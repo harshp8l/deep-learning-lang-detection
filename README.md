@@ -41,6 +41,45 @@ If you have GPU enabled, it will automatically use it.
 python test_run.py
 ```
 
+This tests all files in the test folder and output looks like below:
+
+```
+Final result: 7949/8016 (0.991641716567)
+xml - Precision:0.996 Recall: 0.994011976048
+fsharp - Precision:0.988118811881 Recall: 0.996007984032
+clojure - Precision:0.995991983968 Recall: 0.992015968064
+java - Precision:0.990118577075 Recall: 1.0
+scala - Precision:0.99001996008 Recall: 0.99001996008
+python - Precision:0.976470588235 Recall: 0.994011976048
+sql - Precision:0.995918367347 Recall: 0.974051896208
+js - Precision:0.993951612903 Recall: 0.984031936128
+cpp - Precision:0.993975903614 Recall: 0.988023952096
+css - Precision:0.994011976048 Recall: 0.994011976048
+csharp - Precision:0.986193293886 Recall: 0.998003992016
+go - Precision:0.997995991984 Recall: 0.994011976048
+php - Precision:1.0 Recall: 0.996007984032
+ruby - Precision:0.99595959596 Recall: 0.984031936128
+powershell - Precision:0.994023904382 Recall: 0.996007984032
+bash - Precision:0.994 Recall: 0.992015968064
+xml:    498/501 (0.994011976048)
+fsharp:   499/501 (0.996007984032)
+clojure:    497/501 (0.992015968064)
+java:   501/501 (1.0)
+scala:    496/501 (0.99001996008)
+python:   498/501 (0.994011976048)
+sql:    488/501 (0.974051896208)
+js:   493/501 (0.984031936128)
+cpp:    495/501 (0.988023952096)
+css:    498/501 (0.994011976048)
+csharp:   500/501 (0.998003992016)
+go:   498/501 (0.994011976048)
+php:    499/501 (0.996007984032)
+ruby:   493/501 (0.984031936128)
+powershell:   499/501 (0.996007984032)
+bash:   497/501 (0.992015968064)
+```
+
+
 ### Testing a single file
 
 ```python
@@ -49,7 +88,7 @@ python test.py mytestfile.something
 
 This will print the result with likelihood for each 
 
-```buildoutcfg
+``` buildoutcfg
 1/1 [==============================] - 0s
 [[  1.01206303e-02   2.55753571e-06   1.85673562e-05   8.22590722e-04
     1.82982374e-04   5.92526863e-04   2.45171529e-03   3.59758809e-02
@@ -88,4 +127,4 @@ And you should see application exposed ar port 5000. Browse to [http://127.0.0.1
 
 ## Results
 
-System currently achieves **98.7% accuracy** on test data (not seen).
+System currently achieves **99.2% accuracy** on test data (not seen).
