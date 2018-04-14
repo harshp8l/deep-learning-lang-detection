@@ -6,12 +6,8 @@ import time
 import data_helper
 import keras
 import numpy as np
-import defs
 
 t = time.time()
-if __name__ == '__main__':
-  print("Time is now {}".format(t))
-
 app = Flask(__name__)
 application = app
 
@@ -56,5 +52,5 @@ def detect_text():
   return jsonify({"result": result[0].tolist()})
 
 if __name__ == '__main__':
-  app.run(debug = True, use_reloader=False)
+  app.run(debug=True, use_reloader=False, host='0.0.0.0')
 
