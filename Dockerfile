@@ -20,7 +20,8 @@ RUN pip install \
       requests \
       flask \
       numpy \
-      keras
+      keras \
+      h5py
 
 ENV NB_USER keras
 ENV NB_UID 1000

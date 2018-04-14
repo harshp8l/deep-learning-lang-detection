@@ -10,6 +10,7 @@ import numpy as np
 t = time.time()
 app = Flask(__name__)
 application = app
+model = None
 
 try:
   file_handler = FileHandler("lang_detection.log", "a")
@@ -18,9 +19,8 @@ try:
   model = keras.models.load_model('./save_tmp.h5')
   if __name__ == '__main__':
     print("Took {}".format(time.time() - t))
-except:
-  if __name__ == '__main__':
-    print("could not start file logging")
+except Exception as e:
+  print e.message
 
 @app.route('/', methods=['GET'])
 def browse_default():
