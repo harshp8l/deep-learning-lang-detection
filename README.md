@@ -131,3 +131,6 @@ And you should see application exposed ar port 5000. Browse to [http://127.0.0.1
 ## Results
 
 System currently achieves **99.2% accuracy** on test data (not seen).
+
+## Docker and Kubernetes
+The project contains a Dockerfile and Kubernetes yaml file that you may use to build a simple python service that can score the samples using the UI.
