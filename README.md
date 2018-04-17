@@ -6,10 +6,10 @@ The code from @keon's Github [project](https://github.com/keon/keras-text-classi
 You can download a pre-trained model from [here](https://drive.google.com/file/d/0By4PF7Jis9FzQ2dmeHdPRlFxbWs/view?usp=sharing). This model is trained on GPU over 8 hours.
 
 ## Purpose
-The project is set up to demonstrate - in simple steps - how to use Keras to build a Deep Learning (DL) model to reconise programming language of a code file or snippet. This can be used to detect language of code snippets but needs to be trained for it - the dataset provided with the project can be turned to snippets and then add to the training set.  
+The project is set up to demonstrate - in simple steps - how to use Keras to build a Deep Learning (DL) model to reconise programming language of a code file or snippet. This can be used to detect language of code snippets and has been trained for it by splitting the files into snippets.  
 
 ## Limitations
-Small dataset is the main limitation of the project - for a powerful model, you would need at least x10 or x100 samples. Another problem is that the training has been done on full files (and their snippets) and not on snippets. A dataset supplied with snippets (perhaps extracted from StackOverflow) can help. In the end, **the project aims to demonstrate the ease of getting started with DL with a relatively small dataset. In the process, it seems to achieve reasonable accuracy that can be improved upon.**
+Small dataset is the main limitation of the project - for a powerful model, you would need at least x10 or x100 samples. Another problem is that the training has been done on full files (and their snippets) and not on snippets. A dataset supplied with snippets (perhaps extracted from StackOverflow) can help. In the end, as we said earlier the project aims to demonstrate the ease of getting started with DL with a relatively small dataset. In the process, it seems to achieve reasonable accuracy that can be improved upon.
 
 ## Languages
 16 language was chosen as below:
