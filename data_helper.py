@@ -7,6 +7,7 @@ import requests
 
 train_root_folder = 'data/train'
 test_root_folder = 'data/test'
+snippets_per_file = 3
 
 
 def get_input_and_labels(root_folder=train_root_folder, file_vector_size=10 * 1024, max_files=1000, breakup=False):
@@ -34,7 +35,7 @@ def get_input_and_labels(root_folder=train_root_folder, file_vector_size=10 * 10
       file_name = os.path.join(folder, fn)
       try:
         file_vector = turn_file_to_vector(file_name, file_vector_size, breakup=breakup)
-        if len(file_vector) == 3:  # it has been broken to 3 parts
+        if len(file_vector) == snippets_per_file:  # it has been broken to snippets_per_file parts
           for fv in file_vector:
             X.append(fv)
             Y.append(vect)
@@ -102,7 +103,7 @@ def turn_text_to_vectors(text, file_vector_size=10 * 1024, normalise_whitespace=
   lines = text.split('\n')
   nlines = len(lines)
   if nlines > 50:
-    third = nlines/3
+    third = nlines/snippets_per_file
     twoThird = 2*third
     text2 = '\n'.join(lines[third:twoThird])
     text3 = '\n'.join(lines[twoThird:])
