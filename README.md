@@ -1,16 +1,19 @@
 # Deep Learning Programming Language Detection
-Deep Learning using Keras (and Tensorflow) to detect programming language of **a code file, and in the new version in can recognise snippets with >99% accuracy**. Approach for DL has been based on Zhang and LeCun's 2016 [paper](https://arxiv.org/pdf/1502.01710.pdf) "Text Understanding from Scratch". The main technique is that instead of using word2vec to create word embedding, characters are quantised (turned to one-hot-vector) and then the document is represented by a sequence of quantised characters (vectors). Currently the document is truncated at 2KB and smaller docs are padded by all zero vectors. 
+Deep Learning using Keras (and Tensorflow) to detect programming language of **a code file, and in the new version in can recognise snippets with >99% accuracy**. Approach for DL has been based on Zhang and LeCun's 2016 [paper](https://arxiv.org/pdf/1502.01710.pdf) "Text Understanding from Scratch". The main technique is that instead of using word2vec to create word embedding, characters are quantised (turned to one-hot-vector) and then the document is represented by a sequence of quantised characters (vectors). Currently the document is truncated at 10KB and smaller docs are padded by all zero vectors. 
 
 The code from @keon's Github [project](https://github.com/keon/keras-text-classification) was helpful to get started and I used some of the same structures. [I recently realised he has removed the code ever since]
 
 You can download a pre-trained model from [here](https://drive.google.com/file/d/0By4PF7Jis9FzQ2dmeHdPRlFxbWs/view?usp=sharing). This model is trained on GPU over 8 hours.
 
 ## Purpose
-The project is set up to demonstrate - in simple steps - how to use Keras to build a Deep Learning (DL) model to reconise programming language of a code file or snippet. This can be used to detect language of code snippets but needs to be trained for it - the dataset provided with the project can be turned to snippets and then add to the training set.  
+The project is set up to demonstrate - in simple steps - how to use Keras to build a Deep Learning (DL) model to reconise programming language of a code file or snippet. This can be used to detect language of code snippets and has been trained for it by splitting the files into snippets.  
+
+## Limitations
+Small dataset is the main limitation of the project - for a powerful model, you would need at least x10 or x100 samples. Another problem is that the training has been done on full files (and their snippets) and not on snippets. A dataset supplied with snippets (perhaps extracted from StackOverflow) can help. In the end, as we said earlier the project aims to demonstrate the ease of getting started with DL with a relatively small dataset. In the process, it seems to achieve reasonable accuracy that can be improved upon.
 
 ## Languages
 16 language was chosen as below:
-XML, F#, Clojure, Java, Scala, Python, Javascript, C++, CSS, C#, go, PHP, Ruby, Powershell and bash (and SQL)
+XML, F#, Clojure, Java, Scala, Python, Javascript, C++, CSS, C#, go, PHP, Ruby, Powershell, bash and SQL
 
 ## Data
 All the data was extracted from Github using its search feature. Common inert words used for search where the word is not a keyword in a language. The words used are:
@@ -128,3 +131,6 @@ And you should see application exposed ar port 5000. Browse to [http://127.0.0.1
 ## Results
 
 System currently achieves **99.2% accuracy** on test data (not seen).
+
+## Docker and Kubernetes
+The project contains a Dockerfile and Kubernetes yaml file that you may use to build a simple python service that can score the samples using the UI.
