@@ -14,17 +14,17 @@ number_of_classes = len(defs.langs)
 
 # Model Hyperparameters
 sequence_length = defs.file_characters_truncation_limit
-filter_sizes = (5, 10, 19)
-pooling_sizes = (5, 10, 19)
-num_filters = 128
-dropout_prob = (0.3, 0.6)
-hidden_dims = 128
+filter_sizes = (3, 9, 19)
+pooling_sizes = (3, 9, 19)
+num_filters = 256
+dropout_prob = (0.25, 0.5)
+hidden_dims = 256
 number_of_quantised_characters = len(defs.supported_chars)
 
 
 # Training parameters
 batch_size = 100
-num_epochs = 30
+num_epochs = 50
 val_split = 0.1
 
 
