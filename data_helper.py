@@ -34,13 +34,9 @@ def get_input_and_labels(root_folder=train_root_folder, file_vector_size=10 * 10
         break
       file_name = os.path.join(folder, fn)
       try:
-        file_vector = turn_file_to_vector(file_name, file_vector_size, breakup=breakup)
-        if len(file_vector) == snippets_per_file:  # it has been broken to snippets_per_file parts
-          for fv in file_vector:
-            X.append(fv)
-            Y.append(vect)
-        else:
-          X.append(file_vector)
+        file_vectors = turn_file_to_vectors(file_name, file_vector_size, breakup=breakup)
+        for fv in file_vectors:
+          X.append(fv)
           Y.append(vect)
         n += 1
       except Exception as e:
@@ -50,18 +46,44 @@ def get_input_and_labels(root_folder=train_root_folder, file_vector_size=10 * 10
   return np.array(X), np.array(Y)
 
 
+def get_text_and_labels(root_folder=train_root_folder, max_files=1000, breakup=False):
+  """
+
+  :return: X, Y
+  X is a an array of text
+  Y is basically one-hot vector of the class definition
+  """
+  Y = []
+  langs = defs.langs
+  n_classes = len(langs)
+  print n_classes
+  X = []
+  i = 0
+  for fld in langs:
+    vect = [0 for x in range(0, n_classes)]
+    vect[i] = 1
+    print fld
+    folder = os.path.join(root_folder, fld)
+    n = 0
+    for fn in os.listdir(folder):
+      if n > max_files:
+        break
+      file_name = os.path.join(folder, fn)
+      try:
+        snippets = get_text_or_snippets(file_name, breakup)
+        for t in snippets:
+          X.append(t)
+          Y.append(vect)
+        n += 1
+      except Exception as e:
+        print e
+    i += 1
+
+  return np.array(X), np.array(Y)
+
 def turn_url_to_vector(f_url, file_vector_size=10 * 1024, normalise_whitespace=True):
   r = requests.get(f_url)
   return turn_text_to_vector(r.text, file_vector_size, normalise_whitespace)
-
-def turn_file_to_vector(file_name, file_vector_size=10 * 1024, normalise_whitespace=True, breakup=False):
-  text = ""
-  with codecs.open(file_name, mode='r', encoding='utf-8') as f:
-    text = f.read().lower()
-  if(breakup):
-    return turn_text_to_vectors(text, file_vector_size, normalise_whitespace)
-  else:
-    return turn_text_to_vector(text, file_vector_size, normalise_whitespace)
 
 def turn_text_to_vector(text, file_vector_size=10 * 1024, normalise_whitespace=True):
   """
@@ -90,31 +112,28 @@ def turn_text_to_vector(text, file_vector_size=10 * 1024, normalise_whitespace=T
 
   return np.array(file_vector)
 
-
-def turn_text_to_vectors(text, file_vector_size=10 * 1024, normalise_whitespace=True):
+def get_text_or_snippets(file_name, breakup=False):
   """
-  breaks a file to 3 files if > 100 lines: second third, last third and full text
-  :param text:
-  :param file_vector_size:
-  :param normalise_whitespace: replacing all whitespace to space
-  :return: file vector or array of size 3 of file vectors
+  either returns array of texts
+  :param file_name: name of the file
+  :return: text or list of snippets
   """
-
+  text = ""
+  with codecs.open(file_name, mode='r', encoding='utf-8') as f:
+    text = f.read().lower()
   lines = text.split('\n')
   nlines = len(lines)
-  if nlines > 50:
+  if breakup and nlines > 50:
     third = nlines/snippets_per_file
     twoThird = 2*third
     text2 = '\n'.join(lines[third:twoThird])
     text3 = '\n'.join(lines[twoThird:])
-
-    file_vectors = []  # will be array of file vectors where each is vector of a snippet
-
-    file_vectors.append(turn_text_to_vector(text, file_vector_size, normalise_whitespace))
-    file_vectors.append(turn_text_to_vector(text2, file_vector_size, normalise_whitespace))
-    file_vectors.append(turn_text_to_vector(text3, file_vector_size, normalise_whitespace))
-    return file_vectors
+    return [text, text2, text3]
   else:
-    return turn_text_to_vector(text, file_vector_size, normalise_whitespace)
+    return [text]
 
+
+def turn_file_to_vectors(file_name, file_vector_size=10 * 1024, normalise_whitespace=True, breakup=False):
+  texts = get_text_or_snippets(file_name, breakup)
+  return [turn_text_to_vector(t, file_vector_size, normalise_whitespace) for t in texts]
 
