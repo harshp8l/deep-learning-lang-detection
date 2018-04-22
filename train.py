@@ -33,7 +33,7 @@ val_split = 0.1
 #
 # Load data
 print("Loading data...")
-x, y = data_helper.get_input_and_labels(file_vector_size=sequence_length, max_files=n_max_files, breakup=True)
+x, y, z = data_helper.get_input_and_labels(file_vector_size=sequence_length, max_files=n_max_files, breakup=True)
 
 # Shuffle data
 shuffle_indices = np.random.permutation(np.arange(len(y)))
