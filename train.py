@@ -24,7 +24,7 @@ number_of_quantised_characters = len(defs.supported_chars)
 
 # Training parameters
 batch_size = 100
-num_epochs = 30
+num_epochs = 20
 val_split = 0.1
 
 
