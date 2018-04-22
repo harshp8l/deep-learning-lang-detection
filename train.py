@@ -17,7 +17,7 @@ sequence_length = defs.file_characters_truncation_limit
 filter_sizes = (3, 9, 19)
 pooling_sizes = (3, 9, 19)
 num_filters = 128
-dropout_prob = (0.2, 0.3, 0.4)
+dropout_prob = (0.25, 0.5)
 hidden_dims = 128
 number_of_quantised_characters = len(defs.supported_chars)
 
@@ -65,10 +65,8 @@ model = Sequential()
 
 model.add(Dropout(dropout_prob[0], input_shape=(sequence_length, number_of_quantised_characters)))
 model.add(graph)
-model.add(Dense(hidden_dims, activation='tanh'))
-model.add(Dropout(dropout_prob[1]))
 model.add(Dense(hidden_dims))
-model.add(Dropout(dropout_prob[2]))
+model.add(Dropout(dropout_prob[1]))
 model.add(Dense(number_of_classes))
 model.add(Activation('softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])
