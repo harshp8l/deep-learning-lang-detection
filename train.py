@@ -65,7 +65,7 @@ model = Sequential()
 
 model.add(Dropout(dropout_prob[0], input_shape=(sequence_length, number_of_quantised_characters)))
 model.add(graph)
-model.add(Dense(hidden_dims, activation='relu'))
+model.add(Dense(hidden_dims, activation='tanh'))
 model.add(Dropout(dropout_prob[1]))
 model.add(Dense(hidden_dims))
 model.add(Dropout(dropout_prob[2]))
