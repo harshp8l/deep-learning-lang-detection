@@ -3,6 +3,9 @@ import keras
 import numpy as np
 import defs
 import precision_recall
+import sys
+import os
+import shutil
 
 def interpret_result(yhati, threshold=0.5):
   """
@@ -14,7 +17,16 @@ def interpret_result(yhati, threshold=0.5):
     if yhati[i] > threshold:
       return defs.langs[i]
 
-X, Y = data_helper.get_input_and_labels(data_helper.test_root_folder,
+print 'usage: test_run.py [folder to copy failed files]'
+
+folderName = None
+if len(sys.argv) > 1:
+  folderName = sys.argv[1]
+  if not os.path.exists(folderName):
+    os.mkdir(folderName)
+
+
+X, Y, Z = data_helper.get_input_and_labels(data_helper.test_root_folder,
                                         defs.file_characters_truncation_limit,
                                         max_files=1000)
 
@@ -45,6 +57,13 @@ for i in range(0, len(y_hat)):
       class_success[predicted] = 1
     else:
       class_success[predicted] += 1
+  elif folderName is not None:
+    fn = os.path.basename(Z[i])
+    lang = os.path.basename(os.path.dirname(Z[i]))
+    langFolder = os.path.join(folderName, lang)
+    if not os.path.exists(langFolder):
+      os.mkdir(langFolder)
+    shutil.copyfile(Z[i], os.path.join(langFolder, fn))
 
 print "Final result: {}/{} ({})".format(success, len(y_hat), (success * 1.0 / len(y_hat) * 1.0))
 

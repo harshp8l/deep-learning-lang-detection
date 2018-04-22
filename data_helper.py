@@ -13,15 +13,17 @@ snippets_per_file = 3
 def get_input_and_labels(root_folder=train_root_folder, file_vector_size=10 * 1024, max_files=1000, breakup=False):
   """
 
-  :return: X, Y
+  :return: X, Y, Z
   X is a an array of inputs where each input is a padded array of quantised character one-hot vectors
   Y is basically one-hot vector of the class definition
+  Z is array of file names. It can contain duplicates if file has been split
   """
   Y = []
   langs = defs.langs
   n_classes = len(langs)
   print n_classes
   X = []
+  Z = []
   i = 0
   for fld in langs:
     vect = [0 for x in range(0, n_classes)]
@@ -38,12 +40,13 @@ def get_input_and_labels(root_folder=train_root_folder, file_vector_size=10 * 10
         for fv in file_vectors:
           X.append(fv)
           Y.append(vect)
+          Z.append(file_name)
         n += 1
       except Exception as e:
         print e
     i += 1
 
-  return np.array(X), np.array(Y)
+  return np.array(X), np.array(Y), Z
 
 
 def get_text_and_labels(root_folder=train_root_folder, max_files=1000, breakup=False):
