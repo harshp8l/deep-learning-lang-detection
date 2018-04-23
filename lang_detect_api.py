@@ -6,6 +6,10 @@ import time
 import data_helper
 import keras
 import numpy as np
+import os
+import codecs
+import random
+import defs
 
 t = time.time()
 app = Flask(__name__)
@@ -50,6 +54,20 @@ def detect_text():
   y = model.predict(x)
   result = [100*a for a in model.predict_proba(x)] # tunr to percentage
   return jsonify({"result": result[0].tolist()})
+
+@app.route('/api/v1/lang/random-snippet', methods=['GET'])
+def random_snippet():
+  root = './data/stackoverflow-snippets/'
+  lang = request.args.get('lang')
+  if lang is None or len(lang) == 0:
+    lang = defs.langs[int(random.uniform(0, len(defs.langs)))]
+  root = root + lang + '/'
+  print root
+  files = os.listdir(root)
+  fn = root + files[int(random.uniform(0, len(files)))]
+  print fn
+  with codecs.open(fn) as f:
+    return f.read()
 
 if __name__ == '__main__':
   app.run(debug=True, use_reloader=False, host='0.0.0.0')
