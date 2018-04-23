@@ -1,0 +1,42 @@
+#include <vector>
+#include <iostream>
+#include <functional>
+
+struct Foo
+ {
+   double  value;
+
+   bool IsBefore (std::uint64_t ts) const
+    { std::cout << ""- IsBefore("" << ts << ')' << std::endl; 
+      return value < ts; }
+
+   bool IsAttributeBetween (double a, double b) const
+    { std::cout << ""- IsAttrributeBetwen("" << a << "", "" << b << ')'
+         << std::endl; return (a < value) && (value < b); }
+
+   bool IsOk () const
+    { std::cout << ""- IsOk"" << std::endl; return value != 0.0; }
+ };
+
+int main ()
+ {
+   std::vector<std::function<bool(Foo const *)>> vfc;
+
+   using namespace std::placeholders;
+
+   vfc.emplace_back(std::bind(&Foo::IsBefore, _1, 64U));
+   vfc.emplace_back(std::bind(&Foo::IsAttributeBetween, _1, 10.0, 100.0));
+   vfc.emplace_back(std::bind(&Foo::IsOk, _1));
+
+   std::vector<Foo> vf { Foo{0.0}, Foo{10.0}, Foo{20.0}, Foo{80.0} };
+
+   for ( auto const & f : vf )
+    {
+      bool  bval { true };
+
+      for ( auto const & c : vfc )
+         bval &= c(&f);
+
+      std::cout << ""---- for "" << f.value << "": "" << bval << std::endl;
+    }
+ }

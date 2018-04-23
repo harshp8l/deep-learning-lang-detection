@@ -1,0 +1,19 @@
+import org.apache.spark.sql.SparkSession
+
+case class Address(street: String, number: String, postcode: String)
+case class Person(name: String, phone: String, address: Address)
+
+object JsonReader extends App {
+    val sparkSession = SparkSession.builder()
+      .master(""local"")
+      .getOrCreate()
+
+    import sparkSession.implicits._
+
+    val p = JsonReader.getClass.getClassLoader.getResource(""input.json"").toURI.getPath
+    val df = sparkSession.read.json(p).as[Person]
+    df.printSchema()
+    df.show()
+
+    df.select($""address.*"").show
+}

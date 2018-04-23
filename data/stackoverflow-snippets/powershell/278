@@ -1,0 +1,24 @@
+#Main-Code 
+$keysPerPage = 1000 #Set max key of AWS limit of 1000
+$bucketN = 'testBucket' #Bucketname
+$nextMarker = $null 
+$output =@()
+$Start = ""S3 Bucket Name : $bucketN""
+$End = ""- End of Folder List -""
+
+Do
+{
+  #Iterate 1000 records per do-while loop, this is to overcome the limitation of only 1000 keys retrieval per get-s3object calls by AWS 
+  $batch = get-s3object -BucketName $bucketN -Maxkey $keysPerPage -Marker $nextMarker 
+
+  $batch2 = $batch.key | % {$_.Split('/')[0]} | Sort -Unique 
+  $output += $batch2 
+  $batch2
+
+  $nextMarker= $AWSHistory.LastServiceResponse.NextMarker
+} while ($nextMarker)
+
+   #Output to specific folder in a directory
+   $Start | Out-file C:\Output-Result.csv  -Append
+   $output | Out-file C:\Output-Result.csv  -Append
+   $End | Out-file C:\Output-Result.csv -Append

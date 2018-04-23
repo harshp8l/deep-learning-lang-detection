@@ -1,0 +1,37 @@
+func sqlQueryHandler(response http.ResponseWriter, request *http.Request) {
+    var (
+        userName   = getUserName(request)
+        sqlCommand = request.FormValue(""sqlQuery"")
+    )
+
+    db, err := sql.Open(""mysql"", userName)
+    if err != nil {
+        fmt.Fprintf(response, ""\n\nAn error occured during your MySQL command: %s"", err)
+        // if you panic you stop here anyway. no else needed
+        panic(err)
+    }
+    rows, err := db.Query(sqlCommand)
+    if err != nil {
+        http.Redirect(response, request, ""/error"", 302)
+        // return, so no else is needed
+        return
+    }
+
+    if err != nil {
+        panic(err)
+    }
+    defer rows.Close()
+    for rows.Next() {
+        var (
+            name string
+            age  int
+        )
+        if err := rows.Scan(&name, &age); err != nil {
+            panic(err)
+        }
+        fmt.Printf(""%s is %d\n"", name, age)
+    }
+    if err := rows.Err(); err != nil {
+        panic(err)
+    }
+}

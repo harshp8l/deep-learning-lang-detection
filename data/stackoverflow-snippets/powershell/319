@@ -1,0 +1,35 @@
+param($installPath, $toolsPath, $package, $project)
+
+# Determine fully qualified path to a temp file
+$fileName = [System.IO.Path]::GetTempPath() + [System.Guid]::NewGuid().ToString() + "".vssettings""; 
+
+# Create User Settings file:
+'<UserSettings>
+    <ApplicationIdentity version=""9.0""/>
+    <ToolsOptions/>
+    <Category name=""Environment_Group"" RegisteredName=""Environment_Group"">
+        <Category name=""Environment_ExternalTools"" Category=""{E8FAE9E8-FBA2-4474-B134-AB0FFCFB291D}"" Package=""{DA9FB551-C724-11d0-AE1F-00A0C90FFFC3}"" RegisteredName=""Environment_ExternalTools"" PackageName=""Visual Studio Environment Package"">
+            <PropertyValue name=""Launch Powershell.Command"">powershell.exe</PropertyValue>
+            <PropertyValue name=""Launch Powershell.Arguments"">""&amp; ''$(ProjectDir)\Myscript.ps1''""</PropertyValue>
+            <PropertyValue name=""Launch Powershell.InitialDirectory"">""$(ProjectDir)""</PropertyValue>
+            <PropertyValue name=""Launch Powershell.SourceKeyName""/>
+            <PropertyValue name=""Launch Powershell.UseOutputWindow"">true</PropertyValue>
+            <PropertyValue name=""Launch Powershell.PromptForArguments"">false</PropertyValue>
+            <PropertyValue name=""Launch Powershell.CloseOnExit"">true</PropertyValue>
+            <PropertyValue name=""Launch Powershell.IsGUIapp"">false</PropertyValue>
+            <PropertyValue name=""Launch Powershell.SaveAllDocs"">true</PropertyValue>
+            <PropertyValue name=""Launch Powershell.UseTaskList"">false</PropertyValue>
+            <PropertyValue name=""Launch Powershell.Unicode"">false</PropertyValue>
+            <PropertyValue name=""Launch Powershell.Package"">{00000000-0000-0000-0000-000000000000}</PropertyValue>
+            <PropertyValue name=""Launch Powershell.NameID"">0</PropertyValue>
+            <PropertyValue name=""ToolNames"">Launch Powershell</PropertyValue>
+        </Category>
+    </Category>
+</UserSettings>' >> $fileName
+
+
+# Perform the import of the custom tool
+$project.DTE.ExecuteCommand(""Tools.ImportandExportSettings"", ""/import:""""$fileName"""""");
+
+""--Remove file""
+Remove-Item -path $fileName

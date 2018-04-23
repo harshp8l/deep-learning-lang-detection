@@ -1,0 +1,80 @@
+#include <tuple>
+#include <sstream>
+#include <iostream>
+
+template <typename ... TL>
+struct TemplatedType
+ { std::tuple<TL...> t; };
+
+void myHelper2 (std::istream &)
+ { }
+
+template <typename ... TS>
+void myHelper2 (std::istream &, char const, TS && ...);
+
+template <typename T, typename ... TS>
+void myHelper2 (std::istream &, T &, TS && ...);
+
+template <typename ... TS>
+void myHelper2 (std::istream & is, std::string & s, char const & delim,
+                TS && ... ts)
+ {
+   std::getline(is, s, delim);
+
+   myHelper2(is, std::forward<TS>(ts)...);
+ }
+
+template <typename ... TS>
+void myHelper2 (std::istream & is, char const ch, TS && ... ts)
+ {
+   char ch2;
+
+   is >> ch2;
+
+   // check if `ch` == `ch2`? exception otherwise?
+
+   myHelper2(is, std::forward<TS>(ts)...);
+ }
+
+template <typename T, typename ... TS>
+void myHelper2 (std::istream & is, T & t, TS && ... ts)
+ {
+   is >> t;
+
+   myHelper2(is, std::forward<TS>(ts)...);
+ }
+
+template <typename ... TL, std::size_t ... IL>
+void myHelper1 (std::istream & is,
+                TemplatedType<TL...> const & sp,
+                std::index_sequence<IL...> const &)
+ { myHelper2(is, std::get<IL>(sp.t)...); }
+
+template <typename ... TL>
+std::istream & operator>> (std::istream & is,
+                           TemplatedType<TL...> const & sp)
+ {
+   myHelper1(is, sp, std::index_sequence_for<TL...>{});
+
+   return is;
+ }
+
+
+template <typename ... TL>
+TemplatedType<TL...> mySplit (TL && ... al)
+ { return { std::forward_as_tuple(al...) }; }
+
+int main ()
+ {
+   std::istringstream iss(""alpha:=10/50.1"");
+
+   std::string x;
+   int y{};
+   double z{};
+
+   iss >> mySplit(x, ':', '=', y, '/', z);
+
+   std::cout << ""- x: "" << x << std::endl;  // print alpha
+   std::cout << ""- y: "" << y << std::endl;  // print 10
+   std::cout << ""- z: "" << z << std::endl;  // print 50.1
+ }

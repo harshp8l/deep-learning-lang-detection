@@ -1,0 +1,34 @@
+sleep_time=0
+
+test_starter() {
+    export db_name=""$1""
+    ((sleep_time+=5))
+    echo "" Queuing ${db_name}, starts over ${sleep_time} seconds""
+    (sleep ${sleep_time}; set -x; python ~/tmp/test_sleep/test.py ${db_name} )&
+}
+
+if [ 1=1 ];  then
+    test_starter ""test_1""
+fi
+
+if [ 1=1 ];  then
+    test_starter ""test_2""
+fi
+
+if [ 1=1 ]; then
+    test_starter ""test_3""
+fi
+
+if [ 1=1 ]; then
+    test_starter ""test_4""
+fi
+
+echo ""Everything started""
+
+# wait for background processes to finish
+CHILD_ERROR=0
+for CHILD_PID in `pgrep -P $$`
+do
+    # store child error if any
+    wait $CHILD_PID || CHILD_ERROR=$?
+done

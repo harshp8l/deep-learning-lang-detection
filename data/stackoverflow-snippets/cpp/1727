@@ -1,0 +1,37 @@
+// in-place de-duplication of sequence, similar interface to remove_if
+template<class Iter, class Equivalent>
+Iter inplace_deduplicate_sequence(Iter first, Iter last, Equivalent&& equivalent)
+{
+    while (first != last)
+    {
+        // define a predicate which checks for equivalence to current
+        using value_type = typename std::iterator_traits<Iter>::value_type;
+        auto same = [&](value_type const& x) -> bool
+        {
+            return equivalent(*first, x);
+        };
+
+        // move non-equivalent items to end of sequence
+        // return new 'end of valid sequence'
+        last = std::remove_if(std::next(first), last, same);
+    }
+    return last;
+}
+
+// in-place de-duplication on while vector, including container truncation    
+template<class T, class A, class Equivalent>
+void inplace_deduplicate(std::vector<T, A>& vec, Equivalent&& equivalent)
+{
+    vec.erase(inplace_deduplicate_sequence(vec.begin(), 
+                                           vec.end(), 
+                                           std::forward<Equivalent>(equivalent)), 
+              vec.end());
+}
+
+// non-destructive version   
+template<class T, class A, class Equivalent>
+auto deduplicated2(std::vector<T, A> vec, Equivalent&& equivalent) -> std::vector<T, A>
+{
+    inplace_deduplicate(vec, std::forward<Equivalent>(equivalent));
+    return vec;
+}

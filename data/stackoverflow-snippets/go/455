@@ -1,0 +1,55 @@
+package main
+
+import (
+    ""fmt""
+    ""unsafe""
+)
+
+const num1 = 42
+
+type struct1 struct {
+    arr [num1]byte
+}
+
+const (
+    n1 = 1
+    n2 = 2
+    n3 = 1
+)
+
+type struct2 struct {
+    b1 [n1]uint64
+    b2 [n2]uint64
+    b3 [n3]uint64
+}
+
+func arrInsert(p1 *struct1, i1 int, p2 *struct2) int {
+    if p1 == nil || p2 == nil {
+        return 0
+    }
+    if i1 < 0 || i1 >= len(p1.arr) {
+        return 0
+    }
+    s1 := p1.arr[i1:]
+    s2 := (*[unsafe.Sizeof(*p2)]byte)(unsafe.Pointer(p2))[:]
+    return copy(s1, s2)
+}
+
+func main() {
+    p1 := new(struct1)
+    p2 := new(struct2)
+    for i := range p2.b1 {
+        p2.b1[i] = uint64(i + 10)
+    }
+    for i := range p2.b2 {
+        p2.b2[i] = uint64(i + 20)
+    }
+    for i := range p2.b3 {
+        p2.b3[i] = uint64(i + 30)
+    }
+    n := arrInsert(p1, 1, p2)
+    fmt.Println(n)
+    fmt.Println(*p1)
+    fmt.Println((*[unsafe.Sizeof(*p2)]byte)(unsafe.Pointer(p2))[:])
+    fmt.Println(*p2)
+}

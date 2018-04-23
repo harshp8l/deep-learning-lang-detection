@@ -1,0 +1,11 @@
+var deliveryModels = deliveries.GroupJoin(internalDrivers,
+        delivery => (delivery.DriverType, delivery.DriverId), driver => (""Internal"", driver.Id),
+        (dl, dr) => (dl, dr))
+    .GroupJoin(externalDrivers,
+        internalDriversJoin => (internalDriversJoin.dl.DriverType, internalDriversJoin.dl.DriverId),
+        extDr => (""External"", extDr.Id),
+        (internalJoinResult, dr) => new DeliveryModel
+        {
+            DeliveryId = internalJoinResult.dl.Id,
+            DriverName = (internalJoinResult.dr.FirstOrDefault() ?? dr?.FirstOrDefault())?.DriverName
+        });

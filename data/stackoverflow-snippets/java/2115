@@ -1,0 +1,23 @@
+public String girisKontrol(){
+
+SessionFactory factory = HibernateUtil.getSessionFactory();
+Session session = factory.openSession();
+session.getTransaction();
+
+List<Kullanici> list = session.createSQLQuery(""select * from kullanici where kadi='"" + kullanici.getKadi() + ""' and ksifre='"" + kullanici.getKsifre() + ""'"").list();
+Query kuid = session.createQuery(""select id from kullanici where kadi='"" + kullanici.getKadi() + ""' and ksifre='"" + kullanici.getKsifre() + ""'"");
+
+
+//-----------------solution------------------------
+kullanici.setId((Integer) kuid.uniqueResult());
+
+if (list.size()>0){
+   return ""gorevSayfasi"";
+}else {
+    FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, ""user not found"", """"));
+ }
+  session.beginTransaction();
+  session.getTransaction().commit();
+  session.close();
+  return null;
+}

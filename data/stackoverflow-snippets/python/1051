@@ -1,0 +1,75 @@
+import numpy as np
+import pandas as pd
+import time as t
+
+# Example Functions
+def foo(x):
+    return x + x
+
+def bar(x):
+    return x * x
+
+# Example Functions for multiple columns
+def foo2(x, y):
+    return x + y
+
+def bar2(x, y):
+    return x * y
+
+# Create function dictionary
+funcs = {'foo': foo, 'bar': bar}
+funcs2 = {'foo': foo2, 'bar': bar2}
+
+n_rows = 1000000
+# Generate Sample Data
+names = np.random.choice(list(funcs.keys()), size=n_rows)
+values = np.random.normal(100, 20, size=n_rows)
+df = pd.DataFrame()
+df['name'] = names
+df['value'] = values
+
+# Create copy for comparison using different methods
+df_copy = df.copy()
+
+# Modified original master function
+def masterFunc(row, functs):
+    correctFunction = funcs[row['name']]
+    return correctFunction(row['value']) + 3*row['value']
+
+t1 = t.time()
+df['output'] = df.apply(lambda x: masterFunc(x, funcs), axis=1)
+t2 = t.time()
+print(""Time for all rows/functions: "", t2 - t1)
+
+
+# For Functions that Can be vectorized using numpy
+t3 = t.time()
+output_dataframe_list = []
+for func_name, func in funcs.items():
+    df_subset = df_copy.loc[df_copy['name'] == func_name,:]
+    df_subset['output'] = func(df_subset['value'].values) + 3 * df_subset['value'].values
+    output_dataframe_list.append(df_subset)
+
+output_df = pd.concat(output_dataframe_list)
+
+t4 = t.time()
+print(""Time for all rows/functions: "", t4 - t3)
+
+
+# Using a for loop over numpy array of values is still faster than dataframe apply using
+t5 = t.time()
+output_dataframe_list2 = []
+for func_name, func in funcs2.items():
+    df_subset = df_copy.loc[df_copy['name'] == func_name,:]
+    col1_values = df_subset['value'].values
+    outputs = np.zeros(len(col1_values))
+    for i, v in enumerate(col1_values):
+        outputs[i] = func(col1_values[i], col1_values[i]) + 3 * col1_values[i]
+
+    df_subset['output'] = np.array(outputs)
+    output_dataframe_list2.append(df_subset)
+
+output_df2 = pd.concat(output_dataframe_list2)
+
+t6 = t.time()
+print(""Time for all rows/functions: "", t6 - t5)

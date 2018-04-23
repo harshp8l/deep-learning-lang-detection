@@ -1,0 +1,20 @@
+(defn update-grammar [grammar]
+  (apply str (map (fn [{:keys [word position line tag] }]
+                    (str ""<span class=\""dropt\"">"" word
+                         ""<span style=\""width:500px;\""><font color=\""green\"">Word:</font>"" word
+                         ""<br><font color=\""red\"">Function:</font> "" tag
+                         ""<br><font color=\""blue\"">Meaning:</font> ""     (db/get-chindic-meaning word tag)
+                         ""</span></span>"")) grammar)))
+
+(defn update-trans [trans] (first (map #(last (last %)) trans)))
+
+(fn [{:keys [metre _id num filedate divtype section 
+             sandhi lines grammar devanagari filename 
+             notes trans sectionnumber fileauthor lang]
+      :as params-map}]
+ (cond
+   ;;when we have chinese
+   (= lang ""zh"")
+   (-> params-map
+       (update :grammar update-grammar)
+       (update :trans update-trans))

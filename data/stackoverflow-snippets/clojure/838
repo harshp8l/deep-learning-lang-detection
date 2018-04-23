@@ -1,0 +1,12 @@
+;; first you create a filtering step factory for transduction:
+(defn make-filter [[k v]]
+  (filter #(re-find (re-pattern v)
+                    (clojure.string/lower-case (k %)))))
+
+;; and then transform the collection:
+(let [filters {:name ""test""
+               :type ""new""}
+      collection [{:name ""testable""  :type ""old""}
+                  {:name ""shoudwork"" :type ""new""}
+                  {:name ""testable""  :type ""new""}]]
+  (sequence (reduce comp (map make-filter filters)) collection))

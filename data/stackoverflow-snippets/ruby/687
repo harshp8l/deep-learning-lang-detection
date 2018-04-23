@@ -1,0 +1,13 @@
+class ApplicationController < ActionController::API
+  before_action :authenticate_token
+
+  def authenticate_token
+    token = request.headers['Authorization'].to_s =~ /^Bearer (.*)$/i && $1
+    return head :unauthorized unless token
+    payload = JWT.decode(token, 'secret', true, algorithm: 'HS256')
+    user = User.find_by(email: payload['email'])
+    return head :unauthorized unless user
+    # TODO set the `user` as current_user
+    # How to patch devise's `current_user` helper is another story
+  end
+end

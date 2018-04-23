@@ -1,0 +1,30 @@
+trait KryoSupport {
+  def withKryo[T](f: Kryo => T): T
+}
+
+class PooledKryoSupport(serializers: (Class[_], Serializer[_])*) extends KryoSupport {
+
+  override def withKryo[T](f: Kryo => T): T = {
+    pool.run(new KryoCallback[T] {
+      override def execute(kryo: Kryo): T = f(kryo)
+    })
+  }
+
+  private val pool = {
+    val factory = new KryoFactory() {
+      override def create(): Kryo = {
+        val kryo = new Kryo
+
+        (KryoSupport.ScalaSerializers ++ serializers).foreach {
+          case ((clazz, serializer)) =>
+            kryo.register(clazz, serializer)
+        }
+
+        kryo
+      }
+    }
+
+    new KryoPool.Builder(factory).softReferences().build()
+  }
+
+}

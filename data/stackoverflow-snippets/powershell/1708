@@ -1,0 +1,88 @@
+$word = New-Object -ComObject Word.Application
+$word.visible=$false
+$files = Get-ChildItem ""C:\Users\Ali\Desktop\Test"" -Filter *.docx
+
+$find=""Hello""
+$replace=""Bye""
+$wdHeaderFooterPrimary = 1
+
+
+$ReplaceAll = 2
+$FindContinue = 1
+$MatchCase = $false
+$MatchWholeWord = $false
+$MatchWildcards = $false
+$MatchSoundsLike = $false
+$MatchAllWordForms = $false
+$Forward = $true
+$Wrap = $findContinue
+$Format = $false
+
+
+for ($i=0; $i -lt $files.Count; $i++) {
+$filename = $files[$i].FullName 
+$doc = $word.Documents.Open($filename)
+
+
+ForEach ($StoryRange In $doc.StoryRanges){
+
+$StoryRange.Find.Execute($find,$MatchCase,
+                        $MatchWholeWord,$MatchWildcards,$MatchSoundsLike,
+                        $MatchAllWordForms,$Forward,$Wrap,$Format,
+                        $replace,$ReplaceAll)
+
+ While ($StoryRange.find.Found){
+        $StoryRange.Find.Execute($find,$MatchCase,
+                        $MatchWholeWord,$MatchWildcards,$MatchSoundsLike,
+                        $MatchAllWordForms,$Forward,$Wrap,$Format,
+                        $replace,$ReplaceAll)
+ }
+
+
+
+  While (-Not($StoryRange.NextStoryRange -eq $null)){
+   $StoryRange = $StoryRange.NextStoryRange
+
+
+           $StoryRange.Find.Execute($find,$MatchCase,
+                        $MatchWholeWord,$MatchWildcards,$MatchSoundsLike,
+                        $MatchAllWordForms,$Forward,$Wrap,$Format,
+                        $replace,$ReplaceAll)
+
+
+    While ($StoryRange.find.Found){
+          $StoryRange.Find.Execute($find,$MatchCase,
+                        $MatchWholeWord,$MatchWildcards,$MatchSoundsLike,
+                        $MatchAllWordForms,$Forward,$Wrap,$Format,
+                        $replace,$ReplaceAll)
+    }
+    } 
+
+}
+
+  #shapes in footers and headers
+for ($j=1; $j -le $doc.Sections.Count; $j++) {
+
+    $FooterShapesCount = $doc.Sections($j).Footers($wdHeaderFooterPrimary).Shapes.Count
+    $HeaderShapesCount = $doc.Sections($j).Headers($wdHeaderFooterPrimary).Shapes.Count
+
+        for ($i=1; $i -le $FooterShapesCount; $i++) {
+            $TextRange = $doc.Sections($j).Footers($wdHeaderFooterPrimary).Shapes($i).TextFrame.TextRange
+            $TextRange.Find.Execute($find,$MatchCase,
+                        $MatchWholeWord,$MatchWildcards,$MatchSoundsLike,
+                        $MatchAllWordForms,$Forward,$Wrap,$Format,
+                        $replace,$ReplaceAll)
+        }
+        for ($i=1; $i -le $HeaderShapesCount; $i++) {
+            $TextRange = $doc.Sections($j).Headers($wdHeaderFooterPrimary).Shapes($i).TextFrame.TextRange
+            $TextRange.Find.Execute($find,$MatchCase,
+                        $MatchWholeWord,$MatchWildcards,$MatchSoundsLike,
+                        $MatchAllWordForms,$Forward,$Wrap,$Format,
+                        $replace,$ReplaceAll)
+        }
+    }
+$doc.Save()
+$doc.close()
+}
+
+$word.quit()

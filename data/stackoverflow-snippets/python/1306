@@ -1,0 +1,29 @@
+import logging
+import concurrent.futures
+def process_batchs():
+    batches = [i for i in range(100)]
+    logging.basicConfig(filename=r'test_ProcessPoolExecutor.log', filemode='w+',level=logging.DEBUG)
+    logging.info('this is root logging')
+    with concurrent.futures.ProcessPoolExecutor(10) as e:
+        futures = []
+        for batch in batches:
+            future = e.submit(f, batch)
+            futures.append(future)
+        while True:
+            dones = [future.done() for future in futures]
+            if all(dones):
+               results = [future.result() for future in futures]
+               print results
+               break
+def f(batch):
+    # do some thing
+    # Here is the trick, notice here!!!
+    ########
+    logging.basicConfig(filename=r'test_ProcessPoolExecutor.log', filemode='w+',level=logging.DEBUG)
+    ########
+    logging.info('this is sub logging' + str(batch))
+    return batch
+
+
+if __name__ == '__main__':
+    process_batchs()

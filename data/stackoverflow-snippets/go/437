@@ -1,0 +1,35 @@
+package main
+
+import (
+    ""os/exec""
+    ""bytes""
+    ""os""
+    ""github.com/docker/docker/client""
+    ""golang.org/x/net/context""
+    ""github.com/docker/docker/api/types""
+    ""strings""
+)
+
+func main() {
+    cmd := exec.Command(""docker"", ""version"", ""--format"", ""{{.Server.APIVersion}}"")
+    cmdOutput := &bytes.Buffer{}
+    cmd.Stdout = cmdOutput
+
+    err := cmd.Run()
+    if err != nil {
+        panic(err)
+    }
+    apiVersion := strings.TrimSpace(string(cmdOutput.Bytes()))
+    // TODO: (optional) verify the api version is in the correct format(a.b)
+    os.Setenv(""DOCKER_API_VERSION"", apiVersion)
+    // execute docker commands
+    ctx := context.Background()
+    cli, err := client.NewEnvClient()
+    if err != nil {
+        panic(err)
+    }
+    _, err = cli.ImagePull(ctx, ""alpine"", types.ImagePullOptions{})
+    if err != nil {
+        panic(err)
+    }
+}

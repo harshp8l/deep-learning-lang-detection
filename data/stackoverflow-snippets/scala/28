@@ -1,0 +1,12 @@
+//checking for struct or array type in that column
+val columnType = parentDF.select($""seg:GeographicSegments.seg:GeographicSegment"").schema.map(_.dataType).head.toString().startsWith(""StructType"")
+
+import org.apache.spark.sql.functions._
+//if column type is struct then use .* and array function to convert the struct to array else just use array
+val GeographicSegmentchildDF = if(columnType) {
+  parentDF.select($""DataPartition"".as(""DataPartition""), $""TimeStamp"".as(""TimeStamp""), $""_organizationId"", $""_segmentId"", explode(array($""seg:GeographicSegments.seg:GeographicSegment.*"")).as(""GeographicSegments""), $""_action"")
+}
+else {
+  parentDF.select($""DataPartition"".as(""DataPartition""), $""TimeStamp"".as(""TimeStamp""), $""_organizationId"", $""_segmentId"", explode($""seg:GeographicSegments.seg:GeographicSegment"").as(""GeographicSegments""), $""_action"")
+}
+val GeographicSegmentchildArrayDF = GeographicSegmentchildDF.select(getDataPartition($""DataPartition"").as(""DataPartition""), $""TimeStamp"".as(""TimeStamp""), $""_organizationId"".as(""OrganizationId""), $""_segmentId"".as(""SegmentId""), $""GeographicSegments.*"", getFFActionChild($""_action"").as(""FFAction|!|""))

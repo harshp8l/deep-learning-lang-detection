@@ -1,0 +1,29 @@
+List<string> ExtractDifferences(List<string> sentences)
+{
+    var firstDiffIndex = GetFirstDifferenceIndex(sentences);
+    var lastDiffIndex = GetFirstDifferenceIndex(sentences.Select(s => new string(s.Reverse().ToArray())).ToList());
+    return sentences.Select(s => s.Substring(firstDiffIndex, s.Length - lastDiffIndex - firstDiffIndex)).ToList();
+}
+
+
+int GetFirstDifferenceIndex(IList<string> strings)
+{
+    int firstDifferenceIndex = int.MaxValue;
+
+    for (int i = 0; i < strings.Count; i++)
+    {
+        var current = strings[i];
+        var prev = strings[i == 0 ? strings.Count - 1 : i - 1];
+
+        var firstDiffIndex = current
+            .Select((c, j) => new { CurrentChar = c, Index = j })
+            .FirstOrDefault(ci => ci.CurrentChar != prev[ci.Index])
+            .Index;
+
+        if (firstDiffIndex < firstDifferenceIndex)
+        {
+            firstDifferenceIndex = firstDiffIndex;
+        }
+    }
+    return firstDifferenceIndex;
+}

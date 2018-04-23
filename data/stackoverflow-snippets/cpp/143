@@ -1,0 +1,17 @@
+set.seed(101)
+x <- sample(1:5, 10^4, TRUE)
+y <- sample(1:5, 10^4, TRUE)
+w <- sample(1:5, 10^4, TRUE)
+z <- sample(1:5, 10^4, TRUE)
+df <- data.frame(x,y,w,z)
+
+identical(attr(dplyr::group_by(df, x, y, w, z), ""indices""), rowlistMaster(df))
+[1] TRUE
+
+library(microbenchmark)
+microbenchmark(dplyr = attr(dplyr::group_by(df, x, y, w, z), ""indices""),
+               challenge = rowlistMaster(df))
+Unit: milliseconds
+     expr       min        lq       mean     median         uq        max neval
+    dplyr  2.693624  2.900009   3.324274   3.192952   3.535927   6.827423   100
+challenge 53.905133 70.091335 123.131484 141.414806 149.923166 190.010468   100

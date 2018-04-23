@@ -1,0 +1,23 @@
+(defn- dfs
+  [graph goal]
+  (fn search
+    [path visited]
+    (let [current (peek path)]
+      (if (= goal current)
+        [path]
+        (->> current graph keys
+             (remove visited)
+             (mapcat #(search (conj path %) (conj visited %))))))))
+(defn findpath
+  ""Returns a lazy sequence of all directed paths from start to goal
+  within graph.""
+  [graph start goal]
+  ((dfs graph goal) [start] #{start}))
+
+(defn circular-path-count [graph node] 
+  (flatten (map (fn [s]
+       (map count (findpath graph s node))) (vec (keys (get-in graph [node]))) )))
+
+
+
+e.g. usage: (circular-path-count paths :B)

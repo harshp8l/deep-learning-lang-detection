@@ -1,0 +1,11 @@
+type ListIdF =
+    abstract Apply : 'a * list<Pair<'a>> -> list<'a>
+
+type ListIdG =
+    abstract Apply : Pair<'a> -> Pair<'a>
+
+let rec efold<'a,'b> (f:ListIdF) (g:ListIdG) (h:'a -> 'b) : Nest<'a> -> list<'b> = function
+| Nil -> []
+| Cons(x,xs) -> f.Apply(h x, efold f g (pair h >> g.Apply) xs)
+
+let toList n = efold { new ListIdF with member __.Apply(a,l) = a::(List.collect (fun (x,y) -> [x;y]) l) } { new ListIdG with member __.Apply(p) = p } id n

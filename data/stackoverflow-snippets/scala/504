@@ -1,0 +1,19 @@
+val s = ""fisrt_arg, some_foo(arg1, foo2(arg1, arg2, foo3()),  arg3), third_arg""
+
+def tokenize (argumentlist: String): List[String] = {
+
+    def tokenize (arglist: List[Char], sofar: String, inList: Int): List[String] = arglist match {
+        case Nil => List (sofar)
+        case '(' :: tail => tokenize (tail, sofar + '(', inList + 1)
+        case ')' :: tail => tokenize (tail, sofar + ')', inList - 1)
+        case ',' :: tail => if (inList > 0) {
+                tokenize (tail, sofar + ',', inList)
+            } else {
+                sofar :: tokenize (tail, """", inList)
+            }
+        case c :: tail => tokenize (tail, sofar + c, inList)
+    }
+    tokenize (argumentlist.toList, """", 0)
+}
+
+tokenize (s)

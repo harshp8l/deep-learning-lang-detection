@@ -1,0 +1,23 @@
+SELECT
+    w.emp_id,
+    (CASE WHEN ( EXISTS
+            (SELECT 1 FROM hourly_pay h
+                WHERE
+                    h.emp_id = w.emp_id ) ) 
+          THEN
+            'hourly_pay start_date is later'
+          ELSE
+            'missing in the hourly_pay table'
+          END)
+FROM
+    work_assignments w
+WHERE
+    NOT EXISTS (
+        SELECT
+            1
+        FROM
+            hourly_pay hp
+        WHERE
+            hp.start_date < w.start_date
+        AND w.emp_id = hp.emp_id
+    )

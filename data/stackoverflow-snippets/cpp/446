@@ -1,0 +1,29 @@
+template <class T>
+struct PerformShouldDoIt
+{
+    static bool shouldDoIt(bool state, T&) { return state; }
+};
+
+template <class X>
+struct PerformShouldDoIt<std::vector<std::shared_ptr<MyClass<X>>>>
+{
+    static bool shouldDoIt(bool state,
+                           std::vector<std::shared_ptr<MyClass<X>>>& val) {
+        return std::any_of(val.begin(), val.end(), [](auto &member) {
+            return member->state;
+        });
+    }
+};
+
+// Similarly for whatever you wanted to specialize for
+
+...
+
+template <class T>
+class MyClass : public MyAbstractClass {
+public:
+
+    bool shouldDoIt() {
+        return PerformShouldDoIt<T>::shouldDoIt(state, val);
+    }
+};

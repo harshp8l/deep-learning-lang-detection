@@ -1,0 +1,183 @@
+//=================================================
+// Mouse Movement Control
+// ""ArcBall"" Style of viewing and movement.
+//
+//
+//=================================================
+
+
+#include ""stdafx.h""
+#include ""mouse_control.h""
+
+using namespace std;
+// external variables
+extern float PI;// 3.141592654
+extern bool Right_Mouse_Down;
+extern bool Left_Mouse_Down;
+//==================================================
+float m_speed = 2.0; // control mouse movement speed
+float m_speed_global = 2.0; // Move to external setting
+//==================================================
+
+// Keep z_rotaion in -PI*2 to PI*2 range
+float check_overflow(float v)
+{
+    if (v > 0.0f) if (v > (PI * 2)) v -= (PI * 2);
+    if (v < 0.0f) if (v < (-PI * 2)) v += (PI * 2);
+    return v;
+}
+
+// Keep x_rotaion in 0.0 to -PI/2.0 range
+float check_overflow_x(float v)
+{
+    const float Half_PI = PI / 2.0f;
+    if (v < 0.0f)
+        if (v < -Half_PI+0.001f) // need the +0.001f to avoide fail at set_eyes function
+            v = -Half_PI+0.001f;
+    if (v > 0.0f) v = 0.0f;
+    return v;
+}
+
+// handle mouse rotation
+void handle_mouse_eye_rotaion(CPoint point)
+{
+    CPoint delta = mouse_p - point;
+    int deadzone = 0;
+    m_speed = m_speed_global * -view_radius * 0.1f;
+    if (xz_translation_flag || Left_Mouse_Down)
+    {
+        // about z
+        if (delta.x < deadzone)
+        {
+            rotate_left(delta.x);
+        }
+        if (delta.x > deadzone)
+        {
+            rotate_right(delta.x);
+        }
+        // about x
+        if (delta.y < deadzone)
+        {
+            rotate_down(delta.y);
+        }
+        if (delta.y > deadzone)
+        {
+            rotate_up(delta.y);
+        }
+        mouse_p = point;
+    }
+    else
+    {
+        if (Right_Mouse_Down && !y_move_flag)
+        {
+            zoom_radius(delta); // change zoom
+            mouse_p = point;
+        }
+    }
+
+}
+
+// rotate view clockwise
+void rotate_left(int x)
+{
+    if (x > 100) x = 100;
+    if (x < -100) x = -100;
+    float t = (float(x) / (100.0f * PI));
+    if (!xz_translation_flag)
+    {
+        z_rotation += t * m_speed_global;
+        z_rotation = check_overflow(z_rotation);
+        return;
+    }
+    u_look_point_X -= (t * cosf(z_rotation)*2.0f * m_speed);
+    u_look_point_Z += (t * sinf(z_rotation)*2.0f * m_speed);
+}
+
+// rotate view counter clockwise
+void rotate_right(int x)
+{
+    if (x > 100) x = 100;
+    if (x < -100) x = -100;
+    float t = (float(x) / (100.0f * PI));
+    if (!xz_translation_flag)
+    {
+        z_rotation += t * m_speed_global;
+        z_rotation = check_overflow(z_rotation);
+        return;
+    }
+    u_look_point_X -= (t * cosf(z_rotation)*2.0f * m_speed);
+    u_look_point_Z += (t * sinf(z_rotation)*2.0f * m_speed);
+
+}
+
+//======================== Y
+// rotate view up
+void rotate_up(int x)
+{
+    if (x > 100) x = 100;
+    if (x < -100) x = -100;
+    float t = (float(x) / (100.0f * PI));
+    if (!xz_translation_flag)
+    {
+        x_rotation += t * m_speed_global;
+        x_rotation = check_overflow_x(x_rotation);
+        return;
+    }
+    u_look_point_Z -= (t * cosf(z_rotation)*2.0f * m_speed);
+    u_look_point_X -= (t * sinf(z_rotation)*2.0f * m_speed);
+
+}
+
+// rotate view down
+void rotate_down(int x)
+{
+    if (x > 100) x = 100;
+    if (x < -100) x = -100;
+    float t = (float(x) / (100.0f * PI ));
+    if (!xz_translation_flag)
+    {
+        x_rotation += t * m_speed_global;
+        x_rotation = check_overflow_x(x_rotation);
+        return;
+    }
+    u_look_point_Z -= (t * cosf(z_rotation)*2.0f * m_speed);
+    u_look_point_X -= (t * sinf(z_rotation)*2.0f * m_speed);
+
+}
+
+// used to change zoom
+void zoom_radius(CPoint delta)
+{
+    if (delta.y > 0)
+    {
+        if (delta.y > 100) delta.y = 100;
+    }
+    if (delta.y < 0)
+    {
+        if (delta.x < -100) delta.x = -100;
+    }
+    float y = float(delta.y) / 100.0f;
+    view_radius += y* 2.0f * m_speed;
+    // Adjust these to change max zoom in and out values.
+    // view_radius MOST STAY A NEGATIVE NUMBER!
+    // OpenGL ALWAYS LOOKS IN THE NEGATIVE Z SCREEN DIRECTION!
+    if (view_radius > -0.5f) view_radius = -0.5f;
+    if (view_radius < -1000.0f) view_radius = -1000.0f;
+
+}
+
+// debug junk
+//string s;
+//s = ""mouse_p"";
+//outStr1(s, mouse_p.x, mouse_p.y);
+//s = ""delta"";
+//outStr1(s, delta.x, delta.y);
+
+// debug code
+void outStr1(string s, int a, int b)
+{
+    char buf[100];
+    sprintf_s(buf, ""%s : A= %i : B= %i\n"", s.c_str(), a, b);
+    OutputDebugStringA(buf);
+    return;
+}

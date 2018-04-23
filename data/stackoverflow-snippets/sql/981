@@ -1,0 +1,177 @@
+declare @T table (Period int, Coin varchar(3), Amount int, AnualAmount varchar(4));
+INSERT INTO @T (Period, Coin, Amount, AnualAmount) VALUES
+    (201701, 'MXP', 13.5, NULL),
+    (201702, 'MXP', 14.5, NULL),
+    (201703, 'MXP', 15.5, NULL),
+    (201704, 'MXP', 16.5, NULL),
+    (201705, 'MXP', 17.5, NULL),
+    (201706, 'MXP', 18.5, NULL),
+    (201707, 'MXP', 19.5, NULL),
+    (201708, 'MXP', 20.5, NULL),
+    (201709, 'MXP', 21.5, NULL),
+    (201710, 'MXP', 22.5, NULL),
+    (201711, 'MXP', 23.5, NULL),
+    (201712, 'MXP', 24.5, NULL),
+    (201801, 'MXP', 25.5, NULL),
+    (201802, 'MXP', 26.5, NULL),
+    (201803, 'MXP', 27.5, NULL),
+    (201804, 'MXP', 28.5, NULL),
+    (201805, 'MXP', 29.5, NULL),
+    (201806, 'MXP', 30.5, NULL),
+    (201807, 'MXP', 31.5, NULL),
+    (201808, 'MXP', 32.5, NULL),
+    (201809, 'MXP', 33.5, NULL),
+    (201810, 'MXP', 34.5, NULL),
+    (201811, 'MXP', 35.5, NULL),
+    (201812, 'MXP', 36.5, NULL),
+    (201701, 'COP', 37.5, NULL),
+    (201702, 'COP', 38.5, NULL),
+    (201703, 'COP', 39.5, NULL),
+    (201704, 'COP', 40.5, NULL),
+    (201705, 'COP', 41.5, NULL),
+    (201706, 'COP', 42.5, NULL),
+    (201707, 'COP', 43.5, NULL),
+    (201708, 'COP', 44.5, NULL),
+    (201709, 'COP', 45.5, NULL),
+    (201710, 'COP', 46.5, NULL),
+    (201711, 'COP', 47.5, NULL),
+    (201712, 'COP', 48.5, NULL),
+    (201801, 'COP', 49.5, NULL),
+    (201802, 'COP', 50.5, NULL),
+    (201803, 'COP', 51.5, NULL),
+    (201804, 'COP', 52.5, NULL),
+    (201805, 'COP', 53.5, NULL),
+    (201806, 'COP', 54.5, NULL),
+    (201807, 'COP', 55.5, NULL),
+    (201808, 'COP', 56.5, NULL),
+    (201809, 'COP', 57.5, NULL),
+    (201810, 'COP', 58.5, NULL),
+    (201811, 'COP', 59.5, NULL),
+    (201812, 'COP', 60.5, NULL),
+    (201701, 'REA', 61.5, NULL),
+    (201702, 'REA', 62.5, NULL),
+    (201703, 'REA', 63.5, NULL),
+    (201704, 'REA', 64.5, NULL),
+    (201705, 'REA', 65.5, NULL),
+    (201706, 'REA', 66.5, NULL),
+    (201707, 'REA', 67.5, NULL),
+    (201708, 'REA', 68.5, NULL),
+    (201709, 'REA', 69.5, NULL),
+    (201710, 'REA', 70.5, NULL),
+    (201711, 'REA', 71.5, NULL),
+    (201712, 'REA', 72.5, NULL),
+    (201801, 'REA', 73.5, NULL),
+    (201802, 'REA', 74.5, NULL),
+    (201803, 'REA', 75.5, NULL),
+    (201804, 'REA', 76.5, NULL),
+    (201805, 'REA', 77.5, NULL),
+    (201806, 'REA', 78.5, NULL),
+    (201807, 'REA', 79.5, NULL),
+    (201808, 'REA', 80.5, NULL),
+    (201809, 'REA', 81.5, NULL),
+    (201810, 'REA', 82.5, NULL),
+    (201811, 'REA', 83.5, NULL),
+    (201812, 'REA', 84.5, NULL);
+declare @D table (Period int);
+INSERT INTO @D (Period) values
+    (201712),
+    (201801),
+    (201802),
+    (201803),
+    (201804),
+    (201805),
+    (201806),
+    (201807),
+    (201808),
+    (201809),
+    (201810),
+    (201811),
+    (201812);
+select t.Coin, t.Period, t.Amount 
+     , AVG(t.Amount) over (partition by t.Coin) as Annual     
+from @T t
+join @D d
+on t.Period = d.Period 
+union all 
+select t.Coin, t.Period, t.Amount  
+     , null    
+from @T t
+left join @D d
+on t.Period = d.Period 
+where d.Period is null
+order by Coin, Period;
+
+Coin Period      Amount      Annual
+---- ----------- ----------- -----------
+COP  201701      37          NULL
+COP  201702      38          NULL
+COP  201703      39          NULL
+COP  201704      40          NULL
+COP  201705      41          NULL
+COP  201706      42          NULL
+COP  201707      43          NULL
+COP  201708      44          NULL
+COP  201709      45          NULL
+COP  201710      46          NULL
+COP  201711      47          NULL
+COP  201712      48          54
+COP  201801      49          54
+COP  201802      50          54
+COP  201803      51          54
+COP  201804      52          54
+COP  201805      53          54
+COP  201806      54          54
+COP  201807      55          54
+COP  201808      56          54
+COP  201809      57          54
+COP  201810      58          54
+COP  201811      59          54
+COP  201812      60          54
+MXP  201701      13          NULL
+MXP  201702      14          NULL
+MXP  201703      15          NULL
+MXP  201704      16          NULL
+MXP  201705      17          NULL
+MXP  201706      18          NULL
+MXP  201707      19          NULL
+MXP  201708      20          NULL
+MXP  201709      21          NULL
+MXP  201710      22          NULL
+MXP  201711      23          NULL
+MXP  201712      24          30
+MXP  201801      25          30
+MXP  201802      26          30
+MXP  201803      27          30
+MXP  201804      28          30
+MXP  201805      29          30
+MXP  201806      30          30
+MXP  201807      31          30
+MXP  201808      32          30
+MXP  201809      33          30
+MXP  201810      34          30
+MXP  201811      35          30
+MXP  201812      36          30
+REA  201701      61          NULL
+REA  201702      62          NULL
+REA  201703      63          NULL
+REA  201704      64          NULL
+REA  201705      65          NULL
+REA  201706      66          NULL
+REA  201707      67          NULL
+REA  201708      68          NULL
+REA  201709      69          NULL
+REA  201710      70          NULL
+REA  201711      71          NULL
+REA  201712      72          78
+REA  201801      73          78
+REA  201802      74          78
+REA  201803      75          78
+REA  201804      76          78
+REA  201805      77          78
+REA  201806      78          78
+REA  201807      79          78
+REA  201808      80          78
+REA  201809      81          78
+REA  201810      82          78
+REA  201811      83          78
+REA  201812      84          78

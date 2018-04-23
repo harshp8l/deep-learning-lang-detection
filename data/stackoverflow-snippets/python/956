@@ -1,0 +1,25 @@
+import numpy as np
+import tensorflow as tf
+
+tf.logging.set_verbosity(tf.logging.INFO)
+
+model = tf.estimator.DNNRegressor(
+        hidden_units=[20, 20],
+        feature_columns=[tf.feature_column.numeric_column(key='x')],
+        model_dir=r""E:\GitHub\miscellaneous\ml-models\foobar\tensorflow\test""
+    )
+
+input_train= tf.estimator.inputs.numpy_input_fn(
+        x={'x': np.arange(100)},
+        y=np.arange(100),
+        num_epochs=None,
+        shuffle=True
+    )
+model.train(input_fn=input_train, steps=200)
+
+test = np.array([[200]]) # correct input with shape 1 for each input (row)
+#test = np.array([[200, 300]]) # incorrect input with shape 2 for each input (row)
+input_predict= tf.estimator.inputs.numpy_input_fn(
+        {'x': test}, shuffle=False
+    )
+print(list(model.predict(input_predict)))

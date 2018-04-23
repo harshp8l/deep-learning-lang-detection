@@ -1,0 +1,22 @@
+{-# LANGUAGE ExistentialQuantification #-}
+
+import Data.Map (Map)
+import qualified Data.Map as Map
+
+department_country = Map.fromList [(""IT"",   ""USA""   ), (""Sales"",  ""France"")]
+country_currency   = Map.fromList [(""USA"",  ""Dollar""), (""France"", ""Euro"")]
+exchange_rate      = Map.fromList [(""Euro"", 1.08),     (""Dollar"", 1.2)]
+
+data Chain t u =
+    forall r. (Ord r) =>   -- Any type r can be inside the chain
+       Link (Chain t r) (Chain r u)
+  | Node (Map t u)
+
+lookup :: (Ord t, Ord u) => t -> Chain t u -> Maybe u
+lookup k (Node m) = Map.lookup k m
+lookup k (Link c1 c2) = case lookup k c1 of
+                           Just v -> lookup v c2
+                           Nothing -> Nothing
+
+chain = Link (Node department_country) 
+             (Link (Node country_currency) (Node exchange_rate))

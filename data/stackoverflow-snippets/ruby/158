@@ -1,0 +1,32 @@
+class Xml_extractor
+
+  attr_reader :document, :records
+
+  def initialize document
+    @document = document
+    @records  = []
+  end
+
+  def read
+    # @document.xpath(""//record"").each do |record|
+    @document.each do |record|
+      @records << {id: record[0], ip_address: record[1]}
+    end
+    self # return self so that you can chain another method
+  end
+
+  def search_by_ip(ip)
+    #return first of an array if found, nil otherwise
+    # attention to use a hash key here to search, not a string
+    @records.select {|k| k[:ip_address] == ip.to_s}.first
+  end
+
+end
+
+document = [[0, ""192.168.0.1""], [1, ""192.168.0.2""]]
+p Xml_extractor.new(document).read.records
+# [{:id=>0, :ip_address=>""192.168.0.1""}, {:id=>1, :ip_address=>""192.168.0.2""}]
+p Xml_extractor.new(document).read.search_by_ip(""192.168.0.2"")
+# [{:id=>1, :ip_address=>""192.168.0.2""}]
+p Xml_extractor.new(document).read.search_by_ip(""192.168.0.2"").to_json
+# ""[{\""id\"":1,\""ip_address\"":\""192.168.0.2\""}]""

@@ -1,0 +1,17 @@
+# gather the results
+$results = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-object { $_.Publisher -match ""The""  } | Select-Object @{Label = ""ServerName""; Expression = {$env:computername}}, DisplayName, Publisher, DisplayVersion, InstallDate
+
+# Prepare an array of arrays for the output. 
+$outputToBeConverted = @()
+
+# build the header
+$header = ($results | Get-Member -MemberType NoteProperty).Name
+$outputToBeConverted += ,$header
+
+# Add the rows 
+Foreach($item in $results){
+    # Create a string array by calling each property individually
+    $outputToBeConverted += ,[string[]]($header | ForEach-Object{$item.""$_""})
+}
+
+[pscustomobject]@{table=$outputToBeConverted} | ConvertTo-Json -Depth 5 

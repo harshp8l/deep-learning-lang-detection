@@ -1,0 +1,58 @@
+package main
+
+import (
+    ""bytes""
+    ""encoding/json""
+    ""io""
+    ""log""
+    ""net/http""
+    ""os""
+    ""time""
+)
+
+type Elememt struct {
+    ID int `json:""id""`
+    FirstName string `json:""first_name""`
+    LastName string `json:""last_name""`
+    Time time.Time `json:""time""`
+    Count int `json:""count""`
+    Payout string `json:""payout""`
+}
+
+func main() {
+    elements := []Elememt {
+        {
+            ID: 1,
+            FirstName: ""Dmitriy"",
+            LastName: ""Groschovskiy"",
+            Time: time.Now(),
+            Count: 1,
+            Payout: ""200"",
+        },
+        {
+            ID: 2,
+            FirstName: ""Yasuhiro"",
+            LastName: ""Matsumoto"",
+            Time: time.Now(),
+            Count: 2,
+            Payout: ""150"",
+        },
+    }
+
+    var buf bytes.Buffer
+    err := json.NewEncoder(&buf).Encode(elements)
+    if err != nil {
+        log.Fatal(err)
+    }
+    req, err := http.NewRequest(""POST"", ""http://httpbin.org/post"", &buf)
+    if err != nil {
+        log.Fatal(err)
+    }
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer resp.Body.Close()
+
+    io.Copy(os.Stdout, resp.Body)
+}

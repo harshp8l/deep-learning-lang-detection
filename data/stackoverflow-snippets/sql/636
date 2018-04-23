@@ -1,0 +1,29 @@
+    /*
+create table datatbl (ID tinyint identity(1,1), ROWNUM varchar(5))
+INSERT INTO datatbl VALUES ('A1'), ('A2'), ('A3'), (NULL), (NULL), ('A6')
+*/
+;with islands as (
+select
+    Id,
+    RowNum,
+    ID - 
+    ROW_NUMBER() over (order by 
+    (case when ROWNUM is null then null else id end)
+    ) grpno
+from datatbl
+), boundaries as (
+select distinct
+    grpno, 
+    min(id) over (partition by grpno) as minid,
+    max(id) over (partition by grpno) as maxid
+from islands
+where ROWNUM is not null
+), fragments as (
+select
+    b.grpno,
+    case when (mi.ROWNUM = ma.ROWNUM) then mi.ROWNUM else mi.ROWNUM + '-' + ma.ROWNUM end as boundary
+from boundaries as b
+inner join datatbl as mi on mi.ID = b.minid
+inner join datatbl as ma on ma.ID = b.maxid
+)
+select stuff((select ', ' + boundary from fragments for xml path('')),1, 2, '')

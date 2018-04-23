@@ -1,0 +1,76 @@
+class Game < ApplicationRecord
+  has_many :decks
+  has_one :discard_deck, -> { where(deck_type: :discard) }, foreign_key: :game_id, class_name: 'Deck'
+  has_one :draw_deck, -> { where(deck_type: :draw) }, foreign_key: :game_id, class_name: 'Deck'
+
+  # example attributes:
+  #   is_finished:boolean(default: false)
+
+  def start
+    # populate the decks
+    draw_deck.create!
+    discard_deck.create!
+
+    # populate random cards to be a draw_deck
+    total_draw_deck_cards = 50
+
+    # pick 50 random cards. `RANDOM()` is for Postgresql; else check online
+    random_cards = Card.order('RANDOM()').limit(total_draw_deck_cards)
+
+    random_cards.each do |random_card|
+      draw_deck.deck_cards.create!(card: random_card)
+    end
+  end
+
+  def finish
+    update!(is_finished: true)
+  end
+
+  # `deck` can be any deck_type. Add conditions here if you must for each different deck_type
+  def draw_from(deck)
+  # or if you have multiple players:
+  # def draw_from(deck, player)
+    deck_card = deck.deck_cards.first
+
+    # then do something with this deck_card that you just drawed
+    # i.e. you might want to put this into a ""Hand"" (Player), so you'll need a separate PlayerCard model
+    # PlayerCard.create!(card: deck_card.card)
+
+    # or if you have multiple players:
+    # PlayerCard.create!(card: deck_card.card, player: player) 
+
+    # then lastly remove this deck_card as you've already put it in your hand
+    deck_card.destroy
+  end
+end
+
+class Deck < ApplicationRecord
+  enum deck_type: { draw: 0, discard: 1 }
+
+  belongs_to :game
+  has_many :deck_cards, -> { order(created_at: :desc) }
+  has_many :cards, through: :deck_cards
+
+  # example attributes:
+  #   deck_type:integer
+end
+
+class DeckCard < ApplicationRecord
+  belongs_to :deck
+  belongs_to :card
+
+  # example attributes:
+  #   is_faced_down:boolean(default: true)
+end
+
+class Card < ApplicationRecord
+  enum card_type: { monster: 0, magic: 1, trap: 2 }
+
+  has_many :deck_cards
+  has_many :decks, through: :deck_cards
+
+  # example attributes:
+  #   name:string
+  #   image:string
+  #   card_type:integer
+end

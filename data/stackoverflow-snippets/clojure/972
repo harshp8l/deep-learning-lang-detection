@@ -1,0 +1,25 @@
+(defn expr-seq [in]
+  (let [r (.read in)]
+    (if (= -1 r)
+      nil
+      (do
+        (.unread in r)
+        (cons (clojure.edn/read in) (lazy-seq (expr-seq in)))))))
+
+(defn doc-string [[_ _ ds]]
+  (when (string? ds) ds))
+
+(def sexps
+  (with-open [in (-> (slurp ""/path/to/file.clj"")
+                     clojure.string/trim
+                     java.io.StringReader.
+                     java.io.PushbackReader.)]
+    (doall (expr-seq in))))
+
+; docstrings 
+(map doc-string sexps)
+
+=> (""We've got some sort of docstring here. \""this\"" would be an example of\n  some sort of escaped text within that docstring."" ""Another docstring down here."")
+
+; all strings
+(filter string? (tree-seq coll? seq sexps))

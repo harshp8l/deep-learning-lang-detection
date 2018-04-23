@@ -1,0 +1,44 @@
+;
+with CteCount as(
+Select eventId, isGroupA, null as isGroupB,
+ROW_NUMBER() over (Partition by eventId, isGroupA, UserVote Order by eventId, isGroupA, UserVote) as isGroupACount,
+null as isGroupBCount,
+null as isAllCount,
+uservote
+from @voteTable
+where isGroupA = 1
+
+UNION ALL
+
+Select eventId, null as isGroupA, isGroupB,
+null,
+ROW_NUMBER() over (Partition by eventId, isGroupB, UserVote Order by eventId, isGroupB, UserVote) as isGroupBCount,
+null,
+uservote
+from @voteTable
+where isGroupB = 1
+
+UNION ALL
+
+Select eventId, null as isGroupA, null as isGroupB, 
+null,
+null,
+ROW_NUMBER() over (Partition by eventId, UserVote Order by eventId, UserVote) as isAllCount,
+uservote
+from @voteTable
+),
+CteSummary as(
+Select eventId,
+max(isGroupACount) as GroupA,
+max(isGroupBCount) as GroupB,
+max(isAllCount) as isAll
+from CteCount
+Group by eventId
+)
+Select
+*,
+(Select a.userVote from CteCount a where a.isGroupA = 1 and isGroupACount = GroupA and a.eventId = CteSummary.eventId) as GroupAvote,
+(Select a.userVote from CteCount a where a.isGroupB = 1 and isGroupBCount = GroupB and a.eventId = CteSummary.eventId) as GroupBvote,
+(Select a.userVote from CteCount a where a.isAllCount = isAll and a.eventId = CteSummary.eventId) as Allvote
+
+from CteSummary 

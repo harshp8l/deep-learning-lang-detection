@@ -1,0 +1,39 @@
+#Examples:
+#$lastEventTime = (Get-VM -Name ""SomeVM"" | Get-VMLogLastEvent).EventTime
+#$lastEventTime = Get-VMLogLastEvent -VM ""SomeVM"" -Path ""C:\alternatetemp\""
+
+function Get-VMLogLastEvent{
+    param(
+    [parameter(Mandatory=$true,ValueFromPipeline=$true)][PSObject[]]$VM,
+    [string]$Path=$env:TEMP
+    )
+
+    process{   
+        $report = @()
+
+        foreach($obj in $VM){
+            if($obj.GetType().Name -eq ""string""){
+                $obj = Get-VM -Name $obj
+            }
+            $logpath = ($obj.ExtensionData.LayoutEx.File | ?{$_.Name -like ""*/vmware.log""}).Name
+            $dsName = $logPath.Split(']')[0].Trim('[')
+            $vmPath = $logPath.Split(']')[1].Trim(' ')
+            $ds = Get-Datastore -Name $dsName
+            $drvName = ""MyDS"" + (Get-Random)
+            $localLog = $Path + ""\"" + $obj.Name + "".vmware.log""
+            New-PSDrive -Location $ds -Name $drvName -PSProvider VimDatastore -Root '\' | Out-Null
+            Copy-DatastoreItem -Item ($drvName + "":"" + $vmPath) -Destination $localLog -Force:$true
+            Remove-PSDrive -Name $drvName -Confirm:$false
+
+            $lastEvent = Get-Content -Path $localLog -Tail 1
+            Remove-Item -Path $localLog -Confirm:$false
+
+            $row = """" | Select VM, EventType, Event, EventTime
+            $row.VM = $obj.Name
+            ($row.EventTime, $row.EventType, $row.Event) = $lastEvent.Split(""|"")
+            $row.EventTime = $row.EventTime | Get-Date
+            $report += $row
+         }
+         $report        
+    }
+} 

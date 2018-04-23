@@ -1,0 +1,39 @@
+function Enable-MailboxSafely {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        $Identity,
+        $Database,
+        [switch]$WhatIf
+    )
+
+    $output = [pscustomobject][ordered]@{
+        Identity = $Identity.ToString()
+        Mailbox = $null
+        Message = 'Unknown Error'
+        Success = $false
+    }
+
+    $output.Mailbox = Get-Mailbox -Identity $Identity -ErrorAction SilentlyContinue
+
+    if ($output.Mailbox -ne $null) {
+        $output.Message = 'Mailbox already exists.'
+        $output.success = $true
+    }
+    Else {
+        $null = Enable-Mailbox -Identity $Identity -Database:$Database -ErrorAction SilentlyContinue
+        # Have to look for a mailbox, as a workaround to the Exchange 2010 Cmdlets not implementing exceptions correctly.
+        $output.Mailbox = Get-Mailbox -Identity $Identity -DomainController:$DomainController -ErrorAction SilentlyContinue
+        if ($output.Mailbox -ne $null) {
+            $output.Message = ""Mailbox created for [$Identity] on database [$Database].""
+            $output.success = $true
+        }
+        else {
+            $output.Message = ""Failed to create mailbox for [$Identity] on database [$Database].""
+            $output.Success = $false
+        }
+    }
+    Write-Output $output
+}
+
+Enable-MailboxSafely -Identity Somebody

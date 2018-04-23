@@ -1,0 +1,38 @@
+bool sendAll(SOCKET s, const void *buf, int len)
+{
+    const char *pbuf = (const char*) buf;
+    while (len > 0)
+    {
+        int sent = send(s, pbuf, len, 0);
+        if (sent == SOCKET_ERROR)
+            return false;
+        pbuf += sent;
+        len -= sent;
+    }
+    return true;
+}
+
+bool winsock_client::send_frame(const frame &f)
+{
+    int size = (2 + f.length) * sizeof(u_long);
+
+    char *arr = new char[size];
+
+    // multi-byte integers should always be transmitted in network
+    // byte order to avoid any endian issues across machine boundaries...
+
+    u_long *ptr = (u_long*) arr;
+
+    *ptr++ = htonl(f.length);
+
+    for (int i = 0; i < f.length; ++i)
+        *ptr++ = htonl(f.body[i]);
+
+    *ptr = htonl(f.tail);
+
+    bool result = sendAll(client_socket, arr, size);
+
+    delete[] arr;
+
+    return result;
+}

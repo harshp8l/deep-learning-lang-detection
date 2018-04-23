@@ -1,0 +1,23 @@
+module M = Map.Make(struct type t = int let compare = compare end)
+
+let of_bindings b =
+    List.fold_right (fun (k, v) m -> M.add k v m) b M.empty
+
+let splitmap m =
+    let split1 (k, v) (b1, b2) =
+        match v with
+        | [] -> (b1, b2)
+        | [x] -> ((k, x) :: b1, b2)
+        | h :: t -> ((k, h) :: b1, (k, t) :: b2)
+    in
+    let rec loop sofar m =
+        if M.cardinal m = 0 then
+            List.rev sofar
+        else
+            let (b1, b2) =
+                List.fold_right split1 (M.bindings m) ([], [])
+            in
+            let (ms, m') = (of_bindings b1, of_bindings b2) in
+            loop (ms :: sofar) m'
+    in
+    loop [] m

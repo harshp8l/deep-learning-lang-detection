@@ -1,0 +1,16 @@
+let buildParamsAndExecute parameters buildArguments toolPath workingDir failBuild =
+    let args = buildArguments parameters
+    trace (toolPath + "" "" + args)
+    let result = ExecProcess (fun info ->  
+              info.FileName <- toolPath
+              info.WorkingDirectory <- getWorkingDir workingDir
+              info.Arguments <- args) TimeSpan.MaxValue
+    let ExitCodeForFailedTests = -3
+    if (result = ExitCodeForFailedTests && not failBuild) then 
+        trace (sprintf ""DotCover %s exited with errorcode %d"" toolPath result)
+    else if (result = ExitCodeForFailedTests && failBuild) then 
+        failwithf ""Failing tests, use ErrorLevel.DontFailBuild to ignore failing tests. Exited %s with errorcode %d"" toolPath result
+    else if (result <> 0) then 
+        failwithf ""Error running %s with exitcode %d"" toolPath result
+    else 
+        trace (sprintf ""DotCover exited successfully"")

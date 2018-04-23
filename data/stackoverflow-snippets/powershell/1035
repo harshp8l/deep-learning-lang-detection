@@ -1,0 +1,41 @@
+ function Global:Test-IdenticalObjects
+ {
+    param(
+        [Parameter(Mandatory=$true)]$Object1,
+        [Parameter(Mandatory=$true)]$Object2,
+        $SecondRun=$false
+    )
+
+    if(-not ($Object1 -is [PsCustomObject] -and $Object2 -is [PsCustomObject))
+    {
+        Write-Error ""Objects must be PsCustomObjects""
+        return
+    }
+
+    foreach($property1 in $Object1.PsObject.Properties)
+    {
+        $prop1_name = $property1.Name
+        $prop1_value = $Object1.$prop1_name
+        $found_property = $false
+        foreach($property2 in $Object2.PsObject.Properties)
+        {
+            $prop2_name = $property2.Name
+            $prop2_value = $Object2.$prop2_name
+            if($prop1_name -eq $prop2_name)
+            {
+                $found_property = $true
+                if($prop1_value -ne $prop2_value)
+                {
+                    return $false
+                }
+            }
+        } # j loop
+        if(-not $found_property) { return $false }
+    } # i loop
+    if($SecondRun)
+    {
+        return $true
+    } else {
+        Test-IdenticalObjects -Object1 $Object2 -Object2 $Object1 -SecondRun $true
+    }
+ } # function

@@ -1,0 +1,27 @@
+const fieldTerminator = 0x1e
+
+func main() {
+    data := []string{""item one"", ""item two"", ""item tre""}
+
+    writer, err := os.Create(""x.out"")
+    if err != nil {
+        log.Fatalf(""Could not open file: %q\n"", err)
+    }
+    defer writer.Close()
+
+    ft := make([]byte, 2)
+    binary.LittleEndian.PutUint16(ft, uint16(fieldTerminator))
+    ft = ft[:1] // Truncate ft to a single byte
+
+    for _, d := range data {
+        _, err := writer.Write([]byte(d))
+        if err != nil {
+            log.Fatalf(""%q\n"", err)
+        }
+
+        _, err = writer.Write(ft)
+        if err != nil {
+            log.Fatalf(""%q\n"", err)
+        }
+    }
+}

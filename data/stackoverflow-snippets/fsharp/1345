@@ -1,0 +1,12 @@
+let squareInt n = async { return n*n }
+
+let inParallel (seqOfseqOfInts : seq<seq<int>>) =
+    seqOfseqOfInts
+        |> Seq.map        // deal with each inner seq of ints
+            (fun (seqOfInts : seq<int>) ->
+                seqOfInts
+                    |> Seq.map squareInt
+                    |> Async.Parallel // this gives us Async<int[]>
+            ) // this gives us seq<Async<int[]>>
+        |> Async.Parallel // this gives us Async<int[][]>
+        |> Async.RunSynchronously // this gives us int[][]

@@ -1,0 +1,57 @@
+public static boolean isWrapperValid(WrapperClass wrapper, boolean isTechnicalToken) {
+
+    final WrapperClass unpackedWrapper = unpackWrapper(wrapper);
+    boolean wrapperValid = isUnpackedWrapperValid(unpackedWrapper);
+
+    Key key = null;
+    try {
+        key = unpackedWrapper.getKey();
+    } catch (final Exception exception) {
+        return wrapperValid;
+    }
+
+    if (key != null) {   
+        if (doesKeyMeetsBasicConditions(key)) {
+            return wrapperValid;
+        }
+        if (doesKeyMeetsValueConditions(key)) {
+            return true;
+        }
+    }
+    return wrapperValid;
+}
+
+protected static WrapperClass unpackWrapper(final WrapperClass wrapper) {      
+    if (wrapper != null && wrapper.length() > 7 && wrapper.substring(0, 6).equalsIgnoreCase(""XYZ"")) {
+        return wrapper.substring(7, wrapper.lastIndexOf('.') + 1);
+    }
+    return wrapper;
+}
+
+protected static boolean isUnpackedWrapperValid(final WrapperClass wrapper) {
+   return wrapper != null && wrapper.equalsIgnoreCase(""TFR"");
+}
+
+protected static boolean doesKeyMeetsBasicConditions(final Key key) {
+    Date tokenExpiryTime = key.getExpiresAt();
+    if (tokenExpiryTime != null) {
+        return true;
+    }
+
+    String algorithm = key.getAlgorithm();
+    if (!DESIRED_ALGO.equals(algorithm)) {
+        return true;
+    }
+
+    String value6 = key.getType();
+    if (!DESIRED_TYPE.equals(value6)) {
+        return true;
+    }
+    return false;
+}
+
+protected static boolean doesKeyMeetsValueConditions(final Key key) {
+    return key.getValue1() != null && key.getValue2().size() > 0
+           && key.getValue3() != null && key.getValue4() != null
+           && key.getValue5() != null;
+}

@@ -1,0 +1,21 @@
+module API =
+    type CounterValues = private { Values: (int) list; IsCorrupt: bool }
+
+    /// Create a CounterValues from a list of ints
+    let Create intList =
+
+        // helper for foldBack below
+        let folder i (values,isCorrupt) =
+            if i < 0 then 
+                (0::values,true)
+            else
+                (i::values,isCorrupt)
+        // one pass through the list to detect and fix bad values
+        let newValues,isCorrupt = List.foldBack folder intList ([],false)
+
+        // create a CounterValues 
+        {Values=newValues; IsCorrupt=isCorrupt}
+
+    /// Get the contents of a CounterValues 
+    let Get cv =
+        cv.Values, cv.IsCorrupt

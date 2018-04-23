@@ -1,0 +1,28 @@
+services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+                  {
+                      options.TokenValidationParameters = new TokenValidationParameters
+                                                          {
+                                                              ValidateIssuer = false,
+                                                              ValidateAudience = false,
+                                                              ValidateLifetime = true,
+                                                              ValidateIssuerSigningKey = true,
+                                                              IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(""123124124124124124122141242421421rf1f2qr2f24234234234234234234234324234234234234234234234234234234234234234234234234234234234234""))
+                                                          };
+                      options.Events = new JwtBearerEvents
+                                       {
+                                           OnAuthenticationFailed = context =>
+                                                                    {
+                                                                        Console.WriteLine(""OnAuthenticationFailed: "" +
+                                                                                          context.Exception.Message);
+                                                                        return Task.CompletedTask;
+                                                                    },
+                                           OnTokenValidated = context =>
+                                                              {
+                                                                  Console.WriteLine(""OnTokenValidated: "" +
+                                                                                    context.SecurityToken);
+                                                                  return Task.CompletedTask;
+                                                              }
+                                       };
+                  });

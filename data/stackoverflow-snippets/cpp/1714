@@ -1,0 +1,57 @@
+#include <string>
+#include <memory>
+#include <vector>
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+
+using namespace std;
+
+class Parent {
+    string _name;
+
+public:
+    virtual shared_ptr<Parent> clone() const = 0;
+    Parent(const string& name) { _name = name; }
+    string getName() { return _name; }
+    void setName(const string& name) { _name = name; }
+};
+
+class Child : public Parent {
+public:
+    Child(const string& name) : Parent(name) {}
+    virtual shared_ptr<Parent> clone() const { return make_shared<Child>(*this); }
+};
+
+int main()
+{
+    vector<shared_ptr<Parent>> origins =
+    {
+        shared_ptr<Parent>(new Child(""ant"")),
+        shared_ptr<Parent>(new Child(""bee"")),
+        shared_ptr<Parent>(new Child(""cat"")),
+    };
+
+    vector<shared_ptr<Parent>> clones;
+
+    // copy origins to clones
+    transform(
+        origins.begin(),
+        origins.end(),
+        back_inserter(clones),
+        [](const shared_ptr<Parent>& ptr) -> shared_ptr<Parent> { return ptr->clone(); }
+    );
+
+    // modify values of origins
+    for (const auto& origin : origins) { origin->setName(origin->getName() + ""!""); }
+
+    // print origins (modified)
+    cout << ""<origins>"" << endl;
+    for (const auto& origin : origins) { cout << origin->getName() << endl; }
+
+    // print clones (not modified)
+    cout << ""<clones>"" << endl;
+    for (const auto& clone : clones) { cout << clone->getName() << endl; }
+
+    return 0;
+}

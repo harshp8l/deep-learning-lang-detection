@@ -1,0 +1,14 @@
+import org.apache.spark.sql.functions._
+val tempDF = df.map(row => {
+  val colB = row(1).asInstanceOf[mutable.WrappedArray[Int]]
+  val colC = row(2).asInstanceOf[mutable.WrappedArray[Int]]
+  var array = Array.empty[(Int, Int)]
+  for(loop <- 0 to colB.size-1){
+    array = array :+ (colB(loop), colC(loop))
+  }
+  (row(0).asInstanceOf[Int], array)
+})
+  .toDF(""ColA"", ""ColB"")
+  .withColumn(""ColD"", explode($""ColB""))
+
+tempDF.withColumn(""ColB"", $""ColD._1"").withColumn(""ColC"", $""ColD._2"").drop(""ColD"").show(false)

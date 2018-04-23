@@ -1,0 +1,25 @@
+trait CategoryMapping {
+  self: HasDatabaseConfigProvider[JdbcProfile] =>
+  import dbConfig.profile.api._
+
+  private[models] class CategoryTable(tag: Tag)
+    extends Table[CategoryRow](tag, ""category"") {
+
+    def id = column[Int](""id"", O.AutoInc, O.PrimaryKey)
+
+    def name = column[String](""name"", O.Length(TextMaxLength_250))
+
+    def description = column[String](""description"", Nullable)
+
+    def categoryNameAgencyIndex = index(""categoryName_agency_idx"", (name, agencyId), unique = true)
+
+    override def * = (
+      id,
+      name,
+      description
+    ) <> (CategoryRow.tupled, CategoryRow.unapply)
+  }
+
+  private[models] val Categories = TableQuery[CategoryTable]
+  private[models] val CategoriesInsertQuery = Categories returning Categories.map(_.id)
+}

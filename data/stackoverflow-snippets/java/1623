@@ -1,0 +1,215 @@
+import java.awt.EventQueue;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.metadata.IIOInvalidTreeException;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.stream.ImageOutputStream;
+import javax.print.Doc;
+import javax.print.DocFlavor;
+import javax.print.DocPrintJob;
+import javax.print.PrintException;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
+import javax.print.ServiceUI;
+import javax.print.SimpleDoc;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
+import static javax.print.attribute.ResolutionSyntax.DPI;
+import javax.print.attribute.standard.Copies;
+import javax.print.attribute.standard.Fidelity;
+import javax.print.attribute.standard.MediaPrintableArea;
+import javax.print.attribute.standard.MediaSizeName;
+import javax.print.attribute.standard.OrientationRequested;
+import javax.print.attribute.standard.PrintQuality;
+import javax.print.attribute.standard.PrinterResolution;
+import javax.print.event.PrintJobEvent;
+import javax.print.event.PrintJobListener;
+import javax.print.event.PrintServiceAttributeEvent;
+
+
+
+public class PNGPrintingExample {
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+
+        EventQueue.invokeLater(() -> {
+
+            try {
+
+
+                FileInputStream imageFile = null;
+
+
+
+                imageFile = new FileInputStream(""E:\\1-and-2-1.png"");
+
+                BufferedImage input = ImageIO.read(imageFile);
+                File output = new File(""E:\\To-Be-Printed.png"");
+                saveGridImage(output,input);
+
+                imageFile = new FileInputStream(output);
+
+                // Set the document type
+                DocFlavor myFormat = DocFlavor.INPUT_STREAM.PNG;
+                // Build a set of attributes
+                PrintRequestAttributeSet aset = new HashPrintRequestAttributeSet(); 
+
+                // setting media size and printing media attributes
+                aset.add(MediaSizeName.ISO_A10);  
+                aset.add(new MediaPrintableArea(0, 0, 35, 24, MediaPrintableArea.MM));
+                aset.add(PrintQuality.HIGH);
+                aset.add(new PrinterResolution(203, 203, PrinterResolution.DPI));
+
+                // adding some may be needed attibutes
+                aset.add(OrientationRequested.PORTRAIT);
+                aset.add(new Copies(7));
+                aset.add(Fidelity.FIDELITY_TRUE);
+
+                        DocPrintJob job;
+                        Doc myDoc = new SimpleDoc(imageFile, myFormat, null);
+                        PrintService[] services =
+                                PrintServiceLookup.lookupPrintServices(myFormat, null);
+                        PrintService defaultPrintService = PrintServiceLookup
+                           .lookupDefaultPrintService();     
+                        PrintService selectedPrintService =
+                           ServiceUI.printDialog(null, 150, 150,
+                           services, defaultPrintService, myFormat, aset);
+                        if(selectedPrintService!=null)
+                        {
+                           System.out.println(""selected printer:""
+                              +selectedPrintService.getName());
+
+                                    try {
+
+                                        job = selectedPrintService.createPrintJob();
+                                        // Create a Doc
+
+                                        PrintJobListener pjlForP = new PrintJobListener() {
+
+                                            public void attributeUpdate(PrintServiceAttributeEvent e){
+                                                System.out.println(""updated"");
+                                            }
+
+                                            @Override
+                                            public void printJobNoMoreEvents(PrintJobEvent e){
+                                                System.out.println(""may be sent to ""+e.getPrintJob().getPrintService());
+                                            }
+
+                                            @Override
+                                            public void printDataTransferCompleted(PrintJobEvent pje) {
+                                                System.out.println(""print Data Transfer Completed"");
+                                            }
+
+                                            @Override
+                                            public void printJobCompleted(PrintJobEvent pje) {
+                                                System.out.println(""The print job was completed"");
+                                            }
+
+                                            @Override
+                                            public void printJobFailed(PrintJobEvent pje) {
+                                                System.out.println(""The print job has failed"");
+                                            }
+
+                                            @Override
+                                            public void printJobCanceled(PrintJobEvent pje) {
+                                                System.out.println(""The print job was cancelled"");
+                                            }
+
+                                            @Override
+                                            public void printJobRequiresAttention(PrintJobEvent pje) {
+                                                System.out.println(""The print job require attention"");
+                                            }
+                                        };                                        
+
+
+                                        job.addPrintJobListener(pjlForP);
+                                        job.print(myDoc, aset);
+
+                                        imageFile.close();
+
+                                    } catch (PrintException ex) {
+                                        Logger.getLogger(BarcodePrintingFromJava.class.getName()).log(Level.SEVERE, null, ex);
+                                    }                           
+
+
+                        }
+                        else
+                           System.out.println(""selection cancelled"");                        
+
+
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(BarcodePrintingFromJava.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(BarcodePrintingFromJava.class.getName()).log(Level.SEVERE, null, ex);
+            }
+         });
+
+
+
+    }
+
+
+    public static void saveGridImage(File output,BufferedImage gridImage) throws IOException {
+       output.delete();
+
+       final String formatName = ""png"";
+
+       for (Iterator<ImageWriter> iw = ImageIO.getImageWritersByFormatName(formatName); iw.hasNext();) {
+          ImageWriter writer = iw.next();
+          ImageWriteParam writeParam = writer.getDefaultWriteParam();
+          ImageTypeSpecifier typeSpecifier = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_INT_RGB);
+          IIOMetadata metadata = writer.getDefaultImageMetadata(typeSpecifier, writeParam);
+          if (metadata.isReadOnly() || !metadata.isStandardMetadataFormatSupported()) {
+             continue;
+          }
+
+          setDPI(metadata);
+
+          final ImageOutputStream stream = ImageIO.createImageOutputStream(output);
+          try {
+             writer.setOutput(stream);
+             writer.write(metadata, new IIOImage(gridImage, null, metadata), writeParam);
+          } finally {
+             stream.close();
+          }
+          break;
+       }
+    }
+
+    public static void setDPI(IIOMetadata metadata) throws IIOInvalidTreeException {
+
+       // for PNG, it's dots per millimeter
+       double dotsPerMilli = 1.0 * DPI / 10 / 2.54;
+
+       IIOMetadataNode horiz = new IIOMetadataNode(""HorizontalPixelSize"");
+       horiz.setAttribute(""value"", Double.toString(dotsPerMilli));
+
+       IIOMetadataNode vert = new IIOMetadataNode(""VerticalPixelSize"");
+       vert.setAttribute(""value"", Double.toString(dotsPerMilli));
+
+       IIOMetadataNode dim = new IIOMetadataNode(""Dimension"");
+       dim.appendChild(horiz);
+       dim.appendChild(vert);
+
+       IIOMetadataNode root = new IIOMetadataNode(""javax_imageio_1.0"");
+       root.appendChild(dim);
+
+       metadata.mergeTree(""javax_imageio_1.0"", root);
+    }    
+
+}

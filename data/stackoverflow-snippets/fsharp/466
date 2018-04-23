@@ -1,0 +1,16 @@
+let concatElement element sequence =
+    seq {
+        yield element
+        yield! sequence
+    }
+
+let rec permute (choices : 'a seq) (permBuilder: 'a seq) : seq<seq<'a>>=
+    seq {
+        if Seq.isEmpty choices then
+            yield permBuilder
+        else
+            for choice in choices do
+                let remaining = choices |> Seq.where (fun el -> el <> choice)
+                let newBuilder = concatElement choice permBuilder 
+                for perm in permute remaining newBuilder do
+                    yield perm

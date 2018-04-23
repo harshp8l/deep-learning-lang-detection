@@ -1,0 +1,57 @@
+public List<String> path(String node0, String node1) {
+        // array to keep trace of visited nodes
+        Map<String, Boolean> visited = new HashMap<>();
+        // array to keep trace of predecessors of nodes in the path
+        Map<String, String> pred = new HashMap<>();
+        // initialize maps
+        for (String n : nodeCounter) {
+            visited.put(n, false);
+            pred.put(n, node0);
+        }
+
+        // min costs from node0 to any other node, initialized to INFINITE if
+        // the nodes are not adjacent
+        Map<String, Integer> mincosts = new HashMap<>();
+        for (String n : nodeCounter)
+            mincosts.put(n, costs.get(node0).get(n));
+
+        // initialize flags of start node
+        visited.put(node0, true);
+        mincosts.put(node0, 0);
+
+        // iterate until all vertexes or node1 are reached
+        for (int i = 0; (i < numVert) && (!visited.get(node1)); ++i) {
+            int min = inf;
+            String candidate = null;
+            for (String n : nodeCounter)
+                if (!visited.get(n) && mincosts.get(n) < min) {
+                    min = mincosts.get(n);
+                    candidate = n;
+                }
+            if (candidate == null)
+                break;
+            visited.put(candidate, true);
+
+            for (String n : nodeCounter)
+                if (!visited.get(n) && ((mincosts.get(candidate) + costs.get(candidate).get(n)) < mincosts.get(n))) {
+                    mincosts.put(n, mincosts.get(candidate) + costs.get(candidate).get(n));
+                    pred.put(n, candidate);
+                }
+        }
+
+        if (!visited.get(node1))
+            return null;
+
+        // store the path from node1 to node0, using predecessors
+        // map
+        String current = node1;
+        List<String> path = new ArrayList<>();
+        path.add(current);
+        while (!current.equals(node0))
+            path.add(current = pred.get(current));
+
+        // store the path from node0 to node1
+        Collections.reverse(path);
+
+        return path;
+    }

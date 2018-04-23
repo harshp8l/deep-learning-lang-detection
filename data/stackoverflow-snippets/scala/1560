@@ -1,0 +1,11 @@
+import sparkSession.sqlContext.implicits._
+import org.apache.spark.sql.functions._
+
+var sourceDf = Seq(1000, 2000, 3000, 4000).toDF(""InputGas"")
+var resultDf  = Seq((0, 111, 1111), (0, 222, 2222), (1, 333, 3333), (2, 444, 4444)).toDF(""Time"", ""CalcGas"", ""Speed"")
+
+sourceDf = sourceDf.withColumn(""rowId1"", monotonically_increasing_id())
+resultDf = resultDf.withColumn(""rowId2"", monotonically_increasing_id())
+
+val df = sourceDf.as(""df1"").join(resultDf.as(""df2""), sourceDf(""rowId1"") === resultDf(""rowId2""), ""inner"").select(""df1.InputGas"", ""df2.Time"", ""df2.CalcGas"", ""df2.Speed"")
+df.show()

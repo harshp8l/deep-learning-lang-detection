@@ -1,0 +1,30 @@
+import com.typesafe.config.Config
+import org.apache.spark.sql.SparkSession 
+import org.apache.spark.storage.StorageLevel
+import org.scalactic._
+import spark.jobserver.{NamedDataFrame, NamedObjectSupport, SparkSessionJob}
+import spark.jobserver.api.{JobEnvironment, SingleProblem, ValidationProblem}
+
+import scala.util.Try
+
+object word1 extends SparkSessionJob with NamedObjectSupport {
+  type JobData = Seq[String]
+  type JobOutput = String
+
+def runJob(sparkSession: SparkSession, runtime: JobEnvironment, data: JobData): JobOutput =
+  {
+   val df = sparkSession.sparkContext.parallelize(data)
+   val ndf = NamedDataFrame(df, true, StorageLevel.MEMORY_ONLY)
+   runtime.namedObjects.update(""df1"", ndf)
+   runtime.namedObjects.getNames().toString
+  }
+
+
+ def validate(sparkSession: SparkSession, runtime: JobEnvironment, config: Config):
+    JobData Or Every[ValidationProblem] = {
+ Try(config.getString(""input.string"").split("" "").toSeq)
+   .map(words => Good(words))
+   .getOrElse(Bad(One(SingleProblem(""No input.string param""))))
+  }  
+
+ }

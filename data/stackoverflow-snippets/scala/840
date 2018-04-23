@@ -1,0 +1,26 @@
+val g = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
+  import GraphDSL.Implicits._
+  val in = Consumer.committableSource(consumerSettings, Subscriptions.topics(conf.getString(""kafka.topics.errorRawCdr"")))
+    .map { msg => 
+      val bytes: Array[Byte] = msg.record.value()
+      val errormsg = (bytes.map(_.toChar)).mkString
+      (new Errors(1235, ""filename"", ""cdr"", ""cdr_type"", 0, errormsg), errormsg)
+    }
+  val kuduout = new ErrorKuduSink(session, table)
+  val emailout = Sink.foreach[Seq[String]] { errormsgs =>
+    sendEmail(errormsgs)
+  }
+  val f1 = Flow[(Errors, String)]
+    .map(_._1) // take errors
+
+  val f2 = Flow[(Errors, String)]
+    .map(_._2) // take errormsgs
+    .groupedWithin(100, 1.hour)
+
+  val bcast = builder.add(Broadcast[Int](2))
+
+  in ~> bcast
+  bcast ~> f1 ~> kuduout
+  bcast ~> f2 ~> emailout 
+  ClosedShape
+})

@@ -1,0 +1,18 @@
+$maxRetries = 5
+$retryWaitSeconds = 60
+Get-Content $shaFile | Foreach-Object { ($_ -split "" "", 2)[0] } |
+        Where-Object { ($adfs.$v.iniFile,$shaFile -NotContains $_) -and (Is-Match $_) } | Foreach-Object {
+            do {
+                $file = Download-File $w $_ $dir
+                #force the file download to fail 3 times for testing
+                foreach ($i in 1..3) {
+                    $file = $null
+                }
+
+                #sleep if the file download failed.
+                if ($file -eq $null) {
+                    start-sleep $retryWaitSeconds
+                }
+            }
+            while (($file -eq $null) -and ($retryCount -le $maxRetries)) #limit the maximum number of retries in case download will never succeed.
+        }

@@ -1,0 +1,42 @@
+import org.apache.spark.ml.feature.StringIndexer
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql._
+
+
+val df = Seq((0, ""a""),(1, ""b""),(2, ""c""),(3, ""a""),(4, ""a""),(5, ""c""),(6,""c""),(7,""d""),(8,""b""))
+            .toDF(""id"", ""category"")
+val indexer = new StringIndexer()
+                   .setInputCol(""category"")
+                   .setOutputCol(""categoryIndex"")
+                   .fit(df)
+
+val indexed = indexer.transform(df)
+
+val categoriesIndecies = indexed.select(""category"",""categoryIndex"").distinct
+val categoriesMap: scala.collection.Map[String,Double] = categoriesIndecies.map(x=>(x(0).toString,x(1).toString.toDouble)).collectAsMap()
+
+def getCategoryIndex(catMap: scala.collection.Map[String,Double], expectedValue: Double) = udf((columnValue: String) =>
+if (catMap(columnValue) == expectedValue) 1 else 0)
+
+
+val newDf:DataFrame =categoriesMap.keySet.toSeq.foldLeft[DataFrame](indexed)(
+     (acc,c) => 
+          acc.withColumn(c,getCategoryIndex(categoriesMap,categoriesMap(c))($""category""))
+     )
+
+newDf.show
+
+
++---+--------+-------------+---+---+---+---+
+| id|category|categoryIndex|  b|  d|  a|  c|
++---+--------+-------------+---+---+---+---+
+|  0|       a|          0.0|  0|  0|  1|  0|
+|  1|       b|          2.0|  1|  0|  0|  0|
+|  2|       c|          1.0|  0|  0|  0|  1|
+|  3|       a|          0.0|  0|  0|  1|  0|
+|  4|       a|          0.0|  0|  0|  1|  0|
+|  5|       c|          1.0|  0|  0|  0|  1|
+|  6|       c|          1.0|  0|  0|  0|  1|
+|  7|       d|          3.0|  0|  1|  0|  0|
+|  8|       b|          2.0|  1|  0|  0|  0|
++---+--------+-------------+---+---+---+---+

@@ -1,0 +1,31 @@
+#!/bin/bash
+
+echo ""executing foo.sh:""
+
+function arg_remove ()
+{
+    local array=(""${@:3}"")
+
+    for ((i=0; i<""${#array[@]}""; ++i)); do
+        case ${array[i]} in
+            ""$2"") unset array[i]; unset array[i+1]; break ;;
+        esac
+    done
+
+    # clean up unset array indexes
+    for i in ""${!array[@]}""; do
+        new_array+=( ""${array[i]}"" )
+    done
+    array=(""${new_array[@]}"")
+    unset new_array
+
+    # assign array outside function scope
+    local -g ""$1=(  )""
+    eval ${1}='(""${array[@]}"")'
+}
+
+echo ""arguments income :"" ""$@""
+arg_remove ARG_PASS '--argname' ""$@""
+echo ""arguments passed :"" ""${ARG_PASS[@]}""
+
+./bar.sh ""${ARG_PASS[@]}""

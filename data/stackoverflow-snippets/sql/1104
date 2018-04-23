@@ -1,0 +1,34 @@
+t.FIRST_NAME,
+       t.LAST_NAME,
+       t.GENDER,
+       t.DOB,
+       subj.NAME sub_name,
+       coll.NAME college_name,
+       univ.NAME university_name,
+       dom.name domain,
+       countr.NAME country_name
+TEACHER_TB t,
+       SUBJECT_TB subj,
+       COLLG_TCHR_TB ct,
+       COLLEGE_TB coll,
+       UNIVERSITY_TB univ,
+       DOMAIN_TB dom,
+       COUNTRY_TB countr    
+where 
+t.SUBJECT_ID = subj.SUBJECT_ID
+       AND ct.TEACHER_ID = t.TEACHER_ID
+       AND coll.COLLEGE_ID = ct.COLLEGE_ID
+       AND coll.UNIVERSITY_ID = univ.UNIVERSITY_ID
+       AND dom.DOMAIN_ID = coll.DOMAIN_ID
+       AND countr.COUNTRY_ID = univ.COUNTRY_ID
+
+ and t.teacher_id in(    
+           SELECT t.TEACHER_ID         
+           FROM TEACHER_TB t,       
+           COLLG_TCHR_TB ct,
+           COLLEGE_TB coll           
+           WHERE     
+           ct.TEACHER_ID = t.TEACHER_ID
+           AND coll.COLLEGE_ID = ct.COLLEGE_ID           
+           group by t.TEACHER_ID having count(coll.college_id)>1
+           )

@@ -1,0 +1,29 @@
+(ns compojure.api.examples.handler
+  (:require [clojure.java.io :as io]
+            [compojure.api.sweet :refer :all]
+            [ring.middleware.format :refer [wrap-restful-format]]
+            [ring.util.http-response :refer :all]
+            [ring.util.response :as response]
+            [compojure.api.examples.domain :refer :all]
+            [schema.core :as s]))
+
+(defn wrap-formats [handler]
+  (let [wrapped (wrap-restful-format
+                  handler
+                  {:formats [:json-kw :transit-json :transit-msgpack]})]
+    (fn [request]
+      ;; disable wrap-formats for websockets
+      ;; since they're not compatible with this middleware
+      ((if (:websocket? request) handler wrapped) request))))
+
+(def app
+  (wrap-formats
+   (api
+    (GET ""/lisplogo"" []
+         (-> (response/response (io/file ""lisplogo_256.png""))
+             (response/content-type ""image/png"")))
+
+    (GET ""/lisplogo2"" []
+         (assoc-in (ok (io/file ""lisplogo_256.png""))
+                   [:headers ""Content-Type""]
+                   ""image/png"")))))

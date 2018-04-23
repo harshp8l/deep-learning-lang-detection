@@ -1,0 +1,21 @@
+object AnormForEachOps {
+
+  import anorm._
+  import java.sql.Connection
+
+  implicit class ForEachOps(val query: SqlQuery) extends AnyVal {
+    def foreach[T1, T2, R](rowParser: RowParser[~[T1, T2]], f: R => Unit)(implicit connection: Connection, fl: TupleFlattener[(T1 ~ T2) => R]): Unit = {
+      query.fold(Unit, ColumnAliaser.empty) { (_, r: Row) =>
+        rowParser(r).map(SqlParser.flatten) match {
+          case Success(t) =>
+            f(t)
+            Unit
+          case Error(err) =>
+            throw AnormException(err.toString)
+        }
+        Unit
+      }
+    }
+  }
+
+}

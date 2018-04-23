@@ -1,0 +1,90 @@
+// Those annotations control benchmark configuration. More info on JMH doc
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@BenchmarkMode(Mode.AverageTime)
+@Warmup(iterations = 2, time = 5, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 2, time = 5, timeUnit = TimeUnit.SECONDS)
+@Fork(1)
+public class SortingBenchmark {
+
+/**
+ * We create objects in charge of preparing data required by our benchmarks.
+ * It is created before benchmark starts, so array initialization phase does
+ * not pollute measures.
+ */
+@State(Scope.Benchmark)
+public static class Input {
+
+    final int[] array;
+
+    public Input() {
+        final Random r = new Random();
+        array = new int[100000];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = r.nextInt(1000000) + 1;
+        }
+    }
+}
+
+/**
+ * Test first sorting method
+ * @param in
+ */
+@Benchmark
+public void benchSort1(final Input in) {
+    insertionSort1(in.array);
+}
+
+/**
+ * Test second sorting method
+ * @param in
+ */
+@Benchmark
+public void benchSort2(final Input in) {
+    insertionSort2(in.array);
+}
+
+public static long insertionSort1(int[] intArray) {
+    long startTime = System.currentTimeMillis();
+
+    int n = intArray.length;
+    for (int k = 1; k < n; k++) {
+        int cur = intArray[k];
+        int j = k;
+        while (j > 0 && intArray[j - 1] > cur) {
+            intArray[j] = intArray[j - 1];
+            j--;
+        }
+        intArray[j] = cur;
+    }
+
+    long endTime = System.currentTimeMillis();
+    long elapsedTime = endTime - startTime;
+    return elapsedTime;
+}
+
+public static long insertionSort2(int[] input) {
+    long startTime = System.currentTimeMillis();
+    int temp;
+    for (int i = 1; i < input.length; i++) {
+        for (int j = i; j > 0; j--) {
+            if (input[j] < input[j - 1]) {
+                temp = input[j];
+                input[j] = input[j - 1];
+                input[j - 1] = temp;
+            }
+        }
+    }
+    long endTime = System.currentTimeMillis();
+    long elapsedTime = endTime - startTime;
+    return elapsedTime;
+}
+
+/**
+ * That's JMH boilerplate to launch the benchmark.
+ * @param arg
+ * @throws Exception
+ */
+public static void main(String[] arg) throws Exception {
+    Options option = new OptionsBuilder().include(SortingBenchmark.class.getSimpleName()).build();
+    new Runner(option).run();
+}

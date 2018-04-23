@@ -1,0 +1,29 @@
+public class Main {
+    public static void main(String[] args) {
+
+        //run exactly 10 threads at a time
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+        //this is how we shut it down
+        Shutdown globalShutdown = new Shutdown();
+
+        //start up the 10 threads
+        List<Future<?>> futures = new ArrayList<>();
+        for(int i = 0; i< 10; i++)
+            futures.add(executorService.submit(new MyClass(globalShutdown)));
+
+        //gracefully shut them down
+        globalShutdown.shutdown();
+
+        try {
+            //wait for them all to shutdown
+            for(Future<?> future : futures)
+                future.get();
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(""This should never happen"");
+        } catch (ExecutionException e) {
+            throw new IllegalStateException(""This should never happen"");
+        }
+
+        //everything got shutdown!
+    }

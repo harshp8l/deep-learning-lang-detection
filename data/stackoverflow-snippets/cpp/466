@@ -1,0 +1,30 @@
+#include <tuple>
+#include <utility>
+#include <cstddef>
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
+
+template <std::size_t I, typename It, typename F>
+void sort_tuple(It it, It end, F f)
+{
+    std::stable_sort(it, end, [f](const auto& t1, const auto& t2)
+    {
+        return f(std::get<I>(t1), std::get<I>(t2));
+    });
+}
+
+template <typename It, typename F, std::size_t... Is>
+void sort_tuple(It it, It end, F f, std::index_sequence<Is...>)
+{
+    int dummy[] = { 0, (sort_tuple<sizeof...(Is) - Is - 1>(it, end, f), 0)... };
+    static_cast<void>(dummy);
+}
+
+template <typename It, typename F>
+void sort_tuple(It it, It end, F f)
+{
+    sort_tuple(it, end, f, std::make_index_sequence<
+            std::tuple_size<typename std::iterator_traits<It>::value_type>::value
+                           >{});
+}

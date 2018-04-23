@@ -1,0 +1,31 @@
+%%cython --compile-args=/openmp --link-args=/openmp 
+from cython.parallel import parallel, prange
+from cython import boundscheck, wraparound
+from libc.math cimport sin
+
+@boundscheck(False)
+@wraparound(False)
+def cytest1(double[:,::1] a, double[:,::1] b, int ix1, int ix2, int iz1, int iz2):
+
+    cdef int ix
+    cdef int iz
+
+    for ix in range(ix1, ix2):
+        for iz in range(iz1, iz2):
+            b[ix, iz] =sin(a[ix+1, iz])
+    return b
+
+
+@boundscheck(False)
+@wraparound(False)
+def cytest2(double[:,::1] a, double[:,::1] b, int ix1, int ix2, int iz1, int iz2):
+
+    cdef int ix
+    cdef int iz
+
+    with nogil, parallel():
+        for ix in prange(ix1, ix2):
+            for iz in range(iz1, iz2):
+                b[ix, iz] = sin(a[ix+1, iz])
+
+    return b

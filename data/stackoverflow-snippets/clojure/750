@@ -1,0 +1,14 @@
+(ns test.core
+  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require [cljs.core.async :refer [<! close! promise-chan put!]]))
+
+(let [interval (promise-chan)
+      fooWin (.open js/window ""./foo.html"", ""windowName"")
+      checkOnFooWin 
+        (fn []
+          (when (.-closed fooWin) ;; when has an implicit do
+            (go
+              (.clearInterval js/window (<! interval)))
+            (.alert js/window ""Closed"")))]
+  (put! interval (.setInterval js/window checkOnFooWin 500))
+  (close! interval))

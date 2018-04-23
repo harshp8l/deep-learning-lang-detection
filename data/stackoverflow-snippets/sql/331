@@ -1,0 +1,24 @@
+with temp as (
+    Select 
+        SupLookup.SUPPLIER_NO concat SupLookup.SUPPLIER_LOCATION AS Sup_Num,
+        SupLookup.CONTAINER_CODE,
+        AllocationType.ALLOC_TYPE_DESC,
+        Allocation.ALLOC_QTY,
+        Allocation.SAFE_STOCK_QTY,
+        Allocation.ALLOC_QTY + Allocation.SAFE_STOCK_QTY AS CALC_TOT_ALLOC_REQ_QTY,
+        SupLookup.ALLOC_REQ_QTY,
+        SupLookup.TOT_ALLOC_REQ_QTY,
+        SupLookup.DISC_QTY,
+        SupLookup.FILL_PERCENT,
+        SupLookup.INSERTED_DT,
+        row_number() over (partition by SupLookup.SUPPLIER_NO, SupLookup.CONTAINER_CODE order by SupLookup.INSERTED_DT desc) as rownum
+
+    From RCX.RXSAL1 Allocation
+        Inner Join rcx.RXALT1 AllocationType on Allocation.ALLOC_TYPE_ID = AllocationType.ALLOC_TYPE_ID
+        Left Join rcx.RXPIR1 SupLookup on Allocation.SUPPLIER_ID = SupLookup.SUPPLIER_ID And allocation.CONTAINER_TYPE_ID = SupLookup.CONTAINER_TYPE_ID
+
+    Where Allocation.PLANT_ID= '50000036'
+) 
+SELECT Sup_Num, CONTAINER_CODE, ALLOC_TYPE_DESC, ALLOC_QTY, SAFE_STOCK_QTY, CALC_TOT_ALLOC_REQ_QTY, ALLOC_REQ_QTY, TOT_ALLOC_REQ_QTY, DISC_QTY, FILL_PERCENT,INSERTED_DT
+  FROM temp
+WHERE rownum = 1

@@ -1,0 +1,27 @@
+package main
+
+import (
+    ""fmt""
+    ""net/http""
+    ""time""
+)
+
+func main() {
+    http.ListenAndServe("":3000"", otherHandler(time.RFC1123))
+}
+
+func otherHandler(format string) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+            select {
+            case <-time.After(4 * time.Second):
+                    // time's up
+            case <-r.Context().Done():
+                    // client gave up
+                    return
+            }
+
+            tm := time.Now().Format(format)
+            w.Write([]byte(""The time is: "" + tm))
+            fmt.Println(""response:"", ""The time is: ""+tm)
+    }
+}

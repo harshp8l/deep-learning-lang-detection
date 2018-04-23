@@ -1,0 +1,14 @@
+$addTypeCommand = Get-Command -Name 'Add-Type'
+$addTypeCommandInstance = [Activator]::CreateInstance($addTypeCommand.ImplementingType)
+$resolveAssemblyMethod = $addTypeCommand.ImplementingType.GetMethod('ResolveReferencedAssembly', [Reflection.BindingFlags]'NonPublic, Instance')
+$compilerParameters = New-Object -TypeName System.CodeDom.Compiler.CompilerParameters
+$compilerParameters.CompilerOptions = '/debug-'
+
+foreach ($reference in $ReferencedAssemblies)
+{
+    $resolvedAssembly = $resolveAssemblyMethod.Invoke($addTypeCommandInstance, $reference)
+    $compilerParameters.ReferencedAssemblies.Add($resolvedAssembly)
+}
+
+$compilerParameters.IncludeDebugInformation = $true
+Add-Type -TypeDefinition $TypeDefinition -CompilerParameters $compilerParameters

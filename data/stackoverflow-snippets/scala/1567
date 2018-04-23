@@ -1,0 +1,47 @@
+case class CNode[A](data: A, children: List[CNode[A]]=Nil) {
+  override def toString: String = if (children.isEmpty) s""node($data)"" else
+    s""node($data, children=(${ children.map(_.data).mkString("","") }))""
+}
+
+object Main extends App {
+  def unfold[T, R](init: T)(f: T => Option[(R, T)]): Stream[R] = f(init) match {
+    case None => Stream[R]()
+
+    case Some((r, v)) => r #:: unfold(v)(f)
+  }
+
+  val tree = List(
+              CNode(""root"", List(
+                        CNode(""/a"", List(
+                          CNode(""/a/1"", Nil),
+                          CNode(""/a/2"", Nil)
+                        )),
+                        CNode(""/b"", List(
+                          CNode(""/b/1"", List(
+                            CNode(""/b/1/x"", Nil),
+                            CNode(""/b/1/y"", Nil)
+                          )),
+                          CNode(""/b/2"", List(
+                            CNode(""/b/2/x"", Nil),
+                            CNode(""/b/2/y"", Nil),
+                            CNode(""/b/2/z"", Nil)
+                          ))
+                        ))
+              ))
+            )
+
+  val traversed = unfold(tree) {
+    case node :: Nil =>
+      Some((node, node.children))
+
+    case node :: nodes =>
+      // breadth-first
+      Some((node, nodes ::: node.children))
+      // or depth-first: Some((node, node.children ::: nodes))
+
+    case Nil =>
+      None
+  }
+
+  println(traversed.force.mkString(""\n""))
+}

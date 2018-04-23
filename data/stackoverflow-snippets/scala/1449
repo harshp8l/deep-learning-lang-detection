@@ -1,0 +1,37 @@
+    val latch = new CDL(tobeProcesssed.size)
+      val trackFutures: Future[Seq[Try[Boolean]]] = Future.traverse(tobeProcesssed.seq) { fileNm =>
+        Future {
+          LOG.info(""In the Futures Loop for {}"", fileNm)
+          Try {
+                    doProcessing(fileNm)
+          }
+        }
+      }
+
+      trackFutures.map { seq =>
+        seq.map {
+          case Success(state) => {
+            if (state) {
+              LOG.info(""On Sucess - {} - {}"", latch.getCount, state)
+              return = 0
+              latch.countDown()
+
+            } else {
+              LOG.error(""Failed - {} - {}"", latch.getCount, state)
+              while (latch.getCount > 0) {
+                return  = 1
+                latch.countDown()
+              }
+            }
+
+          }
+          case Failure(exception) => {
+            LOG.error(""Versioning Failed -{} - {}"", latch.countDown(), exception)
+            while (latch.getCount > 0) {
+              return = = 1
+              latch.countDown()
+            }
+          }
+        }
+      }
+      latch.await()

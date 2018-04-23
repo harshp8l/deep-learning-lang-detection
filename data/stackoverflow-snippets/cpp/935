@@ -1,0 +1,53 @@
+double boundedSumJoe(std::vector<int> x, int lower, int upper) {
+
+    int myMax = *std::max_element(x.begin(), x.end());
+    int offSet = std::abs(*std::min_element(x.begin(), x.end())) + 1;
+    unsigned long int myRange;
+
+    if (myMax > 0)
+        myRange = myMax + offSet;  // E.g. if myMax = 10 & myMin = -2, then myRange = 12
+    else
+        myRange = offSet;
+
+    offSet--;
+
+    std::vector<int> frequency(myRange, 0);
+    std::vector<int> values(myRange, 0);
+    std::vector<int>::iterator it, itEnd = x.end();
+    int myIndex;
+    double mySum = 0;
+
+    for (it = x.begin(); it < itEnd; it++) {
+        myIndex = *it + offSet;
+        frequency[myIndex]++;
+        values[myIndex] = *it;
+    }
+
+    int count = 0;
+    bool firstHit = true;
+
+    for (std::size_t j = 0; j < myRange; j++) {
+        if (frequency[j]) {
+            if (count >= lower) {
+                if (count <= upper) {
+                    firstHit = false;
+                    mySum += values[j] * frequency[j];
+                } else {
+                    if ((count - upper) > 1) {
+                        int k = j - 1;
+                        while (!frequency[k]) {k--;}
+                        mySum -= (values[k] * (count - upper - 1));
+                    }
+                    break;
+                }
+            }
+            count += frequency[j];
+            if ((count - lower) >= 1 && firstHit) {
+                firstHit = false;
+                mySum += (values[j] * (count - lower));
+            }
+        }
+    }
+
+    return mySum;
+}

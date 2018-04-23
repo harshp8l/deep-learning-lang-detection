@@ -1,0 +1,32 @@
+$FileAge = -90
+$Paths = @(""c:\Logs"", ""c:\inetpub\logs"", ""c:\Program Files (x86)\Spiceworks\Agent\log"", ""c:\Deployments"")
+$ExcludedExtensions = @(""SvcTraceViewer.exe"", ""*DeployLog.xml"")
+$ExcludedFolders = @()
+$Filter = ""*.*""
+#checking the paths if they exists
+$CheckedPaths = {$Paths}.Invoke()
+
+foreach ($Path in $Paths)
+{
+    if((Test-Path $Path) -eq $false)
+    {
+        $CheckedPaths.Remove($Path.ToString())
+        if ($FailedPaths -eq $Null)
+        {
+            $FailedPaths = $Path
+        }
+        else
+        {
+            $FailedPaths = $FailedPaths + ""`n$Path""
+        } 
+    }
+}
+if ($ExcludedFolders.GetLength(0) -eq 0)
+{
+    $List = Get-ChildItem -Path $CheckedPaths -Recurse -Filter $Filter -Exclude $ExcludedExtensions | Where-Object { !$_.PSIsContainer -and $_.LastWriteTime -lt (Get-Date).AddDays($FileAge)}
+}
+else
+{
+    $List = Get-ChildItem -Path $CheckedPaths -Recurse -Filter $Filter -Exclude $ExcludedExtensions | Where-Object { !$_.PSIsContainer -and $_.LastWriteTime -lt (Get-Date).AddDays($FileAge) -and $_.FullName -notmatch $ExcludedFolders}
+}
+$list | Out-File -filepath ""c:\Jobs\LogCleanup\result.txt""

@@ -1,0 +1,33 @@
+package main
+
+import (
+    ""fmt""
+    ""unsafe""
+)
+
+func main() {
+    type YourType byte
+    theCArray := &[8]YourType{}
+    const arrayLen = 1 << 30
+
+    {
+        length := arrayLen
+
+        fmt.Println()
+        fmt.Println(arrayLen, length)
+        fmt.Println()
+        slice := (*[arrayLen]YourType)(unsafe.Pointer(theCArray))[:length:length]
+        fmt.Println(len(slice), cap(slice), slice[:8])
+    }
+
+    {
+        length := arrayLen + 1
+
+        fmt.Println()
+        fmt.Println(arrayLen, length)
+        fmt.Println()
+        // runtime error: slice bounds out of range
+        slice := (*[arrayLen]YourType)(unsafe.Pointer(theCArray))[:length:length]
+        fmt.Println(len(slice), cap(slice), slice[:8])
+    }
+}

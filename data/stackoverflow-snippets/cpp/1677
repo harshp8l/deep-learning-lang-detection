@@ -1,0 +1,33 @@
+#include <memory>
+#include <functional>
+#include <iostream>
+
+typedef int result_t;
+struct A     { int i; virtual ~A() {} };
+struct B : A { int j; };
+
+typedef std::shared_ptr<A> APtr;
+typedef std::shared_ptr<B> BPtr;
+
+result_t f1(APtr a) { return a?1 : 0; }
+result_t f2(BPtr b) { return b?2 : -99; }
+
+typedef std::function<result_t(APtr const&)> funOfA;
+typedef std::function<result_t(BPtr const&)> funOfB;
+
+funOfA wrapFunOfB(const funOfB f) {
+    return [f](APtr const& a) { return f(std::dynamic_pointer_cast<B>(a)); };
+}
+
+void F(const funOfA f) {
+    APtr a = std::make_shared<A>();
+    APtr b = std::make_shared<B>();
+
+    std::cout << ""f(a): "" << f(a) << ""\n"";
+    std::cout << ""f(b): "" << f(b) << ""\n"";
+}
+
+int main() {
+    F(f1);
+    F(wrapFunOfB(f2));
+}

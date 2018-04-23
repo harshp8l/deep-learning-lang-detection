@@ -1,0 +1,26 @@
+(ns tst.demo.core
+  (:use tupelo.test)
+  (:require
+    [tupelo.core :as t]  ))
+
+(defn rand-gen
+  [seed factor]
+  (t/lazy-gen
+    (loop [acc seed]
+      (let [next (mod (* acc factor) 2147483647)]
+        (t/yield next)
+        (recur next)))))
+
+(defn run2 [num-rand]
+  (->> (interleave
+         ; restrict to [0..99] to simulate bad rand #'s
+         (map #(mod % 100) (rand-gen 59 16807))
+         (map #(mod % 100) (rand-gen 393 48271)))
+       (partition 2)
+       (take num-rand)
+       (filter #(apply = %))
+       (count)))
+
+(t/spyx (time (run2 1e5))) ; expect ~1% will overlap => 1e3
+(t/spyx (time (run2 1e6))) ; expect ~1% will overlap => 1e4
+(t/spyx (time (run2 1e7))) ; expect ~1% will overlap => 1e5

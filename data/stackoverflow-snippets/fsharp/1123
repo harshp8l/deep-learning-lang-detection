@@ -1,0 +1,50 @@
+open System
+open System.Diagnostics
+open RDotNet
+open RProvider
+open RProvider.``base``
+open RProvider.graphics
+open RProvider.stats
+open RProvider.e1071
+
+let x = array2D [ [  0.4992207;  0.83459057 ];
+                  [  0.5095988;  0.86535664 ];
+                  [ -0.3130123; -0.54000741 ];
+                  [  0.7136758;  0.09454017 ];
+                  [ -1.0506291; -0.49390571 ];
+                  [ -0.7504743;  0.19165412 ];
+                  [ -0.3502830; -0.16827662 ];
+                  [  0.6202636; -0.03877393 ];
+                  [ -0.2169360;  0.03409674 ];
+                  [ -0.2485535;  0.68234694 ];
+                  [  1.3264276;  1.40061717 ];
+                  [  0.6886685;  1.38550956 ];
+                  [  2.7057305;  1.52631182 ];
+                  [  2.3354574; -0.49779748 ];
+                  [ -1.3406379;  2.20544301 ];
+                  [  1.2445945; -0.18418390 ];
+                  [  0.7721881;  1.53916368 ];
+                  [ -0.3640324;  2.32334502 ];
+                  [  1.6404738;  1.17708567 ];
+                  [ -1.0440209;  1.95016425 ] ]
+
+let y = [| -1; -1; -1; -1; -1; -1; -1; -1; -1; -1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1 |]
+
+let colors = Array.create y.Length 0
+for k=0 to (Array.length y)-1 do colors.[k] <- y.[k] + 3;
+let pch = 19
+
+let status = R.plot(namedParams [ ""x"", box x; ""col"", box colors; ""pch"", box pch; ""xlab"", box ""x[,1]""; ""ylab"", box ""x[,2]""])
+
+let args =
+    namedParams [
+        ""formula"", box ""y~."";
+        ""x"", box x;
+        ""y"", box y;
+        ""type"", box ""C-classification"";
+        ""kernel"", box ""linear"";
+        ""cost"", box 10;
+        ""scale"", box false]
+
+let svmfit = R.svm(args)
+R.print(svmfit) |> ignore

@@ -1,0 +1,80 @@
+#include <vector>
+#include <algorithm>
+#include <deque>
+#include <stdio.h>
+
+
+typedef unsigned long long int ulli;
+
+using namespace std;
+
+void sliding_window_minimum(vector<pair<ulli, ulli>> st, ulli n, ulli targetDist, ulli range)
+{
+    deque<pair<ulli, ulli>> minimize;
+    ulli j = 0;
+    for (ulli i = 0; i < n; i++)
+    {
+        if (st[i].first <= range)
+        {
+            while (!(minimize.empty()) && (minimize.back().second > st[i].second))
+            {
+                minimize.pop_back();
+            }
+            minimize.push_back(st[i]);
+            j++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    for (ulli k = j; k < n; k++)
+    {
+        while (!(minimize.empty()) && ((st[k].first - minimize.front().first) > range))
+        {
+            minimize.pop_front();
+        }
+        if (minimize.empty()) {
+            break;
+        }
+        ulli tempCost = st[k].second + minimize.front().second;
+        while (!(minimize.empty()) && (minimize.back().second > tempCost))
+        {
+            minimize.pop_back();
+        }
+        minimize.push_back(make_pair(st[k].first, tempCost));
+    }
+    while (!(minimize.empty()) && ((targetDist - minimize.front().first) > range))
+    {
+        minimize.pop_front();
+    }
+    if (minimize.empty())
+    {
+        printf(""NIE\n"");
+    }
+    else
+    {
+        printf(""%llu"", minimize.front().second);
+    }
+}
+
+int main()
+{
+    ulli n, d, b;
+    scanf(""%llu %llu %llu"", &n, &d, &b);
+    if (b >= d)
+    {
+        printf(""%d"", 0);
+        return 0;
+    }
+    int temp = n;
+    ulli d1, c1;
+    vector<pair<ulli, ulli>> st;
+    st.reserve(n+1);
+    while (temp--)
+    {
+        scanf(""%llu %llu"", &d1, &c1);
+        st.push_back(make_pair(d1, c1));
+    }
+    sliding_window_minimum(st, n, d, b);
+}

@@ -1,0 +1,23 @@
+import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.x500.*;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+...
+// test value, actually use CSR subject
+X500Name name = new X500Name (""O=Evil Inc,CN=original,L=Toronto,C=CA"");
+// get the RDNs as an array 
+RDN[] rdns = name.getRDNs();
+// find the attribute and mutate the containing RDN 
+for(int i = 0; i < rdns.length; i++){
+    AttributeTypeAndValue[] atts = rdns[i].getTypesAndValues();
+    for(int j = 0; j < atts.length; j++){
+        if( atts[j].getType().equals(BCStyle.CN) ){
+            atts[j] = new AttributeTypeAndValue (BCStyle.CN, new DERUTF8String(""substitute""));
+            // or DERPrintableString if value suitable and you prefer
+            // or maybe other DirectoryString choice if you don't believe in 5280 
+            rdns[i] = new RDN (atts);
+        }
+    }
+}
+// put into a new X500Name
+name = new X500Name (rdns);
+System.out.println (name.toString()); // etc.

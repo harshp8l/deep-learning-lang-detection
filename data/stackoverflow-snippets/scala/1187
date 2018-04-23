@@ -1,0 +1,134 @@
+import scala.language.experimental.macros
+import scala.annotation.{StaticAnnotation, compileTimeOnly}
+import scala.reflect.macros.whitebox.Context
+import scala.collection.immutable._
+
+
+@compileTimeOnly(""enable macro to expand macro annotations"")
+class SwaggerEnumContainer extends StaticAnnotation {
+  def macroTransform(annottees: Any*) = macro SwaggerEnumMacros.genListString
+}
+
+@compileTimeOnly(""enable macro to expand macro annotations"")
+class SwaggerEnumValue(val readOnly: Boolean = false, val required: Boolean = false) extends StaticAnnotation {
+  def macroTransform(annottees: Any*) = macro SwaggerEnumMacros.genParamAnnotation
+
+}
+
+
+class SwaggerEnumMacros(val c: Context) {
+
+  import c.universe._
+
+  def genListString(annottees: c.Expr[Any]*): c.Expr[Any] = {
+
+    val result = annottees.map(_.tree).toList match {
+      case (xxx@q""object $name extends ..$parents { ..$body }"") :: Nil =>
+        val enclosingObject = xxx.asInstanceOf[ModuleDef]
+        val q""${tq""$pname[..$ptargs]""}(...$pargss)"" = parents.head
+        val enumTraitIdent = ptargs.head.asInstanceOf[Ident]
+        val subclassSymbols: List[TermName] = enclosingObject.impl.body.foldLeft(List.empty[TermName])((list, innerTree) => {
+          innerTree match {
+            case innerObj: ModuleDefApi =>
+              val innerParentIdent = innerObj.impl.parents.head.asInstanceOf[Ident]
+              if (enumTraitIdent.name.equals(innerParentIdent.name))
+                innerObj.name :: list
+              else
+                list
+
+            case _ => list
+          }
+        })
+
+        val reference = subclassSymbols.map(n => n.encodedName.toString).mkString("","")
+        q""""""
+                object $name extends ..$parents {
+                  final val allowableValues = $reference
+                  ..$body
+                }
+              """"""
+
+    }
+    c.Expr[Any](result)
+  }
+
+  def genParamAnnotation(annottees: c.Expr[Any]*): c.Expr[Any] = {
+    val annotationParams: AnnotationParams = extractAnnotationParameters(c.prefix.tree)
+    val baseSwaggerAnnot =
+      q"""""" new ApiModelProperty(
+                   dataType = ""string"",
+                   allowableValues = Mode.allowableValues
+                   ) """""".asInstanceOf[Apply] // why I have to force cast?
+
+    val swaggerAnnot: c.universe.Apply = annotationParams.addArgsTo(baseSwaggerAnnot)
+
+    annottees.map(_.tree).toList match {
+      // field definition
+      case List(param: ValDef) => c.Expr[Any](decorateValDef(param, swaggerAnnot))
+      // field in a case class = constructor param
+      case (param: ValDef) :: (rest@(_ :: _)) => decorateConstructorVal(param, rest, swaggerAnnot)
+      case _ => c.abort(c.enclosingPosition, ""SwaggerEnumValue is expected to be used for value definitions"")
+    }
+  }
+
+  def decorateValDef(valDef: ValDef, swaggerAnnot: Apply): ValDef = {
+    val q""$mods val $name: $tpt = $rhs"" = valDef
+    val newMods: Modifiers = mods.mapAnnotations(al => swaggerAnnot :: al)
+    q""$newMods val $name: $tpt = $rhs""
+  }
+
+
+  def decorateConstructorVal(annottee: c.universe.ValDef, expandees: List[Tree], swaggerAnnot: Apply): c.Expr[Any] = {
+    val q""$_ val $tgtName: $_ = $_"" = annottee
+    val outputs = expandees.map {
+      case q""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents { $self => ..$stats }"" => {
+        // paramss is a 2d array so map inside map
+        val newParams: List[List[ValDef]] = paramss.map(_.map({
+          case valDef: ValDef if valDef.name == tgtName => decorateValDef(valDef, swaggerAnnot)
+          case otherParam => otherParam
+        }))
+
+        q""$mods class $tpname[..$tparams] $ctorMods(...$newParams) extends { ..$earlydefns } with ..$parents { $self => ..$stats }""
+      }
+
+      case otherTree => otherTree
+    }
+    c.Expr[Any](Block(outputs, Literal(Constant(()))))
+  }
+
+
+  case class AnnotationParams(readOnly: Boolean, required: Boolean) {
+    def customCopy(name: String, value: Any) = {
+      name match {
+        case ""readOnly"" => copy(readOnly = value.asInstanceOf[Boolean])
+        case ""required"" => copy(required = value.asInstanceOf[Boolean])
+        case _ => c.abort(c.enclosingPosition, s""Unknown parameter '$name'"")
+      }
+    }
+
+    def addArgsTo(annot: Apply): Apply = {
+      val additionalArgs: List[AssignOrNamedArg] = List(
+        AssignOrNamedArg(q""readOnly"", q""$readOnly""),
+        AssignOrNamedArg(q""required"", q""$required"")
+      )
+
+      Apply(annot.fun, annot.args ++ additionalArgs)
+    }
+  }
+
+  private def extractAnnotationParameters(tree: Tree): AnnotationParams = tree match {
+    case ap: Apply =>
+      val argNames = Array(""readOnly"", ""required"")
+      val defaults = AnnotationParams(readOnly = false, required = false)
+
+      ap.args.zipWithIndex.foldLeft(defaults)((acc, argAndIndex) => argAndIndex match {
+        case (lit: Literal, index: Int) => acc.customCopy(argNames(index), c.eval(c.Expr[Any](lit)))
+
+        case (namedArg: AssignOrNamedArg, _: Int) =>
+          val q""$name = $lit"" = namedArg
+          acc.customCopy(name.asInstanceOf[Ident].name.toString, c.eval(c.Expr[Any](lit)))
+
+        case _ => c.abort(c.enclosingPosition, ""Failed to parse annotation params: "" + argAndIndex)
+      })
+  }
+}

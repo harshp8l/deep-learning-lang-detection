@@ -1,0 +1,88 @@
+package javafxcssbroken;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import javafx.application.Application;
+import javafx.beans.Observable;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableObjectValue;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.stage.Stage;
+
+/**
+ * @param <I> The type of the items to display.
+ * @param <G> The type of the groups to associate items with.
+ */
+public class JavaFXCssBroken<I, G> extends Application {
+
+    private ListView<AssociatedItem<I, G>> listView;
+    private Set<I> items;
+    private ObservableValue<ObservableList<AssociatedItem<I, G>>> associatedItems
+            = new SimpleObjectProperty<>(
+                    FXCollections.observableArrayList(i -> new Observable[]{i.itemProperty(), i.groupProperty()}));
+    private Map<G, Color> groups;
+    private Optional<G> currentGroup;
+
+    public JavaFXCssBroken(Set<I> items, Map<G, Color> groups, Optional<G> initialGroup) {
+        this.items = items;
+        this.groups = groups;
+        this.currentGroup = initialGroup;
+    }
+
+    @Override
+    public void start(Stage primaryStage) {
+        listView = new ListView();
+        listView.setCellFactory(lv -> new ListCell<AssociatedItem<I, G>>() {
+            @Override
+            protected void updateItem(AssociatedItem<I, G> item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setBackground(Background.EMPTY);
+                } else {
+                    item.getGroup().ifPresent(group -> {
+                        setBackground(new Background(
+                                new BackgroundFill(groups.get(group), CornerRadii.EMPTY, Insets.EMPTY)));
+                    });
+                    setText(item.getItem().toString());
+                }
+            }
+        });
+
+        listView.itemsProperty().bind(associatedItems);
+
+        items.stream().forEach(item -> {
+            associatedItems.getValue().add(new AssociatedItem<>(item));
+        });
+
+        Button markAll = new Button(""Select all"");
+        markAll.setOnAction(aevt -> {
+            listView.getItems().stream()
+                    .forEach(item -> item.setGroup(currentGroup));
+        });
+
+        VBox vbox = new VBox(listView, markAll);
+
+        StackPane root = new StackPane();
+        root.getChildren().add(vbox);
+
+        Scene scene = new Scene(root, 300, 250);
+
+        primaryStage.setTitle(""JavaFXCssBroken"");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+}

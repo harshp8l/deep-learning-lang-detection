@@ -1,0 +1,14 @@
+EXPLAIN 
+SELECT
+    DATE_TRUNC('DAY', W.dat_creation), COUNT(1), SUM(W.NUM_VALUE)
+FROM WITHDRAW W
+WHERE W.dat_creation >= (NOW() - INTERVAL '60 DAY')::timestamp
+AND W.dat_creation < (NOW() - INTERVAL '1 DAY')::timestamp
+GROUP BY 1
+
+GroupAggregate  (cost=116522.65..132918.32 rows=655827 width=48)
+  Group Key: (date_trunc('DAY'::text, dat_creation))
+  ->  Sort  (cost=116522.65..118162.22 rows=655827 width=14)
+        Sort Key: (date_trunc('DAY'::text, dat_creation))
+        ->  Seq Scan on withdraw w  (cost=0.00..41949.57 rows=655827 width=14)
+              Filter: ((dat_creation >= ((now() - '60 days'::interval))::timestamp without time zone) AND (dat_creation < ((now() - '1 day'::interval))::timestamp without time zone))

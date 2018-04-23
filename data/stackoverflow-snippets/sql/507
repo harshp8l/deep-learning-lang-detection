@@ -1,0 +1,20 @@
+SELECT DISTINCT  ivp.VendorStockNumber, i.StockNumber, i.StockDescription, 
+                 ivp.PackDescription, ib.BrandName, 
+                 ich.NewPackCost as Cost, 
+                 ich.ModifiedDate as DateChanged,
+                 row_number() over (partition by ivp.VendorStockNumber order by DateChanged desc) as rn 
+FROM InvVendors iv, InvVendorProducts ivp, InvBrands ib, InvItems i, 
+InvCostPackSizeHistory ich, InvSiteTypesItems ist, 
+InvSiteTypesItemsVendorProducts itp
+WHERE i.InvItemID = ivp.InvItemID
+AND iv.InvVendorID = ivp.InvVendorID 
+AND ib.InvBrandID = ivp.InvBrandID
+AND ist.InvSiteTypesItemID = ich.InvSiteTypesItemID
+AND ist.InvSiteTypesItemID = itp.InvSiteTypesItemID
+AND ivp.InvVendorProductID = itp.InvVendorProductID
+AND i.InvItemID = ist.InvItemID
+AND iv.VendorNumber = '5'
+AND ivp.VendorStockNumber <> ''
+AND ich.NewPackCost <> ich.OldPackCost
+AND itp.Preferred = '1'
+ORDER BY i.StockNumber ASC, DateChanged DESC

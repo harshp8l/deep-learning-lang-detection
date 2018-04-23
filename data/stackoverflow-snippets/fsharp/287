@@ -1,0 +1,18 @@
+let groupByListMaxes listMaxes numbers =
+    let rec folder state number =
+        match state with
+            | m :: maxes, _ when number > m ->
+                folder (maxes, List.empty :: snd state) number
+            | m :: maxes, [] ->
+                fst state, List.singleton (List.singleton number)
+            | m :: maxes, h :: t ->
+                fst state, (number :: h) :: t
+            | [], _ ->
+                failwith ""Guaranteed not to happen""
+    let listMaxesList = List.ofSeq listMaxes
+    let initialState = listMaxesList, List.empty
+    let reversed = snd (Seq.fold folder initialState numbers)
+    let temp = List.rev (List.map List.rev reversed)
+    let extraLength = List.length listMaxesList - List.length temp
+    let extra = List.replicate extraLength List.empty
+    List.concat [temp; extra]

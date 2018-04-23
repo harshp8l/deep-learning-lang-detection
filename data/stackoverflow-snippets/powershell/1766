@@ -1,0 +1,51 @@
+Clear-Host
+
+<#
+    Contents of C:\Test.txt
+    Server01
+    Server02
+    Server03
+#>
+
+$userName = 'domain\user'
+$password = ConvertTo-SecureString 'p@ssw0rd' -AsPlainText -Force
+$credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $userName, $password
+$servers = Get-Content 'C:\Test.txt'
+$outputFile = 'C:\output.log'
+
+If (Test-Path $outputFile)
+{
+  Remove-Item $outputFile -Force
+}
+
+Foreach ($server in $servers)
+{
+  $null = New-PSDrive -Name 'Z' -PSProvider 'FileSystem' -Root ""\\$server\c$"" -Credential $credentials
+
+  $files = Get-Item -Path 'Z:\logs*.log'
+
+  Foreach ($file in $files)
+  {
+    $fileContents = Get-Content $file
+
+    $previousLine = 'No previous line'
+    Foreach ($line in $fileContents)
+    {
+      If ($line -like '*retrieved*')
+      {
+        Add-Content -Value $previousLine -Path $outputFile
+        Add-Content -Value $line -Path $outputFile
+        Add-Content -Value ' ' -Path $outputFile
+      }
+
+      $previousLine = $line
+    }
+  }
+
+  Remove-PSDrive -Name 'Z'
+}
+
+If (Test-Path $outputFile)
+{
+  Invoke-Item $outputFile
+}

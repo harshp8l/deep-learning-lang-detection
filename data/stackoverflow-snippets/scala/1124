@@ -1,0 +1,37 @@
+def isBalanced(chars: Seq[Char]): Boolean = {
+  import scala.annotation.tailrec
+
+  case class BracketInfo(c: Char, idx: Int)
+  def isOpen(c: Char): Boolean = c == '('
+  def isClose(c: Char): Boolean = c == ')'
+  def safePop[T](stack: List[T]): Option[T] = {
+    if (stack.length <= 1) stack.headOption
+    else stack.tail.headOption
+  }
+
+  @tailrec
+  def isBalanced(chars: Seq[Char], idx: Int, stack: List[BracketInfo]): Boolean = {
+    chars match {
+      case Seq(c, tail@_*) =>
+        val newStack = BracketInfo(c, idx) :: stack // Stack.push
+        if (isOpen(c)) isBalanced(tail, idx + 1, newStack)
+        else if (isClose(c)) {
+          safePop(stack) match {
+            case Some(b) => isBalanced(tail, idx + 1, stack.tail)
+            case None =>
+              println(s""Closed bracket '$c' at index $idx was not opened"")
+              false
+          }
+        }
+        else isBalanced(tail, idx + 1, stack)
+      case Seq() =>
+        if (stack.nonEmpty) {
+          println(""Stack is not empty => there are non-closed brackets at positions: "")
+          println(s""${stack.map(_.idx).mkString("" "")}"")
+        }
+        stack.isEmpty
+    }
+  }
+
+  isBalanced(chars, 0, List.empty[BracketInfo])
+}

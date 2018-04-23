@@ -1,0 +1,40 @@
+$monthArg = !empty($_GET['m']) ? intval($_GET['m']) : date('m');
+$yearArg  = !empty($_GET['y']) ? intval($_GET['y']) : date('Y'); // you will need to add an other query parameter for this
+
+$currYear  = $yearArg;
+$startDate = strtotime($currYear . ""-"" . $monthArg . ""-01 00:00:01"");
+$startDay  = date(""N"", $startDate);
+$monthName = date(""M"",$startDate );
+
+$daysInMonth = cal_days_in_month(CAL_GREGORIAN, date(""m"", $startDate), date( ""Y"", $startDate));
+$endDate     = strtotime($currYear . ""-"" . $monthArg . ""-"" .  $daysInMonth ."" 00:00:01"");
+
+$endDay = date(""N"", $endDate);
+
+if ($startDay> 6)
+    $startDay = 7 - $startDay;
+
+$currElem        = 0;
+$dayCounter      = 0;
+$firstDayHasCome = false;
+$arrCal          = [];
+
+for($i = 0; $i <= 5; $i ++) {
+    for($j= 0; $j <= 6; $j++) {
+                // decide what to show in the cell
+        if($currElem < $startDay && !$firstDayHasCome)          
+            $arrCal[$i][$j] = """";
+        else if ($currElem == $startDay && !$firstDayHasCome) {
+            $firstDayHasCome= true;
+            $arrCal[$i][$j] = ++$dayCounter;
+        }
+        else if ($firstDayHasCome) {
+            if ($dayCounter < $daysInMonth)
+                $arrCal[$i][$j] = ++ $dayCounter; 
+            else
+                $arrCal[$i][$j] = """";   
+        }                           
+
+        $currElem ++;               
+    }
+}

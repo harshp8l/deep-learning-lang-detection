@@ -1,0 +1,28 @@
+#!/bin/sed -nf
+
+# Execute the following group of commands for each line in the XML node to
+# generate a series of shell commands that we'll feed into an interpreter:
+/<xml>/,/<\/xml>/ {
+    # Extract the ID number to generate a command that changes the output file:
+    /^<id>\([0-9]\+\)<\/id>$/ {
+        # Using the same pattern as above, substitute the ID number into a
+        # command that updates the current output file and increments a counter
+        # for the ID that we'll append as the filename extension:
+        s//c\1=$(( c\1 + 1 )); exec > ""file\1.$c\1""/
+        # Output the generated command:
+        p
+        # Then, proceed to the next line:
+        n
+    }
+    # Output any remaining lines in the XML block except for the <xml> tags:
+    /<xml>\|<\/xml>/ !{
+        # Escape any single quotes in the XML content (so we can wrap it in a
+        # shell command below):
+        s/'/'""'""'/g
+        #'# (...ignore or remove this line...)
+        # Generate a command that will write the line to the current file:
+        s/^.*$/echo '&'/
+        # Output the generated command:
+        p
+    }
+}

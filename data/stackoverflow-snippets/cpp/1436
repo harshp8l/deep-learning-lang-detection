@@ -1,0 +1,63 @@
+class IPublisher
+{
+   protected:
+      std::set<ISubscriber*> Subsribers;
+
+   public:
+   virtual void Notify() = 0;
+   virtual void AddSubcriber(ISubscriber* subscriber) 
+   {
+       Subscribers.insert(subsriber)
+   }
+   virtual void RemoveSubscriber(ISubscriber* subscriber)
+   {
+       Subscribers.remove(subscriber)
+   }
+};
+
+class B : public IPublisher
+{
+   void Notify()
+   {
+       for (auto subscriber: Subscribers){
+          subscriber->OnEvent()
+       }
+   }
+}
+
+
+ class ISubscriber
+ {
+     public:
+        virtual void OnEvent() = 0;      
+ };
+
+ class A : public ISubscriber
+ {
+    private:
+       IPublisher* Publisher;
+    public:
+
+       A(IPublisher* publisher):Publisher(publisher)
+       {
+           Publisher.AddSubscriber(this);    
+       }
+
+       void OnEvent()
+       {
+          // Event specific handling
+       }
+
+       ~A()
+       {
+          Publisher.RemoveSubscriber(this);
+       }
+ };
+
+ int main()
+ {
+     /*for illustration only. The concrete implementations can be 
+       delegated to  a Factory class/ method.*/
+     IPublisher* publisher = new B();    
+     ISubscriber* subscriber = new A(publisher);
+ }

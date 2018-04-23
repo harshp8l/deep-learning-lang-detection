@@ -1,0 +1,54 @@
+class simple_encoder
+{
+public:
+
+    simple_encoder() {}
+
+    // copy constructor
+    simple_encoder(simple_encoder const& other)
+    {
+        // no need to lock this objec because no other thread
+        // will be using it until after construction
+        // but we DO need to lock the other object
+        std::unique_lock<std::mutex> lock_other(other.m_mutex);
+
+        // safely copy the data
+        m_symbols = other.m_symbols;
+        m_symbol_size = other.m_symbol_size;
+        m_completed = other.m_completed;
+
+        // ... etc...
+    }
+
+    // copy assignment operator
+    simple_encoder& operator=(simple_encoder const& other)
+    {
+        if(&other != this)
+        {
+            // lock both objects
+            std::unique_lock<std::mutex> lock_this(m_mutex, std::defer_lock);
+            std::unique_lock<std::mutex> lock_other(other.m_mutex, std::defer_lock);
+
+            // ensure no deadlock
+            std::lock(lock_this, lock_other);
+
+            // safely copy the data
+            m_symbols = other.m_symbols;
+            m_symbol_size = other.m_symbol_size;
+            m_completed = other.m_completed;
+
+            // ... etc...
+        }
+
+        return *this;
+    }
+
+private:
+    // value data
+    uint32_t m_symbols;
+    uint32_t m_symbol_size;
+    uint32_t m_completed;
+
+    // non value utility
+    mutable std::mutex m_mutex; // needs to be mutable
+};

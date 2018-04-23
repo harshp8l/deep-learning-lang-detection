@@ -1,0 +1,18 @@
+(require '[clojure.tools.reader :as r])
+(require '[clojure.tools.reader.reader-types :as rt])
+
+(def reader (rt/indexing-push-back-reader
+             ""(+ \n;; comment here \n 1 \n a)""))
+
+(def s-expr (r/read reader)) ;; => (+ 1 a)
+
+(meta s-expr) ;; => {:line 1, :column 1, :end-line 4, :end-column 4}
+
+(nth s-expr 0) ;; => +
+(meta (nth s-expr 0)) ;; => {:line 1, :column 2, :end-line 1, :end-column 3}
+
+(nth s-expr 1) ;; => 1
+(meta (nth s-expr 1)) ;; => nil (no metadata on literals)
+
+(nth s-expr 2) ;; => a
+(meta (nth s-expr 2)) ;; => {:line 4, :column 2, :end-line 4, :end-column 3}

@@ -1,0 +1,46 @@
+<?php
+if (isset($_POST['submit']) {
+    if (empty($_POST['username']) || empty($_POST['email']) || empty($_POST['password']) || empty($_POST['passwordconf'])) {
+        $error = ""<p class='errormsg'>Please fill out all the fields!</p>"";
+    } elseif ($_POST['password'] !== $_POST['passwordconf']) {
+        $error  = ""<p class='errormsg'>You passwords do not match!</p>"";
+
+    } elseif (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL))
+        $error = ""<p class='errormsg'>Email is not in name@domain format!</p>"";
+    } else {
+        require 'connect.php'; // implement object-oriented $con variable
+        if ($stmt=$con->prepare(""SELECT * FROM users WHERE username=?"")) {
+            if ($stmt->bind_param('s', $_POST['username']) && $stmt->execute() && $stmt->store_result()) {
+                if ($stmt->num_rows) {
+                    $error = ""<p class='errormsg'>Username already exists</p>"";
+                }
+            } else {
+                $error = ""<p class='errormsg'>Username Check Statement Error</p>""; // $stmt->error
+            }
+            $stmt->close();
+        } else {
+            $error = ""<p class='errormsg'>Username Check Prepare Error</p>""; // $con->error;
+        }
+        if ($stmt=$con->prepare(""SELECT * FROM users WHERE email=?"")) {
+            if ($stmt->bind_param('s', $_POST['email']) && $stmt->execute() && $stmt->store_result()) {
+                if ($stmt->num_rows) {
+                    $error = ""<p class='errormsg'>Email already exists</p>"";
+                }
+            } else {
+                $error = ""<p class='errormsg'>Email Check Statement Error</p>""; // $stmt->error
+            }
+            $stmt->close();
+        } else {
+            $error = ""<p class='errormsg'>Email Check Prepare Error</p>""; // $con->error;
+        }
+    }
+    if ($error) {
+        echo $error;
+    } else {
+        // Perform your insert with $_POST['username'], $_POST['email'], $_POST['password'] , but DO NOT EVER, EVER, EVER store raw passwords...
+        // This subject is too extensive and gathers too much scrutiny for me to dare to post any hard-fast lines of code on StackOverflow
+        // Every minute that you spend researching this topic is time well spent.
+        // Not learning about cryptography and password security will lead to many, many unfortunate events for you and your users.
+    }
+}
+?>

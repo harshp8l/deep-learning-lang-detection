@@ -1,0 +1,14 @@
+@cms.route('/add/asset/<client_id>', methods=[""GET""])
+def asset_add(client_id):
+    if int(current_user.id_) == int(client_id):
+        group = {}
+        group['id'] = []
+        group['pid'] = []
+        group['name'] = []
+        for index in range(len([r.id_ for r in db.session.query(Assetgroup.id_)])):
+            for asset in (Assetgroup.query.filter_by(parent_id=(index or ''))):
+                group['id'].append(asset.id_)
+                group['pid'].append(asset.parent_id)
+                group['name'].append(asset.name)
+
+        return jsonify(group)

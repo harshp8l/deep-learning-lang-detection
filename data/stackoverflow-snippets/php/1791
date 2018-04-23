@@ -1,0 +1,59 @@
+<?php
+
+    class HomeController extends CI_controller{
+
+      public function __construct(){
+        parent::__construct();
+        $this->load->model('Login_Model');
+        require_once APPPATH.'third_party/src/Google_Client.php';
+        require_once APPPATH.'third_party/src/contrib/Google_Oauth2Service.php';
+      }
+
+    public function glogin(){
+      $clientId = '390448461087-ivmu5fq7nl67gt8qd09vu6ljh27eh6fg.apps.googleusercontent.com'; //Google client ID
+      $clientSecret = '1qaO8Sa98zqSJU2J2xRFvsW9'; //Google client secret
+      $redirectURL = base_url() .'HomeController/glogin/';
+
+      //Call Google API
+      $gClient = new Google_Client();
+      $gClient->setApplicationName('Login with google');
+      $gClient->setClientId($clientId);
+      $gClient->setClientSecret($clientSecret);
+      $gClient->setRedirectUri($redirectURL);
+      $google_oauthV2 = new Google_Oauth2Service($gClient);
+
+
+      if(isset($_GET['code']))
+      {
+        $gClient->authenticate($_GET['code']);
+        $_SESSION['token'] = $gClient->getAccessToken();
+        header('Location: ' . filter_var($redirectURL, FILTER_SANITIZE_URL));
+      }
+
+      if (isset($_SESSION['token']))
+      {
+        $gClient->setAccessToken($_SESSION['token']);
+      }
+
+      if ($gClient->getAccessToken()) {
+              $userData=$google_oauthV2->userinfo->get();
+        //when i try to save session data like below it is not coming here 
+              $_SESSION['id']=$userData['id'];
+              $_SESSION['email']=$userData['email'];
+              $_SESSION['familyName']=$userData['familyName'];
+              $_SESSION['gender']=$userData['gender'];
+              $_SESSION['age']=$userData['age'];
+              $_SESSION['picture']=$userData['picture'];
+              $_SESSION['givenName']=$userData['givenName'];
+         echo ""<pre>"";
+         print_r($userData);
+         die;
+          }
+      else
+      {
+          $url = $gClient->createAuthUrl();
+          header(""Location: $url"");
+              exit;
+          }
+    }
+}

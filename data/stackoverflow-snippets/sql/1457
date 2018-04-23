@@ -1,0 +1,34 @@
+CREATE TABLE person (personID INT); 
+
+INSERT INTO person (personID) VALUES (1); 
+INSERT INTO person (personID) VALUES(2); 
+INSERT INTO person (personID) VALUES(3);
+INSERT INTO person (personID) VALUES(4);
+INSERT INTO person (personID) VALUES(5);
+INSERT INTO person (personID) VALUES(6);
+
+CREATE TABLE payments (
+   payment_personID INT,
+   Due INT,
+   Paid INT) ;
+
+INSERT INTO payments  (payment_personID, due, paid) VALUES (1, 5, 5);
+INSERT INTO payments  (payment_personID, due, paid) VALUES (2, 5, 3);
+INSERT INTO payments  (payment_personID, due, paid) VALUES (3, 5, 8);
+
+CREATE VIEW payment_state AS (
+SELECT
+   payment_personID,
+  CASE 
+   WHEN COALESCE(paid,0) < COALESCE(due,0) AND due <> 0 THEN 'under' 
+   WHEN COALESCE(paid,0) > COALESCE(due,0) THEN 'over' 
+   WHEN COALESCE(paid,0) = COALESCE(due,0) THEN 'equal' 
+   END AS state 
+FROM payments);
+
+SELECT *
+FROM
+    person
+LEFT JOIN 
+    payment_state   
+ON personID = payment_personID;

@@ -1,0 +1,61 @@
+#include ""stdafx.h""
+#include <atlbase.h>
+#include <atlsafe.h>
+
+#import ""c:\windows\System32\scrrun.dll"" raw_interfaces_only,raw_native_types, named_guids, rename(""DeleteFile"", ""_DeleteFile""), rename(""MoveFile"",""_MoveFile""), rename(""CopyFile"", ""_CopyFile""), rename(""GetFreeSpace"", ""_GetFreeSpace"")
+
+HRESULT DoIt()
+{
+    CComQIPtr<Scripting::IDictionary> dictColours;
+    hr = dictColours.CoCreateInstance(__uuidof(Scripting::Dictionary));
+    if (FAILED(hr)) { return hr; }
+
+    CComVariant varZero(0); //dummy value, only interested in keys
+
+    hr = dictColours->Add(&variant_t(L""red""), &varZero);
+    if (FAILED(hr)) { return hr; }
+
+    hr = dictColours->Add(&variant_t(L""green""), &varZero);
+    if (FAILED(hr)) { return hr; }
+
+    hr = dictColours->Add(&variant_t(L""blue""), &varZero);
+    if (FAILED(hr)) { return hr; }
+
+    long lColourCount(0);
+    hr = dictColours->get_Count(&lColourCount);
+    if (FAILED(hr)) { return hr; }
+
+    VARIANT varColoursKeys;
+    hr = dictColours->Keys(&varColoursKeys);
+    if (FAILED(hr)) { return hr; }
+
+    CComSafeArray<VARIANT> varColours;
+    varColours.Attach(varColoursKeys.parray);
+
+    // use varColours as needed...
+
+    VARTYPE vt = varColours.GetType();
+
+    LONG lLower = varColours.GetLowerBound();
+    LONG lUpper = varColours.GetUpperBound();
+    for (LONG i = lLower; i <= lUpper; ++i)
+    {
+        VARIANT &v = varColours.GetAt(i);
+        // use v.bstrVal as needed ...
+    }
+
+    //...
+
+    return S_OK;
+}
+
+int main()
+{
+    HRESULT hr = CoInitialize(0);
+    if (FAILED(hr)) { return hr; }
+
+    hr = DoIt();
+
+    CoUninitialize();
+    return hr;
+}

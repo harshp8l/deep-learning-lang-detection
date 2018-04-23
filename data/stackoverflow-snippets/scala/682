@@ -1,0 +1,42 @@
+import cats._
+import cats.implicits._
+import cats.arrow.FunctionK
+import scala.language.higherKinds
+
+object TraverseFromIso {
+
+  // This method can build you a `Traversable[Seq]` from
+  // an `Traversable[List]` and a pair of polymorphic conversion
+  // functions:
+
+  def traverseFromIso[F[_], Z[_]]
+    (forward: F ~> Z, inverse: Z ~> F)
+    (implicit zt: Traverse[Z])
+  : Traverse[F] = new Traverse[F] {
+    def foldLeft[A, B](fa: F[A], b: B)(f: (B, A) ⇒ B): B = zt.foldLeft(forward(fa), b)(f)
+    def foldRight[A, B](fa: F[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] =
+      zt.foldRight(forward(fa), lb)(f)
+
+    def traverse[G[_], A, B]
+      (fa: F[A])
+      (f: (A) ⇒ G[B])
+      (implicit appG: Applicative[G])
+    : G[F[B]] = {
+      (zt.traverse(forward(fa))(f)(appG)).map(zb => inverse(zb))
+    }
+  }
+
+  // A little demo
+  def main(args: Array[String]): Unit = {
+
+    // To instantiate a `Traverse[Seq]`, we have to provide
+    // two natural transformations (from List to Seq and back):
+
+    implicit val seqTraverse: Traverse[Seq] = traverseFromIso(
+      new FunctionK[Seq, List] { def apply[X](sx: Seq[X]): List[X] = sx.toList },
+      new FunctionK[List, Seq] { def apply[X](lx: List[X]): Seq[X] = lx }
+    )
+
+    // do stuff with `Traversable[Seq]` here
+  }
+}    

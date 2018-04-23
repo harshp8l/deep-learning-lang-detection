@@ -1,0 +1,28 @@
+import numexpr
+np.random.seed(125)
+
+def ne(x):
+    x = x.A.values
+    return x[numexpr.evaluate('(x > 5)')]
+
+def be(x):
+    return x[x.A > 5]
+
+def q(x):
+    return x[x.A > 5]
+
+def ev(x):
+    return x[x.eval('A > 5')]
+
+res = pd.DataFrame(
+    index=[1000, 10000, 100000, 1000000, 10000000, 100000000],
+    columns='ne be q ev'.split(),
+    dtype=float
+)
+
+for i in res.index:
+    d = pd.DataFrame({'A':np.random.randint(10, size=i)})
+    for j in res.columns:
+        stmt = '{}(d)'.format(j)
+        setp = 'from __main__ import d, {}'.format(j)
+        res.at[i, j] = timeit(stmt, setp, number=5)

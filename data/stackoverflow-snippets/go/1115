@@ -1,0 +1,66 @@
+package main
+
+import (
+    ""bytes""
+    ""image""
+    ""image/png""
+    ""os""
+    ""testing""
+)
+
+func BenchmarkPNG_Encode(b *testing.B) {
+    img, buf := loadImage(b)
+
+    b.ResetTimer()
+
+    for i := 0; i < b.N; i++ {
+            buf.Reset()
+            png.Encode(buf, img)
+    }
+}
+
+func BenchmarkPNG_Encoder(b *testing.B) {
+    img, buf := loadImage(b)
+    enc := &png.Encoder{}
+
+    b.ResetTimer()
+
+    for i := 0; i < b.N; i++ {
+            buf.Reset()
+            enc.Encode(buf, img)
+    }
+}
+
+func BenchmarkPNG_Encoder_NoCompression(b *testing.B) {
+    img, buf := loadImage(b)
+    enc := &png.Encoder{
+            CompressionLevel: png.NoCompression,
+    }
+
+    b.ResetTimer()
+
+    for i := 0; i < b.N; i++ {
+            buf.Reset()
+            enc.Encode(buf, img)
+    }
+}
+
+func loadImage(b *testing.B) (image.Image, *bytes.Buffer) {
+    // foo.png PNG 1920x1053 1920x1053+0+0 8-bit sRGB 251KB 0.000u 0:00.000
+    f, err := os.Open(""foo.png"")
+    if err != nil {
+            b.Fatal(err)
+    }
+
+    img, err := png.Decode(f)
+    if err != nil {
+            b.Fatal(err)
+    }
+    f.Close()
+
+    buf := &bytes.Buffer{}
+    // grow the buffer once
+    (&png.Encoder{CompressionLevel: png.NoCompression}).Encode(buf, img)
+
+    return img, buf
+}

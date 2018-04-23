@@ -1,0 +1,39 @@
+#include <algorithm>
+#include <boost/sort/sort.hpp>
+#include <boost/utility/string_view.hpp>
+#include <vector>
+#define NONIUS_RUNNER
+#include <nonius/benchmark.h++>
+#include <nonius/main.h++>
+
+extern std::vector<std::string> const testdata;
+
+struct kill_SSO {
+    void operator()(std::string& s) const { s.reserve(20); }
+    template <typename Other> void operator()(Other&&) const   {} // not needed
+};
+
+struct std_sort          { template <typename It> static void run(It b, It e) { std::sort(b,                            e); } };
+struct boost_spread_sort { template <typename It> static void run(It b, It e) { boost::sort::spreadsort::string_sort(b, e); } };
+
+template <typename C, typename Sort, bool Kill = false> void bench(nonius::chronometer& cm) {
+    C c {testdata.begin(), testdata.end()};
+    if (Kill) std::for_each(c.begin(), c.end(), kill_SSO{});
+
+    cm.measure([&]{ Sort::run(c.begin(), c.end()); });
+}
+
+using view = boost::string_view; // std::string_view, boost::string_ref, gsl::span etc.
+NONIUS_BENCHMARK(""SSO std::sort time:  "",    [](nonius::chronometer cm) { bench<std::vector<std::string>, std_sort, false>(cm); })
+NONIUS_BENCHMARK(""SSO boost sort time: "",    [](nonius::chronometer cm) { bench<std::vector<std::string>, boost_spread_sort, false>(cm); })
+NONIUS_BENCHMARK(""String std::sort time:  "", [](nonius::chronometer cm) { bench<std::vector<std::string>, std_sort, true>(cm); })
+NONIUS_BENCHMARK(""String boost sort time: "", [](nonius::chronometer cm) { bench<std::vector<std::string>, boost_spread_sort, true>(cm); })
+NONIUS_BENCHMARK(""View std::sort time:    "", [](nonius::chronometer cm) { bench<std::vector<view>       , std_sort>(cm); })
+NONIUS_BENCHMARK(""View boost sort time:   "", [](nonius::chronometer cm) { bench<std::vector<view>       , boost_spread_sort>(cm); })
+
+std::vector<std::string> const testdata = [] {
+    std::vector<std::string> generated(1000000);
+    auto genchar = [count=0]() mutable { return static_cast<char>(static_cast<uint8_t>(count++ % 256)); };
+    std::generate(generated.begin(), generated.end(), [&] { return std::string {genchar(), genchar(), genchar(), genchar()}; });
+    return generated;
+}();

@@ -1,0 +1,30 @@
+import org.json4s._
+import org.json4s.native.JsonMethods._
+
+case class Segment(segmentationStrategyId: Int, segmentId: Int)
+
+object Test {
+  implicit val formats: DefaultFormats.type = DefaultFormats
+  val json: String =
+    """"""
+      | {
+      |    ""segment"": {
+      |        ""134"": ""34"",
+      |        ""154"": ""342""
+      |    }
+      |}
+    """""".stripMargin
+
+  def main(args: Array[String]): Unit = {
+    val originalSegments = for {
+      JObject(o) <- parse(json)
+      JField(""segment"", JObject(segment))  <- o
+    } yield segment
+
+    val originalSegment = originalSegments.head
+    val newSegments = originalSegment.map(
+      s => Segment(s._1.toInt, s._2.extract[String].toInt)
+    )
+    println(newSegments)
+  }
+}

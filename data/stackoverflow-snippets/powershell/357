@@ -1,0 +1,45 @@
+Param([string]$filePath = $PWD)
+
+$Version=$PSVersionTable.PSVersion
+if ($Version.Major -lt 3) {Throw ""Powershell version out of date. Please update powershell."" }
+
+#Create an empty hashtable to track groups
+$ADGroups = @{}
+
+#Get a recursive list of folders and loop through them
+ForEach($Folder in (Get-ChildItem $filePath -Recurse -Directory)){
+    # Get ACLs for the folder
+    $ACLs = Get-Acl -Path $Folder.FullName
+
+    #Do a bunch of filtering to just get AD groups
+    $Groups = $ACLs | 
+        % Access | #Expand the Access property
+        where { $_.IsInherited -eq $false -and $_.AccessControlType -eq 'Allow' -and $_.IdentityReference -notmatch 'BUILTIN|NT AUTHORITY|CREATOR|-----|Identity'} | #Only instances that allow access, are not inherited, and aren't a local group or special case
+        %{$_.IdentityReference -replace 'JAC.*?\\'} | #Expand the IdentityReference property, and replace anything that starts with JAC all the way to the first backslash (likely domain name trimming)
+        Select -Unique #Select only unique values
+
+    #If there are no groups to display for this folder move to the next folder
+    If($Groups.Count -eq 0){Continue}
+
+    #Display Folder Path
+    $Folder.FullName
+    #Put a dashed line under the folder path (using the length of the folder path for the length of the line, just to look nice)
+    '-'*$Folder.FullName.Length
+
+    #Loop through each group and display its name and users
+    ForEach ($Group in $Groups){
+        #Display the group name
+        $Group
+        #Add a line under the group name
+        '-'*$Group.Length
+        #Check if we already have this group, and if not get the group from AD
+        If($ADGroups.Keys -notcontains $Group){
+            $Members = Get-ADGroupMember $Group -Recursive -ErrorAction Ignore | % Name
+            $ADGroups.Add($Group,$Members)
+        }
+        #Display the group members
+        $ADGroups[$Group]
+    }
+    #output a blank line, for some seperation between folders
+    ""`n""
+}

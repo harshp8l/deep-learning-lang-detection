@@ -1,0 +1,47 @@
+type RequestWithReplyChannel = RequestWithKey * AsyncReplyChannel<ResponseWithKey>
+
+type public ApiRateLimiter(httpClient: HttpClient, limitTimePeriod: TimeSpan, limitCount: int) =
+
+    let requestLimit = Math.Max(limitCount,1)
+
+    let agent = MailboxProcessor<RequestWithReplyChannel>.Start(fun inbox -> 
+
+        let rec waitUntilUnderLimit (recentRequestsTimeSent: DateTimeOffset list) = async{
+            let cutoffTime = DateTimeOffset.UtcNow.Subtract limitTimePeriod
+            let requestsWithinLimit = 
+                recentRequestsTimeSent 
+                |> List.takeWhile (fun x -> x >= cutoffTime)
+
+            if List.length requestsWithinLimit >= requestLimit then
+                do! Async.Sleep 100 //sleep for 100 milliseconds and check request limit again
+                return! waitUntilUnderLimit requestsWithinLimit
+            else
+                return requestsWithinLimit
+        }
+
+        let rec messageLoop (mostRecentRequestsTimeSent: DateTimeOffset list) = async{
+            // read a message
+            let! keyedRequest,replyChannel = inbox.Receive()
+            // wait until we are under our rate limit
+            let! remainingRecentRequests = waitUntilUnderLimit mostRecentRequestsTimeSent
+
+            let rightNow = DateTimeOffset.UtcNow
+
+            let! response =
+                keyedRequest.Request
+                |> httpClient.SendAsync
+                |> Async.AwaitTask
+
+            replyChannel.Reply { Key = keyedRequest.Key; Response = response }
+
+            return! messageLoop (rightNow :: remainingRecentRequests)
+        }
+
+        // start the loop
+        messageLoop []
+    )            
+
+    member this.QueueApiRequest keyedRequest =
+        async {
+            return! agent.PostAndAsyncReply(fun replyChannel -> (keyedRequest,replyChannel))
+        } |> Async.StartAsTask

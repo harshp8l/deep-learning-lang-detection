@@ -1,0 +1,49 @@
+import scala.concurrent.Future
+import cats.free.Free
+import cats.free.Free.liftF
+import cats.~>
+
+// Client-definition with both obstacles: implicits + type bound
+trait Resource
+trait Format[A <: Resource]
+trait Definition[A <: Resource]
+
+object Client {
+  def get[A <: Resource](name: String)
+    (implicit fmt: Format[A], dfn: Definition[A])
+  : Future[A] = ???
+}
+
+
+// Solution:
+trait RestrictedNat[R, F[_ <: R], G[_]] {
+  def apply[A <: R](fa: F[A]): G[A]
+}
+
+sealed trait DslOp[A]
+case class Get[A <: Resource](
+  name: String,
+  fmt: Format[A],
+  dfn: Definition[A]
+) extends DslOp[A] {
+  def accept[G[_]](f: RestrictedNat[Resource, Get, G]): G[A] = f(this)
+}
+
+type Dsl[A] = Free[DslOp, A]
+def get[A <: Resource]
+  (name: String)
+  (implicit fmt: Format[A], dfn: Definition[A])
+: Dsl[A] = liftF[DslOp, A](Get[A](name, fmt, dfn))
+
+
+val clientInterpreter_3: (DslOp ~> Future) = new (DslOp ~> Future) {
+  def apply[A](op: DslOp[A]): Future[A] = op match {
+    case g: Get[A] => {
+      val f = new RestrictedNat[Resource, Get, Future] {
+        def apply[X <: Resource](g: Get[X]): Future[X] = 
+          Client.get(g.name)(g.fmt, g.dfn)
+      }
+      g.accept(f)
+    }
+  }
+}

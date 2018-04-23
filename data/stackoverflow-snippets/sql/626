@@ -1,0 +1,60 @@
+CREATE TABLE #Employee (ID int, [Name] varchar(10));
+
+INSERT INTO #Employee
+VALUES(1,'John'),
+      (2,'Doe'),
+      (3,'Dave'),
+      (4,'Smith');
+
+CREATE TABLE #Relative (ID int, EmpID int, RelativeType varchar(10), [Name] char(1)); 
+INSERT INTO #Relative
+VALUES(1,1,'Son','x'),
+      (2,1,'Daughter','y'),
+      (3,1,'Wife','a'),
+      (4,1,'Friend','b'),
+      (5,1,'Father','c'),
+      (6,1,'Friend','e');
+
+WITH RNs AS (
+    SELECT *,
+           CASE RelativeType WHEN 'Son' THEN 'Child'
+                             WHEN 'Daughter' THEN 'Child'
+                             WHEN 'Mother' THEN 'Parent'
+                             WHEN 'Father' THEN 'Parent'
+                             WHEN 'Wife' THEN 'Spouse'
+                             WHEN 'Husband' THEN 'Spouse'
+                             ELSE RelativeType END AS Relation,
+           ROW_NUMBER() OVER (PARTITION BY EmpID,
+                                           CASE RelativeType WHEN 'Son' THEN 'Child'
+                                                             WHEN 'Daughter' THEN 'Child'
+                                                             WHEN 'Mother' THEN 'Parent'
+                                                             WHEN 'Father' THEN 'Parent'
+                                                             WHEN 'Wife' THEN 'Spouse'
+                                                             WHEN 'Husband' THEN 'Spouse'
+                                                             ELSE RelativeType END
+                              ORDER BY ID ASC) RN
+    FROM #Relative R)
+
+SELECT E.ID AS EmpID,
+       E.[Name],
+       MAX(CASE WHEN R.Relation = 'Child' AND RN = 1 THEN R.[Name] END) AS Child1,
+       MAX(CASE WHEN R.Relation = 'Child' AND RN = 2 THEN R.[Name] END) AS Child2,
+       MAX(CASE WHEN R.Relation = 'Child' AND RN = 3 THEN R.[Name] END) AS Child3,
+       MAX(CASE WHEN R.Relation = 'Child' AND RN = 4 THEN R.[Name] END) AS Child4,
+       MAX(CASE WHEN R.Relation = 'Child' AND RN = 5 THEN R.[Name] END) AS Child5,
+       MAX(CASE WHEN R.Relation = 'Child' AND RN = 6 THEN R.[Name] END) AS Child6,
+       MAX(CASE WHEN R.Relation = 'Child' AND RN = 7 THEN R.[Name] END) AS Child7,
+       MAX(CASE WHEN R.Relation = 'Child' AND RN = 8 THEN R.[Name] END) AS Child8,
+       MAX(CASE WHEN R.Relation = 'Spouse' AND RN = 1 THEN R.[Name] END) AS Spouse,
+       MAX(CASE WHEN R.Relation = 'Friend' AND RN = 1 THEN R.[Name] END) AS Friend1,
+       MAX(CASE WHEN R.Relation = 'Friend' AND RN = 2 THEN R.[Name] END) AS Friend2,
+       MAX(CASE WHEN R.Relation = 'Friend' AND RN = 3 THEN R.[Name] END) AS Friend3
+       --You get the idea
+FROM #Employee E
+     JOIN RNs R ON E.ID = R.EmpID
+GROUP BY E.ID,
+         E.[Name];
+
+GO
+DROP TABLE #Employee;
+DROP TABLE #Relative;

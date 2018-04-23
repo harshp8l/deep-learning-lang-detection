@@ -1,0 +1,16 @@
+jq -rc '.RoleDetailList 
+        | map(select((.AssumeRolePolicyDocument.Statement | length > 0) and 
+        (.AssumeRolePolicyDocument.Statement[].Principal.Service) or 
+        (.AssumeRolePolicyDocument.Statement[].Principal.AWS) or 
+        (.AssumeRolePolicyDocument.Statement[].Principal.Federated) or 
+        (.AttachedManagedPolicies | length >0) or 
+        (.RolePolicyList | length > 0)) )[] 
+        | [.RoleName,
+           ([.RolePolicyList[].PolicyName,
+           ([.AttachedManagedPolicies[].PolicyName] | join(""--""))] 
+        | join("" "")),
+         (.AssumeRolePolicyDocument.Statement[] 
+        | .Principal.Federated + """" 
+          + (.Principal.Service | if type == ""array"" then join(""--"") else . end) 
+          + """" + .Principal.AWS)] 
+       | @csv' ./output.json

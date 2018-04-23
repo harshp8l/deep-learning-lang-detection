@@ -1,0 +1,25 @@
+type ParallelData struct {
+    UrlData  UrlData
+    FormData FormData
+}
+
+func (p *ParallelData) UnmarshalJSON(b []byte) error {
+    var records []json.RawMessage
+    if err := json.Unmarshal(b, &records); err != nil {
+            return err
+    }
+
+    if len(records) < 2 {
+            return errors.New(""Short JSON array"")
+    }
+
+    if err := json.Unmarshal(records[0], &p.UrlData); err != nil {
+            return err
+    }
+
+    if err := json.Unmarshal(records[1], &p.FormData); err != nil {
+            return err
+    }
+
+    return nil
+}

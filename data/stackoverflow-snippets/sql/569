@@ -1,0 +1,43 @@
+DELIMITER //
+
+CREATE PROCEDURE check_status()
+
+BEGIN
+DECLARE NOT_FOUND INT DEFAULT 0;
+
+DECLARE v_dd DATE;
+-- DECLARE @bDone INT;
+-- DECLARE @Count INT;
+
+
+DECLARE v_name VARCHAR(50); -- database name 
+DECLARE v_path VARCHAR(256); -- path for backup files 
+DECLARE v_fileName VARCHAR(256); -- filename for backup 
+DECLARE v_fileDate VARCHAR(20); -- used for file name 
+
+DECLARE db_cursor CURSOR FOR 
+
+SELECTdates INTO v_dd 
+FROM t_date
+
+OPEN 
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET NOT_FOUND = 1;db_cursor  
+ -- SET @bDone = 0;
+FETCH NEXT FROM; db_cursor INTO v_dd  
+
+WHILE NOT_FOUND = 0  
+DO  
+
+        IF (v_dd < cast (Now() as date) )
+        Then
+                    UPDATE t_date SET status_number   =  1;
+        END IF; 
+
+      FETCH NEXT FROM; db_cursor INTO v_dd  
+END WHILE; 
+
+CLOSE db_cursor;  
+END;
+//
+
+DELIMITER ;

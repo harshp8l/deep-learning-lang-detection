@@ -1,0 +1,27 @@
+(defn validate-data [[status data]]
+    (if (< (:a data) 10)
+       [:validated data]
+       [:failed data]))
+
+(defn calculate-1 [[status data]]
+     [:calculate-1 (assoc data :b 2)])
+
+(defn calculate-2 [[status data]]
+    (if (:b data)
+       [:calculate-2 (update data :b inc)]
+       [:failed data]))
+
+(deftest test
+    (let [initial-data [:init {:a 1}]]
+       (is (= [:calculate-2 {:a 1, :b 3}] 
+              (run-until->> #(= :failed (first %))
+                            initial-data
+                            (validate-data)
+                            (calculate-1)
+                            (calculate-2))))
+
+       (is (= [:failed {:a 1}] 
+              (run-until->> #(= :failed (first %))
+                            initial-data
+                            (validate-data)
+                            (calculate-2))))))

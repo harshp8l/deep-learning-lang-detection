@@ -1,0 +1,31 @@
+bool last_name_is_less(std::string const& l, Person const& r)
+{
+    return l < r.last;
+}
+
+bool last_name_is_less(Person const& l, std::string const& r)
+{
+    return l.last < r;
+}
+
+// using lambda to aid in expressing semantic intent
+//
+int binaryFindFirstByLastName2(const std::string& value, const Person* array, int size) {
+
+    auto first = array;
+    auto last = array + size;
+
+    auto to_index = [&](auto iter) 
+    {
+        if (iter == last || iter->last != value)
+            return -1;
+        return int(std::distance(first, iter));
+    };
+
+    return to_index(std::lower_bound(first, last, 
+                                     value, 
+                                     [](auto&& l, auto&& r) 
+                                     { 
+                                         return last_name_is_less(l, r); 
+                                     }));
+}

@@ -1,0 +1,31 @@
+trait Show[A] {
+
+  def show(a: A): String
+}
+
+trait MyWrapperBound[A] {
+
+  val message: String
+
+}
+
+object MyWrapperBound {
+
+  def wrap[A](a: => A)(implicit ev: Show[A]): MyWrapperBound[A] =
+    new MyWrapperBound[A] {
+      override val message: String = ev.show(a)
+    }
+}
+
+object ShowInstances {
+
+  case class MyDS(someInformation: List[String])
+
+  implicit val simpleShow: Show[String] = new Show[String] {
+    override def show(a: String): String = a
+  }
+
+  implicit val slightlyMoreComplexShow: Show[MyDS] = new Show[MyDS] {
+    override def show(a: MyDS): String = a.someInformation.mkString(""["", "","", ""]"")
+  }
+}

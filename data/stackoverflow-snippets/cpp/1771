@@ -1,0 +1,43 @@
+class DataReceiver : QObject
+{
+    Q_OBJECT
+
+public:
+    // Con/Destructors
+    explicit DataReceiver(QObject *parent = nullptr);
+    explicit DataReceiver(const QString &pSourceAddress,
+                          const unsigned int &pSourcePort,
+                          QObject *parent = nullptr);
+    ~DataReceiver();
+
+    // Getters
+    QVector<float> *getData(void) const;
+    QTcpServer *getTcpServer(void) const;
+    QString getSourceAddress(void) const;
+    unsigned int getSourcePort(void) const;
+
+    // Setters
+    void setData(const QVector<float> *pData);
+    void setSourceAddress(const QString &pSourceAddress);
+    void setSourcePort(const unsigned int &pSourcePort);
+
+signals:
+
+public slots:
+    void onConnect();
+    void onDisconnect();
+    void onBytesWritten(qint64 bytes);
+    void onDataReceived();
+    void onNewConnection();
+
+private:
+    void decodeData(const QByteArray &pMessage);
+
+    QTcpServer *mTcpServer;
+    QTcpSocket *mTcpSocket;
+    QString mSourceAddress;
+    unsigned int mSourcePort;
+
+    const unsigned int mDataSize = 30;
+    QVector<float> *mData;
+};

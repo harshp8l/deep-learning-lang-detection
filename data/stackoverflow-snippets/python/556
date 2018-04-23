@@ -1,0 +1,24 @@
+import re
+rx = r'''(?s)(?<!\\)(?:\\\\)*(L)?""([^""\\]*(?:\\.[^""\\]*)*)""'''
+s = (""#include <stdio.h>\n\n\n""
+    ""int main()\n""
+    ""{       \n""
+    ""    printf(\""regular char string\"");\n\n""
+    ""    printf(L\"" wchar short string in bracket\"");\n\n""
+    ""    printf(\""short string in bracket\"");\n\n""
+    ""    printf(\""very long\\\n""
+    ""    cuple of line\\\n""
+    ""    string\"");\n\n\n""
+    ""    printf(L\""very long wchar\\\n""
+    ""    cuple of line\\\n""
+    ""    string\"");\n""
+    ""}"")
+chars_list = []
+wchars_list = []
+for m in re.finditer(rx, s):
+    if m.group(1):
+        wchars_list.append(m.group(2))
+        print(""WCHAR: {}"".format(m.group(2)))
+    else:
+        chars_list.append(m.group(2))
+        print(""CHAR: {}"".format(m.group(2)))

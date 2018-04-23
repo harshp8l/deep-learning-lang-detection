@@ -1,0 +1,58 @@
+class Logger {
+
+
+    private static File logFileLoc;
+    private static ExecutorService logExecutor;
+
+    public static void init(Context applicationContext, String logFileName, boolean reCreate) {
+
+        logFileLoc = new File(applicationContext.getCacheDir(), logFileName);
+
+        if (reCreate && logFileLoc.exists()) logFileLoc.delete();
+
+        logExecutor = Executors.newSingleThreadExecutor();
+    }
+
+    public static void log(final String tag, final String msg) {
+
+        if (logFileLoc == null) try {
+
+            throw new Exception(""First you should call init method in your application"");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Log.d(tag, msg);
+
+
+        logExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+
+
+                try {
+
+                    BufferedWriter writer = new BufferedWriter(new FileWriter(logFileLoc,true));
+
+                    String timeStamp = DateFormat.getDateTimeInstance().format(new Date(System.currentTimeMillis()));
+
+                    writer.append(timeStamp + ""  "" + tag + ""  : "" + msg );
+                    writer.newLine();
+
+                    writer.flush();
+
+                    writer.close();
+
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
+    }
+
+}

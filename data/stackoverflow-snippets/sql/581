@@ -1,0 +1,31 @@
+    DELIMITER $$
+    DROP PROCEDURE IF EXISTS check_status$$
+    CREATE PROCEDURE check_status()
+
+     BEGIN
+         DECLARE dd DATE;
+         DECLARE bDone INT;
+         DECLARE Count INT;
+         DEClARE my_status CURSOR FOR SELECT dates FROM t_date;
+         DECLARE CONTINUE HANDLER FOR NOT FOUND SET bDone = 1;
+
+     OPEN my_status;
+        SET bDone = 0;
+
+        REPEAT
+            FETCH my_status INTO dd;
+
+            IF (dd < DATE(NOW()))
+--                  UPDATE t_date SET (status_number) VALUES (1);
+                    UPDATE t_date SET status_number =  1;
+
+            END IF;
+
+        UNTIL bDone END REPEAT;
+
+     CLOSE my_status;
+
+
+     END$$
+
+    DELIMITER ;

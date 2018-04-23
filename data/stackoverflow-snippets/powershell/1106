@@ -1,0 +1,17 @@
+#Requires -Version 3
+
+$FolderSource = Get-ChildItem -Path 'C:\Source' -File |
+    Where-Object { $PSItem.CreationTime -gt (Get-Date).AddDays(-30) }
+$FolderDestination = 'C:\Destination'
+$Archives = @((Get-ChildItem -Path @('C:\ArchiveA','C:\ArchiveB','C:\ArchiveC') -File |
+    Select-Object -ExpandProperty 'Name').ToUpper() |
+    Sort-Object |
+    Get-Unique)
+
+ForEach ($File in $FolderSource)
+{
+    If ($File.Name -notin $Archives)
+    {
+        $File | Move-Item -Destination $FolderDestination
+    }
+}

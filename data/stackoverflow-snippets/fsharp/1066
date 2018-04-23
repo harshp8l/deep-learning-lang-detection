@@ -1,0 +1,42 @@
+-module(z).
+
+-export([integral/4]).
+
+create(Dx, N) ->
+  spawn_link(fun() -> create_loop(Dx, N) end).
+
+create_loop(Dx, 0, Acc)->
+    receive
+        {grab, Target} -> Target ! done,
+        ok
+    after 5000 ->
+       exit(timeout_error)
+    end;
+create_loop(Dx, N, Acc) ->
+    receive
+        {grab, Target} ->
+            Target ! {next, Dx*N},
+            create_loop(Dx, N-1)
+    after 5000 ->
+        exit(timeout_error)
+    end.
+
+next(Pid) ->
+    Pid ! {grab, self()},
+    receive
+        {next, V} -> {next, V};
+        done -> done
+    after 5000 ->
+        exit(timeout_error)
+    end.
+
+sum(F, Points, Acc) ->
+    case next(Points) of
+        {next, V} -> sum(F, Points, Acc + F(V));
+        done -> Acc
+    end.
+
+integral(X1, X2, Dx, F) ->
+    N = trunc( (X2 - X1) / Dx),
+    Points = create(Dx, N),
+    sum(fun(X) -> F(X) * Dx end, Points, 0).

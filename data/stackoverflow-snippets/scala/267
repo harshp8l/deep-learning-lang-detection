@@ -1,0 +1,29 @@
+trait Operation[Out] { outer =>
+  def result: Out
+  def flatMap[Y](f: Out => Operation[Y]): Operation[Y] = new Operation[Y] {
+    def result: Y = f(outer.result).result
+  }
+  def map[Y](f: Out => Y) = new Operation[Y] {
+    def result: Y = f(outer.result)
+  }
+}
+
+object SomeOp extends Operation[String] {
+   def result = ""foo""
+}
+
+case class OtherOp(foo: String) extends Operation[String] {
+   def result = foo + ""bar""
+}
+
+case class YetAnotherOp(foo: String, bar: String) extends Operation[String] {
+  def result = s""previous: $bar, pre-previous: $foo""
+}
+
+def applyAll: Operation[String] = for {
+  foo <- SomeOp
+  fbr <- OtherOp(foo)
+  fbz <- YetAnotherOp(foo, fbr)
+} yield fbz
+
+println(applyAll.result)

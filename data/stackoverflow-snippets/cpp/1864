@@ -1,0 +1,77 @@
+#include <initializer_list>
+#include <array>
+#include <tuple>
+
+template<int... members>
+struct IntList
+{
+    constexpr bool operator==(IntList) const { return true; }
+
+    template<int... others>
+    constexpr bool operator==(IntList<others...>) const { return false; }
+
+    template<int idx>
+    static constexpr auto at() 
+    {
+        return std::get<idx>(std::make_tuple(members...));
+    }
+
+    template<int x>
+    static constexpr auto indexOf()
+    {
+        int sum {};
+        auto _ = { 0, (x > members ? ++sum : 0)... };
+        return sum;
+    }
+
+    template<int x>
+    static constexpr auto count()
+    {
+        int sum {};
+        auto _ = { 0, (x == members ? ++sum : 0)... };
+        return sum;
+    }
+
+    template<int i>
+    static constexpr auto ith()
+    {
+        int result{};
+        auto _ = {
+            ( i >= indexOf<members>() && i < indexOf<members>() + count<members>() ? 
+              result = members : 0 )...
+        };
+        return result;
+    }
+
+    template<std::size_t... i>
+    static constexpr auto sortImpl(std::index_sequence<i...>)
+    {
+        return IntList< ith<i>()... >();
+    }
+
+    static constexpr auto sort() 
+    {
+        return sortImpl(std::make_index_sequence<sizeof...(members)>());
+    }
+};
+
+static_assert(IntList<1, 2, 3>().at<1>() == 2, """");
+
+static_assert(IntList<>().indexOf<1>()           == 0, """");
+static_assert(IntList<1>().indexOf<1>()          == 0, """");
+static_assert(IntList<1, 2, 3, 4>().indexOf<3>() == 2, """");
+
+static_assert(IntList<>().count<1>()        == 0, """");
+static_assert(IntList<1>().count<1>()       == 1, """");
+static_assert(IntList<1, 1>().count<1>()    == 2, """");
+static_assert(IntList<2, 2, 1>().count<1>() == 1, """");
+static_assert(IntList<1, 2, 1>().count<1>() == 2, """");
+
+static_assert(IntList<>().sort()        == IntList<>(),        """");
+static_assert(IntList<1>().sort()       == IntList<1>(),       """");
+static_assert(IntList<1, 2>().sort()    == IntList<1, 2>(),    """");
+static_assert(IntList<2, 1>().sort()    == IntList<1, 2>(),    """");
+static_assert(IntList<3, 2, 1>().sort() == IntList<1, 2, 3>(), """");
+static_assert(IntList<2, 2, 1>().sort() == IntList<1, 2, 2>(), """");
+static_assert(IntList<4, 7, 2, 5, 1>().sort() == IntList<1, 2, 4, 5, 7>(), """");
+static_assert(IntList<4, 7, 7, 5, 1, 1>().sort() == IntList<1, 1, 4, 5, 7, 7>(), """");

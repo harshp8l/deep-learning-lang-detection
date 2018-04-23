@@ -1,0 +1,20 @@
+// this function splits input list into two: 
+// all duplicate values, and the longest list of unique values
+def collectDistinct[A](l: List[A]): (List[A], List[A]) = l.foldLeft((List[A](), List[A]())) {
+  case ((remaining, distinct), candidate) if distinct.contains(candidate) => (candidate :: remaining, distinct)
+  case ((remaining, distinct), candidate) => (remaining, candidate :: distinct)
+}
+
+// this recursive function takes a list of ""remaining"" values,
+// and a list of distinct groups, and adds distinct groups to the list
+// until ""remaining"" is empty
+@tailrec
+def distinctGroups[A](remaining: List[A], groups: List[List[A]]): List[List[A]] = remaining match {
+  case Nil => groups
+  case _ => collectDistinct(remaining) match {
+    case (next, group) => distinctGroups(next, group :: groups)
+  }
+}
+
+// all second function with our input and an empty list of groups to begin with:
+val result = distinctGroups(l, List())

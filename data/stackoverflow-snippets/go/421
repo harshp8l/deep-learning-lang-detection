@@ -1,0 +1,43 @@
+package main
+
+import ""fmt""
+
+// A set of bits
+type IntSet struct {
+    // bits are grouped into 64 bit words
+    words []uint64
+}
+
+// x is the index for a bit
+func (s *IntSet) Has(x int) bool {
+    // The word index for the bit
+    word := x / 64
+    // The bit index within a word for the bit
+    bit := uint(x % 64)
+    if word < 0 || word >= len(s.words) {
+        // error: word index out of range
+        return false
+    }
+    // the bit set within the word
+    mask := uint64(1 << bit)
+    // true if the bit in the word set
+    return s.words[word]&mask != 0
+}
+
+func main() {
+    nBits := 2*64 + 42
+    // round up to whole word
+    nWords := (nBits + (64 - 1)) / 64
+    bits := IntSet{words: make([]uint64, nWords)}
+    // bit 127 = 1 * 64 + 63
+    bits.words[1] = 1 << 63
+    fmt.Printf(""%b\n"", bits.words)
+    for i := 0; i < nWords*64; i++ {
+        has := bits.Has(i)
+        if has {
+            fmt.Println(i, has)
+        }
+    }
+    has := bits.Has(127)
+    fmt.Println(has)
+}

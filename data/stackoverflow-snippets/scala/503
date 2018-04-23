@@ -1,0 +1,39 @@
+import org.apache.spark.sql.expressions.Window.orderBy
+import org.apache.spark.sql.functions.{coalesce, lag}
+
+case class Temp(a: String, b: Option[String], c: Option[String])
+
+val input = ss.createDataFrame(
+  Seq(
+    Temp(""A"", Some(""a1""), Some(""a2"")),
+    Temp(""D"", Some(""d1""), Some(""d2"")),
+    Temp(""B"", Some(""b1""), Some(""b2"")),
+    Temp(""E"", None, None),
+    Temp(""C"", None, None)
+  ))
+
++---+----+----+
+|  a|   b|   c|
++---+----+----+
+|  A|  a1|  a2|
+|  D|  d1|  d2|
+|  B|  b1|  b2|
+|  E|null|null|
+|  C|null|null|
++---+----+----+
+
+val order = orderBy($""a"")
+input
+  .withColumn(""b"", coalesce($""b"", lag($""b"", 1).over(order)))
+  .withColumn(""c"", coalesce($""c"", lag($""c"", 1).over(order)))
+  .show()
+
++---+---+---+
+|  a|  b|  c|
++---+---+---+
+|  A| a1| a2|
+|  B| b1| b2|
+|  C| b1| b2|
+|  D| d1| d2|
+|  E| d1| d2|
++---+---+---+

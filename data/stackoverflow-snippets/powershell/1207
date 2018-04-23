@@ -1,0 +1,14 @@
+$Form    = Form-Control Form @{Text = ""Dock test""; StartPosition = ""CenterScreen""; Padding = 4}
+$Table   = $Form  | Form TableLayoutPanel @{RowCount = 2; ColumnCount = 3; ColumnStyles = (""Percent"", 50), ""AutoSize"", ""AutoSize""; Dock = ""Fill""}
+$Panel   = $Table | Form Panel @{Dock = ""Fill""; BorderStyle = ""FixedSingle""; BackColor = ""Teal""} -Set @{RowSpan = 2}
+$Dock = ForEach ($i in 1..2) {
+    $Button = $Panel | Form Button @{Location = ""25, $(75 * $i - 50)"";  Size = ""50, 50""; BackColor = ""Silver""; Enabled = $False; Text = $i}
+    $Group  = $Table | Form GroupBox @{Text = ""Dock $i""; AutoSize = $True}
+    $Flow   = $Group | Form FlowLayoutPanel @{AutoSize = $True; FlowDirection = ""TopDown""; Dock = ""Fill""; Padding = 4}
+    $Radio  = ""None"", ""Top"", ""Left"", ""Bottom"", ""Right"", ""Fill"" | ForEach {
+        $Flow | Form RadioButton @{Text = $_; AutoSize = $True; Click = ([ScriptBlock]::Create(""`$Dock[$($i - 1)].Button.Dock = `$This.Text""))}
+    }
+    New-Object PSObject -Property @{Button = $Button; Group = $Group; Flow = $Flow; Radio = $Radio}
+}
+$Close  = $Table | Form Button @{Text = ""Close""; Dock = ""Bottom""; Click = {$Form.Close()}} -Set @{ColumnSpan = 2}
+$Form.ShowDialog()

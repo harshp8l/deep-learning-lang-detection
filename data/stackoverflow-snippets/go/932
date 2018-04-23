@@ -1,0 +1,34 @@
+func authHandler(c *gin.Context) {
+    // Handle the exchange code to initiate a transport.
+    session := sessions.Default(c)
+
+    retrievedState := session.Get(""state"")
+    queryState := c.Request.URL.Query().Get(""state"")
+    if retrievedState != queryState {
+        c.AbortWithError(http.StatusUnauthorized, fmt.Errorf(""Invalid session state: %s"", retrievedState))
+        return
+    }
+    code := c.Request.URL.Query().Get(""code"")
+    session.Set(""code"", code)
+    session.Save()
+    c.Redirect(http.StatusFound, ""/calendar"")
+}
+
+func calendarHandler(c *gin.Context) {
+    session := sessions.Default(c)
+    code := session.Get(""code"")
+    tok, err := conf.Exchange(oauth2.NoContext, code)
+    if err != nil {
+        c.AbortWithError(http.StatusBadRequest, err)
+        return
+    }
+
+    client := conf.Client(oauth2.NoContext, tok)
+    calendarService, _ := calendar.New(client)
+    list, err := calendarService.CalendarList.List().Do()
+    if err != nil {
+        fmt.Println(""error"")
+    }
+    log.Println(list.Items[0].Summary)
+    c.Status(http.StatusOK)
+}

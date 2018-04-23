@@ -1,0 +1,58 @@
+package main
+
+import (
+    “fmt”
+    “syscall”
+    “time”
+)
+
+var user32 = syscall.NewLazyDLL(“user32.dll”)
+var procGAKS = user32.NewProc(“GetAsyncKeyState”)
+
+// Key codes from MSDN
+var keys = [4]uint{
+    0xb0, // VK_MEDIA_NEXT_TRACK
+    0xb1, // VK_MEDIA_PREV_TRACK
+    0xb2, // VK_MEDIA_STOP
+    0xb3, // VK_MEDIA_PLAY_PAUSE
+}
+
+var names = [4]string{
+    “VK_MEDIA_NEXT_TRACK”,
+    “VK_MEDIA_PREV_TRACK”,
+    “VK_MEDIA_STOP”,
+    “VK_MEDIA_PLAY_PAUSE”,
+}
+
+func main() {
+    fmt.Println(“Running…”)
+
+    // Since I don’t want to trigger dozens of times for each key I need to track state.
+    // I could check the bits of GAKS’ return value, but that is not reliable.
+    down := [4]bool{false, false, false, false}
+
+    for {
+        time.Sleep(1 * time.Millisecond)
+        for i, key := range keys {
+            // val is not a simple boolean!
+            // 0 means “not pressed” (also certain errors)
+            // If LSB is set the key was just pressed (this may not be reliable)
+            // If MSB is set the key is currently down.
+            val, _, _ := procGAKS.Call(uintptr(key))
+
+            // Turn a press into a transition and track key state.
+            goingdown := false
+            if int(val) != 0 && !down[i] {
+                goingdown = true
+                down[i] = true
+            }
+            if int(val) == 0 && down[i] {
+                down[i] = false
+            }
+            if goingdown {
+                // In a real application I would send a message here.
+                fmt.Println(names[i])
+            }
+        }
+    }
+}

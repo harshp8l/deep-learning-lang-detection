@@ -1,0 +1,23 @@
+(let [conn-count 6
+      ready-chan (chan)]
+
+  ;; Spawn a thread for each connection.
+  (doseq [conn-id (range conn-count)]
+    (thread
+      (Thread/sleep (rand-int 2000))
+      (>!! ready-chan conn-id)))
+
+  ;; Block until all connections are established.
+  (doseq [total (range 1 (inc conn-count))]
+    (println (<!! ready-chan) ""connected,"" total ""overall""))
+
+  ;; Invoke start afterwards.
+  (println ""start""))
+;; 5 connected, 1 overall
+;; 3 connected, 2 overall
+;; 4 connected, 3 overall
+;; 0 connected, 4 overall
+;; 1 connected, 5 overall
+;; 2 connected, 6 overall
+;; start
+;;=> nil

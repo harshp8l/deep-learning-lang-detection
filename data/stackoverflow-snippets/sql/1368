@@ -1,0 +1,28 @@
+Declare @XML xml = '
+<FormSearchFilter>
+    <OtherContent>Some Content</OtherContent>
+    <IDs>
+        <int>1</int>
+        <int>2</int>
+    </IDs>
+    <IDs>
+        <int>11</int>
+        <int>12</int>
+        <int>13</int>
+    </IDs>
+    <IDs>
+        <int>99</int>
+    </IDs>
+    <MoreContent>Some MORE Content</MoreContent>
+</FormSearchFilter>
+'
+
+
+Select @XML = replace(cast(@XML as varchar(max)),RetVal,NewVal)
+ From (
+        Select *
+              ,NewVal = stuff(replace(replace(RetVal,'<int>',','),'</int>',''),1,1,'')
+         From [dbo].[tvf-Str-Extract](cast(@XML as varchar(max)),'<IDs>','</IDs>')
+      ) A
+
+Select @XML

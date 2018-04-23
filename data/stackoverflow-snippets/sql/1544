@@ -1,0 +1,23 @@
+--here I sum values for each team using cumulative sum
+select [date],
+       sum(team1) over (order by [date] rows between unbounded preceding and current row) [team1],
+       sum(team2) over (order by [date] rows between unbounded preceding and current row) [team2],
+       sum(total) over (order by [date] rows between unbounded preceding and current row) [total]
+from (
+    --here I am pivoting inner query, replacing NULL values using COALESCE
+    select [date],
+           coalesce(max(case when teamid = 1 then value end), 0) [team1],
+           coalesce(max(case when teamid = 2 then value end), 0) [team2],
+           coalesce(max(case when teamid = 1 then value end), 0) + coalesce(max(case when teamid = 2 then value end), 0) [total]
+    from (
+        --here I join assigned and unassigned dates with team ids
+        select [AU].assigneddate [date], [U].teamid, 1 [value] from @applicationuser [AU] 
+        join @users [U] on [AU].userid = [U].id
+
+        union all
+
+        select [AU].unassigneddate, [U].teamid, -1 from @applicationuser [AU] 
+        join @users [U] on [AU].userid = [U].id
+    ) a 
+    group by [date]
+) a

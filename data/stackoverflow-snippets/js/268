@@ -1,0 +1,52 @@
+app.get('/api/sentiment', async (req, res) => {
+  console.log(""matched /api/sentiment pattern"")
+  const options = {
+    q : req.query.q,
+    lang : ""en"",
+    count : 100,
+  }
+  try{
+    fetchTweets.byTopic(options, async function(results){
+      const tweets = {""data"": results.map(function(tweet){
+        return {""text"": tweet.body, ""query"": options.q}
+      })}
+      var body = JSON.stringify(tweets)
+
+      // get sentiments
+      const sentiments = await fetch(SEN_URL, {method: ""POST"", body: body})
+      const json = await sentiments.json()
+      const data = json.data
+
+      //console.log(data)
+
+      // calculate percentages
+      const response = {positive: undefined, neutral: undefined, negative: undefined}
+      var numPos = 0
+      var numNeu = 0
+      var numNeg = 0
+      //console.log(response)
+      data.forEach(function(tweet){
+        switch(tweet.polarity){
+          case 4:
+            numPos += 1
+            break
+          case 2:
+            numNeu += 1
+            break
+          case 0:
+            numNeg += 1
+            break
+        }
+      })
+      const tot = numPos + numNeu + numNeg
+      response.positive = numPos/tot
+      response.neutral = numNeu/tot
+      response.negative = numNeg/tot
+      // send response
+      res.send(response)
+    })
+  }catch (error){
+    console.log(error)
+    res.send(error)
+  }
+})

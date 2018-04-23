@@ -1,0 +1,40 @@
+//Given data
+let dataset1 = ""2013-04-10, 2013-04-16""
+let dataset2 = ""87789,2013-04-10|35444,2013-04-14""
+let dataset3 = ""2013-04-10,SE|2013-04-15,EA""
+
+//Extract data
+let keyValuePair (c:char) (str:string) = let [|a;b|] = str.Split(c) in a,b
+let mapTuple fn a = fn (fst a), fn (snd a)
+
+let date1,date2 = keyValuePair ',' dataset1 |> mapTuple System.DateTime.Parse 
+
+let data2 = 
+  dataset2.Split('|') 
+  |> Seq.map (keyValuePair ',') 
+  |> Seq.map (fun (code, date) -> System.DateTime.Parse date, code)
+  |> Map.ofSeq 
+
+let data3 = 
+  dataset3.Split('|') 
+  |> Seq.map (keyValuePair ',') 
+  |> Seq.map (fun (date, code) -> System.DateTime.Parse date, code)
+  |> Map.ofSeq 
+
+let rec dateSeq (a:System.DateTime) (b:System.DateTime) = 
+  seq {
+    yield a.Date
+    if a < b then yield!  dateSeq (a.AddDays(1.0)) b
+  }
+
+//join data
+let getCode data key = match data |> Map.tryFind key with |Some v -> v |None -> """"
+
+let result = 
+  dateSeq date1 date2
+  |> Seq.map (fun d -> d, getCode data2 d, getCode data3 d)
+  |> Seq.toList 
+
+
+//Format result
+result |> List.iter ((fun (date, code1, code2) -> printfn ""[%s;%s;%s]"" (date.ToShortDateString()) code1 code2))

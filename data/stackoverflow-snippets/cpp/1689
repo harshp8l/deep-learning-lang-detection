@@ -1,0 +1,28 @@
+void applySel(const QItemSelectionModel *src, const QItemSelection &sel,
+              const QItemSelection &desel, const QItemSelectionModel *dst) {
+  // Disallow reentrancy on the selection models
+  static QHash<QObject*> busySelectionModels;
+  if (busySelectionModels.contains(src) || busySelectionModels.contains(dst))
+    return;
+  busySelectionModels.insert(src);
+  busySelectionModels.insert(dst);
+  // The models must be proxies
+  auto *srcModel = qobject_cast<QAbstractProxyItemModel*>(src->model());
+  auto *dstModel = qobject_cast<QAbstractProxyItemModel*>(dst->model());
+  Q_ASSERT(srcModel && dstModel);
+  // The proxies must refer to the same source model
+  auto *srcSourceModel = srcModel->sourceModel();
+  auto *dstSourceModel = dstModel->sourceModel();
+  Q_ASSERT(srcSourceModel && (srcSourceModel == dstSourceModel));
+  // Convey the selection
+  auto const srcSel = srcModel->mapSelectionToSource(sel);
+  auto const srcDesel = srcModel->mapSelectionToSource(desel);
+  auto const dstSel = dstModel->mapSelectionFromSource(srcSel);
+  auto const dstDesel = dstModel->mapSelectionFromSource(srcDesel);
+     // we would re-enter in the select calls
+  dst->select(dstSel, QItemSelectionModel::Select);
+  dst->select(dstDesel, QItemSelectionModel::Deselect);
+  // Allow re-entrancy
+  busySelectionModels.remove(src);
+  busySelectionModels.remove(dst);
+}

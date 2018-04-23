@@ -1,0 +1,13 @@
+namespace detail {
+    template <int> using Sink = std::true_type;
+
+    template<typename T,bool SFINAE=true> struct ConstexprDefault;
+    template<typename T>
+    struct ConstexprDefault<T, Sink<(T{}, 0)>::value> { inline static constexpr T instance = {}; };
+
+    template<typename T> constexpr auto constexpr_copiable(int) -> Sink<(T{ConstexprDefault<T>::instance}, 0)>;
+    template<typename T> constexpr auto constexpr_copiable(...) -> std::false_type;
+}
+
+template<typename T>
+using is_constexpr_copyable_t = decltype(detail::constexpr_copiable<T>(0));

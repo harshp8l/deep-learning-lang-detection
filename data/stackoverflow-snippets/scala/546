@@ -1,0 +1,15 @@
+val numericField = """"""\s*[-+]?\d+(\.\d+)?\s*,?"""""".r
+
+sc.textFile(""/path/to/csvFile"").
+  map( _.split("",\\s*"", 2) ).
+  map{ case Array(key, remainder) =>
+    (key, numericField.replaceAllIn(remainder, """").split("",\\s*"")) }.
+  flatMap{ case (k, arr) => arr.map( (k, _) ) }
+// res1: org.apache.spark.rdd.RDD[(String, String)] = MapPartitionsRDD[21] ...
+
+res1.collect
+// res2: Array[(String, String)] = Array(
+//   (R001,A), (R001,C), (R001,D), (R001,X),
+//   (R002,E), (R002,F), (R002,G), (R002,H), (R002,J),
+//   (R003,L), (R003,M), (R003,N), (R003,O), (R003,P), (R003,Q)
+// )

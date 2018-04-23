@@ -1,0 +1,16 @@
+        // Specify the wanted number of parallel tasks, and create a thread pool accordingly.
+    final int threadNb = 4;
+    final ForkJoinPool pool = new ForkJoinPool(threadNb);
+    // We give the entire procedure to the thread pool, which will be in charge of managing executions
+    pool.submit(
+        // Ask to execute each runnable in the list, in a parallel way.
+        () -> fileUploadList.parallelStream().forEach(r -> r.run())
+    );
+
+    // Below block is in charge of waiting complete execution.
+    pool.shutdown();
+    try {
+        pool.awaitTermination(1, TimeUnit.MINUTES);
+    } catch (InterruptedException ex) {
+        // Do whatever cancelling logic you want, or let it propagate
+    }

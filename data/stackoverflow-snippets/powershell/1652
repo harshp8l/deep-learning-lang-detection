@@ -1,0 +1,31 @@
+$ErrorActionPreference = 'SilentlyContinue'
+$servers = Get-Content C:\Servers.txt
+$files = @('C:\DiskSpace.ps1', 'D:\DiskSpace.ps1', 'Y:\DiskSpace.ps1')
+
+$report = foreach ($server in $servers) {
+    if (Test-Connection -ComputerName $server -Quiet) {
+        $response = Invoke-Command -ComputerName $server -ScriptBlock {
+            Get-Childitem -Path $using:files  | ForEach-Object {
+                (Get-Content $_).replace('bad_email@domain.com', 'good_email@domain.com') | Set-Content $_
+                [PSCustomObject]@{
+                    Name = $env:COMPUTERNAME
+                    Message = ""$($_.fullname) updated.""
+                }
+            }
+        }
+        if ($response -eq $null) {
+            [PSCustomObject]@{
+                Name = $env:COMPUTERNAME
+                Message = ""No files found""
+            }
+        } else {
+            $response
+        }
+    } else {
+        [PSCustomObject]@{
+            Name = $env:COMPUTERNAME
+            Message = ""Unreachable""
+        }
+    }
+}
+$report

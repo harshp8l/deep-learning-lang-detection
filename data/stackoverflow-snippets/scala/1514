@@ -1,0 +1,17 @@
+object EvaluateAddress {
+  sealed trait Value
+  object Value {
+    case class AsId(id: String) extends Value
+    case class AsAddress(address: MailingAddress) extends Value
+
+    implicit def idAsValue(id: String): Value = AsId(id)
+    implicit def addressAsValue(address: MailingAddress): Value = AsAddress(address)
+  }
+
+  def withRawValue[T](addressFormat: String,
+    screeningAddressType: String,
+    rawValue: Option[T])(implicit asValue: T => Value): EvaluateAddress = 
+  {
+    EvaluateAddress(addressFormat, screeningAddressType, rawValue.map(asValue))
+  }
+} 

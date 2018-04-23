@@ -1,0 +1,32 @@
+type user struct {
+    Name  string
+    Pass  string
+    Email string
+    Age   int
+}
+
+func main() {
+    db, err := sql.Open(""mysql"", ""pwd@tcp(ip:port)/db"")
+    if err != nil {
+        panic(err.Error())
+    }
+    rows, err := db.Query(""select user, pass, email, age from users"")
+    if err != nil {
+        panic(err.Error())
+    }
+    var (
+        users []user
+    )
+    for rows.Next() {
+        u := user{}
+        err = rows.Scan(
+            &u.Name, &u.Pass, &u.Email, &u.Age,
+        )
+        if err != nil {
+            panic(err)
+        }
+
+        users = append(users, u)
+    }
+    fmt.Println(users)
+}

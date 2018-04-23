@@ -1,0 +1,14 @@
+let doRecursiveAsyncThing input = async {
+    use r = XmlReader.Create(new StringReader(input), new XmlReaderSettings(Async = true ))
+    let loop x = async {
+        let! noteType = r.ReadAsync() |> Async.AwaitTask
+        match noteType with
+        | XmlNodeType.Element -> Console.WriteLine r.LocalName
+                                 do! loop x
+        | XmlNodeType.Text    -> let! value = r.GetValueAsync() |> Async.AwaitTask
+                                 Console.WriteLine value
+                                 do! loop x
+        | _                   -> () }
+
+    }
+    do! loop r

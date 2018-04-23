@@ -1,0 +1,80 @@
+(ns concur-req.core
+  (require [clojure.core.async :as async]
+           [cheshire.core :refer [decode]]
+           [org.httpkit.client :as http]))
+
+(defn url-of
+  [id]
+  ;; this service responds within 100-200ms
+  (str ""http://localhost:28080/"" id "".json""))
+
+(defn retrieve-json-async
+  [url c]
+  (http/get url nil
+            (fn [{body :body status :status :as resp}]
+              (if (= 200 status)
+                (async/put! c (decode body true))
+                (println ""ERROR:"" resp))
+              (async/close! c))))
+
+(defn run [parallelism stop-chan]
+  (let [;; allocate half of the parallelism to each step
+        step1-n    (int (max (/ parallelism 2) 1))
+        step2-n    step1-n
+        ;; buffer to take ids, transform them into urls
+        step1-chan (async/chan step1-n (map url-of))
+        ;; buffer for result of pulling urls from step1, xform by extracting :next url
+        step2-chan (async/chan step2-n (map :next))
+        ;; buffer to count completed results
+        out-chan   (async/chan 1 (map (constantly 1)))
+        ;; for delivering the final result
+        final-chan (async/chan)
+        start-time (System/currentTimeMillis)]
+
+    ;; process URLs from step1 and put the result in step2
+    (async/pipeline-async step1-n step2-chan retrieve-json-async step1-chan)
+    ;; process URLs from step2 and put the result in out
+    (async/pipeline-async step2-n out-chan retrieve-json-async step2-chan)
+
+    ;; keep the input channel full until stop-chan is closed.
+    (async/go-loop []
+      (let [[v c] (async/alts! [stop-chan [step1-chan ""1""]])]
+        (if (= c stop-chan)
+          (async/close! step1-chan)
+          (recur))))
+
+    ;; count messages on out-chan until the pipeline is closed, printing
+    ;; status message every second
+    (async/go-loop [status-timer (async/timeout 1000) subt 0 accu 0]
+      (let [[v c] (async/alts! [status-timer out-chan])]
+        (cond (= c status-timer)
+              (do (println subt ""records..."")
+                  (recur (async/timeout 1000) 0 (+ subt accu)))
+
+              (nil? v)
+              (async/>! final-chan (+ subt accu))
+
+              :else
+              (recur status-timer (+ v subt) accu))))
+
+    ;; block until done, then emit final report.
+    (let [final-total (async/<!! final-chan)
+          elapsed-ms  (- (System/currentTimeMillis) start-time)
+          elapsed-s   (/ elapsed-ms 1000.0)]
+      (print (format ""Processed %d records with parallelism %d in %.3f seconds (%d/sec)\n""
+                     final-total parallelism elapsed-s
+                     (int (/ final-total elapsed-s)))))))
+
+(defn run-for
+  [seconds parallelism]
+  (let [stop-chan (async/chan)]
+    (future
+      (Thread/sleep (* seconds 1000))
+      (async/close! stop-chan))
+    (run parallelism stop-chan)))
+
+(do
+  ;; Warm up the connection pool, avoid somaxconn problems...
+  (doseq [p (map #(* 20 (inc %)) (range 25))]
+    (run-for 1 p))
+  (run-for (* 60 60 6) 500))

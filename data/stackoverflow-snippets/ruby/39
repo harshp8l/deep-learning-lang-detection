@@ -1,0 +1,23 @@
+require 'liquid'
+
+class CreatePicTag < Liquid::Tag
+  def initialize(tag_name, text, tokens)
+    super
+    parse_text(text)
+  end
+
+  def parse_text(text)
+    pattern = /(?<=\[).+?(?=\])/
+    @class = text.scan(pattern)[0]
+    @alt   = text.scan(pattern)[1]
+    @path  = text.scan(pattern)[2]
+  end
+
+  def render(context)
+    [@class, @alt, @path].join('|')
+  end
+end
+
+Liquid::Template.register_tag('create_pig', CreatePicTag)
+@template = Liquid::Template.parse(""{% create_pig [foo][bar][baz] %}"")
+p @template.render

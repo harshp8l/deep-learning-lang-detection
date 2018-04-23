@@ -1,0 +1,23 @@
+// various possible command types
+type Commands =
+    | Command1 of byte * int    // maybe payload of Command1 is known to be an int
+    | Command2 of byte * string // maybe payload of Command1 is known to be a string
+
+// active pattern for initial data decomposition
+let (|Command|) (bytes : byte[]) =
+    (bytes.[0], bytes.[1], Array.skip 2 bytes)
+
+let convert (bytes : byte[]) =
+    match bytes with
+    | Command(addr, 1uy, [| intData |]) ->
+        Command1(addr, int intData)
+    | Command(addr, 2uy, strData) ->
+        Command2(addr, String(Text.Encoding.ASCII.GetChars(strData)))
+    | _ ->
+        failwith ""unknown command type""
+
+// returns Command1(0x10, 42)
+convert [| 0x10uy; 0x01uy; 0x2Auy |]
+
+// returns Command2(0x10, ""foobar"") 
+convert [| 0x10uy; 0x02uy; 0x66uy; 0x6Fuy; 0x6Fuy; 0x62uy; 0x61uy; 0x72uy |]

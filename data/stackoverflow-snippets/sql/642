@@ -1,0 +1,50 @@
+""use strict"";
+
+const fs = require(""fs"");
+const path = require(""path"");
+
+/**
+ * Start off with a MySQL Dump file, import that, and then migrate to the latest version.
+ *
+ * @param dbName {string} the name of the database
+ * @param mysqlDumpFile {string} The full path to the file to import as a starting point
+ */
+module.exports.migrateFromFile = function(dbName, mysqlDumpFile) {
+  let sequelize = createSequelize(dbName);
+  console.log(""Importing from "" + mysqlDumpFile + ""..."");
+  let queries = fs.readFileSync(mysqlDumpFile, {encoding: ""UTF-8""}).split("";\n"");
+
+  console.log(""Importing dump file..."");
+
+  // Setup the DB to import data in bulk.
+  let promise = sequelize.query(""set FOREIGN_KEY_CHECKS=0""
+  ).then(() => {
+    return sequelize.query(""set UNIQUE_CHECKS=0"");
+  }).then(() => {
+    return sequelize.query(""set SQL_MODE='NO_AUTO_VALUE_ON_ZERO'"");
+  }).then(() => {
+    return sequelize.query(""set SQL_NOTES=0"");
+  });
+
+  console.time(""Importing mysql dump"");
+  for (let query of queries) {
+    query = query.trim();
+    if (query.length !== 0 && !query.match(/\/\*/)) {
+      promise = promise.then(() => {
+        console.log(""Executing: "" + query.substring(0, 100));
+        return sequelize.query(query, {raw: true});
+      })
+    }
+  }
+
+  return promise.then(() => {
+    console.timeEnd(""Importing mysql dump"");
+
+    console.log(""Migrating the rest of the way..."");
+    console.time(""Migrating after importing mysql dump"");
+    return exports.migrateUp(dbName); // Run the rest of your migrations
+  }).then(() => {
+    console.timeEnd(""Migrating after importing mysql dump"");
+  });
+
+};

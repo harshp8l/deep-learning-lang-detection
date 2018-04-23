@@ -1,0 +1,21 @@
+(def my-coll '{:data
+               ({:book/public-id #uuid ""555b6f35-4e8c-42c5-bb80-b4d9147394c0""
+                 :book/name ""AAA""}
+                 {:book/public-id #uuid ""555b6f35-4e8c-42c5-bb80-b4d9147394c1""
+                  :book/name ""BBB""}
+                 {:book/public-id #uuid ""555b6f35-4e8c-42c5-bb80-b4d9147394c3""
+                  :book/name ""CCC""})})
+
+;; Note I'm applying this into a set to have faster lookup.
+(def filter-coll (set
+                   '(#uuid ""555b6f35-4e8c-42c5-bb80-b4d9147394c1""
+                      #uuid ""555b6f35-4e8c-42c5-bb80-b4d9147394c3"")))
+
+;; Here we use contains:
+(filter #(contains? filter-coll (:book/public-id %)) (my-coll :data))
+
+;; Here we use the fact that we can call 'sets' like functions:
+(filter #(filter-coll (:book/public-id %)) (my-coll :data))
+
+;; And an even shorter, and equivalent version with comp:
+(filter (comp filter-coll :book/public-id) (:data my-coll))

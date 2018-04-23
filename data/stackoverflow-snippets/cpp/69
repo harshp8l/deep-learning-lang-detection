@@ -1,0 +1,94 @@
+#include <boost/spirit/home/x3.hpp>
+#include <boost/fusion/include/adapt_struct.hpp>
+
+namespace asdl { namespace ast {
+    struct Field {
+        std::string type;
+        boost::optional<char> flag;
+        boost::optional<std::string> name;
+    };
+
+    typedef std::vector<asdl::ast::Field> field_vec;
+
+    struct Constructor {
+        std::string name;
+        boost::optional<field_vec> fields;
+    };
+
+    struct Sum {
+        std::vector<Constructor> types;
+        boost::optional<field_vec> attributes;
+    };
+
+    struct Product {
+        field_vec fields;
+    };
+
+    typedef boost::variant<Product, Sum> type_variant;
+
+    struct Type {
+        std::string name;
+        type_variant value;
+    };
+
+    struct Module {
+        std::string id;
+        std::vector<Type> dfns;
+    };
+} }
+
+BOOST_FUSION_ADAPT_STRUCT(asdl::ast::Module, id, dfns)
+BOOST_FUSION_ADAPT_STRUCT(asdl::ast::Type, name, value)
+BOOST_FUSION_ADAPT_STRUCT(asdl::ast::Field, type, flag, name)
+BOOST_FUSION_ADAPT_STRUCT(asdl::ast::Constructor, name, fields)
+BOOST_FUSION_ADAPT_STRUCT(asdl::ast::Sum, types, attributes)
+BOOST_FUSION_ADAPT_STRUCT(asdl::ast::Product, fields)
+
+namespace asdl
+{
+    namespace x3    = boost::spirit::x3;
+    namespace ascii = boost::spirit::x3::ascii;
+
+    using ast::type_variant;
+    using ast::field_vec;
+
+    x3::rule<class module,      ast::Module     > const module      = ""module"";
+    x3::rule<class definitions, ast::Type       > const definitions = ""definitions"";
+    x3::rule<class type,        type_variant    > const type        = ""type"";
+    x3::rule<class fields,      field_vec       > const fields      = ""fields"";
+    x3::rule<class field,       ast::Field      > const field       = ""field"";
+    x3::rule<class product,     ast::Product    > const product     = ""product"";
+    x3::rule<class sum,         ast::Sum        > const sum         = ""sum"";
+    x3::rule<class constructor, ast::Constructor> const constructor = ""constructor"";
+
+    template <typename T> static auto as = [](auto p) { return x3::rule<struct tag, T> {""as""} = p; };
+
+    auto const alpha           = '_' | ascii::upper | ascii::lower;
+    auto const alpha_num       = alpha | ascii::digit;
+    auto const typ_id          = as<std::string>(x3::lexeme[ascii::lower >> *alpha_num]);
+    auto const con_id          = as<std::string>(x3::lexeme[ascii::upper >> *alpha_num]);
+    auto const id              = typ_id | con_id;
+
+    auto const module_def      = ""module"" >> id >> '{' >> *definitions >> '}';
+    auto const definitions_def = typ_id >> '=' >> type;
+    auto const type_def        = product | sum;
+    auto const product_def     = fields;
+    auto const sum_def         = constructor % '|' >> -(""attributes"" >> fields);
+    auto const constructor_def = con_id >> -fields;
+    auto const fields_def      = '(' >> field % ',' >> ')';
+    auto const field_def       = typ_id >> -(ascii::char_('?') | ascii::char_('*')) >> -id;
+
+    BOOST_SPIRIT_DEFINE(module, definitions, type, product, sum, constructor, fields, field)
+
+    bool parse(const std::string &input, ast::Module &mod) {
+        std::string::const_iterator iter = input.begin();
+        std::string::const_iterator end = input.end();
+
+        return x3::phrase_parse(iter, end, module >> x3::eoi, ascii::space, mod);
+    }
+} //namespace asdl
+
+int main() {
+    asdl::ast::Module mod;
+    asdl::parse("""", mod);
+}

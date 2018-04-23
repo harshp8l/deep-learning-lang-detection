@@ -1,0 +1,18 @@
+bool fromCV2GLM(const cv::Mat& cvmat, glm::mat4* glmmat) {
+    if (cvmat.cols != 4 || cvmat.rows != 4 || cvmat.type() != CV_32FC1) {
+        SysUtil::errorOutput(""PanoDataGenerator::Mat_CV2GLM Matrix conversion error!"");
+        return false;
+    }
+    memcpy(glm::value_ptr(*glmmat), cvmat.data, 16 * sizeof(float));
+    *glmmat = glm::transpose(*glmmat);
+    return true;
+}
+
+bool fromGLM2CV(const glm::mat4& glmmat, cv::Mat* cvmat) {
+    if (cvmat->cols != 4 || cvmat->rows != 4) {
+        (*cvmat) = cv::Mat(4, 4, CV_32F);
+    }
+    memcpy(cvmat->data, glm::value_ptr(glmmat), 16 * sizeof(float));
+    *cvmat = cvmat->t();
+    return true;
+}

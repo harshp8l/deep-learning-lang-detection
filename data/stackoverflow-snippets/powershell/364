@@ -1,0 +1,50 @@
+function g {
+    param (
+        [Parameter(ValueFromPipeline)]
+        $InputObject 
+    )
+    begin { $f = [f]::new() } # The local IDisposable is created when the pipeline is established.
+    process {
+        try 
+        {
+            # flags to keep track of why finally was run
+            $success = $false
+            $caught = $false
+
+            $InputObject  # output an object to exercise the pipeline downstream
+
+            # if we get here, nothing unusual happened downstream
+            $success = $true
+        }
+        catch
+        {
+            # we get here if an exception was thrown
+            $caught = $true
+
+            # !!!
+            # This is bad news.  It's possible the exception will be 
+            # handled by an upstream process{} block.  The pipeline would
+            # survive and the next invocation of process{} would occur
+            # after $f is disposed.
+            # !!!
+            $f.Dispose()
+
+            # rethrow the exception
+            throw
+        }
+        finally
+        {
+            # !!!
+            # This finally block is not invoked when the PowerShell instance receives
+            # a stop signal while executing code upstream in the pipeline.  In that
+            # situation cleanup $f.Dispose() is not invoked.
+            # !!!
+            if ( -not $success -and -not $caught )
+            {
+                # dispose only if finally{} is the only block remaining to run
+                $f.Dispose()
+            }
+        }
+    }
+    end {$f.Dispose()}
+}

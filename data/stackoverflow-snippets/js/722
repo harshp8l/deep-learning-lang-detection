@@ -1,0 +1,14 @@
+# -*- coding: utf-8 -*-       
+from odoo import models, fields, api, tools
+from odoo.addons.mail.models.mail_thread import MailThread
+
+class addon1(models.AbstractModel):
+    _inherit = 'mail.thread'
+
+    @api.multi
+    def _message_add_suggested_recipient(self, result, partner=None, email=None, reason=''):
+        result = super(MailThread, self)._message_add_suggested_recipient(self, result, partner, email, reason)
+
+        if partner and partner.email:  # complete profile: id, name <email>
+            result[self.ids[0]].append((partner.id, '%s<%s>' % (partner.name, partner.email), reason, False))
+        return result

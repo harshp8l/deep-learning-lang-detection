@@ -1,0 +1,14 @@
+doit() {
+  JVM=""$1""
+  systime=$(date +""%m-%d-%y-%T"")
+  for i in {1..10}
+  do
+    PID=`ps -auxwww | grep ""jdk"" |  grep $JVM | grep -v grep | cut -c -30 | awk '{print  $2}'`
+    MEM=`ps -auxwww | grep ""jdk"" |  grep $JVM | grep -v grep | cut -c -30 | awk '{print  $4 }'`
+    CPU=`ps -auxwww | grep ""jdk"" |  grep $JVM | grep -v grep | cut -c -30 | awk '{print  $3 }'`
+    printf '%-5s %-20s %-20s %-20s %-20s \n' ""$systime $JVM $PID $CPU $MEM ""
+    sleep 5
+  done
+}
+export -f doit
+parallel -j0 --linebuffer --tag doit ::: aaa00{1..5}_bcdefx01 >> $LOGFILE

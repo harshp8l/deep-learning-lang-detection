@@ -1,0 +1,28 @@
+import UIKit
+
+class ViewController: UIViewController {
+
+    let queue = DispatchQueue(label: ""wrapper queue"", attributes:.concurrent)
+
+    var valueA: Int32 = 0 {
+        didSet {
+            print(""new valueA \(valueA) on time \(Date())"")
+        }
+    }
+
+    var detector: Wrapper? {
+        didSet {
+            if let detector = detector {
+                queue.async {
+                    detector.asyncFunction(&self.valueA) { value in
+                        print(""iteration value: \(value)"")
+                    }
+                }
+            }
+        }
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        detector = Wrapper()
+    } }

@@ -1,0 +1,30 @@
+cd path_to_data
+# Process a single sample and a single product name
+doit() {
+    SAMPLE_FOLDER=""$1""
+    PRODUCT_NAME_NO_SPACES=""$2""
+    SEQ=""$3""
+    # Make sure temporary files are named uniquely
+    # so any parallel job will not overwrite these.
+    GFF=${TMP_DIR}/tmp.gff-$SEQ
+    cd ${SAMPLE_FOLDER}/another_folder
+    echo ""$SAMPLE_FOLDER was found""
+
+    PRODUCT_NAME=`echo ${PRODUCT_NAME_NO_SPACES} | tr ""@"" "" ""`
+        echo ""$PRODUCT_NAME with white spaces""
+        BED_FILENAME=${BED_DIR}/intersect_${PRODUCT_NAME_NO_SPACES}_${SAMPLE_FOLDER}.bed
+        grep ""$PRODUCT_NAME"" file_to_search_through > $GFF
+
+        cat $GFF | some 'awk' command  > ${BED_FILENAME}
+
+        samtools view -L ${BED_FILENAME} another_input_file.bam | many | pipes | with | 'awk' | and | perl | etc
+        rm $GFF
+    rmdir -p ${OUTPUT_DIR}/tmp
+}
+export -f doit
+# These variables are defined outside the function and must be exported to be visible
+export BED_DIR
+export TMP_DIR
+export OUTPUT_DIR
+# If there are many of these variables, use env_parallel instead of
+# parallel. Then you do not need to export the variables.

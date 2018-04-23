@@ -1,0 +1,23 @@
+func Pack(m, eval int16, depth, ntype uint8) (value uint64) {
+    value = (uint64(eval) |
+        (uint64(m) << 16) |
+        // (uint64(b.Fullmoveno) << 32) |  <-- My suspicion is here !
+        (uint64(depth) << 48) |
+        (uint64(ntype) << 56))
+    return
+}
+func Unpack(value uint64) (move int16, eval int16, depth uint8, ntype uint8) {
+    eval = int16(value & 0xFFFF)
+    move = int16((value >> 16) & 0xFFFF)
+    depth = uint8((value >> 48) & 0xFF)
+    ntype = uint8((value >> 56) & 0xFF)
+    return
+}
+
+func main() {
+    m, e, d, n := int16(8), int16(8), uint8(8), uint8(8)
+    packedValue := Pack(m, e, d, n)
+    fmt.Printf(""%v\n"", packedValue)
+    move, eval, depth, ntype := Unpack(packedValue)
+    fmt.Printf(""%v %v %v %v"", move, eval, depth, ntype)
+}

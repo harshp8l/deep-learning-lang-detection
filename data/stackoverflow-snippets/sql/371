@@ -1,0 +1,26 @@
+%macro remove_str(Dataset, str);
+
+    proc contents noprint
+        data=work.&dataset out=sjm_tmp(keep=NAME);
+    run;
+
+    data sjm_tmp2;
+        set sjm_tmp;
+        help= tranwrd(NAME, ""&str."", '');
+        foobar=cats(name, '=',help);
+    run;
+
+    proc sql noprint;
+        select foobar into :sjm_list separated by ' ' from sjm_tmp2;
+    quit;
+
+    proc datasets library = work nolist;
+       modify &dataset;
+       rename &sjm_list;
+    quit;
+
+    proc datasets library=work noprint;  
+        delete sjm_tmp sjm_tmp2 ;  
+    run;
+
+%mend;

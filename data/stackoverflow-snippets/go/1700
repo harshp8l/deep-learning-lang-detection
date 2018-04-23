@@ -1,0 +1,25 @@
+func main() {
+    // Get the last two snapshots
+    take, _ := zfs.Snapshots(""tank/test"")
+    snap := take[0].Name
+    ds1, _ := zfs.GetDataset(snap)
+    snap = take[1].Name
+    ds2, _ := zfs.GetDataset(snap)
+
+    // New server connection
+    conn, _ := net.Dial(""tcp"", ""192.168.99.5:7766"")
+
+    // Read data of server side
+    buff := bufio.NewReader(conn)
+    n, _ := buff.ReadByte()
+
+    // Execute the correct case
+    switch string(n) {
+    case ""0"":
+        ds1.SendSnapshot(conn)
+        conn.Close()
+    default :
+        zfs.SendSnapshotIncremental(conn, ds1, ds2, zfs.IncrementalStream)
+        conn.Close()
+    }
+}

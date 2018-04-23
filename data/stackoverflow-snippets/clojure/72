@@ -1,0 +1,12 @@
+(defn slow-link [text single-click-fn double-click-fn]
+  (let [waiting? (atom false)]
+    [:a {:on-click #(when (compare-and-set! waiting? false true)
+                      (js/setTimeout (fn [] (when @waiting?
+                                              (single-click-fn %)
+                                              (reset! waiting? false)))
+                                     500))
+         :on-double-click #(do (reset! waiting? false)
+                               (double-click-fn %))}
+     text]))
+
+[slow-link ""Test"" #(prn ""single-click"") #(prn ""double-click"")]

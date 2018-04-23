@@ -1,0 +1,17 @@
+public static void main(String[] args) throws IOException {
+    createDummy(""/tmp/data.txt"", 25_000_000);
+
+    BalanceBatch balance = new BalanceBatch(10);
+
+    balance.startAll();
+    try (Stream<String> stream = Files.lines(Paths.get(""/tmp/data.txt""))) {
+        stream.forEach(balance::send);
+    } catch (Exception e1) {
+        e1.printStackTrace();
+    }
+    balance.stopAll();
+}
+
+public static void createDummy(String file, int nbLine) throws IOException {
+    Files.write(Paths.get(file), (Iterable<String>) IntStream.range(0, nbLine).mapToObj(i -> String.format(""A%d;B%d;C%d;D%d"", i, i, i, i))::iterator);
+}

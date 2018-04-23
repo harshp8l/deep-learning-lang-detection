@@ -1,0 +1,16 @@
+select eventid,
+       max(case when grp = 'A' then uservote end) as groupA,
+       max(case when grp = 'B' then uservote end) as groupB,
+       max(case when grp = 'Both' then uservote end) as both 
+from (select eventid, uservote, grp, count(*) as cnt,
+             row_number() over (partition by eventid, grp order by count(*) desc) as seqnum
+      from votetable vt cross apply
+           (values (case when isGroupA = '1' then 'A' end),
+                   (case when isGroupB = '1' then 'b' end),
+                   ('Both')
+           ) v(grp)
+      where grp is not null
+      group by eventid, uservote, grp
+     ) eg
+where seqnum = 1
+group by eventId;

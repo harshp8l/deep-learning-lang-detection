@@ -1,0 +1,77 @@
+open System
+
+type CategoryAssessment =
+    { fieldIndex: int
+      value: int
+      ruleAssessments: int[] }
+
+let InitAssessment categorizeFields rules =
+    let ruleAssessments = Array.create (Array.length rules) 0
+    Array.map (fun categorizeField ->
+                   let fieldIndex, categoryValue = categorizeField
+                   { CategoryAssessment.fieldIndex = fieldIndex;
+                     value = categoryValue;
+                     ruleAssessments = ruleAssessments })
+              categorizeFields
+
+let AssessCategory ruleMatches (row : int[]) categoryAssessment =
+    let fieldIndex = categoryAssessment.fieldIndex
+    let categoryValue = categoryAssessment.value
+    let categoryMatch = categoryValue = row.[fieldIndex]
+    let newRuleAssessments =
+        Array.map2 (fun ruleAssessment ruleMatch ->
+                        if ruleMatch = categoryMatch then
+                            ruleAssessment + 1
+                        else
+                            ruleAssessment)
+                   categoryAssessment.ruleAssessments
+                   ruleMatches
+    { categoryAssessment with ruleAssessments = newRuleAssessments }
+
+let MatchRule (row : int[]) rule =
+    let fieldIndex, eqVal = rule
+    row.[fieldIndex] = eqVal
+
+let Assess categorizeFields rules input =
+  printfn ""START - Assess""
+  let d =
+    Array.fold (fun categoryAssessment row ->
+                 let ruleMatches = Array.map (MatchRule row) rules
+                 Array.map (AssessCategory ruleMatches row) categoryAssessment)
+               (InitAssessment categorizeFields rules)
+               input
+  printfn ""END - Assess""
+  d
+
+let JoinAssessments assessments =
+    let numAssessments = Array.length assessments
+    Array.fold (fun accAssessment assessment ->
+                    Array.map2 (fun accCategory category ->
+                                    let newRuleAssessments =
+                                        Array.map2 (+)
+                                                   accCategory.ruleAssessments
+                                                   category.ruleAssessments
+                                    { accCategory with
+                                          ruleAssessments = newRuleAssessments })
+                               accAssessment
+                               assessment)
+               assessments.[0]
+               assessments.[1..(numAssessments-1)]
+
+
+let numRecords = 10000
+let numFields = 20
+let numSplits = 10
+let numRules = 10000
+let inputs = Array.create numSplits
+                          [| for i in 1 .. (numRecords / numSplits) ->
+                                [| for j in 1 .. numFields ->
+                                       (i % 10) + j |] |]
+let categorizeFields = [| (1, 6); (2, 3); (2, 4); (3, 2) |]
+let rules = [| for i in 1 .. numRules -> (i % numFields, i) |]
+
+let assessments =
+    Array.Parallel.map (Assess categorizeFields rules) inputs
+    |> JoinAssessments
+printfn ""Assessments: %A"" assessments
+0

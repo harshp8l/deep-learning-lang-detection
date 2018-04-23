@@ -1,0 +1,33 @@
+#include <type_traits>
+#include <utility>
+#include <functional>
+
+template<typename T>
+inline static void f(T&& arg) {
+    static_assert(std::is_lvalue_reference_v<T>, ""Only lvalue permitted"");
+}
+
+template<size_t n>
+inline static void f(const char (&arg)[n])
+{
+    static_assert(n!=n, ""Only lvalue permitted"");
+}
+
+int main()
+{
+    std::string x;
+
+    f(x); // ok
+
+    int y;
+
+    f(y); // ok
+
+    const char *p;
+
+    f(p); // ok
+
+    f(""foobar""); // fail
+
+    return 0;
+}

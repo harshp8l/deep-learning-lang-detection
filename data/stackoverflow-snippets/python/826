@@ -1,0 +1,11 @@
+import pandas as pd
+import numpy as np
+df = pd.DataFrame({'Hours': np.tile([1,2,3,4],50),
+                  'Mins':  np.tile([10,20,30,40],50),
+                  'Secs': np.tile([11,21,31,41],50)})
+
+%timeit pd.to_timedelta(df.Hours*3600 + df.Mins*60 + df.Secs, unit='s')
+#432 µs ± 5.4 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+%timeit df.apply(lambda row: pd.Timedelta(hours=row.Hours, minutes=row.Mins, seconds=row.Secs), axis=1)
+#12 ms ± 67.4 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)

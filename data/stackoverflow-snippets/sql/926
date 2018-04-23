@@ -1,0 +1,36 @@
+declare @t table (IDc int , Idp int)
+insert into @t
+values
+(321,null)
+,(123,321)
+,(124,123)
+,(116,124)
+
+declare @t2 table (RandoID varchar(10), IDChild int)
+insert into @t2
+values('asdf',123)
+
+;with cte as
+(
+    select anchor = IDChild
+         ,ParentOrSelf = IDc
+         ,RandoID 
+         ,RandomName
+    from @t
+    cross join (select RandoID,RandoName from @t2 t2 join @t3 t3 on t2.RandoID=t3.RandoID) crossed
+    where IDc=@anchor
+
+    union all
+
+    select t2.IDChild
+         ,IDc
+         , t2.RandoID,RandomName
+    from @t t
+        cross join (select RandoID,RandoName from @t2 t2 join @t3 t3 on t2.RandoID=t3.RandoID) t2
+        join cte on cte.ParentOrSelf = t.Idp
+)
+
+select IDc
+  , cte.RandoID,cte.RandomName
+from @t t
+    left join cte on t.IDc = cte.ParentOrSelf

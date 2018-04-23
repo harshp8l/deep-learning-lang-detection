@@ -1,0 +1,12 @@
+let getFuncName f =
+   let type' = f.GetType()
+   let method' = type'.GetMethods() |> Array.find (fun m -> m.Name=""Invoke"")
+
+   let il = method'.GetMethodBody().GetILAsByteArray()
+   let methodCodes = [byte OpCodes.Call.Value;byte OpCodes.Callvirt.Value]
+
+   let position = il |> Array.findIndex(fun x -> methodCodes |> List.exists ((=)x))
+   let metadataToken = BitConverter.ToInt32(il, position+1) 
+
+   let actualMethod = type'.Module.ResolveMethod metadataToken
+   actualMethod.Name

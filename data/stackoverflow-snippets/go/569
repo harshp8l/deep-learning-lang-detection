@@ -1,0 +1,40 @@
+func TestSomething(t *testing.T) {
+
+    // newUuid could be used to generate a UUID to be able to uniquely identify ""fooFunc""
+    newUuid := func() string {
+        // sudo apt-get install uuid-runtime
+        uuid, _ := exec.Command(""uuidgen"").Output()
+
+        re := regexp.MustCompile(`\r?\n`)
+        uuidStr := re.ReplaceAllString(string(uuid), """")
+        return uuidStr
+    }
+
+    // randBetween is a dummy random int generator using ""math/rand""
+    randBetween := func(min int, max int) int {
+        return min + rand.Intn(max-min)
+    }
+
+    // fooFunc simulates some sort of very slow execution
+    // like database queries or network I/O
+    fooFunc := func(ctx context.Context) {
+        uuid := newUuid()
+        randWait := time.Duration(randBetween(0, 4000)) * time.Millisecond
+        dummyLog(""Starting task %s taking %s random time"", uuid, randWait)
+        select {
+        case <-time.After(randWait):
+            dummyLog(""Finished task %s"", uuid)
+        case <-ctx.Done():
+            dummyLog(""Killed task %s, reason: '%s'"", uuid, ctx.Err())
+        }
+    }
+
+    // test the very slow execution of ""fooFunc""
+    timeoutUpperBound := 2 * time.Second
+    quitChan := schedule(fooFunc, timeoutUpperBound)
+
+    time.Sleep(6 * timeoutUpperBound)
+    close(quitChan)
+    // wait more to see the ""closing"" message
+    time.Sleep(4 * time.Second)
+}

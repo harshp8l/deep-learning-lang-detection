@@ -1,0 +1,48 @@
+def simple_rnn(features, labels, mode, params):
+
+    # 0. Reformat input shape to become a sequence
+    x = tf.split(features[TIMESERIES_COL], N_INPUTS, 1)
+    #print 'x={}'.format(x)
+
+    # 1. configure the RNN
+    lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(LSTM_SIZE, forget_bias=1.0)
+    outputs, _ = tf.nn.static_rnn(lstm_cell, x, dtype=tf.float32)
+
+    # slice to keep only the last cell of the RNN
+    outputs = outputs[-1]
+    #print 'last outputs={}'.format(outputs)
+
+    # output is result of linear activation of last layer of RNN
+    weight = tf.Variable(tf.random_normal([LSTM_SIZE, N_OUTPUTS]))
+    bias = tf.Variable(tf.random_normal([N_OUTPUTS]))
+    predictions = tf.matmul(outputs, weight) + bias
+
+    # 2. loss function, training/eval ops
+    if mode == tf.contrib.learn.ModeKeys.TRAIN or mode == tf.contrib.learn.ModeKeys.EVAL:
+        loss = tf.losses.mean_squared_error(labels, predictions)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate=params[""l_rate""])
+        train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
+        eval_metric_ops = {""rmse"": tf.metrics.root_mean_squared_error(labels, predictions)}
+        return  tf.estimator.EstimatorSpec(
+            mode=mode,
+            loss=loss,
+            train_op=train_op,
+            eval_metric_ops=eval_metric_ops)
+
+    else:
+        loss = None
+        train_op = None
+        eval_metric_ops = None
+
+        # 3. Create predictions
+
+        export_outputs = {'predict_output': tf.estimator.export.PredictOutput({""pred_output_classes"": predictions, 'probabilities': #your probabilities})}
+        predictions_dict = {""predicted"": predictions}
+        # 4. return ModelFnOps
+
+        return tf.estimator.EstimatorSpec(
+            mode=mode,
+            predictions=predictions_dict,
+            loss=loss,
+            train_op=train_op,
+            eval_metric_ops=eval_metric_ops,export_outputs=export_outputs )

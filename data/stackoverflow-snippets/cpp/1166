@@ -1,0 +1,13 @@
+bp::opstream m_Write; //output stream to pipe   
+boost::filesystem::path program(""/gnuplot/bin/gnuplot.exe"");
+m_Plot = new bp::child(program, bp::std_in = m_Write, bp::windows::hide); //this solves the problem with _popen
+m_Write << ""set term png\n"";
+m_Write << ""set term pngcairo\n""; 
+m_Write << ""set output \"""" + ToPosixPath(sPath) + ""\""\n""; //Notice how this works with std::string :)
+m_Write << ""plot  \"""" + CreateTemp(X, Y) + ""\"" using 1:2 notitle\n"";
+m_Write << ""exit\n"";
+m_Write.flush();
+m_Write.pipe().close();
+
+m_Plot->wait(); //boost doc states ""The call to wait is necessary, to obtain it and tell the operating system, that no one is waiting for the process anymore.""
+delete m_Plot;

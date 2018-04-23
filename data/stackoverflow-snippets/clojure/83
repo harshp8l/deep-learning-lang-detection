@@ -1,0 +1,16 @@
+(db/with-db-transaction [tx {:datasource source-db}]
+  (db/query tx
+    [(db/prepare-statement (:connection tx)
+                           answer-sql
+                           {:result-type :forward-only
+                            :concurrency :read-only
+                            :fetch-size 2000})]
+    {:as-arrays? true
+     :result-set-fn (fn [result-set]
+                      (let [keys (first result-set)
+                            values (rest result-set)]
+                        (doseq [batch (partition-all 2000 values)]
+                          (db/insert-multi! {:datasource dct-db}
+                                            :dim_answers
+                                            keys
+                                            batch))))}))

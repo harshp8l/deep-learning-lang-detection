@@ -1,0 +1,14 @@
+(->> a
+     (partition-by #(-> % :balance neg?))
+     (drop-while #(-> % first :balance pos?))
+     (mapcat identity)
+     (map (juxt :day :balance))
+     (partition-all 2 1)
+     (keep (fn [[[date-1 val-1] [date-2 val-2]]]
+             (cond
+               (neg? val-1) (cond-> {:start date-1
+                                     :value val-1}
+                                    date-2 (assoc :end (dec-date date-2)))
+               (pos? val-1) nil
+               :else {:start date-2
+                      :value val-1}))))

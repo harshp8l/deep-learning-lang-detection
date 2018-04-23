@@ -1,0 +1,43 @@
+<?php
+    $str = '(5+1)*3/9';
+    $count = 0;
+    echo ""step"".($count+1)."" : $str \n<br/>"";
+    function bodmas($eq,$count,$op){
+        foreach (['*','/','+','-'] as $key => $symbol) {
+            preg_match_all(""!\d+(\.\d+)?\\$symbol\d+(\.\d+)?!"", $eq, $matches);
+            if(count($matches[0])){
+                foreach ($matches[0] as $key2 => $match) {
+                    $count++;
+                    eval(""\$result = $match;"");
+                    $eq = str_replace($match, $result, $eq);
+                    if($op){
+                        echo ""step"".($count+1)."" : $eq \n<br/>"";
+                    }
+                    singleton($eq,$count);
+                }
+            }
+        }
+    }
+
+    preg_match_all(""/\([^\^(\)]*\)/"", $str, $matches);
+    //print_r($matches);
+    foreach($matches[0] as $key=>$value){
+        $value = str_replace([""("","")""], ["""",""""], $value);
+        $eq = bodmas($value,$count,false);
+        $count++;
+        eval(""\$result = $value;"");
+        $str = str_replace(""($value)"", $result, $str);
+        echo ""step"".($count+1)."" : $str \n<br/>"";
+    }
+    bodmas($str,$count,true);
+    function singleton($str,$count){
+        preg_match_all(""/\(\d+(\.\d+)?\)/"", $str, $matches);
+        if(count($matches[0])){
+            foreach($matches[0] as $key=>$value){
+                $str = str_replace([""("","")""], ["""",""""], $str);
+            }
+            bodmas($str,$count,true);
+        }
+    }
+
+?>

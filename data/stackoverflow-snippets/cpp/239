@@ -1,0 +1,52 @@
+class Handler
+{
+
+private:
+
+    std::mutex event_one;
+    event_one.lock();
+
+    void stubEventGenerator(void)
+    {
+        for(;;)
+        {
+            if(!event_one.try_lock())
+            {
+                event_one.unlock();
+            }
+
+            sleep(15); //you had a sleep so I added one
+        }
+    }
+
+    template <typename CallbackFunction>
+    void One__(CallbackFunction && func)
+    {
+        while(1)
+        {
+            event_one.lock();
+            func();
+
+        }
+    }
+public:
+
+    Handler()
+    {
+        std::thread H(&Handler::stubEventGenerator, this);
+    }
+
+    ~Handler()
+    {
+        //clean threads, etc
+        //this should really have a quit handler
+    }
+
+    template <typename CallbackFunction>
+    void One(CallbackFunction && func) //I think you have it right, still I'm not 100% sure
+    {
+        std::thread One_thread(&Handler::One__, this, func); //same here
+    }
+
+
+};

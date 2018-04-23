@@ -1,0 +1,19 @@
+     def parse_readings(reading_bytes)
+      readings = {}
+        bytestr = ByteStr.new(reading_bytes).chars.to_a 
+         bytestr.each_slice(30) do|reading_arr|
+            r = reading_arr.map{|b| b.chr}.join
+            # All bytes parsed
+            readings[get_map_value(:readingid, r, 0)] = {
+                                   :value => get_double(r, 2),
+                                   :unit => get_map_value(:unit, r, 10),
+                                   :unit_multiplier => get_s16(r, 12),
+                                   :decimals => get_s16(r, 14),
+                                   :display_digits => get_s16(r, 16),
+                                   :state => get_map_value(:state, r, 18),
+                                   :attribute => get_map_value(:attribute, r, 20),
+                                   :ts => get_time(r, 22)
+            }
+          end
+          readings
+      end

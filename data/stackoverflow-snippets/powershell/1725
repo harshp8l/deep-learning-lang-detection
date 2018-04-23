@@ -1,0 +1,24 @@
+$SVC = (Import-CSV C:\users\me\desktop\Test.csv -header(""Name"", ""Pass"", ""WhatDo"", ""Location"", ""Domain"")) 
+$SVC | ForEach-Object {
+
+        New-ADuser `
+            -Name $_.Name `
+            -AccountPassword (Convertto-SecureString $_.Pass -AsPlainText -Force) `
+            -CannotChangePassword $true `
+            -Description $_.WhatDo `
+            -DisplayName $_.Name `
+            -Enabled $true `
+            -GivenName $_.Name `
+            -PasswordNeverExpires $True `
+            -Office $_.Location `
+            -Path ""OU=Service-Accounts, Ou=Accunts, OU=_CORP, DC=$Domain, DC=net"" `
+            -SamAccountName $_.Name `
+            -UserPrincipleName $_.Name + ""@"" + $_.Domain + "".net"" 
+
+        Start-Sleep -Seconds 15
+
+    Get-ADUser `
+        -Identity $_.Name | Add-ADPrincipalGroupMembership `
+        -MemberOf ""Group1"",""Group2"",""Group3""  
+
+    }

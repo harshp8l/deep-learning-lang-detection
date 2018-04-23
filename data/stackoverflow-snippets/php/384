@@ -1,0 +1,47 @@
+function GetWhoisInfo($whoisserver, $domain){
+  $port = 43;
+  $timeout = 10;
+  $fp = @fsockopen($whoisserver, $port, $errno, $errstr, $timeout) or die(""Socket Error "" . $errno . "" - "" . $errstr);
+  stream_set_blocking($fp, true);
+  fputs($fp, $domain . ""\r\n"");
+  $out = """";
+
+  while(!feof($fp)){
+      $out .= fgets($fp);       
+  }
+
+  fclose($fp);  
+  return $out;
+}
+
+function GetRegistrarWhoisServer($whoisserver, $domain) {
+  $out = GetWhoisInfo($whoisserver, $domain);
+  $rws_string = explode(""\r\n"", $out);
+  $rws = explode(""Registrar WHOIS Server: "", $rws_string[2])[1];  
+  return $rws; 
+}
+
+function WhoisToJson($winfo) {
+  $winfoarr = explode(PHP_EOL, $winfo);
+  $jsonarr = [];
+  foreach($winfoarr as $info){
+   $infodata = explode("": "", $info);
+   if($infodata[0] !== """")$jsonarr[$infodata[0]] = $infodata[1];    
+   //avoid to process privacy info at the end of whois service output
+   if($infodata[0] === ""DNSSEC"")break;
+  }
+  return json_encode($jsonarr);
+} 
+
+function QueryWhoisServer($whoisserver, $domain) {
+  //query to $whoisserver whois to get registrar whois server address only
+  $rws = GetRegistrarWhoisServer($whoisserver, $domain);
+
+  //query to registrar whois server (registrar whois servers are returning contact infos)
+  $out = GetWhoisInfo($rws, $domain);  
+
+  //parsing infos and formatting to json
+  return WhoisToJson($out);
+} 
+
+echo QueryWhoisServer(""whois.verisign-grs.com"", ""google.com"");

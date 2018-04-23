@@ -1,0 +1,48 @@
+type Data = String
+trait OptionTransaction {
+  def data: Data = """"
+}
+
+class BuyOptionTransaction extends OptionTransaction {
+  def x: String = ""X""
+}
+class SellOptionTransaction extends OptionTransaction {
+  def y: String = ""Y""
+
+}
+
+trait Formatter[T] {
+  def format(ot:T):String
+}
+
+object Formatter {
+  def apply[T](implicit screen: Formatter[T]) = screen
+
+  def selectFormatter[T](obj: T)(implicit formatter: Formatter[T]) = formatter
+
+  implicit val buyOT = new Formatter[BuyOptionTransaction] {
+    def format(ot: BuyOptionTransaction):String = ot.x.toString
+  }
+
+  implicit val sellOT = new Formatter[SellOptionTransaction] {
+    def format(ot: SellOptionTransaction):String = ot.y.toString
+  }
+
+  implicit val ot = new Formatter[OptionTransaction] {
+    def format(ot: OptionTransaction):String = ot match {
+      case ot: BuyOptionTransaction =>
+        selectFormatter(ot).format(ot)
+      case ot: SellOptionTransaction =>
+        selectFormatter(ot).format(ot)
+    }
+  }
+}
+
+def startFormat[T](ot: T)(implicit ev: Formatter[T]) = {
+  ev.format(ot)
+}
+import Formatter._
+
+val closeTransactions: List[OptionTransaction] = List(new BuyOptionTransaction, new SellOptionTransaction)
+
+closeTransactions.map(startFormat(_))

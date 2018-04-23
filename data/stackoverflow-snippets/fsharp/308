@@ -1,0 +1,58 @@
+#r ""WindowsBase.dll""
+#r ""PresentationCore.dll""
+#r ""PresentationFramework.dll""
+#r ""System.Xaml.dll""
+
+open System
+open System.Windows
+open System.Windows.Controls
+open System.Windows.Data
+open System.ComponentModel
+
+type TextWrapper (initial : string) =
+    let mutable value = initial
+    let evt = Event<_,_>()
+
+    member this.Value 
+        with get() = value 
+        and set(v) = 
+            if v <> value then
+                value <- v
+                evt.Trigger(this, PropertyChangedEventArgs(""Value""))
+
+    interface INotifyPropertyChanged with
+        [<CLIEvent>]
+        member __.PropertyChanged = evt.Publish
+
+
+[< STAThread >] 
+do 
+    let textBlock = TextBlock()        
+
+    // Create a text wrapper and bind to it
+    let text = TextWrapper ""Drag and drop a folder here""        
+    textBlock.SetBinding(TextBlock.TextProperty, Binding(""Value"")) |> ignore
+    textBlock.DataContext <- text
+
+    let getFiles path =
+        async {         
+            for file in IO.Directory.EnumerateFiles path do
+                text.Value <- text.Value + ""\r\n"" + file // how to make this update show in the UI immediatly?                                
+
+                // do some slow file processing here.. this will happen on a background thread
+                Threading.Thread.Sleep 300 // just a placeholder to simulate the delay of file processing
+        } |> Async.Start
+
+    let w = Window()        
+    w.Content <- textBlock    
+    w.Title <- ""UI test""
+    w.AllowDrop <- true        
+    w.Drop.Add(fun e ->
+        if e.Data.GetDataPresent DataFormats.FileDrop then
+            e.Data.GetData DataFormats.FileDrop 
+            :?> string []
+            |> Seq.iter getFiles)
+
+    let app = Application()  
+    app.Run(w)
+    |> ignore

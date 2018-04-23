@@ -1,0 +1,19 @@
+struct thread_pool;
+template<class T>
+struct my_future:std::future<T> {
+  template<class F>
+  auto then( F&& f )&&
+  -> std::future< std::result_of_t<F(T&&)> >;
+  thread_pool* executor = 0;
+};
+template<>
+struct my_future<void>:std::future<void> {
+  template<class F>
+  auto then( F&& f )&&
+  -> std::future< std::result_of_t<F()> >;
+  thread_pool* executor = 0;
+};
+struct thread_pool {
+  template<class F=do_nothing>
+  my_future<std::result_of_t<F()>> do_task(F&& f={});
+};

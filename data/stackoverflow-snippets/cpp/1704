@@ -1,0 +1,29 @@
+void Writer::writeToYaml(const std::shared_ptr<QAbstractItemModel>& model, const QString& filePath)                 
+{
+
+    std::stack<QModelIndex> indices;
+
+    for (int = model->rowCount() - 1; r >= 0; --r) // iterate from last to first as you put items on a stack
+    {
+        indices.push(model->index(r, 1));
+    }
+
+    while (!indices.empty())
+    {
+        auto index = indices.top();
+        indices.pop();
+
+        QVariant data = model->data(index);
+        qDebug() << data;
+
+        if (model->hasChildren(index))
+        {
+            for (int r = model->rowCount(index) -1 ; r >= 0; --r)
+//                                       ^^^^^ note this, this iterates over all children of item on given index
+            {
+                indices.push(model->index(r, 1, index));
+//                                              ^^^^^ this is the parent index that identifies the item in tree hierarchy
+            }
+        }
+    }
+}

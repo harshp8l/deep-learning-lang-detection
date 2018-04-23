@@ -1,0 +1,15 @@
+  case class Details(id: Int, date: Int, cc: Int)
+  val list = List[Details](
+  Details(1, 20180101, 2),
+  Details(1, 20180102, 3),
+  Details(1, 20180105, 3),
+  Details(2, 20180105, 3),
+  Details(1, 20180108, 4),
+  Details(1, 20180109, 3),
+  Details(2, 20180108, 3),
+  Details(2, 20180109, 6))
+val ds = list.toDS()
+// action 
+val window = Window.partitionBy(""id"").orderBy(""date"")
+val result = ds.withColumn(""lag"", lag($""cc"", 1).over(window)).where(isnull($""lag"") || $""lag"" =!= $""cc"").orderBy(""id"", ""date"")
+result.show(false)

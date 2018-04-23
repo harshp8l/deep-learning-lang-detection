@@ -1,0 +1,14 @@
+Import-Module -Name ActiveDirectory
+$Groups = Get-ADGroup -Filter * -SearchBase ""OU=Network Drives,OU=DJ Security Groups,OU=Security Groups,DC=lan,DC=cyclops-electronics,DC=com""
+
+$Report = foreach ($Group in $Groups) {
+    $Members = Get-ADGroupMember -Identity $Group
+    foreach ($Member in $Members) {
+        [PSCustomObject]@{
+            GroupName = $Group.Name
+            MemberName = $Member.Name
+        }
+    }
+}
+
+$Report | Export-Csv -Path C:\SQLApps\GroupMembers.csv -NoTypeInformation

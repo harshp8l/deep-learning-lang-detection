@@ -1,0 +1,27 @@
+public long GetLastSleepTime()
+{
+    IntPtr lastSleep = IntPtr.Zero;
+    try
+    {
+        lastSleep = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(long)));
+
+        int ntStatus = CallNtPowerInformation(PowerInformationLevel.LastSleepTime, IntPtr.Zero, 0, lastSleep,
+            (uint)Marshal.SizeOf(typeof(long)));
+
+        if (ntStatus != 0)
+            return 0;
+
+        // receives a ULONGLONG that specifies the interrupt-time count, in 100-nanosecond units, at the last system sleep time
+        // there are 1e9 nanoseconds in a second, so there are 1e7 100 - nanoseconds in a second
+
+        long lastSleepTimeInSeconds = Marshal.ReadInt64(lastSleep, 0) / 10000000;
+
+        return lastSleepTimeInSeconds;
+
+    }
+    finally
+    {
+        if (lastSleep != IntPtr.Zero)
+            Marshal.FreeCoTaskMem(lastSleep);
+    }
+}

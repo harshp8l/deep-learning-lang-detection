@@ -1,0 +1,33 @@
+package main
+
+import (
+        ""log""
+        ""net/http""
+)
+
+func serveIDE(w http.ResponseWriter, r *http.Request) {
+        http.FileServer(http.Dir(""/home/user/ide"")).ServeHTTP(w, r)
+}
+
+func serveConsole(w http.ResponseWriter, r *http.Request) {
+        http.FileServer(http.Dir(""/home/user/console"")).ServeHTTP(w, r)
+}
+
+type wHandler struct {
+        fn http.HandlerFunc
+}
+
+func (h *wHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+        log.Printf(""Handle request: %s %s"", r.Method, r.RequestURI)
+        defer log.Printf(""Done with request: %s %s"", r.Method, r.RequestURI)
+        h.fn(w, r)
+}
+
+func main() {
+        http.Handle(""/ide"", http.StripPrefix(""/ide"", &wHandler{fn: serveIDE}))
+        http.Handle(""/console"", http.StripPrefix(""/console"", &wHandler{fn: serveConsole}))
+        err := http.ListenAndServe("":9090"", nil)
+        if err != nil {
+                log.Fatal(""ListenAndServe: "", err)
+        }
+}

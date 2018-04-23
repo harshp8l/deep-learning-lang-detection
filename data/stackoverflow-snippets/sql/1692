@@ -1,0 +1,20 @@
+WITH
+ordering as (
+    SELECT userid, listno, market, owned, time_stamp, lead(time_stamp, 1) 
+    OVER (PARTITION BY userid, listno, market, date_trunc('hour', time_stamp)
+    ORDER BY time_stamp asc) AS next_ts 
+    ,row_number() over OVER (PARTITION BY userid, listno, market, date_trunc('hour', time_stamp)
+    ORDER BY time_stamp asc) AS rnum_asc
+    ,row_number() over OVER (PARTITION BY userid, listno, market, date_trunc('hour', time_stamp)
+    ORDER BY time_stamp desc) AS rnum_desc
+    FROM tableA 
+)
+SELECT
+userid, listno, market, owned, time_stamp
+,case 
+    when rnum_asc=1 then date_trunc('hour',next_ts) 
+    when rnum_desc=2 then date_trunc('hour',next_ts)+interval '59 minutes 59 seconds'
+    else next_ts
+ end as next_ts
+FROM ordering
+ORDER BY listno, time_stamp asc;

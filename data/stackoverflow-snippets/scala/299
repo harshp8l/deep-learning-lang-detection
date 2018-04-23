@@ -1,0 +1,30 @@
+import scala.reflect.runtime.universe._
+
+case class Params[K]( m: Map[(K, TypeTag[_]), Any] ) extends AnyVal {
+  def add[V](k: K, v: V)(implicit vt: TypeTag[V]) = this.copy(
+      m = this.m + ((k, vt) -> v)
+    )
+  def grab[V](k: K)(implicit vt: TypeTag[V]) = m((k, vt)).asInstanceOf[V]
+}
+
+val params = Params[String](Map.empty).
+  add[Int](""a"", 100).
+  add[String](""b"", ""xyz"").
+  add[Double](""c"", 5.0).
+  add[List[Int]](""d"", List(1, 2, 3))
+// params: Params[String] = Params( Map(
+//   (a,TypeTag[Int]) -> 100, (b,TypeTag[String]) -> xyz, (c,TypeTag[Double]) -> 5.0,
+//   (d,TypeTag[scala.List[Int]]) -> List(1, 2, 3)
+// ) )
+
+params.grab[Int](""a"")
+// res1: Int = 100
+
+params.grab[String](""b"")
+// res2: String = xyz
+
+params.grab[Double](""c"")
+// res3: Double = 5.0
+
+params.grab[List[Int]](""d"")
+// res4: List[Int] = List(1, 2, 3)

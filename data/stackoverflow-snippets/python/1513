@@ -1,0 +1,35 @@
+import scrapy
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spider import CrawlSpider, Rule
+
+
+class BooliItem(scrapy.Item):
+    size = scrapy.Field()
+    price = scrapy.Field()
+    m2price = scrapy.Field()
+
+
+class BooliSpider(CrawlSpider):
+    name = ""boolidata""
+    start_urls = [
+        'https://www.booli.se/slutpriser/lund/116978/',
+    ]
+
+    rules = [
+        Rule(
+            LinkExtractor(
+                allow=(r'listing url pattern here to follow'),
+                deny=(r'other url patterns to deny'),
+            ),
+            callback='parse_item',
+            follow=True,
+        ),
+    ]
+
+    def parse_item(self, response):
+        item = BooliItem()
+        item['size'] = response.css('size selector').extract()
+        item['price'] = response.css('price selector').extract()
+        item['m2price'] = response.css('m2price selector').extract()
+
+        return item

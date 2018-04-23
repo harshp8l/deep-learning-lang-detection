@@ -1,0 +1,58 @@
+#include <utility>
+#include <mutex>
+
+template<typename T>
+class monitor {
+private:
+   mutable T t;
+   mutable std::mutex m;
+
+public:
+    monitor()
+        : t{}
+    { }
+
+    template<typename Y>
+    monitor(Y&& y)
+        : t{std::forward<Y>(y)}
+    { }
+
+    template<typename... Args>
+    monitor(std::in_place_t, Args&&... args)
+        : t{std::forward<Args>(args)...}
+    { }
+
+    template<typename F>
+    auto operator()(F f) const -> decltype(f(t))
+    {
+        std::lock_guard<std::mutex> _{m}; return f(t);
+    }
+};
+
+// A non-movable type, just for testing.
+struct NonMovable {
+    NonMovable(int n = 0, double d = 0)
+        : n_{n}, d_{d}
+    { }
+
+    NonMovable(const NonMovable&) = delete;
+    NonMovable(NonMovable&&) = delete;
+    NonMovable& operator=(const NonMovable&) = delete;
+    NonMovable& operator=(NonMovable&&) = delete;
+
+    private:
+        int n_;
+        double d_;
+};
+
+int main() {
+    // Non-movable type.
+    monitor<NonMovable> m4; //< Good. Uses default constructor.
+    //monitor<NonMovable> m5{NonMovable{1, 2.2}};//< Bad! Forwarding constructor.
+    monitor<NonMovable> m6{std::in_place, 1, 2.2};//< Good. In-place constructor.
+
+    // And a movable type, just to make sure we didn't break anything.
+    monitor<int> m1; //< Good. Uses default constructor.
+    monitor<int> m2{1}; //< Good. Forwarding constructor.
+    monitor<int> m3{std::in_place, 1}; //< Good. In-place constructor.
+}

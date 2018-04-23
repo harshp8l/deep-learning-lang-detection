@@ -1,0 +1,24 @@
+s = cat_df.groupby('category')['num_of_likes'].sum()
+print (s)
+category
+food      40
+school    60
+sport     10
+Name: num_of_likes, dtype: int64
+
+df = (cat_df['depth'].ne(0)
+                     .groupby(cat_df['category'])
+                     .value_counts()
+                     .unstack(fill_value=0)
+                     .rename(columns={0:'depth=0', 1:'depth>0'})
+                     .assign(total=lambda x: x.sum(axis=1))
+                     .reindex(columns=['total','depth=0','depth>0'])
+                     .reset_index()
+                     .rename_axis(None, axis=1)
+                     .assign(num_of_likes=lambda x: x['category'].map(s))
+)
+print (df)
+  category  total  depth=0  depth>0  num_of_likes
+0     food      3        1        2            40
+1   school      3        2        1            60
+2    sport      1        0        1            10

@@ -1,0 +1,36 @@
+(ns interop.core)
+
+(definterface ChildInterface
+  (setCoefficient [x]))
+
+(definterface MasterInterface
+  (createChildObject [])
+  (getChildren []))
+
+(deftype ChildObject [master ^:unsynchronized-mutable coefficient]
+  Object
+  (toString [this]
+    (str ""Child "" coefficient))
+  ChildInterface
+  (setCoefficient [this x]
+    (set! coefficient x)
+    this))
+
+(deftype MasterObject [^:unsynchronized-mutable children]
+  Object
+  (toString [this]
+    (str ""Master children: "" (.seq children)))
+  MasterInterface
+  (createChildObject [this]
+    (let [child (ChildObject. this nil)]
+      (set! children (conj children child))
+      child))
+  (getChildren [this]
+    children))
+
+(def master-object (MasterObject. []))
+
+(doseq [x [1 10 50 99]]
+  (.. master-object
+      (createChildObject)
+      (setCoefficient x)))

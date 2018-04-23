@@ -1,0 +1,43 @@
+$siteUrl = ""http://MyDemosite.demosite.net/sites/EAL"" 
+$permissionLevel = ""Design"" 
+$oldGroupName    = ""eal\a-team"" 
+$newGroup = ""c:0+.w|s-1-5-21-3475484702-42583850-3077926241-3109"" 
+
+$spSite = new-object Microsoft.SharePoint.SPSite($siteUrl) 
+
+$firstTime = ""true"";
+$myRole;
+
+foreach ($web in $spSite.allwebs)
+{    
+    $roles = $web.RoleDefinitions; 
+
+    if ($firstTime -eq ""true"")
+    {
+        for($k = 0; $k -lt $roles.Count; $k++)
+        {
+            Write-Output $web.Url
+            $role = $roles[$k]         
+            if( $role.Name -eq $permissionLevel)
+            {                
+                $myRole = $role;                              
+            }
+        }
+        $firstTime = ""false"";
+    }   
+
+    foreach ($name in $web.RoleAssignments.member.displayname) 
+    {
+        if($name -eq $oldGroupName)
+        { 
+            Write-Host -ForegroundColor White -BackgroundColor Green ""Found the right type "" $role.Name
+            $assignment = New-Object Microsoft.SharePoint.SPRoleAssignment($newGroup, """", """", """");
+            $assignment.RoleDefinitionBindings.Add($myRole);
+            $roleassignments = $web.RoleAssignments;
+            $roleassignments.Add($assignment);
+            Write-Output $web.Url; 
+        }
+    }
+    $web.Dispose();
+}
+$spSite.Dispose();  

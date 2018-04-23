@@ -1,0 +1,50 @@
+WITH           your_table AS (SELECT '0001' key_, to_date('01-01-2015', 'dd-mm-yyyy') start_date, to_date('14-01-2015', 'dd-mm-yyyy') end_date, 13 duration_in_days, 0 duration_of_last_sickleave, 'Yes' less_than_28_days FROM dual UNION ALL
+                              SELECT '0001' key_, to_date('03-03-2015', 'dd-mm-yyyy') start_date, to_date('19-03-2015', 'dd-mm-yyyy') end_date, 16 duration_in_days, 13 duration_of_last_sickleave, 'No' less_than_28_days FROM dual UNION ALL
+                              SELECT '0001' key_, to_date('27-05-2015', 'dd-mm-yyyy') start_date, to_date('28-05-2015', 'dd-mm-yyyy') end_date, 1 duration_in_days, 16 duration_of_last_sickleave, 'No' less_than_28_days FROM dual UNION ALL
+                              SELECT '0001' key_, to_date('18-08-2015', 'dd-mm-yyyy') start_date, to_date('31-08-2015', 'dd-mm-yyyy') end_date, 13 duration_in_days, 1 duration_of_last_sickleave, 'No' less_than_28_days FROM dual UNION ALL
+                              SELECT '0001' key_, to_date('24-09-2015', 'dd-mm-yyyy') start_date, to_date('05-10-2015', 'dd-mm-yyyy') end_date, 11 duration_in_days, 13 duration_of_last_sickleave, 'Yes' less_than_28_days FROM dual UNION ALL
+                              SELECT '0001' key_, to_date('24-10-2015', 'dd-mm-yyyy') start_date, to_date('29-10-2015', 'dd-mm-yyyy') end_date, 8 duration_in_days, 11 duration_of_last_sickleave, 'Yes' less_than_28_days FROM dual UNION ALL
+                              SELECT '0001' key_, to_date('05-11-2015', 'dd-mm-yyyy') start_date, to_date('09-11-2015', 'dd-mm-yyyy') end_date, 4 duration_in_days, 8 duration_of_last_sickleave, 'Yes' less_than_28_days FROM dual UNION ALL
+                              SELECT '0001' key_, to_date('07-12-2015', 'dd-mm-yyyy') start_date, to_date('08-12-2015', 'dd-mm-yyyy') end_date, 1 duration_in_days, 4 duration_of_last_sickleave, 'No' less_than_28_days FROM dual UNION ALL
+                              SELECT '0001' key_, to_date('21-12-2015', 'dd-mm-yyyy') start_date, to_date('28-12-2015', 'dd-mm-yyyy') end_date, 7 duration_in_days, 1 duration_of_last_sickleave, 'Yes' less_than_28_days FROM dual UNION ALL
+                              SELECT '0001' key_, to_date('12-01-2016', 'dd-mm-yyyy') start_date, to_date('18-01-2016', 'dd-mm-yyyy') end_date, 6 duration_in_days, 7 duration_of_last_sickleave, 'Yes' less_than_28_days FROM dual UNION ALL
+                              SELECT '0001' key_, to_date('08-02-2016', 'dd-mm-yyyy') start_date, to_date('29-03-2016', 'dd-mm-yyyy') end_date, 21 duration_in_days, 6 duration_of_last_sickleave, 'Yes' less_than_28_days FROM dual),
+  identify_sickness_start AS (SELECT key_,
+                                     start_date,
+                                     end_date,
+                                     duration_in_days,
+                                     duration_of_last_sickleave,
+                                     less_than_28_days,
+                                     CASE WHEN start_date - LAG(end_date, 1, start_date - 30) OVER (PARTITION BY key_ ORDER BY start_date) >= 28 THEN 1 ELSE 0 END new_sickness_period
+                              FROM   your_table),
+     calc_sickness_groups AS (SELECT key_,
+                                     start_date,
+                                     end_date,
+                                     duration_in_days,
+                                     duration_of_last_sickleave,
+                                     less_than_28_days,
+                                     sum(new_sickness_period) OVER (PARTITION BY key_ ORDER BY start_date) grp
+                              FROM   identify_sickness_start)
+SELECT key_,
+       start_date,
+       end_date,
+       duration_in_days,
+       duration_of_last_sickleave,
+       less_than_28_days,
+       sum(duration_in_days) OVER (PARTITION BY key_, grp ORDER BY start_date) total_number_of_days
+FROM   calc_sickness_groups
+ORDER BY key_, start_date;
+
+KEY_ START_DATE  END_DATE    DURATION_IN_DAYS DURATION_OF_LAST_SICKLEAVE LESS_THAN_28_DAYS TOTAL_NUMBER_OF_DAYS
+---- ----------- ----------- ---------------- -------------------------- ----------------- --------------------
+0001 01/01/2015  14/01/2015                13                          0 Yes                                 13
+0001 03/03/2015  19/03/2015                16                         13 No                                  16
+0001 27/05/2015  28/05/2015                 1                         16 No                                   1
+0001 18/08/2015  31/08/2015                13                          1 No                                  13
+0001 24/09/2015  05/10/2015                11                         13 Yes                                 24
+0001 24/10/2015  29/10/2015                 8                         11 Yes                                 32
+0001 05/11/2015  09/11/2015                 4                          8 Yes                                 36
+0001 07/12/2015  08/12/2015                 1                          4 No                                   1
+0001 21/12/2015  28/12/2015                 7                          1 Yes                                  8
+0001 12/01/2016  18/01/2016                 6                          7 Yes                                 14
+0001 08/02/2016  29/03/2016                21                          6 Yes                                 35

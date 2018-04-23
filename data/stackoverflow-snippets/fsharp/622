@@ -1,0 +1,20 @@
+#I ""../packages/FSharp.Data.2.2.5/lib/net40""    
+#r ""System.Xml.Linq""
+#r ""FSharp.Data.dll""
+
+open FSharp.Data
+open System.Text.RegularExpressions
+open System.Xml.Linq
+
+let href s = Regex.Match(s, ""href='(?<url>.*?)'"").Groups.[""url""].Value
+
+type Xml = XmlProvider<""""""<?xml version=""1.0"" encoding=""iso-8859-1""?>
+<?xml-stylesheet type='text/xsl' href='/stylesheets/application_internet.xsl'?>
+<application><other></other></application>"""""">
+
+let doc = Xml.GetSample()
+
+let stylesheetProcessing = (doc.XElement.PreviousNode :?> XProcessingInstruction)
+
+// /stylesheets/application_internet.xsl
+let url = href stylesheetProcessing.Data

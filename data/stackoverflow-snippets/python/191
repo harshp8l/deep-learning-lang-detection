@@ -1,0 +1,23 @@
+from itertools import chain
+import numpy as np
+
+a = np.arange(1, 100)
+def chunk(xs, nlow, nhigh, shuffle=True):
+    xs = np.asarray(xs)
+    if shuffle:
+        # shuffle, if you want
+        xs = xs.copy()
+        np.random.shuffle(xs)
+
+    # get at least enough random chunk sizes in the specified range, ie nlow <= n <= nhigh
+    ns = np.random.randint(nlow, nhigh+1, size=xs.size//nlow)
+    # add up the chunk sizes to get the indices at which we'll slice up the input array
+    ixs = np.add.accumulate(ns)
+    # truncate ixs so that its contents are all valid indices with respect to xs
+    ixs = ixs[:np.searchsorted(ixs, xs.size)]
+
+    # yield slices from the input array
+    for start,end in zip(chain([None], ixs), chain(ixs, [None])):
+        yield xs[start:end]
+
+list(chunk(a, 5, 10))

@@ -1,0 +1,40 @@
+# config/initializers/0_service_activation.rb
+module ServiceActivation
+  def self.with_reload
+    ActiveSupport::Reloader.to_prepare do
+      yield
+    end
+  end
+
+  module Slack
+    def self.service
+      ::SlackConnector
+    end
+
+    def self.should_be_activated?
+      Rails.env.production? ||
+      Rails.env.staging? ||
+      (Rails.env.development? && ENV['ENABLE_SLACK'] == 'true')
+    end
+
+    def self.activate
+      slack = service
+      slack.webhook = Rails.application.secrets.slack&.dig('webhooks', 'my_webhook')
+      ENV['SLACK_INTERCEPT_CHANNEL'].try do |channel|
+        slack.intercept_channel = channel if channel.present?
+      end
+      slack.activate
+      slack
+    end
+  end
+end
+
+[
+  ...,
+  ServiceActivation::Slack
+] .each do |activator|
+  ServiceActivation.with_reload do
+    activator.activate if activator.should_be_activated?
+    activator.service.status_report
+  end
+end

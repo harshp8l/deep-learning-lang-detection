@@ -1,0 +1,56 @@
+<?php
+
+class ApiDefaultController extends ApiBaseController
+{
+    public $method;
+    public $response;
+
+    public function __construct($method)
+    {
+        $this->method = $method;
+        $this->response = array(
+            'Status' => false,
+            'StatusCode' => 0,
+            'StatusMessage' => 'Default'
+        );
+    }
+
+    private $status_codes = array(
+        'success' => true,
+        'failure' => 0,
+        'missing_param' => 150,
+    );
+
+    public function init(WP_REST_Request $request)
+    {
+        try {
+            if (!method_exists($this, $this->method)) {
+                throw new Exception('No method exists', 500);
+            }
+            $data = $this->{$this->method}($request);
+            $this->response['Status'] = $this->status_codes['success'];
+            $this->response['StatusCode'] = 1000;
+            $this->response['StatusMessage'] = 'success';
+            $this->response['Data'] = $data;
+        } catch (Exception $e) {
+            $this->response['Status'] = false;
+            $this->response['StatusCode'] = $e->getCode();
+            $this->response['StatusMessage'] = $e->getMessage();
+        }
+
+        return $this->response;
+    }
+
+    public function cms_promotions($request)
+    {
+        $data = array();
+
+        return $data;
+    }
+
+    public function location_based_notify($request)
+    {
+        $data = array();
+        return $data;
+    }
+}

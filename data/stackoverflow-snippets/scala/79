@@ -1,0 +1,39 @@
+import scala.concurrent._
+import scala.util._
+import scala.concurrent.ExecutionContext.Implicits.global
+
+def either1(i: Int): Future[Either[String,Int]] = Future {
+  if (i < 3) Right(i * 2)
+  else Left(""error 1"")
+}
+
+def either2 (i:Int): Future[Either[String,Int]] = Future {
+  if (i > 3) Right(i * 2)
+  else Left(""error 2"")
+}
+
+val seq = Seq(1, 1, 2, 2, 3, 4, 5)
+val doesntMatter = 42
+
+/** Returns either first error message returned by `either1` or
+  * `either2`, or the fixed number `doesntMatter`.
+  */
+def mainFunction: Future[Either[String, Int]] = {
+  def recHelper(remaining: List[Int]): Future[Either[String, Int]] = {
+    remaining match {
+      case Nil => Future { Right(doesntMatter) }
+      case h :: t => (if (h % 2 == 0) either1(h) else either2(h)).flatMap {
+        headEither =>
+        headEither match {
+          case Left(s) => Future { Left(s) }
+          case Right(n) => recHelper(t)
+        }
+      }
+    }
+  }
+  recHelper(seq.toList)
+}
+
+val res = mainFunction
+Thread.sleep(2000)
+println(res) // Future(Success(Left(error 2)))

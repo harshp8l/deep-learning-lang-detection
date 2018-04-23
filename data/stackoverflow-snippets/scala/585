@@ -1,0 +1,14 @@
+import spray.json._
+object MyProtocol extends DefaultJsonProtocol {
+    implicit object MyCaseClassFormat extends RootJsonFormat[MyCaseClass] {
+      def write(obj: MyCaseClass): JsValue = JsObject(
+        ""optString"" -> JsString(obj.optString)
+      )
+      def read(json: JsValue): MyCaseClass = {
+        json.asJsObject.getFields(""optString"") match {
+          case Seq(JsString(optString)) => MyCaseClass(optString.asInstanceOf[String])
+          case _ => MyCaseClass()
+        }
+      }
+    }
+  }

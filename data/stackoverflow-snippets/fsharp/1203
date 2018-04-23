@@ -1,0 +1,19 @@
+type ResilientMailbox<'T> private(f:ResilientMailbox<'T> -> Async<unit>) as self =
+    let event = Event<_>()
+    let inbox = new MailboxProcessor<_>(fun _inbox ->
+        let rec loop() = async {
+            try
+                return! f self
+            with e ->
+                event.Trigger(e)
+                return! loop()
+            }
+        loop())
+    member __.OnError = event.Publish
+    member __.Start() = inbox.Start()
+    member __.Receive() = inbox.Receive()
+    member __.Post(v:'T) = inbox.Post(v)
+    static member Start(f) =
+        let mbox = new ResilientMailbox<_>(f)
+        mbox.Start()
+        mbox

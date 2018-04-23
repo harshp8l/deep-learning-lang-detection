@@ -1,0 +1,27 @@
+[string][ValidateNotNullOrEmpty()] $userPassword = ""password""
+$username = ""user""
+$password = ConvertTo-SecureString -String ""password"" -AsPlainText -Force
+$computers = gc ""C:\path\to\file\machines.txt""
+$source = ""C:\path\to\source""
+$destination = ""path\to\destination\server""
+$bkup = ""path\to\backup\folder""
+$creds = new-object -typename System.Management.Automation.PSCredential `
+         -argumentlist $username, $password
+foreach ($computer in $computers)
+{
+    if (test-Connection -Cn $computer -quiet)
+    {
+        New-PSDrive -Name Y -PSProvider filesystem -Root ""\\$computer\$destination"" -Credential $creds
+        Copy-Item $source -Destination Y:\ -Recurse -ErrorAction SilentlyContinue -ErrorVariable A
+        if($A) { write-Output ""$computer - File copy Failed"" | out-file ""C:\File Transfer\BIOS_Copy.txt"" -Append }
+        Remove-PSDrive Y
+    }
+    else
+    {
+        Write-Output ""$computer is offline"" | Out-File ""C:\File Transfer\BIOS_Copy_error.txt"" -Append
+    }
+}
+
+Get-ChildItem $source | Copy-Item -Destination $bkup -Force
+
+Get-ChildItem $source | Remove-Item -Force

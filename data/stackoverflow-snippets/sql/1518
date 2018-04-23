@@ -1,0 +1,32 @@
+DECLARE @ClientRental TABLE (Serial varchar(50),client varchar(50), CheckOutDate date, CheckInDate date)
+INSERT INTO @ClientRental
+    select 'nzxi-1565-ubbi-4852','john','19991231', '20000308'
+    union
+    select 'nzxi-1565-ubbi-4852','sami','20000315', '20000828'
+    union
+    select 'nzxi-1565-ubbi-4852','john','20000902', '20010221'
+
+DECLARE @Maintenance TABLE (Serial varchar(50), StartMaintainDate date, FinishMaintainDate date, cost decimal(12,2))   
+INSERT INTO @Maintenance
+    select 'nzxi-1565-ubbi-4852','20000202', '20000206', 98.65
+    union
+    select 'nzxi-1565-ubbi-4852','20000310', '20000312', 10.85
+    union
+    select 'nzxi-1565-ubbi-4852','20000828', '20000902', 60.97
+    union
+    select 'nzxi-1565-ubbi-4852','20000902', '20000903', 15.88
+
+Select CR.Serial, CR.client, m.cost
+from @ClientRental CR
+LEFT JOIN @Maintenance M on (
+        ((CheckOutDate <= FinishMaintainDate) and (StartMaintainDate <= CheckInDate) and (CheckOutDate <= CheckInDate) and (StartMaintainDate <= FinishMaintainDate)) 
+        or ((CheckOutDate <= FinishMaintainDate) and (CheckOutDate <= CheckInDate) and (StartMaintainDate <= CheckInDate) and (StartMaintainDate <= FinishMaintainDate))
+        )
+
+Select CR.Serial, CR.client, SUM(m.cost)
+from @ClientRental CR
+LEFT JOIN @Maintenance M on (
+        ((CheckOutDate <= FinishMaintainDate) and (StartMaintainDate <= CheckInDate) and (CheckOutDate <= CheckInDate) and (StartMaintainDate <= FinishMaintainDate)) 
+        or ((CheckOutDate <= FinishMaintainDate) and (CheckOutDate <= CheckInDate) and (StartMaintainDate <= CheckInDate) and (StartMaintainDate <= FinishMaintainDate))
+        )
+GROUP BY CR.Serial, CR.client       

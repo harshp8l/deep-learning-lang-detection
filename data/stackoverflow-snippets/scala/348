@@ -1,0 +1,37 @@
+class SampleActor extends Actor {
+    implicit val log = Logging(context.system, this)
+    def fun() = {
+        val settings: Settings = new Settings
+        settings.sourcepath.value = ""src/main/scripts""
+        settings.usejavacp.value = true
+        settings.dependencyfile.value = ""*.scala""
+        val engine: Scripted = Scripted(new Scripted.Factory, settings)
+        engine.getContext.setAttribute(""context0"",context,ScriptContext.ENGINE_SCOPE)
+
+        val reader = new FileReader(""src/main/scripts/ActorScript.scala"")
+        engine.eval(""import akka.actor.ActorContext \n"" +""val context1 = context0.asInstanceOf[ActorContext]"")
+
+        val compiledScript : CompiledScript = engine.compile(reader)
+        val x = compiledScript.eval()
+        x.asInstanceOf[ActorRef] ! ""Arikuti""
+        x.asInstanceOf[ActorRef] !  1
+    }
+    override def receive: Receive = {
+        case x : String =>
+          log.info(""Receveid  from ScriptEngine: "" +  x)
+        case i : Int =>
+          log.info(""Receveid from ScriptEngine : "" +  i)
+    }
+
+    override def preStart(): Unit = {
+        super.preStart()
+        fun()
+      }
+    }
+
+object ActorDemo {
+  def main(args: Array[String]): Unit = {
+  val system = ActorSystem(""clientAdapter"")
+  val x = system.actorOf(Props(classOf[SampleActor]),""Main"")
+}
+}

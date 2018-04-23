@@ -1,0 +1,16 @@
+batch_size = 1000
+n_batches = df1.shape[0] // batch_size
+# Integer division rounds down, so if the number
+# of User_ID's is not divisable by the batch_size,
+# we need to add 1 to n_batches
+if n_batches * batch_size < df1.shape[0]:
+    n_batches += 1
+indices = []
+for i in range(n_batches):
+    idx = numpy.where((df1.Ip_Address[i*batch_size:(i+1)*batch_size,None]
+            >= df2.Lower_Bound_IP[None,:]) & 
+            (df1.IP_Address[i*batch_size:(i+1)*batch_size,None] 
+            <= df2.Upper_Bound_IP[None,:]))[1]
+    indices.extend(idx.tolist())
+
+df1[""Country""] = df2.Country[np.asarray(indices)]

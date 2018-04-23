@@ -1,0 +1,30 @@
+Param(
+
+  [ValidateNotNullOrEmpty()]
+  # Do NOT use = $(Throw ...) or [Parameter(Mandatory)].
+  [string]$VirtualMachine, 
+
+  [int]$Attempts = 150
+
+)
+
+# Determine if the script is being ""dot-sourced"".
+# Note: The `$MyInvocation.Line -eq ''` part detects being run from the
+#       ISE or Visual Studio Code, which implicitly perform sourcing too.
+$isDotSourced = $MyInvocation.InvocationName -eq '.' -or $MyInvocation.Line -eq ''
+
+# NOT sourced? Enforce mandatory parameters.
+if (-not $isDotSourced) {
+  if (-not $VirtualMachine) { Throw ""Machine name missing!"" }
+}
+
+Function DoSomething($VirtualMachine, $Attempts) {
+  ""$VirtualMachine and $Attempts""
+}
+
+
+# NOT sourced? Call the default function or
+# do whatever you want the script to do when invoked as a whole.
+if (-not $isDotSourced) {
+  DoSomething $VirtualMachine $Attempts
+}

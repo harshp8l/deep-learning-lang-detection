@@ -1,0 +1,18 @@
+$FilePath = './t.csv'
+$TimeStamp = (Get-Date).toString(""dd/MMM/yyyy HH:mm:ss"")
+$env:USERNAME = $env:USER
+
+# Log start of execution. Note the empty 'FinishDate' property
+# to ensure all rows ultimately have the same column structure.
+[pscustomobject] @{ Username = $env:USERNAME; StartDate = $TimeStamp; FinishDate = '' } |
+  Export-Csv -Notypeinformation -Append $FilePath
+
+# Perform script actions...
+
+# Log end of execution:
+# Read the entire existing file...
+$logRows = Import-Csv $FilePath
+# ... update the last row's .FinishDate property
+$logRows[-1].FinishDate = (Get-Date).toString(""dd/MMM/yyyy HH:mm:ss"")
+# ... and rewrite the entire file, keeping only the last 30 entries
+$logRows[-30..-1] | Export-Csv -Notypeinformation $FilePath

@@ -1,0 +1,27 @@
+func main() {
+    t := template.Must(template.New("""").Funcs(template.FuncMap{
+        ""Field"": func(v interface{}, name string) interface{} {
+            return reflect.ValueOf(v).FieldByName(name).Interface()
+        },
+    }).Parse(templ))
+
+    m := map[string]interface{}{
+        ""columns"": []string{""ID"", ""Title""},
+        ""dataList"": []AdFile{
+            {ID: 1, Title: ""Title1""},
+            {ID: 2, Title: ""Title2""},
+        },
+    }
+
+    if err := t.Execute(os.Stdout, m); err != nil {
+        panic(err)
+    }
+
+}
+
+const templ = `{{$columns := .columns}}
+{{range $dx := .dataList}}
+    {{range $c := $columns}}
+        {{- Field $dx $c }}
+    {{end}}
+{{end}}`

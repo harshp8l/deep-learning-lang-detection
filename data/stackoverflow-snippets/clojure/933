@@ -1,0 +1,22 @@
+(defn add-range
+  [range-obj ranges]
+  (loop [processed []
+         range-obj range-obj
+         remaining (list* ranges)]
+    (if (empty? remaining)
+      (conj processed range-obj)
+      (let [[lo hi] range-obj
+            [h-lo h-hi :as head] (first remaining)
+            upper-merge-threshold (dec h-lo)
+            lower-merge-threshold (inc h-hi)]
+        (cond 
+          (< hi upper-merge-threshold) (into processed 
+                                             (conj remaining range-obj))
+          (= hi upper-merge-threshold) (into processed 
+                                             (conj (rest remaining) [lo h-hi]))
+          (= lo lower-merge-threshold) (recur processed
+                                              [h-lo hi]
+                                              (rest remaining))
+          :else (recur (conj processed head)
+                       range-obj
+                       (rest remaining)))))))

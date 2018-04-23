@@ -1,0 +1,27 @@
+require 'date'
+require 'json'
+
+module HashExtensions
+  refine Hash do
+    def deep_traverse(&block)
+      stack = self.map{ |k,v| [ [k], v ] }
+      while not stack.empty?
+        key, value = stack.pop
+        yield(key, value)
+        if value.is_a? Hash
+          value.each{ |k,v| stack.push [ key.dup << k, v ] }
+        end
+      end
+    end
+
+    def deep_update(&block)
+      deep_traverse do |keys, v|
+        if keys.length == 1
+          self[keys.first] = block.call(v)
+        else
+          self.dig(*keys.first(keys.length - 1))&.[]=(keys.last, block.call(v))
+        end
+      end
+    end
+  end
+end

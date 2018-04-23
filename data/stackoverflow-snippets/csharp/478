@@ -1,0 +1,11 @@
+var combined = dtDataForExistingProducts.AsEnumerable()
+    .Join(dtCatalogFromMySql.AsEnumerable(), 
+        ep => ep.Field<string>(""Prod_No"")
+        ce => ce.Field<string>(""barcode""), 
+        (ep, ce) => new {ExistingProduct = ep, CatalogEntry = ce})
+    .Where(m => !m.ExistingProduct.Field(""Descript"")
+        .Equals(m.CatalogEntry.Field(""productname"")))
+    .Where(m => decimal.Parse(m.ExistingProduct.Field(""Retail_PRC"").ToString()) 
+        != decimal.Parse(m.CatalogEntry.Field(""pricesell"").ToString()))
+    .ToList()
+;

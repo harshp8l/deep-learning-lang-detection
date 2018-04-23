@@ -1,0 +1,106 @@
+$asyncCallback = {
+    Param (
+        # Event source object
+        [System.Management.Automation.Powershell]
+        $sender,
+
+        # Inheritor of [System.EventArgs]
+        [System.Management.Automation.PSInvocationStateChangedEventArgs]
+        $e
+    )
+
+    # Ignore initial state change on startup
+    if ($e.InvocationStateInfo.State -eq [System.Management.Automation.PSInvocationState]::Running)
+    {
+        return
+    }
+
+    Write-Host $sender.Message
+    Write-Host ""Event Fired!""
+    Write-Host (""Invocation State: {0}"" -f $e.InvocationStateInfo.State)
+
+    #Write-EventLog -LogName Application -Source Testing -EntryType Information `
+    #    -Category 0 -EventId 1234 -Message ""Test.""
+
+    # Use the NoteProperty references attached to the Powershell object by Add-Member
+    [void]$sender.EndInvoke($sender.AsyncResult)
+
+    # Clean up if you like
+    $sender.Dispose()
+
+    #
+    # You can unregister the event from within the event handler, but you
+    # shouldn't do so if you plan on recycling/restarting the background
+    # powershell instance.
+    #
+    # Unregister the event subscription
+    Unregister-Event -SourceIdentifier $sender.EventSubscriber.Name
+
+    #
+    # WARNING!
+    # Call To Remove-Job From Parent Thread!
+    #
+    # You cannot dispose of the EventJob (THIS) from within the job itself.
+    # That would kind of be like a snake trying to eat it's own tail...
+    #
+    # As such, you should be very careful about how you remove background jobs. If
+    # you use the command sequence below from anywhere within your main thead, you
+    # will break this event handler (and any others created by Register-ObjectEvent).
+    #
+    # (Dispose of Job)
+    # Get-Job | Remove-Job
+    #
+}
+
+<#
+ # This section is unnecessary unless you are modifying the apartment state
+ # of the runspace before opening it. The shell returned by Create() already
+ # has a runspace.
+ #
+ # $rs = [RunspaceFactory]::CreateRunspace()
+ # $rs.Open()
+ # $ps.Runspace = $rs
+ #>
+$ps = [PowerShell]::Create().AddScript( {
+    #Get-Service
+    Get-Process
+    Start-Sleep -Seconds 2
+} )
+
+#
+# Subscribe to the Powershell state changed event. Attach the registration object
+# to the Powershell object for future reference.
+#
+Add-Member -InputObject $ps -MemberType NoteProperty -Name EventSubscriber -Value (
+    Register-ObjectEvent -InputObject $ps -EventName InvocationStateChanged -Action $asyncCallback)
+
+<#
+ # This call structure is unnecessary as you aren't using the InvocationSettings
+ #
+ # $psis = New-Object Management.Automation.PSInvocationSettings
+ # $aResult = $ps.BeginInvoke($psdcInputs, $psdcOutputs, $psis, $asyncCallback, $ps)
+ #>
+
+#
+# Initialize invocation parameters
+#
+# Attach references to any data/objects/scriptblocks that you must be accessable
+# within your event handler using Add-Member.
+#
+Add-Member -InputObject $ps -MemberType NoteProperty -Name Message -Value (
+    ""Hello World! It's Me {0}"" -f $ps.EventSubscriber.Name)
+
+$psdcInputs = New-Object Management.Automation.PSDataCollection[String]
+$psdcInputs.Complete()
+$psdcOutputs = New-Object Management.Automation.PSDataCollection[Object]
+
+Add-Member -InputObject $ps -MemberType NoteProperty -Name AsyncResult -Value (
+    $ps.BeginInvoke($psdcInputs, $psdcOutputs))
+
+# Watch for race conditions
+Start-Sleep -Seconds 10
+
+# Kill all remaining background jobs (including the EventJob asyncCallback)
+Get-Job
+
+Get-Job | Remove-Job | Out-Null

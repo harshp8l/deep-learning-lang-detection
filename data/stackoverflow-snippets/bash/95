@@ -1,0 +1,65 @@
+version: ""3""
+services:
+  bash:
+####### use hostname ""smtp"" as SMTP server
+    image: bash
+    depends_on:
+      - db
+    networks:
+      - smtp_internal_network
+      - internal_network
+      - data_network
+    volumes:
+      - ../html:/var/www/html
+    restart: always
+  db:
+    image: percona:5.7
+#    ports: # for debug connections and querys
+#      - 3306:3306
+    volumes:
+      - ../db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    networks:
+      - data_network
+    restart: always
+  smtp:
+    image: mwader/postfix-relay
+    environment:
+      - POSTFIX_myhostname=smtp.domain.tld
+    networks:
+      - smtp_internal_network
+    restart: always
+  nginx:
+    image: nginx
+    volumes:
+      - ../html:/var/www/html
+    networks:
+      - external_network
+      - internal_network
+  labels:
+      - ""traefik.backend=nginx_${COMPOSE_PROJECT_NAME}""
+      - ""traefik.port=80""
+      - ""traefik.frontend.rule=Host:${FRONTEND_RULE}""
+      - ""traefik.frontend.passHostHeader=true""
+      - ""traefik.enable=true""
+      - ""traefik.docker.network=traefik_proxy""
+   restart: always
+   depends_on:
+      - db
+      - bash
+
+
+networks:
+  external_network:
+    external:
+      name: traefik_proxy
+  internal_network:
+    driver: bridge
+  smtp_internal_network:
+    driver: bridge
+  data_network:
+    driver: bridge

@@ -1,0 +1,15 @@
+awk '
+FNR==1{                                    ##To skip first line of Input_file which is heading I am putting condition if FNR==1 then do next, where next will skip all further statements of awk.
+  next}
+prev!=$NF && prev{                         ##Checking conditions here if variable prev value is NOT equal to current line $NF and variable prev is NOT NULL then do following:
+  val=prev_val!=a[prev]?prev_val-a[prev]:0;##create a variable val, if prev_val is not equal to a[prev] then subttract prev_val and s[prev] else it will be zero.
+  printf(""%s %d\n"",prev,val>0?val:0)}      ##printing the value of variable prev(which is nothing but value of last column) and then print value of val if greater than 0 or print 0 in place of val here.
+!a[$NF]{                                   ##Checking if array a value whose index is $NF is NULL then fill it with current $NF value, actually this is to get the very first value of any column so that later we could subtract it with the its last value as per OP request.
+  a[$NF]=$(NF-1)}
+{
+  prev=$NF;                                ##creating variable named prev and assigning its value to last column of the current line.
+  prev_val=$(NF-1)}                        ##creating variable named prev_val whose value will be second last columns value of current line.
+END{                                       ##starting end block of awk code here, it will come when Input_file is done with reading.
+  val=prev_val!=a[prev]?prev_val-a[prev]:0;##getting value of variable val where checking if prev_val is not equal to a[prev] then subtract prev_val and s[prev] else it will be zero.
+  printf(""%s %d\n"",prev,val>0?val:0)}      ##printing the value of variable prev(which is nothing but value of last column) and then print value of val if greater than 0 or print 0 in place of val here.
+' Input_file                               ##Mentioning the Input_file name here.

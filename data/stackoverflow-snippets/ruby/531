@@ -1,0 +1,17 @@
+require 'webrick'                                                                                                          
+
+class Server < WEBrick::HTTPServer                                                                                         
+  def service(req, res)                                                                                                    
+    super                                                                                                                  
+    one_hour = 60 * 60                                                                                                     
+    t = Time.now.gmtime + one_hour
+    res['Expires'] = t.strftime(""%a, %d %b %Y %H:%M:%S GMT"")
+  end                                                                                                                      
+end                                                                                                                        
+
+root = File.expand_path('.')                                                                                               
+server = Server.new(Port: 8000, DocumentRoot: root)                                                                        
+
+trap('INT') { server.shutdown } # Ctrl-C to stop                                                                                            
+
+server.start 

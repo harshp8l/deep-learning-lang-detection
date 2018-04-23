@@ -1,0 +1,51 @@
+trait ExpensiveThing
+import MyActor._
+class MyActor extends Actor {
+
+  var expensiveThing : ExpensiveThing = null
+  var initializationListeners:List[ActorRef] = List.empty
+
+
+  def initializeExpensiveThing() : Future[ExpensiveThing]  = ???
+
+  override def preStart(): Unit = {
+    initializeExpensiveThing onSuccess  {
+      case s => self ! InitializationDone(s)
+    }
+
+  }
+
+  override def receive: Receive = {
+    case InitializationDone(s) =>
+      expensiveThing = s
+      initializationListeners.foreach{ s => s ! Initialized }
+    case SubscribeInitialization =>
+      if(expensiveThing != null){
+        sender ! Initialized
+      }
+      else {
+        initializationListeners = sender() +: initializationListeners
+      }
+
+  }
+
+
+}
+
+object MyActor{
+  case class InitializationDone(s:ExpensiveThing)
+
+  case object SubscribeInitialization
+
+  case object Initialized
+
+
+}
+object MyProgram {
+  def doSomething(actorSystem:ActorSystem)  = {
+    val actor = actorSystem.actorOf(Props(new MyActor))
+    import akka.pattern.ask
+    implicit val inizializationTimeout = new Timeout(100,TimeUnit.SECONDS)
+    Await.result(actor ? SubscribeInitialization,Duration.Inf)
+  }
+}

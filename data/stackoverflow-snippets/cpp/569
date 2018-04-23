@@ -1,0 +1,80 @@
+#include <boost/spirit/home/x3.hpp>
+#include <iostream>
+#include <iomanip>
+
+namespace ast {
+    using value = boost::make_recursive_variant<
+            double,
+            std::string,
+            std::vector<boost::recursive_variant_>
+        >::type;
+    using list = std::vector<value>;
+}
+
+namespace x3 = boost::spirit::x3;
+
+namespace Parser {
+    using namespace boost::spirit::x3;
+
+    rule<struct item_, ast::value> item;
+
+    auto quoted   = lexeme [ '""' >> *('\\' >> char_ | ~char_('""')) >> '""' ];
+    auto bare     = lexeme [ +(graph-','-'}') ];
+
+    auto list     = x3::rule<struct list_, ast::list> {""list"" }
+                  = '{' >> (item % ',') >> '}';
+
+    auto item_def = list | double_ | quoted | bare;
+
+    BOOST_SPIRIT_DEFINE(item)
+}
+
+struct pretty_printer {
+    using result_type = void;
+    std::ostream& _os;
+    int _indent;
+
+    pretty_printer(std::ostream& os, int indent = 0) : _os(os), _indent(indent) {}
+
+    void operator()(ast::value const& v) { boost::apply_visitor(*this, v); }
+
+    void operator()(double v)            { _os << v; }
+    void operator()(std::string s)       { _os << std::quoted(s); }
+    void operator()(ast::list const& l)  {
+        _os << ""{\n"";
+        _indent += 2;
+        for (auto& item : l) {
+            _os << std::setw(_indent) << """";
+            operator()(item);
+           _os << "",\n"";
+        }
+        _indent -= 2;
+        _os << std::setw(_indent) << """" << ""}"";
+    }
+};
+
+int main() {
+    pretty_printer print{std::cout};
+
+    for (std::string const input : {
+            R""({one, ""five, six""})"",
+            R""({one, {2, ""three four""}, ""five, six"", {""seven, eight""}})"",
+        })
+    {
+        auto f = input.begin(), l = input.end();
+
+        ast::value parsed;
+        bool ok = phrase_parse(f, l, Parser::item, x3::space, parsed);
+
+        if (ok) {
+            std::cout << ""Parsed: "";
+            print(parsed);
+            std::cout << ""\n"";
+        } else {
+            std::cout << ""Parse failed\n"";
+        }
+
+        if (f != l)
+            std::cout << ""Remaining unparsed: "" << std::quoted(std::string{f, l}) << ""\n"";
+    }
+}

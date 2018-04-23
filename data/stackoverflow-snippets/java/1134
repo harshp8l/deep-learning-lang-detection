@@ -1,0 +1,160 @@
+package hellofx;
+
+
+import com.sun.javafx.scene.control.skin.TableHeaderRow;
+
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.AccessibleAttribute;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollBar;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeTableCell;
+import javafx.scene.control.TreeTableColumn;
+import javafx.scene.control.TreeTableColumn.CellDataFeatures;
+import javafx.scene.control.TreeTableView;
+import javafx.scene.control.cell.TreeItemPropertyValueFactory;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.stage.Stage;
+import javafx.util.Callback;
+
+public class LockedTreeTableView extends Application {
+    private final ObservableList<Person> data = FXCollections.observableArrayList(
+            new Person(""0XYZJacob"", ""Smith"", ""jacob.smith@example.com""),
+            new Person(""0XYZJacob"", ""Albpha"", ""alpha.smith@example.com""),
+            new Person(""0XYZJacob"", ""Beeta"", ""beeta.smith@example.com""),
+            new Person(""1Isabella"", ""Johnson"", ""isabella.johnson@example.com""),
+            new Person(""2Ethan"", ""Williams"", ""ethan.williams@example.com""),
+            new Person(""3Emma"", ""Jones"", ""emma.jones@example.com""),
+            new Person(""4Michael"", ""Brown"", ""michael.brown@example.com""),
+            new Person(""5Jacob"", ""Smith"", ""jacob.smith@example.com""),
+            new Person(""6Isabella"", ""Johnson"", ""isabella.johnson@example.com""));
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    @Override
+    public void start(Stage stage) {
+        stage.setTitle(""Table View Sample"");
+        final Label label = new Label(""Address Book"");
+        label.setFont(new Font(""Arial"", 20));
+        Scene scene = new Scene(buildTableView());
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    private TreeTableView<Person> buildTableView() {
+        TreeTableView<Person> table = new TreeTableView<>();
+        TreeTableColumn<Person, String> indexCol = new TreeTableColumn<>(""Index"");
+        indexCol.setCellValueFactory(new Callback<CellDataFeatures<Person, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(CellDataFeatures<Person, String> param) {
+                return new SimpleStringProperty();
+            }
+        });
+
+        indexCol.setCellFactory(column -> {
+            return new LockedTreeTableCell<Person, String>() {
+                {
+                    setBackground(new Background(new BackgroundFill(Color.AQUA, null, null)));
+                }
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(String.valueOf(getIndex()));
+                }
+            };
+        });
+
+        TreeTableColumn<Person, String> firstNameCol = new TreeTableColumn<>(""First Name"");
+        firstNameCol.setCellValueFactory(new TreeItemPropertyValueFactory<Person, String>(""firstName""));
+        firstNameCol.setCellFactory(column -> {
+            return new LockedTreeTableCell<Person, String>() {
+                {
+                    setBackground(new Background(new BackgroundFill(Color.YELLOW, null, null)));
+                }
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    if (item == null || empty) {
+                        setText(null);
+                        setStyle("""");
+                    } else {
+                        setText(item);
+                    }
+                }
+            };
+        });
+
+        TreeTableColumn<Person, String> lastNameCol = new TreeTableColumn<Person, String>(""Last Name"");
+        lastNameCol.setCellValueFactory(new TreeItemPropertyValueFactory<Person, String>(""lastName""));
+
+        TreeTableColumn<Person, String> firstEmailCol = new TreeTableColumn<>(""Home"");
+        firstEmailCol.setCellValueFactory(new TreeItemPropertyValueFactory<Person, String>(""email""));
+        TreeTableColumn<Person, String> secondEmailCol = new TreeTableColumn<>(""Office"");
+        secondEmailCol.setCellValueFactory(new TreeItemPropertyValueFactory<Person, String>(""email""));
+        TreeTableColumn<Person, String> junkCol = new TreeTableColumn<>(""Junk"");
+        junkCol.setCellValueFactory(new TreeItemPropertyValueFactory<Person, String>(""email""));
+
+        TreeTableColumn<Person, String> emailCol = new TreeTableColumn<>(""Email"");
+        emailCol.getColumns().addAll(firstEmailCol, secondEmailCol,junkCol);
+        table.getColumns().addAll(indexCol, firstNameCol, lastNameCol, emailCol);
+        table.setPrefWidth(500);
+        table.setPrefHeight(250);
+        TreeItem<Person> root = new TreeItem<>(new Person(""FN"",""LN"",""email""));
+        root.setExpanded(true);
+        data.forEach(e->root.getChildren().add(new TreeItem<>(e)));
+        table.setRoot(root);
+        return table;
+    }
+
+    public static class Person {
+
+        private final SimpleStringProperty firstName;
+        private final SimpleStringProperty lastName;
+        private final SimpleStringProperty email;
+
+        private Person(String fName, String lName, String email) {
+            this.firstName = new SimpleStringProperty(fName);
+            this.lastName = new SimpleStringProperty(lName);
+            this.email = new SimpleStringProperty(email);
+        }
+
+        public SimpleStringProperty firstNameProperty() {
+            return firstName;
+        }
+
+        public SimpleStringProperty lastNameProperty() {
+            return lastName;
+        }
+
+        public SimpleStringProperty emailProperty() {
+            return email;
+        }
+    }
+    static abstract class LockedTreeTableCell<T, S> extends TreeTableCell<T, S> {
+        {
+            Platform.runLater(() -> {
+                ScrollBar sc = (ScrollBar) getTreeTableView().queryAccessibleAttribute(AccessibleAttribute.HORIZONTAL_SCROLLBAR);
+                TableHeaderRow thr = (TableHeaderRow) getTreeTableView().queryAccessibleAttribute(AccessibleAttribute.HEADER);
+                Region headerNode = thr.getColumnHeaderFor(this.getTableColumn());
+                sc.valueProperty().addListener((ob, o, n) -> {
+                    double doubleValue = n.doubleValue();
+                    headerNode.setTranslateX(doubleValue);
+                    headerNode.toFront();
+                    this.setTranslateX(doubleValue);
+                    this.toFront();
+                });
+            });
+        }
+    }
+}

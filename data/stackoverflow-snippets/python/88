@@ -1,0 +1,21 @@
+from keras import Model, Input
+from keras.layers import (LSTM, Dense, Activation, BatchNormalization, 
+                      Dropout, Bidirectional, Add)
+
+inputs = Input(shape=(look_back, 1))
+
+bd_seq = Bidirectional(LSTM(128, return_sequences=True,
+                            kernel_regularizer='l2'), 
+                       merge_mode='sum')(inputs)
+bd_sin = Bidirectional(LSTM(32, return_sequences=True, 
+                            kernel_regularizer='l2'), 
+                       merge_mode='sum') (bd_seq)
+
+bd_1 = Bidirectional(LSTM(1, activation='linear'), 
+                     merge_mode='sum')(bd_seq)
+bd_2 = Bidirectional(LSTM(1, activation='tanh'), 
+                     merge_mode='sum')(bd_sin)
+output = Add()([bd_1, bd_2])
+
+model = Model(inputs=inputs, outputs=output)
+model.compile(optimizer='adam', loss='mean_squared_error')

@@ -1,0 +1,28 @@
+(require '[clojure.tools.analyzer.jvm :as ana.jvm])
+
+(def free-variables (atom #{}))
+
+(defn save-and-replace-with-nil [_ s _]
+  (swap! free-variables conj s)
+
+  ;; replacing unresolved symbol with `nil`
+  ;; in order to keep AST valid
+  {:op :const
+   :env {}
+   :type :nil
+   :literal? true
+   :val nil
+   :form nil
+   :top-level true
+   :o-tag nil
+   :tag nil})
+
+(ana.jvm/analyze
+ '(fn [ub]
+    (* (rand-int ub) scaling-factor))
+ (ana.jvm/empty-env)
+ {:passes-opts
+  (assoc ana.jvm/default-passes-opts
+         :validate/unresolvable-symbol-handler save-and-replace-with-nil)})
+
+(println @free-variables) ;; => #{scaling-factor}

@@ -1,0 +1,42 @@
+private boolean jsonEquals(JsonNode actualJson, JsonNode expectJson) {
+    if(actualJson.getNodeType() != expectJson.getNodeType()) return false;
+
+    switch(expectJson.getNodeType()) {
+    case NUMBER:
+        return actualJson.asDouble() == expectJson.asDouble();
+    case STRING:
+    case BOOLEAN:
+        return actualJson.asText().equals(expectJson.asText());
+    case OBJECT:
+        if(actualJson.size() != expectJson.size()) return false;
+
+        Iterator<String> fieldIterator = actualJson.fieldNames();
+        while(fieldIterator.hasNext()) {
+            String fieldName = fieldIterator.next();
+            if(!jsonEquals(actualJson.get(fieldName), expectJson.get(fieldName))) {
+                return false;
+            }
+        }
+        break;
+    case ARRAY:
+        if(actualJson.size() != expectJson.size()) return false;
+        List<JsonNode> remaining = new ArrayList<>();
+        expectJson.forEach(remaining::add);
+        // O(N^2)   
+        for(int i=0; i < actualJson.size(); ++i) {
+            boolean oneEquals = false;
+            for(int j=0; j < remaining.size(); ++j) {
+                if(jsonEquals(actualJson.get(i), remaining.get(j))) {
+                    oneEquals = true;
+                    remaining.remove(j);
+                    break;
+                }
+            }
+            if(!oneEquals) return false;
+        }
+        break;
+    default:
+        throw new IllegalStateException();
+    }
+    return true;
+}

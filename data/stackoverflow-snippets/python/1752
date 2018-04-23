@@ -1,0 +1,18 @@
+import pandas as pd
+
+input = [{""id"":123,""hour"":5,""group"":""1""},{""id"":345,""hour"":3,""group"":""1;2""},{""id"":65,""hour"":-2,""group"":""3""}]
+df = pd.DataFrame(input)
+#Get minimum
+dfmi = df.groupby('group').apply(min)
+#Rename hour column as min_hour
+dfmi.rename(columns={'hour':'min_hour'}, inplace=True)
+dfmx = df.groupby('group').apply(max)
+#Rename hour column as max_hour
+dfmx.rename(columns={'hour':'max_hour'}, inplace=True)
+#Merge min df with main df
+df = df.merge(dfmi, on='group', how='outer')
+#Merge max df with main df
+df = df.merge(dfmx, on='group', how='outer')
+output = list(df.apply(lambda x: x.to_dict(), axis=1))
+#Dictionary of dictionaries
+dict_out = df.to_dict(orient='index')

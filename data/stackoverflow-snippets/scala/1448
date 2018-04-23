@@ -1,0 +1,15 @@
+val subquery1 = TripTable.table.filter(t => t.townFrom >= t.townTo)
+      .groupBy(t => (t.townFrom, t.townTo))
+        .map{ case ((townFrom, townTo), group) => (group.length, townFrom, townTo)}
+
+    val subquery2 = TripTable.table.filter(t => t.townTo > t.townFrom)
+      .groupBy(t => (t.townFrom, t.townTo))
+        .map{ case ((townFrom, townTo), group) => (group.length, townFrom, townTo)}
+
+    val t = subquery1 union subquery2
+    val tt = t.map { case subquery1 => (subquery1._1, subquery1._2, subquery1._3) }
+      .groupBy { case (sub1, sub2, sub3) => (sub2, sub3) }
+      .map { case ((sub2, sub3), group) => (group.map(_._1).sum, sub2, sub3) }
+      .sortBy { case (sum, sub2, sub3) => sum }
+                            .take(1)
+    println(tt.length.result.statements)

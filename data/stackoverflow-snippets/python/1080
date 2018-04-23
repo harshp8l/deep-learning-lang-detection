@@ -1,0 +1,36 @@
+import textwrap
+
+class Letter(object):
+    def __init__(self, shape):
+        # remove space to the left (textwrap.dedent)
+        # and split the shape string into lines (self.shape is a list of strings)
+        self.shape = textwrap.dedent(shape).split('\n')
+
+        # remove any initial empty lines
+        while self.shape[0] == '':
+            self.shape = self.shape[1:]
+
+        # remove any trailing empty lines
+        while self.shape[-1] == '':
+            self.shape = self.shape[:-1]
+
+        self.height = len(self.shape)
+        self.width = max(len(line) for line in self.shape)
+
+        # we're doing the easy case where all letters are capitals
+        # and the baseline is at the bottom
+        self.baseline = self.height
+
+    def add_to_buffer(self, buffer, x, y):
+        ""Write this letter shape to a 2-dimensional buffer at position x, y.""
+
+        # justify our baseline with the buffer's baseline
+        y += buffer.baseline - self.baseline  
+
+        # keeping track of which line and character we're at,
+        # we go through each line in the shape
+        for lineno, line in enumerate(self.shape):
+            # .. and each character in the line
+            for charpos, ch in enumerate(line):
+                # and put the character into the buffer
+                buffer[x + charpos, y + lineno] = ch

@@ -1,0 +1,24 @@
+$session = New-PSSession localhost
+
+$arrayLen = 1024000
+Measure-Command{
+  Invoke-Command -Session $session -ScriptBlock {
+    Write-Host (""Preparing test array {0} elements length..."" -f $using:arrayLen)
+    $global:result = [Byte[]]::new($using:arrayLen)
+    [System.Random]::new().NextBytes($result)
+  }
+} |% {Write-Host (""Completed in {0} sec`n"" -f $_.TotalSeconds)}
+
+Measure-Command{
+  Invoke-Command -Session $session -ScriptBlock {
+    Write-Host (""Transfer array ({0})"" -f $using:arrayLen)
+    return $result
+  } | Out-Null
+} |% {Write-Host (""Completed in {0} sec`n"" -f $_.TotalSeconds)}
+
+Measure-Command{
+  Invoke-Command -Session $session -ScriptBlock {
+    Write-Host (""Transfer same array nested in a single object"")
+    return @{array = $result}
+  } 
+} |% {Write-Host (""Completed in {0} sec`n"" -f $_.TotalSeconds)}

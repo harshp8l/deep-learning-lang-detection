@@ -1,0 +1,82 @@
+Clear-Host
+$StartTime = $null
+$TargetUrl = $null
+$FileName = $null
+$File = $null
+# script to run at specific times
+## Set up a schedueld task for the script run cycle(s)
+### Scheduled Task (set script run daily at ""08:28:00"") )
+### WMI Event Monitor (check for clock time of ""08:28:00""))
+### Load the script on boot up and use a timed infinite loop (Load at boot, Loop un time time of ""08:28:00"" - need to reload script each day to handle if use never reboots)
+
+
+# determine which url to open
+# How the URL is determined
+$TargetUrl = ""google.com""
+# Get-Content -Path ""D:\Temp\UrlList.txt"" | Get-Random -Count 1 
+# $ResponseUrl = (Read-Host -Prompt ""Enter the URL to use"")
+
+# Open the IE to the needed URL
+$ie = new-object -com ""InternetExplorer.Application""
+$ie.navigate($TargetUrl)
+$ie.visible = $true
+$ie.fullscreen = $False
+
+While ($ie.Busy) {Start-Sleep -Milliseconds 100}
+
+# take the screenshot and saves it
+
+Function New-ScreenShot
+{
+    [CmdletBinding()]
+
+    [Alias('nss')]
+
+    Param
+    (
+        # [Parameter(Mandatory = $true)]
+        [string]$Path = ""$env:USERPROFILE\Pictures""
+    )
+
+    $FileName = ""$($env:COMPUTERNAME)_$(get-date -f yyyyMMddHHmmss).bmp""
+    $File = ""$Path\$FileName""
+
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-type -AssemblyName System.Drawing
+
+    # Gather Screen resolution information
+    $Screen = [System.Windows.Forms.SystemInformation]::VirtualScreen
+    $Width = $Screen.Width
+    $Height = $Screen.Height
+    $Left = $Screen.Left
+    $Top = $Screen.Top
+
+    # Create bitmap using the top-left and bottom-right bounds
+    $bitmap = New-Object System.Drawing.Bitmap $Width, $Height
+
+    # Create Graphics object
+    $graphic = [System.Drawing.Graphics]::FromImage($bitmap)
+
+    # Capture screen
+    $graphic.CopyFromScreen($Left, $Top, 0, 0, $bitmap.Size)
+
+    # Save to file
+    $bitmap.Save($File) 
+
+    Write-Output ""Screenshot saved to:""
+    Write-Output $File
+    Start-Sleep -Seconds 1
+    Start-Process -FilePath mspaint -ArgumentList $File
+}
+
+New-ScreenShot
+
+# send it via mail
+# from the PoSH built-in help file
+# Example 2: Send an attachment
+
+Send-MailMessage -From ""User01 <user01@example.com>"" `
+-To ""User02 <user02@example.com>"", ""User03 <user03@example.com>"" `
+-Subject ""Sending the URL Screenshot Attachment"" `
+-Body ""Forgot to send the attachment. Sending now."" `
+-Attachments $File -Priority Low -dno onSuccess, onFailure -SmtpServer ""smtp.example.com""

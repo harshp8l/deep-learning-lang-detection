@@ -1,0 +1,40 @@
+import tensorflow as tf
+
+tags = tf.SparseTensor(indices=[[0, 0], [1, 0], [1, 1], [1, 2]],
+                       values=[2, 0, 2, 5],
+                       dense_shape=[2, 3])
+
+print(type(tags.indices))
+
+# # approach 1:  any TensorFlow way to implement the Python logic below?
+# new_indices = [[tags.indices[i], tags.values[i]]
+#                for i in range(tags.values.shape[0])]  # syntax incorrect
+
+# approach 2:
+indice_idx = tf.map_fn(lambda x : x[0], tags.indices)
+value_idx = tf.map_fn(lambda x : x[1], tags.indices)
+value_arr = tf.cast(tf.gather(tags.values, value_idx), tf.int64)
+
+with tf.Session() as s1:
+    print(indice_idx.eval())
+    print(tags.values.eval())
+    print('value_arr', value_arr.eval())
+
+
+""""""
+[0 0 1 2]   <-- value_idx, which is the index of tags.values
+
+tf.stack does:
+[0 1 1 1]   <-- indice_idx
+[2 2 0 2]   <-- value_arr, which is the value of tags.values
+==>
+[[0,2], [1,2], [1,0], [1,2]]
+""""""
+new_indices = tf.stack([indice_idx, value_arr], axis=1)
+
+with tf.Session() as s:
+    s.run([tf.global_variables_initializer(), tf.tables_initializer()])
+    print(s.run(value_arr))
+    print(s.run(tags.values))
+    print(s.run(new_indices))
+    print(s.run(tags.indices[3, 1]))

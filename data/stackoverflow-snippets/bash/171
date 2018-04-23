@@ -1,0 +1,88 @@
+#!/bin/bash
+
+user=`whoami` #checks which user logged in
+if [ ""$user"" != ""spark"" ]
+then
+    echo ""You must be spark to run this script""
+    #exit 1
+fi
+
+id=$1
+if [ $# = 2 ]
+then
+    ENV=$2
+else
+    ENV=IQA
+fi
+
+case $ENV in
+    'IQA')
+        HOSTS=""19.928.282.26 19.928.282.27 19.928.282.20 19.928.282.31""
+        ;;
+    'DEV')
+        HOSTS=""19.928.282.226 19.928.282.27 319.928.282.250 19.928.522.232""
+        ;;
+    'STAGE')
+        HOSTS=""19.928.282.286 19.928.282.24 319.928.282.255 19.928.522.233""
+        ;;
+    'PERF')
+        HOSTS=""19.928.282.225 19.928.282.25 319.928.282.260 19.928.522.236""
+        ;;
+    'PRODNA')
+        HOSTS=""19.928.282.26 19.928.285.27 56.928.282.45 19.928.522.90""
+        ;;
+    'PRODEU')
+        HOSTS=""19.928.282.276 19.928.282.56 319.928.282.254 19.928.522.245""
+        ;;
+    *)
+        echo ""You must specify a valid environment... IQA, DEV, STAGE, PERF, PRODN or PRODEU""
+        exit 1
+esac
+
+# DEBUG echo ""$id, $ENV""
+
+output_dir=""/tmp/kumar""
+output_dir_javaversion=""$output_dir/${HOSTNAME}_Java_Version_Details""
+if [ ! -d $output_dir_javaversion ]
+then
+    mkdir -p ""/tmp/kumar/${HOSTNAME}_Java_Version_Details""
+fi
+
+case $id in
+    'javaversion')
+        echo ""Grabbing the details of $id""
+        for HOST in ${HOSTS}
+        do
+            echo ""Java version of $HOST"": > $output_dir_javaversion/${HOST}_java_list.txt
+            ssh ${user}@${HOST} ""java -version 2>&1 >/dev/null | grep \""java version\"" | awk \""{print $3}\"""" >> $output_dir_javaversion/${HOST}_java_list.txt
+        done
+        ;;
+    'sparkversion')
+        echo ""Grabbing the details of $id""
+        for HOST in ${HOSTS}
+        do
+            echo ""Spark version for $HOST:"" > $output_dir/${HOST}_spark_versionlist.txt
+            ssh ${user}@${HOST} ""spark-submit --version  > /tmp/${HOSTNAME}_spark_versionlist.txt  2>&1"" >> $output_dir/${HOST}_spark_versionlist.txt
+        done
+        ;;
+    'condalist')
+        echo ""Grabbing the details of $id""
+        for HOST in ${HOSTS}
+        do
+            echo ""Anaconda version for $HOST:"" > $output_dir/${HOST}_conda_list.txt
+            ssh ${user}@${HOSTS} ""/opt/anaconda/bin/conda list > /tmp/${HOSTNAME}_conda_list.txt"" >> $output_dir/${HOST}_conda_list.txt
+        done
+        ;;
+    'piplist')
+        echo ""Grabbing the details of $id""
+        for HOST in ${HOSTS}
+        do
+            echo ""PIP information for $HOST:"" > $output_dir/${HOST}_pip_list.txt
+            ssh ${user}@${HOSTS} ""/opt/anaconda/bin/pip list > /tmp/${HOSTNAME}_pip_list.txt 2> /dev/null"" >> $output_dir/${HOST}_pip_list.txt
+        done
+        ;;
+    *)
+        echo ""Invalid value for id.  Valid values are javaversion, sparkversion, condalist, piplist""
+        exit 1
+        ;;
+esac

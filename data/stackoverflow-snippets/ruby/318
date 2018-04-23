@@ -1,0 +1,29 @@
+require 'rubygems'
+require 'twilio-ruby'
+require ""csv""
+
+def load_alarms
+  CSV.read 'alarms.csv', {col_sep: ';'}
+end
+
+def filter_by_event_type_and_severity(alarms, event_type, severity)
+  alarms.select do |alarm|
+    alarm[1] == event_type && alarm[2].to_i == severity.to_i
+  end
+end
+
+target_alarms = filter_by_event_type_and_severity(load_alarms, 'medium', 2)
+equipments  = target_alarms.map { |alarm| [alarm[0], alarm[3]] }
+
+account_sid = 'ACCOUNT_ID'
+auth_token = 'AUTH_TOKEN'
+client = Twilio::REST::Client.new account_sid, auth_token
+
+# Here is the iteration
+equipments.each do |equipment|
+  client.api.account.messages.create(
+    from: 'SENDER_PHONE',
+    to: 'TARGET_PHONE',
+    body: equipment
+  )
+end

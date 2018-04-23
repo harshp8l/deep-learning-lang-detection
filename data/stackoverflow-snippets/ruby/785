@@ -1,0 +1,49 @@
+# Picking random word to guess
+word = ['open', 'real', 'hang', 'mice'].sample
+
+loop do
+  puts ""So, guess the word:""
+
+  input_word = gets.strip
+  if word == input_word
+    puts(""You are right, the word is: #{input_word}"")
+    break
+  end
+
+  puts ""You typed: #{input_word}""
+
+  # Split both the word to guess and the suggested word into array of letters
+  word_in_letters  = word.split('')
+  input_in_letters = input_word.split('')
+
+  result = []
+  # Iterate over each letter in the word to guess
+  word_in_letters.each_with_index do |letter, index|
+    # Pick the corresponding letter in the entered word
+    letter_from_input = input_in_letters[index]
+
+    if letter == letter_from_input
+      result << ""#{letter_from_input} - Correct""
+      next
+    end
+
+    # Take nearby letters by nearby indexes
+    # `reject` is here to skip negative indexes
+    # ie: letter 'i' in a word ""mice""
+    #   this will return 'm' and 'c'
+    # ie: letter 'm' in a word ""mice""
+    #   this will return 'i'
+    letters_around =
+      [index - 1, index + 1]
+      .reject { |i| i < 0 }
+      .map { |i| word_in_letters[i] }
+    if letters_around.include?(letter_from_input)
+      result << ""#{letter_from_input} - Close""
+      next
+    end
+
+    result << ""#{letter_from_input} - Incorrect""
+  end
+
+  puts result.join(""\n"")
+end

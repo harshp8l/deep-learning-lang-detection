@@ -1,0 +1,22 @@
+    auto const N = 2;
+
+    std::vector<float> floats = {4.0, 5.0, 6.0, 7.0, 0.0, 1.0, 2.0, 3.0};
+
+    assert(floats.size() == 4 * N);
+
+    std::vector<gsl::span<float, 4>> overlays; // spans of 4 floats
+
+    for(auto i = 0U; i < floats.size(); i += 4)
+        overlays.emplace_back(&floats[i], 4); // arrange them over the vector
+
+    // sort the spans
+    std::sort(std::begin(overlays), std::end(overlays), [](auto a, auto b){
+        return a[2] < b[2]; // sort by the third float
+    });
+
+    std::vector<float> sorted_floats; // results
+
+    // copy the ""contents"" of the spans in the correct (sorted)
+    // order into the new container
+    for(auto const& o: overlays)
+        std::copy(std::begin(o), std::end(o), std::back_inserter(sorted_floats));

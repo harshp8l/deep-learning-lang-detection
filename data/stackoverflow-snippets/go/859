@@ -1,0 +1,37 @@
+// shouldSendChunkedRequestBody reports whether we should try to send a
+// chunked request body to the server. In particular, the case we really
+// want to prevent is sending a GET or other typically-bodyless request to a
+// server with a chunked body when the body has zero bytes, since GETs with
+// bodies (while acceptable according to specs), even zero-byte chunked
+// bodies, are approximately never seen in the wild and confuse most
+// servers. See Issue 18257, as one example.
+//
+// The only reason we'd send such a request is if the user set the Body to a
+// non-nil value (say, ioutil.NopCloser(bytes.NewReader(nil))) and didn't
+// set ContentLength, or NewRequest set it to -1 (unknown), so then we assume
+// there's bytes to send.
+//
+// This code tries to read a byte from the Request.Body in such cases to see
+// whether the body actually has content (super rare) or is actually just
+// a non-nil content-less ReadCloser (the more common case). In that more
+// common case, we act as if their Body were nil instead, and don't send
+// a body.
+func (t *transferWriter) shouldSendChunkedRequestBody() bool {
+    // Note that t.ContentLength is the corrected content length
+    // from rr.outgoingLength, so 0 actually means zero, not unknown.
+    if t.ContentLength >= 0 || t.Body == nil { // redundant checks; caller did them
+        return false
+    }
+    if requestMethodUsuallyLacksBody(t.Method) {
+        // Only probe the Request.Body for GET/HEAD/DELETE/etc
+        // requests, because it's only those types of requests
+        // that confuse servers.
+        t.probeRequestBody() // adjusts t.Body, t.ContentLength
+        return t.Body != nil
+    }
+    // For all other request types (PUT, POST, PATCH, or anything
+    // made-up we've never heard of), assume it's normal and the server
+    // can deal with a chunked request body. Maybe we'll adjust this
+    // later.
+    return true
+}

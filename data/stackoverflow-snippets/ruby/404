@@ -1,0 +1,25 @@
+# Based on https://blog.jooq.org/2015/11/07/how-to-find-the-longest-consecutive-series-of-events-in-sql/
+
+WITH
+
+  dates(date) AS (
+    SELECT DISTINCT CAST(created_at AS DATE)
+    FROM histories
+    WHERE histories.user_id = :user_id
+  ),
+
+  groups AS (
+    SELECT
+      ROW_NUMBER() OVER (ORDER BY date) AS rn,
+      date - (ROW_NUMBER() OVER (ORDER BY date) * interval '1' day) AS grp,
+      date
+    FROM dates
+  )
+
+SELECT
+  COUNT(*) AS consecutive_dates,
+  MIN(date) AS min_date,
+  MAX(date) AS max_date
+FROM groups
+GROUP BY grp
+ORDER BY 1 DESC, 2 DESC

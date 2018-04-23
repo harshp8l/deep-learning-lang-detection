@@ -1,0 +1,14 @@
+select a.date, a.name, a.[1],b.[1],a.[2],b.[2],a.[3],b.[3] from (
+select date, name, max([1])[1],max([2])[2],max([3])[3] from(
+select *, row_number() over(partition by date, name order by date)b from #temp) a 
+
+pivot(max(clockin) for b in ([1],[2],[3]))c
+group by date, name)a
+left join
+(
+select date, name, max([1])[1],max([2])[2],max([3])[3]  from(
+select *, row_number() over(partition by date, name order by date)b from #temp) a 
+
+pivot(max(clockout) for b in ([1],[2],[3]))c
+group by date, name)
+b on a.date=b.date and a.name=b.name 

@@ -1,0 +1,31 @@
+(ns clj.core
+  (:use tupelo.core)
+  (:require [clojure.core       :as clj]
+            [schema.core        :as s]
+            [tupelo.types       :as tt]
+            [tupelo.schema      :as ts]
+            [criterium.core     :as crit]
+  ))
+
+; Prismatic Schema type definitions
+(s/set-fn-validation! true)   ; #todo add to Schema docs
+
+(def pts [[2 4] [1 9] [9 4] [2 8]])
+(def p [7 6])
+
+(defn square [x] (* x x))
+
+(defn dist2 [p1 p2]
+  (+ (square (- (p1 0) (p2 0)))
+     (square (- (p1 1) (p2 1)))))
+
+(doseq [curr-p pts]
+  (println ""curr-p: "" curr-p "" -> "" (dist2 p curr-p)))
+
+(newline)
+(spyx (apply min-key #(dist2 p %) pts))
+
+(newline)
+(crit/quick-bench (apply min-key #(dist2 p %) pts))
+
+(defn -main [] )

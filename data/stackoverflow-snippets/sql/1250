@@ -1,0 +1,19 @@
+declare @Today date = getdate()
+declare @CalendarMonth int = datepart(month, @Today)
+declare @LastFinancialQuarterDate date = dateadd(month, (case when @CalendarMonth <= 6 then 6 else 18 end) - @CalendarMonth, @Today)
+
+;with cte as
+(
+    select  cast(datepart(year, @LastFinancialQuarterDate) as varchar(4))
+            +
+            cast(datepart(quarter, @LastFinancialQuarterDate) as varchar(1)) as ID,
+            1 as QuartersAgo
+    union all
+    select  cast(datepart(year, dateadd(month, cte.QuartersAgo * -3, @LastFinancialQuarterDate)) as varchar(4))
+            +
+            cast(datepart(quarter, dateadd(month, cte.QuartersAgo * -3, @LastFinancialQuarterDate)) as varchar(1)) as ID,
+            (cte.QuartersAgo + 1) as QuartersAgo
+    from cte
+    where cte.QuartersAgo < 4
+)
+select * from cte

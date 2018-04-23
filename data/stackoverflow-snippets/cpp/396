@@ -1,0 +1,34 @@
+using hash_type = int;
+
+// handle int
+hash_type my_hash(int i) {
+  return i;
+}
+
+// handle anything else
+template <typename T>
+hash_type my_hash(const T& t) {
+  return t.hash(); // use whatever pattern you want here
+}
+
+template <typename Key, typename Value>
+struct CDict {
+  void insert(const Key& k, const Value& v) {
+    auto hash = my_hash(k); // calls correct overload
+  }
+};
+
+// a type with a hash member function
+struct MyHashable {
+  hash_type hash() const {
+    return 0;
+  }
+};
+
+int main() {
+  CDict<int, double> c1;
+  c1.insert(3, 5.0);
+
+  CDict<MyHashable, char> c2;
+  c2.insert(MyHashable{}, 'a');
+}

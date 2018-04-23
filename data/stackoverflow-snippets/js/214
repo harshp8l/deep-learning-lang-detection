@@ -1,0 +1,43 @@
+// store/Application/index.js
+import { createReducer } from '../../Utils';
+import { operators as UserPrefs } from '../UserPrefs';
+import { operators as Api } from '../Api';
+
+
+// TYPES:
+const types = {
+    INITIALIZED: 'Application/initialized'
+};
+
+// ACTION CREATORS:
+const actions = {
+    initialized: () => ({ type: INITIALIZED })
+};
+
+// OPERATORS:
+const initializeApplication = () => dispatch =>
+    Promise.all([
+        dispatch(UserPrefs.initializeUserPrefs()),
+        dispatch(Api.initializeApi())
+    ])
+    .then(() => dispatch(actions.initialized()));
+
+const operators = {
+    initializeApplication
+};
+
+// REDUCER:
+const initialShape = {
+    ready: false
+};
+const reducer = createReducer(initialShape)({
+    [INITIALIZED]: (state) => ({...state, ready: true })
+});
+
+// EXPORTS
+export default reducer;
+
+export {
+    operators,
+    types
+};

@@ -1,0 +1,14 @@
+ df
+   .withColumn(""is_previous"", coalesce($""id"" - lag($""id"", 1).over(w) === 1, lit(false)))
+   .withColumn(""diff"", when($""is_previous"", diff( lag($""values"", 1).over(w), $""values"")).otherwise($""values""))
+   .show
+
+// +------+---------+----+---+-----------+---------+                               
+// |   key|   values|user| id|is_previous|     diff|
+// +------+---------+----+---+-----------+---------+
+// |Mary_5|   [a, d]|Mary|  5|      false|   [a, d]|
+// |John_1|[a, b, c]|John|  1|      false|[a, b, c]|
+// |John_2|   [a, b]|John|  2|       true|       []|
+// |John_3|   [b, c]|John|  3|       true|      [c]|
+// |John_5|[c, d, e]|John|  5|      false|[c, d, e]|
+// +------+---------+----+---+-----------+---------+

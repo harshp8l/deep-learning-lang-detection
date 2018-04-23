@@ -1,0 +1,127 @@
+    **application.properties**
+
+    banner.charset=UTF-8
+    banner.location=classpath:banner.txt
+
+    server.port=8080
+    server.contextPath=/test
+    spring.mvc.view.prefix: /WEB-INF/jsp/
+    spring.mvc.view.suffix: .jsp
+
+    server.session.timeout=18000
+    server.session.cookie.max-age=18000
+    management.security.enabled=false
+    security.basic.enabled=false
+    a=1
+    b=2
+
+    import java.io.IOException;
+    import java.io.InputStream;
+    import java.util.Collections;
+    import java.util.Enumeration;
+    import java.util.LinkedHashMap;
+    import java.util.Map;
+    import java.util.Properties;
+    import java.util.Set;
+
+    // Load and Read a property file from class path
+
+    public class Load_and_Print_a_Property_File_From_Classpath2 {
+
+        public static void main(String[] args) {
+
+            PreserveInsertionOrderedProperties prop = new PreserveInsertionOrderedProperties();
+            InputStream input = null;
+            String filename = ""application.properties"";
+            try {
+
+                input = Load_and_Print_a_Property_File_From_Classpath2.class.getClassLoader().getResourceAsStream(filename);
+                if (input == null) {
+                    System.out.println(""Sorry, unable to find "" + filename);
+                    return;
+                }
+                prop.load(input);
+
+                LinkedHashMap<Object, Object> keyValueSet = prop.keyValueSet;
+                for (Object key : keyValueSet.keySet()) {
+                    System.out.println(""Key = "" + key + "" | "" + ""Value = "" + keyValueSet.get(key));
+                }
+
+
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            } finally {
+                if (input != null) {
+                    try {
+                        input.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+    public class PreserveInsertionOrderedProperties extends Properties {
+
+        private static final long serialVersionUID = 1L;
+
+        public LinkedHashMap<Object, Object> keyValueSet = new LinkedHashMap<Object, Object>();
+
+        @Override
+        public Enumeration<Object> keys() {
+            return Collections.enumeration(keyValueSet.keySet());
+        }
+
+        @Override
+        public Set<Object> keySet() {
+            return keyValueSet.keySet();
+        }
+
+        @Override
+        public synchronized Object put(Object key, Object value) {
+            if (!keyValueSet.containsValue(key)) 
+                keyValueSet.put(key.toString(), value.toString());
+            return keyValueSet.get(key);
+        }
+
+        @Override
+        public synchronized Object remove(Object key) {
+            return keyValueSet.remove(key);
+        }
+
+        @Override
+        public synchronized void putAll(Map values) {
+            for (Object key : values.keySet()) {
+                if (!containsKey(key)) {
+                    keyValueSet.putAll(values);
+                }
+            }
+        }
+    }
+
+    **After print**
+
+    Key = banner.charset | Value = UTF-8
+
+    Key = banner.location | Value = classpath:banner.txt
+
+    Key = server.port | Value = 8080
+
+    Key = server.contextPath | Value = /test
+
+    Key = spring.mvc.view.prefix | Value = /WEB-INF/jsp/
+
+    Key = spring.mvc.view.suffix | Value = .jsp
+
+    Key = server.session.timeout | Value = 18000
+
+    Key = server.session.cookie.max-age | Value = 18000
+
+    Key = management.security.enabled | Value = false
+
+    Key = security.basic.enabled | Value = false
+
+    Key = a | Value = 1
+
+    Key = b | Value = 2

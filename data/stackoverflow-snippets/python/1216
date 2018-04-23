@@ -1,0 +1,65 @@
+import pandas
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import f1_score
+from collections import defaultdict
+import numpy
+
+headers = ['phrase_type','type','complex_np','np_form','referentiality','grammatical_role','ambiguity','anaphor_type','dir_speech','length_of_span','length_of_coref_chain','position_in_coref_chain','position_in_sentence','is_topic']
+matrix = [
+['np','none','no','no,pds','referring','dir-obj','not_ambig','_unspecified_','text_level','1','1','-1','1','True'],
+['np','none','no','pds','not_specified','sbj','not_ambig','_unspecified_','text_level','1','1','-1','21','False'],
+['np','none','yes','defnp','discourse-new','sbj','not_ambig','_unspecified_','text_level','8','1','-1','1','False'],
+['np','none','yes','defnp','discourse-new','sbj','not_ambig','_unspecified_','text_level','8','2','0','6','False'],
+['np','none','yes','defnp','discourse-new','sbj','not_ambig','_unspecified_','text_level','6','2','0','4','False'],
+['np','none','yes','defnp','discourse-new','sbj','not_ambig','_unspecified_','text_level','21','1','-1','1','True'],
+['np','anaphoric','no','ne','referring','other','not_ambig','anaphor_nominal','text_level','1','9','4','2','True'],
+['np','anaphoric','no','defnp','referring','sbj','not_ambig','anaphor_nominal','text_level','3','9','5','1','True'],
+['np','anaphoric','no','defnp','referring','sbj','not_ambig','anaphor_nominal','text_level','2','9','7','1','True'],
+['np','anaphoric','no','pper','referring','sbj','not_ambig','anaphor_nominal','text_level','1','2','1','1','True'],
+['np','anaphoric','no','ne','referring','sbj','not_ambig','anaphor_nominal','text_level','2','3','2','1','True'],
+['np','anaphoric','no','pper','referring','sbj','not_ambig','anaphor_nominal','text_level','1','9','1','13','False'],
+['np','none','no','defnp','discourse-new','sbj','not_ambig','_unspecified_','text_level','2','3','0','5','False'],
+['np','none','yes','defnp','discourse-new','sbj','not_ambig','_unspecified_','text_level','6','1','-1','1','False'],
+['np','none','no','ne','discourse-new','sbj','not_ambig','_unspecified_','text_level','2','9','0','1','False'],
+['np','none','yes','defnp','discourse-new','sbj','not_ambig','_unspecified_','text_level','5','1','-1','5','False'],
+['np','anaphoric','no','defnp','referring','sbj','not_ambig','anaphor_nominal','text_level','2','3','1','5','False'],
+['np','none','no','defnp','discourse-new','sbj','not_ambig','_unspecified_','text_level','3','3','0','1','True'],
+['np','anaphoric','no','pper','referring','sbj','not_ambig','anaphor_nominal','text_level','1','3','1','1','True'],
+['np','anaphoric','no','pds','referring','sbj','not_ambig','anaphor_nominal','text_level','1','1','-1','2','True']
+]
+
+
+df = pandas.DataFrame(matrix, columns=headers)
+d = defaultdict(LabelEncoder)
+fit = df.apply(lambda x: d[x.name].fit_transform(x))
+df = df.apply(lambda x: d[x.name].transform(x))
+
+testrows = []
+trainrows = []
+splitIndex = len(matrix)/10
+for index, row in df.iterrows():
+    if index < splitIndex:
+        testrows.append(row)
+    else:
+        trainrows.append(row)
+testdf = pandas.DataFrame(testrows)
+traindf = pandas.DataFrame(trainrows)
+train_labels = traindf.is_topic
+labels = list(set(train_labels))
+train_labels = numpy.array([labels.index(x) for x in train_labels])
+train_features = traindf.iloc[:,0:len(headers)-1]
+train_features = numpy.array(train_features)
+print('train features shape:', train_features.shape)
+test_labels = testdf.is_topic
+labels = list(set(test_labels))
+test_labels = numpy.array([labels.index(x) for x in test_labels])
+test_features = testdf.iloc[:,0:len(headers)-1]
+test_features = numpy.array(test_features)
+
+classifier = LogisticRegression()
+classifier.fit(train_features, train_labels)
+print(classifier.coef_)
+results = classifier.predict(test_features)
+f1 = f1_score(test_labels, results)
+print(f1)

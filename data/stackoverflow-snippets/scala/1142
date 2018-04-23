@@ -1,0 +1,22 @@
+from pyspark.sql.functions import col
+def addColumnIndex(df): 
+    # Get old columns names and add a column ""columnindex""
+    oldColumns = df.columns
+    newColumns = oldColumns + [""columnindex""]
+
+    # Add Column index
+    df_indexed = df.rdd.zipWithIndex().map(lambda (row, columnindex): \
+                                         row + (columnindex,)).toDF()
+    #Rename all the columns
+    oldColumns = df_indexed.columns  
+    new_df = reduce(lambda data, idx:data.withColumnRenamed(oldColumns[idx], 
+                  newColumns[idx]), xrange(len(oldColumns)), df_indexed)   
+    return new_df
+
+# Add index now...
+df1WithIndex = addColumnIndex(df1)
+df2WithIndex = addColumnIndex(df2)
+
+#Now time to join ...
+newone = df1WithIndex.join(df2WithIndex, col(""columnindex""),
+                           'inner').drop(""columnindex"")

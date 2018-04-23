@@ -1,0 +1,20 @@
+val df = Seq(
+  (123, 456, 0.5),
+  (123, 789, 1.0),
+  (456, 789, 0.0),
+  (456, 123, 0.5),
+  (789, 123, 1.0),
+  (789, 456, 0.0)
+).toDF(""product1"", ""product2"", ""difference"")
+
+import org.apache.spark.sql.Row
+
+val groupedRDD = df.rdd.map{
+    case Row(p1: Int, p2: Int, diff: Double) => (p1, (p2, diff))
+  }.
+  groupByKey.mapValues(_.toMap)
+
+groupedRDD.collectAsMap
+// res1: scala.collection.immutable.Map[Any,scala.collection.immutable.Map[Int,Double]] = Map(
+//   456 -> Map(789 -> 0.0, 123 -> 0.5), 789 -> Map(123 -> 1.0, 456 -> 0.0), 123 -> Map(456 -> 0.5, 789 -> 1.0)
+// )

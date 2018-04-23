@@ -1,0 +1,18 @@
+from asyncio import SelectorEventLoop, create_subprocess_exec, \
+    wait_for, get_event_loop, set_event_loop, get_child_watcher
+
+
+def run_timeout(loop, awaitable, timeout):
+    timed_awaitable = wait_for(awaitable, timeout=timeout)
+    return loop.run_until_complete(timed_awaitable)
+
+async def foo():
+    process = await create_subprocess_exec('sleep', '3')
+    await process.wait()
+    print(process.returncode)
+
+loop = SelectorEventLoop()
+# core line, get default child watcher and attach it to your custom loop.
+get_child_watcher().attach_loop(loop)
+run_timeout(loop, foo(), 5)
+loop.close()

@@ -1,0 +1,25 @@
+@Autowired
+private JavaMailSender javaMailSender;
+
+public void sendEmailWithInlineImage() {
+    MimeMessage mimeMessage = null;
+    try {
+        InternetAddress from = new InternetAddress(from, personal);
+        mimeMessage = javaMailSender.createMimeMessage();
+        mimeMessage.setSubject(""Test Inline"");
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+        helper.setFrom(from);
+        helper.setTo(""test@test.com"");
+        String contentId = ContentIdGenerator.getContentId();
+        String htmlText = ""Hello,</br> <p>This is test with email inlines.</p><img src=\""cid:"" + contentId + ""\"" />"";
+        helper.setText(htmlText, true);
+
+        ClassPathResource classPathResource = new ClassPathResource(""static/images/first.png"");
+        helper.addInline(contentId, classPathResource);
+        javaMailSender.send(mimeMessage);
+    }
+    catch (Exception e) {
+        LOGGER.error(e.getMessage());
+    }
+
+}

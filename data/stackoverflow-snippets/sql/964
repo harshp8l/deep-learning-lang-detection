@@ -1,0 +1,12 @@
+declare @table table (ID int, Class varchar(1), Indicator varchar(1), IndicatorDate datetime)
+
+insert into @Table(ID, Class, Indicator, IndicatorDate)
+values (1, 'A', 'Y', getdate() - 3), (1, 'B', 'N', getdate() - 2), (1,  'C', 'N', getdate()), (2, 'X', 'N', getdate()), (2, 'K', 'N', getdate() - 1)
+
+select td.ID,
+       (select top 1 t2.Class from @table t2 where t2.ID = td.ID order by t2.Indicator desc, t2.IndicatorDate desc) as selectedClass,
+       (select top 1 t2.Indicator from @table t2 where t2.ID = td.ID order by t2.Indicator desc, t2.IndicatorDate desc) as selectedIndicator
+from 
+(  select distinct t.ID
+   from   @table t
+) td

@@ -1,0 +1,53 @@
+package main
+
+import (
+    ""bufio""
+    ""fmt""
+    ""os""
+    ""os/exec""
+)
+
+func raw(start bool) error {
+    r := ""raw""
+    if !start {
+        r = ""-raw""
+    }
+
+    rawMode := exec.Command(""stty"", r)
+    rawMode.Stdin = os.Stdin
+    err := rawMode.Run()
+    if err != nil {
+        return err
+    }
+
+    return rawMode.Wait()
+}
+
+// http://tldp.org/HOWTO/Bash-Prompt-HOWTO/x361.html
+func main() {
+    var rs []rune
+    raw(true)
+    for {
+        inp := bufio.NewReader(os.Stdin)
+        r, _, err := inp.ReadRune()
+        if err != nil {
+            raw(false)
+            panic(err)
+        }
+
+        if r == '\x03' { // ctrl+c
+            break
+        } else if r == '\r' { // enter
+            fmt.Print(string(rs), ""\n\r"")
+            rs = []rune{}
+            continue
+        } else if r == '\u007f' { // backspace
+            fmt.Printf(""\033[1D\033[K"")
+            continue
+        }
+
+        rs = append(rs, r)
+    }
+
+    raw(false)
+}

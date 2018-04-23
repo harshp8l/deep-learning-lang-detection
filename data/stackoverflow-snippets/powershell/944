@@ -1,0 +1,20 @@
+$emailFileList = """"
+$filelist = @()
+
+try {
+    Get-ChildItem $topLevelPath -Recurse `
+    | Where-Object -Property PSIsContainer -EQ -Value $True `
+    | ForEach-Object {
+        Get-ChildItem $_.FullName | 
+            Where-Object -Property FullName -Like -Value $UnableToProcess `
+            | ForEach-Object {
+                $filelist += Get-ChildItem $_.FullName 
+            }
+    }
+    $emailFileList = $filelist | Select-Object FullName | ConvertTo-Html -Fragment
+    $emailBody = $emailBody + $emailFileList
+}
+catch
+{
+
+}

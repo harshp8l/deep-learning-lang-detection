@@ -1,0 +1,12 @@
+open Microsoft.FSharp.Quotations
+open Microsoft.FSharp.Quotations.Patterns
+
+let rec equal = function
+  | Let(v1, ea1, eb1), Let(v2, ea2, eb2) -> 
+      v1.Name = v2.Name && equal (ea1, ea2) && equal (eb1, eb2)
+  | Var(v1), Var(v2) -> v1.Name = v2.Name
+  | Lambda(v1, e1), Lambda(v2, e2) -> v1.Name = v2.Name && equal (e1, e2)
+  | Call(None, m1, es1), Call(None, m2, es2) -> 
+      m1 = m2 && (List.zip es1 es2 |> List.forall equal)
+  | Value(v1), Value(v2) -> v1 = v2
+  | _ -> false

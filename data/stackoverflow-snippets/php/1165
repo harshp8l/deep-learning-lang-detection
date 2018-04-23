@@ -1,0 +1,32 @@
+class RegistrationController extends Controller{
+
+public function createTypeValidationRules($types){
+    $rules = array();
+    foreach( $types as $typeName ){
+        $type = TicketType::where('name', $typeName)->firstOrFail();
+        $rules[$type->name] = 'between:'.$type->min.','.$type->max
+    }
+    return $rules;
+}
+
+
+public function storeQuantity(Request $request){
+    $typeQuantities = $request->get('types');
+    $rules = $this->createTypeValidationRules(typeQuantities);
+    $validator = Validator::make($typeQuantities,$rules);
+    if ($validator->fails()) {
+        //do whatever you want in case of error here..
+        return false;
+    }
+    $total = 0;
+    foreach($typeQuantities as $typeName => $quantity){
+    $type = TicketType::where('name', $typeName)->firstOrFail();
+    $price = $type->price;
+
+    $selectedTypes[$type->name]['quantity'] = $quantity;
+    $selectedTypes[$type->name]['price'] = $price;
+    $selectedTypes[$type->name]['subtotal'] = $price * $quantity;
+
+    }
+    return view('congresses.registration')->with('selectedTypes', $selectedTypes);
+}

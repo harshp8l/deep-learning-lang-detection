@@ -1,0 +1,50 @@
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.font.TextAttribute;
+import java.util.Collections;
+import java.util.Map;
+
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.WindowConstants;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+
+@SuppressWarnings(""unchecked"")
+public class TableRendererTest {
+
+    public static void main(String[] args) {
+        JFrame frm = new JFrame(""Renderer test"");
+        DefaultTableModel model = new DefaultTableModel(new String[] {""First"", ""Second"", ""Third"" }, 3);
+        model.setValueAt(""Test String"", 0, 0);
+        model.setValueAt(""Corner String"", 2, 0);
+        model.setValueAt(""Last cell"", 2, 2);
+
+        // table with strike-out renderer (first column is stroked out)
+        JTable tbl = new JTable(model);
+        tbl.getColumnModel().getColumn(0).setCellRenderer(new StrikeOutRenderer());
+        frm.add(new JScrollPane(tbl), BorderLayout.NORTH);
+
+        // table with strike-out font (all cells are stroked out)
+        JTable another = new JTable(model);
+        another.setFont(
+                another.getFont().deriveFont(Collections.singletonMap(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON)));
+        frm.add(new JScrollPane(another), BorderLayout.SOUTH);
+        frm.pack();
+        frm.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frm.setLocationRelativeTo(null);
+        frm.setVisible(true);
+    }
+
+    private static class StrikeOutRenderer extends DefaultTableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row,
+                int column) {
+            Component res = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            res.setFont(res.getFont().deriveFont(Collections.singletonMap(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON)));
+            return res;
+        }
+    }
+}

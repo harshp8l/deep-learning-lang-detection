@@ -1,0 +1,24 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; INTERPRETER
+;;
+
+(def pavlov (domonad tt-monad [a (m-output ""hi there pavlov"")
+                               b (m-bell)
+                               c (m-output ""howdya like me now?"")
+                               d (m-bell)
+                               e (m-bell)
+                               f (m-bell)
+                               g (m-done)]
+                     g))
+
+(defn bell-interpreter [program]
+  (let [{ft           :t ; free type: impure or pure?
+         [{t :t
+           v :v} next] :v} program]
+    (if (= :pure ft)
+      ""error, shouldn't have a `pure` type""
+      (case t
+        :output (do (prn v) (bell-interpreter next))
+        :bell (do (prn ""rinnnng"") (bell-interpreter next))
+        :done ""done!""
+        :otherwise ""uh oh, that's not a type I recognize""))))

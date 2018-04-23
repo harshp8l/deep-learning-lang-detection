@@ -1,0 +1,48 @@
+package main
+
+import (
+    ""fmt""
+    ""log""
+)
+
+// One ...
+type One struct{}
+
+// Two ...
+type Two struct{}
+
+func doStuff(*interface{}) {}
+
+func myFunc(input string) {
+    var myChan interface{}
+    switch input {
+    case ""one"":
+        myChan = make(chan One)
+    case ""two"":
+        myChan = make(chan Two)
+    }
+    // might have to move this line of code into the switch block below...
+    // see commented example
+    go doStuff(&myChan)
+
+    switch myChan.(type) {
+    case chan One:
+        // in this way you're not passing an interface{} but a chan or type One or Two
+        // go doStuff(&myChan.(chan One))
+        for item := range myChan.(chan One) {
+            fmt.Println(item)
+        }
+    case chan Two:
+        // go doStuff(&myChan.(chan One))
+        for item := range myChan.(chan Two) {
+            fmt.Println(item)
+        }
+    default:
+        log.Fatalln(""Unknown type entered"")
+    }
+
+}
+
+func main() {
+    myFunc(""one"")
+}

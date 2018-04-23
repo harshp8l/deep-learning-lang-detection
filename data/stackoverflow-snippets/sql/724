@@ -1,0 +1,19 @@
+CREATE TABLE #tbl (ActionName varchar(255), IsDeleted INT)
+
+insert into #tbl values ('Account Detail Tap',0)
+insert into #tbl values ('Travel Insurance Tap',0)
+insert into #tbl values ('Blacklist Tap',0)
+
+
+select * from #tbl
+
+DECLARE @COL VARCHAR(1000)
+DECLARE @Query VARCHAR(2000)
+select @col = COALESCE(@col + ', ','') + QUOTENAME(ActionName)
+from #tbl Group by ActionName
+Set @Query='select * from (select [ActionName],IsDeleted from #tbl) src 
+PIVOT (Max(IsDeleted) FOR ActionName
+IN ('+@col+')) pvt'
+EXEC(@Query)
+
+DROP TABLE #tbl

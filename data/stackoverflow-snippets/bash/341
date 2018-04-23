@@ -1,0 +1,43 @@
+#!/bin/bash
+
+ME=$(basename $0)
+function show_help()
+{
+  IT=$(cat <<EOF
+
+  replaces a string with a new line, or any other string, 
+  first occurrence by default, globally if ""all"" passed in
+
+  usage: $ME SEARCH_FOR {REPLACE_WITH} {ALL}
+
+  e.g. 
+
+  $ME :       -> replaces first instance of "":"" with a new line
+  $ME : b     -> replaces first instance of "":"" with ""b""
+  $ME a b all -> replaces ALL instances of ""a"" with ""b""
+  )
+  echo ""$IT""
+  exit
+}
+
+if [ ""$1"" == ""help"" ]
+then
+  show_help
+fi
+if [ -z ""$1"" ]
+then
+  show_help
+fi
+
+STRING=""$1""
+TIMES=${3:-""""}
+WITH=${2:-""\n""}
+
+if [ ""$TIMES"" == ""all"" ]
+then
+  TIMES=""g""
+else
+  TIMES=""""
+fi
+
+perl -pe ""s/$STRING/$WITH/$TIMES""

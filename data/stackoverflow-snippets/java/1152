@@ -1,0 +1,19 @@
+public class ObjectFinder {
+
+public static boolean checkObject(Object o, String methodName, int value) {
+    return Stream.of(o.getClass().getDeclaredMethods())
+            .filter(method -> method.getName().equals(methodName))
+            .filter(m -> checkType(m, int.class))
+            .map(m -> {
+                try {
+                    return (int) m.invoke(o);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                    return 0;
+                }
+            }).anyMatch(v -> value == v);
+}
+
+private static boolean checkType(Method method, Class type) {
+    return method.getReturnType() == type;
+}

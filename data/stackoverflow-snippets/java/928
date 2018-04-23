@@ -1,0 +1,66 @@
+package tests;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
+public class TestProcessStreamsCloseEOF {
+
+    static void p(Object msg, Throwable... ta) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        pw.println(Thread.currentThread().getName()+""] ""+msg);
+
+        if(ta!=null && ta.length>0)
+            Stream.of(ta).forEach(t -> t.printStackTrace(pw));
+        pw.flush();
+        System.out.print(sw.toString());
+    }
+
+    public static void main(String[] args) throws Exception {
+        /*
+        slowecho.bat:
+        -----------
+        @echo off
+        echo line 1
+        pause
+        echo line 2
+        */
+        Process p = new ProcessBuilder(""slowecho.bat"").start();
+        new Thread(() -> {dump(p.getInputStream());}, ""dumpstdout"").start();
+        new Thread(() -> {dump(p.getErrorStream());}, ""dumpstderr"").start();
+
+        p(""sleep 5s"");
+        Thread.sleep(5000);
+
+        p(""destroy..."");
+        //p.destroy();
+        p.destroyForcibly();
+
+        p(""waitfor 5s"");
+        p.waitFor(5, TimeUnit.SECONDS);
+
+        p(""sleep 5s"");
+        Thread.sleep(5000);
+
+        p(""end."");
+    }
+
+    static void dump(InputStream is) {
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, ""ISO-8859-1""));
+            String line;
+            while((line=br.readLine()) !=null) {
+                p(line);
+            }
+        } catch(Throwable t) {
+            p(""""+t, t);
+        }
+        p(""end"");
+    }
+
+}

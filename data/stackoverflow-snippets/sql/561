@@ -1,0 +1,15 @@
+SELECT COUNT(*) as num_diagnoses, COUNT(DISTINCT patient_id) as num_patients
+FROM visit v JOIN
+     (SELECT patient_id,
+             MIN(v.date_of_visit) as min_dov
+      FROM visit v
+      WHERE v.date_of_visit >= '2018-03-01' AND
+            v.date_of_visit < '2018-04-01' AND
+            v.visit_status = 'Active'
+     ) vf
+     ON v.patient_id = vf.patient_id AND v.date_of_visit = vf.min_dov JOIN
+     consultation c
+     ON c.visit_id = v.visit_id JOIN
+     diagnosis d
+     ON d.diagnosis_id = c.diagnosis_id
+WHERE d.diagnosis_name LIKE '%Cardio%';

@@ -1,0 +1,31 @@
+type MagicMap struct {
+    sync.Mutex
+    data   map[string]interface{}
+    counts map[string]int
+}
+
+func (m MagicMap) Get(key string) interface{} {
+  m.Lock()
+  defer m.Unlock()
+  return m.data[key]
+}
+
+func (m MagicMap) Add(key string, value interface{}) {
+    m.Lock()
+    m.data[key] = value
+    m.counts[key] = m.counts[key] + 1
+    m.Unlock()
+}
+
+func (m MagicMap) Remove(key string) {
+    m.Lock()
+    count := m.counts[key]
+    count -= 1
+    if count < 1 {
+      delete(m.data, key)
+      delete(m.counts, key)
+    } else {
+      m.counts[key] = count
+    }
+    m.Unlock()
+}

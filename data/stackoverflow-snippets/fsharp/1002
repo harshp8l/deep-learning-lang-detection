@@ -1,0 +1,35 @@
+open System
+open System.Collections.Generic
+open System.Runtime.InteropServices
+
+
+module Test =
+
+  type MyType<'A,'B,'C>() =
+    let mutable counter = 0
+    member this.Counter with get() = counter and set(v) = counter <- v
+    member inline this.TryDoWorkChecked(next:KeyValuePair<'A,'B>, [<Out>] value: byref<'C>) : bool =
+      let before = this.Counter
+      let res = this.TryDoWork(next, &value)
+      if before <> this.Counter then raise (InvalidOperationException(""Must not change counter during work""))
+      else res
+    abstract TryDoWork: next:KeyValuePair<'A,'B> * [<Out>] value: byref<'C> -> bool
+    override this.TryDoWork(next:KeyValuePair<'A,'B>, [<Out>] value: byref<'C>) : bool =
+      value <- Unchecked.defaultof<'C>
+      if counter > 10 then true else false
+
+    member this.DoWork(next:KeyValuePair<'A,'B>) =
+      let mutable value = Unchecked.defaultof<'C>
+      while not (this.TryDoWorkChecked(next, &value)) do
+        counter <- counter + 1
+
+
+open Test
+
+[<EntryPoint>]
+let main argv = 
+    let myType = MyType<int,int,int>()
+    let next = Unchecked.defaultof<KeyValuePair<int,int>>
+    myType.DoWork(next)
+    Console.ReadLine() |> ignore
+    0

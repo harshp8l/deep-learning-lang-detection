@@ -1,0 +1,64 @@
+testdata='''\
+{
+    ""key A"":[
+        [""some val"", ""value a1""],
+        [""some val"", ""value a2""],
+        [""some val"", ""value an""],
+    ], ""key B"":[
+        [""some val"", ""value b1""],
+        [""some val"", ""value b2""]
+    ],
+    ""key X"":[
+        [""some val"", ""value x1""],
+        [""some val"", ""value x2""]
+    ]
+}'''
+
+json_bnf = """"""
+object 
+    { members } 
+    {} 
+members 
+    string : value 
+    members , string : value 
+array 
+    [ elements ]
+    [] 
+elements 
+    value 
+    elements , value 
+value 
+    string
+    number
+    object
+    array
+    true
+    false
+    null
+""""""
+
+from pyparsing import *
+import ast
+
+def make_keyword(kwd_str, kwd_value):
+    return Keyword(kwd_str).setParseAction(replaceWith(kwd_value))
+TRUE  = make_keyword(""true"", True)
+FALSE = make_keyword(""false"", False)
+NULL  = make_keyword(""null"", None)
+
+LBRACK, RBRACK, LBRACE, RBRACE, COLON = map(Suppress, ""[]{}:"")
+
+jsonString = dblQuotedString().setParseAction(removeQuotes)
+jsonNumber = pyparsing_common.number()
+
+jsonObject = Forward()
+jsonValue = Forward()
+jsonElements = delimitedList( jsonValue )
+jsonArray = Group(LBRACK + Optional(jsonElements, []) + Optional(Suppress("","")) + RBRACK)
+jsonValue << (jsonString | jsonNumber | Group(jsonObject)  | jsonArray | TRUE | FALSE | NULL)
+memberDef = Group(jsonString + COLON + jsonValue)
+jsonMembers = delimitedList(memberDef)
+jsonObject << Dict(LBRACE + Optional(jsonMembers) + RBRACE)
+
+jsonComment = cppStyleComment 
+jsonObject.ignore(jsonComment)

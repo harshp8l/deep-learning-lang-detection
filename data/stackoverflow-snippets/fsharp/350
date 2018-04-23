@@ -1,0 +1,11 @@
+type Async =
+    static member AwaitTaskWithCancellations (task: Task<_>) =
+        Async.FromContinuations(fun (setResult, setException, setCancelation) ->
+            task.ContinueWith(fun (t:Task<_>) -> 
+                match t.Status with 
+                | TaskStatus.RanToCompletion -> setResult t.Result
+                | TaskStatus.Faulted -> setException t.Exception
+                | TaskStatus.Canceled -> setException <| OperationCanceledException()
+                | _ -> ()
+            ) |> ignore
+        )

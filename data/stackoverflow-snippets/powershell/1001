@@ -1,0 +1,47 @@
+function Remove-NetScalerWhiteListItem
+{
+[CmdletBinding()]
+Param
+(
+)
+DynamicParam 
+{
+    $ParameterName = ""ServiceGroup""
+
+    $AttributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
+
+    $ParameterAttribute = New-Object System.Management.Automation.ParameterAttribute
+    $ParameterAttribute.Mandatory = $true
+    $ParameterAttribute.Position = 0
+    $ParameterAttribute.DontShow = $false
+
+    $serviceGroups = Get-NetScalerWhiteList
+
+    $ValidateSetAtrribute = New-Object System.Management.Automation.ValidateSetAttribute($serviceGroups)
+
+    $AttributeCollection.Add($ValidateSetAtrribute)
+    $AttributeCollection.Add($ParameterAttribute)
+
+    $RunTimeParameter = New-Object System.Management.Automation.RuntimeDefinedParameter($ParameterName, [string], $AttributeCollection)
+
+    $RuntimeParameterDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+    $RuntimeParameterDictionary.Add($ParameterName, $RunTimeParameter)
+
+
+    $RuntimeParameterDictionary
+
+}
+Begin
+{
+    $ServiceGroup = $PSBoundParameters[$ParameterName] 
+}
+Process
+{
+    Copy-Item ""$masterIgnoreFilePath\ingnore.txt"" ""$masterIgnoreFilePath\ingnore.bak""
+    $serviceGroups = Get-NetScalerWhiteList
+    $serviceGroups.Remove($serviceGroup)
+    Write-Host $serviceGroups
+
+}
+
+}

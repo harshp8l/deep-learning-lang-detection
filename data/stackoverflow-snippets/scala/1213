@@ -1,0 +1,54 @@
+trait Block {
+  type Parameters
+
+  // WARNING: This function is used only by pipeline and cast only the block parameters to avoid any cast in
+  // implementations
+  def mapDf[T <: Block : ClassTag](df: DataFrame, params: Any): DataFrame = {
+    this.map[T](df, params.asInstanceOf[Parameters])
+  }
+
+  // Abstract function that processes a dataframe
+  def map[T <: Block : ClassTag](df: DataFrame, params: Parameters): DataFrame
+}
+
+case class ParseURL() extends Block {
+  override type Parameters = (String, Column)
+
+  override def map[T <: Block : ClassTag](df: DataFrame, params: Parameters): DataFrame = {...}
+}
+
+class Pipeline(df: Dataframe) {
+  ...
+  def copy(newDf: DataFrame) = new Pipeline(newDf)
+  ...
+
+  def map[T <: Block : ClassTag](d: T#Parameters): Pipeline = {
+    this.copy(registry.lookupRegistry[T].mapDf(df, d))
+  }
+  ...
+}
+
+case class NoSuchBlockException(declaredBlock: Class[_])
+    extends Exception(s""No block registered $declaredBlock in current registry"")
+
+class BlockRegistry {
+  var registry: Map[ClassTag[_ <: Block], _ <: Block] = Map()
+
+  def register[T <: Block : ClassTag](block: Block) = {
+    registry += (classTag[T] -> block)
+    this
+  }
+
+  def lookupRegistry[T <: Block : ClassTag]: Block = registry.get(classTag[T]) match {
+    case Some(block) => block
+    case _ => throw NoSuchBlockException(classTag[T].runtimeClass)
+  }
+}
+
+object BlockRegistry {
+  val registry: BlockRegistry = new BlockRegistry()
+      .register[ParseURL](ParseURL())
+      .register[CastColumn](CastColumn())
+}
+
+val pipeline = new Pipeline(df).map[ParseURL](""url"", $""url"")

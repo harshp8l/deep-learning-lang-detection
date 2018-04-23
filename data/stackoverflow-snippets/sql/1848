@@ -1,0 +1,49 @@
+declare @O table(id int primary key, val int);
+insert into @O values
+    (1, 123)
+  , (2, 338)
+  , (3, 500);
+declare @C table(oid int, alias varchar(20), val varchar(20));
+insert into @C values
+       (1, 'firstName', 'John')
+     , (1, 'lastName', 'Smith')
+     , (1, 'city', 'Boston')
+     , (1, 'zip', '12345')
+     , (1, 'address1', 'Someplace')
+     , (2, 'firstName', 'Jane')
+     , (2, 'lastName', 'Doe')
+     , (2, 'city', 'New Orleans')
+     , (2, 'zip', '23456')
+     , (2, 'address1', '1 Brookland Avenue')
+     , (3, 'firstName', 'Eric')
+     , (3, 'lastName', 'Black')
+     , (3, 'city', 'Chicago')
+     , (3, 'zip', '34567')
+     , (3, 'address1', 'Apartment 356');
+select o.id as orderId, o.val as orderValue
+     , cF.val as firstName, cl.val as lastName
+   --, cC.val as city, cZ.val as zip, cA.val as address1
+     , cC.val + ', ' + cZ.val + ', ' + cA.val as address
+  from @O o
+  join @C cF 
+    on cF.oid = o.id 
+   and cF.alias = 'firstName'
+  join @C cL 
+    on cL.oid = o.id 
+   and cL.alias = 'lastName'
+  join @C cC
+    on cC.oid = o.id 
+   and cC.alias = 'city'
+  join @C cZ 
+    on cZ.oid = o.id 
+   and cZ.alias = 'zip'
+  join @C cA
+    on cA.oid = o.id 
+   and cA.alias = 'address1' 
+ order by o.id;
+
+orderId     orderValue  firstName            lastName             address
+----------- ----------- -------------------- -------------------- ----------------------------------------------------------------
+1           123         John                 Smith                Boston, 12345, Someplace
+2           338         Jane                 Doe                  New Orleans, 23456, 1 Brookland Avenue
+3           500         Eric                 Black                Chicago, 34567, Apartment 356

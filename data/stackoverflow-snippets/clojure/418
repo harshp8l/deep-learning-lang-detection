@@ -1,0 +1,33 @@
+Clojure 1.9.0-alpha14
+user=> (require '[clojure.spec :as s])
+nil
+user=> (s/def ::key string?)
+:user/key
+user=> (s/def ::value string?)
+:user/value
+user=> (s/def ::n int?)
+:user/n
+(s/def ::node (s/keys :req [::key ::value ::n]
+                      :opt [::left ::right]))
+:user/node
+user=> (s/def ::left ::node)
+:user/left
+user=> (s/def ::right ::node)
+:user/right
+(defn test-it []
+  (s/valid? ::node
+            {::key ""hi""
+             ::value ""bye""
+             ::n 0
+             ::left {::key ""what""
+                     ::value ""nothing""
+                     ::n 0}
+             ::right {::key ""hello""
+                      ::value ""goodbye""
+                      ::n 0}
+             }))
+#'user/test-it
+user=> (test-it)
+true
+user=> (s/valid? ::node {::key ""hi"" ::value ""bye"" ::n 0 ::left {}})
+false

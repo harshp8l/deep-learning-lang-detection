@@ -1,0 +1,18 @@
+     var rdd = if (inputFileType.equalsIgnoreCase(InputFileType_Text)) {
+        // Read local text file
+        // Tried using a NullWritable here for local testing, but it throws
+        // a 'Not Serializable' error.  Using null instead.
+        sparkCtx.textFile(srcDir).map(line => {
+           val tokens = line.split(""\t"")
+           (null, tokens(1))
+        })
+     } else  {
+        // Default to assuming sequence files are input
+        // Read HDFS directory of seq files.
+        log.debug(""SEQUENCE files, srcDir={}"", srcDir)
+        sparkCtx.sequenceFile[NullWritable, String](srcDir)
+     }
+     log.debug(""LOADED: rdd<NullWritable,String>"")
+
+     // Json records
+     val jsonRecs = rdd.map((record: (NullWritable, String)) => new String(record._2))

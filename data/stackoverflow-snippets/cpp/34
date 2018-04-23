@@ -1,0 +1,61 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <iomanip>
+#include <vector>
+
+class Person
+{
+  public:
+    Person(int id, std::string name);
+    friend std::ostream& operator<<(std::ostream&, const Person&);
+  private:
+    int idNum_;
+    std::string name_;
+};
+
+Person::Person(int idNum, std::string name)
+  : idNum_{idNum}, name_{std::move(name)}
+{ }
+
+std::ostream& operator<<(std::ostream& out, const Person& p)
+{
+    return out << p.name_ << ' ' << p.idNum_;
+}
+
+std::ostream& personDisplay(std::ostream& s)
+{
+    s.setf(std::ios::left);
+    s.width(12);
+    return s;
+}
+
+int main()
+{
+    const int QUIT = 0;
+    const int MAX = 10;
+    std::vector<Person> persons;
+    int id;
+    std::string name;
+
+    while (persons.size() < MAX &&
+           std::cout << ""Enter an ID number or "" << QUIT << "" to quit "" &&
+           std::cin >> id &&
+           id != QUIT)
+    {
+        std::cout << "" Enter name "";
+        std::cin >> name;
+        persons.emplace_back(id, std::move(name));
+    }
+
+    int personsPrinted = 0;
+    for (const auto& person : persons)
+    {
+        std::cout << personDisplay << person;
+        if (++personsPrinted % 2 == 0)
+            std::cout << '\n';
+        else
+            std::cout << ""   "";
+    }
+    if (persons.size() % 2) std::cout << '\n';
+}

@@ -1,0 +1,21 @@
+int CFFmpegPlayer::PauseDemuxer()
+{
+    if (is_paused_ != is_last_paused_) {
+        is_last_paused_ = is_paused_;
+        if (is_paused_){
+            read_pause_return_ = av_read_pause(input_format_context_);
+            StopAudio();
+        }
+        else{
+            av_read_play(input_format_context_);
+            StartAudio();
+        }
+    }
+    if (is_paused_  && !strcmp(input_format_context_->iformat->name, ""rtsp"")) {
+        /* wait 10 ms to avoid trying to get another packet */
+        /* XXX: horrible */
+        SDL_Delay(10);
+        return 1;
+    }
+    return 0;
+}

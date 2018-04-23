@@ -1,0 +1,28 @@
+Try this one:
+
+if($stmt = $conn->prepare(""SELECT a.id, a.title, a.content, a.posted, a.author, u.login FROM articles a INNER JOIN users u ON a.author=u.id ORDER BY a.id DESC""))
+{
+    $stmt->execute();
+    $stmt->bind_result($id,$title,$content,$posted,$author,$login);             
+    $stmt->store_result();
+    echo ""numrows"".$stmt->num_rows();
+    while ($stmt->fetch()) 
+    {
+        $data[] = array(
+                   'id'    => $id,
+                   'title'     => $title,
+                   'content'     => $content,  
+                   'posted'     => $posted,
+                   'author'     => $author,
+                   'login'     => $login                       
+        );
+        foreach($data as $row) 
+        {
+            echo '<span>'.$row['title'] . '</span>';
+            echo '<span>'.$row['posted'].' | '.$row['login'].'</span><br /><br />';
+            echo $row['content'] . '<br /><br />';
+        }
+        $data = []; 
+    }
+    $stmt->close();
+}

@@ -1,0 +1,40 @@
+#include <cstdlib>
+#include <cassert>
+#include <tensorflow/core/framework/tensor.h>
+#include <tensorflow/core/framework/tensor_shape.h>
+
+tensorflow::Tensor get_element(const tensorflow::Tensor data, unsigned int index, bool keepDim)
+{
+    using namespace std;
+    using namespace tensorflow;
+
+    typedef typename tensorflow::DataTypeToEnum<T> DataType;
+    auto dtype = DataType::v();
+    assert(dtype == data.dtype());
+
+    auto dtype = data.dtype();
+    auto dataShape = data.shape();
+
+    TensorShape elementShape;
+    if (keepDim)
+    {
+        elementShape.addDim(1);
+    }
+    for (int iDim = 1; iDim < dataShape.dims(); iDim++) {
+      elementShape.AddDim(dataShape.dim_size(iDim));
+    }
+    Tensor element(dtype, elementShape);
+    auto elementBytes = elementShape.num_elements() * DataTypeSize(dtype);
+
+    memcpy(element.flat<void>().data(),
+           batch.flat<void>().data() + elementBytes * index,
+           elementBytes);
+    return element;
+}
+
+int main()
+{
+    Tensor batch =  ...;
+    Tensor first = get_element(batch, 0);
+    return 0;
+}

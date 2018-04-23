@@ -1,0 +1,19 @@
+import scala.io._
+
+object Pworp {
+    val r = (Source.fromFile (""./dialektik-der-aufklaerung.txt"").getLines.filter (_.size > 1).flatMap (
+          line => line.split (""""""[\]\[ ,.?!»«0-9-]"""""").filter (_.size > 2).map (_.replaceAll (""^(P|p)?(.*)(p)?$"", ""$1-$3:$1$2$3"")))).toList.groupBy (s => (s(0),s(1))).toList
+
+    ((0 to r.size-1).map (i => r(i)._1 match {
+            case (('P'|'p'), 'p') => Some (r(i)._2.distinct)
+            case (('P'|'p'), '-') => Some (r(i)._2.distinct)
+            case (   '-'   , 'p') => Some (r(i)._2.distinct)
+            case (   '-'   , ':') => None // Some (r(i)._2.distinct) -- too many
+            case _  => None // Shouldn't happen, but happens, if the 
+                            // split-expression is bogus
+        })).flatten.map (ri => println (s""${ri.distinct.size}: ${ri.distinct}\n""))
+
+    def main (args: Array[String]) {
+        val ex = Pworp
+    }
+}

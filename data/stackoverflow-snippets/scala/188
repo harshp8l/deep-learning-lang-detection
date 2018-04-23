@@ -1,0 +1,12 @@
+import org.apache.spark.sql.functions.udf
+def toEquals = udf((rd1: String, rd2: String) => {
+  val d1 = adjust(LocalDateTime.parse(rd1, DATE_TIME_FORMATTER))
+  val d2 = adjust(LocalDateTime.parse(rd2, DATE_TIME_FORMATTER), asc = false)     
+  if (d1.isAfter(d2)) 0.hours.toString
+  else if (d1.toLocalDate.isEqual(d2.toLocalDate)) {
+    (toEnd(d1.toLocalTime) - toEnd(d2.toLocalTime)).toString
+  }
+  else {
+    (toEnd(d1.toLocalTime) + jourOuvree(d1.toLocalDate.plusDays(1), d2.toLocalDate.minusDays(1)) * 8.hours + toStart(d2.toLocalTime)).toString
+  }
+})

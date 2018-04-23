@@ -1,0 +1,50 @@
+#include <boost/hana.hpp>
+#include <string>
+
+namespace hana = boost::hana;
+
+struct WithoutToString { }; 
+struct WithToString { std::string toString() const { return ""implements toString()""; } };
+
+namespace v1 {
+    //This is the 1st version of the check using hana::is_valid:
+    auto has_toString = hana::is_valid([] (auto&& obj) -> decltype(obj.toString()) { });
+
+    template <typename T>
+        std::string optionalToString1(T const& obj)
+        {
+            return hana::if_(has_toString(obj),
+                    [] (auto&& x) { return std::forward<decltype(x)>(x).toString(); },
+                    [] (auto&&) { return ""toString not defined""; }
+                    )(obj);
+        }
+}
+
+namespace v2 {
+    //This is the 2nd version of the check using hana::sfinae:
+    template <typename T>
+        std::string optionalToString2(T const& obj)
+        {
+            auto maybeToString = hana::sfinae([](auto&& x) -> decltype(x.toString())
+                    {
+                    return x.toString();
+                    });
+
+            return maybeToString(obj).value_or(""toString not defined"");
+        }
+}
+
+#include <iostream>
+int main()
+{
+    WithToString with;
+    WithoutToString without;
+
+    std::cout << std::boolalpha << v1::has_toString(without) << std::endl;
+    std::cout << std::boolalpha << v1::has_toString(with)    << std::endl;
+
+    std::cout << v1::optionalToString1(without) << std::endl;
+    std::cout << v1::optionalToString1(with)    << std::endl;
+    std::cout << v2::optionalToString2(without) << std::endl;
+    std::cout << v2::optionalToString2(with)    << std::endl;
+}

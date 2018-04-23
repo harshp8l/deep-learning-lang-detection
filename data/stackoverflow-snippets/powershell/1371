@@ -1,0 +1,47 @@
+# Compare the group memberships of 2 Active Directory Users or the user memberships of 2 Active Directory Groups.
+# Requires the ActiveDirectory PowerShell module from the Microsoft's Remote Server Administration Tools.
+
+Import-Module ActiveDirectory
+
+function Get-ComparisonResult ($name1, $name2, $sideIndicator)
+{
+    $comparisonResult = $null
+
+    switch ($_.SideIndicator)
+    {
+        '<=' { $comparisonResult = ""$($name1) Only"" }
+        '==' { $comparisonResult = ""$($name1) and $($name2)"" }
+        '=>' { $comparisonResult = ""$($name2) Only"" }
+    }
+
+    return $comparisonResult
+}
+
+function Compare-ADUserGroupMembership($userName1, $userName2)
+{
+    $userComparisonResultColumn = @{ name = 'Comparison Result'; expression = { Get-ComparisonResult $user1.DisplayName $user2.DisplayName  $_.SideIndicator } }
+    $groupNameColumn = @{ name = 'Group Name'; expression = { (Get-ADGroup $_.InputObject).Name } }
+
+    $user1 = Get-ADUser $userName1 -Properties memberOf, displayName
+    $user2 = Get-ADUser $userName2 -Properties memberOf, displayName
+
+    $userGroupComparison = Compare-Object -IncludeEqual $user1.MemberOf $user2.MemberOf | Select $userComparisonResultColumn, $groupNameColumn
+
+    return $userGroupComparison
+}
+
+function Compare-ADGroupMembership($groupName1, $groupName2)
+{
+    $groupComparisonResultColumn = @{ name = 'Comparison Result'; expression = { Get-ComparisonResult $groupName1 $groupName2 $_.SideIndicator } }
+    $userNameColumn = @{ name = 'User Name'; expression = { $_.InputObject.name } }
+
+    $groupMembers1 = Get-ADGroupMember $groupName1
+    $groupMembers2 = Get-ADGroupMember $groupName2
+
+    $groupMemberComparison = Compare-Object -IncludeEqual $groupMembers1 $groupMembers2 | Select $groupComparisonResultColumn, $userNameColumn
+
+    return  $groupMemberComparison
+}
+
+Compare-ADUserGroupMembership 'userone' 'usertwo' | ft -AutoSize
+Compare-ADGroupMembership 'Group One' 'Group Two' | ft -AutoSize

@@ -1,0 +1,12 @@
+let rec list : (obj list -> Expr list) = function
+    | head::tail -> 
+        match head with
+        | :? string as x'-> Symbol (x') :: list tail
+        // Other cases you're already covering
+        | :? float as x' -> Real x' :: list tail
+        | :? Expr as x' -> x' :: list tail
+        | :? System.Collections.IEnumerable as x' -> 
+            // It is a collection and we can get its elements as `obj` values!
+            let nested = x' |> Seq.cast |> List.ofSeq |> list
+            List(nested) :: list tail
+    | _ -> []

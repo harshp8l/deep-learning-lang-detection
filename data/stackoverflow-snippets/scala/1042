@@ -1,0 +1,17 @@
+graphDF
+  .where($""type_from"" === $""type_to"" && $""from"" =!= $""to"")
+  .groupBy($""from"" as ""nodeId"", $""type_from"" as ""type"")
+  .agg(count(""*"") as ""numLinks"")
+  .join(types, Seq(""nodeId"", ""type""), ""rightouter"")
+  .na.fill(0)
+
+// +------+----+--------+
+// |nodeId|type|numLinks|
+// +------+----+--------+
+// |     0|   0|       0|
+// |     1|   0|       1|
+// |     2|   2|       0|
+// |     3|   4|       0|
+// |     4|   4|       2|
+// |     5|   4|       0|
+// +------+----+--------+

@@ -1,0 +1,50 @@
+script=r'''#!/bin/bash
+
+DATA=""""
+RETRY=50
+
+# avoid copying the variable; quote the string
+echo ""$hostname""
+
+sleep 1m
+
+while true; do
+    # fix indentation    
+    while [ $RETRY -gt 0 ]
+    do
+        # avoid useless use of if [ $? -eq 0 ]
+        # quote URL for mainly stylistic reasons
+        if DATA=$(wget -O - -q -t 1 ""http://$hostname:8080/process"")
+        then
+            break
+        else
+            if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null ;
+            then
+                # Consistently use stderr for diagnostic messages
+                echo ""Server is already running"" >&2
+            else
+                echo ""Server is not running so starting it"" >&2
+                /opt/abc/hello start
+            fi
+            let RETRY-=1
+            sleep 30
+        fi
+    done
+
+    if [ $RETRY -eq 0 ]
+    then
+        echo ""Server is still down. Exiting out of shell script."" >&2
+        exit 2
+    fi
+
+    # stderr again
+    echo ""Server is up. Now parsing the process."" >&2
+    state=$(grep -oP 'state: \K\S+' <<< ""$DATA"")
+    # use a default
+    state=${state:-0}
+    echo ""$state""
+
+    if [[ ""$state"" == ""DONE"" || ""$state"" == ""0"" ]]; then exit 0; fi
+
+    sleep 30
+done'''

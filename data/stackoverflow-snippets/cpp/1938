@@ -1,0 +1,31 @@
+    unordered_map<std::string, int> map;
+    std::vector<std::unordered_map<std::string,int>::iterator> order;
+
+    // Lets assume this is my string stream
+    std::vector<std::string> words = {""a"",""b"",""a"" ... };
+
+    // Insert elements to map and the corresponding iterator to order
+    for (auto& word : words){
+        auto it = map.emplace(word,1);
+        if (!it.second){
+            it.first->second++;
+        }
+        else {
+            order.push_back(it.first);
+        }
+        max_count = std::max(max_count,it.first->second);
+    }
+
+    //  Bucket Sorting
+    /*  We are iterating over the vector and not the map
+        this ensures we are iterating by the order they got inserted */
+    std::vector<std::vector<std::string>> buckets(max_count);
+    for (auto o : order){
+        int count = o->second;
+        buckets[count-1].push_back(o->first);
+    }
+
+    std::vector<std::string> res;
+    for (auto it = buckets.rbegin(); it != buckets.rend(); ++it)
+        for (auto& str : *it)
+            res.push_back(str);

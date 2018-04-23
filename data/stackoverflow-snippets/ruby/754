@@ -1,0 +1,52 @@
+require 'nokogiri'
+
+class PacketFilter < Nokogiri::XML::SAX::Document
+  def initialize
+    reset
+  end
+
+  def end_document
+    puts 'the document has ended'
+  end
+
+  def start_element(name, attributes = [])
+    case name
+    when 'packet'
+      @in_packet = true
+    when 'proto'
+      @have_s1ap = @in_packet && attribute_value(attributes, 'name') == 's1ap'
+    when 'field'
+      case attribute_value(attributes, 'name')
+      when 's1ap.procedureCode'
+        @procedure_code = attribute_value(attributes, 'showname')
+      when 'frame.time_epoch'
+        @epoch_time = attribute_value(attributes, 'showname')
+      end
+    end
+  end
+
+  def end_element(name)
+    if name == 'packet'
+      puts ""#{@procedure_code}, #{@epoch_time}"" if @have_s1ap
+      reset
+    end
+  end
+
+  private
+
+  def attribute_value(attributes, name)
+    attributes.reduce(nil) do |value, assoc|
+      assoc[0] == name ? assoc[1] : value
+    end
+  end
+
+  def reset
+    @in_packet = false
+    @have_s1ap = false
+    @procedure_code = nil
+    @epoch_time = nil
+  end
+end
+
+parser = Nokogiri::XML::SAX::Parser.new(PacketFilter.new)
+parser.parse($stdin)

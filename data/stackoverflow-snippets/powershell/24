@@ -1,0 +1,18 @@
+## Identify the certificate who's private key you want to grant
+## permission to
+$certificate = $(ls 'cert:\LocalMachine\My\C51280CE3AD1FEA848308B764DDCFA7F43D4AB1A')
+
+## Identify the user you'll be granting permission to
+$grantee_name = 'foo\lordAdam'
+$grantee = New-Object System.Security.Principal.NTAccount($grantee_name)
+
+## Get the location and permission-of the cert's private key
+$privatekey_rsa = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($certificate)
+$privatekey_file_name = $privatekey_rsa.key.UniqueName
+$privatekey_path = ""${env:ALLUSERSPROFILE}\Microsoft\Crypto\Keys\${privatekey_file_name}""
+$privatekey_file_permissions = Get-Acl -Path $privatekey_path
+
+## Grant the user 'read' access to the key
+$access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($grantee, 'Read', 'None', 'None', 'Allow')
+$privatekey_file_permissions.AddAccessRule($access_rule)
+Set-Acl -Path $privatekey_path -AclObject $privatekey_file_permissions

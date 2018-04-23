@@ -1,0 +1,23 @@
+class Other
+
+class OtherConstructor[O <: Other] {
+  def apply(o: O): O = o  // constructor 1 in base class
+}
+
+class Something[T](value: T) extends Other
+
+class SomethingConstructor[T] extends OtherConstructor[Something[T]] {
+  def apply(o: T, s: String) = new Something[T](o)   // constructor 2 in subclass
+}
+
+object Something {
+  def apply[T] = new SomethingConstructor[T] // the ""constructor constructor"" method
+}
+
+object demoX extends App {
+  val si = new Something(123)
+  val sd = new Something(1.23)
+
+  val si1: Something[Int] = Something[Int](si)                    // OtherConstructor.apply
+  val sd1: Something[Double] = Something[Double](1.23, ""hello"")   // SomethingConstructor[Double].apply
+}

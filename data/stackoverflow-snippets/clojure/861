@@ -1,0 +1,67 @@
+(ns adventofcode.day6singlearray
+  (:require [clojure.java.io :as io]
+            [clojure.string :as string]))
+
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed) 
+
+(def ^:const grid-size 1000)
+
+(defn make-grid []
+  (let [l (* grid-size grid-size)
+        a (make-array Long/TYPE l)]
+    (loop [i 0]
+      (if (< i l)
+        (do (aset ^longs a i -1)
+            (recur (inc i)))
+        a))))
+
+(defn parse-line [l]
+  (let [[command left-top right-bottom]
+        (-> l
+            (string/replace ""turn off"" ""turn-off"")
+            (string/replace ""turn on"" ""turn-on"")
+            (string/replace ""through "" """")
+            (string/split #"" ""))
+        parse-coordinates (fn [s]
+                            (let [parts (string/split s #"","")]
+                              (map #(Integer/parseInt %) parts)))
+        [left top] (parse-coordinates left-top)
+        [right bottom] (parse-coordinates right-bottom)]
+    [command left top right bottom]))
+
+(defn set-grid! [grid ^long i ^long j v]
+  (let [pos (+ i (* j (dec grid-size)))]
+    (aset ^longs grid pos ^long v)))
+
+(defn toggle-grid! [grid ^long i ^long j]
+  (let [pos (+ i (* j (dec grid-size)))]
+    (aset ^longs grid pos
+             ^long (* -1 (aget ^longs grid pos)))))
+
+(defn process-line [grid command left top right bottom]
+  (let [operation (case command
+                    ""turn-off"" #(set-grid! grid %1 %2 -1)
+                    ""turn-on""  #(set-grid! grid %1 %2 1)
+                    ""toggle""   #(toggle-grid! grid %1 %2)
+                    (throw (Exception. ""unrecognized command"")))]
+  (loop [^long i left
+         ^long j top]
+    (if (<= i ^long right)
+      (if (<= j ^long bottom)
+        (do (operation i j)
+            (recur i (inc j)))
+        (recur (inc i) top))))))    
+
+(defn count-lights [grid]
+  (count (filter pos? grid)))
+
+(defn the-answer []
+  (with-open [rdr (-> ""input-day6.txt""
+                      io/resource
+                      io/reader)]
+    (let [grid (make-grid)]
+      (doseq [l (line-seq rdr)]
+        (apply process-line grid
+               (parse-line l)))
+      (count-lights grid))))

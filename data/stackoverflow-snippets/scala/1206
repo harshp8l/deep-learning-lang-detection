@@ -1,0 +1,31 @@
+import java.time.LocalDateTime
+
+import org.scalacheck._
+import org.scalatest._
+import prop._
+
+case class AuthUser(u: String, p: String)
+
+class AuthJwtSpec extends PropSpec with Checkers with PropertyChecks  {
+  private val start = LocalDateTime.now.atZone(java.time.ZoneId.systemDefault()).toEpochSecond
+  private val end = LocalDateTime.now.plusDays(2).atZone(java.time.ZoneId.systemDefault()).toEpochSecond
+
+  private val pickTime: Gen[Long] = Gen.choose(start, end)
+
+  // AuthUser should be Gen[AuthUser], not Arbitary[AuthUser]
+  private val authUser: Gen[AuthUser] =
+      for {
+        u <- Arbitrary.arbitrary[String]
+        p <- Arbitrary.arbitrary[String]
+      } yield AuthUser(u, p)
+
+  property(""Generate JWT token."") {
+    val prop = Prop.forAll(authUser, pickTime) {(user: AuthUser, time: Long) =>
+      println(s""User: $user"")
+      println(s""Time: $time"")
+      // Property checks must always return true or false
+      true
+    }
+    check(prop)
+  }
+}

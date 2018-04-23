@@ -1,0 +1,32 @@
+SELECT
+  C.customer_id,
+  C.name,
+  SUM(CASE WHEN strftime('%Y-%m-%d', O.order_date) = S.final_order_date THEN O.quantity END)
+  -
+  SUM(CASE WHEN strftime('%Y-%m-%d', O.order_date) = S.first_order_date THEN O.quantity END)
+      AS delta_value
+FROM
+  customers    C
+INNER JOIN
+(
+  SELECT
+    customer_id,
+    strftime('%Y-%m-%d', MIN(order_date))   first_order_date,
+    strftime('%Y-%m-%d', MAX(order_date))   final_order_date
+  FROM
+    orders
+  GROUP BY
+    customer_id 
+)
+  S
+    ON S.customer_id = C.customer_id
+INNER JOIN
+  orders    O
+    ON O.customer_id = C.customer_id
+GROUP BY
+  C.customer_id,
+  C.name
+ORDER BY
+  C.name
+LIMIT
+  20

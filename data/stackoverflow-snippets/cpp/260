@@ -1,0 +1,182 @@
+#include ""stdafx.h""
+//#include ""utilities.h""
+#include <cstdlib>
+#include <iostream>
+#include <tuple>
+
+//https://stackoverflow.com/questions/26902633/how-to-iterate-over-a-stdtuple-in-c-11
+template<class F, class...Ts, std::size_t...Is>
+void for_each_in_tuple(const std::tuple<Ts...> & tuple, F func, std::index_sequence<Is...>) {
+    using expander = int[];
+    (void)expander {
+        0, ((void)func(std::get<Is>(tuple)), 0)...
+    };
+}
+
+template<class F, class...Ts>
+void for_each_in_tuple( std::tuple<Ts...> & tuple, F func) {
+    for_each_in_tuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
+}
+
+
+// https://stackoverflow.com/questions/42255534 (Yakk)
+namespace notstd {
+    template<class T> struct tag_t { constexpr tag_t() {}; using type = T; };
+    template<class T> constexpr tag_t<T> tag{};
+    template<class Tag> using type_t = typename Tag::type;
+
+    template<class...Ts, class F>
+    void for_each_type(F&& f) {
+        using discard = int[];
+        (void)discard {
+            0, (void(
+                f(tag<Ts>)
+                ), 0)...
+        };
+    }
+}
+
+// A component
+class icomponent {
+public:
+    virtual std::string id() = 0;
+    virtual ~icomponent() = default;
+
+    virtual void init() = 0;
+    virtual void dispose() = 0;
+
+    void say() const {
+        std::cout << ""say: "" << typeid(*this).name() << "" ANDNAME: "" << /*id( ).c_str( )*/""???"" << std::endl;
+    }
+};
+
+class component_base : public icomponent
+{
+public:
+    virtual ~component_base() = default;
+
+    virtual void init()
+    {
+        // ... init context
+    }
+
+    virtual void dispose()
+    {
+        // ...
+    }
+
+    // ... more
+};
+
+// Sample components
+class component_a : public component_base {
+public:
+    virtual std::string id() override { return ""component a""; }
+};
+class component_b : public component_base {
+public:
+    virtual std::string id() override { return ""component b""; }
+};
+class component_c : public component_base {
+public:
+    virtual std::string id() override { return ""component c""; }
+};
+
+// Interface component manager
+class iprocessing_component_manager {
+public:
+    virtual ~iprocessing_component_manager() = default;
+
+    virtual void init() = 0;
+    virtual icomponent* prepare() = 0;
+    virtual void recycle(icomponent* p) = 0;
+    virtual void dispose() = 0;
+};
+
+// Implementation component manager
+template<typename T>
+class  type_processing_component_manager
+    : public iprocessing_component_manager {
+public:
+    virtual ~type_processing_component_manager() = default;
+
+    virtual T* prepare() override
+    {
+        // Default create T or fetch from a object pool, etc ...
+        return new T;
+    }
+};
+
+// Implementation virt. methods component mgr
+template<typename ... Ts>
+class tuple_processing_component_manager
+    : public type_processing_component_manager<Ts>... {
+public:
+    virtual ~tuple_processing_component_manager() = default;
+
+    virtual void init() override
+    {
+        std::cout << ""init: "" << typeid(*this).name() << std::endl;
+
+    }
+
+    template<typename T>
+    T* prepare()
+    {
+        return type_processing_component_manager<T>::prepare();
+    }
+
+    virtual void recycle(icomponent* p) override
+    {
+        // Delete pointer or return to an object pool, etc
+        delete p;
+    }
+
+    virtual void dispose() override
+    {
+
+    }
+};
+
+// The controller
+template <typename... Ts>
+class controller  {
+
+    std::tuple< Ts...> tups;
+
+public:
+    controller()
+    {
+    }
+    ~controller() = default;
+
+    // Do some initialization
+    // https://stackoverflow.com/questions/16387354/template-tuple-calling-a-function-on-each-element
+    void init()
+    {
+        for_each_in_tuple(tups, [](auto &x) { x.say(); });
+//      m_component_manager->init();
+    }
+
+    // Process components
+    void process()
+    {
+        // A simple loop over components. 
+
+        //but this does not get the stored objects!
+        //notstd::for_each_type<Ts...>([&](auto tag) {
+        //  using component_t = notstd::type_t<decltype(tag)>;
+
+    }
+
+    // ... more stuff
+};
+
+int main(int argc, char** argv)
+{
+    controller<component_a, component_c> c;
+    c.init();
+    c.process();
+
+    return 0;
+}

@@ -1,0 +1,34 @@
+#r ""Newtonsoft.Json.dll""
+
+open System
+open System.Text.RegularExpressions
+open Newtonsoft.Json.Linq
+
+let (|Regex|_|) pattern input =
+    let m = Regex.Match(input, pattern)
+    if m.Success then Some(List.tail [ for g in m.Groups -> g.Value ])
+    else None
+
+type ActorDetails =
+    {
+        Date: DateTime
+        Name: string
+        Email: string
+    }
+
+let parseActorDetails queryString =
+    match queryString with
+    | Regex @""[\?|&]actor=([^&]+)"" [json] ->
+        let jsonValue = JValue.Parse(Uri.UnescapeDataString(json))
+        {
+            Date = DateTime.UtcNow (* replace with parsed date *)
+            Name = jsonValue.Value<JArray>(""name"").[0].Value<string>()
+            Email = jsonValue.Value<JArray>(""mbox"").[0].Value<string>().[7..]
+        }
+    | _ -> invalidArg ""queryString"" ""Invalid format""
+
+parseActorDetails ""&actor=%7B%22name%22%3A%5B%22James%2C%20Smith%22%5D%2C%22mbox%22%3A%5B%22mailto%3AJames.Smith%40student.colled.edu%22%5D%7D&""
+
+val it : ActorDetails = {Date = 11/10/2015 9:14:25 PM;
+                         Name = ""James, Smith"";
+                         Email = ""James.Smith@student.colled.edu"";}

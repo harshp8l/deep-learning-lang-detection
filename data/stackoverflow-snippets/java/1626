@@ -1,0 +1,34 @@
+int entityCount = 50;
+int batchSize = 25;
+
+EntityManager entityManager = entityManagerFactory().createEntityManager();
+
+EntityTransaction entityTransaction = entityManager.getTransaction();
+
+try {
+    entityTransaction.begin();
+
+    for (int i = 0; i < entityCount; i++) {
+        if (i > 0 && i % batchSize == 0) {
+            entityTransaction.commit();
+            entityTransaction.begin();
+
+            entityManager.clear();
+        }
+
+        Post post = new Post(
+            String.format(""Post %d"", i + 1)
+        );
+
+        entityManager.persist(post);
+    }
+
+    entityTransaction.commit();
+} catch (RuntimeException e) {
+    if (entityTransaction.isActive()) {
+        entityTransaction.rollback();
+    }
+    throw e;
+} finally {
+    entityManager.close();
+}

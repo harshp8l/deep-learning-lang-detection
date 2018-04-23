@@ -1,0 +1,70 @@
+class BinaryNodeTreeToHTML extends BinaryNodeTree {
+    constructor(rootPtr, className = ""tree-html"") {
+        super(rootPtr);
+        this.html = [];
+        this.rootPtr = rootPtr;
+        this.className = className;
+    }
+    createContainer() {
+        const _ = this;
+        return new $(""<div />"", {
+            ""class"": _.className
+        });
+    }
+    createListItem(type, value, id, parentId) {
+        const _ = this;
+        return $(""<li />"", {
+            id,
+            ""data-parent_id"": parentId,
+            ""data-type"": type,
+            ""data-value"": value,
+            html: _.createAnchor(type, value)
+        });
+    }
+    createAnchor(type, value) {
+        return $(""<a />"", {
+            href: ""#"",
+            ""data-type"": type,
+            text: value
+        });
+    }
+    createUnorderedList(parent = ""root"") {
+        return $(""<ul />"", {
+            ""data-parent"": parent
+        })
+    }
+    Start(outputClassName) {
+        const _ = this;
+        console.log(this.Root);
+        const $output = $(`.${outputClassName}`).eq(0);
+        const $container = this.createContainer();
+        let $main_ul = _.createUnorderedList();
+        $container.append($main_ul);
+        $output.append($container);
+        console.log(_.html);
+        this.inOrderTraverse((Item, Id, Pointer, Parent) => {
+            if (Parent !== null) {
+                let $new_item = _.createListItem(Item.Type, Item.Value, Id, Parent.Id);
+                $main_ul.append($new_item);
+            } else {
+                let $new_item = _.createListItem(Item.Type, Item.Value, Id, ""root"");
+                $main_ul.append($new_item);
+            }
+        })
+        for(let obj of $main_ul.find(""li"")){
+            let $obj = $(obj);
+            if($obj.data().parent_id !== ""root""){
+                let $parent = $(""#""+$obj.data().parent_id);
+                if($parent.find(""[data-parent=""+$parent.attr(""id"")+""]"").length > 0){
+                    let $ul = $parent.find(""[data-parent=""+$parent.attr(""id"")+""]"")
+                    $ul.append($obj);
+                }else{
+                    $parent.append(_.createUnorderedList($parent.attr(""id"")).append($obj))
+                }
+            }
+
+        }
+
+        return $container;
+    }
+};

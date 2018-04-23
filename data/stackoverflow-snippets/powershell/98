@@ -1,0 +1,18 @@
+Import-Module ReportingServicesTools
+$ReportPath = 'C:\MyFiles\SSRS 2016 Upgrade\Reporting Server' 
+
+Get-ChildItem $ReportPath -Recurse -Directory -Name | ForEach-Object {
+  # Split the relative input path into leaf (directory name)
+  # and parent path, and convert the parent path to the target parent path
+  # by prepending ""/"" and converting path-internal ""\"" instances to ""/"".
+  $SubFolderParentPath = '/' + ((Split-Path -Parent $_) -replace '\\', '/')                            #'
+  $SubFolderName = Split-Path -Leaf $_
+  try{
+    New-RsFolder -ReportServerUri $ReportServerURI -Path $SubFolderParentPath -FolderName $SubFolderName 
+    Write-Host ""Created folder ${SubFolderPath}/${SubFolder}""
+  }
+  catch {
+      # Report the specific error that occurred, accessible via $_
+      Write-Host ""An error occurred for ${SubFolderPath}/${SubFolder}: $_""
+  }
+}

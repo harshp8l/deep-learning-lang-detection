@@ -1,0 +1,29 @@
+typedef unsigned char byte;
+
+uint32_t read_u32_be(const byte *buf) {
+    return uint32_t(buf[0])<<24 |
+           uint32_t(buf[1])<<16 |
+           uint32_t(buf[2])<<8  |
+           uint32_t(buf[3]);
+}
+
+int32_t read_i32_be(const byte *buf) {
+    // assume 2's complement in unsigned -> signed conversion
+    return read_u32_be(buf);
+}
+
+double read_f64_be(const byte *buf) {
+    static_assert(sizeof(double)==8);
+    double ret;
+    std::reverse_copy(buf, buf+8, (byte*)&ret);
+    return ret;
+}
+
+void read_A(const byte *buf, A& t) {
+    t.a_ = read_i32_be(buf+8);
+}
+
+void read_B(const uint8_t *buf, B& t) {
+    read_A(buf, t);
+    t.b_ = read_f64_be(buf+0x10);
+}

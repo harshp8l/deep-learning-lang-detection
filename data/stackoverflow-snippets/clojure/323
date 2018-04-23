@@ -1,0 +1,28 @@
+(fn [rf]
+  (let [a (java.util.ArrayList.)
+        pv (volatile! ::none)]
+    (fn
+      ([] (rf))
+      ([result]
+         (let [result (if (.isEmpty a)
+                        result
+                        (let [v (vec (.toArray a))]
+                          ;;clear first!
+                          (.clear a)
+                          (unreduced (rf result v))))]
+           (rf result)))
+      ([result input]
+        (let [pval @pv
+              val (f input)]
+          (vreset! pv val)
+          (if (or (identical? pval ::none)
+                  (= val pval))
+            (do
+              (.add a input)
+              result)
+            (let [v (vec (.toArray a))]
+              (.clear a)
+              (let [ret (rf result v)]
+                (when-not (reduced? ret)
+                  (.add a input))
+                ret))))))))

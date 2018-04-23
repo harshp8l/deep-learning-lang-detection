@@ -1,0 +1,15 @@
+(defn fetch-pages
+  [urls]
+  (let [url-chan (async/to-chan urls)
+        pages (atom (reduce (fn [m u] (assoc m u nil)) {} urls))
+        conn-manager (http.conn-mgr/make-reusable-conn-manager {})
+        workers (mapv (fn [_] (create-worker url-chan pages conn-manager))
+                      (range n-cpus))]
+    ; wait for workers to finish and shut conn-manager down
+    (loop [workers workers]
+      (when (seq workers)
+        (let [[_ finished-worker] (async/alts!! workers)]
+          (recur (filterv #(not= finished-worker %) workers)))))
+
+    (http.conn-mgr/shutdown-manager conn-manager)    
+    (mapv #(get @pages %) urls)))

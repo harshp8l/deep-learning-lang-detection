@@ -1,0 +1,31 @@
+func (r *SocketRegistry) register(c *Client) {
+    r.mu.Lock()
+    defer r.mu.Unlock()
+    r.clients[c.id] = c
+}
+
+func (r *SocketRegistry) unregister(c *Client) {
+    r.mu.Lock()
+    defer r.mu.Unlock()
+    delete(r.clients, c.id)
+    close(c.send)
+}
+
+func (r *SocketRegister) get(id string) (*Client, bool) {
+    r.mu.Lock()
+    defer r.mu.Unlock()
+    c, ok := r.clients[id]
+    return c, ok
+}
+
+func (r *SocketRegistry) send(id string, data []byte) {
+   r.mu.Lock()
+   defer r.mu.Unlock()
+   c := r.clients[id]
+   select {
+   case c.send <- data:
+   default:
+      close(c.send)
+      delete(r.clients, c.id)
+   }
+}

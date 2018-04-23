@@ -1,0 +1,29 @@
+class Array {
+public:
+    Array(size_t size) : m_size(size) {
+        m_data = std::make_unique<int[]>(size);
+    }
+
+    Array(const Array& other) : Array(other.size) {
+        std::copy_n(other.m_data.get(), other.m_size, m_data.get());
+    }
+
+    Array(Array&& other) : m_data(nullptr) {
+        *this = other;
+    } 
+
+    Array& operator=(Array&& other) {
+        std::swap(m_data, std::move(other.m_data));
+        m_size = other.m_size;
+    }
+
+    Array& operator=(const Array& other) {
+        m_data = std::make_unique<int[]>(other.m_size);
+        std::copy_n(other.m_data.get(), other.m_size, m_data.get());
+    }
+
+    ~Array() = default;
+
+    std::unique_ptr<int>  m_data;
+    size_t                m_size;
+};

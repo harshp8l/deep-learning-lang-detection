@@ -1,0 +1,20 @@
+open System.Collections.Generic
+
+let groupConsecutive (sq : seq<_>) =
+    let rec group (e : IEnumerator<_>) xs =
+        seq {
+            if e.MoveNext() then
+                if e.Current = List.head xs then
+                    yield! group e (e.Current :: xs)
+                else
+                    yield List.rev xs
+                    yield! group e [e.Current]
+            else
+                yield List.rev xs
+        }
+
+    seq {
+        let e = sq.GetEnumerator()
+        if e.MoveNext() then
+            yield! group e [e.Current]
+    }

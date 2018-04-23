@@ -1,0 +1,24 @@
+import re
+
+text = ""aa b%b(   %cc(dd! (:ee ff) gg) %hh ii)  ""
+
+# Solution 1: don't process parentheses at all
+regexA = re.compile(r'(\S+)')
+print(regexA.split(text))
+
+# Solution 2: works for non-nested parentheses
+regexB = re.compile(r'(%[^(\s]*\([^)]*\)|\S+)')
+print(regexB.split(text))
+
+# Solution 3: works for one level of nested parentheses
+regexC = re.compile(r'(%[^(\s]*\((?:[^()]*\([^)]*\))*[^)]*\)|\S+)')
+print(regexC.split(text))
+
+# Solution 4: works for arbitrary levels of nested parentheses
+n, words = 0, []
+for word in regexA.split(text):
+    if n: words[-1] += word
+    else: words.append(word)
+    if n or (word and word[0] == '%'):
+        n += word.count('(') - word.count(')')
+print(words)

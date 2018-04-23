@@ -1,0 +1,21 @@
+def download_excel(request):
+    if ""selectdate"" in request.POST:
+        if ""selectaccount"" in request.POST:
+            selected_date = request.POST[""selectdate""]
+            selected_acc = request.POST[""selectaccount""]
+        if selected_date==selected_date:
+            if selected_acc==selected_acc:
+                convert=datetime.datetime.strptime(selected_date, ""%Y-%m-%d"").toordinal()
+                engine=create_engine('mssql+pymssql://username:password@servername /db')
+                connection = engine.connect()
+                metadata=MetaData()
+                fund=Table('gltrxdet',metadata,autoload=True,autoload_with=engine)
+                rate=Table('gltrx_all',metadata,autoload=True,autoload_with=engine)
+                stmt=select([fund.columns.account_code,fund.columns.description,fund.columns.nat_balance,fund.columns.rate_type_home,rate.columns.date_applied,rate.columns.date_entered,fund.columns.journal_ctrl_num,rate.columns.journal_ctrl_num])
+                stmt=stmt.where(and_(rate.columns.journal_ctrl_num==fund.columns.journal_ctrl_num,fund.columns.account_code==selected_acc,rate.columns.date_entered==convert))
+
+                df = pd.read_sql(stmt,connection)
+
+                writer = pd.ExcelWriter('C:\excel\export.xls')
+                df.to_excel(writer, sheet_name ='bar')
+                writer.save()

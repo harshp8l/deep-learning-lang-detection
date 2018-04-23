@@ -1,0 +1,16 @@
+import cats.free._
+import cats.implicits._
+
+private def filterInner(list : List[Any], acc : List[Any] = Nil) : Trampoline[List[Any]] = {
+  list match {
+    case Nil => Trampoline.done(acc)
+    case (l : List[_]) :: tail =>
+      Trampoline.defer(filterInner(l)).flatMap {
+        case Nil => Trampoline.defer(filterInner(tail, acc))
+        case nested => Trampoline.defer(filterInner(tail, acc :+ nested))
+      }
+    case 1 :: tail =>     Trampoline.defer(filterInner(tail, acc))
+    case other :: tail => Trampoline.defer(filterInner(tail, acc :+ other))
+  }
+}
+def filter(list : List[Any]): List[Any] = filterInner(list).run

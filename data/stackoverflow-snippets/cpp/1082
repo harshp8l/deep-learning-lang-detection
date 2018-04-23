@@ -1,0 +1,58 @@
+#pragma once
+
+#include <boost/asio/io_service.hpp>
+#include <utility>
+#include <memory>
+
+template <typename HANDLER>
+class unwork
+{
+    public:
+        unwork(boost::asio::io_service &service, HANDLER &&handler) :
+            _work_guard(std::make_unique<boost::asio::io_service::work>(service)),
+            _handler(std::forward<HANDLER>(handler))
+        {
+            // wait for the handler to be installed
+            service.post([work_guard = _work_guard.operator->()]() {
+                // remove the work guard and the handler that has now been installed
+                work_guard->~work();
+                work_guard->~work();
+            });
+        }
+
+        unwork(const unwork &that) :
+            unwork(that._work_guard->get_io_service(), that._handler)
+        {}
+
+        unwork(unwork &&that) :
+            _work_guard(std::move(that._work_guard)),
+            _handler(std::move(that._handler))
+        {}
+
+        ~unwork()
+        {
+            // was the work guard not moved out?
+            if (_work_guard) {
+                // add the work guard reference and the handler reference again
+                new (_work_guard.operator->()) boost::asio::io_service::work{ _work_guard->get_io_service() };
+                new (_work_guard.operator->()) boost::asio::io_service::work{ _work_guard->get_io_service() };
+            }
+        }
+
+        template <class ...Arguments>
+        auto operator()(Arguments ...parameters)
+        {
+            return _handler(std::forward<Arguments>(parameters)...);
+        }
+    private:
+        std::unique_ptr<boost::asio::io_service::work>  _work_guard;
+        HANDLER                                         _handler;
+};
+
+// maker function, for c++ < c++17
+template <typename HANDLER>
+unwork<HANDLER> make_unwork(boost::asio::io_service &service, HANDLER &&handler)
+{
+    // create the new unwork wrapper
+    return { service, std::forward<HANDLER>(handler) };
+}

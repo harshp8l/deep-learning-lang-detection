@@ -1,0 +1,47 @@
+#!/bin/bash
+#
+# consume a logfile as written so far. Then, collect every new line
+# and show it in an interval of $interval
+#
+interval=9 # 9 seconds
+#
+printf -v secnow '%(%s)T' -1 
+start=$(( secnow % (3600*24*365) ))
+declare -a arr
+init=false
+while true
+do
+  read line
+  printf -v secnow '%(%s)T' -1 
+  now=$(( secnow % (3600*24*365) ))
+
+  # consume every line created in the past
+  if (( ! init ))
+  then
+    # assume reading a line might not take longer than a second (rounded to whole seconds)
+    while (( ${#line} > 0 && (now - start) < 2 ))
+    do
+      read line
+      start=$now
+      echo -n ""."" # for debugging purpose, remove  
+      printf -v secnow '%(%s)T' -1 
+      now=$(( secnow % (3600*24*365) ))
+    done
+    init=1
+    echo ""init=$init"" # for debugging purpose, remove 
+  # collect new lines, display them every $interval seconds
+  else
+    if ((${#line} > 0 ))
+    then
+      echo -n ""-"" # for debugging purpose, remove 
+      arr+=(""read: $line \n"")
+    fi
+    if (( (now - start) > interval ))
+    then
+      echo -e ""${arr[@]]}""
+      arr=()
+      start=$now
+    fi
+  fi
+  sleep .1
+done < seconds.log

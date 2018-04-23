@@ -1,0 +1,63 @@
+package main
+
+import (
+    ""os""
+    ""text/template""
+)
+
+type Entitie struct {
+    Results []*Data
+}
+
+type Data struct {
+    Name  string
+    Value int32
+}
+
+// Change this function to mod how to filter
+func (e *Entitie) isInSlice(name string) bool {
+    for _, item := range e.Results {
+        if item.Name == name {
+            return true
+        }
+    }
+    return false
+}
+
+func (e *Entitie) AddData(name string, value int32) {
+    if !e.isInSlice(name) {
+        e.Results = append(e.Results, &Data{Name: name, Value: value})
+    }
+}
+
+// In the template, we use rangeStruct to turn our struct values
+// into a slice we can iterate over
+var template = `
+    {{range $i, $e := .Data.Results}}
+        {{$e.Name}} = {{$e.Value}}
+    {{end}}
+    `
+
+func main() {
+    data := make(map[string]Entitie)
+
+    var entities Entitie
+
+    entities.AddData(""test"", 15)
+    entities.AddData(""test"", 15)
+    entities.AddData(""test2"", 15)
+
+    t := template.New(""t"")
+    t, err := t.Parse(template)
+    if err != nil {
+        panic(err)
+    }
+
+    data[""Data""] = entities
+
+    err = t.Execute(os.Stdout, data)
+    if err != nil {
+        panic(err)
+    }
+
+}

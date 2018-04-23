@@ -1,0 +1,26 @@
+$ERROR_SERVICE_REQUEST_TIMEOUT = 1053
+$ERROR_SERVICE_ALREADY_RUNNING = 1056
+$ERROR_SERVICE_DOES_NOT_EXIST  = 1060
+
+function Start-Service {
+  param(
+    [String] $serviceName,
+    [Int32] $timeoutSeconds
+  )
+  $service = Get-Service $serviceName
+  if ( -not $service ) {
+    return $ERROR_SERVICE_DOES_NOT_EXIST
+  }
+  if ( $service.Status -eq [ServiceProcess.ServiceControllerStatus]::Running ) {
+    return $ERROR_SERVICE_ALREADY_RUNNING
+  }
+  $timeSpan = New-Object Timespan 0,0,$timeoutSeconds
+  try {
+    $service.Start()
+    $service.WaitForStatus([ServiceProcess.ServiceControllerStatus]::Running, $timeSpan)
+    return 0
+  }
+  catch [Management.Automation.MethodInvocationException],[ServiceProcess.TimeoutException] {
+    return $ERROR_SERVICE_REQUEST_TIMEOUT
+  }
+}

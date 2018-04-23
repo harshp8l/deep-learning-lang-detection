@@ -1,0 +1,24 @@
+package main
+
+import (
+    ""log""
+    ""net/http""
+    ""net/http/httputil""
+)
+
+func main() {
+    director := func(req *http.Request) {
+        switch req.Host {
+        case ""address001.com"":
+            req.URL.Host = ""localhost:4444""
+            req.URL.Scheme = ""http""
+        case ""address002.com"":
+            req.URL.Host = ""localhost:5555""
+            req.URL.Scheme = ""http""
+        default:
+            log.Println(""error"")
+        }
+    }
+    proxy := &httputil.ReverseProxy{Director: director}
+    log.Fatalln(http.ListenAndServe("":8080"", proxy))
+}

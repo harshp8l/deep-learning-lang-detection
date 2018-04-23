@@ -1,0 +1,20 @@
+class Widget {
+public:
+  enum class State { Off, Standby, Locked };
+
+  void update(float time_interval) {
+    current_state_ = (this->*state_fn_.at(state_))(time_interval);
+  }
+
+private:
+  State off_(float) {return ::has_power() ? State::Standby : State::Off;}
+  State standby_(float);
+  State locked_(float);
+
+  const std::unordered_map<State, State(Widget::*)(float)> state_fn_{
+      {State::Off,     &Widget::off_},
+      {State::Standby, &Widget::standby_},
+      {State::Locked,  &Widget::locked_}};
+
+  State current_state_{State::Off};
+};

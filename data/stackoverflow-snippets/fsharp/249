@@ -1,0 +1,17 @@
+// Index the info frame by city/state, so that we can do lookup
+let infoByCity = infoFrame |> Frame.indexRowsString ""City, State""
+
+// Create a new frame with the same row indices as 'primaryFrame' 
+// containing the additional information from infoFrame.
+let infoMatched = 
+  primaryFrame.Rows
+  |> Series.map (fun k row -> 
+      // For every row, we get the ""City, State"" value of the row and then
+      // find the corresponding row with additional information in infoFrame. Using 
+      // 'ValueOrDefault' will automatically give missing when the key does not exist
+      infoByCity.Rows.TryGet(row.GetAs<string>(""City, State"")).ValueOrDefault)
+  // Now turn the series of rows into a frame
+  |> Frame.ofRows
+
+// Now we have two frames with matching keys, so we can join!
+primaryFrame.Join(infoMatched)

@@ -1,0 +1,20 @@
+val list = Sighting.all.
+  iterator.
+  map(s => (s, haversineDistance(s, ourLocation))).
+  toSeq
+
+// For example ...
+res1: list = List(
+  (""a"", 5), (""b"", 2), (""c"", 12), (""d"", 9), (""e"", 6), (""f"", 15),
+  (""g"", 9), (""h"", 7), (""i"", 6), (""j"", 3), (""k"", 10), (""l"", 5)
+)
+
+val top5 = list.drop(5).
+  foldLeft( list.take(5).sortWith(_._2 > _._2) )(
+    (l, e) => if (e._2 < l.head._2)
+                (e :: l.tail).sortWith(_._2 > _._2)
+              else
+                l
+  ).
+  sortBy(_._2)
+// top5: List[(String, Int)] = List((b,2), (f,3), (h,5), (a,5), (e,6))

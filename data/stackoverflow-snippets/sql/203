@@ -1,0 +1,18 @@
+drop table if exists my_table;
+create table my_table(id int primary key, col1 text, col2 text, col3 text);
+insert into my_table values
+    (1, 'alfa', null, null),
+    (2, null, null, null),
+    (3, 'alfa', null, 'beta');
+
+select t.*, string_agg(value, ', ') as result
+from my_table t
+left join jsonb_each_text(to_jsonb(t)- 'id') on value is not null
+group by id;
+
+ id | col1 | col2 | col3 |   result   
+----+------+------+------+------------
+  1 | alfa |      |      | alfa
+  2 |      |      |      | 
+  3 | alfa |      | beta | alfa, beta
+(3 rows)    

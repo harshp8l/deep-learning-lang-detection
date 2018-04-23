@@ -1,0 +1,22 @@
+void sendSparseEigen(const Ref<const SparseMatrix<double>,StandardCompressedFormat>& mat) {
+    int rows=mat.rows, cols=mat.cols, nnz=mat.nonZeros();
+    assert(rows==mat.innerSize() && cols==mat.outerSize());
+    assert(mat.outerIndexPtr()[cols]==nnz);
+    int shape[3] = {rows, cols, nnz};
+    MPI_Send(shape              ,3   ,MPI_INT,   1, 100, MPI_COMM_WORLD);
+    MPI_Send(mat.valuePtr()     ,nnz ,MPI_DOUBLE,1, 101, MPI_COMM_WORLD);
+    MPI_Send(mat.innerIndexPtr(),nnz ,MPI_INT,   1, 102, MPI_COMM_WORLD);
+    MPI_Send(mat.outerIndexPtr(),cols,MPI_INT,   1, 103, MPI_COMM_WORLD);
+}
+
+void receiveSparseEigen(SparseMatrix<double> &out){
+    int shape[3];
+    MPI_Recv(shape,3,MPI_INT,0, 100, MPI_COMM_WORLD, &status);
+    int rows=shape[0], cols=shape[1], nnz=shape[2];
+    out.resize(rows, cols);
+    out.reserve(nnz);
+    MPI_Recv(out.valuePtr(),  nnz, MPI_DOUBLE,0, 101, MPI_COMM_WORLD, &status);
+    MPI_Recv(out.innerIndexPtr(),nnz, MPI_INT,0, 102, MPI_COMM_WORLD, &status);
+    MPI_Recv(out.outerIndexPtr(),cols,MPI_INT,0, 103, MPI_COMM_WORLD, &status);
+    out.outerIndexPtr()[cols] = nnz;
+}

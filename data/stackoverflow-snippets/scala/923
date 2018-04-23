@@ -1,0 +1,29 @@
+val df = spark.range(24).toDF(""metric"").withColumn(""group"", $""metric"" > 12)
+
+val baseWindow = Window.partitionBy(""group"").orderBy(""metric"")
+
+df.withColumn(""almost"", almost).show
+// +------+-----+------+
+// |metric|group|almost|
+// +------+-----+------+
+// |    13| true|    13| 13
+// |    14| true|    14| 14
+// |    15| true|    15| 15 
+// |    16| true|    29| 16 + 13
+// |    17| true|    31| 17 + 14
+// |    18| true|    33| 18 + 14
+// |    19| true|    48| 19 + 16 + 13
+// |    20| true|    51| 20 + 17 + 14
+// |    21| true|    54| 21 + 18 + 15
+// |    22| true|    70| 22 + 19 + 16 + 13
+// |    23| true|    74| 23 + 20 + 17 + 14
+// |     0|false|     0| ...
+// |     1|false|     1| 1
+// |     2|false|     2| 2
+// |     3|false|     3| 3
+// |     4|false|     5| 4 + 1
+// |     5|false|     7| 5 + 2
+// |     6|false|     9| 6 + 3
+// |     7|false|    12| 7 + 4 + 1
+// |     8|false|    15| 8 + 5 + 2
+// +------+-----+------+

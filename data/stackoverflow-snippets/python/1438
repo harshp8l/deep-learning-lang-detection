@@ -1,0 +1,21 @@
+def writeToCSV(frelation,file_id):
+    csvfile = open('data'+str(file_id)+'.csv', 'w')
+    fieldnames = ['sub', 'sup']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer.writeheader()
+    relation = frelation.getElementsByTagName(""predicate"")
+    for elem in relation:
+        sub = elem.attributes['sub'].value
+        for elem1 in elem.getElementsByTagName(""sup""):
+            sup = elem1.attributes['name'].value
+            writer.writerow({'sub': sub, 'sup': sup})
+
+file_id=1;
+for root, dirs, files in os.walk('data/frames'):
+    for file in files:
+        if (file.endswith('.xml')):
+            xmldoc = parse(os.path.join(root, file))
+            frelation = xmldoc.getElementsByTagName(""frameset"")[0]
+            relation = frelation.getElementsByTagName(""predicate"")
+            writeToCSV(frelation,file_id)
+            file_id+=1

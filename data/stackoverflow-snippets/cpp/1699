@@ -1,0 +1,99 @@
+#include ""animpreview.h""
+
+#include <QPainter>
+
+AnimPreview::AnimPreview(QWidget *parent):QLabel(parent)
+{
+}
+
+void AnimPreview::paintEvent(QPaintEvent *){
+
+    QPainter p(this);
+    QPixmap pic;
+    QPixmap hairs;
+
+    if(draw)
+    {
+        //Sesso
+        switch(sex)
+        {
+        case 0:
+            pic.load("":/Male/Base/Res/man_f.png"");
+            break;
+        case 1:
+            pic.load("":/Male/Base/Res/woman_f.png"");
+
+            break;
+        }
+
+        //capelli
+        if(sex == 1)
+        {
+            switch(hair)
+            {
+            case 1:
+                hairs.load("":/Female/Hair/Res/7_aqua.png"");
+                break;
+            case 2:
+                hairs.load("":/Female/Hair/Res/5_gold.png"");
+                break;
+            }
+        }
+
+        if(sex == 0)
+        {
+            switch (hair)
+            {
+            case 0:
+                break;
+            case 1:
+                hairs.load("":/Male/Hair/Res/1_aqua.png"");
+                break;
+            case 2:
+                hairs.load("":/Male/Hair/Res/14_black.png"");
+                break;
+            }
+        }
+
+    }
+
+    p.drawPixmap(width()/2 - offsetX,height()/2 - offsetY,pic,0,rotation,32,48);
+    p.drawPixmap(width()/2 - offsetX,height()/2 - offsetY,hairs,0,rotation,32,48);
+    p.drawRect(0,0, width()-1, height()-1);
+
+    base = pic;
+    Hair = hairs;
+
+    if(compisition)
+    {
+        QPixmap pix(128,192);
+        QPainter p(&pix);
+
+        p.drawPixmap(0,0,128,192, base);
+        p.drawPixmap(0,0,128,192, Hair);
+
+        p.end();
+
+        Composited = pix;
+        compisition = false;
+    }
+}
+
+void AnimPreview::Rotate(int value)
+{
+    rotation = value;
+    update();
+}
+
+void AnimPreview::Create(int _sex, int _hair)
+{
+    sex = _sex;
+    hair = _hair;
+    draw = true;
+}
+
+void AnimPreview::Composite()
+{
+    compisition = true;
+    update();
+}

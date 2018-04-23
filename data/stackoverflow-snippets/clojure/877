@@ -1,0 +1,29 @@
+;; Helper function to have vector's indexes work like for get-in
+(defn- to-indexed-seqs [coll]
+  (if (map? coll)
+    coll
+    (map vector (range) coll)))
+
+;; Flattening the tree to a dict of (path, value) pairs that I can map over
+;; user>  (flatten-path [] {:a {:k1 1 :k2 2} :b [1 2 3]})
+;; {[:a :k1] 1, [:a :k2] 2, [:b 0] 1, [:b 1] 2, [:b 2] 3}
+(defn- flatten-path [path step]
+  (if (coll? step)
+    (->> step
+         to-indexed-seqs
+         (map (fn [[k v]] (flatten-path (conj path k) v)))
+         (into {}))
+    [path step]))
+
+;; Some final glue
+(defn path-walk [f coll]
+  (->> coll
+      (flatten-path [])
+      (map #(apply f %))))
+
+;; user> (println (clojure.string/join ""\n"" (path-walk #(str %1 "" - "" %2) {:a {:k1 1 :k2 2} :b [1 2 3]})))
+;; [:a :k1] - 1
+;; [:a :k2] - 2
+;; [:b 0] - 1
+;; [:b 1] - 2
+;; [:b 2] - 3

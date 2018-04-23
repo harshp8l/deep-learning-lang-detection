@@ -1,0 +1,22 @@
+from(""direct:start"")    
+    .setProperty(""StartDate"", simple(""${date:now:yyyy-MM-dd'T'HH-mm-ss}""))
+    .to(""direct:download"");
+
+from(""direct:download"")
+    .loopDoWhile(body().isNotNull())
+        .pollEnrich()
+        .simple(""sftp://{{remote.user}}@{{remote.url}}/{{remote.directory}}?password={{remote.password}}""
+                + ""&move=.done/${property.StartDate}""
+                + ""&localWorkDirectory=work/tmp""
+                + ""&autoCreate=false""
+                + ""&consumer.bridgeErrorHandler=true""
+                + ""&throwExceptionOnConnectFailed=true""
+                + ""&recursive=true""
+        )
+        .timeout(0)
+        .choice()
+            .when(body().isNotNull())
+                .to(""file:work/inbox/?fileName=${file:name}"")
+            .otherwise()
+                .end()
+    .end();

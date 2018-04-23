@@ -1,0 +1,21 @@
+size = 4
+
+x_in = tf.placeholder( shape=[None,size] , dtype=tf.float32 )
+y_in = tf.placeholder( shape=[None] , dtype=tf.float32 )
+l1_weight = tf.placeholder( shape=[] , dtype=tf.float32 )
+
+m = tf.Variable( tf.random_uniform( shape=[size,1] , minval=0.1 , maxval=0.9 ) , dtype=tf.float32 )
+m = tf.nn.relu(m)
+b = tf.Variable([-10], dtype=tf.float32 )
+
+predict = tf.squeeze( tf.nn.xw_plus_b(x_in,m,b) )
+
+l1_loss = tf.reduce_sum(tf.abs(m))
+loss = tf.reduce_mean( tf.square( y_in - predict ) ) + l1_loss * l1_weight
+
+optimizer = tf.train.GradientDescentOptimizer(1e-4)
+train = optimizer.minimize(loss)
+
+m_all_0 = tf.zeros( [size,1] , dtype=tf.float32 )
+zerod_feature_count = tf.reduce_sum( tf.cast( tf.equal( m , m_all_0 ) , dtype=tf.float32 ) )
+k = size - zerod_feature_count

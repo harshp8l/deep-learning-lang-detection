@@ -1,0 +1,39 @@
+template <typename T>
+struct wrapper {
+    typedef T type;
+};
+
+template <class T>
+struct IFoo 
+{
+    typedef T temp;
+    friend class wrapper<temp>::type;
+private:
+    IFoo() {}
+    IFoo(const char * x) {}
+    public:
+    T & operator=(const char * x){ return *static_cast<T *>(this); } //not working
+
+    void Test() { static_cast<T *>(this)->TestInternal(); }
+};
+
+
+struct Bar : public IFoo<Bar>
+{
+    //using IFoo<Bar>::IFoo;
+    using IFoo<Bar>::operator=;
+
+    Bar() {}
+    Bar(const char *x) {}
+    Bar(const Bar & b) {}
+    Bar(const Bar && b) {}
+
+    //Bar & operator=(const char * x){ return *this;} //works
+
+    void TestInternal(){}
+};
+
+int main () {
+     Bar bar = ""bar"";
+     bar = ""bar"";
+}

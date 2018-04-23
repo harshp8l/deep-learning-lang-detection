@@ -1,0 +1,22 @@
+service
+    .fetchUserOrdersIds( getters.user.id )
+    .then( snapshot => {
+        var tempOrderIds = snapshot.val();
+        var size = Object.keys( tempOrderIds ).length;
+        var i = 0;
+
+        var promises = tempOrderIds
+            .map( orderId => firebase
+                .database()
+                .ref( ""orders"" )
+                .child( orderId )
+                .once( ""value"" )
+            );
+
+        Promise
+            .all( promises )
+            .then( orderValues => {
+                orderValues = orderValues.map( e => e.val() );
+                commit( ""setUserOrders"", orderValues );
+            } );
+    }

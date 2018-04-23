@@ -1,0 +1,18 @@
+{:db/ident :myapp.fns/checking-invariants,
+ :db/fn #db/fn{:lang :clojure,
+               :imports [],
+               :requires [[datomic.api :as d]],
+               :params [db invariant-q tx],
+               :code
+               (let [{:keys [query inputs]} invariants-q
+                     {:keys [db-before db-after tx-data tempids]}
+                     (d/with db tx)]
+                 (when-some [violations (apply d/q query
+                                          db-before db-after tx-data tempids
+                                          inputs)]
+                   (throw (ex-info
+                            ""Transaction would violate invariants.""
+                            {:tx tx
+                             :violations violations
+                             :t (d/basis-t db-before)})))
+                 tx)}}

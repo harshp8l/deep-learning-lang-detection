@@ -1,0 +1,16 @@
+In [8]: sq = select([cases.c.case_id, cases.c.party_type]).\
+   ...:     where(cases.c.law_firm_id == 918).\
+   ...:     alias()
+
+In [9]: stmt = select([cases.c.case_id,
+   ...:                cases.c.law_firm_id,
+   ...:                cases.c.party_type,
+   ...:                sq.c.party_type.label('anchored_party_type')]).\
+   ...:     select_from(sq.join(cases, sq.c.case_id == cases.c.case_id))
+   ...:                
+
+In [10]: print(stmt)
+SELECT cases.case_id, cases.law_firm_id, cases.party_type, anon_1.party_type AS anchored_party_type 
+FROM (SELECT cases.case_id AS case_id, cases.party_type AS party_type 
+FROM cases 
+WHERE cases.law_firm_id = %(law_firm_id_1)s) AS anon_1 JOIN cases ON anon_1.case_id = cases.case_id

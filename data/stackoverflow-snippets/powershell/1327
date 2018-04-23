@@ -1,0 +1,28 @@
+....
+ Invoke-Command -ComputerName $cluster -ArgumentList $file, $folderdest, $instance -ScriptBlock 
+{
+    Param(
+       [string] $rFile,
+       [string] $rfileDest,
+       [string] $rInstance
+    )
+
+    # Remove Write-Host after the script block works fine -> Write-Host is only a quick and dirty way to dump the variables content
+
+    Write-Host $rFile
+    Write-Host $rfileDest
+    Write-Host $rInstance
+
+    cd $rfileDest
+
+    $someArgs = ""/X:{0}"" -f $rfileDest
+    Start-Process -FilePath  $rFile -ArgumentList $someArgs -Wait -PassThru
+
+    Start-Sleep -s 10
+
+    $setupArgs = ""action=patch /instancename={0} /quiet /IAcceptSQLServerLicenseTerms"" -f $rInstance
+
+    Start-Process -FilePath "".\Setup.exe"" -ArgumentList $setupArgs -Wait -PassThru
+
+}
+....

@@ -1,0 +1,350 @@
+#include <iostream>
+#include <sstream>
+#include <vector>
+
+#ifdef STANDALONE
+    namespace {
+        struct LogTx {
+            std::stringstream _ss;
+            std::ostream& _os;
+            bool _armed = true;
+
+            LogTx(std::ostream& os) : _os(os) {}
+            LogTx(LogTx&& rhs) : _ss(std::move(rhs._ss)), _os(rhs._os) { rhs._armed = false; }
+            ~LogTx() { if (_armed) _os << _ss.rdbuf() << std::endl; }
+
+            LogTx operator<<(std::ostream&(&v)(std::ostream&)) { _ss << v; return std::move(*this); }
+            template <typename T> LogTx operator<<(T&& v) { _ss << v; return std::move(*this); }
+        };
+
+    }
+
+#   define LOG_FATAL LogTx(std::cerr) << ""FATAL: ""
+#   define LOG_TRACE LogTx(std::clog) << ""TRACE: ""
+#   define LOG_ERROR LogTx(std::cerr) << ""ERROR: ""
+#   define LOG_INFO  LogTx(std::clog) << ""INFO:  ""
+#   define Q_UNUSED(a) static_cast<void>(a)
+
+    namespace {
+        struct Connector {
+            void sendDisconnectedStatus()               { LOG_INFO << ""Disconnected""; }
+            void setReadMsg(std::vector<char> const& v) { LOG_INFO << ""response: '"" << std::string(v.begin(), v.end()) << ""'""; }
+        };
+    }
+#endif
+
+#ifndef SSLHANDLER_H
+#define SSLHANDLER_H
+#include <boost/endian/arithmetic.hpp> // for big_uint32_t
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
+#include <boost/bind.hpp>
+#include <queue>
+#include <string>
+#include <thread>
+
+const int READ_SIZE = 0;
+const int READ_MSG = 1;
+
+class SSLHandler {
+  public:
+    SSLHandler(boost::asio::io_service &io_service, boost::asio::ssl::context &context,
+               boost::asio::ip::tcp::resolver::iterator endpoint_iterator, Connector *pConnector)
+            : socket_(io_service, context), mEndpointIterator(endpoint_iterator),
+              mpConnector(pConnector), timer_{ io_service }, isConnectionOk{ false } 
+    {
+        LOG_TRACE << ""creating new sslhandler"";
+        socket_.set_verify_mode(boost::asio::ssl::context::verify_none);
+        socket_.set_verify_callback(boost::bind(&SSLHandler::verify_certificate, this, _1, _2));
+
+        mode = READ_SIZE;
+    }
+    ~SSLHandler();
+    bool verify_certificate(bool preverified, boost::asio::ssl::verify_context &ctx);
+    void handle_connect(const boost::system::error_code &error);
+    void handle_handshake(const boost::system::error_code &error);
+    void handle_write(const boost::system::error_code &error, size_t bytes_transferred);
+    void handle_write_auth(const boost::system::error_code &error, size_t bytes_transferred);
+    void handle_read_msgsize(const boost::system::error_code &error, size_t bytes_transferred);
+    void handle_read_message(const boost::system::error_code &error, size_t bytes_transferred);
+    void connectToServer();
+    void do_reconnect();
+    void handle_reconnect_timer(boost::system::error_code ec);
+
+    void writeMessage(std::vector<char> &array);
+
+    void setRequestMsg(std::vector<char> &&array);
+
+    void setIsDestructing(bool value);
+
+  private:
+    boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket_;
+    boost::asio::ip::tcp::resolver::iterator mEndpointIterator;
+    Connector *mpConnector; // ptr to object compose message
+    boost::asio::deadline_timer timer_;
+    char reply_[0x1 << 16]; //=65356 bytes
+
+    size_t getFirstFour() {
+        return *boost::asio::buffer_cast<boost::endian::big_uint32_t *>(boost::asio::buffer(reply_));
+    };
+
+    int mode;
+    uint32_t size;
+    std::vector<char> requestMsg;
+    std::vector<char> replyMsg;
+    std::queue<std::vector<char> > mQueueMsg;
+    bool isConnectionOk;
+    bool isDestructing = false;
+
+  private:
+    void writeMessageWithQueue(std::vector<char> &array);
+};
+
+#endif // SSLHANDLER_H
+
+//#include ""sslhandler.h""
+//#include ""connector.h""
+//#include ""BoostLogger.h""
+//#include <QThread>
+//#include ""boost/enable_shared_from_this.hpp""
+
+SSLHandler::~SSLHandler() {
+    LOG_FATAL << ""ssl handler shutdown"";
+    if (isConnectionOk) {
+        socket_.lowest_layer().close();
+        boost::system::error_code ec;
+        socket_.shutdown(ec);
+        if (ec) {
+            LOG_FATAL << ""ssl handler socket shutdown with err: "" << ec.message();
+        }
+
+        LOG_TRACE << ""ssl handler shutdown complete"";
+    }
+}
+
+bool SSLHandler::verify_certificate(bool preverified, boost::asio::ssl::verify_context &ctx) {
+    char subject_name[256];
+    X509 *cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
+    X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
+    std::cout << ""Verifying:\n"" << subject_name << std::endl;
+
+    return preverified;
+}
+
+void SSLHandler::handle_connect(const boost::system::error_code &error) {
+    if (isDestructing) {
+        LOG_TRACE << ""Is destructing ssl connect so abort "";
+        return;
+    }
+    LOG_TRACE << ""get past destructing"";
+    if (!error) {
+        isConnectionOk = true;
+        LOG_TRACE << ""Connection OK!"" << std::endl;
+        socket_.async_handshake(boost::asio::ssl::stream_base::client,
+                                boost::bind(&SSLHandler::handle_handshake, this, boost::asio::placeholders::error));
+    } else {
+        LOG_FATAL << ""Connect failed: "" << error.message() << std::endl;
+        mpConnector->sendDisconnectedStatus();
+        do_reconnect();
+    }
+}
+
+void SSLHandler::handle_handshake(const boost::system::error_code &error) {
+    if (isDestructing) {
+        LOG_TRACE << ""Is destructing ssl connect so abort "";
+        return;
+    }
+    if (!error) {
+        std::cout << ""Sending request: "" << std::endl;
+
+        boost::asio::async_write(socket_, boost::asio::buffer(requestMsg.data(), requestMsg.size()),
+                                 boost::bind(&SSLHandler::handle_write_auth, this, boost::asio::placeholders::error,
+                                             boost::asio::placeholders::bytes_transferred));
+    } else {
+        LOG_FATAL << ""Handshake failed: "" << error.message() << std::endl;
+        mpConnector->sendDisconnectedStatus();
+        do_reconnect();
+    }
+}
+
+void SSLHandler::handle_write(const boost::system::error_code &error, size_t bytes_transferred) {
+    if (isDestructing) {
+        LOG_TRACE << ""Is destructing ssl connect so abort "";
+        return;
+    }
+
+    if (error) {
+        LOG_FATAL << ""Write failed: "" << error.message() << std::endl;
+        mpConnector->sendDisconnectedStatus();
+        do_reconnect();
+    }
+
+    Q_UNUSED(bytes_transferred);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    if (!mQueueMsg.empty()) {
+        mQueueMsg.pop();
+        if (!mQueueMsg.empty()) {
+            auto msg = mQueueMsg.front();
+            writeMessageWithQueue(msg);
+        }
+
+    } else {
+        LOG_ERROR << ""Empty queue messages!"";
+    }
+}
+
+void SSLHandler::handle_write_auth(const boost::system::error_code &error, size_t bytes_transferred) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    if (isDestructing) {
+        LOG_TRACE << ""Is destructing ssl connect so abort "";
+        return;
+    }
+
+    if (!error) {
+        if (mode == READ_SIZE) {
+            mode = READ_MSG;
+            std::cerr << ""\nSending request read size OK!\n"" << std::endl;
+            //      char respond[bytes_transferred] = """";
+            boost::asio::async_read(socket_, boost::asio::buffer(reply_, 4),
+                                    boost::bind(&SSLHandler::handle_read_msgsize, this,
+                                                boost::asio::placeholders::error,
+                                                boost::asio::placeholders::bytes_transferred));
+            //            std::cerr << ""respond is "" ;
+        }
+
+    } else {
+        LOG_FATAL << ""Write failed: "" << error.message() << std::endl;
+        mpConnector->sendDisconnectedStatus();
+        do_reconnect();
+    }
+}
+
+void SSLHandler::handle_read_msgsize(const boost::system::error_code &error, size_t bytes_transferred) {
+    if (isDestructing) {
+        LOG_TRACE << ""Is destructing ssl connect so abort "";
+        return;
+    }
+    if (!error) {
+        // first 4 bytes contain size of message
+        size = getFirstFour();
+        LOG_TRACE << ""Decoded size: "" << size;
+
+        mode = READ_SIZE;
+        boost::asio::async_read(socket_, boost::asio::buffer(reply_, size),
+                                boost::bind(&SSLHandler::handle_read_message, this,
+                                            //                                            mWriteId++,
+                                            boost::asio::placeholders::error,
+                                            boost::asio::placeholders::bytes_transferred));
+
+    } else {
+        LOG_FATAL << ""Read failed: "" << error.message() << std::endl;
+        mpConnector->sendDisconnectedStatus();
+        do_reconnect();
+    }
+}
+
+void SSLHandler::handle_read_message(const boost::system::error_code &error, size_t bytes_transferred) {
+    if (isDestructing) {
+        LOG_TRACE << ""Is destructing ssl connect so abort "";
+        return;
+    }
+    if (!error) {
+
+        replyMsg.clear();
+        replyMsg.assign(reply_, reply_ + size);
+        mpConnector->setReadMsg(replyMsg);
+
+        mode = READ_SIZE;
+
+        // read next message size
+        boost::asio::async_read(socket_, boost::asio::buffer(reply_, 4),
+                                boost::bind(&SSLHandler::handle_read_msgsize, this, boost::asio::placeholders::error,
+                                            boost::asio::placeholders::bytes_transferred));
+
+    } else {
+        LOG_FATAL << ""Read failed: "" << error.message() << std::endl;
+        mpConnector->sendDisconnectedStatus();
+        do_reconnect();
+    }
+}
+
+void SSLHandler::connectToServer() {
+    //    boost::asio::ip::tcp::resolver r(socket_.get_io_service());
+    if (isDestructing) {
+        LOG_TRACE << ""Is destructing ssl connect so abort "";
+        return;
+    }
+    boost::asio::async_connect(socket_.lowest_layer(), mEndpointIterator,
+                               boost::bind(&SSLHandler::handle_connect, this, boost::asio::placeholders::error));
+    LOG_TRACE << ""async_connect called"";
+}
+
+void SSLHandler::do_reconnect() {
+    //    socket_.shutdown();
+    isConnectionOk = false;
+    //    return;
+    if (isDestructing) {
+        LOG_TRACE << ""Is destructing ssl connect so abort "";
+        return;
+    } else {
+        socket_.lowest_layer().cancel();
+        timer_.expires_from_now(boost::posix_time::millisec(500));
+        timer_.async_wait(boost::bind(&SSLHandler::handle_reconnect_timer, this, boost::asio::placeholders::error()));
+    }
+}
+
+void SSLHandler::handle_reconnect_timer(boost::system::error_code ec) {
+    if (!ec) {
+        connectToServer();
+    } else {
+        LOG_TRACE << ""Error with reconnect timer : "" << ec.message();
+    }
+}
+
+void SSLHandler::writeMessageWithQueue(std::vector<char> &array) {
+
+    //    std::cerr << ""write : "" << (void*) array.data() << "" | "" << array.size() << std::endl;
+    if (isDestructing) {
+        LOG_TRACE << ""Is destructing ssl connect so abort "";
+        return;
+    }
+    boost::asio::async_write(socket_, boost::asio::buffer(array.data(), array.size()),
+                             boost::bind(&SSLHandler::handle_write, this, boost::asio::placeholders::error,
+                                         boost::asio::placeholders::bytes_transferred));
+}
+
+void SSLHandler::writeMessage(std::vector<char> &array) {
+    if (mQueueMsg.size() == 0) {
+        mQueueMsg.push(array);
+        writeMessageWithQueue(array);
+    }
+
+    else
+        mQueueMsg.push(array);
+}
+void SSLHandler::setRequestMsg(std::vector<char> &&array) { requestMsg = std::move(array); }
+void SSLHandler::setIsDestructing(bool value) {
+    LOG_INFO << ""ssl connection destructing set as "" << value;
+    isDestructing = value;
+    if (isDestructing == true) {
+        if (isConnectionOk) {
+            socket_.lowest_layer().cancel();
+            //        socket_.shutdown();
+            LOG_INFO << ""ssl connection destructing get pass shutdown"";
+        }
+    }
+}
+
+int main() {
+    Connector c;
+
+    boost::asio::io_service svc;
+    boost::asio::ssl::context ctx(boost::asio::ssl::context_base::sslv23_client);
+
+    SSLHandler h(svc, ctx, boost::asio::ip::tcp::resolver{svc}.resolve({{}, 6767}), &c);
+    h.setRequestMsg({'h','e','l','l','o','\n','w','o','r','l','d'});
+    h.connectToServer();
+
+    svc.run();
+}

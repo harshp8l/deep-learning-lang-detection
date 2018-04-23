@@ -1,0 +1,61 @@
+function Change-WebPart {
+    #variables that needs to be set before starting the script
+    $siteURL = ""https://spfire.sharepoint.com""
+    $userName = ""mpadmin@spfire.onmicrosoft.com""
+    $webURL = ""https://spfire.sharepoint.com""
+    $relativePageUrl = ""/SitePages/Home.aspx""
+
+    # Let the user fill in their password in the PowerShell window
+    $password = Read-Host ""Please enter the password for $($userName)"" -AsSecureString
+    # set SharePoint Online credentials
+    $SPOCredentials = New-Object Microsoft.SharePoint.Client.SharePointOnlineCredentials($userName, $password)
+
+    # Creating client context object
+    $context = New-Object Microsoft.SharePoint.Client.ClientContext($webURL)
+    $context.credentials = $SPOCredentials
+
+    #get Page file
+    $page = $context.web.getFileByServerRelativeUrl($relativePageUrl)
+    $context.load($page)
+
+    #send the request containing all operations to the server
+    try{
+        $context.executeQuery()
+    }
+    catch{
+        write-host ""Error: $($_.Exception.Message)"" -foregroundcolor red
+    }
+
+    #use the WebPartManger to load the webparts on a certain page
+    $webPartManager = $page.GetLimitedWebPartManager([System.Web.UI.WebControls.WebParts.PersonalizationScope]::Shared)
+    $context.load($webPartManager.webparts)
+
+    #send the request containing all operations to the server
+    try{
+        $context.executeQuery()
+    }
+    catch{
+        write-host ""Error: $($_.Exception.Message)"" -foregroundcolor red
+    }
+
+    #loop through all WebParts to get the correct one and change its property
+    foreach($webPartDefinition in $webpartmanager.webparts){
+        $context.Load($webPartDefinition.WebPart.Properties)
+
+        #send the request containing all operations to the server
+        try{
+            $context.executeQuery()
+        }
+        catch{
+            write-host ""Error: $($_.Exception.Message)"" -foregroundcolor red
+        }
+
+        #Only change the webpart with a certain title
+        if ($webPartDefinition.WebPart.Properties.FieldValues.Title -eq ""Documents"")
+        {
+            $webPartDefinition.webpart.properties[""Title""] = ""My Documents""
+            $webPartDefinition.SaveWebPartChanges()
+        }
+    }
+}
+Change-WebPart

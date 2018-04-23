@@ -1,0 +1,80 @@
+#include ""std_lib_facilities.h""
+
+int main()
+{
+  constexpr double METERS_PER_CM = 1/100.0;
+  constexpr double METERS_PER_IN = 1/39.37; //avoid magic #s!
+  constexpr double METERS_PER_FT = 1/3.28;
+
+  double smallest_so_far = 0;
+  double largest_so_far = 0;
+  double current_val = 0;
+  double current_val_meters = 0;
+  vector<double> all_distances;
+  double values_sum = 0;
+  string units;
+  bool valid_entry = true; //if they enter some bs, set to false
+
+  cout << fixed << showpoint << setprecision(3);
+  cout << ""Please enter length and unit. Enter single char if done.\n""
+      << ""Assume 0 was first. Units are cm, m, in, ft.\n\n"";
+  while ( cin >> current_val >> units)
+  {
+    cout << ""You entered "" << current_val << units << "".\n"";
+    //process units: convert to meters
+    if (units == ""m"")
+      current_val_meters = current_val;
+    else if (units == ""cm"")
+      current_val_meters = current_val * METERS_PER_CM;
+    else if (units == ""in"")
+      current_val_meters = current_val * METERS_PER_IN;
+    else if (units == ""ft"")
+      current_val_meters = current_val * METERS_PER_FT;
+    else
+    {
+      cout << ""You done messed up A-aron!\n"";
+      valid_entry = false;
+    }
+
+    if (valid_entry)
+    {
+      if (units != ""m"")
+        cout << ""\nThat is "" << current_val_meters << "" meter(s)!\n"";
+
+      //add to vector
+      all_distances.push_back(current_val_meters);
+      //deal with relative sizes
+      if (current_val_meters < smallest_so_far)
+      {
+        cout << ""Smallest so far!\n"";
+        smallest_so_far = current_val;
+      }
+      if (current_val_meters > largest_so_far)
+      {
+        cout << ""Largest so far!\n"";
+        largest_so_far = current_val_meters;
+      }
+  } // valid_entry
+    valid_entry = true;
+    cout << ""\nAnother...?\n"";
+  }  // while cin
+
+  //When done, present summary statistics
+  cout << ""You entered "" << all_distances.size() << "" values.\n"";
+  //Get sum
+  sort(all_distances);
+  cout << ""All the values you entered: \n"";
+  for (double x: all_distances)
+  {
+    values_sum += x;
+    cout << x << ""\n"";
+  }
+  cout << ""Sum of all meters: "" << values_sum << ""\n"";
+
+  //show min and max
+  cout << ""The max was "" << largest_so_far << "", and the min was ""
+       << smallest_so_far << "".\n"";
+
+  cout << ""\nHave a good day!\n"";
+  return 0;
+};

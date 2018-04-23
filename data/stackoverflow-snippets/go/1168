@@ -1,0 +1,29 @@
+package main
+
+import (
+    ""cloud.google.com/go/bigquery""
+    ""fmt""
+    ""golang.org/x/net/context""
+    ""google.golang.org/api/iterator""
+    ""google.golang.org/api/option""
+)
+
+func main() {
+    ctx := context.Background()
+    client, err := bigquery.NewClient(ctx, ""project-name"", option.WithCredentialsFile(""keyfile.json""))
+
+    if err != nil {
+        panic(err.Error())
+    }
+
+    it := client.Datasets(ctx)
+    for {
+        dataset, err := it.Next()
+        if err == iterator.Done {
+            break
+        }
+        fmt.Println(dataset.DatasetID)
+    }
+
+    println(""logged in"")
+}

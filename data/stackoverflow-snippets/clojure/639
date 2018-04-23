@@ -1,0 +1,25 @@
+package pubsub_echo.pubsub;
+
+import com.google.cloud.AuthCredentials;
+import com.google.cloud.pubsub.PubSub;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+public class GCloudPubSub {
+
+    public PubSub getClient() throws FileNotFoundException, IOException {
+        PubSubOptions.Builder optionsBuilder = PubSubOptions.builder();
+        ClassLoader classLoader = getClass().getClassLoader();
+        FileInputStream authStream = new FileInputStream(classLoader.getResource(""SERVICE_ACCOUNT.json"").getPath());
+        AuthCredentials creds = AuthCredentials.createForJson(authStream);
+
+        return optionsBuilder
+            .authCredentials(creds)
+            .projectId(""PROJECT_ID"")
+            .build()
+            .service();
+    }
+
+}

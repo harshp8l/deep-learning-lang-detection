@@ -1,0 +1,32 @@
+$.fn.extend({
+  animateCSS: function(animationName, callback, duration) {
+    var animationEnd = {
+      animation: 'animationend',
+      OAnimation: 'oAnimationEnd',
+      MozAnimation: 'mozAnimationEnd',
+      WebkitAnimation: 'webkitAnimationEnd',
+    };
+
+    for (var t in animationEnd)
+      if (this[0].style[t] !== undefined){
+        animationEnd = animationEnd[t];
+        break;
+      }
+
+    if(duration)
+      this.css('-webkit-animation-duration', duration+'s')
+        .css('animation-duration', duration+'s');
+
+    this.addClass('animated ' + animationName).one(animationEnd, function() {
+      $(this).removeClass('animated ' + animationName);
+
+      if(duration)
+        $(this).css('-webkit-animation-duration', '')
+          .css('animation-duration', '');
+
+      if (typeof callback === 'function') callback();
+    });
+
+    return this;
+  }
+});

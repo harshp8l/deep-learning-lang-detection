@@ -1,0 +1,37 @@
+ ##########
+ # THEORY :
+ # .trace_variable( <mode>, <aTracedVarEventHANDLER> )
+ #                  <mode> := { ""w"": WRITE-DELTA-TRACER    |
+ #                              ""r"": READ-ACCESS-TRACER    |
+ #                              ""u"": UNDEFINE-DELETE-TRACER
+ #                               }
+
+ #########
+ # SETUP :
+ pass;             aMessageVAR = StringVar()
+ id_W            = aMessageVAR.trace_variable( ""w"", \ 
+ onWriteChange_var_aMessageVAR ) #             ""WRITE""-DELTA-Event <~ callback()
+ # + any change of aMessageVAR auto-triggers  onWriteChange_var_aMessageVAR()
+ #                                             with 3 params:
+ #                                                  aTkNameOfVAR,
+ #                                                  aTkArrayIndex,
+ #                                                  aTkAccessMode {""w""|""r""|""u""}
+ #
+ #                                             global       aMessageVAR
+ #                                             aLocalCopy = aMessageVAR.get()
+ #                                             #LocalCopy content b4 next .set()
+
+ ############
+ # ORIGINAL :
+ #____________________________________________ original while-loop:
+ while True:
+                   aMessageVAR.set( zmq_socket.recv_json() )
+                   #                                     ^__blocks, better
+                   #                                        design
+                   #                                        non-blocking .poll()
+                   #                                        scheduled with
+                   #                                        .after( nMS, aPoll )
+                   #                                        + .set() on POSACK'd
+ #########
+ # FINALLY:
+ pass;             aMessageVAR.trace_vdelete( ""w"", id_W ) # CLEAN THE TRACER

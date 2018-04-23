@@ -1,0 +1,87 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+struct BigInt
+{
+    BigInt(std::string num) { for (auto &i : num) storage.push_back(i - 48); }
+    BigInt(std::vector<char> numVect) : storage(numVect) {}
+
+    vector<char> storage;
+
+    string getAsString() 
+    { string str; for (auto& i : storage) str += i + 48; return str; }
+    // Add 48 to turn 0 - 9 to ascii string.
+
+    vector<char> add(vector<char>& lhs, vector<char>& rhs)
+    // Add function only needed if number is multiplied by more than one digit.
+    {
+        // Fill with zeros to make both vectors same length.
+        int sizeDiff = (int)lhs.size() - (int)rhs.size();
+        if (sizeDiff < 0)
+            lhs.insert(lhs.begin(), abs(sizeDiff), 0);
+        else if (sizeDiff > 0)
+            rhs.insert(rhs.begin(), abs(sizeDiff), 0);
+
+        vector<char> resultVect;
+        int carry = 0;
+        for (int i = lhs.size() - 1; i >= 0; --i)
+        {
+            int result = lhs[i] + rhs[i] + carry;
+            carry = result / 10;
+            result %= 10;
+            resultVect.insert(resultVect.begin(), result);
+        }
+        if (carry != 0) resultVect.insert(resultVect.begin(), carry);
+
+        return resultVect;
+    }
+
+    BigInt operator*(BigInt rhs)
+    {
+        int unitPlace = 0; // Keeps track of how many zeros to add in subsequent results
+        vector<char> totalVect; // Accumulated value after each addition
+        vector<char> resultVect; // Result of this particular multiplication
+
+        for (int i = rhs.storage.size() - 1; i >= 0; --i, unitPlace++)
+        {
+            int carry = 0;
+            for (int k = 0; k < unitPlace; ++k) resultVect.push_back(0);
+
+            for (int j = storage.size() - 1; j >= 0; j--)
+            {
+                int result = rhs.storage[i] * storage[j] + carry;
+                carry = result / 10;
+                result %= 10;
+
+                resultVect.insert(resultVect.begin(), result);
+            }
+            resultVect.insert(resultVect.begin(), carry);
+            totalVect = add(totalVect, resultVect); // Add sub-result
+            resultVect.clear();
+        }
+
+        // Strip leading zeros
+        for (int i = 0; i < totalVect.size(); ++i) {
+            if (totalVect[i] == 0) totalVect.erase(totalVect.begin() + i);
+            else break;
+        }
+
+        return BigInt{ totalVect };
+    }
+};
+
+int main()
+{
+    BigInt a{ ""335467"" };
+    BigInt b{ ""1019737"" };
+
+    BigInt c = a * b;
+
+    std::cout << c.getAsString() << '\n';
+
+    cin.ignore();
+    return 0;
+}

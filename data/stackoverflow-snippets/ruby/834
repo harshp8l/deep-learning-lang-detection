@@ -1,0 +1,44 @@
+class Api::V1::MessagesController < Api::V1::BaseController
+
+  def create
+    @message = Message.new(message_params)
+    respond_to do |format|
+      if @message.save
+        @message.update(url: ""http://link.com/#{@message.id}"")
+        format.json { render json: create_hsh, status: :ok }
+        format.xml  { render xml: create_hsh, staus: :ok }
+      else
+        format.json { render json: @message.errors, status: :unprocessable_entity }
+        format.xml  { render xml:  @message.errors, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def show 
+    respond_to do |format|
+      if @message = Message.find_by(id: params[:id])
+        format.json { render json: show_hsh, status: :ok }
+        format.xml  { render xml: show_hsh, status: :ok }
+      else
+        format.json { render json: {errors: :not_found}, status: :not_found }
+        format.xml  { render xml: {errors: :not_found}, status: :not_found } 
+      end
+    end
+  end
+
+private
+
+  def create_hsh
+    @message.attributes.with_indifferent_access.slice(:url)
+  end
+
+  def show_hsh
+    attr = @message.attributes.with_indifferent_access
+    attr.slice(:foo, :bar).merge!(message: attr[:text])
+  end
+
+  def message_params
+    params.require(:message).permit(:text)
+  end
+
+end

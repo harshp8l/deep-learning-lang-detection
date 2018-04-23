@@ -1,0 +1,17 @@
+# Note: It's usually better to filter with Where-Object and then Select-Object
+$ExpiringCerts = $cert | Where-Object { $_.ExpireInDays -lt 30 } | Select-Object -Properties PSComputerName, DnsNameList, NotAfter, ExpireInDays;
+
+if ($ExpiringCerts) {
+    $MailSettings = @{
+        SmtpServer = 'smtp.example.com';
+        Port = 25;
+        UseSsl = $false;
+        Subject = 'Subject Line';
+        To = 'to@example.com','other@example.com'
+        From = 'from@example.com';
+        Body = $ExpiringCerts | ConvertTo-Html -As Table -Fragment | Out-String;
+        BodyAsHtml = $true;
+    };
+
+    Send-MailMessage @MailSettings;
+}

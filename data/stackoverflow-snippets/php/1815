@@ -1,0 +1,119 @@
+<?php
+error_reporting(0);
+
+/*
+CREATE TABLE `student` (
+`id` int(4) primary key auto_increment,
+`firstname` varchar(65) NOT NULL default '',
+`lastname` varchar(65) NOT NULL default '',
+`student_id` varchar(65) NOT NULL default '');
+
+
+
+CREATE TABLE `new_student` (
+`id` int(4) primary key auto_increment,
+`firstname` varchar(65) NOT NULL default '',
+`lastname` varchar(65) NOT NULL default '',
+`student_id` varchar(65) NOT NULL default '');
+
+
+
+INSERT INTO `student` VALUES (1, 'Billly', 'Blueton', '100');
+INSERT INTO `student` VALUES (2, 'Jame', 'Campbell', '200');
+INSERT INTO `student` VALUES (3, 'Mark', 'Jackson', '300');
+INSERT INTO `student` VALUES (4, 'Billly', 'Blueton', '400');
+
+INSERT INTO `student` VALUES (5, 'Jame', 'Campbell', '500');
+
+INSERT INTO `student` VALUES (6, 'Mark', 'Jackson', '600');
+*/
+
+
+
+// use PDO
+$db = new PDO (
+    'mysql:host=localhost;dbname=student_db;charset=utf8', 
+    'root', // username
+
+    '' // password
+); 
+
+
+$sql = $db->prepare('SELECT * FROM student');
+$sql->execute(array());
+//$result = $sql->fetch();
+$count = $sql->rowCount();
+
+?>
+
+<table width=""400"" border=""0"" cellspacing=""1"" cellpadding=""0"">
+<tr>
+<td><form name=""form1"" method=""post"" action="""">
+<table width=""400"" border=""0"" cellpadding=""3"" cellspacing=""1"" bgcolor=""#CCCCCC"">
+<tr>
+<td bgcolor=""#FFFFFF"">&nbsp;</td>
+<td colspan=""4"" bgcolor=""#FFFFFF""><strong>Add multiple rows</strong> </td>
+</tr>
+<tr>
+<td align=""center"" bgcolor=""#FFFFFF"">#</td>
+<td align=""center"" bgcolor=""#FFFFFF""><strong>Id</strong></td>
+<td align=""center"" bgcolor=""#FFFFFF""><strong>FirstName</strong></td>
+<td align=""center"" bgcolor=""#FFFFFF""><strong>Lastname</strong></td>
+<td align=""center"" bgcolor=""#FFFFFF""><strong>school-id</strong></td>
+</tr>
+
+<?php
+while ($rows = $sql->fetch()) {
+//while($rows=mysql_fetch_array($result)){
+?>
+
+<tr>
+<td align=""center"" bgcolor=""#FFFFFF""><input name=""checkbox[]"" type=""checkbox"" id=""checkbox[]"" value=""<? echo $rows['id']; ?>""></td>
+<td bgcolor=""#FFFFFF""><? echo $rows['id']; ?></td>
+<td bgcolor=""#FFFFFF""><? echo htmlentities($rows['firstname']); ?></td>
+<td bgcolor=""#FFFFFF""><? echo htmlentities($rows['lastname']); ?></td>
+<td bgcolor=""#FFFFFF""><? echo htmlentities($rows['student_id']); ?></td>
+</tr>
+
+<?php
+}
+?>
+
+<tr>
+<td colspan=""5"" align=""center"" bgcolor=""#FFFFFF""><input name=""add"" type=""submit"" id=""add"" value=""Add""></td>
+</tr>
+
+<?php
+
+// Check if delete button active, start this 
+$add =$_POST['add'];
+$checkbox =$_POST['checkbox'];
+//$delete;
+if($add){
+for($i=0;$i<$count;$i++){
+$student_id = $checkbox[$i];
+
+
+
+
+
+
+$statement = $db->prepare('INSERT INTO new_student(student_id)values(:student_id)');
+
+if($statement->execute(array(':student_id' => $student_id))){
+echo ""inserted"";
+}else{
+echo ""error"";
+}
+
+}
+
+}
+
+?>
+
+</table>
+</form>
+</td>
+</tr>
+</table>

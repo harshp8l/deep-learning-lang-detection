@@ -1,0 +1,19 @@
+@nb.njit(fastmath=True,parallel=True)
+def calcAlpha(phi,fix_phis):
+    phi_sq = phi*phi
+    fix_phis_sq = fix_phis*fix_phis #1d
+    F = np.zeros((fix_phis_sq.shape[0],phi.shape[0],phi.shape[1]),dtype=phi.dtype)
+
+    for l in nb.prange(fix_phis_sq.shape[0]):
+        for x in range(phi_sq.shape[0]):
+          for y in range(phi_sq.shape[1]):
+            F[l,x,y]=2.0*phi_sq[x,y]/(phi_sq[x,y]-fix_phis_sq[l])
+
+        #if fix_phis doesn't get bigger, but phi does parallelize this loop
+        for j in range(fix_phis_sq.shape[0]):
+            if j != l:
+                for x in range(phi_sq.shape[0]):
+                    for y in range(phi_sq.shape[1]):
+                        F[l,x,y]*=(phi_sq[x,y] - fix_phis_sq[j])/(fix_phis_sq[l] + fix_phis_sq[j])
+                        F[l,x,y]*=(fix_phis_sq[l] + fix_phis_sq[j])/(phi_sq[x,y] + fix_phis_sq[j])
+    return F

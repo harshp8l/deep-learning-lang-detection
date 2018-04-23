@@ -1,0 +1,24 @@
+  SELECT COUNT(T.tripId) as Escort_Count,
+  (
+      SELECT COUNT(*) FROM 
+      (
+          SELECT a.allocationId
+          FROM escort_allocation a 
+          INNER JOIN trip_details b ON a.allocationId = b.allocationId 
+          INNER JOIN cab_allocation c ON a.allocationId = c.allocationId 
+          WHERE c.allocationType = 'Adhoc Trip' AND tripDate BETWEEN '20180315' AND '20180320'
+          GROUP BY a.allocationId
+      ) AS Ad
+
+  ) AS Adhoc_Trip_Count,
+  (SELECT COUNT(id) FROM trip_details WHERE tripDate BETWEEN '20180315' AND '20180320') as Total_Count
+  FROM 
+  ( 
+      SELECT a.tripId FROM 
+      trip_details a 
+      INNER JOIN 
+      escort_allocation b 
+      ON a.allocationId = b.allocationId 
+      WHERE tripDate BETWEEN '20180315' AND '20180320'
+      GROUP BY a.allocationId 
+  ) AS T

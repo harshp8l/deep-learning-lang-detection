@@ -1,0 +1,43 @@
+(ns clj.core
+  (:use tupelo.core)
+  (:require [clojure.core               :as clj]
+            [schema.core                :as s]
+            [tupelo.types               :as tt]
+            [tupelo.schema              :as ts]
+  ))
+
+; Prismatic Schema type definitions
+(s/set-fn-validation! true)   ; #todo add to Schema docs
+
+(def data [ {:a 1 :b 2} {:a 3 :b 4} {:a 1 :b 6} {:a 3 :b 9} {:a 5 :b 1} {:a 6 :b 1} ] )
+
+(def data-by-a (group-by :a data))
+    ; like { 1 [{:a 1, :b 2} {:a 1, :b 6}], 
+    ;        3 [{:a 3, :b 4} {:a 3, :b 9}], 
+    ;        5 [{:a 5, :b 1}],
+    ;        6 [{:a 6, :b 1}] }
+(spyx data-by-a)
+
+(defn smallest-map-by-b
+  [curr-result  ; like {:a 1, :b 2}
+   next-value]  ; like {:a 1, :b 6}
+  (if (<  (grab :b curr-result)
+          (grab :b next-value))
+    curr-result
+    next-value))
+
+(defn find-min-b
+  ""Return the map with the smallest b value""
+  [ab-maps] ; like [ {:a 1, :b 2} {:a 1, :b 6} ]
+  (reduce smallest-map-by-b 
+          (first ab-maps)   ; choose 1st as init guess at result
+          ab-maps))
+
+(def result 
+  (glue
+    (for [entry data-by-a]  ; entry is MapEntry like:  [ 1 [{:a 1, :b 2} {:a 1, :b 6}] ]
+      (spyx (find-min-b (val entry)))
+      )))
+(spyx result)
+
+(defn -main [] )

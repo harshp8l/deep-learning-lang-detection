@@ -1,0 +1,22 @@
+add_action( 'woocommerce_product_query', 'hide_specific_products_from_shop', 20, 2 );
+function hide_specific_products_from_shop( $q, $query ) {
+    if( is_admin() && WC()->cart->is_empty() )
+        return;
+
+    // HERE Set the product IDs in the array
+    $targeted_ids = array( 6121, 6107, 14202, 14203 );
+
+    $products_in_cart = array();
+
+    // Loop through cart items
+    foreach( WC()->cart->get_cart() as $cart_item ){
+        if( in_array( $cart_item['product_id'], $targeted_ids ) ){
+            // When any defined product is found we add it to an array
+            $products_in_cart[] = $cart_item['product_id'];
+        }
+    }
+    // We remove the matched products from woocommerce lopp
+    if( count( $products_in_cart ) > 0){
+        $q->set( 'post__not_in', $products_in_cart );
+    }
+}

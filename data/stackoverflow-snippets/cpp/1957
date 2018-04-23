@@ -1,0 +1,51 @@
+void test(string filename)
+{
+    BmpHeader head;
+    ifstream f(filename, ios::binary);
+    if(!f.good())
+        return;
+
+    int headsize = sizeof(BmpHeader);
+    f.read((char*)&head, headsize);
+
+    if(head.bitsPerPixel != 1) 
+    {
+        f.close();
+        throw ""Invalid bitmap loaded"";
+    }
+
+    int height = head.height;
+    int width = head.width;
+
+    int bpp = 1;
+    int linesize = ((width * bpp + 31) / 32) * 4;
+    int filesize = linesize * height;
+
+    vector<unsigned char> data(filesize);
+
+    //read color table
+    uint32_t color0;
+    uint32_t color1;
+    uint32_t colortable[2];
+    f.seekg(54);
+    f.read((char*)&colortable[0], 4);
+    f.read((char*)&colortable[1], 4);
+    printf(""colortable: 0x%06X 0x%06X\n"", colortable[0], colortable[1]);
+
+    f.seekg(head.offset);
+    f.read((char*)&data[0], filesize);
+
+    for(int y = height - 1; y >= 0; y--)
+    {
+        for(int x = 0; x < width; x++)
+        {
+            int pos = y * linesize + x / 8;
+            int bit = 1 << (7 - x % 8);
+            int v = (data[pos] & bit) > 0;
+            printf(""%d"", v);
+        }
+        printf(""\n"");
+    }
+
+    f.close();
+}

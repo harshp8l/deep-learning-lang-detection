@@ -1,0 +1,26 @@
+std::vector<Tensor> outputs;
+    Status run_status = session->Run(feed_dict, {""fc2/Softmax""}, {}, &outputs);
+    if (!run_status.ok()) {
+        cout << ""Running model failed: "" << run_status;
+        return -1;
+    }
+    for (auto &t : outputs) // access by reference to avoid copying
+    {  
+        cout << t.DebugString() + ""\n"";
+        tensorflow::TTypes<float, 2>::Tensor scores = t.flat_inner_dims<float>();
+        auto dims = scores.dimensions();
+        int imgCount = dims[0];
+        int classesCount = dims[1];
+        for(int i = 0; i<imgCount; i++) {
+            float maxVal = scores(i,0);
+            int maxIndex = 0;
+            for(int j = 1; j<classesCount; j++) {
+                float val = scores(i,j);
+                if(val > maxVal) {
+                    maxVal = val;
+                    maxIndex = j;
+                }
+            }
+            cout << ""Img"" + to_string(i) + "" prediction: "" + to_string(maxIndex) + "", score: "" + to_string(maxVal) + ""\n"";
+        }
+    }

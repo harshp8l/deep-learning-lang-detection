@@ -1,0 +1,20 @@
+ SELECT Detail.[Entry No_],
+           'Cliente' AS Tipo,
+           Cust.[Customer No_] AS Cliente,
+           Detail.[Posting Date] AS DATA,
+           Detail.[Document No_] AS Documento,
+           Detail.[Amount (LCY)] AS Valor,
+           case when Cust.[Document Type] = 2 then 'factura' else '' end  AS LiqPorTipo,
+           Cust.[Document No_] AS LiqPorNDocumento,
+           '97' AS Conta,
+           'MR' AS Loja,
+           'SUPER' AS Utilizador,
+           'MR01' AS POS
+    FROM dbo.MBS_tabela_21Detailed_NAV16 AS Detail
+    INNER JOIN dbo.MBS_tabela_21_NAV16 AS Cust ON Detail.[Cust_ Ledger Entry No_] = Cust.[Entry No_]
+    INNER JOIN dbo.Integracao_Periodo_NAV16 AS Integr ON YEAR(Detail.[Posting Date]) = Integr.Ano
+    AND MONTH(Detail.[Posting Date]) = Integr.Mes
+    WHERE (Detail.[Document No_] LIKE '%REC%'
+           OR Detail.[Document No_] LIKE '%L%')
+      AND (Detail.[Entry Type] = 2)
+      AND (Cust.[Global Dimension 1 Code] = 'LMR')

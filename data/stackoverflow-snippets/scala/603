@@ -1,0 +1,42 @@
+import scalaz.{Ordering => _, _}    
+
+def mergeWithPicker[A](originSources: Seq[Source[Partition, A]])(implicit monoid: Monoid[A], ord: Ordering[Partition]): Source[Partition, A] =
+    merge(originSources, picker[A])
+
+ def mergeWithSorter[A](originSources: Seq[Source[Partition, A]])(implicit monoid: Monoid[A], ord: Ordering[Partition]): Source[Partition, A] =
+    merge(originSources, sorter[A])
+
+private def merge[A](originSources: Seq[Source[Partition, A]], f: (Source[Partition, A], Source[Partition, A]) => Source[Partition, A])(implicit monoid: Monoid[A]): Source[Partition, A] = originSources match {
+    case Nil     =>
+      Source.empty[Partition].mapMaterializedValue(_ => monoid.zero)
+
+    case sources =>
+      @tailrec
+      def reducePairs(sources: Seq[Source[Partition, A]]): Source[Partition, A] =
+        sources match {
+          case Seq(s) =>
+            s
+
+          case _      =>
+            reducePairs(sources.grouped(2).map {
+              case Seq(a)    => a
+              case Seq(a, b) => f(a, b)
+            }.toSeq)
+        }
+
+      reducePairs(sources)
+    }
+
+  private def picker[A](s1: Source[Partition, A], s2: Source[Partition, A])(implicit monoid: Monoid[A], ord: Ordering[Partition]): Source[Partition, A] =
+    combineSources(new PartitionPicker[Partition], s1, s2)(monoid.append(_, _))
+
+  private def sorter[A](s1: Source[Partition, A], s2: Source[Partition, A])(implicit monoid: Monoid[A], ord: Ordering[Partition]): Source[Partition, A] =
+    combineSources(new MergeSorted[Partition], s1, s2)(monoid.append(_, _))
+
+  private def combineSources[A, MatIn0, MatIn1, Mat](combinator: GraphStage[FanInShape2[A, A, A]], s0: Source[A, MatIn0], s1: Source[A, MatIn1])(combineMat: (MatIn0, MatIn1) => Mat): Source[A, Mat] =
+    Source.fromGraph(GraphDSL.create(s0, s1)(combineMat) { implicit builder => (s0, s1) =>
+      val merge = builder.add(combinator)
+      s0 ~> merge.in0
+      s1 ~> merge.in1
+      SourceShape(merge.out)
+    })

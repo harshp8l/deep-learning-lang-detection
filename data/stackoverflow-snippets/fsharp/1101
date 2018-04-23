@@ -1,0 +1,25 @@
+type TermRec<'t> = {
+    succ: 't -> 't
+    init: unit -> 't
+    compare: 't -> 't -> int
+}
+
+type TermUser<'z> =
+    abstract Use : TermRec<'t> -> 'z
+
+type Term =
+    abstract Apply : TermUser<'z> -> 'z
+
+let mkTerm r = { new Term with member this.Apply(u) = u.Use r }
+
+let term1 = mkTerm { succ = (fun i -> i + 1); init = (fun() -> 0); compare = compare }
+
+let term2 = mkTerm { succ = (fun i -> not i); init = (fun() -> false); compare = compare }
+
+let user = { 
+    new TermUser<_> with 
+        member this.Use(t) = 
+            t.compare (t.init() |> t.succ |> t.succ) (t.init()) }
+
+let v1 = term1.Apply user
+let v2 = term2.Apply user

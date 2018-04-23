@@ -1,0 +1,21 @@
+(ns hello-world.service
+  (:require
+   [io.pedestal.http :as http]
+   [io.pedestal.http.ring-middlewares :as middlewares]
+   [io.pedestal.http.route :as route]
+   [io.pedestal.http.route.definition :refer [defroutes]]))
+
+(defroutes routes
+  [[]])
+
+(def service
+  {::http/type :jetty
+   ::http/port 8080
+   ::http/interceptors [http/log-request
+                        http/not-found
+                        middlewares/session
+                        route/query-params
+                        (middlewares/file-info)  ; HERE
+                        (middlewares/file ""/tmp/www"")
+                        ;; ... insert other interceptors ...
+                        (route/router #(deref #'routes) :map-tree)]})

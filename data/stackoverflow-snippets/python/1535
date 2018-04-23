@@ -1,0 +1,32 @@
+'''
+Date      Machine   TRH
+01-03-2018   A      2200
+01-03-2018   B      5700
+02-03-2018   A      2204
+09-03-2018   B      5709
+15-03-2018   B      5715
+18-03-2018   A      2214
+25-03-2018   A      2222
+29-03-2018   B      5720
+31-03-2018   A      2230
+'''
+
+# clean up
+df = pd.read_clipboard().sort_values('Date')
+df.Date = pd.to_datetime(df.Date, dayfirst = True)
+df['month'] = df.Date.dt.to_period('M')
+df.TRH = pd.to_numeric(df.TRH).copy()
+
+# do it in one go
+df.groupby([
+    'month',
+    'Machine'
+]).nth([
+    0,
+    -1
+]).groupby([
+    'month',
+    'Machine'
+]).diff().drop(columns = 'Date').dropna().reset_index().rename(columns = {
+    'TRH' : 'Monthly TRH'
+}).merge(df).drop(columns = 'month')

@@ -1,0 +1,43 @@
+<?php
+//usual db stuff
+$DBhost = 'localhost';
+$DBname = 'test';
+$DBuser = '';
+$DBpass = '';
+
+//error reporting for mysql
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+//connect to database
+$conn = new mysqli($DBhost, $DBuser, $DBpass, $DBname);
+
+//prepare this is a dummy table in a dummy database
+//actual table is quite complicated
+$stmt = $conn->prepare('INSERT INTO `users` (`fname`,`lname`,`city`) VALUES(?,?,?)');
+
+//create a variable to store the data
+// so we can bind it before going further
+$data=array_fill(0,3,'');
+//bind params use array expansion
+$stmt->bind_param('sss', ...$data);
+
+$stmt->execute(); //########
+
+//this part runs in a loop
+// mock loop for just to show idea
+for($i=0;$i<1;$i++)
+{
+    //get the data
+    $data = get_data();
+    //already binded $data before the loop
+    //so execute this should insert the data just returned
+    //except this doesnt, it inserts blanks
+    //it acts as if the data still has the blank array from line 20
+    //$stmt->execute(); ########
+
+    //bind it again
+    $stmt->bind_param('sss', ...$data);
+    //execute
+    //this inserts the data
+    $stmt->execute();
+}

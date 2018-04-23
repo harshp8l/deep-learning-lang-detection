@@ -1,0 +1,38 @@
+import pandas as pd
+import numpy as np
+
+# Define the cycles
+df['y_pos'] = np.where((df.y > 0), True, False)
+df['cycle_n'] = (df.y_pos != df.y_pos.shift(1)).cumsum()
+
+# Function to classify states based on x and y
+def classify_state(df):
+    x_pos = df.x.max() >= 0
+    x_neg = df.x.min() < 0
+    y_pos = df.y_pos.any()
+
+    if y_pos:
+        if x_pos and x_neg:
+            state = 'A'
+        elif x_pos:
+            state = 'B'
+        else:
+            state = 'C'
+    else:
+        if x_pos and x_neg:
+            state = 'F'
+        elif x_pos:
+            state = 'D'
+        else:
+            state = 'E'
+
+    df['state'] = state
+    return df
+
+# Apply that function over the cycles
+df = df.groupby('cycle_n').apply(classify_state)
+
+# Make the labels and clean up the temporary columns
+df['label'] = 'Cycle ' + df.cycle_n.astype(str) + ' ' + df.y_pos.map({True: '(+)', False: '(-)'})
+del df['cycle_n']
+del df['y_pos']

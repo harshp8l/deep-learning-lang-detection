@@ -1,0 +1,58 @@
+class foo {
+public:
+    int data;
+
+    foo(int dataIn) : data(dataIn) {}
+    virtual ~foo() {}
+
+    // Some other class methods
+protected:
+    // Some internal helper class methods
+};
+
+template<bool ISFOO> struct IsFoo_ {
+    enum {
+        IS_FOO_ = ISFOO
+    };
+};
+
+template<typename T>class bar {
+protected:
+    T data;
+public:
+    bar() {}
+    virtual ~bar() {}
+
+    struct CRV {
+        enum {
+            USES_FOO = std::is_same<T, foo>::value
+        };
+    };
+
+    void* getCopyable() {
+        return getCopyable_<CRV::USES_FOO>();
+    }
+
+    void read(unsigned char* readBuff, const std::size_t &readSize) {
+        // Some stuff
+        std::memcpy(readBuff, this->getCopyable(), readSize);
+        // Some stuff
+    }
+
+private:
+    // Caller method
+    template<bool ISFOO> inline void* getCopyable_() {
+        return getCopyable_(IsBitVector_<ISFOO>());
+    }
+    // Generic method
+    template<bool ISFOO> inline void* getCopyable_(IsFoo_<ISFOO>) {
+        return nullptr;
+    }
+    // Specializations
+    inline void* getCopyable_(IsFoo_<true>) {
+        return reinterpret_cast<void*>(&(this->data.data));
+    }
+    inline void* getCopyable_(IsFoo_<false>) {
+        return reinterpret_cast<void*>(&(this->data));
+    }
+};

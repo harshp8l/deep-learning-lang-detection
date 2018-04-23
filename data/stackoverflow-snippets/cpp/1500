@@ -1,0 +1,39 @@
+#include <stdint.h>
+#include <immintrin.h>
+
+class LeftShifter_AVX2{
+public:
+    LeftShifter_AVX2(uint32_t bits){
+        //  Precompute all the necessary values.
+        permL = _mm256_sub_epi32(
+            _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7),
+            _mm256_set1_epi32(bits / 32)
+        );
+        permR = _mm256_sub_epi32(permL, _mm256_set1_epi32(1));
+
+        bits %= 32;
+        shiftL = _mm_cvtsi32_si128(bits);
+        shiftR = _mm_cvtsi32_si128(32 - bits);
+        __m256i maskL = _mm256_cmpgt_epi32(_mm256_setzero_si256(), permL);
+        __m256i maskR = _mm256_cmpgt_epi32(_mm256_setzero_si256(), permR);
+        mask = _mm256_or_si256(maskL, _mm256_srl_epi32(maskR, shiftR));
+    }
+
+    __m256i rotate(__m256i x) const{
+        __m256i L = _mm256_permutevar8x32_epi32(x, permL);
+        __m256i R = _mm256_permutevar8x32_epi32(x, permR);
+        L = _mm256_sll_epi32(L, shiftL);
+        R = _mm256_srl_epi32(R, shiftR);
+        return _mm256_or_si256(L, R);
+    }
+    __m256i shift(__m256i x) const{
+        return _mm256_andnot_si256(mask, rotate(x));
+    }
+
+private:
+    __m256i permL;
+    __m256i permR;
+    __m128i shiftL;
+    __m128i shiftR;
+    __m256i mask;
+};

@@ -1,0 +1,12 @@
+select o2014.cid, count(distinct o2013.pid) as num_products,
+       group_concat(distinct o2013.pid) as products
+from orders o2013 join
+     orders o2014
+     on o2013.pid = o2014.pid and
+        year(o2013.odate) = 2013 and year(o2014.odate) = 2014
+where o2013.cid = (select c.cid from customers c where c.cname = 'Smith')
+group by o2014.cid
+having num_products = (select count(distinct o2013.products)
+                       from orders o2013
+                       where o2013.cid = (select c.cid from customers c where c.cname = 'Smith')
+                      );

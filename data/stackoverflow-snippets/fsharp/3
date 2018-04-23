@@ -1,0 +1,22 @@
+#r @""c:\packages\chessie.0.6.0\lib\net40\Chessie.dll""
+
+open Chessie
+open Chessie.ErrorHandling
+
+type Ops=
+
+    /// Left-to-right Kleisli composition
+    static member (>=>) (_:Ops, g:'b -> Result<'c,_>) =
+        fun (f:'a -> AsyncResult<'b,_>) x ->
+            asyncTrial {
+            let! y = f x
+            let! z = g y
+            return z }
+
+/// Left-to-right Kleisli composition
+    static member (>=>) (_:Ops, g:'b -> AsyncResult<'c,_>) =
+        fun (f:'a -> AsyncResult<'b,_>) x ->
+            asyncTrial {
+            let! y = f x
+            let! z = g y
+            return z }

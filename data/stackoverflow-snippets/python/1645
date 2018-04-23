@@ -1,0 +1,103 @@
+import tkinter as tk
+
+UPDATE_RATE = 10  # Updates-per-second.
+UPDATE_DELAY = 1000//UPDATE_RATE  # msec delay between updates.
+
+class Token:
+    WIDTH, HEIGHT, INCR = 25, 25, 1
+
+    def __init__(self, canvas, x, y, color, max_value, dx, dy):
+        self.canvas, self.x, self.y = canvas, x, y
+        self.color, self.max_value, self.dx, self.dy = color, max_value, dx, dy
+        self.value, self.moving, self.saved_direction = 0, 0, 1
+        self.id = self.canvas.create_rectangle(x-self.WIDTH, y-self.HEIGHT,
+                                               x+self.WIDTH, y+self.HEIGHT,
+                                               outline=color, fill=color)
+        self.canvas.tag_bind(self.id, ""<ButtonPress-1>"", self._toggle)
+
+    def _toggle(self, _event):
+        """""" Start movement of object if it's paused otherwise reverse its
+            direction.
+        """"""
+        if self.moving:
+            self.moving = -self.moving  # Reverse movement.
+        else:  # Start it moving.
+            self.moving = self.saved_direction
+
+    def start(self):
+        self.moving = self.saved_direction
+
+    def pause(self):
+        if self.moving:
+            self.saved_direction = self.moving
+            self.moving = 0
+
+
+class Example(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+
+        self.canvas = tk.Canvas(width=400, height=400)
+        self.canvas.pack()
+
+        # Create list of movable objects.
+        self._tokens = []
+        self._tokens.append(Token(self.canvas, 100, 100, ""green"", 25, 0, 5))
+        self._tokens.append(Token(self.canvas, 200, 100, ""black"", 25, 0, 5))
+
+        tk.Button(self, text='Go', command=self._start_paused_tokens).pack(side=tk.LEFT)
+        tk.Button(self, text='Pause', command=self._pause_tokens).pack(side=tk.LEFT)
+
+        # Start the updating of active objects in _tokens list.
+        self.after(UPDATE_DELAY, self._update_tokens)
+
+    def _start_paused_tokens(self):
+        """""" Start any paused Tokens. """"""
+        for token in self._tokens:
+            if token.moving == 0:
+                token.start()
+
+    def _pause_tokens(self):
+        """""" Stop any moving Tokens. """"""
+        for token in self._tokens:
+            if token.moving != 0:
+                token.pause()
+
+    def _update_tokens(self):
+        """""" Update any objects in Tokens lst that aren't paused. """"""
+        for token in self._tokens:
+            if token.moving > 0:
+                if token.value < token.max_value:
+                    token.value += token.INCR
+                    token.canvas.move(token.id, token.dx, token.dy)
+                else:
+                    token.value = token.max_value
+                    token.moving = -token.moving  # Reverse moving.
+                    token.canvas.move(token.id, token.dx, -token.dy)
+            elif token.moving < 0:
+                if token.value > 0:
+                    token.value -= token.INCR
+                    token.canvas.move(token.id, token.dx, -token.dy)
+                else:
+                    token.value = 0
+                    token.moving = -token.moving  # Reverse moving.
+                    token.canvas.move(token.id, token.dx, token.dy)
+
+        self.after(UPDATE_DELAY, self._update_tokens)  # Continue doing updates.
+
+    def on_token_press(self, event):
+        closest_token = self.canvas.find_closest(event.x, event.y)
+        dx, dy = 0, 5
+        for i in range(25):
+            time.sleep(0.025)
+            self.canvas.move(closest_token, dx, dy)
+            self.canvas.update()
+        for i in range(25):
+            time.sleep(0.025)
+            self.canvas.move(closest_token, dx, -dy)
+            self.canvas.update()
+
+if __name__ == ""__main__"":
+    root = tk.Tk()
+    Example(root).pack()
+    root.mainloop()

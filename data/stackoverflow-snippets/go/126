@@ -1,0 +1,26 @@
+Resources:
+  WorkerPeriodicFunction:
+    Properties:
+      CodeUri: ./handlers/worker-periodic/main.zip
+      Environment:
+        Variables:
+          BUCKET: !Ref Bucket
+      Events:
+        Request:
+          Properties:
+            Schedule: rate(1 day)
+          Type: Schedule
+      Handler: main
+      Policies:
+        - Statement:
+            - Action:
+                - s3:DeleteObject
+              Effect: Allow
+              Resource: !Sub ""arn:aws:s3:::${Bucket}/*""
+            - Action:
+                - s3:ListBucket
+              Effect: Allow
+              Resource: !Sub ""arn:aws:s3:::${Bucket}""
+      Runtime: go1.x
+      Timeout: 15
+    Type: AWS::Serverless::Function

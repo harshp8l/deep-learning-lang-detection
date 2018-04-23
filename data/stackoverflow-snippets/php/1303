@@ -1,0 +1,43 @@
+<?php
+
+function setTier(array $nodes, $tier = 1)
+{
+    return array_map(function ($node) use ($tier) {
+        $node->tier = $tier;
+        $node->children = setTier($node->children, $tier + 1);
+
+        return $node;
+    }, $nodes);
+}
+
+$structure = json_decode('
+    [{
+        ""name"": ""a"",
+        ""children"": [{
+            ""name"": ""c"",
+            ""children"": [{
+                ""name"": ""e"",
+                ""children"": [{
+                    ""name"": ""g"",
+                    ""children"": []
+                }]
+            }, {
+                ""name"": ""f"",
+                ""children"": []
+            }]
+        }, {
+            ""name"": ""d"",
+            ""children"": [{
+                ""name"": ""h"",
+                ""children"": []
+            }]
+        }]
+    }, {
+        ""name"": ""b"",
+        ""children"": []
+    }]
+');
+
+$structure = setTier($structure);
+
+print_r($structure); die;

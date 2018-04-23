@@ -1,0 +1,62 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+)
+
+// JSON ...
+var JSON = `{ 
+  ""response"": [
+    {
+      ""message"": [
+         ""hello world""
+      ],
+      ""misc"": [
+        {
+          ""timestamp"": [
+             ""2017-06-28T05:52:39.347Z""
+          ],
+          ""server"": [
+             ""server-0101""
+          ]
+        }
+      ]
+    }
+  ]
+}
+`
+
+type rawObject struct {
+    Response []struct {
+        Message []string      `json:""message""`
+        Misc    []interface{} `json:""misc""`
+    } `json:""response""`
+}
+
+type clean struct {
+    Message string                 `json:""message""`
+    Misc    map[string]interface{} `json:""misc""`
+}
+
+func main() {
+    var o rawObject
+    var c clean
+    // init map
+    c.Misc = make(map[string]interface{})
+
+    // unmarshall the raw data
+    json.Unmarshal([]byte(JSON), &o)
+
+    for _, res := range o.Response { // I assume there should only be one response, don't know why this is wrapped as an array
+        //  assume message is not really an array
+        c.Message = res.Message[0]
+        // convert []interface to map[string]interface
+        for _, m := range res.Misc {
+            for k, v := range m.(map[string]interface{}) {
+                c.Misc[k] = v
+            }
+        }
+    }
+    fmt.Printf(""%+v\n"", c)
+}

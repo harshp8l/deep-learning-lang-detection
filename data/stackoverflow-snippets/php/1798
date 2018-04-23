@@ -1,0 +1,132 @@
+function getWorkingDays($days1,$start_dt,$end_dt,$holidays) {
+
+
+    $date1 = $start_dt;
+    $date2 = $end_dt;
+
+    $array = array();
+    $query = $holidays;// pass array of holidays.
+    foreach($query as $row)
+    {
+        $array[] = $row['h_date'];
+    }
+
+    $workingDays = [1, 2, 3, 4, 5];// 1 = Mon,...
+    $holidayDays = $array; # variable and fixed holidays
+
+    $from = new DateTime($date1);
+    $to = new DateTime($date2);
+    $to->modify('+1 day');
+    $interval = new DateInterval('P1D');
+    $periods = new DatePeriod($from, $interval, $to);
+
+    $nameOfDay = date('N', strtotime($date1));
+    if($nameOfDay==7)
+    {
+        $nameOfDay=0;
+    }
+    $days = $nameOfDay;
+    $fullDate=explode('-',$date1);
+
+    $y=$fullDate['0'];
+    $m=$fullDate['1'];
+    $d=$fullDate['2'];
+
+    foreach ($periods as $period) {
+        if (!in_array($period->format('N'), $workingDays)) {
+
+            $d++;
+            continue;
+        }
+        if (in_array($period->format('Y-m-d'), $holidayDays)) {
+            if($d==32 && $m==12)
+            {
+                $d=1;
+                $m=1;
+                $y++;
+            }
+
+            $d++;
+            continue;
+        }
+        if (in_array($period->format('*-m-d'), $holidayDays)) {
+
+            $d++;
+            continue;
+        }
+
+        switch ($m) {
+
+            case '2':
+                if( (0 == $y % 4) and (0 != $y % 100) or (0 == $y % 400) )
+                {
+                    if($d>=30)
+                    {
+                        $d=1;
+                        $m++;
+                        break;
+                    }  
+                }
+                else
+                {
+                    if($d>=29)
+                    {
+                        $d=1;
+                        $m++;
+                        break;
+                    }  
+                }
+
+            case '4':
+            case '6':
+            case '9':
+            case '11':
+                if($d>=31)
+                {
+                    $d=1;
+                    $m++;
+                }
+                break;
+
+            case '1':
+            case '3':
+            case '5':
+            case '7':
+            case '8':
+            case '10':
+                if($d>=32)
+                {
+                    $d=1;
+                    $m++;   
+                }
+                break;
+
+            case '12':
+                if($d>=32)
+                {
+                    $d=1;
+                    $m=1;
+                    $y++;
+                }
+                break;
+        }
+
+        $dn = date('D', strtotime($d.'-'.$m.'-'.$y));
+        if($d==1 && $dn=='Sun')
+        {
+            $d++;
+        }
+        if($d==1 && $dn=='Sat')
+        {
+            $d=$d+2;
+        }
+
+        $dayName = date('D', strtotime($d.'-'.$m.'-'.$y));
+
+        $planbookid = $this->planbook->get_planbook_id();
+
+        $d++;
+        $days++;
+    }
+    echo json_encode($result);
+}

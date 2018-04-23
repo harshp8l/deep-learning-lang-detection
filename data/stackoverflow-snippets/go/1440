@@ -1,0 +1,31 @@
+func main() {
+    // stop on ^c
+    quit := make(chan os.Signal)
+    signal.Notify(quit, os.Interrupt)
+
+    // router
+    mux := http.NewServeMux()
+    mux.HandleFunc(""/"", func(w http.ResponseWriter, r *http.Request) {
+        log.Println(""serving request"")
+        io.WriteString(w, ""Hello, world!\n"")
+    })
+
+    // start server
+    srv := &http.Server{Addr: "":8080"", Handler: mux}
+    go func() {
+        log.Println(""server starting"")
+        if err := srv.ListenAndServe(); err != nil {
+            log.Fatalf(""listenAndServe failed: %v"", err)
+        }
+    }()
+    fmt.Println(""server started"")
+
+    <-quit
+    // gracefully stop server
+    ctx, cancel := context.WithTimeout(context.Background(), 60 * time.Second)
+    defer cancel()
+    if err := srv.Shutdown(ctx); err != nil {
+        log.Fatal(err)
+    }
+    log.Println(""server stopped"")
+}

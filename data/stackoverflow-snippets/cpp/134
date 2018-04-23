@@ -1,0 +1,37 @@
+class CallbackTimer
+{
+public:
+    ~CallbackTimer()
+    {
+        stop();
+    }
+
+    void start(std::chrono::milliseconds interval, std::function<void()> callback)
+    {
+        stop();
+        shouldQuit = false;
+
+        handle = std::async([=,callback=std::move(callback)]() {
+
+            while (!shouldQuit)
+            {
+                auto nextStart = std::chrono::steady_clock::now() + interval;
+                callback();
+                std::this_thread::sleep_until(nextStart);
+            }
+        });
+    }
+
+    void stop()
+    {
+        if (handle.valid())
+        {
+            shouldQuit = true;
+            handle.get();
+        }
+    }
+
+private:
+    std::atomic_bool shouldQuit;
+    std::future<void> handle;
+};

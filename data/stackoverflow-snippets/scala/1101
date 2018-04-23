@@ -1,0 +1,30 @@
+import akka.stream.stage._
+
+object Main {
+  import scala.concurrent._
+  import akka._
+  import akka.actor._
+  import akka.stream._
+  import akka.stream.scaladsl._
+
+  implicit val system = ActorSystem(""TestSystem"")
+  implicit val materializer = ActorMaterializer()
+  import system.dispatcher
+
+  class FlowWithCounter extends GraphStageWithMaterializedValue[FlowShape[Int, Int], Future[Int]]{....}
+
+  def main(args:Array[String]):Unit = {
+    val source:Source[Int, NotUsed] = Source(15 to 25)
+    val flow:Flow[Int, Int, Future[Int]] = Flow.fromGraph(new FlowWithCounter)
+    val sink:Sink[Int, Future[Done]] = Sink.foreach(println)
+
+    val completion:(Future[Int], Future[Done]) = ((source.viaMat(flow)(Keep.right)).toMat(sink)(Keep.both)).run()
+    completion._2 foreach{_ =>
+      completion._1 foreach{count =>
+        println(""Our flow processed "" + count + "" elements."")
+        system.terminate()
+      }
+    }
+  }
+
+}

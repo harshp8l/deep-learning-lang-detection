@@ -1,0 +1,24 @@
+MERGE INTO my_table dst
+USING (
+  SELECT d.business_unit,
+         d.voucher_id,
+         SUM( DECODE( TAX_CD_VAT_PCT, 0, 0, d.monetary_amount ) ) AS total_tax_cd_vat_pct,
+         MAX (D.TAX_CD_VAT_PCT) AS max_tax_cd_vat_pct
+  FROM   ps_VCHR_LINE_WTHD w 
+         INNER JOIN
+         PS_DISTRIB_LINE d 
+         ON ( /* some conditions here */ )
+  WHERE  1=1
+         -- some conditions
+  GROUP BY
+         d.business_unit,
+         d.voucher_id
+) src
+ON (
+      src.business_unit = dst.business_unit
+  AND src.voucher_id    = dst.voucher_id
+)
+WHEN MATCHED THEN
+  UPDATE SET
+   BASE_AMT       = src.total_tax_cd_vat_pct
+   TAX_CD_VAT_PCT = src.max_tax_cd_vat_pct;

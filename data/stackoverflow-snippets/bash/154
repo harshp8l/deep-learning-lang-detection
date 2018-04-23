@@ -1,0 +1,59 @@
+#! /bin/bash
+
+fib() {
+    # Validate input argument to be integer 1...92.
+
+    num=$1
+    if [[ ! ${num} =~ ^[1-9][0-9]*$ ]] ; then
+        echo ""Invalid input '${num}'.""
+        return
+    fi
+    if [[ ${num} -gt 92 ]] ; then
+        echo ""Invalid input '${num}'.""
+        return
+    fi
+
+    # First two Fib's are both one.    
+
+    if [[ ${num} -le 2 ]] ; then
+        echo ""1""
+        return
+    fi
+
+    # For other Fib's, just iterate keeping previous two.
+
+    grandparent=1 ; parent=1 ; child=2
+    ((num -= 3))
+
+    while [[ ${num} -gt 0 ]] ; do
+        ((grandparent = parent))
+        ((parent = child))
+        ((child = grandparent + parent))
+        ((num--))
+    done
+
+    echo ${child}
+}
+
+# Rather rudimentary test harness.
+
+[[ ""$(fib x)"" != ""Invalid input 'x'."" ]] && echo Fail A && exit
+[[ ""$(fib -7)"" != ""Invalid input '-7'."" ]] && echo Fail B && exit
+[[ ""$(fib 0)"" != ""Invalid input '0'."" ]] && echo Fail C && exit
+[[ ""$(fib 93)"" != ""Invalid input '93'."" ]] && echo Fail D && exit
+
+[[ ""$(fib 1)"" != ""1"" ]] && echo Fail E && exit
+[[ ""$(fib 2)"" != ""1"" ]] && echo Fail F && exit
+[[ ""$(fib 3)"" != ""2"" ]] && echo Fail G && exit
+[[ ""$(fib 4)"" != ""3"" ]] && echo Fail H && exit
+[[ ""$(fib 5)"" != ""5"" ]] && echo Fail I && exit
+[[ ""$(fib 6)"" != ""8"" ]] && echo Fail J && exit
+[[ ""$(fib 20)"" != ""6765"" ]] && echo Fail K && exit
+[[ ""$(fib 50)"" != ""12586269025"" ]] && echo Fail L && exit
+[[ ""$(fib 92)"" != ""7540113804746346429"" ]] && echo Fail M && exit
+
+# User test.
+
+read -p ""Which Fibonacci number (>= 1)? "" n
+result=$(fib $n)
+echo $result

@@ -1,0 +1,37 @@
+$users = Import-Csv -Path ""C:\AddingUser.csv""
+
+foreach($user in $users)
+{
+    # Splat the params for easier reading
+    $msol_params = @{
+        DisplayName = $user.DisplayName
+        FirstName = $user.FirstName
+        LastName = $user.LastName
+        UserPrincipalName = $user.UserPrincipalName
+        PhoneNumber = $user.PhoneNumber
+        Department = $user.Department
+        Title = $user.Title
+        UsageLocation = $user.UsageLocation
+        Password = $user.Password
+    }
+
+    New-MsolUser @msol_params | Set-MsolUserLicense -AddLicenses STANDARDPACK
+
+    # switch instead of ifelse to simplify adding new departments
+    switch($user.Department)
+    {
+        'Scheduling' {
+            Add-MailboxPermission -Identity ""Scheduling"" -AccessRights FullAccess -InheritanceType All –User $user.DisplayName
+            Add-MailboxPermission -Identity ""Renewals"" -AccessRights FullAccess -InheritanceType All –User $user.DisplayName
+            Add-MailboxPermission -Identity ""Scans"" -AccessRights FullAccess -InheritanceType All –User $user.DisplayName
+        }
+        'Customer Care' {
+            Add-MailboxPermission -Identity ""Renewals"" -AccessRights FullAccess -InheritanceType All –User $user.DisplayName
+            Add-MailboxPermission -Identity ""AP CustomerService"" -AccessRights FullAccess -InheritanceType All –User $user.DisplayName
+            Add-MailboxPermission -Identity ""Scans"" -AccessRights FullAccess -InheritanceType All –User $user.DisplayName
+        }
+        Default {
+            Write-Error -Message ""Invalid Department for user: $($user.DisplayName)""
+        }
+    }
+}

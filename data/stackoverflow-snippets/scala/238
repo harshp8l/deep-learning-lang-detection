@@ -1,0 +1,49 @@
+import java.time.temporal.ChronoUnit
+import java.time.LocalTime
+
+import scala.concurrent.duration._
+
+val t = LocalTime.now()
+
+
+// start of the day
+val start = LocalTime.of(9, 0)
+// end of first half
+val midEnd = LocalTime.of(13, 0)
+// start of second half
+val midStart = LocalTime.of(14, 0)
+// end of the day
+val end = LocalTime.of(18, 0)
+// here we define duration of first half a day: diff between start of a day and midEnd (end of first half)
+val firstHalf = start.until(midEnd, ChronoUnit.MILLIS).millis
+// here we define duration of second half a day: diff between start of second half a day and end of a day
+val secondHalf = midStart.until(end, ChronoUnit.MILLIS).millis
+
+def toStart(t: LocalTime) = {
+  // when checked time is before start of a day
+  if (t.isBefore(start)) 0.hours
+  // otherwise when checked time is before end of first half (will be diff between start time and checked time)
+  else if (t.isBefore(midEnd)) start.until(t, ChronoUnit.MILLIS).millis
+  // otherwise when checked time is before start of second half (will be duration of first half)
+  else if (t.isBefore(midStart)) firstHalf
+  // otherwise when checked time is before end of a day (will be duration of first half + duration of diff between checked time and start of second half)
+  else if (t.isBefore(end)) firstHalf + midStart.until(t, ChronoUnit.MILLIS).millis
+  // otherwise sum of durations 
+  else firstHalf + secondHalf
+}
+
+// here you can add any specific format for evaluated duration
+implicit class formatter(d: FiniteDuration) {
+  def withMinutes = {
+    // convert to minutes
+    val l = d.toMinutes
+    // format
+    s""${l / 60}:${l % 60}""
+  }
+}
+
+toStart(t).withMinutes
+toStart(LocalTime.of(9, 30)).withMinutes
+toStart(LocalTime.of(12, 30)).withMinutes
+toStart(LocalTime.of(13, 30)).withMinutes
+toStart(LocalTime.of(14, 30)).withMinutes

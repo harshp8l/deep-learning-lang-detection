@@ -1,0 +1,20 @@
+select MonthName, 
+   sum(case when cnt >= 5 then sum_cost else 0 end) as "">=5 CostLoss"",
+   sum(case when cnt  < 5 then sum_cost else 0 end) as ""<5 CostLoss""
+from
+ (  select UserId, 
+           month(TStamp) as monthNum,
+           MonthName,
+           sum(Cost) as sum_cost,
+           count(*) as cnt
+    from yourTable
+    where Code = 'SALE_ABANDONED'
+    group by UserId, month(TStamp), MonthName
+) as t
+group by MonthName
+order by monthNum  
+
+Result:
+   MonthName    >=5 CostLoss    <5 CostLoss
+   January       2654            260
+   February       791              0

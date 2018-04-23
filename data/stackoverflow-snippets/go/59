@@ -1,0 +1,58 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+)
+
+func main() {
+    a := &Ansible{
+            Metadata: Hostvars{
+                    Hosts: map[string]map[string]string{
+                            ""172.16.0.3"": map[string]string{
+                                    ""displayname"": ""server 1"",
+                            },
+                    },
+            },
+            Hosts: map[string]Group{
+                    ""group1"":  Group{Hosts: []string{""172.16.0.3"", ""172.16.0.4"", ""172.16.0.5""}},
+                    ""sandbox"": Group{Children: []string{""server1"", ""server2"", ""server3""}},
+                    ""server1"": Group{Hosts: []string{""172.16.0.3""}},
+            },
+    }
+
+    b, err := json.MarshalIndent(a, """", ""  "")
+    fmt.Println(string(b), err)
+}
+
+type Ansible struct {
+    Metadata Hostvars
+    Hosts    map[string]Group
+}
+
+type Hostvars struct {
+    Hosts map[string]map[string]string `json:""hostvars""`
+}
+
+// I don't *think* Ansible supports anything else in host groups, so it makes
+// sense to define it as a struct.
+type Group struct {
+    Hosts    []string `json:""hosts,omitempty""`
+    Children []string `json:""children,omitempty""`
+}
+
+// MarshalJSON implements json.Marshaler
+func (a *Ansible) MarshalJSON() ([]byte, error) {
+    // Define a map that we will encode at the end of the function.
+    doc := make(map[string]interface{})
+
+    // Add all the groups.
+    for k, v := range a.Hosts {
+            doc[k] = v
+    }
+
+    // Add the _meta key.
+    doc[""_meta""] = a.Metadata
+
+    return json.Marshal(doc)
+}

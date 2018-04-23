@@ -1,0 +1,45 @@
+AVFrame cvmat_to_avframe(cv::Mat* frame)
+{
+
+        AVFrame dst;
+        cv::Size frameSize = frame->size();
+        AVCodec *encoder = avcodec_find_encoder(AV_CODEC_ID_RAWVIDEO);
+        AVFormatContext* outContainer = avformat_alloc_context();
+        AVStream *outStream = avformat_new_stream(outContainer, encoder);
+        avcodec_get_context_defaults3(outStream->codec, encoder);
+
+        outStream->codec->pix_fmt = AV_PIX_FMT_BGR24;
+        outStream->codec->width = frame->cols;
+        outStream->codec->height = frame->rows;
+        avpicture_fill((AVPicture*)&dst, frame->data, AV_PIX_FMT_BGR24, outStream->codec->width, outStream->codec->height);
+        dst.width = frameSize.width;
+        dst.height = frameSize.height;
+
+        return dst;
+}
+
+
+cv::Mat avframe_to_cvmat(AVFrame *frame)
+{
+        AVFrame dst;
+        cv::Mat m;
+
+        memset(&dst, 0, sizeof(dst));
+
+        int w = frame->width, h = frame->height;
+        m = cv::Mat(h, w, CV_8UC3);
+        dst.data[0] = (uint8_t *)m.data;
+        avpicture_fill( (AVPicture *)&dst, dst.data[0], AV_PIX_FMT_BGR24, w, h);
+
+        struct SwsContext *convert_ctx=NULL;
+        enum AVPixelFormat src_pixfmt = AV_PIX_FMT_BGR24;
+        enum AVPixelFormat dst_pixfmt = AV_PIX_FMT_BGR24;
+        convert_ctx = sws_getContext(w, h, src_pixfmt, w, h, dst_pixfmt,
+                        SWS_FAST_BILINEAR, NULL, NULL, NULL);
+
+        sws_scale(convert_ctx, frame->data, frame->linesize, 0, h,
+                        dst.data, dst.linesize);
+        sws_freeContext(convert_ctx);
+
+        return m;
+}

@@ -1,0 +1,21 @@
+function global:SetServerMacMap{
+
+param(
+    [Parameter(mandatory=$true)][String]$ServerName,
+    [Parameter(mandatory=$true)][String]$LocalIPAddress
+)
+
+$IPAddress = ([System.Net.Dns]::GetHostAddresses($ServerName)).IPAddressToString
+
+if($IPAddress -match $LocalIPAddress){
+    $IPAddress = $LocalIPAddress
+}
+
+$MACAddress = ((Get-WmiObject Win32_NetworkAdapterConfiguration -ComputerName $ServerName | where{$_.IPAddress -like ""*$IPaddress*""} | select macaddress).macaddress).Replace(':','-')
+
+$ServerMacMap = ""$ServerName@$IPaddress""+"":$MacAddress""
+
+$reg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $NSSServerName ) 
+        $regKey= $reg.OpenSubKey(""SOFTWARE\\MySoftware\\Settings"",$true) 
+        $regKey.SetValue('ServerMacMap',$ServerMacMap,[Microsoft.Win32.RegistryValueKind]::String)
+}

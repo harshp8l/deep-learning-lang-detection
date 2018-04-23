@@ -1,0 +1,39 @@
+require 'sequel'
+require 'bcrypt'
+
+DB = Sequel.sqlite
+
+DB.create_table(:users) do
+  primary_key :id
+  String :name, null: false, unique: true
+  String :password_hash, null: false
+end
+
+class User < Sequel::Model
+  plugin :validation_helpers
+  include BCrypt
+
+  def validate
+    super
+    validates_presence [:name,:password]
+    validates_unique [:name]
+    errors.add(:password, 'is shorter than 8 characters') if @password==nil || @password.length < 8
+  end
+
+  def password
+    Password.new(password_hash) if password_hash
+  end
+
+  def password=(new_password)
+
+    # uncomment to prevent bad passwords from changing a good password; probably needs to include a non-terminating error message
+    # return if new_password==nil || new_password.length < 8
+
+    # store clear-text password for validation
+    @password = new_password
+
+    #modify password hash accordingly
+    self.password_hash = if new_password then Password.create(new_password) else nil end
+  end
+
+end

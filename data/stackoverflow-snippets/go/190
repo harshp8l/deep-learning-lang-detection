@@ -1,0 +1,45 @@
+package main
+
+import (
+    ""fmt""
+    ""sync""
+)
+
+func main() {
+    tasks := make(chan int)
+    results := make(chan string)
+
+    var wg sync.WaitGroup
+    for i := 0; i < 4; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            for task := range tasks {
+                rem := int(task) % 2
+                switch rem {
+                case 0:
+                    results <- fmt.Sprintf(""done with task %d"", task)
+                case 1:
+                    results <- fmt.Sprintf(""error: only even tasks accepted: %d"", task)
+                }
+            }
+        }()
+    }
+
+    summary := """"
+    go func() {
+        for result := range results {
+            summary += result + ""\n""
+        }
+    }()
+
+    for i := 0; i < 10; i++ {
+        tasks <- i
+    }
+
+    close(tasks)
+    wg.Wait()
+    close(results)
+
+    fmt.Println(summary)
+}

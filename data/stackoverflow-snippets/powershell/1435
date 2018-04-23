@@ -1,0 +1,14 @@
+$browser = New-Object System.Net.WebClient
+$browser.Proxy.Credentials =[System.Net.CredentialCache]::DefaultNetworkCredentials 
+$url = 'http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote'
+[xml]$xml = $browser.DownloadString($url)
+
+$resultset = New-Object System.Collections.ArrayList
+foreach ($quote in $xml.list.resources.resource){
+    $singlequote = New-Object System.Collections.Specialized.OrderedDictionary
+    foreach($element in $quote.field){
+        $singlequote.Add($element.name,$element.'#text')
+    }
+    $resultset += New-Object PSObject -Property $singlequote
+}
+$resultset | format-table 

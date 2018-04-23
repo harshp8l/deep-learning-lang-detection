@@ -1,0 +1,20 @@
+$event = Get-EventLog -LogName Application -Source ""My Script-1"" | where {$_.eventID -eq 1}
+
+if ($event.EntryType -eq ""Error"")
+{
+    [string]$EmailBody = $event.Data
+    #or [string]$EmailBody = $event.Message
+
+    $EmailFrom = ""Test@google.com""
+    $EmailTo = ""lmill130@kent.edu""
+    $EmailSubject = ""This was sent from a PowerShell Script""
+    $SMTPServer = ""Example Server SMTP""
+    Write-host ""Sending Email Test""
+    Send-MailMessage -From $EmailFrom -To $EmailTo -Subject $EmailSubject -Body $EmailBody -SmtpServer $SMTPServer
+}
+else 
+{
+    write-host ""No error found""
+    write-host ""Here is the log entry that was inspected:""
+    $event
+}

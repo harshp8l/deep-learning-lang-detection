@@ -1,0 +1,22 @@
+import akka.actor.{Actor, ActorSystem, Props}
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.ExecutionContext.Implicits.global
+
+object AskPattern extends App {
+  case object AskName
+
+  class Name extends Actor{
+    override def receive: Receive = {
+      case AskName => sender ! ""Helmy""
+      case s : String => println(s)
+    }
+  }
+
+ implicit val timeout: akka.util.Timeout = Timeout.apply(1,java.util.concurrent.TimeUnit.SECONDS)
+  val systemActor = ActorSystem(""AskPattern"")
+  val actor1 = systemActor.actorOf(Props[Name],""Umair"")
+  val actor2 = systemActor.actorOf(Props[Name],""Farooq"")
+
+  actor2 ? AskName map { x => println(s""Resolved future $x"") }
+}

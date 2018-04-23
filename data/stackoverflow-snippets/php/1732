@@ -1,0 +1,19 @@
+public function render($request, Exception $exception)
+{
+        $this->report($exception);
+
+        if ($exception instanceof ModelNotFoundException ||
+            $exception->getCode() == 403 ||
+            $exception instanceof MethodNotAllowedHttpException) {
+            if (!is_admin_site()) {
+                 return view('user.403');
+            }
+            return view('admin.403');
+        }
+
+        if ($exception instanceof TokenMismatchException) {
+            return view('admin.501');
+        }
+
+        return parent::render($request, $exception);
+}

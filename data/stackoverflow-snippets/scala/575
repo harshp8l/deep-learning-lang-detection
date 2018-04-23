@@ -1,0 +1,25 @@
+val inputColumns = List(
+  List(1, 2, 3, 4, 5, 6),   // first ""column""
+  List(4, 6, 5, 7, 12, 15)  // second ""column""
+)
+
+type UDF = Function[List[Int], List[Int]]
+
+val bucketizers: Seq[UDF] = List(
+  _.map(_ * 42),              // first ""UDF""
+  _.map(_  % 3)               // second ""UDF""
+)
+
+println(bucketizers(0)(List(1, 100))) // 42, 4200
+println(bucketizers(1)(List(1,2,3,4))) // 1,2,0,1
+
+val modifiedTable = inputColumns.zipWithIndex.map{ case (col, idx) =>
+  bucketizers(idx)(col)
+}
+
+println(modifiedTable)
+// Output:
+// List(
+//   List(42, 84, 126, 168, 210, 252), // first column times 42
+//   List(1, 0, 2, 1, 0, 0)            // second column modulo 3
+// )

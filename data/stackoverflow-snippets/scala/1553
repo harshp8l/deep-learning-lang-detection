@@ -1,0 +1,36 @@
+class Handler(requests: List[RequestMsg]) extends Actor {
+  import context.{become, dispatcher}
+  var numProcessed = 0
+  var results: List[Any] = List()
+  requests.foreach(self ! _)
+
+  implicit val timeout = Timeout(100.millis)
+
+  def receive = {
+    case r: RequestMsg =>
+      val sendRequestActor = context.actorOf(Props(new SendRequest(r)), ""Send_Request"".concat(getActorNumber))
+      (sendRequestActor ? Request).pipeTo(self)
+
+    case s: SuccessResponse =>
+      println(s""response: $s"")
+      results = results :+ s
+      if (results.size == requests.size)
+        become(done)
+
+    case akka.actor.Status.Failure(f) =>
+      println(""a request failed or timed out"")
+      results = results :+ RequestTimeout
+      if (results.size == requests.size)
+        become(done)
+
+    case m =>
+      println(s""Unhandled message received while processing requests: $m"")
+      sender ! NotDone
+  }
+
+  def done: Receive = {
+    case GetResponses =>
+      println(""sending responses"")
+      sender ! results
+  }
+}

@@ -1,0 +1,34 @@
+$RObj = ForEach ($User in $samage_users.users.user) { 
+  ### calculate basic properties - even those ones absent in XML
+  $UObj = $user | Select-Object @(
+    @{l=""Email"";e={$_.email}},
+    @{l=""Name"";e={$_.name}},
+    @{l=""ID"";e={$_.ID}},
+    @{l=""Phone"";e={$_.phone}},
+    @{l=""Site"";e={$_.site.name}},
+    @{l=""Rs_To"";e={$_.reports_to.name}},   # ""Rs_To""   cut ""Reports_To""
+    @{l=""Rs_To_E"";e={$_.reports_to.email}} # ""Rs_To_E"" cut ""Reports_To_Email""
+                                           # cuttings merely for better output readability
+  )
+  ### add user-dependent properties for each custom field 
+    $User.custom_fields_values.custom_fields_value | 
+      ForEach-Object {
+        $UObj | Add-Member NoteProperty -Name $_.custom_field_id -Value $_.value
+      }
+    $UObj     ### add current PSCustomObject to the `$RObj` array
+}
+### mutually arrange potentially missing user-dependent properties
+for ($i = 0; $i -lt $RObj.Count; $i++ ) {
+ for ($j = 0; $j -lt $RObj.Count; $j++ ) {
+  if ( $i -ne $j ) {
+   $RObj[$i] | ForEach-Object { $_.PSObject.Properties.Name } | 
+    Where-Object { $_ -notin $RObj[$j].PSObject.Properties.Name } | 
+     ForEach-Object { 
+        $RObj[$j] | Add-Member -MemberType NoteProperty -Name $_ -Value ''
+     }
+  }
+ }
+}
+### $RObj | Export-Csv ""Samanage_users.csv"" -NoTypeInformation
+### debugging output instead of `Export-Csv`
+$RObj | Format-Table -Property * -AutoSize

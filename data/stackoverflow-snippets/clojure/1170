@@ -1,0 +1,19 @@
+(defmacro memoize-rec [form]
+  (let [[fn* fname params & body] form
+        params-with-fname (vec (cons fname params))]
+    `(let [f# (memoize (fn ~params-with-fname
+                         (let [~fname (partial ~fname ~fname)] ~@body)))]
+       (partial f# f#))))
+
+;; (clojure.pprint/pprint (macroexpand '(memoize-rec (fn f [x] (str (f x))))))
+((memoize-rec (fn fib [n]
+                (if (< n 2)
+                  n
+                  (+ (fib (- n 1))
+                     (fib (- n 2)))))) 75) ;; instant
+
+((fn fib [n]
+                (if (< n 2)
+                  n
+                  (+ (fib (- n 1))
+                     (fib (- n 2))))) 75) ;; slooooooow

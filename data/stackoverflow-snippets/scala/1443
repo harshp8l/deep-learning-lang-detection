@@ -1,0 +1,22 @@
+val df = Seq(
+  (0, Seq(0.1f, 0.2f, 0.3f)),
+  (1, Seq(0.4f, 0.5f, 0.6f))
+).toDF(""id"", ""features"")
+
+def addIndex = udf(
+  (s: Seq[Float]) => s.zipWithIndex
+)
+
+val df2 = df.withColumn( ""features_idx"", explode(addIndex($""features"")) )
+
+df2.select( $""id"", $""features_idx._1"".as(""features""), $""features_idx._2"".as(""features_pos"") ).show
++---+--------+------------+
+| id|features|features_pos|
++---+--------+------------+
+|  0|     0.1|           0|
+|  0|     0.2|           1|
+|  0|     0.3|           2|
+|  1|     0.4|           0|
+|  1|     0.5|           1|
+|  1|     0.6|           2|
++---+--------+------------+

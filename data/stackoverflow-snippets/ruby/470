@@ -1,0 +1,59 @@
+require 'matrix'
+
+module ReadableArrays
+    def readable(factor: 1, method: :rjust)
+        repr = to_a.map { |row|
+            row.map(&:inspect)
+        }
+
+        column_widths = repr.transpose.map { |col|
+            col.map(&:size).max + factor
+        }
+
+        res = """"
+        repr.each { |row|
+            row.each_with_index { |el, j|
+                res += el.send method, column_widths[j]
+            }
+            res += ""\n""
+        }
+        res.chomp
+    end
+end
+
+## example usage ##
+class Matrix
+    include ReadableArrays
+end
+class Array
+    include ReadableArrays
+end
+
+arr = [[1, 20, 3], [20, 3, 19], [-32, 3, 5]]
+mat = Matrix[*arr]
+
+p arr
+#=> [[1, 20, 3], [20, 3, 19], [-2, 3, 5]]
+p mat
+#=> Matrix[[1, 20, 3], [20, 3, 19], [-2, 3, 5]]
+
+puts arr.readable
+#=>
+#    1 20  3
+#   20  3 19
+#  -32  3  5
+puts mat.readable
+#=>
+#    1 20  3
+#   20  3 19
+#  -32  3  5
+puts mat.readable(method: :ljust)
+#=>
+# 1   20 3
+# 20  3  19
+# -32 3  5
+puts mat.readable(method: :center)
+#=>
+#  1  20  3
+#  20  3 19
+# -32  3  5

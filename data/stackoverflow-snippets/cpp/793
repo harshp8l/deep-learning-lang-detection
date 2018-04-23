@@ -1,0 +1,42 @@
+#include <iostream>
+
+using namespace std;
+
+// TODO - replace this C construct with C++ equivalent
+//typedef bool(*match_key)(const void* key1, const void* key2);
+
+// somehow declare this as a typedef?  need a way to declare a signature in C++
+typedef template<class T>
+using match_key = bool (*)(const T& key1, const T& key2);
+
+
+// *** User defined matching function
+bool mymatcher(const int i, const int j) {
+    return i == j;
+}
+
+template<class K>
+class hashmap{
+public:
+    hashmap(const K& key, match_key<K> matchfunc) : key_(key), cmp(matchfunc) { }
+
+    bool matched(const K& key) {
+        return cmp(key_, key);
+    }
+
+private:
+    const K key_;
+    match_key<K> cmp;
+};
+
+
+int main()
+{
+    int i = 3;
+    int j = 4;
+
+    hashmap<int> hm(i, mymatcher);
+    cout << ""i matches j? "" << (hm.matched(j) ? ""yes"" : ""no"") << endl;
+
+    return 0;
+}

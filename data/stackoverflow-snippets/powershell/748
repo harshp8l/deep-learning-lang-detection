@@ -1,0 +1,21 @@
+$dates = 30, 10, 3, 2, 1
+Get-ADUser -Filter { Enabled -eq $true} -Properties Description, 'msDS-UserPasswordExpiryTimeComputed' |
+Select-Object SamAccountName, UserPrincipalName, Description,
+@{n='PasswordExpires';e={
+    [DateTime]::FromFileTime($_.'msDS-UserPasswordExpiryTimeComputed')
+}},
+@{n='DaysToExpiry';e={[Math]::Floor(([DateTime]::FromFileTime($_.'msDS-UserPasswordExpiryTimeComputed') - [datetime]::Now).TotalDays)}}|
+    Where-Object { $_.DaysToExpiry -in $dates } |
+    ForEach-Object { 
+    $daysToExpiry = $_.DaysToExpiry
+
+    $mailParams = @{
+        To         = $_.UserPrincipalName
+        From       = 'blah@blah.com'
+        Body       = ""Your password will expire in $daysToExpiry""
+        Subject    = ""Password expires in $daysToExpiry""
+        SmtpServer = 'blah.smtp.com'
+    }
+    Send-MailMessage @params
+    $_
+} | Export-Csv output.csv -NoTypeInformation

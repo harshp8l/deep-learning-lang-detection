@@ -1,0 +1,26 @@
+import-module sqlps
+
+$database = ""NewDb""
+$backupLocation = ""D:\Backups\CurrentDB.bak""
+$dataFileLocation = ""D:\Databases\NewDB.mdf""
+$logFileLocation = ""D:\Logs\NewDB_log.ldf""
+
+$sql = @""
+
+USE [master]
+
+ALTER DATABASE [$database] 
+    SET SINGLE_USER WITH ROLLBACK IMMEDIATE
+
+RESTORE DATABASE [$database] 
+FROM DISK = N'$backupLocation' 
+WITH FILE = 1,  
+     MOVE N'CurrentDB' TO N'$dataFileLocation',  
+     MOVE N'CurrentDB_log' TO N'$logFileLocation',  
+     NOUNLOAD, REPLACE, STATS = 5
+
+ALTER DATABASE [$database] 
+    SET MULTI_USER
+""@
+
+invoke-sqlcmd $sql

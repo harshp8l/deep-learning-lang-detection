@@ -1,0 +1,47 @@
+trait YourDBFunctionsIII[T] {
+  def compute(): ReaderT[Future, UserContext, T]
+  def computeII(): ReaderT[Future, UserContext, T]
+}
+
+// In case you want to deal with Futures
+object YourDBFunctionsIII extends YourDBFunctionsIII[String] {
+
+  override def compute(): ReaderT[Future, UserContext, String] = ReaderT {
+    ctx =>
+      Future {
+        // Do something
+        ctx.passwd
+      }.recover {
+        case e: Throwable =>
+          ""Error""
+      }
+  }
+
+  override def computeII(): ReaderT[Future, UserContext, String] = ReaderT {
+    ctx =>
+      Future {
+        // Do other thing
+        ctx.passwd
+      }
+  }
+}
+
+class YourRoutesIII {
+  import YourDBFunctionsIII._
+
+  val route: Route = { requestContext =>
+    {
+      val userContext: UserContext = ??? // Extract from RequestContext
+
+      val routines = for {
+        resul1 <- compute()
+        resul2 <- computeII()
+      } yield resul2
+
+      // Execute monad composition
+      val computeResult = routines.run(userContext)
+
+      requestContext.complete(computeResult)
+    }
+  }
+}

@@ -1,0 +1,22 @@
+(import java.io.File)
+(import clojure.lang.RT)
+(require '[clojure.java.io :as io])
+
+(defn copy-src [& name-spaces]
+   (doseq [name-space name-spaces]
+     (let [
+          resource (-> name-space
+                       str
+                       (.replace ""."" ""/"")
+                       (.replace ""-"" ""_"")
+                       (str "".clj""))
+          on-classpath (RT/getResource (RT/baseLoader) resource)
+          parent-dir (File.
+                      (str 
+                       "".cljsserve/""
+                       (.substring resource 0 (.lastIndexOf resource ""/""))))
+          src-file (File. (str "".cljsserve/"" resource))
+          ]
+      (.mkdirs parent-dir)
+      (with-open [in (io/input-stream on-classpath)]
+        (io/copy in src-file)))))

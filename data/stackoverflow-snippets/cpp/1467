@@ -1,0 +1,55 @@
+#include <iostream>
+#include <algorithm>
+#include <memory>
+
+struct ComplexNumber
+{
+    ComplexNumber() : ComplexNumber( 0, 0 ) {}
+    ComplexNumber( int re, int im ) : re( re ), im( im ) {}
+    int re;
+    int im;
+};
+
+int main() 
+{
+    ComplexNumber **nizKompl = nullptr;
+    size_t brojUnesenih = 0;
+    bool unos;
+
+    do
+    {
+        std::cout << ""Unesite novi kompleksni broj(realni imaginarni): "";
+
+        int re, im;
+
+        if( ( unos = !!( std::cin >> re >> im ) ) )
+        { 
+            ComplexNumber **nizTemp = new ComplexNumber * [brojUnesenih + 1];
+
+            std::copy( nizKompl, nizKompl + brojUnesenih, nizTemp );
+            nizTemp[brojUnesenih] = new ComplexNumber( re, im );
+
+            ++brojUnesenih;
+
+            delete [] nizKompl;
+            nizKompl = nizTemp;
+        }
+    } while ( unos );
+
+    for ( size_t i = 0; i < brojUnesenih; i++ )
+    {
+        std::cout << ""{ "" << nizKompl[i]->re 
+                  << "", "" << nizKompl[i]->im
+                  << "" } "";
+    }
+    std::cout << std::endl;
+
+    if ( nizKompl )
+    {
+        std::for_each( nizKompl, nizKompl + brojUnesenih, std::default_delete<ComplexNumber>() );
+    }
+
+    delete [] nizKompl;
+
+    return 0;
+}   

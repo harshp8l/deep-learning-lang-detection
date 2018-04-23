@@ -1,0 +1,56 @@
+import React, {Component} from 'react';
+import { connect } from 'react-redux';
+import '../res/messages.css';
+const client = require('../client');
+
+class Messages extends Component {
+
+constructor(props) {
+    super(props);
+    this.state = {messages: []};{messages: []};
+}
+
+getInitialState(){
+    return { messages : [] }
+}
+
+updateMessages(msg){
+    this.setState({
+        messages : this.state.messages.concat([ msg ])
+    })
+}
+
+componentDidMount() {
+    var clientWebSocket = new WebSocket(""ws://127.0.0.1:8080/websocket/chat"");
+    clientWebSocket.onopen = function() {
+        console.log(""clientWebSocket.onopen"", clientWebSocket);
+        console.log(""clientWebSocket.readyState"", ""websocketstatus"");
+        clientWebSocket.send(""event-me-from-browser"");
+    }
+    clientWebSocket.onclose = function(error) {
+        console.log(""clientWebSocket.onclose"", clientWebSocket, error);
+    }
+    clientWebSocket.onerror = function(error) {
+        console.log(""clientWebSocket.onerror"", clientWebSocket, error);
+    }
+    var tmpMsg;
+    var _this = this;
+    clientWebSocket.onmessage = function(dataFromServer) {
+        console.log(""clientWebSocket.onmessage"", clientWebSocket, dataFromServer);
+        var date =  new Date() ;
+        tmpMsg =  dataFromServer;
+        _this.updateMessages(tmpMsg);
+    }
+
+}
+
+render() {
+    return (
+        <div>
+            <ul>{ this.state.messages.map( (msg) =>
+                <li>{ JSON.parse(msg.data).eventDt }</li> )}
+            </ul>
+        </div>
+
+    )
+}

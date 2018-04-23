@@ -1,0 +1,24 @@
+(require '[cats.monad.either :as either])
+
+(defn assert-config-path-e [config-path]
+  (if config-path
+    (either/right config-path)
+    (either/left ""no argument"")))
+
+(defn read-file-e [config-path]
+  ;; interpret return value as error
+  (if-let [content (read-file config-path)]
+    (either/right content)
+    (either/left ""file-not-found"")))
+
+(defn read-edn-e [content]
+  (try
+    (read-edn content)
+    (catch ...
+      ;; interpret thrown exception as error
+      (either/left ""invalid-edn-format""))))
+
+(defn parse-e [raw-data]
+  (if-let [parsed (parse raw-data)]
+    (either/right parsed)
+    (either/left ""parsing-error"")))

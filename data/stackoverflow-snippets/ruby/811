@@ -1,0 +1,11 @@
+  def index
+    #artists = Artist.for_name(params[:name])
+    artists = Artist.find_by_sql [""SELECT artists.*, ((artists.popularity / 50 * (ts_rank((artists.tsv_name), (to_tsquery('simple', ''' ' || ? || ' ''' || ':*')), 2))) + (ts_rank((artists.tsv_name), (to_tsquery('simple', ''' ' || ? || ' ''' || ':*')), 2))) AS pg_search_rank FROM artists "" +
+      ""JOIN album_groups on (artists.id = album_groups.artist_id) "" +
+      ""JOIN tracks on (tracks.album_group_id = album_groups.id) "" +
+      ""JOIN videos on (videos.track_id = tracks.id) "" +
+      ""WHERE (((artists.tsv_name) @@ (to_tsquery('simple', ''' ' || ? || ' ''' || ':*')))) "" +
+      ""GROUP BY artists.id "" +
+      ""ORDER BY pg_search_rank DESC, artists.id ASC"", params[:name], params[:name], params[:name]]
+    render json: artists, each_serializer: SimpleArtistSerializer
+  end

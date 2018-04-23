@@ -1,0 +1,51 @@
+$ cat tst.awk
+BEGIN { OFS="","" }
+
+!NF || /^([^[:alpha:]]|SQL|Finished)/ { next }
+
+{ tag = val = $0 }
+
+/^Running/ {
+    prt()
+    gsub(/^[^ ]+ |=.*/,"""",tag)
+    gsub(/.*\[|\].*/,"""",val)
+}
+
+/^Statement/ {
+    tag = ""rowsAffected""
+    gsub(/.*\[|\].*/,"""",val)
+}
+
+/^[:[:alpha:]]+: / {
+    sub(/:.*/,"""",tag)
+    sub(/^[:[:alpha:]]+: /,"""",val)
+}
+
+{
+    tags[++numTags] = tag
+    tag2val[tag] = val
+}
+
+END { prt() }
+
+function prt( tag,val,tagNr) {
+    if (numTags > 0) {
+        if ( ++recNr == 1 ) {
+            printf ""\""%s\""%s"", ""file"", OFS
+            for (tagNr=1; tagNr<=numTags; tagNr++) {
+                tag = tags[tagNr]
+                printf ""\""%s\""%s"", tag, (tagNr<numTags ? OFS : ORS)
+            }
+        }
+        printf ""\""%s\""%s"", FILENAME, OFS
+        for (tagNr=1; tagNr<=numTags; tagNr++) {
+            tag = tags[tagNr]
+            val = tag2val[tag]
+            gsub(/""/,""\""\"""",val)
+            printf ""\""%s\""%s"", val, (tagNr<numTags ? OFS : ORS)
+        }
+    }
+    delete tags
+    delete tag2val
+    numTags = 0
+}

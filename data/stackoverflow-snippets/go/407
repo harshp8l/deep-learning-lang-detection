@@ -1,0 +1,44 @@
+import (
+    ""encoding/json""
+    ""fmt""
+)
+
+type Example struct {
+    Entity Entity `json:""entity""`
+}
+
+type Entity struct {
+    CustomerEntity
+    EmployeeEntity
+}
+
+func (s Entity) IsCustomer() bool {
+    return s.CustomerEntity != CustomerEntity{}
+}
+func (s Entity) IsEmployee() bool {
+    return s.EmployeeEntity != EmployeeEntity{}
+}
+
+type CustomerEntity struct {
+    CustomerName    string `json:""customer_name""`
+    CustomerAddress string `json:""customer_address""`
+}
+
+type EmployeeEntity struct {
+    EmployeeName string `json:""employee_name""`
+    EmployeeID   int    `json:""employee_id""`
+}
+
+func main() {
+    var example Example
+    if err := json.Unmarshal([]byte(`{""entity"":{""employee_name"":""Bob"", ""employee_id"":77}}`), &example); err != nil {
+        panic(""won't fail"")
+    }
+    fmt.Printf(""%#v\n"", example)
+    if example.Entity.IsCustomer() {
+        fmt.Printf(""customer %s lives at %d\n"", example.Entity.CustomerName, example.Entity.CustomerAddress)
+    }
+    if example.Entity.IsEmployee() {
+        fmt.Printf(""employee %s has id %d\n"", example.Entity.EmployeeName, example.Entity.EmployeeID)
+    }
+}

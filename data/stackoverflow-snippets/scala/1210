@@ -1,0 +1,30 @@
+val df1 = Seq(
+  (1, Seq(3, 4, 5)),
+  (2, Seq(5, 6)),
+  (3, Seq(2)),
+  (4, Seq())
+).toDF(""ident"", ""list_of_ids"")
+
+val df2 = Seq(
+  (2, ""aa""),
+  (3, ""bb""),
+  (4, ""cc""),
+  (5, ""dd""),
+  (6, ""ee"")
+).toDF(""id"", ""desc"")
+
+val df1Exploded = df1.select($""ident"", explode($""list_of_ids"").as(""id""))
+
+val df1Distinct = df2.join(broadcast(df1Exploded.select($""id"").distinct), Seq(""id""))
+
+val dfResult = df1Exploded.join(df1Distinct, Seq(""id"")).groupBy($""ident"").
+  agg(collect_list($""desc"").as(""list_of_desc""))
+
+dfResult.show
++-----+------------+
+|ident|list_of_desc|
++-----+------------+
+|    1|[bb, cc, dd]|
+|    3|        [aa]|
+|    2|    [dd, ee]|
++-----+------------+

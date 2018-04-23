@@ -1,0 +1,15 @@
+# Create a global Event
+shutdown_event = tornado.locks.Event()
+
+def shutdown():
+    # Same as in the question, but instead of `io_loop.stop()`:
+    shutdown_event.set()
+
+@gen.coroutine
+def main():
+    # Use a WaitIterator to exit when either the queue 
+    # is done or shutdown is triggered. 
+    wait_iter = gen.WaitIterator(q.join(), shutdown_event.wait())
+    # In this case we just want to wait for the first one; we don't
+    # need to actually iterate over the WaitIterator. 
+    yield wait_iter.next()

@@ -1,0 +1,20 @@
+SELECT *
+FROM
+(
+    SELECT D.Country
+        , D.City
+        , D.Date
+        , Lag(Date) OVER(PARTITION BY Country
+                              , City ORDER BY Date) AS Previousdate
+        , D.Price
+        , Lag(Price) OVER(PARTITION BY Country
+                               , City ORDER BY Date) AS Previousprice
+        , 100 * (Price / Lag(Price) OVER(PARTITION BY Country
+                                           , City ORDER BY Date) - 1) AS Percentageincrease
+        , ROW_NUMBER() OVER(PARTITION BY Country
+                                , City ORDER BY Date DESC) AS Rn
+    FROM   #Data AS D
+) AS A
+WHERE  Rn = 1
+ORDER BY Country
+      , City;

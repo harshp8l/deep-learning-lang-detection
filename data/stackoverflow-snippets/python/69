@@ -1,0 +1,24 @@
+def populate_files(self):
+    model = self.ui_files.model()
+    model.clear()
+    exts = [""*.obj""]
+    root = 'C:/Users/jmartini/Desktop/Trash/models'
+    def addItems(parent, path):
+        finfo = QtCore.QFileInfo(path)
+        if finfo.isFile():
+            if ""*.""+finfo.suffix() in exts:
+                it = QtGui.QStandardItem(finfo.fileName())
+                it.setData(finfo.absoluteFilePath(), QtCore.Qt.UserRole)
+                parent.appendRow(it)
+        elif finfo.isDir():
+            iterator = QtCore.QDirIterator(finfo.absoluteFilePath(), exts, QtCore.QDir.Files, QtCore.QDirIterator.Subdirectories)
+            if iterator.hasNext():
+                it = QtGui.QStandardItem(finfo.fileName().upper())
+                it.setData(finfo.absoluteFilePath(), QtCore.Qt.UserRole)
+                parent.appendRow(it)
+                for subfiles in QtCore.QDir(finfo.absoluteFilePath()).entryInfoList([], QtCore.QDir.AllEntries|QtCore.QDir.NoDotAndDotDot):
+                    addItems(it, subfiles.absoluteFilePath())
+
+    for finfo in QtCore.QDir(root).entryInfoList([], QtCore.QDir.AllEntries|QtCore.QDir.NoDotAndDotDot):
+        addItems(model, finfo.absoluteFilePath())
+    self.ui_files.expandAll()

@@ -1,0 +1,19 @@
+In [32]: np.random.seed(0)
+    ...: m,n = 10000,100
+    ...: a = np.random.randint(0,9,(m,n))
+    ...: b = a.copy()
+    ...: 
+    ...: # Let's set 10% of rows as different ones
+    ...: b[np.random.choice(len(a), len(a)//10, replace=0)] = 0
+
+In [33]: %timeit (a!=b).any(-1).sum() # app#1 from this soln
+    ...: %timeit np.count_nonzero((a!=b).any(-1)) # app#2
+    ...: %timeit np.any(a - b, axis=1).sum() # @Graipher's soln
+1000 loops, best of 3: 1.14 ms per loop
+1000 loops, best of 3: 1.08 ms per loop
+100 loops, best of 3: 2.33 ms per loop
+
+In [34]: %%timeit  # app#3
+    ...: a1D,b1D = view1D(a,b)
+    ...: out = np.count_nonzero((a1D!=b1D).any(-1))
+1000 loops, best of 3: 797 µs per loop

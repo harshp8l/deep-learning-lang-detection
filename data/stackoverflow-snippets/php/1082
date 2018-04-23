@@ -1,0 +1,22 @@
+public function getAc($eventId) {
+    // Pull event
+    $event = $this->eventService->api->getEventForce($eventId);
+
+    // If no access code for the event, generate one and update event record accordingly
+    if ($event->access_code == null) {
+        $access_code = $this->generateAccessCode();
+        $affected = DB::update('update events set access_code = ? where id = ?', [$access_code, $eventId]);
+        // Pull event again
+        $event = $this->eventService->api->getEventForce($eventId);
+    }
+
+    // Is the event currently private? return access code
+    if ($event->privacy=='private') {
+        return $event->access_code;
+    }
+
+    // Is it public ? return empty string.
+    else {
+        return '';
+    }
+}

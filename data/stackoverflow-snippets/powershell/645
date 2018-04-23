@@ -1,0 +1,50 @@
+;WITH 
+XMLNAMESPACES  -- XML namespace def must be the first in with clause. 
+(
+    DEFAULT 'http://schemas.microsoft.com/sqlserver/reporting/2006/03/reportdatasource' 
+    ,'http://schemas.microsoft.com/SQLServer/reporting/reportdesigner' 
+    AS rd
+) 
+, 
+shared_datasource 
+AS 
+(
+    SELECT 
+          DsnSharedName = sds.[Name]
+        , DsnPath = sds.[Path] 
+        , DEF = CONVERT(xml, CONVERT(varbinary(max), content)) 
+    FROM 
+        dbo.[Catalog] AS sds 
+    WHERE sds.[Type] = 5) --> 5 = Shared Datasource 
+, 
+data_source_name (DsnPath, DsnSharedName, DsnConnString)
+AS
+(
+    SELECT 
+          cn.DsnPath
+        , cn.DsnSharedName 
+        , cn.DsnConnString 
+    FROM 
+        (SELECT
+              sd.DsnPath
+            , sd.DsnSharedName 
+            , DsnConnString = dsn.value('ConnectString[1]', 'varchar(150)')
+        FROM 
+            shared_datasource AS sd 
+            CROSS APPLY sd.DEF.nodes('/DataSourceDefinition') AS R(dsn) 
+        ) AS cn 
+)
+SELECT 
+      DataSourceName = lk.[Name]
+    , dsn.DsnPath
+    , dsn.DsnConnString
+    , ReportName = c.[Name]
+    , ReportFolder = c.[Path]
+FROM 
+    dbo.[Catalog] c
+    INNER JOIN dbo.DataSource ds ON c.ItemID = ds.ItemID
+    INNER JOIN dbo.[Catalog] lk ON ds.Link = lk.ItemID
+    INNER JOIN data_source_name dsn ON dsn.DsnSharedName = lk.[Name]
+WHERE 
+    c.[Type] = 2  --> 2 = Reports
+    --AND dsn.DsnConnString LIKE '%Initial Catalog%=%DatabaseNameHere%' 

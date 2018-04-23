@@ -1,0 +1,13 @@
+#!/bin/bash
+perl -MTime::Piece -lne'
+    @ms = ();
+    push @ms, sprintf ""%-3s"", $1 while s/\.([0-9]+)//;
+    s/ /0/g for @ms;
+    @dates = map Time::Piece->strptime($_, ""%Y-%m-%d %H:%M:%S""),
+             split /, /;
+    warn ""End date different to start date!\n""
+        if $dates[0]->ymd ne $dates[1]->ymd;
+    print join "" "", $dates[0]->ymd,
+                    sprintf(""%02d"", $dates[0]->hour),
+                    1000 * ($dates[1] - $dates[0]) + $ms[1] - $ms[0];
+' -- input.txt

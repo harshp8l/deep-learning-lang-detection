@@ -1,0 +1,45 @@
+package main
+
+import (
+    ""fmt""
+    ""golang.org/x/exp/io/spi""
+    ""log""
+)
+
+func main() {
+
+    spiDev, err := spi.Open(&spi.Devfs{
+        Dev:      ""/dev/spidev0.0"",
+        MaxSpeed: int64(1000000),
+    })
+
+    spiDev.SetMode(spi.Mode0)
+    spiDev.SetBitOrder(spi.MSBFirst)
+    spiDev.SetBitsPerWord(8)
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    writeSpiData := func(dataIn []byte) (out []byte, err error) {
+        out = make([]byte, len(dataIn))
+        err = spiDev.Tx(dataIn, out)
+        return
+    }
+
+    devWrite := func(address int, data byte) (err error) {
+        newData := [2]byte{(byte(address) << 1) & 0x7E, data}
+        readBuf, err := writeSpiData(newData[0:])
+        fmt.Println("">>"", newData, readBuf)
+        return
+    }
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    devWrite(0x01, 0x0F)
+
+    fmt.Println(""Done"")
+
+}

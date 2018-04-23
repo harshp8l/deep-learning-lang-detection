@@ -1,0 +1,25 @@
+import cats.data.NonEmptyList
+import cats.implicits._
+
+import scala.concurrent.Future
+
+case class Person(name: String, age: Int, email: String)
+
+type FutureResult[A] = Future[Either[NonEmptyList[String], Option[A]]]
+
+def getNameApiCall(id: Int): FutureResult[String] = ???
+def getAgeApiCall(id: Int): FutureResult[Int] = ???
+def getEmailApiCall(id: Int): FutureResult[String] = ???
+
+def getPerson(id: Int): FutureResult[Person] =
+(
+  getNameApiCall(id).map(_.toValidated),
+  getAgeApiCall(id).map(_.toValidated),
+  getEmailApiCall(id).map(_.toValidated)
+).tupled // combine three futures
+  .map {
+    case (nameV, ageV, emailV) =>
+      (nameV, ageV, emailV).tupled // combine three Validated
+        .map(_.tupled) // combine three Options
+        .map(_.map { case (name, age, email) => Person(name, age, email) })   // wrap final result
+  }.map(_.toEither)

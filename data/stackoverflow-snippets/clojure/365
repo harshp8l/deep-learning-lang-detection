@@ -1,0 +1,40 @@
+(ns tst.clj.core
+  (:use clj.core clojure.test tupelo.test)
+  (:require
+    [clojure.string :as str]
+    [clojure.pprint :refer [pprint]]
+    [tupelo.core :as t]
+    [tupelo.string :as ts]
+  ))
+(t/refer-tupelo)
+(t/print-versions)
+
+(def my-map
+  {:allow_kebab_or-snake  {:required-key {:must_be_kebab """"}}
+   :allow_kebab_or-snake2 {:optional-key {:required-key {:must_be_kebab """"}}}})
+
+(defn children->kabob? [kw]
+  (= kw :required-key))
+
+(defn proc-child-maps
+  [ctx map-arg]
+  (apply t/glue
+    (for [curr-key (keys map-arg)]
+      (let [curr-val (grab curr-key map-arg)
+            new-ctx  (if (children->kabob? curr-key)
+                       (assoc ctx :snake->kabob true)
+                       ctx)
+            out-key  (if (grab :snake->kabob ctx)
+                       (ts/kw-snake->kabob curr-key)
+                       curr-key)
+            out-val  (if (map? curr-val)
+                       (proc-child-maps new-ctx curr-val)
+                       curr-val)]
+        {out-key out-val}))))
+
+(defn nested-keys->snake
+  [arg]
+  (let [ctx {:snake->kabob false}]
+    (if (map? arg)
+      (proc-child-maps ctx arg)
+      arg)))

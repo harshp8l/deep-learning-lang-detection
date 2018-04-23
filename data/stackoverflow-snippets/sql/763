@@ -1,0 +1,420 @@
+Public Function GetQuartile( _
+  ByVal strTable As String, _
+  ByVal strField As String, _
+  ByVal bytQuartile As Byte, _
+  Optional ByVal bytMethod As Byte, _
+  Optional ByVal strFilter As String) _
+  As Double
+
+  ' strTable :    Name of the table/query to analyze.
+  ' strField :    Name of the field to analyze.
+  ' bytQuartile:  Which min/max or median/quartile to calculate.
+  ' bytMethod:    Method for calculation of lower/higher quartile.
+  ' strFilter:    Optional filter expression.
+  '
+  ' Returns:
+  '   Minimum, maximum, median or upper/lower quartile
+  '   of strField of strTable filtered on strFilter.
+  '
+  ' 2006-03-05. Cactus Data ApS, CPH.
+
+
+    ' Reference for methods for calculation as explained here:
+    '   http://www.daheiser.info/excel/notes/noteh.pdf 
+    ' Note: Table H-4, p. 4, has correct data for dataset 1-96 while
+    '   datasets 1-100 to 1-97 actually are datasets 1-99 to 1-96
+    '   shifted one column left.
+    '   Thus, the dataset 1-100 is missing.
+    '
+    '   Method 3b is not implemented as no one seems to use it.
+    '   Neither are no example data given.
+    '
+    ' Further notes on methods here:
+    '   http://mathforum.org/library/drmath/view/60969.html 
+    '   http://www.haiweb.org/medicineprices/manual/quartiles_iTSS.pdf 
+    '
+    ' Data must be in ascending order by strField.
+
+
+    ' L: Q1, Lower quartile.
+    ' H: Q3, Higher quartile.
+    ' M: Q2, Median.
+    ' n: Count of elements.
+    ' p: Calculated position of quartile.
+    ' j: Element of dataset.
+    ' g: Decimal part of p
+    '    to be used for interpolation between j and j+1.
+
+    ' Basic operation.
+    ' Constant values mimic those of Excel's Quartile() function.
+
+    ' Find median.
+    Const cbytQuartMedian             As Byte = 2
+    ' Find lower (first) quartile.
+    Const cbytQuartLow                As Byte = 1
+    ' Find upper (third) quartile.
+    Const cbytQuartHigh               As Byte = 3
+    ' Find minimum value.
+    Const cbytQuartMinimum            As Byte = 0
+    ' Find maximum value.
+    Const cbytQuartMaximum            As Byte = 4
+
+    ' Define default operation.
+    Const cbytQuartDefault = cbytQuartMedian
+
+    ' Quartile calculation methods.
+
+    ' Step. Mendenhall and Sincich method.
+    ' SAS #3.
+    ' Round up to actual element of dataset.
+    ' L: -Int(-n/4)
+    ' H: n-Int(-n/4)
+    Const cbytMethodMendenhallSincich As Byte = 1
+
+    ' Average step.
+    ' SAS #5, Minitab (%DESCRIBE), GLIM (percentile).
+    ' Add bias of one or two on basis of n/4.
+    ' L: (Int((n+1)/4)+Int(n/4))/2+1
+    ' H: n-(Int((n+1)/4)+Int(n/4))/2+1
+    Const cbytMethodAverage           As Byte = 2
+
+    ' Nearest integer to np.
+    ' SAS #2.
+    ' Round to nearest integer on basis of n/4.
+    ' L: Int((n+2)/4)
+    ' H: n-Int((n+2)/4)
+    ' Note:
+    '   Reference contains an error in example data.
+    '   Dataset 1-100 to 1-97 (is really 1-99 to 1-96!) should read:
+    '   25  25  24  24
+    Const cbytMethodNearestInteger    As Byte = 3
+
+    ' Parzen method.
+    ' Method 1 with interpolation.
+    ' SAS #1.
+    ' L: n/4
+    ' H: 3n/4
+    Const cbytMethodParzen            As Byte = 4
+
+    ' Hazen method.
+    ' Values midway between method 1 steps.
+    ' GLIM (interpolate).
+    ' Add bias of 2, don't round to actual element of dataset.
+    ' L: (n+2)/4
+    ' H: 3(n+2)/4
+    Const cbytMethodHazen             As Byte = 5
+
+    ' Weibull method.
+    ' SAS #4. Minitab (DECRIBE), SPSS, BMDP.
+    ' Add bias of 1, don't round to actual element of dataset.
+    ' L: (n+1)/4
+    ' H: 3(n+1)/4
+    Const cbytMethodWeibull           As Byte = 6
+
+    ' Freund, J. and Perles, B., Gumbell method.
+    ' S-PLUS, R, Excel, Star Office Calc.
+    ' Add bias of 3, don't round to actual element of dataset.
+    ' L: (n+3)/4
+    ' H: (3n+1)/4
+    Const cbytMethodFreundPerles      As Byte = 7
+
+    ' Median Position.
+    ' Median unbiased.
+    ' L: (3n+5)/12
+    ' H: (9n+7)/12
+    Const cbytMethodMedianPosition    As Byte = 8
+
+    ' Bernard and Bos-Levenbach.
+    ' L: (n/4)+0.4
+    ' H: (3n/4)/+0.6
+    ' Note:
+    '   Reference claims L to be (n/4)+0.31.
+    Const cbytMethodBernardLevenbach  As Byte = 9
+
+    ' Blom's Plotting Position.
+    ' Better approximation when the distribution is normal.
+    ' L: (4n+7)/16
+    ' H: (12n+9)/16
+    Const cbytMethodBlom              As Byte = 10
+
+    ' Moore's first method.
+    ' Add bias of one half step.
+    ' L: (n+0.5)/4
+    ' H: n-(n+0.5)/4
+    Const cbytMethodMoore1            As Byte = 11
+
+    ' Moore's second method.
+    ' Add bias of one or two steps on basis of (n+1)/4.
+    ' L: (Int((n+1)/4)+Int(n/4))/2+1
+    ' H: n-(Int((n+1)/4)+Int(n/4))/2+1
+    Const cbytMethodMoore2            As Byte = 12
+
+    ' John Tukey's method.
+    ' Include median from odd dataset in dataset for quartile.
+    ' L: (1-Int(-n/2))/2
+    ' H: n-(1-Int(-n/2))/2
+    Const cbytMethodTukey             As Byte = 13
+
+    ' Moore and McCabe (M & M), variation of John Tukey's method.
+    ' TI-83.
+    ' Exclude median from odd dataset in dataset for quartile.
+    ' L: (Int(n/2)+1)/2
+    ' H: n-(Int(n/2)+1)/2
+    Const cbytMethodTukeyMM           As Byte = 14
+
+    ' Additional variations between Weibull's and Hazen's methods, from
+    '   (i-0.000)/(n+1.00)
+    ' to
+    '   (i-0.500)/(n+0.00)
+    '
+    ' Variation of Weibull.
+    ' L: n(n/4-0)/(n+1)
+    ' H: n(3n/4-0)/(n+1)
+    Const cbytMethodModWeibull        As Byte = 15
+    ' Variation of Blom.
+    ' L: n(n/4-3/8)/(n+1/4)
+    ' H: n(3n/4-3/8)/(n+1/4)
+    Const cbytMethodModBlom           As Byte = 16
+    ' Variation of Tukey.
+    ' L: n(n/4-1/3)/(n+1/3)
+    ' H: n(3n/4-1/3)/(n+1/3)
+    Const cbytMethodModTukey          As Byte = 17
+    ' Variation of Cunnane.
+    ' L: n(n/4-2/5)/(n+1/5)
+    ' H: n(3n/4-2/5)/(n+1/5)
+    Const cbytMethodModCunnane        As Byte = 18
+    ' Variation of Gringorten.
+    ' L: n(n/4-0.44)/(n+0.12)
+    ' H: n(3n/4-0.44)/(n+0.12)
+    Const cbytMethodModGringorten     As Byte = 19
+    ' Variation of Hazen.
+    ' L: n(n/4-1/2)/n
+    ' H: n(3n/4-1/2)/n
+    Const cbytMethodModHazen          As Byte = 20
+
+
+    ' Define default method to calculate quartiles.
+    Const cbytMethodDefault = cbytMethodFreundPerles
+
+    Static dbs      As DAO.Database
+    Static rst      As DAO.Recordset
+
+    Dim strSQL      As String
+    Dim lngNumber   As Long
+    Dim dblPosition As Double
+    Dim lngPosition As Long
+    Dim dblInterpol As Double
+    Dim dblValueOne As Double
+    Dim dblValueTwo As Double
+    Dim dblQuartile As Double
+
+    ' Use default calculation if choice of calculation is outside range.
+    If bytQuartile > 4 Then
+      bytQuartile = cbytQuartDefault
+    End If
+    ' Use default method if choice of method is outside range.
+    If bytMethod = 0 Or bytMethod > 20 Then
+      bytMethod = cbytMethodDefault
+    End If
+
+    If dbs Is Nothing Then
+      Set dbs = CurrentDb()
+    End If
+
+    If Len(strTable) > 0 And Len(strField) > 0 Then
+      strSQL = ""SELECT ["" & strField & ""] FROM ["" & strTable & ""] ""
+      strSQL = strSQL & ""WHERE (["" & strField & ""] Is Not Null) ""
+      If Len(strFilter) > 0 Then
+        strSQL = strSQL & ""AND ("" & strFilter & "") ""
+      End If
+      strSQL = strSQL & ""ORDER BY ["" & strField & ""];""
+
+      Set rst = dbs.OpenRecordset(strSQL)
+
+      With rst
+        If Not .EOF = True Then
+          If bytQuartile = cbytQuartMinimum Then
+            ' No need to count records.
+            lngNumber = 1
+          Else
+            ' Count records.
+            .MoveLast
+            lngNumber = .RecordCount
+          End If
+          Select Case bytQuartile
+            Case cbytQuartMinimum
+              ' Current record is first record.
+              ' Read value of this record.
+            Case cbytQuartMaximum
+              ' Current record is last record.
+              ' Read value of this record.
+            Case cbytQuartMedian
+              ' Locate position of median.
+              dblPosition = (lngNumber + 1) / 2
+            Case cbytQuartLow
+              Select Case bytMethod
+                Case cbytMethodMendenhallSincich
+                  dblPosition = -Int(-lngNumber / 4)
+                Case cbytMethodAverage
+                  dblPosition = (Int((lngNumber + 1) / 4) + Int(lngNumber / 4)) / 2 + 1
+                Case cbytMethodNearestInteger
+                  dblPosition = Int((lngNumber + 2) / 4)
+                Case cbytMethodParzen
+                  dblPosition = lngNumber / 4
+                Case cbytMethodHazen
+                  dblPosition = (lngNumber + 2) / 4
+                Case cbytMethodWeibull
+                  dblPosition = (lngNumber + 1) / 4
+                Case cbytMethodFreundPerles
+                  dblPosition = (lngNumber + 3) / 4
+                Case cbytMethodMedianPosition
+                  dblPosition = (3 * lngNumber + 5) / 12
+                Case cbytMethodBernardLevenbach
+                  dblPosition = (lngNumber / 4) + 0.4
+                Case cbytMethodBlom
+                  dblPosition = (4 * lngNumber + 7) / 16
+                Case cbytMethodMoore1
+                  dblPosition = (lngNumber + 0.5) / 4
+                Case cbytMethodMoore2
+                  dblPosition = (Int((lngNumber + 1) / 4) + Int(lngNumber / 4)) / 2 + 1
+                Case cbytMethodTukey
+                  dblPosition = (1 - Int(-lngNumber / 2)) / 2
+                Case cbytMethodTukeyMM
+                  dblPosition = (Int(lngNumber / 2) + 1) / 2
+                Case cbytMethodModWeibull
+                  dblPosition = lngNumber * (lngNumber / 4) / (lngNumber + 1)
+                Case cbytMethodModBlom
+                  dblPosition = lngNumber * (lngNumber / 4 - 3 / 8) / (lngNumber + 1 / 4)
+                Case cbytMethodModTukey
+                  dblPosition = lngNumber * (lngNumber / 4 - 1 / 3) / (lngNumber + 1 / 3)
+                Case cbytMethodModCunnane
+                  dblPosition = lngNumber * (lngNumber / 4 - 2 / 5) / (lngNumber + 1 / 5)
+                Case cbytMethodModGringorten
+                  dblPosition = lngNumber * (lngNumber / 4 - 0.44) / (lngNumber + 0.12)
+                Case cbytMethodModHazen
+                  dblPosition = lngNumber * (lngNumber / 4 - 1 / 2) / lngNumber
+              End Select
+            Case cbytQuartHigh
+              Select Case bytMethod
+                Case cbytMethodMendenhallSincich
+                  dblPosition = lngNumber - (-Int(-lngNumber / 4))
+                Case cbytMethodAverage
+                  dblPosition = lngNumber - (Int((lngNumber + 1) / 4) + Int(lngNumber / 4)) / 2 + 1
+                Case cbytMethodNearestInteger
+                  dblPosition = lngNumber - Int((lngNumber + 2) / 4)
+                Case cbytMethodParzen
+                  dblPosition = 3 * lngNumber / 4
+                Case cbytMethodHazen
+                  dblPosition = 3 * (lngNumber + 2) / 4
+                Case cbytMethodWeibull
+                  dblPosition = 3 * (lngNumber + 1) / 4
+                Case cbytMethodFreundPerles
+                  dblPosition = (3 * lngNumber + 1) / 4
+                Case cbytMethodMedianPosition
+                  dblPosition = (9 * lngNumber + 7) / 12
+                Case cbytMethodBernardLevenbach
+                  dblPosition = (3 * lngNumber / 4) + 0.6
+                Case cbytMethodBlom
+                  dblPosition = (12 * lngNumber + 9) / 16
+                Case cbytMethodMoore1
+                  dblPosition = lngNumber - (lngNumber + 0.5) / 4
+                Case cbytMethodMoore2
+                  dblPosition = lngNumber - (Int((lngNumber + 1) / 4) + Int(lngNumber / 4)) / 2 + 1
+                Case cbytMethodTukey
+                  dblPosition = lngNumber - (1 - Int(-lngNumber / 2)) / 2
+                Case cbytMethodTukeyMM
+                  dblPosition = lngNumber - (Int(lngNumber / 2) + 1) / 2
+                Case cbytMethodModWeibull
+                  dblPosition = lngNumber * (3 * lngNumber / 4) / (lngNumber + 1)
+                Case cbytMethodModBlom
+                  dblPosition = lngNumber * (3 * lngNumber / 4 - 3 / 8) / (lngNumber + 1 / 4)
+                Case cbytMethodModTukey
+                  dblPosition = lngNumber * (3 * lngNumber / 4 - 1 / 3) / (lngNumber + 1 / 3)
+                Case cbytMethodModCunnane
+                  dblPosition = lngNumber * (3 * lngNumber / 4 - 2 / 5) / (lngNumber + 1 / 5)
+                Case cbytMethodModGringorten
+                  dblPosition = lngNumber * (3 * lngNumber / 4 - 0.44) / (lngNumber + 0.12)
+                Case cbytMethodModHazen
+                  dblPosition = lngNumber * (3 * lngNumber / 4 - 1 / 2) / lngNumber
+              End Select
+          End Select
+          Select Case bytQuartile
+            Case cbytQuartMinimum, cbytQuartMaximum
+              ' Read current row.
+            Case Else
+              .MoveFirst
+              ' Find position of first observation to retrieve.
+              ' If lngPosition is 0, then upper position is first record.
+              ' If lngPosition is not 0 and position is not an integer, then
+              ' read the next observation too.
+              lngPosition = Fix(dblPosition)
+              dblInterpol = dblPosition - lngPosition
+              If lngNumber = 1 Then
+                ' Nowhere else to move.
+                If dblInterpol < 0 Then
+                  ' Prevent values to be created by extrapolation beyond zero from observation one
+                  ' for these methods:
+                  '   cbytMethodModBlom
+                  '   cbytMethodModTukey
+                  '   cbytMethodModCunnane
+                  '   cbytMethodModGringorten
+                  '   cbytMethodModHazen
+                  '
+                  ' Comment this line out, if reading by extrapolation *is* requested.
+                  dblInterpol = 0
+                End If
+              ElseIf lngPosition > 1 Then
+                ' Move to record to read.
+                .Move lngPosition - 1
+              End If
+          End Select
+          ' Retrieve value from first observation.
+          dblValueOne = .Fields(0).Value
+
+          Select Case bytQuartile
+            Case cbytQuartMinimum, cbytQuartMaximum
+              dblQuartile = dblValueOne
+            Case Else
+              If dblInterpol = 0 Then
+                ' Only one observation to read.
+                If lngPosition = 0 Then
+                  ' Return 0.
+                Else
+                  dblQuartile = dblValueOne
+                End If
+              Else
+                If lngPosition = 0 Then
+                  ' No first observation to retrieve.
+                  dblValueTwo = dblValueOne
+                  If dblValueOne > 0 Then
+                    ' Use 0 as other observation.
+                    dblValueOne = 0
+                  Else
+                    dblValueOne = 2 * dblValueOne
+                  End If
+                Else
+                  ' Move to next observation.
+                  .MoveNext
+                  ' Retrieve value from second observation.
+                  dblValueTwo = .Fields(0).Value
+                End If
+                ' For positive values interpolate between 0 and dblValueOne.
+                ' For negative values interpolate between 2 * dblValueOne and dblValueOne.
+                ' Calculate quartile using linear interpolation.
+                dblQuartile = dblValueOne + dblInterpol * CDec(dblValueTwo - dblValueOne)
+              End If
+          End Select
+        End If
+        .Close
+      End With
+    Else
+      ' Reset.
+      Set rst = Nothing
+      Set dbs = Nothing
+    End If
+
+    ''Set rst = Nothing
+
+  GetQuartile = dblQuartile
+
+End Function

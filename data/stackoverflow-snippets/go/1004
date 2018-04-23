@@ -1,0 +1,61 @@
+package main
+
+import (
+    ""encoding/json""
+    ""io/ioutil""
+    ""net/http""
+)
+
+var largePool chan struct{}
+var smallPool chan struct{}
+
+func main() {
+    largePool = make(chan struct{}, 100)
+    smallPool = make(chan struct{}, 10)
+
+    http.HandleFunc(""/endpoint-1"", handler1)
+    http.HandleFunc(""/endpoint-2"", handler2)
+
+    http.ListenAndServe("":8080"", nil)
+}
+
+func handler1(w http.ResponseWriter, r *http.Request) {
+    var job struct{ URL string }
+
+    if err := json.NewDecoder(r.Body).Decode(&job); err != nil {
+            http.Error(w, err.Error(), http.StatusBadRequest)
+            return
+    }
+
+    go func() {
+            // Block until there are fewer than cap(largePool) light-work
+            // goroutines running.
+            largePool <- struct{}{}
+            defer func() { <-largePool }() // Let everyone that we are done
+
+            http.Get(job.URL)
+    }()
+
+    w.WriteHeader(http.StatusAccepted)
+}
+
+func handler2(w http.ResponseWriter, r *http.Request) {
+    b, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+    }
+
+    go func() {
+            // Block until there are fewer than cap(smallPool) hard-work
+            // goroutines running.
+            smallPool <- struct{}{}
+            defer func() { <-smallPool }() // Let everyone that we are done
+
+            processImage(b)
+    }()
+
+    w.WriteHeader(http.StatusAccepted)
+}
+
+func processImage(b []byte) {}

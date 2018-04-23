@@ -1,0 +1,22 @@
+SELECT ID,  Customer_Id, 
+       CASE 
+          -- 2 records per Customer_id -> swap
+          WHEN COUNT(*) OVER (PARTITION BY Customer_id) = 2 THEN
+            CASE       
+               WHEN ROW_NUMBER() OVER (PARTITION BY Customer_id ORDER BY ID) = 1 
+                  THEN LEAD(Rate) OVER (PARTITION BY Customer_id ORDER BY ID)
+               ELSE LAG(Rate) OVER (PARTITION BY Customer_id ORDER BY ID)
+            END
+          -- 1 record per Customer_id -> don't swap
+          ELSE Rate
+       END,
+       CASE 
+          WHEN COUNT(*) OVER (PARTITION BY Customer_id) = 2 THEN
+            CASE       
+               WHEN ROW_NUMBER() OVER (PARTITION BY Customer_id ORDER BY ID) = 1 
+                  THEN LEAD(Pid) OVER (PARTITION BY Customer_id ORDER BY ID)
+               ELSE LAG(Pid) OVER (PARTITION BY Customer_id ORDER BY ID)
+            END
+          ELSE Pid
+       END
+FROM Sales

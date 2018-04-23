@@ -1,0 +1,32 @@
+val input = List(
+  (""a"", ""10 in""), (""a"", ""15 in""), (""a"", ""10 inches""), (""a"", ""15 Inches""), (""a"", ""15.00 inches""),
+  (""b"", ""2 cm""), (""b"", ""4 cm""), (""b"", ""2.00 CM""),
+  (""c"", ""7 cm""), (""c"", ""7 in"")
+)
+
+// Trivialized fuzzy match
+def fuzzyMatch(s1: String, s2: String): Boolean = {
+  val st1 = s1.toLowerCase.replace("".00"", """").replace(""inches"", ""in"")
+  val st2 = s2.toLowerCase.replace("".00"", """").replace(""inches"", ""in"")
+  st1 == st2
+}
+
+// Create a Map of Sets of fuzzy-matched values from all 2-combinations per key
+val fuzMap = input.combinations(2).foldLeft( Map[String, Seq[Set[String]]]() ){
+  case (m, Seq(t1: Tuple2[String, String], t2: Tuple2[String, String])) =>
+    if (fuzzyMatch(t1._2, t2._2)) {
+      val fuzSets = m.getOrElse(t1._1, Seq(Set(t1._2, t2._2))).map(
+        x => if (x.contains(t1._2) || x.contains(t2._2)) x ++ Set(t1._2, t2._2) else x
+      )
+      if (!fuzSets.flatten.contains(t1._2) && !fuzSets.flatten.contains(t2._2))
+        m + (t1._1 -> (fuzSets :+ Set(t1._2, t2._2)))
+      else
+        m + (t1._1 -> fuzSets)
+    }
+    else
+      m
+}
+// fuzMap: scala.collection.immutable.Map[String,Seq[Set[String]]] = Map(
+//   a -> List(Set(10 in, 10 inches), Set(15 in, 15 Inches, 15.00 inches)), 
+//   b -> List(Set(2 cm, 2.00 CM)))
+// )

@@ -1,0 +1,35 @@
+#Create a ScriptBlock
+$ReturnVarBlock = {
+param(
+    [Parameter(Mandatory=$true,
+                   Position=0)]
+    $WExe,
+    [Parameter(Mandatory=$true,
+                   Position=1)]
+    $IFile
+)
+    Start-Process $WExe $IFile -NoNewWindow -Wait
+}
+
+#Trigger a background Job
+Start-Job -Name MyJob -ScriptBlock $ReturnVarBlock -ArgumentList $WExe, $IFIle
+
+#Waiting a max of 30 mins = 1800 seconds after which the wait times out.
+Wait-Job -Name MyJob -Timeout 1800
+
+
+$JobState = (Get-Job -Name MyJob).State
+if ($JobState -eq ""Completed"")
+{
+    Write-Host ""Success""
+}
+elseif ($JobState -eq ""Failed"")
+{
+    Write-Host ""Job Failed""
+}
+else
+{
+    Write-Host ""Job is stuck""
+    #Uncomment below line to kill the Job
+    #Remove-Job -Name MyJob -Force
+}

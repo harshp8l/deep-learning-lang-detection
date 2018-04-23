@@ -1,0 +1,17 @@
+(ns mail-client.core
+  (:import [org.apache.commons.net PrintCommandListener]
+            [org.apache.commons.net.imap IMAPClient]))
+
+(defn get-mail [server username password]
+  (doto (IMAPClient.)
+    (.setDefaultTimeout 60000)
+    (.addProtocolCommandListener (PrintCommandListener. System/out true))
+    (.connect server)
+    (.login username password)
+    (.setSoTimeout 6000)
+    (.capability)
+    (.select ""inbox"")
+    (.examine ""inbox"")
+    (.status ""inbox"" (into-array String [""MESSAGES""]))
+    (.logout)
+    (.disconnect)))

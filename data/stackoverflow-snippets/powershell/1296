@@ -1,0 +1,36 @@
+﻿[PSCustomObject]
+{
+[string] $pc,
+[string] $name,
+[string] $date,
+[string] $city
+}
+
+[System.Collections.Generic.List[PSCustomObject]] $list1 = Import-Csv ""C:\SOSamples\log.csv"";
+[System.Collections.Generic.List[PSCustomObject]] $list2 = Import-Csv ""C:\SOSamples\log2.csv"";
+[PSCustomObject] $record = $null;
+[PSCustomObject] $match = $null;
+
+foreach($record in $list2)
+{
+    # NOTE: This only retrieves the FIRST MATCHING item using a CASE-INSENSITIVE comparison       
+    $match = $list1 | Where { $_.pc.ToLower() -eq $record.pc.ToLower() } | Select -First 1;
+
+    if($match -eq $null)
+    {
+        Write-Host ""Not Found!"";
+        $list1.Add($record);
+    }
+    else 
+    {
+        Write-Host ""Found!"";
+        $match.date = $record.date;
+    }
+}
+
+Write-Host ""--------------------------------------------------------------------""
+
+foreach($record in $list1)
+{
+    Write-Host $record
+}

@@ -1,0 +1,15 @@
+ def index(dstype:String, name:String, metadata:Option[Boolean]) = Action.async {
+    getDataDict(dstype, name) flatMap {
+      case Some(datasetDictionary) =>
+        getDatasetData(datasetDictionary) flatMap { datasetDataList =>
+          if (metadata == Some(true)) {
+            getMetadata(datasetDictionary) map { metadataList =>
+              Ok(Json.toJson((datasetDictionary, datasetDataList, metadataList)))
+            }
+          } else {
+            Future.successful(Ok(Json.toJson(datasetDataList)))
+          }
+        }
+      case None => Future.successful(BadRequest(""Dataset not found""))
+    }
+  }

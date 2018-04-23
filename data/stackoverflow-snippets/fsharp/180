@@ -1,0 +1,31 @@
+type DoSomethingInstruction<'a> =
+| DoIt of 'a
+| DoItMore of 'a
+| DoItMost of 'a
+
+let private mapI f = function
+    | DoIt next     -> DoIt     (next |> f)
+    | DoItMore next -> DoItMore (next |> f)
+    | DoItMost next -> DoItMost (next |> f)
+
+type DoSomethingProgram<'a> =
+| Free of DoSomethingInstruction<DoSomethingProgram<'a>>
+| Pure of 'a
+
+let rec bind f = function
+    | Free x -> x |> mapI (bind f) |> Free
+    | Pure x -> f x
+
+let doIt = Free (DoIt (Pure ()))
+
+let doItMore = Free (DoItMore (Pure ()))
+
+let doItMost = Free (DoItMost (Pure ()))
+
+type DoSomethingBuilder () =
+    member this.Bind (x, f) = bind f x
+    member this.Return x = Pure x
+    member this.ReturnFrom x = x
+    member this.Zero () = Pure ()
+
+let doDomething = DoSomethingBuilder ()

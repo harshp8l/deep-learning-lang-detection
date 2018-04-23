@@ -1,0 +1,86 @@
+public static final String
+    CONFIG_KEY_START = ""---["",
+    CONFIG_KEY_END = ""]"";
+
+public static Map<String, String> readToMap(Class iClass, String iFileName)
+    throws IOException
+{
+    final InputStream vResourceAsStream = iClass.getResourceAsStream(iFileName);
+
+    try (Scanner vScanner = new Scanner(vResourceAsStream))
+    {
+        Map<String, String>
+            vMap = new LinkedHashMap<>();
+
+        String
+            vCurrentKey = null;
+
+        StringBuilder
+            vValueBuffer = null;
+
+        boolean
+            vSeeFirst = false;
+
+        while (vScanner.hasNextLine())
+        {
+            String
+                vLine = vScanner.nextLine();
+
+            if(vLine == null)
+            {
+                continue;
+            }
+
+            vLine = vLine.trim();
+
+            if(vLine.isEmpty())
+            {
+                continue;
+            }
+
+            if(vLine.startsWith(CONFIG_KEY_START))
+            {
+                if(!vSeeFirst)
+                {
+                    vSeeFirst = true;
+                }
+
+                if(vCurrentKey != null)
+                {
+                    vMap.put(vCurrentKey, vValueBuffer == null ? null : vValueBuffer.toString());
+                    vValueBuffer = null;
+                }
+
+                vCurrentKey = vLine.substring(CONFIG_KEY_START.length());
+                if(vCurrentKey.endsWith(CONFIG_KEY_END))
+                {
+                    vCurrentKey = vCurrentKey.substring(0, vCurrentKey.length() - CONFIG_KEY_END.length());
+                }
+
+                continue;
+            }
+
+            if(!vSeeFirst)
+            {
+                continue;
+            }
+
+            if(vValueBuffer == null)
+            {
+                vValueBuffer = new StringBuilder();
+            }
+            else
+            {
+                vValueBuffer.append('\n');
+            }
+            vValueBuffer.append(vLine);
+        }
+
+        if(vCurrentKey != null)
+        {
+            vMap.put(vCurrentKey, vValueBuffer == null ? null : vValueBuffer.toString());
+        }
+
+        return vMap;
+    }
+}

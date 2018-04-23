@@ -1,0 +1,21 @@
+import shapeless._
+
+trait Drink[+A]{ def v: A}
+
+case class Water(v: Int) extends Drink[Int]
+case class Juice(v: BigDecimal) extends Drink[BigDecimal]
+case class Squash(v: BigDecimal) extends Drink[BigDecimal]
+
+trait Box[E] { def elem: E}
+case class ABox[E](elem: E) extends Box[E]
+case class BBox[E](elem: E) extends Box[E]
+
+object pour extends Poly1{
+  implicit def caseInt[A <: Drink[Int], M[x] <: Box[x]] = at[M[A]](o => o.elem.v * 2)
+  implicit def caseDec[A <: Drink[BigDecimal], M[x] <: Box[x]] = at[M[A]](o => o.elem.v + 5.0)
+}
+
+
+val drinks = ABox(Water(10)) :: BBox(Squash(15.0)) :: ABox(Juice(2.0)) :: HNil
+
+drinks.map(pour)

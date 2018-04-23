@@ -1,0 +1,18 @@
+(import 'java.util.stream.Stream)
+
+(defmacro interface-static-call
+  [sym & argtypes]
+  `(let [m# (.getMethod ~(symbol (namespace sym))
+                        ~(name sym)
+                        (into-array Class ~argtypes))]
+     (fn [& args#]
+       (.invoke m# nil (to-array args#)))))
+
+(doto ((interface-static-call Stream/builder))
+  (.accept ""a"")
+  (.accept ""b"")
+  (.accept ""c"")
+  (.accept ""d"")
+  (.accept ""e""))
+
+;;=> #object[java.util.stream.Streams$StreamBuilderImpl 0x121300ed ""java.util.stream.Streams$StreamBuilderImpl@121300ed""]

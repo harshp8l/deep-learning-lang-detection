@@ -1,0 +1,25 @@
+#r ""System.IO.Compression.FileSystem.dll""
+#r ""System.IO.Compression.dll""
+
+open System  
+open System.IO
+open System.IO.Compression
+
+type Status = 
+  | Zip_file_ok
+  | Not_a_zip_file
+  | File_not_found
+  | Unsupported_exception
+  | I_am_a_catch_all
+
+let test_zip_archive candidate_zip_archive =
+  let rc() =
+    try
+      ZipFile.Open(candidate_zip_archive.ToString(), ZipArchiveMode.Read) |> ignore
+      Zip_file_ok
+    with
+    | :? System.IO.InvalidDataException -> Not_a_zip_file
+    | :? System.IO.FileNotFoundException -> File_not_found         
+    | :? System.NotSupportedException -> Unsupported_exception
+    | _ -> I_am_a_catch_all // otherwise known as ""wildcard""
+  rc

@@ -1,0 +1,45 @@
+# might_throw_cont.rb
+def might_throw_second
+  throw :warden if rand(100) < 10
+
+  might_throw_third
+end
+
+def might_throw_third
+  throw :warden if rand(100) < 10
+
+  might_throw_final
+end
+
+# example.rb
+require './might_throw_cont'
+
+def might_throw_first
+  throw :warden if rand(100) < 10
+
+  might_throw_second
+end
+
+def might_throw_final
+  throw :warden if rand(100) < 10
+
+  will_throw
+end
+
+def will_throw
+  throw :warden
+end
+
+TracePoint.new(:call, :c_call) do |trace|
+  if trace.event == :call || trace.method_id == :throw
+    p [trace.method_id, trace.path, trace.lineno]
+  end
+
+  trace.disable if trace.method_id == :throw
+end.enable do
+  catch :warden do
+    might_throw_first
+  end
+
+  puts ""done""
+end

@@ -1,0 +1,39 @@
+function Find-SSRSEntities{
+    [CmdletBinding()] 
+    param(
+        [Parameter(Position=0,Mandatory=$true)]
+        [Alias(""Proxy"")]
+        [Web.Services.Protocols.SoapHttpClientProtocol]$ReportService,
+
+        [Parameter(Position=1)]
+        [Alias(""Path"")]
+        [string]$SearchPath=""/"",
+
+        [Parameter(Position=2)]
+        [ValidateSet(""All"", ""Folder"", ""Report"", ""Resource"", ""LinkedReport"", ""DataSource"", ""Model"")]
+        [Alias(""Type"")]
+        [String]$EntityType = ""All"",
+
+        [Parameter(Position=3)]
+        [String]$Match,
+
+        [Parameter(Position=4)]
+        [Switch]$Partial=$false
+    )
+    # Get all of the catalog items that match the criteria passed
+    # https://msdn.microsoft.com/en-us/library/reportservice2005.reportingservice2005.listchildren.aspx
+    $recursive = $true
+    $catalogItems = $ReportService.ListChildren($SearchPath,$recursive)
+    Write-Verbose ""$($catalogItems.Count) item(s) located in the root path $SearchPath""
+
+    # Limit the results to the catalog types requested
+    if($EntityType -ne ""All""){$catalogItems = $catalogItems | Where-Object{$_.Type -eq $EntityType}}
+    Write-Verbose ""$($catalogItems.Count) item(s) found matching the type $EntityType""
+
+    # Set the match string based on parameters
+    if(-not $Partial.isPresent -and $Match){$Match = ""^$Match$""}
+    Write-Verbose ""Returning all items matching: '$Match'""
+
+    # If the regex is an empty string all object will be returned.
+    return $catalogItems | Where-Object{$_.Name -match $Match}
+}

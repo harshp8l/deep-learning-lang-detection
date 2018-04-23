@@ -1,0 +1,21 @@
+import scala.language.implicitConversions
+import scala.language.reflectiveCalls
+import collection.mutable.PriorityQueue
+implicit def iterExt[A](iter: Iterable[A]) = new {
+    def top[B](n: Int, f: A => B)(implicit ord: Ordering[B]) : List[A] = {
+        def updateSofar (sofar: PriorityQueue[A], el: A): PriorityQueue[A] = {
+            if (ord.compare(f(el), f(sofar.head)) < 0){
+                sofar.dequeue
+                sofar.enqueue(el)
+            }
+            sofar
+        }
+
+        val (sofar, rest) = iter.splitAt(n)
+        (PriorityQueue(sofar.toSeq:_*)( Ordering.by( (x :A) => f(x) ) ) /: rest) (updateSofar (_, _)).dequeueAll.toList.reverse
+    }
+}
+
+case class A(s: String, i: Int)
+val li = List (4, 3, 6, 7, 1, 2, 9, 5).map(i => A(i.toString(), i))
+println(li.top(3, -_.i))

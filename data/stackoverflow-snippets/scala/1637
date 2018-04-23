@@ -1,0 +1,13 @@
+// read Spark Output Fixed width table:
+val t = spark.read
+    .option(""header"",""true"")
+    .option(""inferSchema"",""true"")
+    .option(""delimiter"",""|"")
+    .option(""comment"",""+"")
+    .csv(""file:///temp/spark.out"")
+// select not-null columns
+val cols = t.columns.filterNot(c => c.startsWith(""_c"")).map(a => t(a))
+// trim spaces from columns
+val colsTrimmed = t.columns.filterNot(c => c.startsWith(""_c"")).map(c => c.replaceAll(""\\s+"",""""))
+// reanme columns using 'colsTrimmed'
+val df = t.select(cols:_*).toDF(colsTrimmed:_*)

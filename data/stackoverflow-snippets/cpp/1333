@@ -1,0 +1,49 @@
+#ifndef CLIENT_H
+#define CLIENT_H
+
+#include <QtCore>
+#include <QtNetwork>
+#include ""common.h""
+
+class Client : public QObject
+{
+    Q_OBJECT
+public:
+    explicit Client(QObject *parent = nullptr);
+    ~Client();
+
+signals:
+    void peerFound(QHostAddress);
+    void searchPeersFinished();
+    void connected(PeerData);
+    void disconnected(PeerData);
+    void readyRead(PeerData);
+    void error(QString);
+
+public slots:
+    void abort();
+    void connectToHost(const QString &host, quint16 port);
+    void searchPeers(quint16 port);
+    void stop();
+    int write(const QByteArray &data);
+
+private slots:
+    void UDPReadyRead();
+    void UDPWrite();
+    void searchPeersEnd();
+    void timeout();
+    void connectedPrivate();
+    void disconnectedPrivate();
+    void errorPrivate(QAbstractSocket::SocketError e);
+    void readyReadPrivate();
+
+private:
+    QTcpSocket *m_socket;
+    QUdpSocket *m_udp_socket;
+    quint16 m_udp_port;
+    QByteArray m_buffer;
+    qint32 m_size;
+    QTimer *m_timer;
+};
+
+#endif // CLIENT_H

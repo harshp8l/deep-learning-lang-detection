@@ -1,0 +1,15 @@
+Select 
+ Patients.[Last Name],
+ Patients.[First Name], 
+ SUM(select SUM(Treatments.Fee) from Treatments Where Treatments.Patient=@PatientID)
+AS CHARGES, 
+ SUM(select SUM(PAYMENTS.AMOUNT) from PAYMENTS Where PAYMENTS.Patient=@PatientID)
+AS PAYMENTS, 
+SUM(
+ (select SUM(Treatments.Fee) from Treatments Where Treatments.Patient=@PatientID)
+- (select SUM(PAYMENTS.AMOUNT) from PAYMENTS Where PAYMENTS.Patient=@PatientID)
+)
+as Balance
+FROM Patients
+WHERE Patients.ID = @PatientID
+GROUP BY Patients.[Last Name],Patients.[First Name]

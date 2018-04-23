@@ -1,0 +1,64 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+)
+
+type Stream []struct {
+    Status string `json:""status""`
+    Type   string `json:""type""`
+
+    // map instead of struct
+    Transaction map[string]interface{} `json:""transaction""`
+
+    Validated bool `json:""validated""`
+}
+
+func main() {
+
+    stream := Stream{}
+
+    err := json.Unmarshal(rawj, &stream)
+    if err != nil {
+        fmt.Println(""error:"", err)
+        return
+    }
+
+    for i, s := range stream {
+        fmt.Println(""thing:"", i)
+        for k, v := range s.Transaction {
+
+            // do manual stuff here, perhaps long switch on k and/or
+            // as suggested by Cerise Limón type switch on v
+            fmt.Printf(""key: %s, val: %v, val type: %T\n"", k, v, v)
+
+        }
+        fmt.Println()
+    }
+
+}
+
+var rawj = []byte(`[{
+  ""status"": ""closed"",
+  ""type"": ""transaction"",
+  ""transaction"": {
+    ""TransactionType"": ""TypeA"",
+    ""Account"": ""Some string"",
+    ""Fee"": ""14"",
+    ""date"": 45325680
+  },
+  ""validated"": true
+},
+
+{
+  ""status"": ""closed"",
+  ""type"": ""transaction"",
+  ""transaction"": {
+    ""TransactionType"" : ""TypeB"",
+    ""Account"" : ""Some string"",
+    ""Fee"": ""42"",
+    ""Destination"" : ""Some string""
+  },
+  ""validated"": true
+}]`)

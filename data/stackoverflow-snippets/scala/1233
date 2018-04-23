@@ -1,0 +1,75 @@
+import scalafx.Includes._
+import scalafx.animation.PauseTransition
+import scalafx.application.JFXApp
+import scalafx.application.JFXApp.PrimaryStage
+import scalafx.beans.property.StringProperty
+import scalafx.scene.Scene
+import scalafx.scene.layout.VBox
+import scalafx.scene.control.{Alert, ButtonType, Label}
+import scalafx.scene.control.Alert.AlertType
+import scalafx.util.Duration
+
+object main extends JFXApp {
+
+  // String property for the text in myLabel.
+  val strProp = StringProperty(""Some Text"")
+
+  // Declare this so that it's accessible from timerA.onFinished.
+  val myLabel = new Label {
+
+    // Bind the text property to the value of strProp.
+    // When strProp's value changes, so does the label's text.
+    text <== strProp
+  }
+
+  stage = new PrimaryStage() {
+    scene = new Scene {
+      root = new VBox {
+        children = myLabel
+      }
+    }
+  }
+
+  // Custom buttons.
+  val ButtonTypeOne = new ButtonType(""Change the text"")
+  val ButtonTypeTwo = new ButtonType(""No"")
+
+  // Create the timer. This goes off after 5,000ms (5 seconds) - after play is called.
+  val timerA = new PauseTransition(Duration(5000))
+
+  // Alert dialog.
+  // Note: JavaFX forbids use of showAndWait within animation processing, so we must use
+  // an onHidden event instead.
+  val alert1 = new Alert(AlertType.Warning) {
+    initOwner(stage)
+    title = ""Warning!!!""
+    headerText = ""Header""
+    contentText = ""Do you need to change the text?""
+    buttonTypes = Seq(ButtonTypeOne, ButtonTypeTwo, ButtonType.Cancel)
+  }
+
+  // React to the dialog being closed.
+  alert1.onHidden = {_ =>
+    alert1.result.value match {
+
+      // If button type one, change the property value.
+      // Note alert1.result.value is a JavaFX ButtonType, so use .delegate for the match.
+      case ButtonTypeOne.delegate => strProp.value = ""Changed!""
+
+      // Otherwise, do nothing.
+      case _ =>
+    }
+
+    // Start the timer once more.
+    // This is going to be a very annoying app! ;-)
+    timerA.playFromStart()
+  }
+
+  // When the timer goes off, show the alert.
+  timerA.onFinished = {_ =>
+    alert1.show()
+  }
+
+  // Start the timer for the first time.
+  timerA.play
+}

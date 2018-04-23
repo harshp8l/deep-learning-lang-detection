@@ -1,0 +1,50 @@
+<?php
+
+require_once 'abstract.php';
+
+class Mage_Shell_SpecialPrice extends Mage_Shell_Abstract
+{
+    public function run()
+    {
+        if ($this->getArg('help')) {
+            echo $this->usageHelp();
+            return;
+        }
+
+        $collection = $this->_getProductCollection();
+
+        /** @var Mage_Catalog_Model_Product $product */
+        foreach ($collection as $product) {
+            $product->setPrice($product->getSpecialPrice())
+                ->setSpecialPrice(null);
+
+            $product->getResource()->saveAttribute($product, 'price');
+            $product->getResource()->saveAttribute($product, 'special_price');
+        }
+    }
+
+    /**
+     * @return Mage_Catalog_Model_Resource_Product_Collection
+     */
+    protected function _getProductCollection()
+    {
+        return Mage::getResourceModel('catalog/product_collection')
+            ->addAttributeToFilter('special_price', array('notnull' => true))
+            ->setOrder($this->getArg('limit') ?: 'created_at', $this->getArg('dir') ?: 'desc')
+            ->setPageSize($this->getArg('limit') ?: 20);
+    }
+
+    /**
+     * @return string
+     */
+    public function usageHelp()
+    {
+        return <<<USAGE
+Usage:  php -f special-price.php
+        php -f special-price.php --limit 20 --sort created_at --dir desc
+USAGE;
+    }
+}
+
+$shell = new Mage_Shell_SpecialPrice();
+$shell->run();

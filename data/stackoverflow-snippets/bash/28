@@ -1,0 +1,86 @@
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+
+/* https://stackoverflow.com/a/8584708/1837991 */
+inline char *sstrstr(char *haystack, char *needle, size_t length)
+{
+    size_t needle_length = strlen(needle);
+    size_t i;
+    for (i = 0; i < length; i++) {
+        if (i + needle_length > length) {
+            return NULL;
+        }
+        if (strncmp(&haystack[i], needle, needle_length) == 0) {
+            return &haystack[i];
+        }
+    }
+    return NULL;
+}
+
+int matcher(char * filename, char ** strings, unsigned int str_count)
+{
+    int fd;
+    struct stat sb;
+    char *addr;
+    unsigned int i = 0; /* Used to keep us from running of the end of strings into SIGSEGV */
+
+    fd = open(filename, O_RDONLY);
+    if (fd == -1) {
+        fprintf(stderr,""Error '%s' with open on '%s'\n"",strerror(errno),filename);
+        return 2;
+    }
+
+    if (fstat(fd, &sb) == -1) {          /* To obtain file size */
+        fprintf(stderr,""Error '%s' with fstat on '%s'\n"",strerror(errno),filename);
+        close(fd);
+        return 2;
+    }
+
+    if (sb.st_size <= 0) { /* zero byte file */
+        close(fd);
+        return 1; /* 0 byte files don't match anything */
+    }
+
+    /* mmap the file. */
+    addr = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (addr == MAP_FAILED) {
+        fprintf(stderr,""Error '%s' with mmap on '%s'\n"",strerror(errno),filename);
+        close(fd);
+        return 2;
+    }
+
+    while (i++ < str_count) {
+        char * found = sstrstr(addr,strings[0],sb.st_size);
+        if (found == NULL) {  /* If we haven't found this string, we can't find all of them */
+            munmap(addr, sb.st_size);
+            close(fd);
+            return 1; /* so give the user an error */
+        }
+        strings++;
+    }
+    munmap(addr, sb.st_size);
+    close(fd);
+    return 0; /* if we get here, we found everything */
+}
+
+int main(int argc, char *argv[])
+{
+    char *filename;
+    char **strings;
+    unsigned int str_count;
+    if (argc < 3) { /* Lets count parameters at least... */
+        fprintf(stderr,""%i is not enough parameters!\n"",argc);
+        return 2;
+    }
+    filename = argv[1]; /* First parameter is filename */
+    strings = argv + 2; /* Search strings start from 3rd parameter */
+    str_count = argc - 2; /* strings are two ($0 and filename) less than argc */
+
+    return matcher(filename,strings,str_count);
+}

@@ -1,0 +1,130 @@
+public class MainActivityNew extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener {
+
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
+    @BindView(R.id.nav_view)
+    NavigationView navView;
+    @BindView(R.id.drawer_layout)
+    DrawerLayout drawerLayout;
+
+    public static final String TAG_HOME = ""Dashboard"";
+    public static final String TAG_TEMP = ""Temperature"";
+    public static String CURRENT_TAG = TAG_HOME;
+
+    public static int navItemIndex = 0;
+
+    public Fragment fragment;
+
+    private Fragment sendFragment;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main_new);
+        ButterKnife.bind(this);
+        setSupportActionBar(toolbar);
+
+        if (savedInstanceState != null) {
+            fragment = getSupportFragmentManager().getFragment(savedInstanceState, ""myFragmentName"");
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.setCustomAnimations(android.R.anim.fade_in,
+                    android.R.anim.fade_out);
+            fragmentTransaction.replace(R.id.frame, fragment, CURRENT_TAG);
+            fragmentTransaction.commit();
+        } else {
+            navItemIndex = 0;
+            CURRENT_TAG = TAG_HOME;
+            loadHomeFragment();
+        }
+
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+
+        drawerLayout.setDrawerListener(toggle);
+        toggle.syncState();
+
+        navView.setNavigationItemSelectedListener(this);
+    }
+
+    private void loadHomeFragment() {
+        selectNavMenu();
+
+        if (getSupportFragmentManager().findFragmentByTag(CURRENT_TAG) != null) {
+            drawerLayout.closeDrawers();
+            return;
+        } else {
+            fragment = getHomeFragment();
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.setCustomAnimations(android.R.anim.fade_in,
+                    android.R.anim.fade_out);
+            fragmentTransaction.replace(R.id.frame, fragment, CURRENT_TAG);
+            fragmentTransaction.commit();
+            drawerLayout.closeDrawers();
+        }
+    }
+
+    private Fragment getHomeFragment() {
+        switch (navItemIndex) {
+            case 0:
+                sendFragment = new HomeFragment();
+                break;
+            case 1:
+                sendFragment = new TemperatureFragment();
+                break;
+            default:
+                sendFragment = new TemperatureFragment();
+        }
+        return sendFragment;
+    }
+
+    private void selectNavMenu() {
+        navView.getMenu().getItem(navItemIndex).setChecked(true);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    @SuppressWarnings(""StatementWithEmptyBody"")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem menuItem) {
+
+        switch (menuItem.getItemId()) {
+            case R.id.home:
+                navItemIndex = 0;
+                CURRENT_TAG = TAG_HOME;
+                break;
+            case R.id.temperrature_sensor:
+                navItemIndex = 1;
+                CURRENT_TAG = TAG_TEMP;
+                break;
+            default:
+                navItemIndex = 0;
+        }
+        if (menuItem.isChecked()) {
+            menuItem.setChecked(false);
+        } else {
+            menuItem.setChecked(true);
+        }
+        menuItem.setChecked(true);
+
+        loadHomeFragment();
+        return true;
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        getSupportFragmentManager().putFragment(outState, ""myFragmentName"", fragment);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState, PersistableBundle persistentState) {
+        super.onRestoreInstanceState(savedInstanceState, persistentState);
+    }
+}

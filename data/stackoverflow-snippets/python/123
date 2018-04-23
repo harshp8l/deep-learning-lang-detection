@@ -1,0 +1,28 @@
+import maya.api.OpenMaya as api
+from math import floor
+
+def get_shells(obj, uvset = ''):
+    selected = api.MGlobal.getSelectionListByName(obj)
+    node =  selected.getDependNode(0)
+
+    mesh = api.MFnMesh(node)
+    howmany, shell_ids = mesh.getUvShellsIds(uvset)
+    u_list, v_list = mesh.getUVs()
+    shells = []
+    for shell_num in range(howmany):
+        umin =  vmin = 9999999999999
+        umax=  vmax = -9999999999999
+        for idx, value in enumerate(shell_ids):
+            if value == shell_num:
+                umin = min(umin, u_list[idx])
+                umax = max(umax, u_list[idx])
+                vmin = min(vmin, v_list[idx])
+                vmax = max(vmax, v_list[idx])
+
+        shells.append ( (umin, vmin, umax, vmax) ) 
+
+    return shells
+
+
+print get_shells('pCylinderShape1')
+# [(0.3437499701976776, -7.450580596923828e-08, 0.65625, 0.3125), (0.375, 0.3125, 0.6249997615814209, 0.6884398460388184), (0.3437499701976776, 0.6874999403953552, 0.65625, 1.0)]

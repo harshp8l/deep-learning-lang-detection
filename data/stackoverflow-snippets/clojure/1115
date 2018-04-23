@@ -1,0 +1,16 @@
+(defn logged-in-verify
+  [ring-handler]
+  (fn new-ring-handler
+    [request]
+    ;;verify that the scrypt hash of email and timestamp matches.
+    (if-let [session   (:session request)]
+        (let [email     (:ph-auth-email session)
+              token     (:ph-auth-token session)
+              timestamp (:ph-auth-timestamp session)]
+          (if (scryptgen/check (str email timestamp) token)
+             ;; return response from wrapped handler
+             (ring-handler request))
+             ;; return error response
+             {:status 400, :body ""Please sign in.""}))
+        ;; do something when there is no session yet
+        (generate-new-session-and-redirect))))

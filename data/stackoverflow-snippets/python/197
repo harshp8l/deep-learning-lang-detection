@@ -1,0 +1,32 @@
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+
+
+class ComboBoxWindow:
+
+    def on_combo_changed(self, combo):
+        tree_iter = combo.get_active_iter()
+        if tree_iter is not None:
+            model = combo.get_model()
+            print(""row: [%s]"" % ', '.join(""%s(%s)"" % (type(i), str(i)) for i in model[tree_iter]))
+        else:
+            entry = combo.get_child()
+            print(""Entered: %s"" % entry.get_text())
+
+    def __init__(self, builder):
+        import os.path
+        path, name = os.path.split(__file__)
+        builder.add_from_file(os.path.join(path, ""ex13.glade""))
+        builder.connect_signals(self)
+        self.window = builder.get_object(""window1"")
+        self.window.connect(""destroy"", Gtk.main_quit)
+
+    def show_all(self):
+        self.window.show_all()
+
+
+builder = Gtk.Builder()
+win = ComboBoxWindow(builder)
+win.show_all()
+Gtk.main()

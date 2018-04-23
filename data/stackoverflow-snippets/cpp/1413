@@ -1,0 +1,27 @@
+TARGETS := latest.bin
+
+LD      := ld
+LDFLAGS := -T linker.ld -melf_i386
+
+CC      := ~/opt/cross/bin/i386-elf-g++
+CCFLAGS := -c -ffreestanding -nostdlib -fno-builtin -fno-rtti -fno-exceptions
+
+AS      := ~/opt/cross/bin/i386-elf-as
+ASFLAGS := -c
+
+vpath %.cpp  src/kernel
+vpath %.s    src/kernel/arch/i386
+
+SOURCES := $(wildcard *.cpp) $(wildcard *.s)
+OBJECTS := $(addsuffix .o, $(basename $(notdir $(SOURCES))))
+
+all: $(TARGETS)
+
+out/%.o: %.cpp
+    $(CC) $(CCFLAGS) -o $@ $<
+
+out/%.o: %.s
+    $(AS) $(ASFLAGS) -o $@ $<
+
+latest.bin: $(OBJECTS)
+    $(LD) $(LDFLAGS) -o $@ $^

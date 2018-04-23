@@ -1,0 +1,34 @@
+$file = Get-Content D:\test\originalFile.txt #file from question
+foreach ($line in $file)
+{
+    #lines with description only start section and are omitted
+    If ($line -eq ""[TABLE]"") { 
+        $section = ""file_name""
+        continue
+    }
+    If ($line -eq ""[FIELDS]"") {
+        $section = ""field_names""
+        continue
+    }
+    If ($line -eq ""[DATA]"") {
+        $section = ""data_in_fields""
+        continue
+    }
+
+    if ($section -eq ""file_name"") { #one line with file name
+        $filename = $line.Substring(1,$line.Length-2) + "".csv""
+        Write-Host ""filename :""$filename
+    }
+    if ($section -eq ""field_names"") { #one line with column names
+        $fields = $line
+        $fields | Set-Content $PSScriptRoot\$filename 
+        Write-Host ""fields :""$fields
+    }   
+    if ($section -eq ""data_in_fields"") { #multiple lines with data
+        $data = $line
+        $data | Add-Content $PSScriptRoot\$filename
+        Write-Host ""data :""$data
+    }
+
+ }
+ Read-Host -Prompt ""Press Enter to exit""

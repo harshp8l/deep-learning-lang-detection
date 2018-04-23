@@ -1,0 +1,28 @@
+#path where CUDA samples are located
+$files = Get-ChildItem ""c:\ProgramData\NVIDIA Corporation\CUDA Samples\v9.1\"" -Recurse -Include ""*_vs2017.vcxproj""
+
+
+#string to find
+$stringToFind= '<Import Project=""$(VCTargetsPath)\Microsoft.Cpp.Default.props"" />'
+#strings that will be added actually it's string with two lines
+$stringToAdd = '  <Import Project=""C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\14.11\Microsoft.VCToolsVersion.14.11.props"" />' + ""`r`n"" + 
+                '  <Import Project=""$(VCTargetsPath)\Microsoft.Cpp.Default.props"" />'
+
+
+for($i=0;$i -le $files.count;$i++){
+    Write-Host $files[$i].FullName
+    #the path of file that is currently being worked on
+    $filePath = $files[$i].FullName
+    #content of the file
+    $fileToChange = Get-Content $filePath
+    for($j = 0;$j -le $fileToChange.Count;$j++){
+        if($fileToChange[$j].Contains($stringToFind)){
+            #find the string from above and break the for loop
+            #since we only need to find 1st line and add one line above it
+            $fileToChange[$j] = $stringToAdd
+            break
+        }
+    }
+    #writing changes to a file
+    $fileToChange | Set-Content $filePath
+}

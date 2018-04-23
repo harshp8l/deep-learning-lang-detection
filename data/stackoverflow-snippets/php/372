@@ -1,0 +1,36 @@
+function array_find_deep($array, $search, $keys = array())
+{
+    foreach($array as $key => $value) {
+        if (is_array($value)) {
+            $sub = array_find_deep($value, $search, array_merge($keys, array($key)));
+            if (count($sub)) {
+                return $sub;
+            }
+        } elseif ($value === $search) {
+            return array_merge($keys, array($key));
+        }
+    }
+
+    return array();
+}
+function replaceValueWithKeyMap($keys, &$arr, $new_val) {
+    if (empty($keys)) return ; // Don't change $arr if $keys is empty
+    $ref =& $arr ; // path starts with the root of $arr
+    foreach ($keys as $key) { // for each keys
+        $ref =& $ref[$key] ; // update the path
+    }
+    $ref = $new_val; // apply the new value
+}
+$test_arr = [
+    'key1' => [
+        'key2' => [
+             'key3' => 'value',
+         ],
+    ],
+    'key4' => 'value 2',
+    'key5' => 'value 3',
+];
+
+$key = array_find_deep($test_arr, 'value');
+replaceValueWithKeyMap($key,$test_arr,'newvalue');
+print_r($test_arr);

@@ -1,0 +1,28 @@
+var database = client.GetDatabase(""database"");            
+var collection = database.GetCollection<BsonDocument>(""collection"");
+
+var options = new ChangeStreamOptions { FullDocument = ChangeStreamFullDocumentOption.UpdateLookup };
+
+// Aggregation Pipeline
+var addFields = new BsonDocument { 
+                    { ""$addFields"", new BsonDocument { 
+                       { ""tmpfields"", new BsonDocument { 
+                         { ""$objectToArray"", 
+                           ""$updateDescription.updatedFields"" } 
+                       } } 
+                 } } };
+var match = new BsonDocument { 
+                { ""$match"", new BsonDocument { 
+                  { ""tmpfields.k"", new BsonDocument { 
+                    { ""$nin"", new BsonArray{""LastModified"", ""Unwanted""} } 
+            } } } } };
+
+var pipeline = new[] { addFields, match };
+
+// ChangeStreams
+var cursor = collection.Watch<BsonDocument>(pipeline, options);
+
+foreach (var change in cursor.ToEnumerable())
+{
+    Console.WriteLine(change.ToJson());
+}

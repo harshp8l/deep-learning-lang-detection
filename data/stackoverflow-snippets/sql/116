@@ -1,0 +1,111 @@
+with MyCTE3 (WorkflowStepName, Depth, WorkflowId, WorkflowStepId, SubWorkflowBaseId, SubWorkflowId, Sequence, StepType, JoinColumn, DisplayOrder) as 
+(
+    SELECT wfs.WorkflowStepName
+           ,1 as Depth
+           , wfs.WorkflowId
+           , wfs.WorkflowStepId
+           , wfs.SubWorkflowBaseId
+           , wfs.SubWorkflowId
+           , wfs.Sequence
+           , wfs.StepType
+           , case 
+                when wfs.SubWorkflowBaseId = '0000000000000000' then wfs.SubworkflowId
+                --when wfs.SubWorkflowBaseId is null then wfs.SubworkflowId
+                when wfs.SubWorkflowId = '0000000000000000' then wfs.SubWorkflowBaseId
+                --when wfs.SubWorkflowId is null then wfs.SubWorkflowBaseId
+             end as JoinColumn
+          ,1 || '.' || CAST(wfs.Sequence AS VARCHAR(255))  AS DisplayOrder
+      --, to_clob(wfs.WorkflowId) as ProcessedWorkflow
+      FROM WorkflowStep2 wfs, Workflow2  wf 
+     WHERE wfs.WorkflowId = '1100000000000000' 
+     and wf.WorkflowId = wfs.WorkflowId
+
+    union all
+    SELECT wfs.WorkflowStepName
+            ,  Depth+1
+            , wfs.WorkflowId
+            , wfs.WorkflowStepId
+            , wfs.SubWorkflowBaseId
+            , wfs.SubWorkflowId
+            , wfs.Sequence
+            , wfs.StepType
+            , case 
+                when wfs.SubWorkflowBaseId = '0000000000000000' then wfs.SubworkflowId
+                --when wfs.SubWorkflowBaseId is null then wfs.SubworkflowId
+                when wfs.SubWorkflowId = '0000000000000000' then wfs.SubWorkflowBaseId
+                --when wfs.SubWorkflowId is null then wfs.SubWorkflowBaseId
+                end as JoinColumn
+        ,DisplayOrder || '.' || CAST(Depth+1 AS VARCHAR(255)) || CAST(wfs.Sequence AS VARCHAR(255))  as DisplayOrder
+        --,to_clob(myCTE3.ProcessedWorkflow) || ',' || to_clob(wfs.WorkflowId) as ProcessedWorkflow
+        FROM workflowbase2 wfb, workflowstep2 wfs, workflow2 wf, MyCTE3     
+    where  myCTE3.JoinColumn is not null
+    -- and (','+to_clob(myCTE3.ProcessedWorkflow) +',' not like '%,'+to_clob(wfs.WorkflowId)+',%')    
+    -- and (dbms_lob.instr(myCTE3.ProcessedWorkflow,wfs.WorkflowId) = 0)  
+        AND
+        (    
+            myCTE3.SubWorkflowBaseId <>  '0000000000000000' 
+            and myCTE3.SubWorkflowBaseId is not null 
+            and myCTE3.JoinColumn = wfb.WorkflowBaseId
+            and wfb.RevOfRcdId    = wf.WorkflowId
+            and wf.workflowid     = wfs.WorkflowId
+        )   
+), mcte2(WorkflowStepName, Depth, WorkflowId, WorkflowStepId, SubWorkflowBaseId, SubWorkflowId, Sequence, StepType, JoinColumn, DisplayOrder) AS (
+  SELECT wfs.WorkflowStepName
+           ,1 as Depth
+           , wfs.WorkflowId
+           , wfs.WorkflowStepId
+           , wfs.SubWorkflowBaseId
+           , wfs.SubWorkflowId
+           , wfs.Sequence
+           , wfs.StepType
+           , case 
+                when wfs.SubWorkflowBaseId = '0000000000000000' then wfs.SubworkflowId
+                --when wfs.SubWorkflowBaseId is null then wfs.SubworkflowId
+                when wfs.SubWorkflowId = '0000000000000000' then wfs.SubWorkflowBaseId
+                --when wfs.SubWorkflowId is null then wfs.SubWorkflowBaseId
+             end as JoinColumn
+          ,1 || '.' || CAST(wfs.Sequence AS VARCHAR(255))  AS DisplayOrder
+      --, to_clob(wfs.WorkflowId) as ProcessedWorkflow
+      FROM WorkflowStep2 wfs, Workflow2  wf 
+     WHERE wfs.WorkflowId = '1100000000000000' 
+     and wf.WorkflowId = wfs.WorkflowId
+
+    union all
+
+
+  SELECT wfs.WorkflowStepName
+            ,  Depth+1
+            , wfs.WorkflowId
+            , wfs.WorkflowStepId
+            , wfs.SubWorkflowBaseId
+            , wfs.SubWorkflowId
+            , wfs.Sequence
+            , wfs.StepType
+            , case 
+                when wfs.SubWorkflowBaseId = '0000000000000000' then wfs.SubworkflowId
+                --when wfs.SubWorkflowBaseId is null then wfs.SubworkflowId
+                when wfs.SubWorkflowId = '0000000000000000' then wfs.SubWorkflowBaseId
+                --when wfs.SubWorkflowId is null then wfs.SubWorkflowBaseId
+                end as JoinColumn
+        ,DisplayOrder || '.' || CAST(Depth+1 AS VARCHAR(255)) || CAST(wfs.Sequence AS VARCHAR(255))  as DisplayOrder
+        --,to_clob(myCTE3.ProcessedWorkflow) || ',' || to_clob(wfs.WorkflowId) as ProcessedWorkflow
+        FROM workflowbase2 wfb, workflowstep2 wfs, workflow2 wf, MyCTE3     
+    where  myCTE3.JoinColumn is not null
+       AND
+        (
+            myCTE3.SubWorkflowId <>  '0000000000000000'
+            and myCTE3.SubWorkflowId is not null 
+            and myCTE3.JoinColumn =  wf.workflowid 
+            --and wf.workflowid     = wfs.SubWorkflowId
+            and wf.workflowid     = wfs.WorkflowId
+      and wf.WorkflowBaseId = wfb.WorkflowBaseId     
+        ) 
+)
+select   WorkFlowStepName, DisplayOrder --, DisplayOrder, ProcessedWorkflow
+  from MyCTE3
+where MYCTE3.StepType <> 2
+UNION ALL
+select   WorkFlowStepName, DisplayOrder --, DisplayOrder, ProcessedWorkflow
+  from MyCTE3
+where MYCTE3.StepType <> 2
+order by DisplayOrder ;

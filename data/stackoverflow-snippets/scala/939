@@ -1,0 +1,16 @@
+private[ml] def evaluateClassificationModel(
+      model: Transformer,
+      data: DataFrame,
+      labelColName: String): Unit = {
+    val fullPredictions = model.transform(data).cache()
+    val predictions = fullPredictions.select(""prediction"").rdd.map(_.getDouble(0))
+    val labels = fullPredictions.select(labelColName).rdd.map(_.getDouble(0))
+    // Print number of classes for reference.
+    val numClasses = MetadataUtils.getNumClasses(fullPredictions.schema(labelColName)) match {
+      case Some(n) => n
+      case None => throw new RuntimeException(
+        ""Unknown failure when indexing labels for classification."")
+    }
+    val accuracy = new MulticlassMetrics(predictions.zip(labels)).accuracy
+    println(s""  Accuracy ($numClasses classes): $accuracy"")
+  }

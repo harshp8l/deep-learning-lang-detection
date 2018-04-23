@@ -1,0 +1,27 @@
+(def lookup-sentinel  #?(:clj ::not-found :cljs (js-obj))
+(def pending-sentinel #?(:clj ::pending   :cljs (js-obj))
+
+(defn memoize-async
+  [f]
+  (let [>in (chan)
+        pending (pub >in :args)
+        mem (atom {})]
+    (letfn
+        [(memoized [& args]
+           (go
+             (let [v (get @mem args lookup-sentinel)]
+               (condp identical? v
+                 lookup-sentinel
+                 (do
+                   (swap! mem assoc args pending-sentinel)
+                   (go
+                     (let [ret (<! (apply f args))]
+                       (swap! mem assoc args ret)
+                       (put! >in {:args args :ret ret})))
+                   (<! (apply memoized args)))
+                 pending-sentinel
+                 (let [<out (chan 1)]
+                   (sub pending args <out)
+                   (:ret (<! <out)))
+                 v))))]
+        memoized)))

@@ -1,0 +1,51 @@
+package controllers
+
+import javax.inject.{Inject, Singleton}
+
+import akka.actor._
+import akka.stream._
+import akka.stream.scaladsl._
+
+import com.github.mauricio.async.db.postgresql.PostgreSQLConnection
+import com.github.mauricio.async.db.postgresql.util.URLParser
+import com.github.mauricio.async.db.util.ExecutorServiceUtils.CachedExecutionContext
+
+import play.api.Logger
+import play.api.http.ContentTypes
+import play.api.libs.EventSource
+import play.api.mvc._
+
+import scala.concurrent.duration._
+import scala.concurrent.Await
+
+@Singleton
+class DbNotificationController @Inject()(cc: ControllerComponents,
+                                         materializer: Materializer)
+  extends AbstractController(cc) {
+
+  implicit val mat = materializer
+
+  val configuration = URLParser.parse(""jdbc:postgresql://localhost:5233/my_db?user=dbuser&password=pwd"")
+  val connection = new PostgreSQLConnection(configuration)
+  Await.result(connection.connect, 5 seconds)
+
+  val (actor, dbSource) =
+    Source.actorRef[String](Int.MaxValue, OverflowStrategy.dropNew)
+          .toMat(BroadcastHub.sink[String])(Keep.both)
+          .run()
+
+  connection.sendQuery(""LISTEN my_channel"")
+  connection.registerNotifyListener { message =>
+    val msg = message.payload
+    Logger.debug(s""Sending the payload: $msg"")
+    actor ! msg
+  }
+
+  def index() = Action {
+    Ok(views.html.scaladbnotification())
+  }
+
+  def streamDb() = Action {
+    Ok.chunked(dbSource via EventSource.flow).as(ContentTypes.EVENT_STREAM)
+  }
+}

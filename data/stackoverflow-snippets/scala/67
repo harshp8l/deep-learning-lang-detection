@@ -1,0 +1,18 @@
+def getAccessToken(id: BSONObjectID): Future[String] = {
+    userDAO.find(id).flatMap {
+      case Some(user) =>
+        val optToken = user.settings.flatMap (_.accessToken)
+        optToken.map(Future.successful).getOrElse(Future.failed(AccessTokenIsInvalid(user)))
+      case _ => Future.failed(UserNotFoundError(user))
+    }
+  }
+
+case class AccessTokenIsInvalid(user: String) 
+  extends YourAppException(s""Access token is invalid for user $user"") {
+}
+
+accessToken <- service.getAccessToken(id) ?| { error => 
+           logger.error(error.getMessage)
+           InternalServerError(
+             ApiResponse(""internal_server_error"", error.getMessage))
+         }

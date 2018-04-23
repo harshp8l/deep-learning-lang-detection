@@ -1,0 +1,16 @@
+import org.apache.spark.sql.functions._
+//udf function to change the time
+def changeTimeInDate = udf((toCopy: String, withCopied: String)=> withCopied.split(""T"")(0)+""T""+toCopy.split(""T"")(1))
+
+//creating Ind column with N populated and saving in temporaty dataframe
+val indDF = df.withColumn(""Ind"", lit(""N""))
+
+//filtering out the rows that match the condition mentioned in the question and then changing the Amt column and Ind column and START_DATE
+val duplicatedDF = indDF.filter($""START_DATE"" <= ""2017-10-31T23:59:59"" && $""END_DATE"" >= ""2017-10-31T23:59:59"")
+  .withColumn(""Amt"", lit(""0.0""))
+  .withColumn(""Ind"", lit(""Y""))
+  .withColumn(""START_DATE"", changeTimeInDate($""END_DATE"", $""START_DATE""))
+
+//Changing the END_DATE and finally merging both
+val result = indDF.withColumn(""END_DATE"", changeTimeInDate($""START_DATE"", $""END_DATE""))
+  .union(duplicatedDF)

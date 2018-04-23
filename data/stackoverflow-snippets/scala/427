@@ -1,0 +1,26 @@
+val sink1 = Sink.foreach(println)
+val sink2 = Sink.fold[Int, ByteString](0)((acc, _) => acc + 1)
+
+val g = RunnableGraph.fromGraph(GraphDSL.create(sink1, sink2)((_, _)) { implicit builder =>
+  (s1, s2) =>
+  import GraphDSL.Implicits._
+
+  val broadcast = builder.add(Broadcast[ByteString](2))
+
+  val source: Source[ByteString, NotUsed] =
+    Source(1 to 10)
+      .map(i => List(i.toString))
+      .via(CsvFormatting.format())
+
+  source ~> broadcast.in
+  broadcast.out(0) ~> s1
+  broadcast.out(1) ~> s2
+  ClosedShape
+}) // RunnableGraph[(Future[Done], Future[Int])]
+
+val (fut1, fut2) = g.run()
+
+fut2 onComplete {
+  case Success(count) => println(s""Number of elements: $count"")
+  case Failure(_) =>
+}

@@ -1,0 +1,21 @@
+sealed trait Nullability[-T]
+case object Nullable extends Nullability[AnyRef] {
+  def isNull(t: Any): Boolean = t == null
+}
+case object NotNullable extends Nullability[AnyVal]
+object Nullability {
+  implicit def anyRefIsNullable[T <: AnyRef]: Nullability[T] = Nullable
+  implicit def anyValIsNotNullable[T <: AnyVal]: Nullability[T] = NotNullable
+}
+
+def myFunc[T](t: T)(implicit nullability: Nullability[T]): Unit = {
+  nullability match {
+    case Nullable => 
+      if (t == null) {
+        println(""that's a null"")
+      } else {
+        println(""that's a non-null object: "" + t)
+      }
+    case NotNullable => println(""That's an AnyVal: "" + t)
+  }
+}

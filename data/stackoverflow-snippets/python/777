@@ -1,0 +1,61 @@
+from sqlalchemy import Table, Column, MetaData, Integer
+from sqlalchemy import select, case, func, exists
+
+m = MetaData()
+
+foo = Table(
+    'foo', m,
+    Column('a', Integer),
+    Column('b', Integer)
+)
+
+bar = Table(
+    'bar', m,
+    Column('x', Integer),
+    Column('y', Integer),
+    Column('z', Integer)
+)
+
+subq = select([foo.c.a]).where(foo.c.b > 10).alias()
+stmt = select([
+    bar.c.x,
+    case([
+        (bar.c.y == 5, ""A""),
+        (bar.c.y == 10, ""B"")
+    ], else_=""C"").label(""complicated_case"").
+    comment(""comment explaining the convoluted case statement""),
+    func.row_number().over(order_by=bar.c.z).label(""complicated_row_num"").
+    comment(""comment exaplaining the convoluted window function"")
+]).select_from(
+    bar.join(
+        subq.comment(""Comment explaining subquery and join""),
+        bar.c.x == subq.c.a
+    )
+).where(
+    exists([foo.c.b]).where(foo.c.a == bar.c.y).
+    comment(""comment explaining the purpose of the EXISTS clause"")
+)
+
+print stmt
+
+""""""
+
+output:
+
+SELECT bar.x,
+-- comment explaining the convoluted case statement
+CASE WHEN (bar.y = :y_1) THEN :param_1 WHEN (bar.y = :y_2) THEN :param_2 ELSE :param_3 END AS complicated_case,
+-- comment exaplaining the convoluted window function
+row_number() OVER (ORDER BY bar.z) AS complicated_row_num
+FROM bar JOIN
+-- Comment explaining subquery and join
+(SELECT foo.a AS a
+FROM foo
+WHERE foo.b > :b_1) AS anon_1 ON bar.x = anon_1.a
+WHERE
+-- comment explaining the purpose of the EXISTS clause
+EXISTS (SELECT foo.b
+FROM foo
+WHERE foo.a = bar.y)
+
+""""""

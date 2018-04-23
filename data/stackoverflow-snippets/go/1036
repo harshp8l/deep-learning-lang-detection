@@ -1,0 +1,26 @@
+import (
+    ""bytes""
+    ""crypto/tls""
+    ""encoding/pem""
+)
+
+func GetCertificatesPEM(address string) (string, error) {
+    conn, err := tls.Dial(""tcp"", address, &tls.Config{
+        InsecureSkipVerify: true,
+    })
+    if err != nil {
+        return """", err
+    }
+    defer conn.Close()
+    var b bytes.Buffer
+    for _, cert := range conn.ConnectionState().PeerCertificates {
+        err := pem.Encode(&b, &pem.Block{
+            Type: ""CERTIFICATE"",
+            Bytes: cert.Raw,
+        })
+        if err != nil {
+            return """", err
+        }
+    }
+    return b.String(), nil
+}

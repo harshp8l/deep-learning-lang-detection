@@ -1,0 +1,14 @@
+// key/iv in ASCII binary data, $str base64
+function decrypt_stuff($key, $str, $iv) {
+    // $plaintext_dec = mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, base64_decode($str), MCRYPT_MODE_CBC, $iv);
+    $plaintext_dec = openssl_decrypt(base64_decode($str), ""aes-256-cbc"", $key,  OPENSSL_RAW_DATA|OPENSSL_ZERO_PADDING, $iv);
+    return $plaintext_dec;
+}
+
+// key/iv in ascii binary data, $str ascii
+function encrypt_stuff($key, $str, $iv) {
+    // $ciphertext = base64_encode(mcrypt_encrypt(MCRYPT_RIJNDAEL_128, $key, $str, MCRYPT_MODE_CBC, $iv));
+    if (($l = (strlen($str) & 15)) > 0) { $str .= str_repeat(chr(0), 16 - $l); }
+    $ciphertext = base64_encode(openssl_encrypt($str, ""aes-256-cbc"", $key,  OPENSSL_RAW_DATA|OPENSSL_ZERO_PADDING, $iv));
+    return $ciphertext;
+}

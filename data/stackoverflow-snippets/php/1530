@@ -1,0 +1,73 @@
+// Ad 'addressbook' custom checkout select field
+add_filter( 'woocommerce_checkout_fields' , 'add_address_book_checkout_field', 20, 1 );
+function add_address_book_checkout_field( $fields ) {
+    if ( ! is_ssl() ) return $fields; // if needed (?)
+
+    // Get 'addressbook' posts
+    $addressbook_posts = get_post(array('post_type'=>'addressbook', 'posts_per_page' => -1 ));
+    // First option
+    $options = array( '' => 'Please select something…');
+
+    // Loop through 'addressbook' posts (to set all other select options)
+    foreach( $addressbook_posts as $post ){
+        // Set each complete name as an option (Where key is the post ID)
+        $options[$post->ID] = get_field( 'fname', $post->ID ) . ' ' . get_field( 'lname', $post->ID );
+    }
+
+    $fields['shipping']['address_book'] = array(
+        'type'          => 'select',
+        'label'         => __('Address Book', 'woocommerce'),
+        'placeholder'   => _x('Pick an address', 'placeholder', 'woocommerce'),
+        'options'       =>  $options, // Here we set the options
+        'required'      => false,
+        'priority'      => 1,
+        'class'         => array('form-row-wide'),
+        'clear'         => true
+    );
+
+    return $fields;
+}
+
+// process custom checkout field
+add_action('woocommerce_checkout_process', 'check_address_book_checkout_field', 20 );
+function check_address_book_checkout_field( $order, $data ) {
+    if ( isset($_POST['address_book']) && empty($_POST['address_book']) )
+        wc_add_notice( __(""Please pick an address from the Address Book""), 'error' );
+}
+
+// Add custom meta data (or existing change data) to the order before saving it
+add_action('woocommerce_checkout_create_order', 'set_meta_data_in_checkout_create_order', 20, 2 );
+function set_meta_data_in_checkout_create_order( $order, $data ) {
+    if ( isset($_POST['address_book']) ){
+        // The selected ""Adress book"" Post ID
+        $post_id = $_POST['address_book'];
+
+        // Get the data for the selected ""Adress book"" Post ID
+        $fname      = get_field( 'fname', $post_id );
+        $lname      = get_field( 'lname', $post_id );
+        $company    = get_field( 'company', $post_id );
+        $addr1      = get_field( 'address_line_1', $post_id );
+        $addr2      = get_field( 'address_line_2', $post_id );
+        $city       = get_field( 'city', $post_id );
+        $state      = get_field( 'state', $post_id );
+        $zip        = get_field( 'zip', $post_id );
+
+        // Set the meta data in the order
+        if( ! empty($fname) )
+            $order->update_meta_data( 'ab_fname', esc_attr( $fname ) );
+        if( ! empty($lname) )
+            $order->update_meta_data( 'ab_lname', esc_attr( $lname ) );
+        if( ! empty($company) )
+            $order->update_meta_data( 'ab_company', esc_attr( $company ) );
+        if( ! empty($addr1) )
+            $order->update_meta_data( 'ab_addr1', esc_attr( $addr1 ) );
+        if( ! empty($addr2) )
+            $order->update_meta_data( 'ab_addr2', esc_attr( $addr2 ) );
+        if( ! empty($city) )
+            $order->update_meta_data( 'ab_city', esc_attr( $city ) );
+        if( ! empty($state) )
+            $order->update_meta_data( 'ab_state', esc_attr( $state ) );
+        if( ! empty($zip) )
+            $order->update_meta_data( 'ab_zip', esc_attr( $zip ) );
+    }
+}

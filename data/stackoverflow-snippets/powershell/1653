@@ -1,0 +1,20 @@
+[CmdletBinding()]
+param (
+    [Parameter()]
+    [string[]]$Computers ,
+
+    [Parameter(ParameterSetName = 'DoSomethingWithIIS', Mandatory = $true)]
+    [bool]$IIS
+)
+
+$Computers | Foreach-Object {
+    Invoke-Command -ArgumentList $IIS -ScriptBlock {
+        param(
+            [bool]$IIS
+        )
+
+        if ($PSCmdlet.ParameterSetName -ne 'DoSomethingWithIIS') {
+            $InstallIIS = Read-Host ""Do you want to install IIS? (Y/N)""
+            if ($InstallIIS -eq ""Y"") {$IIS = $true}
+        }
+        if ($IIS) {Do stuff here}

@@ -1,0 +1,52 @@
+package main
+
+import (
+    ""bytes""
+    ""fmt""
+    ""io""
+    ""io/ioutil""
+    ""log""
+    ""net/http""
+    ""sync""
+)
+
+// now your going to have to be careful because you can potentially run out of memory downloading to many files at once..
+// however here is an example that can be modded
+func downloader(wg *sync.WaitGroup, sema chan struct{}, fileNum int, URL string) {
+    sema <- struct{}{}
+    defer func() {
+        <-sema
+        wg.Done()
+    }()
+
+    client := &http.Client{Timeout: 10}
+    res, err := client.Get(URL)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer res.Body.Close()
+    var buf bytes.Buffer
+    // I'm copying to a buffer before writing it to file
+    // I could also just use IO copy to write it to the file
+    // directly and save memory by dumping to the disk directly.
+    io.Copy(&buf, res.Body)
+    // write the bytes to file
+    ioutil.WriteFile(fmt.Sprintf(""file%d.txt"", fileNum), buf.Bytes(), 0644)
+    return
+}
+
+func main() {
+    links := []string{
+        ""url1"",
+        ""url2"", // etc...
+    }
+    var wg sync.WaitGroup
+    // limit to four downloads at a time, this is called a semaphore
+    limiter := make(chan struct{}, 4)
+    for i, link := range links {
+        wg.Add(1)
+        go downloader(&wg, limiter, i, link)
+    }
+    wg.Wait()
+
+}

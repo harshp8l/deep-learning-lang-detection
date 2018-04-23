@@ -1,0 +1,30 @@
+import org.apache.spark.sql.functions._
+import spark.implicits._
+
+// create the sample data:
+val df1 = List(
+  (66, 100),
+  (67, 10),
+  (67, 10),
+  (67, 2),
+  (67, 4),
+  (68, 23),
+  (68, 23)
+).toDF(""KEY"", ""TYPE_VAL"")
+
+// define a UDF that computes the result per scenario for a given Seq[Int]. 
+// This is just one possible implementation, simpler ones probably exist...
+val computeTypeVal = udf { (vals: Seq[Int]) =>
+  vals.groupBy(identity).values.toList.sortBy(-_.size).flatten match {
+    case a :: Nil => a
+    case a :: b :: tail if a == b => a - tail.filterNot(_ == a).sum
+    case _ => 0 // or whatever else should be done for other cases
+  }
+}
+
+// group by key, use functions.collect_list to collect all value per key and apply UDF
+df1.groupBy($""KEY"")
+  .agg(collect_list($""TYPE_VAL"") as ""VALS"")
+  .select($""KEY"", computeTypeVal($""VALS"") as ""TYPE_VAL"")
+  .sort($""KEY"")
+  .show() 

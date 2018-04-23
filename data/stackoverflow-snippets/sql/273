@@ -1,0 +1,16 @@
+with col_list as
+(select owner, constraint_name, listagg(column_name,',') within group (order by position) col_list
+      from dba_cons_columns
+      group by owner, constraint_name) 
+select pk.owner, pk.constraint_name pk, fk.owner, fk.constraint_name fk, pk_cols.col_list, fk_cols.col_list 
+from dba_constraints pk
+join dba_constraints fk
+on pk.constraint_name=fk.r_constraint_name
+and pk.owner=fk.r_owner
+and fk.constraint_type='R'
+join col_list pk_cols
+on pk_cols.constraint_name=pk.constraint_name
+and pk_cols.owner=pk.owner
+join col_list fk_cols
+on fk_cols.constraint_name=fk.constraint_name
+and fk_cols.owner=fk.owner

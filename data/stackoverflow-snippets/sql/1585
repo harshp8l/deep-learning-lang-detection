@@ -1,0 +1,15 @@
+SELECT tam.fld_account_id AS [Account Id], 
+MAX(CASE WHEN tbcep.fld_cr_dr = 'Dr' THEN SUM(ISNULL(fld_amount,0)) ELSE 0 
+END) AS Payments,
+MAX(CASE WHEN tbcep.fld_cr_dr = 'Cr' THEN SUM(ISNULL(fld_amount,0)) ELSE 0 
+END) AS Receipts
+FROM tbl_bank_cash_entry_particulars tbcep
+INNER JOIN tbl_bank_cash_entry tbce 
+ON tbce.fld_bank_cash_entry_id = tbcep.fld_bank_cash_entry_id 
+AND tbce.fld_fy_id=1 AND tbce.fld_is_active=1 AND tbce.fld_is_delete=0
+LEFT JOIN tbl_account_master tam 
+ON tam.fld_account_id = tbcep.fld_account_id 
+AND tam.fld_is_active=1 AND tam.fld_is_delete=0
+WHERE tam.fld_account_group_id=36 
+AND tbcep.fld_is_active=1 AND tbcep.fld_is_delete=0
+            GROUP BY tam.fld_account_id

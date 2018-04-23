@@ -1,0 +1,26 @@
+(defcache MidnightCache [cache dates]
+  CacheProtocol
+  (lookup [this key]
+    (lookup this key nil))
+  (lookup [this key not-found]
+    (if (has? this key)
+      (get cache key)
+      not-found))
+  (has? [this key]
+    (let [d (get dates key)]
+      (and d
+           (= d (today)))))
+  (hit [this key]
+    this)
+  (miss [this key new-value]
+    (MidnightCache. (assoc (dissoc cache key)
+                           key new-value)
+                    (assoc (dissoc dates key)
+                           key (today))))
+  (evict [this key]
+    (MidnightCache. (dissoc cache key)
+                    (dissoc dates key)))
+  (seed [this base]
+    (MidnightCache. base
+                    (zipmap (keys base)
+                            (iterate identity (today))))))

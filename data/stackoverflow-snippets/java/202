@@ -1,0 +1,46 @@
+interface DataPersister {
+    void persist(String s);
+}
+
+private class DatabasePersister implements DataPersister {
+    final Session session;
+
+    public DatabasePersister(Session session) {
+        this.session = session;
+    }
+
+    @Override
+    public void persist(String s) {
+        System.out.println(""Persist to database: "" + s);
+    }
+}
+
+private class FilePersister implements DataPersister {
+    final String filename;
+
+    public FilePersister(String filename) {
+        this.filename = filename;
+    }
+
+    @Override
+    public void persist(String s) {
+        System.out.println(""Persist to file: "" + s);
+    }
+}
+
+class PersisterFactory {
+    public DataPersister createDatabasePersister(Session session) {
+        return new DatabasePersister(session);
+    }
+
+    public DataPersister createFilePersister(String filename) {
+        return new FilePersister(filename);
+    }
+}
+
+public void test(String[] args) {
+    DataPersister databasePersister = new PersisterFactory().createDatabasePersister(new Session());
+    databasePersister.persist(""Hello"");
+    DataPersister filePersister = new PersisterFactory().createFilePersister(""Hello"");
+    filePersister.persist(""Hello"");
+}

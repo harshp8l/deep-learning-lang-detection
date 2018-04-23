@@ -1,0 +1,21 @@
+(defn sku-diff [sku-before sku-after]
+  (let [[removed added _] (d/diff (set (keys sku-before)) (set (keys sku-after)))
+        removed-map (apply hash-map (concat (interpose {:Status ""Missing""} removed)
+                                            [{:Status ""Missing""}]))
+        added-map (apply hash-map (concat (interpose {:Status ""Added""} added)
+                                          [{:Status ""Added""}]))
+
+        [before after _] (d/diff sku-before sku-after)
+        before (apply dissoc before removed)
+        after (apply dissoc after added)
+
+        merge-fn (fn [{before-qty :QTY} {after-qty :QTY}]
+                   (let [stock-change (- after-qty before-qty)
+                         text (cond (zero? before-qty) ""In Stock +""
+                                    (zero? after-qty) ""Out of stock ""
+                                    :default ""Stock Change "")]
+                     {:Status (str text stock-change)}))
+
+        changed-map (merge-with merge-fn before after)]
+
+    (merge removed-map added-map changed-map)))

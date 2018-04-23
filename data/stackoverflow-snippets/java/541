@@ -1,0 +1,18 @@
+public static <T> List<T> zipStreams(List<T> list1, List<T> list2, BiFunction<T, T, T> employeeMerger, Comparator<T> sortComparator) {
+
+    if(list1.size() != list2.size()) {
+        throw new IllegalArgumentException(""Lists must be of the same length"");
+    }
+
+    List<T> list1Sorted = sortComparator == null ? list1: list1.stream()
+                    .sorted(sortComparator)
+                    .collect(Collectors.toList()), 
+       list2Sorted = sortComparator == null ? list2: list2.stream()
+                    .sorted(sortComparator)
+                    .collect(Collectors.toList());
+
+    return IntStream.range(0,  list1Sorted.size())
+            .mapToObj(i -> Arrays.<T>asList(list1Sorted.get(i), list2Sorted.get(i)))
+            .map(list -> employeeMerger.apply(list.get(0), list.get(1)))
+            .collect(Collectors.toList());
+}

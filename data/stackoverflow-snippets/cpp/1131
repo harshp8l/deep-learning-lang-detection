@@ -1,0 +1,38 @@
+#include <functional>
+#include <array>
+#include <vector>
+#include <iostream>
+
+struct A
+{
+    A(int _val = 0) : val(_val) {}
+    int val;
+};
+struct B
+{
+    B(int _val = 0) : a(_val) {}
+    A a;
+};
+
+template<typename Elem, typename Head, typename... Tail>
+constexpr decltype(auto) getElement(const Elem& _elem, Head&& _head, Tail&&... _tail)
+{
+    auto fn = std::mem_fn(std::forward<Head>(_head));
+    if constexpr(sizeof...(_tail) == 0)
+    {
+        return fn(_elem);
+    }
+    else
+    {
+        return getElement(fn(_elem), std::forward<Tail>(_tail)...);
+    }
+}
+
+int main()
+{
+    B b{ 7 };
+    int i = getElement(b, &B::a, &A::i); // get the a from B first, then get the val from that a
+    int j = getElement(b.a, &A::i);
+
+    return 0;
+}

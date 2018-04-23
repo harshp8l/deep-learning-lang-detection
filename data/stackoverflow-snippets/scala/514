@@ -1,0 +1,16 @@
+// taken from https://stackoverflow.com/a/4608061/44647
+def printToFile(fileName: String)(op: java.io.PrintWriter => Unit) {
+  val p = new java.io.PrintWriter(fileName)
+  try { op(p) } finally { p.close() }
+}
+
+val collectedData: Seq[(Int, Seq[Iterable[Int]])] = finalRDD.collect()
+val output: Seq[String] = collectedData
+  .map(_._2) // use only second part of tuple Seq[Iterable[Int]]
+  .map { seq: Seq[Iterable[Int]] =>
+     // render inner Iterable[Int] as String in ('1', '2', '3') format
+     val inner: Seq[String] = seq.map(""("" + _.map(i => s""'$i'"").mkString("", "") + "")"")
+     inner.mkString("", "")
+  }
+
+printToFile(outputFileName) { p => output.foreach(p.println) }

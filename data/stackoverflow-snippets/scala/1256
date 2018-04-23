@@ -1,0 +1,18 @@
+def incAndDouble = udf( (i: Double) => (i + 1) * 2)
+val q = df.withColumn(""r"", incAndDouble($""c""))
+scala> q.explain(extended = true)
+== Parsed Logical Plan ==
+'Project [c#3, UDF('c) AS r#16]
++- AnalysisBarrier Project [value#1 AS c#3]
+
+== Analyzed Logical Plan ==
+c: int, r: double
+Project [c#3, if (isnull(cast(c#3 as double))) null else UDF(cast(c#3 as double)) AS r#16]
++- Project [value#1 AS c#3]
+   +- LocalRelation [value#1]
+
+== Optimized Logical Plan ==
+LocalRelation [c#3, r#16]
+
+== Physical Plan ==
+LocalTableScan [c#3, r#16]

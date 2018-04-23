@@ -1,0 +1,67 @@
+  import shapeless.{::, Generic, HList, HNil, Lens, MkHListSelectLens}
+
+  case class Testing(field1: String, field2: Double)
+
+  trait MkLensHlist[A] {
+    type Out <: HList
+    def apply(): Out
+  }
+
+  object MkLensHlist {
+    type Aux[A, Out0 <: HList] = MkLensHlist[A] { type Out = Out0 }
+    def instance[L, Out0 <: HList](x: Out0): Aux[L, Out0] = new MkLensHlist[L] {
+      override type Out = Out0
+      override def apply(): Out0 = x
+    }
+
+    def apply[A](implicit instance: MkLensHlist[A]): instance.Out = instance()
+
+    implicit def mk[A, L <: HList, Out <: HList](implicit
+                                                 gen: Generic.Aux[A, L],
+                                                 apply: ApplyMkHListSelectLens.Aux[L, Out]
+                                                ): Aux[A, Out] = instance(apply())
+  }
+
+  trait ApplyMkHListSelectLens[L <: HList] {
+    type Out <: HList
+    def apply(): Out
+  }
+
+  object ApplyMkHListSelectLens {
+    type Aux[L <: HList, Out0 <: HList] = ApplyMkHListSelectLens[L] { type Out = Out0}
+    def instance[L <: HList, Out0 <: HList](x: Out0): Aux[L, Out0] = new ApplyMkHListSelectLens[L] {
+      override type Out = Out0
+      override def apply(): Out0 = x
+    }
+
+    implicit def mk[L <: HList, Out <: HList](implicit
+                                              apply: ApplyMkHListSelectLens1.Aux[L, L, Out]
+                                             ): Aux[L, Out] =
+      instance(apply())
+  }
+
+
+  trait ApplyMkHListSelectLens1[L <: HList, L1 <: HList] {
+    type Out <: HList
+    def apply(): Out
+  }
+
+  object ApplyMkHListSelectLens1 {
+    type Aux[L <: HList, L1 <: HList, Out0 <: HList] = ApplyMkHListSelectLens1[L, L1] { type Out = Out0}
+    def instance[L <: HList, L1 <: HList, Out0 <: HList](x: Out0): Aux[L, L1, Out0] = new ApplyMkHListSelectLens1[L, L1] {
+      override type Out = Out0
+      override def apply(): Out0 = x
+    }
+
+    implicit def mk1[L <: HList, H, T <: HList, Out <: HList](implicit
+                                                             lens: MkHListSelectLens[L, H],
+                                                             apply: Aux[L, T, Out]
+                                                            ): Aux[L, H :: T, Lens[L, H] :: Out] =
+      instance(lens() :: apply())
+
+    implicit def mk2[L <: HList]: Aux[L, HNil, HNil] =
+      instance(HNil)
+  }
+
+  MkLensHlist[Testing] 
+  // shapeless.MkHListSelectLens$$anon$36$$anon$17@340f438e :: shapeless.MkHListSelectLens$$anon$36$$anon$17@30c7da1e :: HNil

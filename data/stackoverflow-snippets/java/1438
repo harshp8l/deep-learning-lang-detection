@@ -1,0 +1,61 @@
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import java.lang.reflect.Type;
+
+public class Main {
+    public static void main(String[] args) {
+        String inputLine = ""[\""aa\"",[\""Aarhus\"",\""Aalen\"",\""Aalborg\"",\""Aargau\"",\""Aare\""],[\""\"",\""\"",\""\"",\""\"",\""\""],[\""https://wiki.openstreetmap.org/wiki/Aarhus\"",\""https://wiki.openstreetmap.org/wiki/Aalen\"",\""https://wiki.openstreetmap.org/wiki/Aalborg\"",\""https://wiki.openstreetmap.org/wiki/Aargau\"",\""https://wiki.openstreetmap.org/wiki/Aare\""]]"";
+
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OsmWikiResult.class, new WikiSearchResultDeserializer())
+                .create();
+
+        OsmWikiResult result = gson.fromJson(inputLine, OsmWikiResult.class);
+        System.out.println(""result.getSearchTerm() = "" + result.getSearchTerm());
+        System.out.println(""result.getResults() = "" + String.join("", "", result.getResults()));
+        System.out.println(""result.getLinks() = "" + String.join("", "", result.getLinks()));
+    }
+}
+
+class WikiSearchResultDeserializer implements JsonDeserializer<OsmWikiResult> {
+
+    @Override
+    public OsmWikiResult deserialize(
+            JsonElement json,
+            Type typeOfT,
+            JsonDeserializationContext context
+    ) throws JsonParseException {
+        JsonArray root = json.getAsJsonArray();
+        String searchTerm = root.get(0).getAsString();
+        String[] results = context.deserialize(root.get(1), String[].class);
+        String[] dummy = context.deserialize(root.get(2), String[].class);
+        String[] links = context.deserialize(root.get(3), String[].class);
+        return new OsmWikiResult(searchTerm, results, dummy, links);
+    }
+}
+
+
+class OsmWikiResult {
+    private String searchTerm;
+    private String[] results;
+    private String[] dummy;
+
+    private String[] links;
+
+    public OsmWikiResult(String searchTerm, String[] results, String[] dummy, String[] links) {
+        this.searchTerm = searchTerm;
+        this.results = results;
+        this.dummy = dummy;
+        this.links = links;
+    }
+
+    public String getSearchTerm() { return searchTerm; }
+    public String[] getResults() { return results; }
+    public String[] getDummy() { return dummy; }
+    public String[] getLinks() { return links; }
+}

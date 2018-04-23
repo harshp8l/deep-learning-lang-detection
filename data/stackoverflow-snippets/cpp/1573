@@ -1,0 +1,17 @@
+TEST(tagmodel,tag_resource){
+    TagModel m;
+    Tag *t = m.createTag(""tag"");
+    ResourceMock mockres;
+    TagCache cache;
+    EXPECT_CALL(mockres,tagCache())
+            .Times(AtLeast(1))
+            .WillOnce(Return(&cache)); // must not return a nullptr default value, because the 'tagResource' will call the cache.
+    m.tagResource(t,&mockres);
+}
+
+mutable QSharedPointer<TagCache> tagcache_;
+// Would like to add 'final' keyword, but the mock must be able to override this method.
+virtual TagCache *tagCache() const{
+    if ( tagcache_.isNull() ){ tagcache_ = QSharedPointer<TagCache>(new TagCache); }
+    return tagcache_.data();
+}

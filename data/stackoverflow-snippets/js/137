@@ -1,0 +1,53 @@
+        paypal.Button.render({
+
+        <% if (useBankAccount) { %>
+            env: 'production', // Or 'sandbox', 'production'
+        <% } else { %>
+            env: 'sandbox', // Or 'sandbox', 'production'
+        <% }%>
+
+        client: {
+            sandbox: 'xxx',
+            production: 'xxx'
+        },
+        commit: true,
+
+        payment: function (data, actions) {
+
+            return actions.payment.create({
+                payment: {
+                    transactions: [
+                        {
+                            amount: { total: currentPayment, currency: 'USD' }
+
+                        }
+                    ]
+                 }
+            });
+         },
+
+
+        onAuthorize: function (data, actions) {
+
+            return actions.payment.execute().then(function (payment) {
+                // setup the data to post
+                TheForm.submit(); 
+            });
+         },
+
+        onCancel: function (data, actions) {
+            OpenMessageWindow(""The payment was cancelled."");
+        },
+
+
+        onError: function (err) {
+            var result = err.message.toString().indexOf(""Amount cannot be zero"")
+
+            if (result > 0) {
+                OpenMessageWindow('Payment Error: The purchase amount must be more than zero');
+                return;
+            }
+            OpenMessageWindow('Payment Error:<br/>' + err.message)
+        }
+
+    }, '#paypal-button');

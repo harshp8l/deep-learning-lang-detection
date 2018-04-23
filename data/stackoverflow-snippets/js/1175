@@ -1,0 +1,70 @@
+var PromisePool = require('es6-promise-pool'); 
+
+//single promises
+function p1(){
+  return new Promise(function(resolve, reject) {
+      console.log('p1');  
+      setTimeout(resolve, 2000, 'foo');
+ });
+}
+function p2(){
+  return new Promise(function(resolve, reject) {
+      console.log('p2');  
+      setTimeout(resolve, 2000, 'foo');
+  });
+}
+function p3(){
+ return new Promise(function(resolve, reject) {
+    console.log('p3');  
+    setTimeout(resolve, 2000, 'foo');
+ });
+}
+
+
+var tasks=[];
+var loopIndex = 0;
+[1,2,3,4,5,6,7,8].forEach(function(v,i){
+
+   console.log(v,i);
+
+   //build promise chain
+   var x = (v) => new Promise(function(resolve, reject) {
+      console.log(v);
+
+      p1().then(function(r){
+         return p2();
+      })
+      .then(function(r){
+        return p3();
+      })
+      .then(function(r){
+        //console.log('embedded chain done');
+        resolve('embedded chain done');
+       }).catch(function(e){
+        reject('embedded chain failed');
+     }); 
+    //setTimeout(resolve, 2000, 'foo');
+  })
+
+  //build one promise task
+  tasks.push({fun:x,param:i});
+
+  if(++loopIndex == 8){
+     //once the array is done
+    const promiseProducer = () => {
+        while(tasks.length) {
+           console.log('processing ');
+           const task = tasks.shift();
+           return task.fun(task.param);  
+        } 
+        return null;
+     }
+
+      // concurrent Promises set to 3
+      const pool = new PromisePool(promiseProducer, 3); 
+     //start to promise all, yet with concurrent 3 tasks.
+     const poolPromise = pool.start(); 
+     poolPromise.then(() => { console.log('done!'); })
+    }  
+
+});

@@ -1,0 +1,23 @@
+flat_array   = [  apple, 1,   banana, 2  ] # count=4
+nested_array = [ [apple, 1], [banana, 2] ] # count=2 of count=2 k,v arrays
+incomplete_f = [  apple, 1,   banana     ] # count=3 - missing last value
+incomplete_n = [ [apple, 1], [banana   ] ] # count=2 of either k or k,v arrays
+
+
+# there's one option for flat_array:
+h1  = Hash[*flat_array]                     # => {apple=>1, banana=>2}
+
+# two options for nested_array:
+h2a = nested_array.to_h # since ruby 2.1.0    => {apple=>1, banana=>2}
+h2b = Hash[nested_array]                    # => {apple=>1, banana=>2}
+
+# ok if *only* the last value is missing:
+h3  = Hash[incomplete_f.each_slice(2).to_a] # => {apple=>1, banana=>nil}
+# always ok for k without v in nested array:
+h4  = Hash[incomplete_n] # or .to_h           => {apple=>1, banana=>nil}
+
+# as one might expect:
+h1 == h2a # => true
+h1 == h2b # => true
+h1 == h3  # => false
+h3 == h4  # => true

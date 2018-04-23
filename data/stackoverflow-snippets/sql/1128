@@ -1,0 +1,48 @@
+-- Sample data
+CREATE TABLE Issues (
+    IssueID int NOT NULL,
+    CustomFieldID int NOT NULL,
+    FieldData nvarchar(max) NOT NULL,
+    Created datetime default getutcdate()
+)
+
+INSERT Issues (IssueID, CustomFieldID, FieldData)
+VALUES
+(176367, 1234, 'barb'),
+(176367, 5678, 'health plan'),
+(176367, 9012, '68121'),
+(176368, 1234, 'don'),
+(176368, 5678, 'health plan2'),
+(176368, 9012, '12345')
+
+
+CREATE TABLE CustomFieldDefinitions (
+    CustomFieldID int NOT NULL PRIMARY KEY,
+    CustomFieldName nvarchar(max) NOT NULL)
+
+INSERT CustomFieldDefinitions VALUES
+(1234, 'Business Owner'),
+(5678, 'Client'),
+(9012, 'Cost Center')
+
+
+-- Query
+SELECT IssueID, [Business Owner], [Client], [Cost Center]
+FROM
+(
+   SELECT i.IssueID, c.CustomFieldName, i.FieldData
+   FROM Issues i
+   INNER JOIN CustomFieldDefinitions c ON i.CustomFieldID = c.CustomFieldID
+   -- add other conditions to filter Issues
+) AS SourceTable
+PIVOT
+(
+   MAX(FieldData)
+   FOR CustomFieldName IN ([Business Owner], [Client], [Cost Center])
+) AS PivotTable;
+
+-- Results
+| IssueID | Business Owner |       Client | Cost Center |
+|---------|----------------|--------------|-------------|
+|  176367 |           barb |  health plan |       68121 |
+|  176368 |            don | health plan2 |       12345 |

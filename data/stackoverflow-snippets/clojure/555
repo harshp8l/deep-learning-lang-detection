@@ -1,0 +1,43 @@
+(ns tst.clj.core
+  (:use clj.core
+        clojure.test))
+
+(def data
+  {:firstName    ""foo""
+   :lastName     ""bar""
+   :addressLine1 ""line1""
+   :addressLine2 ""line2""
+   :birthDate    {:iso ""1930-03-12""}}
+  )
+
+(def target
+  {:name    ""foo bar""
+   :address ""line1\nline2""
+ ; :age     86      ; left as an excercise to the reader :)
+   })
+
+(defn transform-name [m]
+  {:name (str (:firstName m) "" "" 
+              (:lastName  m))})
+
+(defn transform-addr [m]
+  {:address (str (:addressLine1 m) \newline 
+                 (:addressLine2 m))})
+
+(defn transform-person-simple [m]
+  (merge (transform-name m)
+         (transform-addr m)))
+
+; You could also use the obscure function `juxt`, although this is
+; more likely to confuse people.  
+; See http://clojuredocs.org/clojure.core/juxt
+(defn transform-person-juxt [m]
+  (let [tx-juxt      (juxt transform-name transform-addr)
+        juxt-answers (tx-juxt m)
+        result       (into {} juxt-answers) ]
+    result ))
+
+(deftest t-tx
+  (is (= target (transform-person-simple data)))
+  (is (= target (transform-person-juxt   data)))
+)

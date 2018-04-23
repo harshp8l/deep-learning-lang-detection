@@ -1,0 +1,21 @@
+val topSink = Sink.foreach(println)
+val bottomSink = Sink.foreach(println)
+val sharedDoubler = Flow[Int].map(_ * 2)
+val killSwitch = KillSwitches.single[Int]
+
+val g = RunnableGraph.fromGraph(GraphDSL.create(topSink, bottomSink, killSwitch)((_, _, _)) {
+  implicit builder => (topS, bottomS, switch) =>
+
+  import GraphDSL.Implicits._
+
+  val broadcast = builder.add(Broadcast[Int](2))
+  Source.fromIterator(() => (1 to 1000000).iterator) ~> switch ~> broadcast.in
+
+  broadcast.out(0) ~> sharedDoubler ~> topS.in
+  broadcast.out(1) ~> sharedDoubler ~> bottomS.in
+  ClosedShape
+})
+
+val res = g.run // res is of type (Future[Done], Future[Done], UniqueKillSwitch)
+Thread.sleep(1000)
+res._3.shutdown()

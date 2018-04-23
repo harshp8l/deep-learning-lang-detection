@@ -1,0 +1,39 @@
+function Get-LastBusinessDay {
+    [CmdletBinding()]
+    param (
+        [Parameter(Position = 1)]
+        [System.DateTime]$Date = [System.DateTime]::Today,
+        [Parameter(Position = 2)]
+        [System.DateTime[]]$Holidays
+    );
+
+    $Weekends = @([System.DayOfWeek]::Saturday, [System.DayOfWeek]::Sunday);
+
+    $LastBusinessDay = $Date.AddDays(-1);
+
+    while (($LastBusinessDay.DayOfWeek -in $Weekends) -or ($LastBusinessDay.Date -in $Holidays)) {
+        $LastBusinessDay = $LastBusinessDay.AddDays(-1);
+    }
+
+    return $LastBusinessDay;
+}
+
+$HolidayTable = @(
+    # 2018 US Federal Holidays
+    'January 1, 2018',
+    'January 15, 2018',
+    'February 19, 2018',
+    'May 28, 2018',
+    'July 4, 2018',
+    'September 3, 2018',
+    'October 8, 2018',
+    'November 12, 2018',
+    'November 22, 2018',
+    'December 25, 2018'
+);
+
+Get-LastBusinessDay -Date '2018-12-26' -Holidays $HolidayTable
+# Returns December 24
+
+Get-LastBusinessDay -Date '2018-09-04' -Holidays $HolidayTable
+# Returns Aug 31

@@ -1,0 +1,27 @@
+<?php 
+/**
+ * Capture timestamp of active user
+ *
+ */
+
+function user_last_seen() {
+    if ( is_user_logged_in() ) {
+        update_user_meta( get_current_user_id(), 'last_seen', time() );
+    } else {
+        return;
+    }
+
+}
+add_action( 'wp_footer', 'user_last_seen', 10 );
+
+
+function wp_lastseen() { 
+    $last_seen = get_the_author_meta('last_seen');
+    $the_last_seen_date = human_time_diff($last_seen);
+    return $the_last_seen_date; 
+} 
+
+add_shortcode('lastseen','wp_lastseen');
+?>
+
+<?php echo 'Last seen: '. do_shortcode('[lastseen]') .' ago'; ?>

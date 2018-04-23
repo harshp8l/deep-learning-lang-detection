@@ -1,0 +1,158 @@
+  import shapeless.{::, DepFn1, DepFn2, Generic, HList, HNil, Lens, OpticDefns}
+
+  trait DeepGeneric[T <: Product] {
+    type Repr <: HList
+    def to(t : T) : Repr
+    def from(r : Repr) : T
+  }
+
+  object DeepGeneric {
+    type Aux[T <: Product, Repr0 <: HList] = DeepGeneric[T] { type Repr = Repr0 }
+    def instance[T <: Product, Repr0 <: HList](f: T => Repr0, g: Repr0 => T): Aux[T, Repr0] = new DeepGeneric[T] {
+      override type Repr = Repr0
+      override def to(t: T): Repr = f(t)
+      override def from(r: Repr): T = g(r)
+    }
+
+    implicit def deepGeneric[A <: Product, L <: HList, L1 <: HList](implicit
+      generic: Generic.Aux[A, L],
+      hListDeepGeneric: HListDeepGeneric.Aux[L, L1]
+      ): Aux[A, L1] = instance(a => hListDeepGeneric.to(generic.to(a)), l1 => generic.from(hListDeepGeneric.from(l1)))
+  }
+
+  trait HListDeepGeneric[T <: HList] {
+    type Repr <: HList
+    def to(t : T) : Repr
+    def from(r : Repr) : T
+  }
+
+  trait LowPriorityHListDeepGeneric {
+    type Aux[T <: HList, Repr0 <: HList] = HListDeepGeneric[T] { type Repr = Repr0 }
+    def instance[T <: HList, Repr0 <: HList](f: T => Repr0, g: Repr0 => T): Aux[T, Repr0] = new HListDeepGeneric[T] {
+      override type Repr = Repr0
+      override def to(t: T): Repr = f(t)
+      override def from(r: Repr): T = g(r)
+    }
+
+    implicit def headNotCaseClass[H, T <: HList, T_hListDeepGen <: HList](implicit
+      tailHListDeepGeneric: HListDeepGeneric.Aux[T, T_hListDeepGen]
+      ): Aux[H :: T, H :: T_hListDeepGen] = instance({
+        case h :: t => h :: tailHListDeepGeneric.to(t)
+      }, {
+        case h :: t => h :: tailHListDeepGeneric.from(t)
+      })
+  }
+
+  object HListDeepGeneric extends LowPriorityHListDeepGeneric {
+    implicit val hNil: Aux[HNil, HNil] = instance(identity, identity)
+
+    implicit def headCaseClass[H <: Product, T <: HList, H_deepGen <: HList, T_hListDeepGen <: HList](implicit
+      headDeepGeneric: DeepGeneric.Aux[H, H_deepGen],
+      tailHListDeepGeneric: HListDeepGeneric.Aux[T, T_hListDeepGen]
+      ): Aux[H :: T, H_deepGen :: T_hListDeepGen] = instance({
+        case h :: t => headDeepGeneric.to(h) :: tailHListDeepGeneric.to(t)
+      }, {
+        case h :: t => headDeepGeneric.from(h) :: tailHListDeepGeneric.from(t)
+      })
+  }
+
+  // example
+  case class A(i: Int, b: Boolean)
+  case class B(s: String, d: Double)
+  case class C(a: A, b: B, l: Long)
+  implicitly[DeepGeneric.Aux[C, (Int :: Boolean :: HNil) :: (String :: Double :: HNil) :: Long :: HNil]]
+
+  trait DeepSelector[L <: HList, U] extends DepFn1[L] { type Out = U }
+
+  trait LowPriorityDeepSelector {
+    def instance[L <: HList, U](f: L => U): DeepSelector[L, U] = (l: L) => f(l)
+
+    implicit def select[H, T <: HList]: DeepSelector[H :: T, H] = instance(_.head)
+  }
+
+  object DeepSelector extends LowPriorityDeepSelector {
+    implicit def deepSelect[H <: HList, T <: HList, H_deepGen <: HList, U](implicit
+      deepSelector: DeepSelector[H, U]
+      ): DeepSelector[H :: T, U] =
+      instance(l => deepSelector(l.head))
+
+    implicit def recurse[H, T <: HList, U](implicit deepSelector: DeepSelector[T, U]): DeepSelector[H :: T, U] =
+      instance(l => deepSelector(l.tail))
+  }
+
+  trait DeepReplacer[L <: HList, U, V] extends DepFn2[L, V]
+
+  trait LowPriorityDeepReplacer {
+    type Aux[L <: HList, U, V, Out0] = DeepReplacer[L, U, V] { type Out = Out0 }
+    def instance[L <: HList, U, V, Out0](f: (L, V) => Out0): Aux[L, U, V, Out0] = new DeepReplacer[L, U, V] {
+      override type Out = Out0
+      override def apply(l: L, v: V): Out = f(l, v)
+    }
+
+    implicit def replace[T <: HList, U, V]: Aux[U :: T, U, V, (U, V :: T)] = instance((l, v) => (l.head, v :: l.tail))
+  }
+
+  object DeepReplacer extends LowPriorityDeepReplacer {
+    implicit def deepReplace[H <: HList, T <: HList, U, V, H1 <: HList](implicit
+      deepReplacer: Aux[H, U, V, (U, H1)]): Aux[H :: T, U, V, (U, H1 :: T)] = instance((l, v) => {
+        val (u, h1) = deepReplacer(l.head, v)
+        (u, h1 :: l.tail)
+      })
+
+    implicit def recurse[H, T <: HList, U, V, OutT <: HList](implicit
+      deepReplacer : Aux[T, U, V, (U, OutT)]): Aux[H :: T, U, V, (U, H :: OutT)] = instance((l, v) => {
+        val (u, l1) = deepReplacer(l.tail, v)
+        (u, l.head :: l1)
+      })
+  }
+
+  trait MkDeepGenericLens[T] {
+    type Repr
+    def apply(): Lens[T, Repr]
+  }
+
+  object MkDeepGenericLens {
+    type Aux[T, Repr0] = MkDeepGenericLens[T] { type Repr = Repr0 }
+    def instance[T, Repr0](f: => Lens[T, Repr0]): Aux[T, Repr0] = new MkDeepGenericLens[T] {
+      override type Repr = Repr0
+      override def apply(): Lens[T, Repr] = f
+    }
+
+    implicit def mkDeepGenericLens[T <: Product](implicit gen: DeepGeneric[T]): Aux[T, gen.Repr] =
+      instance(new Lens[T, gen.Repr] {
+        def get(t: T): gen.Repr = gen.to(t)
+        def set(t: T)(r: gen.Repr): T = gen.from(r)
+      })
+  }
+
+  trait MkHListDeepSelectLens[L <: HList, U] {
+    def apply(): Lens[L, U]
+  }
+
+  object MkHListDeepSelectLens {
+    def instance[L <: HList, U](f: => Lens[L, U]): MkHListDeepSelectLens[L, U] = () => f
+
+    implicit def mKHlistDeepSelectLens[L <: HList, U](implicit
+      selector: DeepSelector[L, U], replacer: DeepReplacer.Aux[L, U, U, (U, L)]): MkHListDeepSelectLens[L, U] =
+      instance(new Lens[L, U] {
+        def get(l: L) = selector(l)
+        def set(l: L)(u: U): L = replacer(l, u)._2
+      })
+  }
+
+  class Classy[O[_, _], S, A](val get: O[S, A])
+
+  object Classy {
+    def apply[O[_, _], S, A](implicit ev: Classy[O, S, A]): Classy[O, S, A] = ev
+
+    implicit def rootLens[S]: Classy[Lens, S, S] = new Classy(OpticDefns.id[S])
+
+    implicit def elementLens[S, L <: HList, A](implicit 
+      genLens: MkDeepGenericLens.Aux[S, L],
+      aLens: MkHListDeepSelectLens[L, A]
+      ): Classy[Lens, S, A] = new Classy(aLens() compose genLens())
+  }
+
+  Classy[Lens, String, String] // OK
+  Classy[Lens, (Long, String), String] // OK
+  Classy[Lens, (Int, (Long, String), Double), String] // OK

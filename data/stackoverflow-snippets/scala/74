@@ -1,0 +1,50 @@
+object Example {
+
+  trait Item
+
+  // generic interface that makes possible for T
+  // to be updated by an Item
+  // Better to return a new object here instead of mutating an old one
+  trait Updater[T] {
+    def update(obj: T, item: Item): T
+  }
+
+  class B1
+
+  class B2
+
+  implicit val b1Updated: Updater[B1] = new Updater[B1] {
+    override def update(obj: B1, item: Item): B1 = {
+      println(""B1 updater called"")
+      //your code for b1 here
+      ???
+    }
+  }
+
+  implicit val b2Updated: Updater[B2] = new Updater[B2] {
+    override def update(obj: B2, item: Item): B2 = {
+      println(""B2 updater called"")
+      //your code for b2 here
+      ???
+    }
+  }
+
+  //whenever you add a new class that has to be updatable you must provide such instance of Updater[MyNewB]
+  //But you don't have to declare it right here so it's still modular
+
+
+  //works for every type T that has implicit instance of type Updater[T]
+  def updateOne[T: Updater](obj: T, item: Item): T = {
+    implicitly[Updater[T]].update(obj, item)
+  }
+
+  def updateList[T: Updater](lst: List[T], item: Item): List[T] = {
+    val updater = implicitly[Updater[T]]
+    lst.map(e => updater.update(e, item))
+  }
+
+  def main(args: Array[String]): Unit = {
+    val list: List[B1] = List(new B1, new B1)
+    updateList(list, new Item {})
+  }
+}

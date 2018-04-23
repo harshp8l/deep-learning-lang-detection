@@ -1,0 +1,18 @@
+debug_conv_encoder_impl::debug_conv_encoder_impl(int frame_size, std::vector<int> polys, int mode, int pad)
+  : gr::hier_block2(""debug_conv_encoder"",
+          gr::io_signature::make(1, 1, sizeof(unsigned char)),
+          gr::io_signature::make(1, 1, sizeof(unsigned char)))
+{
+  //Creating a coder variable
+  int k = 7;
+  int rate = 2;
+  bool d_pad = (pad == 1) ? true : false;
+  cc_mode_t d_mode = get_mode(mode);
+  gr::fec::code::cc_encoder::sptr coder_variable(gr::fec::code::cc_encoder::make(frame_size,k,rate,polys,0,d_mode,d_pad));
+
+  //Creating a deployment variable
+  gr::fec::encoder::sptr coder_deployment(gr::fec::encoder::make(coder_variable,sizeof(unsigned char),sizeof(unsigned char)));
+  connect(self() , 0 , coder_deployment , 0);
+  connect(coder_deployment , 0 , self() , 0);
+  //connect(encoder);
+}

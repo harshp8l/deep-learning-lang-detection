@@ -1,0 +1,47 @@
+(ns tst.clj.core
+  (:use clj.core
+        tupelo.test)
+  (:require
+    [tupelo.core :as t] ))
+(t/refer-tupelo)
+
+(def            fred      0)
+(def ^:dynamic *barney*   0) ; normally use ""earmuffs"" for dynamic vars
+(def ^:dynamic  wilma     0) ; you aren't forced to use use them (but you should!)
+(def            betty    29)
+
+(dotest
+  (throws?
+    (binding [fred 1] ; can't bind non-dynamic var
+      (is= fred 1)
+      (throws? (set! fred 2))
+      (is= fred 2)))
+
+  (is= fred 0)
+  (throws? (set! fred 2)) ;  can't set it
+  (is= fred 0)
+  (throws? (var-set #'fred 3)) ; java.lang.IllegalStateException: Can't change/establish root binding of: fred with set
+  (is= fred 0)
+  (is= (var-get #'fred) 0)
+
+  (binding [*barney* 3]
+    (is= *barney* 3)
+    (set! *barney* 4) ; works fine
+    (is= *barney* 4))
+  (is= *barney* 3)  ; original value once leave binding scope
+
+  (binding [wilma 6]
+    (is= wilma 6)
+    (set! wilma 7)  ; this works
+    (is= wilma 7)
+    (alter-var-root #'wilma inc)  ; this doesn't work!
+    (is= wilma 7))
+  (is= wilma 1)     ; the `inc` altered the root value, not the dynamic value in the `binding`
+  (alter-var-root #'wilma #(+ 23 %)) ; can alter root value outside of binding
+  (is= wilma 24)
+
+  (is= betty 29)
+  (alter-var-root #'betty inc) ; non-dynamic vars can have root value altered
+  (is= betty 30)
+
+)

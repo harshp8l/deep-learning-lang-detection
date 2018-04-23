@@ -1,0 +1,21 @@
+(defn merge' [& maps]
+  (apply merge (reverse maps)))
+
+(require '[criterium.core :as c])
+(c/quick-bench
+ (let [a (atom {})]
+   (dorun (map #(swap! a merge {% 1}) (range 10000))) ))
+
+=> Execution time mean : 4.990763 ms
+
+(c/quick-bench
+ (let [a (atom {})]
+   (dorun (map #(swap! a (partial merge' {% 1})) (range 10000))) ))
+
+=> Execution time mean : 7.168238 ms
+
+(c/quick-bench
+ (let [a (atom {})]
+   (dorun (map #(swap! a (partial merge {% 1})) (range 10000))) ))
+
+=> Execution time mean : 10.610342 sec 

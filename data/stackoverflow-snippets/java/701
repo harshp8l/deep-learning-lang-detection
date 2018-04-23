@@ -1,0 +1,40 @@
+ Student st = new Student();
+ createJsonIgnoreFields(st,""firstname,age"");
+
+import java.util.logging.Logger;
+
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.ObjectWriter;
+import org.codehaus.jackson.map.ser.FilterProvider;
+import org.codehaus.jackson.map.ser.impl.SimpleBeanPropertyFilter;
+import org.codehaus.jackson.map.ser.impl.SimpleFilterProvider;
+
+public class JsonUtil {
+
+  public static String createJsonIgnoreFields(Object object, String ignoreFields) {
+     try {
+         ObjectMapper mapper = new ObjectMapper();
+         mapper.getSerializationConfig().addMixInAnnotations(Object.class, JsonPropertyFilterMixIn.class);
+         String[] ignoreFieldsArray = ignoreFields.split("","");
+         FilterProvider filters = new SimpleFilterProvider()
+             .addFilter(""filter properties by field names"",
+                 SimpleBeanPropertyFilter.serializeAllExcept(ignoreFieldsArray));
+         ObjectWriter writer = mapper.writer().withFilters(filters);
+         return writer.writeValueAsString(object);
+     } catch (Exception e) {
+         //handle exception here
+     }
+     return """";
+   }
+
+   public static String createJson(Object object) {
+        try {
+         ObjectMapper mapper = new ObjectMapper();
+         ObjectWriter writer = mapper.writer().withDefaultPrettyPrinter();
+         return writer.writeValueAsString(object);
+        }catch (Exception e) {
+         //handle exception here
+        }
+        return """";
+   }
+ }    

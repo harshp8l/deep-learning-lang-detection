@@ -1,0 +1,12 @@
+    try {
+        $query = $this->dbh->prepare('INSERT INTO users (username,email) VALUES (""test"", ""test"")');
+        $result = $query->execute();
+    } catch (PDOException $e) {
+        if( $e->errorInfo[0] == '23000' && $e->errorInfo[1] == '1062' ){
+            if( strpos($e->getMessage(), 'username') == true ) $result = 'duplicate_username';
+            elseif( strpos($e->getMessage(), 'email') == true ) $result = 'duplicate_email';
+        } else {
+            throw $e;
+            $return = false;
+        }
+    }

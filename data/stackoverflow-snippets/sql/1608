@@ -1,0 +1,40 @@
+;with MinuteGroup as 
+        (
+            select  count(*) as COUNT,
+                    year([CONSUMPTION_DATE]) as YEAR_GROUP_MINUTE, 
+                    month([CONSUMPTION_DATE])as MONTH_GROUP_MINUTE, 
+                    day([CONSUMPTION_DATE]) as DAY_GROUP_MINUTE,
+                    DATEPART ( hour , [CONSUMPTION_DATE] ) as HOUR_GROUP_MINUTE,
+                    DATEPART ( minute , [DATE_SELECTION_START] ) as MINUTE_GROUP_MINUTE
+                FROM [CONSUMPTION_TABLE]
+                where [CONSUMPTION_DATE] between '2018-01-18' and '2018-03-20'
+                group by    year([CONSUMPTION_DATE]), 
+                            month([CONSUMPTION_DATE]), 
+                            day([CONSUMPTION_DATE]),
+                            DATEPART ( hour , [CONSUMPTION_DATE] ),
+                            DATEPART ( minute , [CONSUMPTION_DATE] )
+        ),
+        HourGroup as 
+        (
+            select top 10 year([CONSUMPTION_DATE]) as YEAR_GROUP_MINUTE, 
+                    month([CONSUMPTION_DATE])as MONTH_GROUP_MINUTE, 
+                    day([CONSUMPTION_DATE]) as DAY_GROUP_MINUTE,
+                    DATEPART ( hour , [CONSUMPTION_DATE] ) as HOUR_GROUP_MINUTE
+                FROM [CONSUMPTION_TABLE]
+                where [CONSUMPTION_DATE] between '2018-01-18' and '2018-03-20'
+                group by    year([CONSUMPTION_DATE]), 
+                            month([CONSUMPTION_DATE]), 
+                            day([CONSUMPTION_DATE]),
+                            DATEPART ( hour , [CONSUMPTION_DATE] )
+        )
+    select  MinuteGroup.COUNT,
+            MinuteGroup.YEAR_GROUP_MINUTE,
+            MinuteGroup.MONTH_GROUP_MINUTE,
+            MinuteGroup.DAY_GROUP_MINUTE,
+            MinuteGroup.HOUR_GROUP_MINUTE,
+            MinuteGroup.MINUTE_GROUP_MINUTE
+    from MinuteGroup join HourGroup 
+                on  HourGroup.YEAR_GROUP_MINUTE = MinuteGroup.YEAR_GROUP_MINUTE
+                and HourGroup.MONTH_GROUP_MINUTE = MinuteGroup.MONTH_GROUP_MINUTE
+                and HourGroup.DAY_GROUP_MINUTE = MinuteGroup.DAY_GROUP_MINUTE
+                and HourGroup.HOUR_GROUP_MINUTE = MinuteGroup.HOUR_GROUP_MINUTE

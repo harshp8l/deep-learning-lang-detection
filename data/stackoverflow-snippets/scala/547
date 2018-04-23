@@ -1,0 +1,20 @@
+def getDataFrameMaxRow(df:DataFrame , col:String):DataFrame = {
+ // get the maximum value
+ val list_prediction = df.select(col).toJSON.rdd
+         .collect()
+         .toList
+         .map { x =>  gson.fromJson[JsonObject](x, classOf[JsonObject])}
+         .map { x => x.get(col).getAsString.toInt}
+ val max = getMaxFromList(list_prediction)
+
+ // filter dataframe by the maximum value
+ val df_filtered = df.filter(df(col) === max.toString())
+
+ return df_filtered
+}
+
+
+def getMaxFromList(xs: List[Int]): Int = xs match {
+ case List(x: Int) => x
+ case x :: y :: rest => getMaxFromList( (if (x > y) x else y) :: rest )
+}

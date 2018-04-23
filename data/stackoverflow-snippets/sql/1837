@@ -1,0 +1,30 @@
+WITH NEW_D AS
+(
+  SELECT MAX(determid) as determnd
+  FROM dbo.determ 
+  WHERE appid = @appid
+), OLD_D AS
+(
+  SELECT MAX(determid) as determid
+  FROM dbo.determ, NEW_D
+  WHERE appid = @appid AND determid <> NEW_D.determid
+), EMP_NEW AS
+(
+  SELECT empid
+  FROM emp, NEW_D
+  WHERE appid = @appid AND determid = NEW_D.determid 
+), EMP_OLD AS
+(
+  SELECT empid
+  FROM emp, OLD_D
+  WHERE appid = @appid AND determid = OLD_D.determid 
+)
+SELECT empid
+FROM EMP_OLD
+WHERE empid NOT IN (SELECT empid FROM EMP_NEW)
+
+UNION ALL
+
+SELECT empid
+FROM EMP_NEW
+WHERE empid NOT IN (SELECT empid FROM EMP_OLD)

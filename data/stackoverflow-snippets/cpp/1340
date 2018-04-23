@@ -1,0 +1,48 @@
+#include ""settingspane.h""
+
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QRadioButton>
+#include <QButtonGroup>
+
+SettingsPane::SettingsPane(QWidget *parent)
+   : QWidget(parent)
+{
+    settings = new QSettings();
+
+    auto mlayout = new QVBoxLayout();
+    setLayout(mlayout);
+
+    // create some buttons
+    auto rb_frst = new QRadioButton(""first"");
+    auto rb_scnd = new QRadioButton(""second"");
+    auto rb_thrd = new QRadioButton(""third"");
+    // container to organize groups of buttons (no visual)
+    auto buttonGroup = new QButtonGroup();
+    buttonGroup->addButton(rb_frst,0);
+    buttonGroup->addButton(rb_scnd,1);
+    buttonGroup->addButton(rb_thrd,2);
+    // layout buttons for visual representation
+    auto rb_layout = new QHBoxLayout();
+    rb_layout->addWidget(rb_frst);
+    rb_layout->addWidget(rb_scnd);
+    rb_layout->addWidget(rb_thrd);
+    mlayout->addLayout(rb_layout);
+
+    // use Functor-Based Connection due to overloaded buttonReleased
+    connect( buttonGroup,
+             SIGNAL(buttonReleased(int)),
+             this,
+             SLOT(handle_rb_buttonReleased(int)));
+
+    // restore button from settings
+    int id = settings->value(""buttonGroup"").toInt();
+    buttonGroup->button(id)->setChecked(true);
+}
+
+void
+SettingsPane::handle_rb_buttonReleased(int id)
+{
+    // save new status to the settings
+    settings->setValue(""buttonGroup"", id);
+}

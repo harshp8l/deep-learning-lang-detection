@@ -1,0 +1,43 @@
+if (ENABLE_QT_SimApp_GUI)
+
+find_package(qtlibs)
+
+find_package(SimApp)
+if (NOT SimApp_FOUND)
+    message(FATAL_ERROR ""Could not find SimApp"")
+endif(NOT SimApp_FOUND)
+
+set(CMAKE_PREFIX_PATH ${PREFIX_PATH})
+message(STATUS ""CMAKE_PREFIX_PATH"" ${CMAKE_PREFIX_PATH})
+
+find_package(Qt5 REQUIRED COMPONENTS Widgets Core Gui Sql PrintSupport WebEngineWidgets)
+
+qt5_wrap_cpp(QtSimAppProjectLib_hdr_moc ${QtSimAppProjectLib_hdr})
+qt5_wrap_ui(QtSimAppProjectLib_ui_uic ${QtSimAppProjectLib_ui})
+qt5_add_resources(QtSimAppProjectLib_qrc_rcc ${QtSimAppProjectLib_qrc})
+
+include_directories (${PROJECT_SOURCE_DIR})
+include_directories (${PROJECT_BINARY_DIR})
+
+add_library (QtSimAppProjectLib STATIC ${QtSimAppProjectLib_src} ${QtSASQProjectLib_hdr_moc} ${QtSASQProjectLib_ui_uic})
+
+target_link_libraries (QtSimAppProjectLib
+        Qt5::Core
+        Qt5::Gui
+        Qt5::Widgets
+        Qt5::Sql
+        Qt5::PrintSupport
+        Qt5::WebEngineWidgets)
+
+#WIN32 to suppress the console window under Windows
+add_executable(SIM_APP WIN32 ${QtSimAppProjectLib_src} ${QtSimAppProjectLib_qrc_rcc})
+
+# use one of the following target_link_libraries() calls
+target_link_libraries(SIM_APP Qt5::Core Qt5::Gui Qt5::Widgets)
+# target_link_libraries(SIM_APP QtSimAppProjectLib)
+
+if (ENABLE_COPY_QT_LIBS AND WIN32)
+    find_package(qtdlls)
+endif(ENABLE_COPY_QT_LIBS AND WIN32)
+
+endif (ENABLE_QT_SimApp_GUI)

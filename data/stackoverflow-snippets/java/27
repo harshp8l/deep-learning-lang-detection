@@ -1,0 +1,41 @@
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.function.Supplier;
+
+import static java.util.concurrent.CompletableFuture.supplyAsync;
+
+public class ExecutorTest {
+
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        Executor executor1 = Executors.newSingleThreadExecutor();
+        Executor executor2 = Executors.newSingleThreadExecutor();
+        CompletableFuture<Integer> cf1 = supplyAsync(run(1), executor1); //executor1
+        CompletableFuture<Integer> cf2 = supplyAsync(run(2), executor1); //executor1
+        CompletableFuture<Integer> cf3 = supplyAsync(run(3), executor2); //executor2
+        CompletableFuture<Void> result = CompletableFuture.allOf(cf1, cf2, cf3);
+        new Thread(() -> {
+            try {
+                result.get();
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }).start();
+        System.out.println(""Waiting now..."");
+    }
+
+    private static Supplier<Integer> run(int result) {
+        return () -> runDelayed(result);
+    }
+
+    private static int runDelayed(int result) {
+        try {
+            Thread.sleep(30000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+}

@@ -1,0 +1,42 @@
+rpos = vec2(rx,ry); // Ring segment center coordinates
+cpos = vec2(cx,cy); // Circle coordinates
+
+a = atan2(cy-ry, cx-rx); // Relative angle
+r = length(cpos - rpos); // Distance between centers
+
+if (a > a1 && a < a2) // Case 1
+{
+    does_collide = (r+rc > a1 && r-rc < a2);
+}
+else
+{
+    // Ring segment corners:
+    p11 = vec2(cos(a1), sin(a1)) * r1;
+    p12 = vec2(cos(a1), sin(a1)) * r2;
+    p21 = vec2(cos(a2), sin(a2)) * r1;
+    p22 = vec2(cos(a2), sin(a2)) * r2;
+
+    if (((cpos-p11) · (p12-p11) > 0 && (cpos-p12) · (p11-p12) > 0) ||
+        ((cpos-p21) · (p22-p21) > 0 && (cpos-p22) · (p21-p22) > 0)) // Case 2
+    {
+        // Normals of straight edges:
+        n1 = normalize(vec2(p12.y - p11.y, p11.x - p12.x));
+        n2 = normalize(vec2(p21.y - p22.y, p22.x - p21.x));
+
+        // Distances to edges:
+        d1 = n1 · (cpos - p11);
+        d2 = n2 · (cpos - p21);
+
+        does_collide = (min(d1, d2) < rc);
+    }
+    else // Case 3
+    {
+        // Squared distances to corners
+        c1 = length_sqr(cpos-p11);
+        c2 = length_sqr(cpos-p12);
+        c3 = length_sqr(cpos-p21);
+        c4 = length_sqr(cpos-p22);
+
+        does_collide = (sqrt(min(c1, c2, c3, c4)) < rc);
+    }
+}

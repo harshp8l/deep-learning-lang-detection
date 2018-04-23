@@ -1,0 +1,22 @@
+case class Details(id: Int, date: Int, cc: Int)
+val sc = new SparkContext(""local[*]"", ""App"")
+val list = List[Details](
+    Details(1,20180101,2),
+    Details(1,20180102,3),
+    Details(1,20180105,3),
+    Details(2,20180105,3),
+    Details(1,20180108,4),
+    Details(1,20180109,3),
+    Details(2,20180108,3),
+    Details(2,20180109,6))
+
+val rdd = sc.parallelize(list)
+val createCombiner = (v: (Int, Int)) => List[(Int, Int)](v)
+val combiner = (c: List[(Int, Int)], v: (Int, Int)) => (c :+ v).sortBy(_._1)
+val mergeCombiner = (c1: List[(Int, Int)], c2: List[(Int, Int)]) => (c1 ++ c2).sortBy(_._1)
+
+rdd
+   .map(det => (det.id, (det.date, det.cc)))
+   .combineByKey(createCombiner, combiner, mergeCombiner)
+   .collect()
+   .foreach(println)

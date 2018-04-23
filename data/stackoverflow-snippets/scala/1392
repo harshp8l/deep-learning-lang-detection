@@ -1,0 +1,69 @@
+import akka.actor._
+import akka.pattern.{ask, pipe}
+import akka.util.Timeout
+
+import language.postfixOps
+
+import scala.concurrent._
+import scala.concurrent.duration._
+
+case class Signal(requestId: Long)
+case class ResponseSignal(requestId: Long, issueId: Long)
+
+object ActorA {
+  def props(actorB: ActorRef) = Props(new ActorA(actorB))
+}
+
+class ActorA(dbActor: ActorRef) extends Actor {
+  import context.dispatcher
+
+  var targets: Map[Long, ActorRef] = Map.empty
+
+  def receive = {
+    case Signal(requestId) =>
+      val s = sender
+      targets = targets + (requestId -> s)
+      createIssue(requestId).mapTo[Tuple2[Long, Long]].pipeTo(self) // <-- use pipeTo
+    case ids: Tuple2[Long, Long] =>
+      println(s""Sending $ids to dbActor"")
+      dbActor ! ids
+    case r: ResponseSignal =>
+      println(s""Received from dbActor: $r"")
+      val target = targets.get(r.requestId)
+      println(s""In actorA, sending to: $target"")
+      target.foreach(_ ! r)
+      targets = targets - r.requestId
+  }
+}
+
+class DbActor extends Actor {
+  def receive = {
+    case (requestId: Long, issueId: Long) =>
+      val response = ResponseSignal(requestId, issueId)
+      println(s""In dbActor, sending $response to $sender"")
+      sender ! response
+  }
+}
+
+val system = ActorSystem(""jiratest"")
+implicit val ec = system.dispatcher
+
+val dbActor = system.actorOf(Props[DbActor])
+val jiraActor = system.actorOf(Props(new ActorA(dbActor)))
+
+val requestId = 2L
+
+def createIssue(requestId: Long): Future[(Long, Long)] = {
+  println(s""Creating an issue ID for requestId[$requestId]"")
+  Future((requestId, 99L))
+}
+
+def createFeedback(): Future[Long] = {
+  implicit val timeout = Timeout(5.seconds)
+  val res = (jiraActor ? Signal(requestId)).mapTo[ResponseSignal]
+  res.map(_.issueId)
+}
+
+createFeedback().onComplete { x =>
+  println(s""Done: $x"")
+}

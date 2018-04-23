@@ -1,0 +1,79 @@
+public static final int MULTIPLE_PERMISSIONS = 1;
+public static final int CAMERA_PERMISSION_REQUEST_CODE = 2;
+public static final int STORAGE_PERMISSION_REQUEST_CODE = 3;
+
+    private void askPermissions() {
+
+    int permissionCheckStorage = ContextCompat.checkSelfPermission(this,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+    int permissionCheckCamera = ContextCompat.checkSelfPermission(this,
+            Manifest.permission.CAMERA); 
+
+   // we already asked for permisson & Permission granted, call camera intent
+    if (permissionCheckStorage == PackageManager.PERMISSION_GRANTED && permissionCheckCamera == PackageManager.PERMISSION_GRANTED) {
+
+        launchCamera();
+
+    } //asking permission for the first time
+     else if (permissionCheckStorage != PackageManager.PERMISSION_GRANTED && permissionCheckCamera != PackageManager.PERMISSION_GRANTED) {
+
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                MULTIPLE_PERMISSIONS);
+
+    } else {
+        // Permission denied, so request permission
+
+        // if camera request is denied
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.CAMERA)) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(""You need to give permission to take pictures in order to work this feature."");
+            builder.setNegativeButton(""CANCEL"", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    dialogInterface.dismiss();
+                }
+            });
+            builder.setPositiveButton(""GIVE PERMISSION"", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    dialogInterface.dismiss();
+
+                    // Show permission request popup
+                    ActivityCompat.requestPermissions(this,
+                            new String[]{Manifest.permission.CAMERA},
+                            CAMERA_PERMISSION_REQUEST_CODE);
+                }
+            });
+            builder.show();
+
+        }   // if storage request is denied
+                else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(""You need to give permission to access storage in order to work this feature."");
+            builder.setNegativeButton(""CANCEL"", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    dialogInterface.dismiss();
+                }
+            });
+            builder.setPositiveButton(""GIVE PERMISSION"", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    dialogInterface.dismiss();
+
+                    // Show permission request popup
+                    ActivityCompat.requestPermissions(this,
+                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            STORAGE_PERMISSION_REQUEST_CODE);
+                }
+            });
+            builder.show();
+
+        } 
+
+    }
+}

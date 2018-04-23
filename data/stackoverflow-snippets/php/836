@@ -1,0 +1,25 @@
+add_filter( 'woocommerce_email_headers', 'custom_cc_email_headers', 10, 3 );
+function custom_cc_email_headers( $header, $email_id, $order ) {
+
+    // Only for ""Customer Completed Order"" email notification
+    if( 'customer_completed_order' !== $email_id )
+        return $header;
+
+    // Get the custom email from user meta data  (with the correct User ID)
+    $custom_user_email = get_user_meta( $order->get_user_id(), 'order_cc_email', true );
+
+    if( ! empty($custom_email) ) 
+        return $header; // Exit (if empty value)
+
+    // Get customer billing full name
+    $user_name  = $order->get_billing_first_name().' ';
+    $user_name .= $order->get_billing_last_name();
+
+    // Merge and prepare the data
+    $formatted_email = utf8_decode($user_name . ' <' . $custom_user_email . '>');
+
+    // Add Cc to headers
+    $header .= 'Cc: '.$formatted_email .'\r\n';
+
+    return $header;
+}

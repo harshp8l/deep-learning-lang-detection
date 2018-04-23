@@ -1,0 +1,30 @@
+ import org.apache.spark.sql.functions._
+ import spark.implicits._
+
+  //Dummy data df1
+  val df1 = Seq(
+    (1, """"),
+    (2, """"),
+    (3, """"),
+    (4, """"),
+    (5, """")
+  ).toDF(""ID"", ""key"")
+
+  //Dummy data df2
+  val df2 = Seq(
+    (1, 9, 9, 777),
+    (9, 8, 8, 878),
+    (8, 1, 10, 765),
+    (10, 12, 19, 909),
+    (11, 2, 20, 708)
+  ).toDF(""first"", ""second"", ""third"", ""key"")
+
+  // Join condition
+  val joinCondition = df1(""ID"") === df2(""first"") ||
+    df1(""ID"") === df2(""second"") ||
+    df1(""ID"") === df2(""third"")
+
+  val newDF  = df1.drop(""key"")
+    .join(df2, joinCondition, ""left"")
+    .drop(""first"", ""second"", ""third"")
+    .groupBy(""ID"").agg(first($""key"").as(""key)

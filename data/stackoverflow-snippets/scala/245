@@ -1,0 +1,9 @@
+def depositMessage(msg: MySQLInsertMessage): Unit = {
+      NamedDB('MySQLMsgDepositor) localTx { implicit session =>
+        val unsafeSQLRegex = ""[`'\""]"".r
+        val table = SQLSyntax.createUnsafely(s""`${unsafeSQLRegex.replaceAllIn(msg.tableName, """")}`"")
+        val columns = SQLSyntax.createUnsafely(msg.columns.map(value => unsafeSQLRegex.replaceAllIn(value, """")).mkString(""`"", ""`, `"", ""`""))
+        val sqlStmt = sql""INSERT INTO $table ($columns) VALUES (${msg.values})"".update().apply()
+      }
+    }
+  }

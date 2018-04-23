@@ -1,0 +1,70 @@
+import (
+    ""os""
+
+    . ""github.com/onsi/ginkgo/tmp""
+    ""github.com/onsi/gomega/ghttp""
+
+    . ""github.com/onsi/ginkgo""
+    . ""github.com/onsi/gomega""
+)
+
+var _ = Describe(""GetVolAnnotations"", func() {
+    var server *ghttp.Server
+    var returnedVolume Volume
+    var statusCode int
+
+    BeforeEach(func() {
+        server = ghttp.NewServer()
+        os.Setenv(""SOME_ADDR"", server.Addr())
+
+        server.AppendHandlers(
+            ghttp.CombineHandlers(
+                ghttp.VerifyRequest(""GET"", ""/path/to/somepage/VOLUME""),
+                ghttp.RespondWithJSONEncodedPtr(&statusCode, &returnedVolume),
+            )
+        )
+    })
+
+    AfterEach(func() {
+        server.Close()
+    })
+
+    Context(""When when the server returns a volume"", func() {
+        BeforeEach(func() {
+            returnedVolume = Volume{
+                Metadata: Metadata{
+                    Annotations: []string{""foo""}
+                }
+            }
+            statusCode = 200
+        })
+
+        It(""returns the annotations associated with the volume"", func() {
+            Expect(GetVolAnnotations(""VOLUME"")).To(Equal([]string{""foo""}))
+        })
+    })
+
+    Context(""when the server returns 500"", func() {
+        BeforEach(func() {
+            statusCode = 500
+        })
+
+        It(""errors"", func() {
+            value, err := GetVolAnnotations(""VOLUME"")
+            Expect(value).To(BeNil())
+            Expect(err).To(HaveOccurred())
+        })
+    })
+
+    Context(""when the server returns 503"", func() {
+        BeforEach(func() {
+            statusCode = 503
+        })
+
+        It(""errors"", func() {
+            value, err := GetVolAnnotations(""VOLUME"")
+            Expect(value).To(BeNil())
+            Expect(err).To(HaveOccurred())
+        })
+    })
+})

@@ -1,0 +1,55 @@
+#include <windows.h>
+#include <iostream>
+
+int main()
+{
+    WNDCLASSEX wx = {};
+    wx.cbSize = sizeof(WNDCLASSEX);
+    wx.lpfnWndProc = DefWindowProc;
+    wx.hInstance = GeteModuleHandle(NULL);
+    wx.lpszClassName = TEXT(""MyRawInputWndClass"");
+
+    if (!RegisterClassEx(&wx))
+    {
+        std::cout << ""Window Class Registration failed"" << std::endl;
+        return 1;
+    }
+
+    HWND hWnd = CreateWindowEx(0, wx.lpszClassName, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, wx.hInstance, NULL);
+    if (!hWnd)
+    {
+        std::cout << ""Window Creation failed"" << std::endl;
+        return 1;
+    }
+
+    RAWINPUTDEVICE Rid = {};
+    Rid.usUsagePage = 0x01;
+    Rid.usUsage = 0x05;
+    Rid.dwFlags = 0;
+    Rid.hwndTarget = hWnd;
+
+    if (!RegisterRawInputDevices(&Rid, 1, sizeof(RAWINPUTDEVICE)))
+    {
+        std::cout << ""Device Registration failed"" << std::endl;
+        return 1;
+    }
+
+    std::cout << ""Device Registration OK"" << std::endl;
+
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
+        if (msg.message == WM_INPUT)
+        {
+            HRAWINPUT hRawInput = reinterpret_cast<HRAWINPUT>(msg.lParam);
+            // retrieve and process data from hRawInput as needed...
+        }
+        else
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,54 @@
+package main
+
+import (
+    ""fmt""
+
+    ""github.com/miekg/dns""
+)
+
+type LastCnamer interface {
+    LastCname(domain string) (lastCname string, err error)
+}
+
+type LastCnameResolver string
+
+func (l LastCnameResolver) LastCname(domain string) (lastCname string, err error) {
+    ns := string(l)
+
+    c := dns.Client{}
+    m := dns.Msg{}
+    m.SetQuestion(domain, dns.TypeA)
+    r, _, err := c.Exchange(&m, ns)
+    if err != nil {
+        return lastCname, err
+    }
+    // Last CNAME
+    for _, ans := range r.Answer {
+        cname, ok := ans.(*dns.CNAME)
+        if ok {
+            lastCname = cname.Target
+        }
+    }
+    return lastCname, nil
+}
+
+type LastCnameStub map[string]string
+
+func (m LastCnameStub) LastCname(domain string) (string, error) {
+    return m[domain], nil
+}
+
+func main() {
+    m := make(map[string]string)
+    m[""www.linkedin.com.""] = ""pop-tmu1-alpha.www.linkedin.com.""
+    var l LastCnamer = LastCnameStub(m)
+    cname, _ := l.LastCname(""www.linkedin.com."")
+    fmt.Println(""Stub"", cname)
+
+    l = LastCnameResolver(""8.8.8.8:53"")
+    cname, err := l.LastCname(""www.linkedin.com."")
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(""Resolved"", cname)
+}

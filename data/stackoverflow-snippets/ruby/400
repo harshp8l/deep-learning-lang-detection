@@ -1,0 +1,21 @@
+entries.group_by {|a| a[:account_id]}.each do |contents|
+  if contents.length > 1 # This will always be true, since contents is an Array of [account_id, [entries]]
+    get_id = []
+    get_debit = []
+    get_credit = []
+    contents.each do |subject| # Again, contents is a Hash of account_id => [entries]; should be |id, entries|
+      get_id << subject.account_id  # Even if this was a single entry, this wouldn't work since it's a Hash; should be subject[:account_id]
+      get_debit << subject.amount_debit unless subject.amount_debit == 0  # Fails for the same reason
+      get_credit << subject.amount_credit unless subject.amount_credit == 0  # Fails for the same reason
+      if get_debit.sum > get_credit.sum  # We're summing what we saved, but excluded 0 values even though they don't change the sum?
+        total = get_debit.sum - get_credit.sum  # Avoid summing again
+        final_entries << { account_id: get_id[0], amount_credit: 0.0, amount_debit: total }
+      else
+        total = get_credit.sum - get_debit.sum
+        final_entries << { account_id: get_id[0], amount_credit: total, amount_debit: 0.0 }
+      end
+    end
+  else
+    final_entries << contents
+  end
+end

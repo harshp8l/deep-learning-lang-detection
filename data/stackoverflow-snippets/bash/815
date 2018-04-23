@@ -1,0 +1,13 @@
+# Create an out_fd variable that points to stdout (FD 1) if dexflag != ""false"", or to a new
+# handle on /dev/null otherwise
+if [[ $dexflag = false ]]; then
+  exec {out_fd}>/dev/null # maybe put 2>&1 as well to suppress stderr
+else
+  out_fd=1 # use FD 1 (stdout)
+fi
+
+# run dex with its stdout redirected to the FD number in ""out_fd""
+dex ... >&""$out_fd""
+
+# if out_fd is not stdin/stdout/stderr, then go ahead and close it when done.
+(( out_fd > 2 )) && exec {out_fd}>&-

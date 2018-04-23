@@ -1,0 +1,15 @@
+import shapeless._, syntax.singleton._, record._
+
+case class Foo(x: Int, y: String)
+case class RichFoo(x: Int, y: String, z: Double)
+
+class Morph[A, B, AR](a: A, genA: LabelledGeneric.Aux[A, AR]) {
+  def apply[BR](f: AR => BR)(implicit genB: LabelledGeneric.Aux[B, BR]) = genB.from(f(genA.to(a)))
+}
+
+implicit class Syntax[A, AR](val a: A)(implicit genA: LabelledGeneric.Aux[A, AR]) {
+  def morph[B]: Morph[A, B, AR] = new Morph(a, genA)
+}
+
+val a = Foo(1, ""hello"")
+a.morph[RichFoo](_ + ('z ->> 0.9)) // => RichFoo(1,hello,0.9)

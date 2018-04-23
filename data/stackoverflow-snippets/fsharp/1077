@@ -1,0 +1,38 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.IO;
+using System.Data;
+using Newtonsoft.Json;
+using System.Xml;
+using System.Data.SqlClient;
+
+namespace ConsoleApplication1
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+             String testPath = @""G:\TestJson.txt"" ;//This file contains    Anderson Silva's data
+         XmlDocument xmlDoc = JsonConvert.DeserializeXmlNode(File.ReadAllText(testPath), ""dbo.Fighter"");
+         DataSet testDataset = new DataSet(""Test Dataset"");
+         XmlNodeReader  xmlReader = new XmlNodeReader(xmlDoc);
+         testDataset.ReadXml(xmlReader) ;
+
+
+         String connectionString = @""Data Source=myserver;Initial Catalog=test;Integrated Security=True"";
+         SqlConnection connection = new SqlConnection(connectionString);
+         connection.Open();
+         DataTableCollection datatables = testDataset.Tables;
+            foreach (DataTable datatable in datatables) 
+            {
+                Console.WriteLine(""Bulk insert commenced in table"" + datatable.TableName);
+                SqlBulkCopy bulk = new SqlBulkCopy(connection);
+                bulk.DestinationTableName= datatable.TableName.Replace('{',' ').Replace('}',' ');
+                bulk.WriteToServer(datatable);
+                Console.WriteLine(""Bulk insert comped in table"" + datatable.TableName);
+            }
+    }
+}
+}

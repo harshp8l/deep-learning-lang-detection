@@ -1,0 +1,61 @@
+package main
+
+import (
+    ""fmt""
+    ""log""
+    ""sync""
+    ""time""
+
+    ""github.com/nats-io/go-nats""
+)
+
+// create wait group
+var wg sync.WaitGroup
+
+func main() {
+    // add 1 waiter
+    wg.Add(1)
+    go createPublisher()
+
+    // wait for wait group to complete
+    wg.Wait()
+}
+
+func createPublisher() {
+
+    log.Println(""pub started"")
+    // mark wait group done after createPublisher completes
+    defer wg.Done()
+
+    nc, err := nats.Connect(nats.DefaultURL)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer nc.Close()
+
+    msg := make([]byte, 16)
+
+    for i := 0; i < 100000; i++ {
+        if errPub := nc.Publish(""alenSub"", msg); errPub != nil {
+            panic(errPub)
+        }
+
+        if (i % 100) == 0 {
+            fmt.Println(""i"", i)
+        }
+        time.Sleep(time.Millisecond * 1)
+    }
+
+    log.Println(""pub finish"")
+
+    errFlush := nc.Flush()
+    if errFlush != nil {
+        panic(errFlush)
+    }
+
+    errLast := nc.LastError()
+    if errLast != nil {
+        panic(errLast)
+    }
+
+}

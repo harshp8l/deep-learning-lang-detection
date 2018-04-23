@@ -1,0 +1,28 @@
+workbook = load_workbook(excel_file,read_only=False)
+worksheet = workbook['Sheet2']   # make sure this sheet exist e.g. create it before
+
+df = pd.read_excel(excel_file, ""Sheet1"") #sheet 1 contains the data see above
+
+# combine these different collections into a list    
+data_to_plot = [df._series['val_1']]
+
+# Create a figure instance
+fig = plt.figure(1, figsize=(8, 8))
+
+# Create an axes instance
+ax = fig.add_subplot(111)
+
+# Create the boxplot
+bp = ax.boxplot(data_to_plot)
+
+for flier in bp['fliers']:
+     flier.set(marker='o', color='#e7298a', alpha=0.5)
+
+# Save the figure
+fig.savefig('val_1.png', bbox_inches='tight')
+
+# load the created boxplot image and insert in sheet2
+img = openpyxl.drawing.image.Image('val_1.png')
+worksheet.add_image(img,'D3')
+
+workbook.save(excel_file)

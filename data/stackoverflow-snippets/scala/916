@@ -1,0 +1,12 @@
+  import cats._
+  import cats.implicits._
+  import cats.data.Cokleisli
+  type FAlgebra[F[_], A] = Cokleisli[F, A, A]
+
+  def nestEffect[F[_], A, B, G[_]](coKleisli: Cokleisli[F, A, B])
+                            (implicit F: Traverse[F], G: Applicative[G]): Cokleisli[F, G[A], G[B]] =
+    Cokleisli((fga: F[G[A]]) => F.sequence[G, A](fga).map(coKleisli.run))
+
+    def algebraSeq[F[_], A](fa: FAlgebra[F, A])
+                         (implicit F: Traverse[F]): FAlgebra[F, List[A]] = 
+      nestEffect[F, A, A, List](fa)

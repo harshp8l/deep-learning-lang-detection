@@ -1,0 +1,22 @@
+#include <boost/array.hpp>
+#include <vector>
+#include <boost/range/algorithm.hpp>
+#include <iostream>
+#include <cassert>
+
+template<size_t Size, class Container>
+boost::array<typename Container::value_type, Size> as_array(const Container &cont)
+{
+    assert(cont.size() == Size);
+    boost::array<typename Container::value_type, Size> result;
+    boost::range::copy(cont, result.begin());
+    return result;
+}
+
+int main()
+{
+    // this is C++11 initialization, but the rest of code is C++03-complient
+    std::vector<int> v{1, 2, 3};
+    boost::array<int, 3> a = as_array<3>(v);
+    boost::range::copy(a, std::ostream_iterator<int>(std::cout,"", ""));
+}

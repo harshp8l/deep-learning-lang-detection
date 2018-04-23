@@ -1,0 +1,39 @@
+package main
+
+import (
+    ""bytes""
+    ""encoding/json""
+    ""log""
+)
+
+var (
+    sampleJSON   = []byte(`{""id"": ""urn:uuid:1234567890""}`)
+    prefixToTrim = []byte(`urn:uuid:`)
+)
+
+type IDField string
+
+type Data struct {
+    ID IDField `json:""id""`
+}
+
+func main() {
+    d := &Data{}
+    err := json.Unmarshal(sampleJSON, d)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    log.Println(d.ID)
+}
+
+// UnmarshalJSON provides custom unmarshalling to trim `urn:uuid:` prefix from IDField
+func (id *IDField) UnmarshalJSON(rawIDBytes []byte) error {
+
+    // trim quotes and prefix
+    trimmedID := bytes.TrimPrefix(bytes.Trim(rawIDBytes, `""`), prefixToTrim)
+
+    // convert back to id field & assign
+    *id = IDField(trimmedID)
+    return nil
+}

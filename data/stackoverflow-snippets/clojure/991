@@ -1,0 +1,24 @@
+(defn fn0 [] -1) ;; function we want to mock
+
+;; fn1 retries fn0 if there is an exception
+(defn fn1 [] (try 
+               (fn0)
+               (catch Exception e 
+                      (do
+                         (prn ""Exception Caught, try again..."")
+                         (fn0)))))
+
+(def call-count (atom -1))     ;; counts how many times fn0 is called
+
+;; stub fn0 by returning different result
+(defn make-stub [& result-seqs]
+  (fn [& _]
+    (swap! call-count inc)
+    (let [result (nth result-seqs @call-count)]
+      (if (instance? Throwable result)
+        (throw result)
+        result))))
+
+(fact ""fn1 ignores first exception and returns second call to fn0""
+  (with-redefs [fn0 (make-stub (Exception. ""stubbed error"") 100)]
+    (fn1) => 100))

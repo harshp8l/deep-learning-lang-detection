@@ -1,0 +1,157 @@
+#include <stdio.h>
+#include <stdlib.h>
+//#include <conio.h>
+
+typedef struct Node_ {
+    int data;
+    struct Node_* next;
+} Node;
+
+typedef struct List_ {
+    int count;
+    Node* head;
+    Node* tail;
+} List;
+
+Node* NewNode(void);
+Node* Insert(List* p, int data);
+void Print(Node* p);
+void PrintList(List *list);
+void RevPrint(Node* p);
+void RevPrintList(List *list);
+
+List freelist;
+
+int
+main()
+{
+    List nodelist = { 0, NULL, NULL };
+
+    printf(""---------------------------------\n""
+        ""Insert()\n---------------------------------\n"");
+
+    for (int i = 1; i < 1000000; i++) {
+        Insert(&nodelist, i);
+#if 0
+        printf("" %d"", i);
+#endif
+    }
+
+    printf(""\n---------------------------------\n""
+        ""Print()\n---------------------------------\n"");
+#if 0
+    Print(nodelist.head);
+#else
+    PrintList(&nodelist);
+#endif
+
+    printf(""---------------------------------\n""
+        ""RevPrint()\n---------------------------------"");
+#if 0
+    RevPrint(nodelist.head);
+#else
+    RevPrintList(&nodelist);
+#endif
+
+    printf(""\nPress any key to continue..."");
+#if 0
+    _getch();
+#else
+    getchar();
+#endif
+}
+
+Node*
+NewNode(void)
+{
+    Node *node;
+
+    // NOTE: adjust the count setup (e.g. 1000) to what ever value you want
+    if (freelist.count <= 0) {
+        freelist.count = 1000;
+        freelist.head = calloc(freelist.count,sizeof(Node));
+    }
+
+    node = freelist.head++;
+    freelist.count -= 1;
+
+    return node;
+}
+
+Node*
+Insert(List* list,int _nbr)
+{
+    Node *node = NewNode();
+
+    node->data = _nbr;
+    node->next = NULL;
+
+    if (list->head == NULL) {
+        list->head = node;
+    }
+    else {
+        list->tail->next = node;
+    }
+
+    list->tail = node;
+    list->count += 1;
+
+    return node;
+}
+
+void
+Print(Node* p)
+{
+
+    if (p == NULL) {
+        printf(""\n"");
+        return;
+    }
+
+    printf("" %d"", p->data);
+    Print(p->next);
+}
+
+void
+PrintList(List* list)
+{
+    Node *node;
+
+    for (node = list->head;  node != NULL;  node = node->next)
+        printf("" %d"", node->data);
+
+    printf(""\n"");
+}
+
+void
+RevPrint(Node* p)
+{
+
+    if (p == NULL) {
+        printf(""\n"");
+        return;
+    }
+
+    RevPrint(p->next);
+    printf("" %d"", p->data);
+}
+
+void
+RevPrintList(List *list)
+{
+    Node **rlist = malloc(sizeof(Node**) * list->count);
+    Node *node;
+    int ridx;
+
+    ridx = list->count - 1;
+    for (node = list->head;  node != NULL;  node = node->next, --ridx)
+        rlist[ridx] = node;
+
+    for (ridx = 0;  ridx < list->count;  ++ridx) {
+        node = rlist[ridx];
+        printf("" %d"",node->data);
+    }
+    printf(""\n"");
+
+    free(rlist);
+}

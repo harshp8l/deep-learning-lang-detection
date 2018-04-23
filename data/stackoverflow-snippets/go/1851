@@ -1,0 +1,31 @@
+func TestMap(t *testing.T) {
+    fset := token.NewFileSet()
+    f, err := parser.ParseFile(fset, ""errcodes.go"", nil, 0)
+    if err != nil {
+        t.Errorf(""Failed to parse file: %v"", err)
+        return
+    }
+
+    errCodeCount := 0
+    // Range through declarations:
+    for _, dd := range f.Decls {
+        if gd, ok := dd.(*ast.GenDecl); ok {
+            // Find constant declrations:
+            if gd.Tok == token.CONST {
+                for _, sp := range gd.Specs {
+                    if valSp, ok := sp.(*ast.ValueSpec); ok {
+                        for _, name := range valSp.Names {
+                            // Count those that start with ""APIErrorCode""
+                            if strings.HasPrefix(name.Name, ""APIErrorCode"") {
+                                errCodeCount++
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if exp, got := errCodeCount, len(APIErrorCodeMessages); exp != got {
+        t.Errorf(""Expected %d err codes, got: %d"", exp, got)
+    }
+}

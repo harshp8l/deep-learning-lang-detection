@@ -1,0 +1,19 @@
+;; https://github.com/ptaoussanis/sente
+(let [{:keys [chsk ch-recv send-fn state]}
+      (sente/make-channel-socket! ""/web-socket""
+                                  {:host     conf/remote-host:port
+                                   :protocol (str conf/remote-protocol "":"")
+                                   :type     :auto})]
+  (def chsk chsk)
+  (def ch-chsk ch-recv)                                     ; ChannelSocket's receive channel
+  (def chsk-send! send-fn)                                  ; ChannelSocket's send API fn
+  (def chsk-state state))                                   ; Watchable, read-only atom
+
+(defonce router_ (atom nil))
+(defn stop-router! [] (when-let [stop-f @router_] (stop-f)))
+(defn start-router! []
+  (stop-router!)
+  (reset! router_
+          (sente/start-client-chsk-router!
+            ch-chsk (fn [{:keys [ch-recv send-fn state event id ?data] :as arg}]
+                      (println ""Event"" event)))))

@@ -1,0 +1,24 @@
+ val sqlCtx = sqlContext
+import sqlCtx.implicits._
+
+
+val metadata: DataFrame= Seq(
+  (Some(""1""), ""DATETIME"", ""Num"", ""8"", ""DATETIME20"", ""DATETIME20""),
+  (Some(""3""), ""SOURCEBANK"", ""Num"", ""1"", ""null"", ""null"")
+).toDF(""SNo"", ""Variable"", ""Type"", ""Len"", ""Format"", ""Informat"")
+
+val metadataAdapted: DataFrame = metadata
+  .withColumn(""Name"", functions.upper(col(""Variable"")))
+  .withColumnRenamed(""Type"", ""TypeHive"")
+val sasDF = Seq((""datetime"", ""TimestampType""),
+  (""datetime"", ""TimestampType"")
+).toDF(""variable"", ""type"")
+val sasDFAdapted = sasDF
+  .withColumn(""Name"", functions.upper(col(""variable"")))
+  .withColumnRenamed(""Type"", ""TypeSaS"")
+
+val res = sasDFAdapted.join(metadataAdapted, Seq(""Name""), ""inner"")
+
+val map = Map(""TimestampType"" -> ""Num"")
+ def udfType(dict: Map[String, String]) = functions.udf( (typeVar: String) => dict(typeVar))
+val result = res.withColumn(""correctMapping"", udfType(map)(col(""TypeSaS"")) === col(""TypeHive""))

@@ -1,0 +1,20 @@
+FTPFile[] remoteFiles = ftpClient.listFiles(remotePath);
+
+Pattern pattern = Pattern.compile("".*\\.jpg"");
+Stream<FTPFile> matchingFiles =
+    Arrays.stream(remoteFiles).filter(
+        (FTPFile remoteFile) -> pattern.matcher(remoteFile.getName()).matches());
+
+for (Iterator<FTPFile> iter = matchingFiles.iterator(); iter.hasNext(); ) {
+    FTPFile remoteFile = iter.next();
+    System.out.println(""Found file "" + remoteFile.getName() + "", downloading ..."");
+
+    File localFile = new File(localPath + ""\\"" + remoteFile.getName());
+
+    OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(localFile));
+    if (ftpClient.retrieveFile(remotePath + ""/"" + remoteFile.getName(), outputStream))
+    {
+        System.out.println(""File "" + remoteFile.getName() + "" downloaded successfully."");
+    }
+    outputStream.close();
+}

@@ -1,0 +1,53 @@
+package main
+
+import (
+    ""bytes""
+    ""fmt""
+
+    ""encoding/binary""
+
+    ""golang.org/x/crypto/blowfish""
+)
+
+func convertEndian(in []byte) ([]byte, error) {
+    //Read byte array as uint32 (little-endian)
+    var v1, v2 uint32
+    buf := bytes.NewReader(in)
+    if err := binary.Read(buf, binary.LittleEndian, &v1); err != nil {
+        return nil, err
+    }
+    if err := binary.Read(buf, binary.LittleEndian, &v2); err != nil {
+        return nil, err
+    }
+
+    //convert uint32 to byte array
+    out := make([]byte, 8)
+    binary.BigEndian.PutUint32(out, v1)
+    binary.BigEndian.PutUint32(out[4:], v2)
+
+    return out, nil
+}
+
+func main() {
+    key := []byte{0xc9, 0x04, 0xa7, 0xa8, 0x5b, 0xbd, 0x97, 0x53, 0x24, 0xc5, 0x08, 0x3e, 0xd9, 0x6f, 0xf0, 0x22, 0xf2, 0x5e, 0x06, 0x2d, 0xa1, 0xd5, 0x75, 0xb2, 0x46, 0x2c, 0x2c, 0x98, 0xd8, 0xd6, 0x4d, 0x9d}
+    data := []byte{0x53, 0x8b, 0x77, 0x59, 0x83, 0x4d, 0x34, 0x18}
+
+    //Add: This is equal to: (unsigned int *)data in C
+    cdata, _ := convertEndian(data)
+
+    cipher, err := blowfish.NewCipher(key)
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Printf(""key: %x\n"", key)
+    fmt.Printf(""data: %x\n"", cdata)
+
+    encrypted := make([]byte, 8)
+    cipher.Encrypt(encrypted, cdata)
+    fmt.Printf(""encrypted-1: %x\n"", encrypted)
+
+    //Add: This is equal to {uint32, uint32} --> byte array
+    ce, _ := convertEndian(encrypted)
+    fmt.Printf(""encrypted-2: %02x\n"", ce)
+}

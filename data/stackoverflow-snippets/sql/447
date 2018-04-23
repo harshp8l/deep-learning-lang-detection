@@ -1,0 +1,18 @@
+SELECT
+  CONCAT(cm.nl_long, ' ', y.my_year) as label, YEAR(v.create_time) as vacyear
+    ,  ifnull(MONTH(v.create_time), 0) as vacmonth, ifnull(COUNT(*),0) as totalsubscriptions
+FROM `calendar_months` as cm
+CROSS JOIN (
+    select 2018 my_year
+    from dual 
+    union 
+    select 2017 
+    from dual 
+) y 
+LEFT JOIN `vacancies` as v on cm.month_id = month(v.create_time) 
+    AND  (v.create_time >= (DATE_ADD(NOW(),INTERVAL -12 MONTH)))
+    AND v.is_deleted = 0
+    AND v.org_id = 1
+LEFT JOIN `vacancy_subscriptions` as vs on v.vacancy_id = vs.vacancy_id 
+GROUP BY vacyear, vacmonth, label
+ORDER BY y.my_year ASC, vacmonth ASC

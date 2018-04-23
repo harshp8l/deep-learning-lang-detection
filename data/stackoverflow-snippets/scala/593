@@ -1,0 +1,41 @@
+import spray.json._
+import scala.util.Try
+
+object Test
+  extends App {
+
+  // case class
+  case class InputJson(segment: Map[String, String])
+  case class OutputSegment(segmentationStrategyId: Int, segmentId: Int)
+  case class OutputJson(segment: List[OutputSegment])
+
+  // protocol for json conversion
+  object MyProtocol extends DefaultJsonProtocol {
+    implicit val inputJsonFormat = jsonFormat1(InputJson.apply)
+    implicit val outputSegmentFormat = jsonFormat2(OutputSegment.apply)
+    implicit val outputJsonFormat = jsonFormat1(OutputJson.apply)
+  }
+
+  // input json
+  val jsonString: String =
+    """"""{
+      |    ""segment"": {
+      |        ""134"": ""34"",
+      |        ""154"": ""342""
+      |    }
+      |}"""""".stripMargin
+
+  import MyProtocol._
+
+  val jsonVal: JsValue = jsonString.parseJson
+
+  val jsonInput: InputJson = jsonVal.convertTo[InputJson]
+
+  val outputSegments: List[OutputSegment] = jsonInput.segment.flatMap {
+    case (key, value) => Try(OutputSegment(key.toInt, value.toInt)).toOption
+  }.toList
+
+  val outputJson: String = OutputJson(outputSegments).toJson.prettyPrint
+
+  println(outputJson)
+}

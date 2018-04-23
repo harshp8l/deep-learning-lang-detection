@@ -1,0 +1,49 @@
+var tarFiles: Array[String] = Array()
+val tar_path = path + ""millionsongsubset.tar.gz""
+
+//TODO: add all your tar.gz files in main folder path to tarFiles array
+//should add here as many tar.gz files as wanted containing the
+//hdf5 files for the songs
+tarFiles = tarFiles :+ tar_path
+//tarFiles = tarFiles :+ (path+""A.tar.gz"")
+//tarFiles = tarFiles :+ (path+""B.tar.gz"")
+//tarFiles = tarFiles :+ (path+""C.tar.gz"")
+
+//This reads all tar.gz files in tarFiles list, and for each .h5
+//file within, it extracts each song's list of features.
+//Thus, it gets a list of features for all songs in the files.
+var allHDF5 = sc.parallelize(tarFiles).flatMap(path => { 
+    val tar = new TarArchiveInputStream(new GzipCompressorInputStream(new FileInputStream(path)))
+    var entry: TarArchiveEntry = tar.getNextEntry().asInstanceOf[TarArchiveEntry]
+    var res: List[Array[Byte]] = List()
+    var i = 0
+    while (entry != null) {
+        var outputFile:File = new File(entry.getName());
+        if (!entry.isDirectory() && entry.getName.contains("".h5"")) {
+            var byteFile = Array.ofDim[Byte](entry.getSize.toInt)
+            tar.read(byteFile);
+            res = byteFile :: res
+            if(i%100==0) {
+              println(""Read "" + i + "" files"")
+            }
+            i = i+1
+
+        }
+        entry = tar.getNextEntry().asInstanceOf[TarArchiveEntry]
+    }
+    //All files are turned into byte arrays
+    res
+
+  } ).map(bytes => {
+    // The toString method is used as a UUID for the file
+     val name = bytes.toString()
+     FileUtils.writeByteArrayToFile(new File(name), bytes)
+     val reader = HDF5Factory.openForReading(name)
+     val features = getFeatures(reader)
+     reader.close()
+     features
+  })
+
+  println(""Extracted songs from tar.gz, showing 5 examples"")
+  allHDF5.take(5).foreach(x => { x.foreach(y => print(y+"" ""))
+                       println()})

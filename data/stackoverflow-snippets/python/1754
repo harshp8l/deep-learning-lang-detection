@@ -1,0 +1,33 @@
+import re
+
+id_exceptions = ['id_ex_1', 'id_ex_2']
+class_exceptions = ['class_ex_1', 'class_ex_2']
+
+# Values to be written to dowload.txt file
+# Since id's needs to be unique, structure of this dict should be like this:
+# {[single key as value of an id]: {name: xxx, class: xxx}}
+unique_values = dict()  
+
+# All files should be opened using 'with' statement
+with open('open.txt') as source:
+    # Read whole file into one single long string
+    all_lines = source.read().replace('\n', '')
+    # Prepare regular expression for geting values from: name, id and class as a dict
+    # Read https://regex101.com/r/Kby3fY/1 for extra explanation what does it do
+    reg_exp = re.compile('name:(?<name>[a-zA-Z0-9_-]*);\sid:(?<id>[a-zA-Z0-9_-]*);\sclass:(?<class>[a-zA-Z0-9_-]*);')
+    # Read single long string and match to above regular expression
+    for match in reg_exp.finditer(all_lines):
+        # This will produce a single dict {'name': xxx, 'id': xxx, 'class': xxx}
+        single_line = match.groupdict()
+        # Now we will check againt all conditions at once and
+        # if they are not True we will add values as an unique id
+        if single_line['id'] not in unique_values or  # Check if not present already
+        single_line['id'] not in id_exceptions or  # Check is not in id exceptions
+        single_line['class'] not in class_exceptions:  # Check is not in class exceptions
+            # Add unique id values
+            unique_values[single_line['id']] = {'name': single_line['name'],
+                                                'class': single_line['class']}
+# Now we just need to write it to download.txt file
+with open('download.txt', 'w') as destintion:
+    for key, value in all_lines.items():  # In Python 2.x use all_lines.iteritems()
+        line = ""id:{}; name:{}; class:{}"".format(key, value['name'], value['class'])

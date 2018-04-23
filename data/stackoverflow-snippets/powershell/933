@@ -1,0 +1,33 @@
+#Unzip BrandingPackage 
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+Add-Type -AssemblyName System.Collections
+$BrandingPackagePath = ($PSScriptRoot + ""\FrequentisReportCenter.zip"")
+$BrandingPackageUnzipped = ($PSScriptRoot + ""\FrequentisReportCenter.zip.Unzipped"")
+[System.IO.Compression.ZipFile]::ExtractToDirectory($BrandingPackagePath,$BrandingPackageUnzipped)
+Write-Host ""BrandingPackage unzipped""
+$xml = New-Object System.Xml.XmlDocument
+$nsMngr = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+$nsMngr.AddNamespace(""ns"",""http://schemas.microsoft.com/sqlserver/reporting/2016/01/systemresourcepackagemetadata"")
+$xml.Load(($BrandingPackageUnzipped + ""\"" + ""metadata.xml""))
+$BrandingType=$xml[""SystemResourcePackage""].Attributes[""type""].Value
+$BrandingVersion=$xml[""SystemResourcePackage""].Attributes[""version""].Value
+$BrandingName=$xml[""SystemResourcePackage""].Attributes[""name""].Value
+$PathColors=($BrandingPackageUnzipped + ""\"" + $xml.SelectNodes(""//ns:Contents/ns:Item[@key='colors']"",$nsMngr)[0].Attributes[""path""].Value)
+$PathLogo=($BrandingPackageUnzipped + ""\"" + $xml.SelectNodes(""//ns:Contents/ns:Item[@key='logo']"",$nsMngr)[0].Attributes[""path""].Value)
+#BrandingPackage values fetched
+
+$cmd.CommandText=""MyDatabase.dbo.InstallBrandingPackage `
+                                                  @BrandingZIPPath=@ZIPPath,`
+                                                  @BrandingColorsPath=@ColorsPath,`
+                                                  @BrandingLogoPath=@LogoPath,`
+                                                  @BrandingType=@Type,`
+                                                  @BrandingName=@Name,`
+                                                  @BrandingVersion=@Version""
+$cmd.Parameters.AddWithValue(""@ZIPPath"",$BrandingPackagePath)
+$cmd.Parameters.AddWithValue(""@ColorsPath"",$PathColors)
+$cmd.Parameters.AddWithValue(""@LogoPath"",$PathLogo)
+$cmd.Parameters.AddWithValue(""@Type"",$BrandingType)
+$cmd.Parameters.AddWithValue(""@Name"",$BrandingName)
+$cmd.Parameters.AddWithValue(""@Version"",$BrandingVersion)
+$cmd.ExecuteNonQuery()
+#BrandingPackage written

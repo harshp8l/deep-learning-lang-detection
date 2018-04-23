@@ -1,0 +1,78 @@
+WITH tbl
+     AS (SELECT '1'          id,
+                'John'       name,
+                'Journalist' occupation,
+                '01/01/2000' startdate,
+                '01/01/2000' enddate
+           FROM DUAL
+         UNION ALL
+         SELECT '2', 'John', 'Baker', '01/01/2002', '01/01/2004' FROM DUAL
+         UNION ALL
+         SELECT '3',
+                'John',
+                'Butcher',
+                '01/01/2004',
+                NULL
+           FROM DUAL
+         UNION ALL
+         SELECT '4',
+                'Mark',
+                'Baker',
+                '05/03/2000',
+                NULL
+           FROM DUAL
+         UNION ALL
+         SELECT '5', 'Petrus', 'Lawyer', '01/01/2001', '01/01/2002' FROM DUAL
+         UNION ALL
+         SELECT '6',
+                'Petrus',
+                'Baker',
+                '01/01/2002',
+                NULL
+           FROM DUAL
+         UNION ALL
+         SELECT '7',
+                'Andre',
+                'Journalist',
+                '01/01/1999',
+                '01/01/2000'
+           FROM DUAL
+         UNION ALL
+         SELECT '8',
+                'Andre',
+                'Baker',
+                '01/01/2000',
+                NULL
+           FROM DUAL)
+SELECT id,
+       name,
+       occupation,
+       startdate,
+       enddate
+  FROM (SELECT t.*,
+               ROW_NUMBER () OVER (PARTITION BY name ORDER BY startdate) rn
+          FROM tbl t) mn_tbl
+ WHERE     name IN
+              (SELECT name
+                 FROM (SELECT t.*,
+                              ROW_NUMBER ()
+                                 OVER (PARTITION BY name ORDER BY startdate)
+                                 rn
+                         FROM tbl t)
+                WHERE rn = 1 AND occupation = 'Journalist') -- First occupation was Journalist
+       AND EXISTS
+              (SELECT name
+                 FROM (SELECT t.*,
+                              ROW_NUMBER ()
+                                 OVER (PARTITION BY name ORDER BY startdate)
+                                 rn
+                         FROM tbl t)
+                WHERE rn = 2 AND name = mn_tbl.name AND occupation = 'Baker') -- Second occupation was Baker
+       AND NOT EXISTS
+              (SELECT name
+                 FROM (SELECT t.*,
+                              ROW_NUMBER ()
+                                 OVER (PARTITION BY name ORDER BY startdate)
+                                 rn
+                         FROM tbl t)
+                WHERE rn > 2 AND name = mn_tbl.name)    -- No more occupations

@@ -1,0 +1,23 @@
+(ns tst.demo.core
+  (:use tupelo.test )
+  (:require [tupelo.core :as t] ))
+
+(defn integrate-to [x]
+  (/ (* x (+ x 1)) 2))
+(defn sum-to-n [n]
+  (integrate-to (- n 1)))
+(defn sum-n-to-k [n k]
+  (- (integrate-to k) (integrate-to n)))
+(defn sums-match[n k]
+  (= (sum-to-n n) (sum-n-to-k n k)))
+
+(defn recur-gen []
+  (t/lazy-gen
+    (loop [n 1 k 2]
+      (when (sums-match n k)
+        (t/yield [n k]))
+      (if (< (sum-to-n n) (sum-n-to-k n k))
+        (recur (inc n) k)
+        (recur n (inc k))))))
+
+(t/spyx (take 5 (recur-gen)))

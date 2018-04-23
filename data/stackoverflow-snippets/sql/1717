@@ -1,0 +1,15 @@
+select events.id, events.title, 
+categories.name as category, 
+GROUP_CONCAT(dates.startdate separator ',') as startdate, 
+GROUP_CONCAT(dates.enddate separator ',') as enddate, 
+GROUP_CONCAT(promoters.name separator ',') as promoter, 
+GROUP_CONCAT(promoters.avatar separator ',') as avatar
+from events
+inner join categories on events.category_id = categories.id
+inner join event_dates on events.id = event_dates.event_id
+inner join dates on event_dates.date_id = dates.id 
+inner join event_promoter on events.id = event_promoter.event_id 
+inner join promoters on event_promoter.promoter_id = promoters.id
+where dates.startdate > now()
+group by events.id
+order by dates.startdate

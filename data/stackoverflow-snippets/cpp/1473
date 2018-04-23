@@ -1,0 +1,31 @@
+#include <type_traits>
+
+struct B {
+    void danger() {
+    }
+    void all_fine() const {
+    }
+};
+
+template<bool Writeable>
+struct A {
+    using BRef = typename std::conditional<Writeable, B &, B const &>::type;
+    BRef b;
+
+    A (BRef b) : b(b) {};
+};
+
+using ConstA = A<false>;
+using NonConstA = A<true>;
+
+int main() {
+    B b;
+    ConstA a(b);
+    //NonConstA nc_a(a);
+    ConstA another_a(a);
+    //another_a.b.danger();
+    another_a.b.all_fine();
+
+    NonConstA a2(b);
+    a2.b.danger();
+}

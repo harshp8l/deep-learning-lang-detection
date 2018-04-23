@@ -1,0 +1,35 @@
+typedef SparseMatrix<double, Eigen::RowMajor> SpMat;
+typedef Spectra::SparseSymMatProd<double, Eigen::Upper, Eigen::RowMajor> SpSymMatProd;
+typedef Spectra::SparseCholesky<double, Eigen::Upper> SpCholesky;
+typedef Spectra::SparseRegularInverse<double, Eigen::Upper, Eigen::RowMajor> SpRegularInverse;
+
+
+template < typename Scalar,
+    int SelectionRule,
+    typename OpType,
+    typename BOpType,
+    int GEigsMode >
+    SymGEigsSolver<Scalar, SelectionRule, OpType, BOpType, GEigsMode> CreateSolverEngine
+    (const SpMat& A, const SpMat&  B, int selectRule, int gMode,  int nMode, int ncv)
+{
+    SpSymMatProd op(A);
+
+    if (gMode == Spectra::GEIGS_CHOLESKY)
+    {
+        SpCholesky  Bop(B);
+        SymGEigsSolver<Scalar, SelectionRule, SpSymMatProd, SpCholesky, GEigsMode>
+            ges1(op, Bop, nMode, ncv);
+        return ges1;
+    }
+    if (gMode == Spectra::GEIGS_REGULAR_INVERSE)
+    {
+        SpRegularInverse Bop2(B);
+        SymGEigsSolver<Scalar, SelectionRule, SpSymMatProd, SpRegularInverse, GEigsMode>
+            ges(op, Bop2, nMode, ncv);
+        return ges;
+    }
+
+    throw std::out_of_range(""out of range for ""+gMode);
+
+
+}

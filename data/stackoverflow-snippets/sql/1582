@@ -1,0 +1,28 @@
+SQL> create table t1 as
+  2    select 50 s, 90 o from dual union
+  3    select 51, 90 from dual union
+  4    select 50, 10 from dual;
+
+Table created.
+
+SQL>  create table t2 as
+  2    select 50 z, 10 p from dual union
+  3    select 51, 10 from dual union
+  4    select 50, 90 from dual union
+  5    select 51, 90 from dual;
+
+Table created.
+
+SQL>
+SQL> create or replace trigger trg_ad_t1
+  2    after delete on t1
+  3    for each row
+  4    when (old.o = 90)
+  5  begin
+  6    delete from t2
+  7      where z = :old.s
+  8        and p = :old.o;
+  9  end;
+ 10  /
+
+Trigger created.

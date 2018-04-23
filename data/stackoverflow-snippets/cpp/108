@@ -1,0 +1,25 @@
+struct Container
+{
+    struct Nested{
+            std::unique_ptr<Container> node;
+
+            Nested(): node(nullptr) {}
+            Nested(std::unique_ptr<Container> t) : node(std::move(t)) {}
+        };
+
+    std::vector<Nested> edges;
+};
+
+typedef std::unique_ptr<Container> UCont;
+typedef Container::Nested Nested;
+
+
+int main()
+{
+        auto v = std::vector<Nested>{3};
+        v.push_back(std::move(Nested(std::move(std::unique_ptr<Container>(new Container{})))));
+        v.push_back(std::move(Nested(std::move(std::unique_ptr<Container>(new Container{})))));
+        v.push_back(std::move(Nested(std::move(std::unique_ptr<Container>(new Container{})))));
+        std::unique_ptr<Container> object = UCont(new Container { std::move(v) });
+
+}

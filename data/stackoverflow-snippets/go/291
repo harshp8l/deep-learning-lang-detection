@@ -1,0 +1,59 @@
+package main
+
+import (
+    ""bytes""
+    ""encoding/json""
+    ""fmt""
+)
+
+type Response struct {
+    Data OrderedMap `json:""data""`
+}
+
+type OrderedMap []Entry
+
+type Entry struct {
+    Key   string
+    Value interface{}
+}
+
+func (m OrderedMap) MarshalJSON() ([]byte, error) {
+    var buf bytes.Buffer
+    buf.WriteByte('{')
+    for i, entry := range m {
+        if i != 0 {
+            buf.WriteByte(',')
+        }
+        key, err := json.Marshal(entry.Key)
+        if err != nil {
+            return nil, err
+        }
+        buf.Write(key)
+        buf.WriteByte(':')
+        value, err := json.Marshal(entry.Value)
+        if err != nil {
+            return nil, err
+        }
+        buf.Write(value)
+    }
+    buf.WriteByte('}')
+    return buf.Bytes(), nil
+}
+
+func main() {
+    response := Response{
+        Data: OrderedMap{
+            {""42"", map[string][]int{""1517616000"": []int{1200}}},
+            {""15"", map[string][]int{""1517616000"": []int{1200}}},
+            {""29"", map[string][]int{""1517616000"": []int{1200}}},
+            {""10"", map[string][]int{""1517616000"": []int{1000}}},
+        },
+    }
+
+    j, err := json.MarshalIndent(response, """", ""  "")
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Println(string(j))
+}

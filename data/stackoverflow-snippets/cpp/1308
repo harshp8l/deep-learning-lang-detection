@@ -1,0 +1,33 @@
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <iostream>
+
+void broken_input() {
+    boost::property_tree::ptree pt;
+    std::istringstream is(""\""ok\"""");
+    read_json(is, pt);
+    std::cout << ""Root value is "" << pt.get_value<std::string>() << std::endl;
+}
+
+void normal_tree() {
+    boost::property_tree::ptree pt;
+    pt.put(""first"", ""hello"");
+    pt.put(""second"", ""world"");
+    pt.put(""third"", ""bye"");
+
+    std::cout << pt.ordered_begin()->second.get_value<std::string>() << std::endl;
+
+    write_json(std::cout, pt);
+}
+
+
+int main() {
+    try {
+        broken_input();
+        normal_tree();
+    }
+    catch (std::exception const& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+}

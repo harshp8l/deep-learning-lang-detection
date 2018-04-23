@@ -1,0 +1,125 @@
+open System
+open System.IO
+open System.Diagnostics
+
+let clock =
+  let sw = Stopwatch ()
+  sw.Start ()
+  sw
+
+let collectionCount () = 
+  GC.CollectionCount 0 + GC.CollectionCount 1 + GC.CollectionCount 2
+
+let timeIt (n : string) (outer : int) (a : unit -> 'T) : 'T*int64 =
+  printfn ""Timing '%s'..."" n
+
+  let v = a ()
+
+  let t = clock.ElapsedMilliseconds
+  for i in 1..outer do
+    a () |> ignore
+  let e = clock.ElapsedMilliseconds - t
+
+  printfn ""  took %d ms"" e
+
+  v, e
+
+[<EntryPoint>]
+let main argv =
+  let random  = Random 19740531
+  let total   = 100000000
+  let outers  = [|100;10000;1000000|]
+
+  use output = new StreamWriter "".\output.tsv""
+  ""Dimensions\tName\tSum\tCollectionCounts\tMilliseconds"" |> output.WriteLine
+
+  for outer in outers do
+    let inner = total / outer
+    let dim   = inner |> float |> sqrt |> int32
+    let ar    = Array2D.init dim dim (fun _ _ -> random.NextDouble ())
+
+    printfn ""New test run, matrix dimensions are %dx%d"" dim dim 
+
+    let run = sprintf ""%d_%d"" dim dim
+
+    let perf_zero () : float[,] = 
+      let xl = ar.GetLength(0)
+      let yl = ar.GetLength(1)
+      let res = Array2D.zeroCreate xl yl
+      res
+
+    let perf_copy () : float[,] = 
+      Array2D.copy ar
+
+    let perf_id () : float[,] = 
+      ar |> Array2D.map id
+
+    let perf_op () : float[,] = 
+      ar |> Array2D.mapi(fun rowi coli value -> (value + 1.6) * double(coli + 6) * double(rowi + 7))
+
+    let perf_tp () : float[,] =
+      let res = ar |> Array2D.map id
+      for x in 0 .. ar.GetLength(0) - 1 do
+        for y in 0 .. ar.GetLength(1) - 1 do
+          res.[x, y] <- (ar.[x, y] + 1.6) * double ((x + 6) * (y + 7))
+      res
+
+    let perf_tpm () : float[,] =
+      let xl = ar.GetLength(0)
+      let yl = ar.GetLength(1)
+      let res = Array2D.zeroCreate xl yl
+      for x in 0 .. xl - 1 do
+        for y in 0 .. yl - 1 do
+          res.[x, y] <- (ar.[x, y] + 1.6) * double ((x + 6) * (y + 7))
+      res
+
+    let perf_tpmf () : float[,] =
+      let xl = ar.GetLength(0)
+      let yl = ar.GetLength(1)
+      let res = Array2D.zeroCreate xl yl
+      for y in 0 .. yl - 1 do
+        for x in 0 .. xl - 1 do
+          res.[x, y] <- (ar.[x, y] + 1.6) * double ((x + 6) * (y + 7))
+      res
+
+    let perf_tr () : float[,] =
+      let xl = ar.GetLength(0)
+      let yl = ar.GetLength(1)
+      let res = Array2D.zeroCreate xl yl
+      let rec loopy x y =
+        if y >= 0 then
+          res.[x, y] <- (ar.[x, y] + 1.6) * double ((x + 6) * (y + 7))
+          loopy x (y - 1)
+        else
+          ()
+      and loopx x =
+        if x >= 0 then
+          loopy x (yl - 1)
+          loopx (x - 1)
+        else
+          ()
+      loopx (xl - 1)
+      res
+
+
+    let testCases =
+      [|
+        ""Creating Zero Matrix""              , perf_zero
+        ""Copying Matrix""                    , perf_copy
+        ""Mapping Matrix with id""            , perf_id
+        ""Original Algorithm""                , perf_op
+        ""Tomas Petricek Algorithm""          , perf_tp 
+        ""Modified Tomas Petricek Algorithm"" , perf_tpm
+        ""Reverse Algoritm""                  , perf_tr
+        ""Flipped x,y Algoritm""              , perf_tpmf
+      |]
+
+    for name, a in testCases do
+      let pcc   = collectionCount ()
+      let vs, t = timeIt name outer a
+      let sum   = ref 0.
+      vs |> Array2D.iter (fun v -> sum := !sum + v)
+      let dcc   = collectionCount () - pcc
+      sprintf ""%s\t%s\t%f\t%d\t%d"" run name !sum dcc t |> output.WriteLine
+
+  0

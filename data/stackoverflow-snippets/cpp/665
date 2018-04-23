@@ -1,0 +1,20 @@
+0:001> .shell -ci ""!dh psapi"" grep Export
+    1088 [     359] address [size] of Export Directory
+.shell: Process exited
+0:001> dt ole32!_IMAGE_EXPORT_DIRECTORY  (psapi + 1088)
+   +0x000 Characteristics  : 0
+   +0x004 TimeDateStamp    : 0x4a5bc026
+   +0x008 MajorVersion     : 0
+   +0x00a MinorVersion     : 0
+   +0x00c Name             : 0x11be
+   +0x010 Base             : 1
+   +0x014 NumberOfFunctions : 0x1b
+   +0x018 NumberOfNames    : 0x1b
+   +0x01c AddressOfFunctions : 0x10b0
+   +0x020 AddressOfNames   : 0x111c
+   +0x024 AddressOfNameOrdinals : 0x1188
+0:001> r? $t0 = (int *) @@(psapi + 10b0)
+0:001> r? $t1 = (int *) @@(psapi + 111c)
+0:001> r? $t2 = (short *) @@(psapi + 1188)
+0:001> .printf ""%x %ma %y\n"" , @@(@$t2[4]) , (@@(@$t1[4]) + psapi) , (@@(@$t0[4]) + psapi)
+4 EnumProcessModules PSAPI!EnumProcessModulesStub (762d1408)

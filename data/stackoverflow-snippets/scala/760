@@ -1,0 +1,28 @@
+import org.apache.spark.rdd.RDD
+import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
+import org.apache.hadoop.conf.Configuration
+
+def saveAsSingleTextFile(
+    outputRDD: RDD[String],
+    outputFile: String
+): Unit = {
+
+  // Classic saveAsTextFile in a temporary folder:
+  outputRDD.saveAsTextFile(outputFile + "".tmp"")
+
+  // The facility allowing file manipulations on hdfs:
+  val hdfs = FileSystem.get(new Configuration())
+
+  // Merge the folder into a single file:
+  FileUtil.copyMerge(
+    hdfs,
+    new Path(outputFile + "".tmp""),
+    hdfs,
+    new Path(outputFile),
+    true,
+    new Configuration(),
+    null)
+
+  // And we delete the intermediate folder:
+  hdfs.delete(new Path(outputFile + "".tmp""), true)
+}

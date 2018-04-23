@@ -1,0 +1,86 @@
+var ErrNotExists = errors.New(""value doesn't exist"")
+var ErrWrongType = errors.New(""variable is wrong type"")
+
+type MyMap map[string]interface{}
+
+func(m MyMap) IsArray(key string) bool {
+    val, ok := m[key]
+    if !ok {
+        return false
+    }
+    _, ok = val.([]string)
+    return ok
+}
+
+func(m MyMap) Exists(key string) bool {
+    _, ok := m[key]
+    return ok
+}
+
+func(m MyMap) SetString(key, value string) {
+    m[key] = value
+}
+
+func(m MyMap) SetArray(key string, value []string) {
+    m[key] = value
+}
+
+func(m MyMap) GetString(key string) (string, error) {
+    v, ok := m[key]
+    if !ok {
+        return """", ErrNotExists
+    }
+    realVal, ok := v.(string)
+    if !ok {
+        return """", ErrWrongType
+    }
+    return realVal, nil
+}
+
+func(m MyMap) GetArray(key string) ([]string, error) {
+    v, ok := m[key]
+    if !ok {
+        return nil, ErrNotExists
+    }
+    realVal, ok := v.([]string)
+    if !ok {
+        return nil, ErrWrongType
+    }
+    return realVal, nil
+}
+
+func(m MyMap) AppendArray(key string, toAppend []string) error {
+    v, ok := m[key]
+    if !ok {
+        return ErrNotExists
+    }
+    realVal, ok := v.([]string)
+    if !ok {
+        return ErrWrongType
+    }
+    m[key] = append(realVal, toAppend...)
+    return nil
+}
+
+func main() {
+    m := make(MyMap)
+    m.SetString(""string"",""hello"")
+    m.SetArray(""array"",[]string{""hi"",""there""})
+    fmt.Println(m)
+    fmt.Println(m.IsArray(""string""), m.IsArray(""array""))
+    s, err := m.GetString(""string"")
+    if err != nil { // handle
+        fmt.Println(err)
+    }
+    a, err := m.GetArray(""array"")
+    if err != nil { // handle
+        fmt.Println(err)
+    }
+    fmt.Println(s,a)
+    m.AppendArray(""array"", []string{""all"",""you"",""people""})
+    a, err = m.GetArray(""array"")
+    if err != nil { // handle
+        fmt.Println(err)
+    }
+    fmt.Println(a)
+}

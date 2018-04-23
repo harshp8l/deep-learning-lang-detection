@@ -1,0 +1,42 @@
+type Table = 
+    {
+        Quote:int
+        Sequence: decimal
+        Item: string
+    }
+
+let createTableEntry (q,s,i) = 
+    {
+        Quote = q
+        Sequence = s
+        Item = i
+    }
+
+let printTR {Quote=q;Sequence=s;Item=i} = printfn ""%A   |  %A  | %A"" q s i 
+
+let table =
+    [
+        (1  ,    1.0M   , ""a"")
+        (1  ,    2.0M   , ""a"")
+        (1  ,    3.0M   , ""a"")
+        (1  ,    1.0M   , ""b"")
+        (1  ,    2.0M   , ""b"")
+        (1  ,    3.0M   , ""b"")
+        (2  ,    1.0M   , ""x"")
+        (2  ,    2.0M   , ""x"")
+        (3  ,    1.0M   , ""y"")
+    ]
+    |> List.map createTableEntry
+
+let result = 
+    table
+    |> List.groupBy (fun x -> x.Quote, x.Item) //group ""unique"" by Quote&Item
+    |> List.map (fun x -> snd x |> List.max)   //get max of each group, i.e. max of Sequence
+
+
+result |> Seq.iter printTR
+
+1   |  3.0M  | ""a""
+1   |  3.0M  | ""b""
+2   |  2.0M  | ""x""
+3   |  1.0M  | ""y""

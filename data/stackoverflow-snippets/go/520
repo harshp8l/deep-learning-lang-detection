@@ -1,0 +1,33 @@
+import (
+    ""fmt""
+    ""net""
+    ""net/http""
+)
+
+func init() {
+    http.HandleFunc(""/"", handler)
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    clientIPAddress, _, err := net.SplitHostPort(r.RemoteAddr)
+    if err != nil {
+        clientIPAddress = err.Error()
+    }
+    rAddr := r.RemoteAddr
+    forward := r.Header.Get(""x-forwarded-for"")
+    country := r.Header.Get(""X-AppEngineCountry"")
+    region := r.Header.Get(""X-AppEngine-Region"")
+    city := r.Header.Get(""X-AppEngine-City"")
+    cityLatLong := r.Header.Get(""X-AppEngine-CityLatLong"")
+    fullHeader := r.Header
+    fmt.Fprintf(w, ""Hello, world!\n %v\n %v\n %v\n %v\n %v\n %v\n %v\n %v"",
+        clientIPAddress,
+        rAddr,
+        forward,
+        country,
+        region,
+        city,
+        cityLatLong,
+        fullHeader
+    )
+}

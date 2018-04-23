@@ -1,0 +1,9 @@
+public static boolean copyMerge(SparkConf sparkConf, JavaRDD rdd, String dstPath) throws IOException, URISyntaxException {
+    Configuration hadoopConf = sparkConf.hadoopConfiguration();
+    hadoopConf.set(""fs.s3.awsAccessKeyId"", awsAccessKey);
+    hadoopConf.set(""fs.s3.awsSecretAccessKey"", awsSecretKey);
+    String tempFolder = ""s3://bucket/folder"";
+    rdd.saveAsTextFile(tempFolder);
+    FileSystem hdfs = FileSystem.get(new URI(tempFolder), hadoopConfig);
+    return FileUtil.copyMerge(hdfs, new Path(tempFolder), hdfs, new Path(dstPath), false, hadoopConfig, null);
+}

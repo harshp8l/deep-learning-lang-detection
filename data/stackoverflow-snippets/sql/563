@@ -1,0 +1,42 @@
+DECLARE @table TABLE(
+ID INT IDENTITY(1,1),
+Date DATETIME,
+Day VARCHAR(50)
+)
+DECLARE @Days TABLE(
+ID INT IDENTITY(1,1),
+Day VARCHAR(50)
+)
+
+INSERT INTO @Days VALUES ('Monday')
+INSERT INTO @Days VALUES ('Thursday')
+
+
+
+
+DECLARE @StartDate DATETIME='2018-01-01';
+DECLARE @EndDate DATETIME=GETDATE();
+
+
+DECLARE @Day VARCHAR(50)='Friday';
+
+DECLARE @TempDate DATETIME=@StartDate;
+
+WHILE CAST(@TempDate AS DATE)<=CAST(@EndDate AS DATE)
+BEGIN
+
+    IF EXISTS (SELECT 1 FROM @Days WHERE DAY IN (DATENAME(dw,@TempDate))) 
+    BEGIN
+        INSERT INTO @table
+        VALUES  ( 
+                  @TempDate, -- Date - datetime
+                  DATENAME(dw,@TempDate)  -- Day - varchar(50)
+                  )
+    END
+
+    SET @TempDate=DATEADD(DAY,1,@TempDate)
+END
+
+
+
+SELECT * FROM @table

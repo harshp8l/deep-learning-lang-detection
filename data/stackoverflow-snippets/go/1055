@@ -1,0 +1,19 @@
+client, err := datastore.NewClient(ctx, projectID)
+tx, err := client.NewTransaction(ctx)
+if err != nil {
+    log.Fatalf(""Failed to create client: %v"", err)
+}
+
+fmt.Fprint(w, input)
+taskKey := datastore.NameKey(""Entity"", ""stringID"", nil)
+var task Entity
+if err := tx.Get(taskKey, &task); err != nil {
+    log.Fatalf(""tx.Get: %v"", err)
+}
+task.Values = append(task.Values, input)
+if _, err := tx.Put(taskKey, &task); err != nil {
+    log.Fatalf(""tx.Put: %v"", err)
+}
+if _, err := tx.Commit(); err != nil {
+    log.Fatalf(""tx.Commit: %v"", err)
+}

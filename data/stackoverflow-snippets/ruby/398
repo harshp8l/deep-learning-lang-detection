@@ -1,0 +1,20 @@
+final_entries = []
+entries.group_by {|a| a[:account_id]}.each do |key, value|
+    if value.length > 1
+      get_debit = []
+      get_credit = []
+      value.each do |subject|
+        get_debit << subject[:amount_debit] if subject[:amount_debit] > 0
+        get_credit << subject[:amount_credit] if subject[:amount_credit] > 0
+      end
+      if get_debit.sum > get_credit.sum
+        total = get_debit.sum - get_credit.sum
+        final_entries << { account_id: key, amount_credit: 0.0, amount_debit: total }
+      else
+        total = get_credit.sum - get_debit.sum
+        final_entries << { account_id: key, amount_credit: total, amount_debit: 0.0 }
+      end
+    else
+      final_entries << value[0]
+    end
+  end

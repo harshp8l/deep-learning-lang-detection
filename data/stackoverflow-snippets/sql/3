@@ -1,0 +1,23 @@
+select FOScouts, FNScouts, FTScouts, MOScouts, MNScouts, MTScouts,
+FOScouts+FNScouts+FTScouts as `Total Female Scouts`,
+MOScouts+MNScouts+MTScouts as `Total Male Scouts`,
+FOScouts+FNScouts+FTScouts+MOScouts+MNScouts+MTScouts as `Total Scouts`
+from (select count(case when gender='Female' then 1 end) as FOScouts,
+      count(case when gender='Male' then 1 end) as MOScouts
+      from stormtroopers_officer st_o
+      join st_officer_assign st_o_a 
+      on st_o_a.stid = st_o.stid
+      where st_o_a.role = 'Scout') o
+     join
+     (select count(case when gender='Female' then 1 end) as FNScouts,
+      count(case when gender='Male' then 1 end) as MNScouts
+      from stormtroopers_nco st_n
+      join st_nco_assign st_n_a 
+      on st_n_a.stid = st_n.stid
+      where st_n_a.role = 'Scout') n
+     join
+     (select count(case when gender='Female' then 1 end) as FTScouts,
+      count(case when gender='Male' then 1 end) as MTScouts
+      from stormtroopers_troop st_t
+      join st_troop_assign st_t_a on st_t_a.stid = st_t.stid
+      where st_t_a.role = 'Scout') t

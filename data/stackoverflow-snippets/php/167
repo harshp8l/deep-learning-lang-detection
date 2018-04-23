@@ -1,0 +1,24 @@
+public function onKernelRequest(GetResponseEvent $event)
+{
+    $pathInfo = $event->getRequest()->getPathinfo();
+    $baseUrl = $event->getRequest()->getBaseUrl();
+    $checkLocale = explode('/', ltrim($pathInfo, '/'))[0];
+
+    //Or some other logic to detect/provide locale
+
+    if (($this->isLocaleSupported($checkLocale) == false) && ($this->defaultLocale !== $checkLocale)) {
+        if ($this->isProfilerRoute($checkLocale) == false) {
+            $locale = $this->defaultLocale;
+            $event->setResponse(new RedirectResponse($baseUrl . '/' . $locale . $pathInfo));
+    }
+    /* Or with matcher:
+    try {
+         //Try to match the path with the locale prefix
+         $this->matcher->match('/' . $locale . $pathInfo);
+         //$event->setResponse(new RedirectResponse($baseUrl . '/' . $locale . $pathInfo));
+    } catch (\Symfony\Component\Routing\Exception\ResourceNotFoundException $e) {
+    } catch (\Symfony\Component\Routing\Exception\MethodNotAllowedException $e) {
+    }
+    */
+    }
+}

@@ -1,0 +1,47 @@
+@Component
+class RestService {
+
+    private final RestTemplate restTemplate
+    private final static Logger log = LoggerFactory.getLogger(RestService.class)
+
+    @Autowired
+    RestService(
+            @Qualifier(""myRestTemplate"") RestTemplate restTemplate
+    ) {
+        this.restTemplate = restTemplate
+    }
+
+    // add specific methods to your service that access the GET and PUT methods
+
+    private <T> T getForObject(String path, Class<T> object, Map<String, ?> params = [:]) {
+        try {
+            return restTemplate.getForObject(path, object, params)
+        } catch (HttpClientErrorException e) {
+            log.warn(""Client Error (${path}): ${e.responseBodyAsString}"")
+        } catch (HttpServerErrorException e) {
+            String msg = ""Server Error (${path}): ${e.responseBodyAsString}""
+            log.error(msg, e)
+        } catch (RestClientException e) {
+            String msg = ""Error (${path})""
+            log.error(msg, e)
+        }
+        return null
+    }
+
+    private <T> T putForObject(String path, T object) {
+        try {
+            HttpEntity<T> request = new HttpEntity<>(object)
+            HttpEntity<T> response = restTemplate.exchange(path, HttpMethod.PUT, request, T)
+            return response.getBody()
+        } catch (HttpClientErrorException e) {
+            log.warn(""Error (${path}): ${e.responseBodyAsString}"")
+        } catch (HttpServerErrorException e) {
+            String msg = ""Error (${path}): ${e.responseBodyAsString}""
+            log.error(msg, e)
+        } catch (RestClientException e) {
+            String msg = ""Error (${path})""
+            log.error(msg, e)
+        }
+        return null
+    }
+}

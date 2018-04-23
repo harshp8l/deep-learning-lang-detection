@@ -1,0 +1,35 @@
+#include <type_traits>
+#include <iostream>
+
+//enable_if
+template<bool, typename T = void>
+struct enable_if {};
+template <typename T>
+struct enable_if<true, T> {
+    using type = int; // must be a non-type template parameter
+};
+
+template <typename T, typename enable_if<std::is_integral<T>::value, T>::type = 0>
+void do_stuff(T &t) {
+    std::cout<< ""Integral selected ""<<std::endl;
+}
+
+template <typename T, typename enable_if<std::is_class<T>::value, T>::type = 0>
+void do_stuff(T &t) {
+    std::cout<<""Class selected "" <<std::endl;
+}
+
+class Foo
+{
+  public:
+    Foo() = default;
+};
+
+int main()
+{
+    int t =25;
+    Foo f;
+    do_stuff(t);
+    do_stuff(f);
+    return 0;
+}

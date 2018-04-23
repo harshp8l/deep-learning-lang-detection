@@ -1,0 +1,46 @@
+//   TL(1)-------TR(2)
+//    |           |
+//    |           |
+//   BL(4)-------BR(3)
+//
+template<typename T>
+int OrderPoints(vector<cv::Point_<T>>& ip_op_corners_orig)
+{
+    if (ip_op_corners_orig.size() < 4)
+        return -1;
+
+    //Making a copy of the Original corner points
+    vector<cv::Point_<T>> corners = ip_op_corners_orig;
+
+    ip_op_corners_orig.clear();
+    ip_op_corners_orig.resize(4);
+
+    //Sorting based on the X Co-ordinates of points
+    vector<int> sIdx = { 0, 1, 2, 3 };
+    vector<cv::Point_<T>> leftMost, rightMost;
+
+    std::sort(sIdx.begin(), sIdx.end(), [&corners](int i1, int i2){return corners[i1].x < corners[i2].x; });
+
+    //Getting the Left most and Right most points and getting the top left and bottom left points
+    leftMost = { corners[sIdx[0]], corners[sIdx[1]] };
+
+    //Getting the Top Left and Bottom Left point
+    ip_op_corners_orig[0] = leftMost[0].y > leftMost[1].y ? leftMost[1] : leftMost[0];
+    ip_op_corners_orig[3] = leftMost[0].y < leftMost[1].y ? leftMost[1] : leftMost[0];
+
+
+    //Getting the Bottom right anfd top right point
+    rightMost = { corners[sIdx[2]], corners[sIdx[3]] };
+
+    //Getting the Top right and Bottom right point
+    ip_op_corners_orig[1] = rightMost[0].y > rightMost[1].y ? rightMost[1] : rightMost[0];
+    ip_op_corners_orig[2] = rightMost[0].y < rightMost[1].y ? rightMost[1] : rightMost[0];
+
+
+    return 0;
+}
+
+//template explicit definitions
+template int OrderPoints(vector<cv::Point>&);
+template int OrderPoints(vector<cv::Point2d>&);
+template int OrderPoints(vector<cv::Point2f>&);

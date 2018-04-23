@@ -1,0 +1,50 @@
+(ns myapp.utils.schema
+  (:import [org.apache.commons.validator.routines EmailValidator])
+  (:require [clojure.string :as str]
+            [schema.core :as s]
+            [schema.coerce :as sco]))
+
+(def valid-email? ""Checks that the value is a valid email string.""
+  (let [ev (EmailValidator/getInstance)]
+    (fn [s]
+      (and
+        (string? s)
+        (.isValid ev, ^String s)
+        ))))
+
+(def Email ""Email schema type, stricter than schema.core/Str.""
+  (s/pred valid-email?))
+
+(defn sanitize-email [s]
+  (if (string? s)
+    (-> s str/lower-case str/trim)
+    s))
+
+(defn email-matcher [s]
+  (when (= Email s) sanitize-email))
+
+
+(def matcher
+  ""The Plumatic matcher used for Plumatic schema coercion in myapp.""
+  (sco/first-matcher [email-matcher,,,]))
+
+(defn coercer 
+  [schema]
+  (sco/coercer schema matcher))
+
+;; ...
+
+(ns myapp.customer
+  (:require [schema.core :as s]
+            [myapp.utils.schema :as sc]))
+
+(def Customer 
+  {:customer/email sc/Email 
+   :customer/name s/Str})
+
+(def coerce-customer (sc/coercer Customer))
+
+(coerce-customer {:customer/email ""vAlENTin@gmaIl.com ""
+                  :customer/name ""Valentin""})
+=> {:customer/email ""valentin@gmail.com""
+    :customer/name ""Valentin""}

@@ -1,0 +1,29 @@
+class TextLine(object):
+    def __init__(self, letters):
+        self.letters = letters
+        self.width = sum(letter.width for letter in self.letters)
+        # one space between each letter, except the last one
+        self.width += len(self.letters) - 1
+        self.height = max(letter.height for letter in self.letters)
+        self.baseline = self.height
+
+        # add letters to buffer
+        self.buffer = [' '] * (self.width * self.height)  # should probably use a buffer.buffer here..
+        x = 0
+        for letter in self.letters:
+            letter.add_to_buffer(self, x, 0)
+            x += letter.width + 1
+
+    def __setitem__(self, (x, y), ch):
+        # calculate the position and assign the character
+        self.buffer[y * self.width + x] = ch
+
+    def __str__(self):
+        chunks = []
+        # divide the buffer into pieces/chunks of length self.width..
+        # (see https://stackoverflow.com/a/312464/75103 for how this works)
+        for i in range(0, len(self.buffer), self.width):
+            chunk = self.buffer[i:i + self.width]
+            chunks.append(''.join(chunk))
+        # .. and start each chunk on a new line
+        return '\n'.join(chunks)

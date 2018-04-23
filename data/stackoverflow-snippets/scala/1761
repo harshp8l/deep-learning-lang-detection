@@ -1,0 +1,13 @@
+  def updateFieldsToNullable(structType: StructType): StructType = {
+    StructType(structType.map(f => f.dataType match {
+      case d: ArrayType =>
+        val element = d.elementType match {
+          case s: StructType => updateFieldsToNullable(s)
+          case _ => d.elementType
+        }
+        f.copy(nullable = true, dataType = ArrayType(element, d.containsNull))
+      case s: StructType => f.copy(nullable = true, dataType = updateFieldsToNullable(s))
+      case _ => f.copy(nullable = true)
+    })
+    )
+  }

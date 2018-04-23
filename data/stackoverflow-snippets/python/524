@@ -1,0 +1,19 @@
+@bp.route('/wells/name')
+def wells_name():
+    if 'field' in request.args and 'name' not in request.args:
+        field = request.args['field']
+        query = Wells.query.filter(Wells.field.ilike('%{}%'.format(field))) \
+            .with_entities(Wells.name).group_by(Wells.name).order_by(Wells.name)
+    elif 'field' not in request.args and 'name' in request.args:
+        name = request.args['name']
+        query = Wells.query.filter(Wells.name.ilike('%{}%'.format(name))) \
+            .with_entities(Wells.name).group_by(Wells.name).order_by(Wells.name)
+    elif 'field' in request.args and 'name' in request.args:
+        field = request.args['field']
+        name = request.args['name']
+        query = Wells.query.filter(Wells.field.ilike('%{}%'.format(field)), \
+            Wells.name.ilike('%{}%'.format(name))) \
+            .with_entities(Wells.name).group_by(Wells.name).order_by(Wells.name)
+    else:
+        query = Wells.query.with_entities(Wells.name).group_by(Wells.name) \
+            .order_by(Wells.name)

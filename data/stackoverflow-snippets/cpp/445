@@ -1,0 +1,30 @@
+template <class T>
+class MyClass : public MyAbstractClass {
+public:
+
+    bool shouldDoIt() {
+        if (state) return true;
+        return specializedShouldDoIt(val);
+    }
+
+private:
+    template <class U>
+    static bool specializedShouldDoIt(U&) { return false; }
+
+    template <class X>
+    static bool specializedShouldDoIt(
+                        std::vector<std::shared_ptr<MyClass<X>>> &val) {
+        // your loop is equivalent to std::any_of
+        return std::any_of(val.begin(), val.end(), [](auto &member) {
+            return member->state;
+        });
+    }
+
+    template <class X, class Y>
+    static bool specializedShouldDoIt(
+                   std::unordered_map<X, std::shared_ptr<MyClass<Y>>> &val) {
+        return std::any_of(val.begin(), val.end(), [](auto &member) {
+            return member.second->state;
+        });
+    }
+};

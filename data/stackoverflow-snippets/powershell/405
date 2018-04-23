@@ -1,0 +1,27 @@
+if ($base -eq $destination) {
+    return "".""
+}
+
+if ($destination.StartsWith($base)) {
+    # destination is inside base
+
+    $baseRE = [regex]::Escape($base)
+    return $destination -replace ""$baseRE\\?"", """"
+} else {
+    # destination is inside a parent of base
+
+    if (!$base.StartsWith($destination)) {
+        # destination is a file
+
+        $fileDir = Split-Path $destination
+        $destRE = [regex]::Escape($fileDir)
+
+        $relativePathToFile = $base -replace ""$destRE\\?"", """" -replace ""([^\\]+)"", ""..""
+        $fileName = Split-Path $destination -Leaf
+
+        return Join-Path $relativePathToFile $fileName
+    }
+
+    $destRE = [regex]::Escape($destination)
+    return $base -replace ""$destRE\\?"", """" -replace ""([^\\]+)"", ""..""
+}

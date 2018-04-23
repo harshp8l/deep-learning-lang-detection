@@ -1,0 +1,29 @@
+private def generateWhereForPreviousYears(nbYears: Int): Column =
+  (-1 to -nbYears by -1) // loop on each backwards year value
+    .map(yearsBack => 
+    /*
+      * Each year back count number is transformed in an expression
+      * to be included into the WHERE clause.
+      * This is equivalent to ""history.date=add_months($currentdate,-1*12)""
+      * in your comment in the question.
+      */
+    add_months($""df1.date"", 12 * yearsBack) === $""df2.date""
+  )
+    /*
+    The previous .map call produces a sequence of Column expressions,
+    we need to concatenate them with ""or"" in order to obtain
+    a single Spark Column reference. .reduce() function is most
+    appropriate here.
+     */
+    .reduce(_ or _) or $""df2.date"".isNull // the last ""or"" is added to include empty lines in the result.
+
+val nbYearsBack = 3
+
+val result = sourceDf1.as(""df1"")
+  .join(sourceDf2.as(""df2""), $""df1.key"" === $""df2.key"", ""left"")
+  .where(generateWhereForPreviousYears(nbYearsBack))
+  .withColumn(""diff_years"", concat(lit(""previous_year_""), year($""df1.date"") - year($""df2.date"")))
+  .groupBy($""df1.key"", $""df1.date"")
+  .pivot(""diff_years"")
+  .agg(first($""df2.value""))
+  .drop(""null"") // drop the unwanted extra column with null values

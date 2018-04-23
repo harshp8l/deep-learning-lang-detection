@@ -1,0 +1,14 @@
+import com.twitter.finagle.{Filter, Service, SimpleFilter}
+
+class CorsFilter extends SimpleFilter[Request, Response] { 
+    override def apply(request: Request, service: Service[Request, Response]): Future[Response] = {
+
+        service(request).map {
+            response => response.headerMap
+              .add(""access-control-allow-origin"", ""*"")
+              .add(""access-control-allow-headers"", ""accept, content-type"")
+              .add(""access-control-allow-methods"", ""GET,HEAD,POST,DELETE,OPTIONS,PUT,PATCH"")
+
+            response
+        }
+}

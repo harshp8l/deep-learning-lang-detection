@@ -1,0 +1,27 @@
+  implicit val actorSystem = ActorSystem(""test-actor-system"")
+  implicit val streamMaterializer = ActorMaterializer()
+  implicit val ec = actorSystem.dispatcher
+
+  val consumer =
+  Consumer
+    .plainSource(consumerSettings, subscription)
+    .map(_.value())
+
+  val tick = Source.tick(50 millis, 30 seconds, ""Timeout"")
+
+  val source = GraphDSL.create(consumer, tick)(Keep.both) { implicit b ⇒
+    (r1, r2) ⇒
+      val merge = b.add(MergePreferred[String](1, false))
+      r2 ~> merge.in(0)
+      r1 ~> merge.preferred
+      SourceShape(merge.out)
+  }
+
+  Source
+    .fromGraph(source)
+    .takeWhile(el => el != ""Timeout"")
+    .runForeach(msg => println(msg))
+  .onComplete{
+    case Success(_) => println(""Stream ended"")
+    case Failure(error) => println(""There was an error"")
+  }

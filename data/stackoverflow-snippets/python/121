@@ -1,0 +1,17 @@
+from bs4 import BeautifulSoup
+import js2py
+import requests
+
+r = requests.get('https://bedbathandbeyond.ugc.bazaarvoice.com/2009-en_us/1061083288/reviews.djs?format=embeddedhtml')
+
+pattern = (r'var'
+           r'\s+'
+           r'materials'
+           r'\s*=\s*'
+           r'{""BVRRRatingSummarySourceID"".*}')
+
+js_materials = re.search(pattern, r.text).group()
+obj = js2py.eval_js(js_materials).to_dict()
+html = obj['BVRRSourceID']
+soup = BeautifulSoup(html, 'lxml')
+spans = soup.select('span.BVRRReviewAbbreviatedText')

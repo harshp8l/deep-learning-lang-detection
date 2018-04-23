@@ -1,0 +1,33 @@
+(ns foo.utils)
+(defn export-refs
+  [target-ns source-namespaces]
+  (doseq [ns source-namespaces
+          [sym f] (ns-interns ns)
+          :let [existing (get (ns-interns target-ns) sym)]]
+    (when (and existing (not= (var-get existing) f))
+      (throw (Exception.
+               (format (str ""Cannot refer to symbol %s in %s from %s, because that symbol ""
+                            ""already exists in the target namespace"")
+                       sym (ns-name ns) (ns-name target-ns)))))
+    (intern target-ns sym f)))
+
+(ns foo.car.components.engine)
+(defn engine [] (println ""engine""))
+
+(ns foo.car.components.transmission)
+(defn transmission [] (println ""transmission""))
+
+(ns foo.car.components.brakes)
+(defn brakes [] (println ""brakes""))
+
+(ns foo.car.components
+  (:require [foo.utils :refer [export-refs]]))
+(export-refs 'foo.car.components '[foo.car.components.engine
+                                   foo.car.components.transmission
+                                   foo.car.components.brakes])
+
+(ns user
+  (:require [foo.car.components :refer [engine transmission brakes]]))
+(engine) ;; Prints ""engine""
+(transmission) ;; Prints ""transmission""
+(brakes) ;; Prints ""brakes""

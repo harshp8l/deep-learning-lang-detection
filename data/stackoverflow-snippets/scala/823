@@ -1,0 +1,13 @@
+def insertIfNotExists(mapCountryStates: Map[String, Iterable[StateUtil]]): Future[Seq[StateTable]] = {
+  val interaction = DBIO.sequence(mapCountryStates.toSeq.map { case (alpha2Country, statesUtil) =>
+    val codes = statesUtil.map(_.alpha3Code)
+    for {
+      countryId <- Countries.filter(_.alpha2Code === alpha2Country).map(_.id).result.head
+      existing <- States.filter(s => (s.alpha3Code inSet codes) && s.countryId === countryId).result
+      stateTables = statesUtil.map(x => StateTable(0L, x.name, x.alpha3Code, countryId))
+      statesInserted <- StatesInsertQuery ++= stateTables.filter(s => !existing.exists(x => x.alpha3Code == s.alpha3Code && x.countryId == s.countryId))
+    } yield existing ++ statesInserted
+  })
+
+  db.run(interaction.transactionally).map(_.flatten)
+}

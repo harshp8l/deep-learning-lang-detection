@@ -1,0 +1,46 @@
+int main(int argc, char* argv[])
+{
+    cv::Mat image = cv::imread(""C:/StackOverflow/Input/coloredLines.png"");
+
+    cv::Mat mask = cv::Mat::zeros(image.size(), CV_8UC1);
+
+    // create the edge mask:
+    for (int j = 0; j < image.rows; ++j)
+        for (int i = 0; i < image.cols; ++i)
+            if (image.at<cv::Vec3b>(j, i) != cv::Vec3b(255, 255, 255)) mask.at<unsigned char>(j, i) = 255;
+
+
+    // here's where your code starts:
+
+    std::vector<std::vector<cv::Point > > contours;
+    cv::findContours(mask, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+
+
+    // now draw all the bounding rects, using  drawContours function:
+    for (unsigned int i = 0; i < contours.size(); ++i)
+    {
+        cv::RotatedRect rect = cv::minAreaRect(contours[i]);
+        cv::Point2f points[4];
+        rect.points(points);
+
+        // must be cv::Point to be used by drawContours function
+        std::vector<cv::Point> boundingContour;
+
+        // push all the contour points in that temporary vector
+        for (unsigned int j = 0; j < 4; ++j)
+            boundingContour.push_back(points[j]);
+
+        // create a temporary dummy container that could hold multiple contours, but we'll only have exactly one in here
+        std::vector<std::vector<cv::Point>> boxContours;
+        boxContours.push_back(boundingContour);
+
+        // there is only 1 contour inside, so always draw the 0-index contour!
+        cv::drawContours(image, boxContours, 0, cvScalar(0, 255, 0), 2);
+
+    }
+
+    cv::imshow(""image"", image);
+
+    cv::waitKey(0);
+    return 0;
+}

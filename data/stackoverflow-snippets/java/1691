@@ -1,0 +1,74 @@
+<broker>
+
+  <destinationPolicy>
+    <policyMap>
+      <policyEntries>
+        <!-- Set the following policy on all queues using the '>' wildcard -->
+        <policyEntry queue="">"">
+          <deadLetterStrategy>
+            <!--
+              Use the prefix 'DLQ.' for the destination name, and make
+              the DLQ a queue rather than a topic
+            -->
+            <individualDeadLetterStrategy queuePrefix=""DLQ."" useQueueForQueueMessages=""true""/>
+          </deadLetterStrategy>
+        </policyEntry>
+      </policyEntries>
+    </policyMap>
+  </destinationPolicy>
+
+</broker>
+
+
+
+
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.jms.ConnectionFactory;
+
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.RedeliveryPolicy;
+import org.apache.activemq.broker.BrokerService;
+import org.apache.activemq.broker.region.policy.DeadLetterStrategy;
+import org.apache.activemq.broker.region.policy.IndividualDeadLetterStrategy;
+import org.apache.activemq.broker.region.policy.PolicyEntry;
+import org.apache.activemq.broker.region.policy.PolicyMap;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.stereotype.Component;
+
+@SpringBootApplication
+@Configuration
+@ComponentScan(excludeFilters = @ComponentScan.Filter(type = FilterType.ANNOTATION, classes = { Configuration.class,
+        Component.class }))
+public class ActiveMQConfigurationDeadLetterStrategy {
+
+    public static void main(String[] args) {
+        ConfigurableApplicationContext app = SpringApplication.run(ActiveMQConfigurationDeadLetterStrategy.class, args);
+    }
+
+    @Bean
+    public RedeliveryPolicy redeliveryPolicy() {
+        RedeliveryPolicy redeliveryPolicy = new RedeliveryPolicy();
+        redeliveryPolicy.setInitialRedeliveryDelay(5000);
+        redeliveryPolicy.setBackOffMultiplier(2);
+        redeliveryPolicy.setUseExponentialBackOff(true);
+        redeliveryPolicy.setMaximumRedeliveries(5);
+        return redeliveryPolicy;
+    }
+
+    @Bean
+    public ConnectionFactory jmsConnectionFactory() {
+        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(""tcp://localhost:61616"");
+        connectionFactory.setRedeliveryPolicy(redeliveryPolicy());
+        return connectionFactory;
+    }
+}

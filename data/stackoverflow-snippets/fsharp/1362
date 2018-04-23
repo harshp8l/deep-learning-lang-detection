@@ -1,0 +1,39 @@
+type TestTarget = 
+    { a: string
+      b: int }
+
+[<TestFixture>]
+type JsonTests() = 
+    [<Test>]
+    member x.``can serialize``() = 
+        let objectUnderTest = { TestTarget.a = ""isa""; b = 9 }
+        let jsonResult: string = Newtonsoft.Json.JsonConvert.SerializeObject(objectUnderTest)
+        printfn ""json is:\n%s"" jsonResult
+        let xmlResult = Newtonsoft.Json.JsonConvert.DeserializeXmlNode(jsonResult, ""root"")
+        printfn ""xml is:\n%s"" (xmlResult.OuterXml)
+
+        let jsonRoundtrip = Newtonsoft.Json.JsonConvert.DeserializeObject<TestTarget>(jsonResult)
+        printfn ""json roundtrip: %A"" jsonRoundtrip
+
+        let xmlAsJson = Newtonsoft.Json.JsonConvert.SerializeXmlNode(xmlResult, Newtonsoft.Json.Formatting.Indented, true)
+        printfn ""object -> json -> xml -> json:\n%A"" xmlAsJson
+        let xmlRoundtrip = Newtonsoft.Json.JsonConvert.DeserializeObject<TestTarget>(xmlAsJson)
+        printfn ""xml roundtrip:\n%A"" xmlRoundtrip
+
+        Assert.That(true, Is.False)
+        ()
+
+json is:
+{""a"":""isa"",""b"":9}
+xml is:
+<root><a>isa</a><b>9</b></root>
+json roundtrip: {a = ""isa"";
+ b = 9;}
+object -> json -> xml -> json:
+""{
+  ""a"": ""isa"",
+  ""b"": ""9""
+}""
+xml roundtrip:
+{a = ""isa"";
+ b = 9;}

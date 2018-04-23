@@ -1,0 +1,37 @@
+(require '[instaparse.core :as insta])
+
+(def parse
+  (insta/parser
+    ""<moustache> = (tagged-block / word / sp)*
+     <tagged-block> = comment | section | var
+     comment = <tag-open> <'!'> (word | sp)* <tag-close>
+     section = section-block-open (current-item / var / comment / word / sp)* <section-block-close>
+     <section-block-open> = <tag-open> <'#'> name <tag-close>
+     section-block-close = tag-open '/' name tag-close
+     var = <tag-open> name <tag-close>
+     current-item  = <tag-open> <'.'> <tag-close>
+     <word> = #'[^\\s{}]+'
+     <sp> = #'[\\s]+' 
+     name = #'[^\\s{}]+'
+     tag-open = '{{'
+     tag-close = '}}'""))
+
+(def template ""{{name}}.{{surname}}
+  {{#data}}
+  * {{.}}
+  {{/data}}"")
+
+(parse template) ;=> ([:var [:name ""name""]] ""."" [:var [:name ""surname""]] ""\n  "" [:var [:name ""#data""]] ""\n  "" ""*"" "" "" [:var [:name "".""]] ""\n  "" [:var [:name ""/data""]])
+
+(defn introspect [parsed]
+  (->> (tree-seq sequential? seq parsed)
+       (filter sequential?)
+       (filter #(#{:var :section} (first %)))
+       (map (juxt first (comp keyword last second)))
+       (map #(case (first %)
+               :var [(second %) """"]
+               :section [(second %) []]))
+       (into {})))
+
+(assert (= {:name """" :surname """" :data []}
+           (introspect (parse template))))

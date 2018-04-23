@@ -1,0 +1,22 @@
+ObjectMapper mapper = new ObjectMapper();
+JsonNode rootNode = mapper.readTree(JsonString);
+JsonPointer valueNodePointer = JsonPointer.compile(""/GrandObj/Obj/field"");
+JsonPointer containerPointer = valueNodePointer.head();
+JsonNode parentJsonNode = rootNode.at(containerPointer);
+
+//above is what you asked for as per my understanding
+//following you can use to update the value node just for 
+//the sake of completeness why someone really look for parent
+//node
+if (!parentJsonNode.isMissingNode() && parentJsonNode.isObject()) {
+    ObjectNode parentObjectNode = (ObjectNode) parentJsonNode;
+    //following will give you just the field name. e.g. if pointer is /grandObject/Object/field
+    //JsonPoint.last() will give you /field 
+    //remember to take out the / character 
+    String fieldName = valueNodePointer.last().toString();
+    fieldName = fieldName.replace(Character.toString(JsonPointer.SEPARATOR), StringUtils.EMPTY);
+    JsonNode fieldValueNode = parentObjectNode.get(fieldName);
+    if(fieldValueNode != null) {
+        parentObjectNode.put(fieldName, 'NewValue');
+    }
+}

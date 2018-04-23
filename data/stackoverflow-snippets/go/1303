@@ -1,0 +1,64 @@
+func Validate(b []byte) bool {
+    for i := range b {
+        switch {
+        case b[i] >= '0' && b[i] <= '9':
+            continue
+        case b[i] == '.':
+            if len(b) == 1 {
+                return false
+            }
+            if len(b) > i {
+                return fractional(b[i+1:])
+            }
+            return true
+        case i == 0 && b[i] == '-':
+            if len(b) == 1 {
+                return false
+            }
+            continue
+        default:
+            return false
+        }
+    }
+
+    return true
+}
+
+func fractional(b []byte) bool {
+    for i := range b {
+        switch {
+        case b[i] >= '0' && b[i] <= '9':
+            continue
+        case b[i] == 'e' || b[i] == 'E':
+            if len(b[:i]) == 0 {
+                return false
+            }
+            if len(b) > i+1 {
+                return scientific(b[i+1:])
+            }
+            return false
+        default:
+            return false
+        }
+    }
+
+    return true
+}
+
+func scientific(b []byte) bool {
+    for i := range b {
+        switch {
+        case b[i] >= '0' && b[i] <= '9':
+            continue
+        case i == 0 && b[i] == '-':
+            if len(b) == 1 {
+                return false
+            }
+            continue
+        default:
+            return false
+        }
+    }
+
+    return true
+}

@@ -1,0 +1,33 @@
+#include <iostream>
+#include <chrono>
+#include <thread>
+
+int main(int argc, char *argv[]) {
+    // Check args.
+
+    if (argc != 2) {
+        std::cerr << ""Usage: testprog <sleepTime>"" << std::endl;
+        return 1;
+    }
+
+    // Create a millisecond sleep time from argument.
+
+    auto sleepTime = strtoul(argv[1], nullptr, 10);
+    sleepTime = sleepTime * 1234 + 1000;
+    std::cout << ""Given '"" << argv[1] <<
+        ""', should sleep for about "" << sleepTime <<
+        ""ms ... "" << std::flush;
+
+    // Get the start time, then wait for a bit.
+
+    auto startTime(std::chrono::high_resolution_clock::now());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
+
+    // Get end time, work out and print duration.
+
+    auto endTime(std::chrono::high_resolution_clock::now());
+    auto duration(std::chrono::duration_cast<std::chrono::milliseconds>
+        (endTime - startTime));
+    std::cout << ""that took "" << duration.count() << ""ms."" << std::endl;
+}

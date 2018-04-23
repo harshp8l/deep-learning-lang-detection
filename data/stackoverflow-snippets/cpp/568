@@ -1,0 +1,49 @@
+#include <boost/spirit/home/x3.hpp>
+#include <iostream>
+#include <iomanip>
+
+using token  = std::string;
+using tokens = std::vector<token>;
+
+namespace x3 = boost::spirit::x3;
+
+namespace Parser {
+    using namespace boost::spirit::x3;
+
+    rule<struct list_, token> item;
+
+    auto quoted   = lexeme [ '""' >> *('\\' >> char_ | ~char_('""')) >> '""' ];
+    auto bare     = lexeme [ +(graph-','-'}') ];
+
+    auto list     = '{' >> (item % ',') >> '}';
+    auto sublist  = raw [ list ];
+
+    auto item_def = sublist | quoted | bare;
+
+    BOOST_SPIRIT_DEFINE(item)
+}
+
+int main() {
+    for (std::string const input : {
+            R""({one, ""five, six""})"",
+            R""({one, {2, ""three four""}, ""five, six"", {""seven, eight""}})"",
+        })
+    {
+        auto f = input.begin(), l = input.end();
+
+        std::vector<std::string> parsed;
+        bool ok = phrase_parse(f, l, Parser::list, x3::space, parsed);
+
+        if (ok) {
+            std::cout << ""Parsed: "" << parsed.size() << "" elements\n"";
+            for (auto& el : parsed) {
+                std::cout << "" - "" << std::quoted(el, '\'') << ""\n"";
+            }
+        } else {
+            std::cout << ""Parse failed\n"";
+        }
+
+        if (f != l)
+            std::cout << ""Remaining unparsed: "" << std::quoted(std::string{f, l}) << ""\n"";
+    }
+}

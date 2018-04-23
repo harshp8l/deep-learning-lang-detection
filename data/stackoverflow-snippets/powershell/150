@@ -1,0 +1,19 @@
+$path = ""C:\backup\DEV82"" 
+if(!(Test-Path -Path $path )){
+    New-Item -ItemType directory -Path $path
+}
+
+cd C:\inetpub\wwwroot\dev82\
+$SOURCE = Get-ChildItem * -Directory|Where-Object {$_.FullName -match ""App_Config|Resources|bin""}
+
+$dtstamp = (Get-Date).ToString(""yyyyMMdd_HHmmss"")
+$DESTINATION = Join-path -path $path -ChildPath ""$dtstamp.zip""
+Add-Type -assembly ""system.io.compression.filesystem""
+If(Test-path $DESTINATION) {
+    Remove-item $DESTINATION
+}
+
+Foreach ($s in $SOURCE)
+{
+Compress-Archive -Path $s.fullname -DestinationPath $DESTINATION -Update
+}

@@ -1,0 +1,22 @@
+$path = 'C:\users\xx\Desktop\mappcent3'
+$firstKeyword = ""Keyword""
+$secondKeyword = ""Secondkeyword""
+$resultsPath = ""C:\Temp\results.csv""
+Get-ChildItem $path -Filter ""*.txt"" | ForEach-Object{
+    # Read the file in
+    $fileContents = Get-Content $_.FullName
+
+    # Find the first keyword data
+    $firstKeywordData = ($fileContents | Select-String -Pattern $firstKeyword -Context 0,1 -SimpleMatch).Context.PostContext[0]
+
+    # Find the second keyword data
+    $secondKeywordData = ($fileContents | Select-String -Pattern $secondKeyword -Context 0,1 -SimpleMatch).Context.PostContext[0]
+
+    # Create a new object with details gathered. 
+    [pscustomobject][ordered]@{
+        File = $_.FullName
+        FirstKeywordData = $firstKeywordData
+        SecondKeywordData = $secondKeywordData
+    }
+
+} | Export-CSV $resultsPath -NoTypeInformation

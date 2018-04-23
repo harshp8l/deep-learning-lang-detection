@@ -1,0 +1,38 @@
+object HelloObservable {
+
+    import monix.eval.Task
+    import monix.execution.Scheduler.Implicits.global
+    import monix.reactive._
+
+    type Node = Int
+
+    //real case fetch next node across the network so the signature
+    //has to be Node -> List[Task[Node]]
+    def nexts(i: Node): List[Task[Node]] = List(Task(i), Task(i + 1))
+
+    def go(i: Node): Task[List[List[Node]]] =
+      Task.sequence(nexts(i).sliding(100, 100).toList.map(Task.gatherUnordered))
+
+
+    def explore(r: Node): Observable[Node] = {
+      val firsts = for {
+        ilr <- Observable.fromTask(go(r))
+        lr <- Observable.fromIterable(ilr)
+        r <- Observable.fromIterable(lr)
+      } yield r
+      firsts ++ firsts.flatMap(explore)
+    }
+
+
+    def main(args: Array[String]): Unit = {
+
+      val obs = explore(0)
+
+      val cancelable = obs
+        .dump(""O"")
+        .subscribe()
+
+      scala.io.StdIn.readLine()
+
+    }
+}

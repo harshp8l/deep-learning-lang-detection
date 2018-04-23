@@ -1,0 +1,22 @@
+bool Signature::VerifySignature(const std::string &PublicKeyString,
+    const std::string &data,
+    const std::string &SignatureStr)
+{
+    CryptoPP::StringSource PKeyStringSource(PublicKeyString, true);
+    CryptoPP::StringSource SignStringSource(SignatureStr, true);
+
+    CryptoPP::RSA::PublicKey publicKey;
+    publicKey.Load(PKeyStringSource);
+
+    // verify message
+    bool result = false;
+
+    m_verifier.AccessPublicKey().Load(SignStringSource);
+
+    CryptoPP::StringSource ss2(SignatureStr + data, true,
+        new CryptoPP::SignatureVerificationFilter(m_verifier,
+            new CryptoPP::ArraySink((CryptoPP::byte*)&result,
+                sizeof(result))));
+
+    return result;
+}

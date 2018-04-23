@@ -1,0 +1,30 @@
+class Base(object):
+    def f1(self):
+        return 0
+    def f2(self):
+        return 0
+
+class InvestA(Base):
+    def f2(self):
+        return 2
+
+class InvestB(Base):
+    def f1(self):
+        return 1
+
+class Portfolio(Base):
+    def __init__(self, invest):
+        self.invest = invest
+        for name in [n for n in Base.__dict__ if n[:2] != '__']:
+           self.__dict__[name] = lambda name=name: self.sum(name)
+    def sum(self, name):
+        return sum([i.__class__.__dict__[name](i) for i in self.invest
+                   if name in i.__class__.__dict__])
+
+A = InvestA()
+print(""A.f1 = %s, A.f2 = %s"" % (A.f1(), A.f2()))
+B = InvestB()
+print(""B.f1 = %s, B.f2 = %s"" % (B.f1(), B.f2()))
+P = Portfolio([A,A,B])
+print('P.f1 = A.f1 + A.f1 + B.f1 =', P.f1())
+print('P.f2 = A.f2 + A.f2 + B.f2 =', P.f2())

@@ -1,0 +1,18 @@
+private void Update(Expression<Func<Product, string>> getExpr)
+{
+    var value = Expression.Parameter(typeof(string), ""value"");
+    var setExpr = Expression.Lambda<Action<Product, string>>(
+        Expression.Assign(getExpr.Body, value), getExpr.Parameters[0], value);
+
+    Func<Product, string> getter = getExpr.Compile();
+    Action<Product, string> setter = setExpr.Compile();
+
+    var products = (from p in _context.Products
+                    where getter(p) == null
+                    select p);
+    foreach (var productItem in products)
+    {
+        setter(productItem, string.Empty);
+        _context.UpdateProduct(productItem);
+    }
+}

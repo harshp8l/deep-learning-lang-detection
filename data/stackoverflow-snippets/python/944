@@ -1,0 +1,37 @@
+import sys
+import subprocess as subp
+import threading
+import shutil
+import re
+
+socat_proc = subp.Popen(['socat', '-d', '-d', 'pty,raw,echo=0', 'pty,raw,echo=0'],
+    stderr=subp.PIPE)
+
+try:
+    # scan output for 2 ptys
+    ptylist = []
+    for line in socat_proc.stderr:
+        line = line.decode().strip()
+        print(line)
+        pty = re.search(r""N PTY is (.+)"", line)
+        if pty:
+            ptylist.append(pty.group(1))
+            if len(ptylist) == 2:
+                break
+
+    if socat_proc.poll() is not None:
+        print(""badness. socat dead."")
+        exit(2)
+
+    # background thread consumes proc pipe and sends to stdout
+    socat_thread = threading.Thread(target=shutil.copyfileobj, 
+        args=(socat_proc.stdout, sys.stdout))
+    socat_thread.daemon = True
+    socat_thread.start()
+
+    print(""pty"", ptylist)
+
+    # now you can start your programs...
+
+finally:
+    socat_proc.terminate()

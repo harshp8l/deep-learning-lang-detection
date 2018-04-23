@@ -1,0 +1,18 @@
+(defn add-path [[path paths] node]
+    ""adds a node to a given path, which is added to a map of paths, keyed by that node""
+    [path (assoc paths node (conj path node))])
+
+(defn navigate-to [grid start dest]
+    ""provides route from start to dest, including both""
+    (loop [remaining-nodes #{start}
+           closed-nodes    #{}
+           paths           (hash-map start [start])]
+        (let [current-node           (first remaining-nodes)
+              current-path           (get paths current-node)
+              all-current-neighbours (neighbours-of grid current-node)
+              open-neighbours        (set/difference all-current-neighbours closed-nodes)]
+            (if (contains? #{dest nil} current-node)
+                current-path ;; search complete
+                (recur (set/union (disj remaining-nodes current-node) open-neighbours)
+                    (conj closed-nodes current-node)
+                    (second (reduce add-path [current-path paths] open-neighbours)))))))

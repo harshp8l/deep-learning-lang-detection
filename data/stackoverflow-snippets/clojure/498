@@ -1,0 +1,39 @@
+;; Note that many of these pieces of code are not idiomatic, just for fun
+
+;; Reduce implementation
+(defn gen_array [n times]
+  (reduce
+    (fn [agg n]
+      (conj agg n))
+    [] (range times))) ;; out is []
+
+
+;; Uses transitory transient collection
+(defn gen_array [n times]
+  (persitent!
+    (reduce
+      (fn [agg n]
+        (conj! agg n))
+      (transient []) (range times))))
+
+;; Uses an atom, which is mutable
+
+(defn gen_array [n times]
+  (let [agg (atom [])
+        _ (dotimes [_ times] (swap! agg conj n))]
+    @agg))
+
+;; Loop/recur version
+
+(defn gen_array [n times]
+  (loop [out []
+         i 0]
+    (if (= times i)
+        out
+        (recur (conj out n) (inc i)))))
+
+;; Real Java Object[] assuming you want to pass any Object !
+
+(defn gen_array [n times]
+  (let [out (object-array n)]
+    (amap out idx ret n)))

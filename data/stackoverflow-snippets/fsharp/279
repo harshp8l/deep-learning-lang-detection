@@ -1,0 +1,19 @@
+#r ""System.Management.Automation""
+
+module MyPowershell =
+
+    let InvokeRemote server command =
+        let block = ScriptBlock.Create(command)
+        let pipe=PowerShell.Create()    
+                .AddCommand(""invoke-command"")
+        pipe.AddParameter(""ComputerName"", server)            
+            .AddParameter(""ScriptBlock"", block)
+            .Invoke() 
+            |> Seq.map (sprintf  ""%O"")
+            |> Seq.iter (fun line ->
+                                let tracer=if line.Contains(""not installed"") then
+                                                traceError 
+                                        else 
+                                                trace
+                                tracer line)
+        pipe.Streams.Error |> Seq.iter (traceError << sprintf ""%O"" )

@@ -1,0 +1,22 @@
+ALTER PROCEDURE [dbo].[usp_Get_MessageType_And_Count] 
+       @table_name varchar(max)  
+AS
+BEGIN
+
+DECLARE @ActualTableName AS NVarchar(255)
+
+    SELECT @ActualTableName = QUOTENAME( TABLE_NAME )
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_NAME = @table_name
+
+DECLARE @sql AS NVARCHAR(MAX)
+    SELECT @sql =
+'select [MessageType],count([MessageType]) as Count
+from
+(SELECT Split.a.value(''.'',''VARCHAR(100)'') AS [MessageType]  
+ FROM  (SELECT [Message Type] AS [Message Type CSV],  
+         CAST (''<M>'' + REPLACE([Message Type], '','',''</M><M>'') + ''</M>'' AS XML) AS [MessageType]  
+     FROM  ' + @table_name +') AS A CROSS APPLY [MessageType].nodes (''/M'') AS Split(a)) as tab group by [MessageType]'
+
+   EXEC(@sql)  
+END

@@ -1,0 +1,48 @@
+public class MyFirebaseMessagingService extends com.google.firebase.messaging.FirebaseMessagingService {
+
+@Override
+public void onMessageReceived(RemoteMessage remoteMessage) {
+    String body = null;
+
+    if(remoteMessage.getNotification() != null) {
+        body = remoteMessage.getNotification().getBody();
+    }
+
+    String id = null;
+
+    // get data that server passed (if it passed any at all)
+    if(remoteMessage.getData().size() > 0) {
+        id = remoteMessage.getData().get(""id"");
+    }
+
+    sendNotification(body, id);
+}
+
+private void sendNotification(String messageBody, String id) {
+    // put data you want to send through intent
+    Bundle bundle = new Bundle();
+    bundle.putString(""id"", id);
+
+    // create intent, put data, and 
+    Intent intent = new Intent(this, ActivityLogin.class);
+    intent.putExtras(bundle);
+
+    // IMPORTANT! clearing previous tasks so desired activity will launch
+    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+
+    // customising the notification
+    Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+    NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(getResources().getString(R.string.app_name))
+            .setContentText(messageBody)
+            .setAutoCancel(true)
+            .setSound(defaultSoundUri)
+            .setContentIntent(pendingIntent);
+
+    NotificationManager notificationManager =
+            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+    notificationManager.notify(0, notificationBuilder.build());
+}

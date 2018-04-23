@@ -1,0 +1,23 @@
+  object constNone extends Poly1 {
+    implicit def zeroCase[In]: Case.Aux[In, Option[Int]] = at(_ => None)
+
+    implicit def succCase[In, In1, Out](implicit 
+      cse: Case.Aux[In, Out]): Case.Aux[In1, In => Out] = at(_ => cse(_))
+  }
+
+  object transform extends Poly1 {
+    implicit def zeroCase: Case.Aux[Int, Option[Int]] = at(Some(_))
+
+    implicit def succCase[In, Out](implicit 
+      cse: Case.Aux[In, Out], 
+      noneCase: constNone.Case.Aux[In, Out]
+    ): Case.Aux[Int => In, Option[Int] => Out] =
+      at(f => {
+        case Some(n) => cse(f(n))
+        case None => noneCase(f(0))
+      })
+  }
+
+  (transform((x: Int) => (y: Int) => x + y) _)(Some(1))(Some(2)) //Some(3)
+  (transform((x: Int) => (y: Int) => x + y) _)(Some(1))(None) //None
+  (transform((x: Int) => (y: Int) => x + y) _)(None)(Some(2)) //None

@@ -1,0 +1,77 @@
+CREATE FUNCTION [dbo].[UF_ADJUST_OFFSET]
+(
+    @dt_utc datetime2(7)
+)
+RETURNS INT
+AS
+BEGIN
+
+
+declare @month int,
+        @year int,
+        @current_offset int,
+        @offset_since int,
+        @offset int,
+        @yearmonth varchar(8),
+        @changeoffsetdate datetime2(7)
+
+declare @lastweek table(giorno datetime2(7))
+
+select @current_offset = DATEDIFF(hh, GETUTCDATE(), GETDATE())
+
+select @month = datepart(month, @dt_utc)
+
+if @month < 3 or @month > 10 Begin Set @offset_since = 1 Goto JMP End
+
+if @month > 3 and @month < 10 Begin Set @offset_since = 2 Goto JMP End
+
+--If i'm here is march or october
+select @year = datepart(yyyy, @dt_utc)
+
+if @month = 3
+Begin
+
+Set @yearmonth = cast(@year as varchar) + '-03-'
+
+Insert Into @lastweek Values(@yearmonth + '31 03:00:00.000000'),(@yearmonth + '30 03:00:00.000000'),(@yearmonth + '29 03:00:00.000000'),(@yearmonth + '28 03:00:00.000000'),
+                         (@yearmonth + '27 03:00:00.000000'),(@yearmonth + '26 03:00:00.000000'),(@yearmonth + '25 03:00:00.000000')
+
+--Last week of march
+Select @changeoffsetdate = giorno From @lastweek Where  datepart(weekday, giorno) = 1
+
+    if @dt_utc < @changeoffsetdate 
+    Begin 
+        Set @offset_since = 1 
+    End Else Begin
+        Set @offset_since = 2
+    End
+End
+
+if @month = 10
+Begin
+
+Set @yearmonth = cast(@year as varchar) + '-10-'
+
+Insert Into @lastweek Values(@yearmonth + '31 03:00:00.000000'),(@yearmonth + '30 03:00:00.000000'),(@yearmonth + '29 03:00:00.000000'),(@yearmonth + '28 03:00:00.000000'),
+                         (@yearmonth + '27 03:00:00.000000'),(@yearmonth + '26 03:00:00.000000'),(@yearmonth + '25 03:00:00.000000')
+
+--Last week of october
+Select @changeoffsetdate = giorno From @lastweek Where  datepart(weekday, giorno) = 1
+
+    if @dt_utc > @changeoffsetdate 
+    Begin 
+        Set @offset_since = 1 
+    End Else Begin
+        Set @offset_since = 2
+    End
+End
+
+JMP:
+
+if @current_offset < @offset_since Begin
+    Set @offset = 1
+End Else if @current_offset > @offset_since Set @offset = -1 Else Set @offset = 0
+
+Return @offset
+
+END

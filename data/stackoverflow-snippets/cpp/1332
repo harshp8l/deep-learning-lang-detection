@@ -1,0 +1,50 @@
+#ifndef COMMON_H
+#define COMMON_H
+
+#include <QtCore>
+#include <QtNetwork>
+
+//Helper macro to set a QObject pointer to nullptr when it's get destroyed
+#define SETTONULLPTR(obj) QObject::connect(obj, &QObject::destroyed, [=]{obj = nullptr;})
+
+//Define a max size for each send data operation
+#define MAX_NETWORK_CHUNK_SIZE 10*1024*1024
+
+//Create differents types for incomming data, valid for both client and server
+namespace Type
+{
+enum
+{
+    DataType1,
+    DataType2
+};
+}
+
+//Convert some data of type T to QByteArray, by default in big endian order
+template <typename T>
+static inline QByteArray getBytes(T input)
+{
+    QByteArray tmp;
+    QDataStream data(&tmp, QIODevice::WriteOnly);
+    data << input;
+    return tmp;
+}
+
+//Convert some QByteArray to data of type T
+template <typename T>
+static inline T getValue(QByteArray bytes)
+{
+    T tmp;
+    QDataStream data(&bytes, QIODevice::ReadOnly);
+    data >> tmp;
+    return tmp;
+}
+
+//Struct that holds data and information about the peer
+typedef struct PeerData {
+    QByteArray data;
+    QHostAddress host;
+    qintptr descriptor;
+} PeerData;
+
+#endif // COMMON_H

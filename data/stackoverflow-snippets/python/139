@@ -1,0 +1,42 @@
+from timeit import timeit
+
+class dictObjecter:
+    def __init__(self,adict):
+        for k,v in adict.items():
+            self.__dict__[k] = v
+            if type(v) == dict: self.__dict__[k] = dictObjecter(v)
+
+class dictDotter(dict):
+    def __getattr__(self,key):
+        val = self[key]
+        return val if type(val) != dict else dictDotter(val)
+
+def get_entry(dict, keyspec):
+    keys = keyspec.split('.')
+
+    result = dict[keys[0]]
+    for key in keys[1:]:
+        result = result[key]
+
+    return result
+
+class dotdict(dict):
+    """"""dot.notation access to dictionary attributes""""""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+def dct_to_dotdct(d):
+    if isinstance(d, dict):
+        d = dotdict({k: dct_to_dotdct(v) for k, v in d.items()})
+    return d
+
+x = {'a':{'b':{'c':{'d':1}}}}
+y = dictDotter(x)
+z = dct_to_dotdct(x)
+w = dictObjecter(x)
+print('{:15} : {}'.format('dict dotter',timeit('y.a.b.c.d',globals=locals(),number=1000)))
+print('{:15} : {}'.format('dot dict',timeit('z.a.b.c.d',globals=locals(),number=1000)))
+print('{:15} : {}'.format('dict objecter',timeit('w.a.b.c.d',globals=locals(),number=1000)))
+print('{:15} : {}'.format('original',timeit(""get_entry(x,'a.b.c.d')"",globals=locals(),number=1000)))
+print('{:15} : {:.20f}'.format('best ref',timeit(""x['a']['b']['c']['d']"",globals=locals(),number=1000)))

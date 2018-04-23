@@ -1,0 +1,17 @@
+DROP PROCEDURE IF EXISTS status_json;
+DELIMITER @@
+CREATE PROCEDURE status_json (
+    IN input1 INT,
+    IN input2 INT,
+    OUT data JSON
+)
+proc: BEGIN
+
+    SELECT JSON_MERGE(
+       JSON_OBJECT('count', (SELECT COUNT(*) FROM account WHERE time >= input1 AND time >= input2)),
+       JSON_OBJECT('sum_gt_0', (SELECT SUM(IF(status > 0, 1, 0)) FROM account WHERE time >= input1 AND time >= input2)),
+       JSON_OBJECT('sum_eq_0', (SELECT SUM(IF(status = 0, 1, 0)) FROM account WHERE time >= input1 AND time >= input2))
+    ) INTO data;
+
+END proc @@
+DELIMITER ;

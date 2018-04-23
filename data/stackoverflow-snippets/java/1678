@@ -1,0 +1,20 @@
+public SQSMutex {
+    // Only one process can access the list.
+    private Semaphore mutex = new Semaphore(1);
+   private ArrayList<ThingToFlush> list = new ArrayList<>();
+
+   public void enqueueElement(ThingToFlush item){
+       mutex.acquire();
+       this.list.add(item);
+       mutex.release();
+   }
+
+   public void flushToDB(){
+      mutex.acquire();
+      Iterator<ThingToFlush> it = this.list.iterator();
+      while(it.hasNext()){
+         db.insert(it.next());
+      }
+      mutex.release();
+   }
+}

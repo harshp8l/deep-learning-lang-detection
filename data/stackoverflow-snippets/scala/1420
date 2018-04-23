@@ -1,0 +1,23 @@
+trait FieldNameExtractor[T] extends Serializable {
+  import shapeless.ops.hlist.{RightFolder, ToTraversable}
+  import shapeless.ops.record.Keys
+  import shapeless.{HList, HNil, LabelledGeneric, Poly2}
+
+  /**
+    * Extracts filtered field names for type [[T]],
+    * given a polymorphic function that acts as the type filter
+    */
+  def extract[L <: HList, R <: HList, O <: HList](op: Poly2)(
+      implicit lgen: LabelledGeneric.Aux[T, L],
+      folder: RightFolder.Aux[L, HNil.type, op.type, R],
+      keys: Keys.Aux[R, O],
+      traversable: ToTraversable.Aux[O, List, Symbol]
+  ): List[String] = {
+    val result = keys().to[List]
+    result.map(_.name)
+  }
+}
+
+object FieldNameExtractor {
+  def apply[T] = new FieldNameExtractor[T] {}
+}

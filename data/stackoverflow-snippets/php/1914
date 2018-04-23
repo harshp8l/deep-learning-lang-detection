@@ -1,0 +1,27 @@
+add_action( 'template_redirect', 'auto_add_product_to_cart' );
+function auto_add_product_to_cart() {
+    if ( is_admin() ) return;
+
+    // Product Id of the free product which will get added to cart;
+    $product_id = 99999;
+
+    if ( WC()->cart->is_empty() ) 
+    {
+        // No products in cart, we add it
+        WC()->cart->add_to_cart( $product_id ); 
+    } 
+    else
+    {
+        $found  = false;
+
+        //check if product already in cart
+        foreach ( WC()->cart->get_cart() as $cart_item ) {
+            if ( $cart_item['data']->get_id() == $product_id )
+                $found = true;
+        }
+
+        // if the product is not in cart, we add it
+        if ( ! $found )
+            WC()->cart->add_to_cart( $product_id ); 
+    }
+}

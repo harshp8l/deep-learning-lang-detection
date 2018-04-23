@@ -1,0 +1,19 @@
+#include <numeric>
+#include <functional>
+#include <iterator>
+
+template <typename ForwardIterator, typename BinaryPredicate>
+auto count_pairs_if(ForwardIterator first, ForwardIterator last, 
+                    BinaryPredicate pred)
+{
+    const auto n = std::distance(first, last);
+    if (n < 2) return std::size_t {0};
+    return std::inner_product(first, std::next(first, n - 1), std::next(first),
+                              std::size_t {0}, std::plus<> {}, pred);
+}
+
+template <typename Range, typename BinaryPredicate>
+auto count_pairs_if(const Range& values, BinaryPredicate pred)
+{
+    return count_pairs_if(std::cbegin(values), std::cend(values), pred);
+}

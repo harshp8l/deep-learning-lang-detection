@@ -1,0 +1,59 @@
+@Override
+protected void configure(HttpSecurity http) throws Exception {
+
+
+
+    http.csrf().disable()
+            .cors()
+            .and()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+            .authorizeRequests()
+            .antMatchers(HttpMethod.OPTIONS, ""/**"").permitAll()
+            .antMatchers(HttpMethod.HEAD, ""/**"").permitAll()
+            .antMatchers((String[]) ACTUATOR_ENDPOINTS.toArray()).hasAuthority(role).anyRequest().authenticated()
+            .antMatchers(""/**"").authenticated()
+            .and()
+            .exceptionHandling().authenticationEntryPoint(unauthorizedEntryPoint());
+
+
+    http.addFilterBefore(new AuthenticationFilter(authenticationManager()), BasicAuthenticationFilter.class)
+        .addFilterBefore(
+                new ManagementEndpointAuthenticationFilter(authenticationManager()),
+                BasicAuthenticationFilter.class
+        );
+
+}
+
+@Override
+protected void configure(AuthenticationManagerBuilder auth) {
+    auth.authenticationProvider(managementUsernamePasswordAuthenticationProvider())
+        .authenticationProvider(tokenAuthenticationProvider());
+}
+
+@Bean
+CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.addAllowedMethod(""*"");
+    configuration.addAllowedOrigin(""*"");
+    configuration.addAllowedHeader(""*"");
+    configuration.setAllowCredentials(true);
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration(""/**"", configuration);
+    return source;
+}
+
+@Bean
+public AuthenticationProvider managementUsernamePasswordAuthenticationProvider() {
+    return new ManagementUsernamePasswordAuthenticationProvider();
+}
+
+@Bean
+public AuthenticationProvider tokenAuthenticationProvider() {
+    return new TokenAuthenticationProvider(tokenService, userService, token);
+}
+
+@Bean
+public AuthenticationEntryPoint unauthorizedEntryPoint() {
+    return (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+}

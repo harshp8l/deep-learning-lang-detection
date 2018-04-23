@@ -1,0 +1,21 @@
+// add ""wrapper"" class for RDD with new printDebugRecords method:
+class RDDDebugFunction[K](rdd: RDD[K]) {
+
+  def printDebugRecords(msgFormat: K => String): RDD[K] = {
+    if (isDebugMode) {
+      rdd.cache
+      rdd.foreach { row => logDebug(msgFormat(row)) }
+      doMoreStuff()
+    }
+    rdd
+  }
+
+  def isDebugMode: Boolean = ???
+  def logDebug(s: String) = ???
+  def doMoreStuff(): Unit = ???
+}
+
+// add implicit conversion from RDD to our new class
+object RDDDebugFunction {
+  implicit def toDebugFunction[K](rdd: RDD[K]): RDDDebugFunction[K] = new RDDDebugFunction(rdd)
+}

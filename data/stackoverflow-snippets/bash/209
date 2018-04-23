@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# big log filename
+f=""test.txt""
+fout=""$(mktemp -p . f_XXXXX)""
+fsize=0
+slimit=2500
+
+while read line; do
+    if [ ""$fsize"" -le ""$slimit"" ]; then
+        # append to log file and get line size at the same time ;-)
+        lsize=$(echo ""$line"" | tee -a $fout | wc -c)
+        # add to file size
+        fsize=$(( $fsize + $lsize ))
+    else
+        echo ""size of last file $fout: $fsize""
+        # create a new log file
+        fout=""$(mktemp -p . f_XXXXX)""
+        # reset size counter
+        fsize=0
+    fi
+done < <(grep 'YOUR_REGEXP' ""$f"")
+
+size of last file ./f_GrWgD: 2537
+size of last file ./f_E0n7E: 2547
+size of last file ./f_do2AM: 2586
+size of last file ./f_lwwhI: 2548
+size of last file ./f_4D09V: 2575
+size of last file ./f_ZuNBE: 2546

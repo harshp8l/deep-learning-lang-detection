@@ -1,0 +1,18 @@
+ //Get linked claim for children list from ClaimLink
+        foreach (var claim in processedClaims)
+        {
+            if (claim.Children == null)
+            {
+                claim.Children = new List<Claim>();
+            }
+            var claimRelationList = newClaimLink.Where(k=> k.ClaimLinkId == claim.Id).ToList();
+            if (claimRelationList.Any())
+            {
+                //Get the claim for all selected ClaimLink
+                var newChildren = claims.Where(o => claimRelationList.Select(p => p.ClaimId).Contains(o.Id));
+                if (newChildren.Any())
+                {
+                    claim.Children = claim.Children != null && claim.Children.Any() ? newChildren.Concat(claim.Children) : newChildren;
+                }
+            }
+        }

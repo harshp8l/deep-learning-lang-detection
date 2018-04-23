@@ -1,0 +1,26 @@
+<?php
+include_once './aliyun-php-sdk/aliyun-php-sdk-core/Config.php'; //source php and aliyun-php-sdk in same directory
+use vod\Request\V20170321 as vod;
+function init_vod_client($accessKeyId, $accessKeySecret) {
+    $regionId = 'cn-shanghai';  
+    $profile = DefaultProfile::getProfile($regionId, $accessKeyId, $accessKeySecret);
+    return new DefaultAcsClient($profile);
+}
+function create_upload_video($client) {
+    $request = new vod\CreateUploadVideoRequest();
+    $request->setTitle(""VideoTitle"");               // Video Title (Mandatory)
+    $request->setFileName(""filename.mov"");          // Source document file name with file extension (Mandatory)
+    $request->setDescription(""Video Description"");  // Video Description (Optional)
+    $request->setCoverURL(""http://img.alicdn.com/tps/XXXXXXXXXXXXXXXXXXXXXXXXXXX-700-700.png""); // Custom video coverpage (Optional)
+    $request->setTags(""Tag1,Tag2"");                 // Video tags, separated by commas (Optional)
+    $request->setAcceptFormat('JSON');
+    return $client->getAcsResponse($request);
+}
+try {
+    $client = init_vod_client('<AccessKeyId>', '<AccessKeySecret>');
+    $uploadInfo = create_upload_video($client);
+    var_dump($uploadInfo);
+} catch (Exception $e) {
+    print $e->getMessage().""\n"";
+}
+?>

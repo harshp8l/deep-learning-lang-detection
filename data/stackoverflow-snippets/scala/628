@@ -1,0 +1,40 @@
+object Color extends Enumeration {
+  type Color = Value
+  val Red, Green, Blue = Value
+}
+object State extends Enumeration {
+  type State = Value
+  val Running, Stopped, Finished = Value
+}
+
+/** Dummy replacement with similar signature */
+class Injection[A, B]()
+
+
+import scala.reflect.runtime.universe.TypeTag
+
+object ItDoesNotWorkInReplObjectsMustBeTopLevel {
+
+  implicit def enumToByteInjection[E <: Enumeration](implicit tt: TypeTag[E]): Injection[E#Value, Byte] = {
+    val ru = scala.reflect.runtime.universe
+    val classLoaderMirror = ru.runtimeMirror(getClass.getClassLoader)
+    val moduleSymbol = ru.typeOf[E].termSymbol.asModule
+    val moduleMirror = classLoaderMirror.reflectModule(moduleSymbol)
+    val companionObject = moduleMirror.instance.asInstanceOf[E]
+
+    println(s""/* 1 */ Materialize companion object $companionObject out of nothing!"")
+              /* 2 */ ???
+              /* 3 */ // profit!
+  }
+
+  /** A function that requires implicit `Injection` */
+  def testNeedsInjection[E <: Enumeration](implicit inj: Injection[E#Value, Byte]): Unit = 
+    println(""replace ??? above to continue here"")
+
+
+  def main(args: Array[String]): Unit = {
+    /** Test whether an implicit injection is constructed */
+    testNeedsInjection[Color.type] // compiles (crashes, as expected, but compiles)
+
+  }
+}

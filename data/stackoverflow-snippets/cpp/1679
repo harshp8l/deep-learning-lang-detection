@@ -1,0 +1,34 @@
+class LongOperationBase : public QObject {
+  Q_OBJECT
+  std::atomic_bool stop, running;
+protected:
+  bool shouldRun() const { return !stop; }
+  virtual void compute() = 0;
+public:
+  Q_SLOT void start() {
+    stop = false;
+    emit started();
+    QtConcurrent::run([this]{
+      if (running || stop) return;
+      running = true;
+      compute();
+      running = false;
+    });
+  }
+  LongOperationBase() {}
+  LongOperationBase(QProgressDialog *pd) {
+    connectTo(pd);
+  }
+  bool isRunning() const { return running; }
+  Q_SLOT void cancel() { stop = true; } // thread-safe
+  Q_SIGNAL void started();
+  Q_SIGNAL void hasRange(int);
+  Q_SIGNAL void hasProgress(int);
+  void connectTo(QProgressDialog *pd) {
+    using B = LongOperationBase;
+    connect(this, &B::started, pd, &QProgressDialog::show);
+    connect(this, &B::hasRange, pd, &QProgressDialog::setMaximum);
+    connect(this, &B::hasProgress, pd, &QProgressDialog::setValue);
+    connect(pd, &QProgressDialog::canceled, this, &B::cancel, Qt::DirectConnection);
+  }
+};

@@ -1,0 +1,34 @@
+class User::SessionsController < Devise::SessionsController
+  before_action :check_failed_attempts, only: :create
+
+  def after_sign_in_path_for(user)
+    # some code
+  end
+
+  def create
+    super
+    # create some stuff and check others
+  end
+
+  def destroy
+    # may be destroy and deal with cookies
+    super
+  end
+
+  def check_failed_attempts
+    flash.clear
+
+    email = self.params[""user""][""email""]
+    return unless email
+
+    user = User.find_by_email(email)
+    return unless user
+
+    failed_attempts = user.failed_attempts
+    maximum_attempts = User.maximum_attempts
+    attempts_left = maximum_attempts - failed_attempts - 1
+    if attempts_left != maximum_attempts and attempts_left > 1
+      flash[:notice] = I18n.t 'devise.failure.n_attempt', attempts_left: attempts_left
+    end
+  end
+end

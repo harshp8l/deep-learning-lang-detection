@@ -1,0 +1,26 @@
+m = int(1e6)
+n = 5
+df = pd.DataFrame(np.random.rand(m,n)).round().astype(int)
+
+def StatusQuo(df):
+    df_asstr = df.astype(str)
+    bin_series = df_asstr.sum(axis=1).astype(int).astype(str)
+
+    def bin_to_int(strnum):
+        return int(strnum, 2)
+
+    decimal_series = bin_series.astype(str).apply(bin_to_int)
+    return decimal_series
+%time StatusQuo(df)
+# CPU times: user 12.1 s, sys: 103 ms, total: 12.2 s
+# Wall time: 12.2 s
+
+
+def Naive(df):
+    n = len(df.columns)
+    powers = np.array([2**i for i in range(n-1,-1,-1)])
+    df_values = df.mul(powers).sum(axis=1)
+return df_values
+%time Naive(df)
+# CPU times: user 31 ms, sys: 52 ms, total: 83 ms
+# Wall time: 32.1 ms

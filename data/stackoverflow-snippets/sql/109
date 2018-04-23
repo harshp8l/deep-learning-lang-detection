@@ -1,0 +1,19 @@
+DECLARE @cols AS NVARCHAR(MAX),
+@query  AS NVARCHAR(MAX)
+select @cols = STUFF((SELECT ',' + QUOTENAME(MY_KEY) 
+                from yt
+                group by MY_KEY
+                order by MY_KEY ASC
+        FOR XML PATH(''), TYPE
+        ).value('.', 'NVARCHAR(MAX)') 
+    ,1,1,'')
+set @query = 'SELECT ID,' + @cols + ' from 
+         (
+            select ID, MY_KEY, VAL 
+            from yt
+        ) x
+        pivot 
+        (
+            sum(VAL)
+            for MY_KEY in (' + @cols + ')
+        ) p '

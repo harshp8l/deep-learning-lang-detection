@@ -1,0 +1,32 @@
+interface I{}
+class A implements I{}
+class B implements I{}
+
+class MyAbstractFactory implements AbstractFactoryInterface
+{
+    public function canCreate(ContainerInterface $container, $requestedName)
+    {
+        return in_array('I', class_implements($requestedName), true);
+    }
+
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    {
+        return new $requestedName(
+            $container->get(DependencyFoo::class),
+            $container->get(DependencyBar::class)
+        );
+    }
+}
+
+// config/autoload/dependencies.global.php
+return [
+    'dependencies' => [
+        'factories' => [
+            // ...
+        ],
+
+        'abstract_factories' => [
+            MyAbstractFactory::class,
+        ],
+    ],
+];

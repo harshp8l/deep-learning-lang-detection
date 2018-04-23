@@ -1,0 +1,33 @@
+import (
+    ""net/http""
+
+    ""example.com/your-package/app""
+    ""example.com/your-package/public/swagger""
+
+    ""github.com/elazarl/go-bindata-assetfs""
+    ""github.com/goadesign/goa""
+    ""github.com/goadesign/goa/middleware""
+)
+
+func main() {
+    // ...
+
+    // Mount ""schema"" controller
+    c1 := NewSchemaController(service)
+    app.MountSchemaController(service, c1)
+    // Mount ""swagger"" controller
+    c2 := NewSwaggerController(service)
+    // You can override FileSystem of the controller.
+    // For example using github.com/elazarl/go-bindata-assetfs is like below.
+    c2.FileSystem = func(dir string) http.FileSystem {
+        return &assetfs.AssetFS{
+            Asset:     swagger.Asset,
+            AssetDir:  swagger.AssetDir,
+            AssetInfo: swagger.AssetInfo,
+            Prefix:    dir,
+        }
+    }
+    app.MountSwaggerController(service, c2)
+
+    // ...
+}

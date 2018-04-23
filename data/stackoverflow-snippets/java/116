@@ -1,0 +1,51 @@
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+public class CommonConnectionClass {
+    JSONObject jsonObject;
+    public JSONObject getConnection(String u,JSONObject object){
+        try {
+
+            //URL url=new URL(""https://e-gurukulam.000webhostapp.com/public_html/project/login.php""+u+"".php"");
+            URL url=new URL(""http://""+new Connection_Url_Setter().urlIp+""/classroom/""+u+"".php"");
+           // URL url=new URL(""http://192.168.43.120/classroom/""+u+"".php"");
+            HttpURLConnection httpURLConnection=(HttpURLConnection)url.openConnection();
+            httpURLConnection.setRequestMethod(""POST"");
+            httpURLConnection.setRequestProperty(""Content-Type"",""application/json; charset=utf-8"");
+            httpURLConnection.setRequestProperty(""Accept"",""application/json; charset=utf-8"");
+            httpURLConnection.setDoInput(true);
+            httpURLConnection.setDoOutput(true);
+            httpURLConnection.connect();
+
+            if(object!=null) {
+                DataOutputStream dataOutputStream = new DataOutputStream(httpURLConnection.getOutputStream());
+                dataOutputStream.write(object.toString().getBytes());
+
+            }
+            int code=httpURLConnection.getResponseCode();
+            if(code== HttpURLConnection.HTTP_OK){
+                String inputLine;
+                StringBuilder stringBuilder=new StringBuilder();
+
+
+                BufferedReader bufferedReader=new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
+                while((inputLine=bufferedReader.readLine())!=null){
+                    stringBuilder.append(inputLine);
+                }
+                jsonObject=new JSONObject(stringBuilder.toString());
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        return jsonObject;
+    }
+}

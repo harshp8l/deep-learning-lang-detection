@@ -1,0 +1,76 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+vector<vector<int>> group_digit(vector<vector<int>> component)
+{
+    class interval_intersectionQ
+    {
+    public:
+        bool operator()(vector<vector<int>> sub_group, vector<int> vec)
+        {
+            vector<int> continuous_line;
+            for (vector<int> i : sub_group)
+            {
+                continuous_line.push_back(i[1]);
+                continuous_line.push_back(i[1] + i[2]);
+            }
+            pair<vector<int>::iterator, vector<int>::iterator> interval = minmax_element(continuous_line.begin(), continuous_line.end());
+            if (*interval.first <= vec[1] && vec[1] <= *interval.second || 
+                *interval.first <= vec[1] + vec[2] && vec[1] + vec[2] <= *interval.second || 
+                vec[1] <= *interval.first && *interval.first <= vec[1] + vec[2] || 
+                vec[1] <= *interval.second && *interval.second <= vec[1] + vec[2])
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    };
+    vector<vector<int>> origin = component;
+    vector<vector<vector<int>>> group;
+    while (!origin.empty())
+    {
+        group.push_back(vector<vector<int>>());
+        group[group.size() - 1].push_back(origin[origin.size() - 1]);
+        origin.pop_back();
+        for (int i = 0; i < origin.size(); i++)
+        {
+            if (interval_intersectionQ()(group[group.size() - 1], origin[i]))
+            {
+                group[group.size() - 1].push_back(origin[i]);
+                origin.erase(origin.begin() + i);
+                i = -1;
+            }
+        }
+    }
+    vector<vector<int>> one_digit(group.size());
+    for (int i = 0; i<group.size(); i++)
+    {
+        for (vector<int> j : group[i])
+        {
+            one_digit[i].push_back(j[0]);
+        }
+    }
+    return one_digit;
+}
+
+
+int main()
+{
+    vector<vector<int>> origin = { { 1, 10, 5 },{ 2, 20, 5 },{ 3, 22, 5 },
+    { 4, 26, 3 },{ 5, 33, 5 },{ 6, 30,5 },{ 7, 31, 5 },{ 8, 40, 6 } };
+    vector<vector<int>> one_digit = group_digit(origin);
+    for (vector<int> i : one_digit)
+    {
+        for (int j : i)
+        {
+            cout << j << ""  "";
+        }
+        cout << endl;
+    }
+    return 0;
+}

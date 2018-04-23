@@ -1,0 +1,21 @@
+object Test {
+  sealed trait Funding {
+    val id: Int
+  }
+
+  final case class FlatRate(id: Int, days: Int, amount: BigDecimal) extends Funding
+  final case class PerItem(id: Int, amount: BigDecimal, discount: BigDecimal) extends Funding
+
+  final case class AppliedFunding[+A <: Funding](
+    person: String, funding: A)
+
+  val allFundings: List[AppliedFunding[Funding]] = List(AppliedFunding[FlatRate](""alex"", FlatRate(1, 10, 100)), AppliedFunding[PerItem](""christian"", PerItem(2, 100, 10)))
+
+  def flatRatePredicate[A <: Funding](appliedFunding: AppliedFunding[A]): Boolean = appliedFunding.funding.isInstanceOf[FlatRate]
+
+  val flatRateFundings: List[AppliedFunding[FlatRate]] = allFundings.filter(flatRatePredicate).asInstanceOf[List[AppliedFunding[FlatRate]]]
+
+  def main(args: Array[String]): Unit = {
+    println(flatRateFundings)
+  }
+}

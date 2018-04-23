@@ -1,0 +1,27 @@
+$ScriptBlockDir = {
+  Param ([string]$samAccountName)
+  If ($Env:ComputerName -eq 'fileserver101' ) {
+    $LocalFolderPath = 'H:\Users'
+  }
+  Else {
+    $LocalFolderPath = 'D:\Users'
+  }
+  If (-not (Test-Path -Path ""$LocalFolderPath\$samAccountName"")) {
+    try {
+        New-Item -Path $LocalFolderPath -Name $samAccountName -ItemType Directory -ErrorAction Stop
+        return 1
+    }
+    catch {
+        Write-Host $_.Exception.Message
+        return -1
+    }
+  }
+  else {
+    Write-Host ""already exists""
+    Return 0
+  }
+
+}
+
+$result = Invoke-Command -ScriptBlock $ScriptBlockDir -ArgumentList $samAccountName
+Write-Host $result

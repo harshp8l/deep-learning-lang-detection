@@ -1,0 +1,48 @@
+class TestChecker(BaseChecker):
+    """"""
+    find the check type in the following url:
+    https://github.com/PyCQA/pylint/blob/63eb8c4663a77d0caf2a842b716e4161f9763a16/pylint/checkers/typecheck.py
+    """"""
+    __implements__ = IAstroidChecker
+
+    name = 'test-checker'
+    priority = -1
+    msgs = {
+        'W0001': (
+            'You should not import ""%s""',
+            'import-datetime-returns',
+            'Should not import datetime'
+        ),
+    }
+
+    def __init__(self, linter):
+        super().__init__(linter)
+        # I use original pylint's ImportsChecker as a property
+        # from  import **
+        self.forbidden_import = ['datetime.datetime.now']
+        self.forbidden_import_from = ['datetime.now', 'now']
+        self.forbidden_import_attribute = ['datetime.now', 'now', 'datetime.datetime.now']
+
+    #the function will be rewrited
+    def visit_importfrom(self, node):
+        names = [name for name, _alias in node.names]
+        for item in names:
+            for check in self.forbidden_import_from:
+                if item == check:
+                    self.add_message('W0001', node=node, args=item)
+
+    def visit_import(self, node):
+        names = [name for name, _ in node.names]
+        for item in names:
+            for check in self.forbidden_import:
+                if check == item:
+                    self.add_message('W0001', node=node, args=item)
+
+    def visit_attribute(self, node):
+        for check_attr in self.forbidden_import_attribute:
+            if check_attr == node.as_string():
+                self.add_message('W0001', node=node, args=check_attr)
+
+
+def register(linter):
+    linter.register_checker(TestChecker(linter))

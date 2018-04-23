@@ -1,0 +1,46 @@
+val graph = Flow.fromGraph(GraphDSL.create() { implicit b =>
+import GraphDSL.Implicits._
+
+    val host1Flow = b.add(Http().cachedHostConnectionPool[Unit](uri.format(p, id)))
+    val host2Flow = b.add(Http().superPool[Unit]())
+
+    val toInitialRes = b.add(
+      Flow[(Try[HttpResponse], Unit)]
+        .collect {
+          case (Success(HttpResponse(StatusCodes.OK, _, entity, _)), _) =>
+            val initialRes = entity.dataBytes
+              .via(JsonFraming.objectScanner(Int.MaxValue))
+              .map(bStr => ChunkStreamPart(bStr.utf8String))
+            Some(initialRes)
+
+          case (Success(resp @ HttpResponse(code, _, _, _)), _) =>
+            log.error(""Request to test job failed, response code: "" + code)
+            // Discard the flow to avoid backpressure
+            resp.discardEntityBytes()
+            None
+        }
+    )
+
+    val keepOkStatus = b.add(
+      Flow[Option[Source[HttpEntity.ChunkStreamPart, Any]]]
+        .collect {
+          case Some(initialRes) => initialRes
+        }
+    )
+
+    val toOtherHost = b.add(
+      Flow[Source[HttpEntity.ChunkStreamPart, Any]]
+        .map { initialRes =>
+          (HttpRequest(
+             method = HttpMethods.POST,
+             uri = ""googl.cm/flow"",
+             entity = HttpEntity.Chunked(ContentTypes.`application/json`, initialRes)
+           ),
+           ())
+        }
+    )
+
+    host1Flow ~> toInitialRes ~> keepOkStatus ~> toOtherHost ~> host2Flow
+
+    FlowShape(host1Flow.in, host2Flow.out)
+})

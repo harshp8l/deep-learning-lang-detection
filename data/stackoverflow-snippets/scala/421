@@ -1,0 +1,8 @@
+df.toDS().groupByKey(_.guid).flatMapGroups((a,b) => {
+          val list = b.toList
+          val minimum = list.minBy(_.timestamp).timestamp
+          val filteredList = list.filterNot(_.agt == """")
+          val agtM = if(filteredList.isEmpty) """" else filteredList.maxBy(_.timestamp).agt
+          list.groupBy(_.timestamp).map(r => (r._2.head.guid, r._1, r._2.head.agt, minimum, r._2.length, agtM))
+        }).select($""_1"".as(""guid""), $""_2"".as(""timestamp""),
+          $""_3"".as(""agt""), $""_4"".as(""minimum""), $""_5"".as(""count""), $""_6"".as(""agtM"")).show()

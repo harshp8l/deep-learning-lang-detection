@@ -1,0 +1,15 @@
+Select A.* 
+      ,B.*
+ from  YourTable2 A
+ Cross Apply (Select First_Color  = max(case when RN=1 then Item end)  
+                    ,First_Value  = max(case when RN=1 then Value end)  
+                    ,Second_Color = max(case when RN=2 then Item end)  
+                    ,Second_Value = max(case when RN=2 then Value end)  
+                From (Select *,RN=Row_Number() over (Order by Value Desc)
+                        From ( values ('Red',Red)
+                                     ,('Green',Green)
+                                     ,('Blue',Blue)
+                                     ,('Black',Black)
+                               ) B1 (Item,Value)
+                     ) B2
+             ) B

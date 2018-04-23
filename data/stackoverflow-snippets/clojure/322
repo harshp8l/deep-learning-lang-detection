@@ -1,0 +1,25 @@
+(defn qsort [list]
+  (loop [[current & todo :as all] [list] sorted []]
+    (cond
+      (nil? current) sorted
+
+      (or (nil? (seq current)) (= (count current) 1))
+          (recur todo (glue sorted current))
+
+      :else (let [[pivot & rest] current
+                  pred #(> (compare pivot %) 0)
+                  lt   (keep-if pred rest)
+                  gte  (drop-if pred rest)
+                  work (list* lt [pivot] gte todo)]
+              (recur work sorted)))))
+
+(defn tlfnum [] (str/join (repeatedly 10 #(rand-int 10))))
+(defn tlfbook [n] (repeatedly n #(tlfnum)))
+(def result
+  (time (count (qsort (tlfbook 10000)))))
+
+-------------------------------------
+   Clojure 1.8.0    Java 1.8.0_111
+-------------------------------------
+""Elapsed time: 1377.321118 msecs""
+result => 10000

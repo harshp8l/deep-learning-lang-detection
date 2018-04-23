@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+stepdown_csv() {
+  local n=500
+  [[ $# -eq 1 ]] && n=""$1""
+
+  generate50000 |
+  splitcsv ""$n"" |
+  while IFS= read -r line; do
+    process_csv_line ""$line""
+  done
+}
+
+process_csv_line() {
+  local unsep=$(sed 's/,/ /g' <<< ""$1"")
+
+  if [[ ""$unsep"" != '' ]]; then
+    set $unsep
+    echo ""Got a CSV line with $# fields""
+    # sleep 60
+  fi
+}
+
+splitcsv() {
+  awk -F , -v flds=""$1"" '{
+    for (n=1; n<=NF; n++) {
+      printf ""%s%s"", $n, n % flds == 0 || n == NF ? ""\n"" : "",""
+    }
+  }'
+}
+
+generate50000() {
+  for n in {1..50000}; do
+    echo -n $RANDOM
+    if [[ n -lt 50000 ]]; then
+      echo -n ,
+    else
+      echo
+    fi
+  done
+}
+
+stepdown_csv ""$@""

@@ -1,0 +1,33 @@
+with last_revision_invoices as
+(
+  select top(1) with ties
+    clientcode, 
+    year(invdate) as year, 
+    month(invdate) as month, 
+    tax_credit
+  from client_invoices ci 
+  order by case when invoice_revision = max(invoice_revision) over (partition by clientcode, invdate, invnumber) then 1 else 2 end
+)
+, months as (
+  select year(@range_start) as year, month(@range_start) as month
+  union all
+  select case when month < 12 then year else year + 1 end, (month % 12) + 1
+  from months
+  where year < year(@range_end) or (year = year(@range_end) and month < month(@range_end))
+)
+select c.clientcode, m.year, m.month, coalesce(cur.total, 0) as total_then, coalesce(prev.total, 0) as total_previous_year
+from client_main c
+cross join months m
+left join
+(
+  select clientcode, year, month, sum(tax_credit) as total
+  from  last_revision_invoices
+  group by clientcode, year, month
+) cur on cur.clientcode = c.clientcode and cur.year = m.year and cur.month = m.month
+left join
+(
+  select clientcode, year, month, sum(tax_credit) as total
+  from  last_revision_invoices
+  group by clientcode, year, month
+) prev on prev.clientcode = c.clientcode and prev.year = m.year - 1 and prev.month = m.month
+order by c.clientcode, m.year, m.month;

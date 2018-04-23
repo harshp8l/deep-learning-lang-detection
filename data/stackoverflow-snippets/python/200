@@ -1,0 +1,38 @@
+def handleData(self, chunk):
+    pdb.set_trace()
+    # Assigns the previous unprocessed byte string to the current_chunk, will be empty byte string if none found
+    current_chunk = self.last_chunk.get(threading.current_thread(), b'')
+    # Adds the argument chunk to the previous chunk (if called by itself or from main loop)
+    current_chunk += chunk
+    current_len = len(current_chunk)
+    # Decimal values of ASCII chars #, $
+    hash_dec = 35
+    dollar_dec = 36
+    idx = 0
+
+    # For loop to iterate over the byte string
+    for x in current_chunk:
+        # if current index is # and the next two indexs are $ then we have found a record delimiter
+        if x == hash_dec and current_chunk[idx+1] == dollar_dec and current_chunk[idx+2] == dollar_dec:
+            # Index positions for list slice
+            start = idx+3
+            end = idx+45
+
+            # if end slice index is greater than range of list
+            if end > current_len:
+                print('Index out of range')
+                self.last_chunk[threading.current_thread()] = current_chunk[idx:]
+                return True
+
+            self.printValues(current_chunk[start:end])
+
+            self.last_chunk[threading.current_thread()] = b''
+
+            #if end == current_len:
+                #print('No more bytes left in chunk!')
+                #return True
+
+            print('Ending Chunk:', current_chunk[end:])
+            return self.handleData(current_chunk[end:])
+
+        idx += 1

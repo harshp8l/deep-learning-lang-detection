@@ -1,0 +1,12 @@
+val step1 = df.groupBy(""name"", ""food"").agg(sum(""weight"").as(""weight"")).
+    groupBy(""name"").agg(collect_list(struct(""food"", ""weight"")).as(""buy""))
+val result = step1.map(row =>
+    (row.getAs[String](""name""), row.getAs[Seq[Row]](""buy"").map(map =>
+        map.getAs[String](""food"") -> map.getAs[Long](""weight"")).toMap)
+    ).toDF(""name"", ""buy"")
+result.toJSON.show(false)
+
++---------------------------------------------+
+|{""name"":""john"",""buy"":{""carrot"":4,""tomato"":3}}|
+|{""name"":""bill"",""buy"":{""taco"":6,""apple"":1}}   |
++---------------------------------------------+

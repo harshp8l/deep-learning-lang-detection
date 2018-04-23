@@ -1,0 +1,18 @@
+:parse ForEach ($Computer in (Get-Content C:\Path\computers.txt))
+{
+    If (Test-Connection $Computer -Quiet)
+    {
+        $Result = Get-Hotfix -Id KB4012212 -ComputerName $Computer -ErrorAction 'SilentlyContinue'
+
+        If ($Result)
+        {
+            $Result |
+              Select-Object -Property CSName,HotFixID |
+              ConvertTo-Csv -NoTypeInformation |
+              Out-File ""C:\$Computer.csv""
+            Continue :parse
+         }
+         ""`""CSName`"",`""HotFixID`""`r`n`""$Computer`"",`""NUL`"""" |
+           Out-File ""C:\$Computer.csv""
+    } Else { Write-Host 'Unable to connect to $Computer' }
+}

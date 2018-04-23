@@ -1,0 +1,27 @@
+val df = Seq(
+  (1, 1, Seq(1.0, 1.0, 3.4)),
+  (1, 2, Seq(1.0, 0.0, 4.3)),
+  (2, 1, Seq(0.0, 0.0, 0.0)),
+  (2, 3, Seq(1.2, 1.1, 1.1))
+).toDF(""c1"", ""c2"", ""c3"")
+
+def elementSum = udf(
+  (a: Seq[Seq[Double]]) => {
+    val zeroSeq = Seq.fill[Double](a(0).size)(0.0)
+    a.foldLeft(zeroSeq)(
+      (a, x) => (a zip x).map{ case (u, v) => u + v }
+    )
+  }
+)
+
+val df2 = df.groupBy(""c1"").agg(
+  elementSum(collect_list(""c3"")).as(""c3prime"")
+)
+
+df2.show(truncate=false)
+// +---+-----------------------------+
+// |c1 |c3prime                      |
+// +---+-----------------------------+
+// |1  |[2.0, 1.0, 7.699999999999999]|
+// |2  |[1.2, 1.1, 1.1]              |
+// +---+-----------------------------+

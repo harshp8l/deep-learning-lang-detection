@@ -1,0 +1,29 @@
+# rails g model breed_tag breed:belongs_to 
+
+# the table naming for has_many through: is different
+class CreateBreedTags < ActiveRecord::Migration[5.1]
+  def change
+    create_table :breed_tags do |t|
+      t.belongs_to :breed, foreign_key: true
+      t.belongs_to :tag, foreign_key: true
+      t.index [:breed_id, :tag_id], unique: true
+      t.timestamps
+    end
+  end
+end
+
+class BreedTag < ApplicationRecord
+  belongs_to :breed
+  belongs_to :tag
+  validates_uniqueness_of :breed_id, scope: :tag_id
+end
+
+class Breed < ApplicationRecord
+  has_many :breed_tags
+  has_many :tags, through: :breed_tags
+end
+
+class Tag < ApplicationRecord
+  has_many :breed_tags
+  has_many :breeds, through: :breed_tags
+end

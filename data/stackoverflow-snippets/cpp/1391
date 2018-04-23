@@ -1,0 +1,45 @@
+I'm gonna try to make this as simple as possible:  
+
+int = 32 bits:
+0000 0000 0000 0000 0000 0000 0000 0000  
+left-most bit represents sign, so largest int32 number that you can have is:  
+0111 1111 1111 1111 1111 1111 1111 1111 (which is 2147483647)
+
+for negative numbers if left-most bit is set to 1 then to get ""human readable""  
+number you will have to do complement 2 of that number which is invert every bit  
+and add 1.
+
+ex.
+1111 1111 1111 1111 1111 1111 1111 1111  <- my number (i know it is negative, -?)  
+0000 0000 0000 0000 0000 0000 0000 0000  <- all bits converted  
+0000 0000 0000 0000 0000 0000 0000 0001  <- added 1    
+=> so that begging number was -1  
+
+Now that you know this, question is what happens if you add 1 to the   
+largest positive int32 number (0111 1111 1111 1111 1111 1111 1111 1111) ?  
+
+Well you will get 1000 0000 0000 0000 0000 0000 0000 0000
+which is (-2147483648). What happened here was overflow caused by addition.  
+This was the case in your program for your 'a' variable.
+
+- As for your confusion with 'inf': 
+
+Floating point numbers work differently then integers.  
+I'm not gonna go into too much detail on how bits and bytes are arranged.
+Just know that there is :  
+ - 1 bit reserved for sign (top-left)   
+ - next 8 (for float32) bits for exponent   
+ - and the rest for fraction  
+Now what is interesting is that there are certain 'special' values defined in
+IEEE 754 which are the following:
+
+ - +0 = 0 00000000 00000000000000000000000  
+ - -0 = 1 00000000 00000000000000000000000  
+ - +inf = 0 11111111 00000000000000000000000
+ - -inf = 1 11111111 00000000000000000000000
+ - NaN = 0 11111111 00000000000000000000001
+
+As you see these special values are not defined in int type which is the reason  
+why you get 'inf' in float and something weird/unexpected in int.
+
+I hope i answered your question. 

@@ -1,0 +1,39 @@
+open System.Drawing
+open System.Windows.Forms
+
+let genLoops depth scale extent figure startPt =
+    let offsets dist (x, y) =
+        List.map (fun (ox, oy) ->
+            x + ox * dist, y + oy * dist )
+    let rec aux n size pt =
+        if n = 0 then
+            match offsets (size / extent) pt figure with
+            | [] -> invalidOp ""Empty figure""
+            | p::ps -> [p::ps @ [p]]
+        else
+            pt::offsets (size / scale) pt figure
+            |> List.collect (aux (n - 1) (size / scale))
+    aux depth 1. startPt
+
+type MyForm(loops) as this =
+    inherit Form()
+    let bm() = new Bitmap(this.ClientSize.Width, this.ClientSize.Height)
+    let mutable bitmap = bm()
+    let mapToPoint(x, y) =
+        Point(int(x * float(bitmap.Width - 1)),
+              int(y * float(bitmap.Height - 1)) )
+    override me.OnResize _ =
+        bitmap <- bm()
+        me.Invalidate()
+    override __.OnPaint arg =
+        let g = arg.Graphics
+        g.Clear Color.White
+        for loop in loops do
+            Seq.map mapToPoint loop
+            |> Seq.pairwise
+            |> Seq.iter (fun (p0, p1) ->
+                g.DrawLine (new Pen(Color.Black), p0, p1) )
+        g.DrawImage(bitmap, 0, 0)
+
+let triangle = [0., 0.; -0.5, 1.; 0.5, 1.]
+(new MyForm(genLoops 5 2. 1. triangle (0.5, 0.))).Show()

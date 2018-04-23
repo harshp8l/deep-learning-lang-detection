@@ -1,0 +1,66 @@
+package main
+
+import (
+    ""log""
+    ""text/template""
+    ""gopkg.in/yaml.v2""
+    ""os""
+)
+
+type File struct {
+    TypeVersion string `yaml:""_type-version""`
+    Dependency  []Dependency
+}
+
+type Dependency struct {
+    Name    string
+    Type    string
+    CWD     string
+    Install []Install
+}
+
+type Install map[string]string
+
+var data = `
+_type-version: ""1.0.0""
+dependency:
+  - name: ui
+    type: runner
+    cwd: /ui
+    install:
+       - name: api
+
+  - name: ui2
+    type: runner2
+    cwd: /ui2
+    install:
+       - name: api2
+
+`
+
+func main() {
+    f := File{}
+
+    err := yaml.Unmarshal([]byte(data), &f)
+    if err != nil {
+        log.Fatalf(""error: %v"", err)
+    }
+
+   const t = `
+#!/bin/bash
+
+{{range .Dependency}}
+echo ""type is {{.Type}}""
+echo ""cwd is {{.CWD}}""
+{{range .Install}}
+echo ""install {{.name}}""
+{{end}}
+{{end}}
+`
+
+    tt := template.Must(template.New("""").Parse(t))
+    err = tt.Execute(os.Stdout, f)
+    if err != nil {
+        log.Println(""executing template:"", err)
+    }
+}

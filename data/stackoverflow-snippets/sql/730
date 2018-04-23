@@ -1,0 +1,35 @@
+MariaDB [test]> select * from yourTable;
++-------------+-------------+---------------------+-------------+
+| ministry_id | building_id | action_date         | action_type |
++-------------+-------------+---------------------+-------------+
+|          14 |        1653 | 2011-12-23 11:22:33 |           1 |
+|          14 |        1653 | 2012-02-29 11:51:12 |           2 |
+|          14 |        1653 | 2013-06-25 11:29:22 |           1 |
+|          14 |        1653 | 2017-05-15 17:01:37 |           2 |
++-------------+-------------+---------------------+-------------+
+4 rows in set (0.00 sec)
+
+MariaDB [test]> SELECT 
+    -> t1.ministry_id,
+    -> t1.building_id,
+    -> t1.action_date as add_date,
+    -> MIN(t2.end_date) as end_date
+    -> FROM yourTable t1
+    -> LEFT JOIN (
+    -> SELECT t.action_date end_date, action_date
+    -> FROM yourTable t
+    -> WHERE t.action_type = 2 
+    -> ) t2
+    -> ON t1.action_date < t2.action_date
+    -> WHERE t1.action_type = 1
+    -> GROUP BY t1.action_date
+    -> ;
++-------------+-------------+---------------------+---------------------+
+| ministry_id | building_id | add_date            | end_date            |
++-------------+-------------+---------------------+---------------------+
+|          14 |        1653 | 2011-12-23 11:22:33 | 2012-02-29 11:51:12 |
+|          14 |        1653 | 2013-06-25 11:29:22 | 2017-05-15 17:01:37 |
++-------------+-------------+---------------------+---------------------+
+2 rows in set (0.00 sec)
+
+MariaDB [test]> 

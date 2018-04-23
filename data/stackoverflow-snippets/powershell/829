@@ -1,0 +1,37 @@
+[xml]$alpha = @""
+<report>
+    <row>
+        <pID>418</pID>
+        <elementRootID>63789</elementRootID>
+    </row>
+    <row>
+        <pID>419</pID>
+        <elementRootID>63789</elementRootID>
+    </row>
+</report>
+""@
+
+[xml]$beta = @""
+<report>
+    <row>
+        <ID>418</ID>
+        <obpdID>248</obpdID>
+    </row>
+    <row>
+        <ID>419</ID>
+        <obpdID>249</obpdID>
+    </row>
+</report> 
+""@
+
+$elementRootID = 63789
+
+$results = $alpha.report.row |
+    Where-Object elementRootID -EQ $elementRootID |
+    ForEach-Object {
+        $beta.report.row |
+            Where-Object ID -EQ $_.pID |
+            Select-Object -Property @{Name=""elementRootID""; Expression={$elementRootID}}, @{Name=""pID""; Expression={$_.ID}}, obpdID
+    }
+
+$results

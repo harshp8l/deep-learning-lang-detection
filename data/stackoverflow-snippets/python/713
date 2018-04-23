@@ -1,0 +1,19 @@
+class MemberManager:
+    managed_member_names = ('a', 'b', 'c')
+    def __init__(self, a, b, c):
+        self.a, self.b, self.c = a, b, c
+    def __enter__(self):
+        # yield statement means this enter method returns a generator
+        for i in (getattr(self,n) for n self.managed_member_names):
+            with open(i, mode=""w"") as x:
+                # yield prevents the context manager from exiting
+                yield x
+    def __exit__(self, exc_type, exc_value, traceback):
+        # all items will be closed by __enter__ context manager; nothing needed here
+        pass
+
+mm = MemberManager(fname1, fname2, fname3)
+with mm as open_members:
+    # open_members is a generator/iterator
+    for member in open_members:
+        member.write(""foo"")

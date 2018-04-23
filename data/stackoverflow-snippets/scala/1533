@@ -1,0 +1,43 @@
+import java.io.{BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream}
+import java.util.zip.{ZipEntry, ZipOutputStream}
+import akka.stream.scaladsl.{StreamConverters}
+import org.apache.commons.io.FileUtils
+import play.api.mvc.{Action, Controller}
+
+class HomeController extends Controller {
+  def single() = Action {
+                         Ok.sendFile(
+                           content = new java.io.File(""C:\\Users\\a.csv""),
+                           fileName = _ => ""a.csv""
+                         )
+                       }
+
+  def zip() = Action {
+                     Ok.chunked(StreamConverters.fromInputStream(fileByteData)).withHeaders(
+                       CONTENT_TYPE -> ""application/zip"",
+                       CONTENT_DISPOSITION -> s""attachment; filename = test.zip""
+                     )
+                   }
+
+  def fileByteData(): ByteArrayInputStream = {
+    val fileList = List(
+      new java.io.File(""C:\\Users\\a.csv""),
+      new java.io.File(""C:\\Users\\b.csv"")
+    )
+
+    val baos = new ByteArrayOutputStream()
+    val zos = new ZipOutputStream(new BufferedOutputStream(baos))
+
+    try {
+      fileList.map(file => {
+        zos.putNextEntry(new ZipEntry(file.toPath.getFileName.toString))
+        zos.write(FileUtils.readFileToByteArray(file))
+        zos.closeEntry()
+      })
+    } finally {
+      zos.close()
+    }
+
+    new ByteArrayInputStream(baos.toByteArray)
+  }
+}

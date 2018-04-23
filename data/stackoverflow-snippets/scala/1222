@@ -1,0 +1,37 @@
+private val firstSegmentRE = """"""^(\w+)[\.*].*$"""""".r
+
+// convert ""aaa.bbb.ccc"" to ""aaa""
+private def parseFirstSegment(fullPath: String) : Option[String] = {
+  if (fullPath.contains("".""))
+    fullPath match {
+      case firstSegmentRE(segment) => Some(segment)
+      case _ => None
+    }
+  else
+    Some(fullPath)
+}
+
+// for all keys in white list get a map of key -> config
+protected def subConfigMap(config: Config, whiteList: List[String], 
+configName: String) : ErrorOr[Map[String, Config]] = {
+  // This will traverse the whole config and flatten down to the leaves..
+  val leafKeys : List[String] =
+    config.entrySet()
+      .asScala
+      .map(e => e.getKey)
+      .toList
+  // Remove all after the first dot
+  val nextLevelKeys : List[String] =
+    leafKeys.map(parseFirstSegment)
+      .collect {
+        case Some(firstSegment) => firstSegment
+      }
+      .distinct
+  val keysToSearch = nextLevelKeys.filter(whiteList.contains)
+  // we have a list of valid first level children
+  // parse out subconfigs and convert to map
+  keysToSearch.traverseErrorOr( key =>
+    extractSubConfig(config, key, configName).map((key, _))
+  )
+  .map(_.toMap)
+}

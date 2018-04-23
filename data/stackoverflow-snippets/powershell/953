@@ -1,0 +1,380 @@
+@echo off
+cls
+cd /d ""%~dp0""
+setlocal enableextensions
+setlocal enabledelayedexpansion
+
+rem ___________________________________________________________________________
+
+rem Liste des fichiers à concaténer.
+set FILE_1=Fichier 1.txt
+set FILE_2=Fichier 2.txt
+set FILE_3=Fichier 3.txt
+set FILE_4=Fichier 4.txt
+
+
+
+rem Nom du fichier concaténé.
+set OUTPUT_FILE=Final.txt
+
+
+
+rem ___________________________________________________________________________
+
+rem Liste des Byte Order Mark (BOM).
+set ""BOM_UTF8=EFBBBF""
+set ""BOM_UTF16_LE=FFFE""
+set ""BOM_UTF16_BE=FEFF""
+set ""BOM_UTF32_LE=FFFE0000""
+set ""BOM_UTF32_BE=0000FEFF""
+
+rem Taille maximum d'un BOM, ici 4 octets avec l'UTF-32.
+set /a BOM_MAX_SIZE=4
+
+rem Fichiers temporaires pour les commandes ""fc"" et ""certutil"".
+set ""TEMP_FILE_1=script_tmp_1.txt""
+set ""TEMP_FILE_2=script_tmp_2.txt""
+set ""TEMP_FILE_OUTPUT_1=script_tmp_3.txt""
+set ""TEMP_FILE_OUTPUT_2=script_tmp_4.txt""
+
+set error_message_1=Erreur, le fichier : ""!FILE_1!"" n'existe pas. ^& echo.Ce script va s'arreter.
+rem error_message_1=Error, the file: ""!FILE_1!"" doesn't exist. ^& echo.This script will stop.
+set /a switch=0
+:define_variable
+set error_message_2=Erreur : Le Byte Order Mark de ""!CURRENT_FILE!"" est ""!FILE_BOM!"" au lieu de ""!FIRST_FILE_BOM!"". ^& echo.Ce script va s'arreter.
+rem error_message_2=Error: The Byte Order Mark in ""!CURRENT_FILE!"" is ""!FILE_BOM!"" instead of ""!FIRST_FILE_BOM!"". ^& echo.This script will stop.
+if %switch% EQU 1 (goto variable_defined)
+set ""end_message=Operation accomplie.""
+rem ""end_message=Operation completed.""
+
+
+
+echo en-US : If the files to concatenate have a Byte Order Mark, this script is limited to small files. From 10000 bytes, it will have to create more than 1254 temporary files, the operation may take a long time. Do you want to continue ? (Y/N)
+echo.
+echo fr-FR : Si les fichiers a concatener ont un Byte Order Mark, ce script se limite aux petits fichiers. A partir de 10000 octets, il devra creer plus de 1254 fichiers temporaires, l'operation risque de durer longtemps. Voulez-vous continuer ? (Y/N)
+echo.
+echo.
+set RESPONSE=
+set /P RESPONSE=Type your answer: %=%
+if ""%RESPONSE%""==""y"" (goto yes)
+if ""%RESPONSE%""==""n"" (goto no)
+if ""%RESPONSE%""==""Y"" (goto yes)
+if ""%RESPONSE%""==""N"" (goto no)
+:no
+exit /b 0
+:yes
+echo.
+rem ""echo."" affiche une ligne vide, on peut aussi utiliser ""echo("".
+
+
+
+rem Si le premier fichier n'existe pas, on stoppe le programme en renvoyant le code d'erreur -1.
+if not exist ""%FILE_1%"" (
+    echo %error_message_1%
+    echo.
+    pause
+    exit /b -1
+)
+
+rem On détecte le BOM du premier fichier.
+set ""FILE_BOM=NONE""
+call:my_function_read_bom ""%FILE_1%"",FILE_BOM
+set ""FIRST_FILE_BOM=%FILE_BOM%""
+echo %FILE_1% : %FIRST_FILE_BOM%
+
+rem On crée le fichier de sortie.
+copy /v /y /b ""%FILE_1%"" ""%OUTPUT_FILE%"" /b
+echo.
+
+rem S'il n'y a pas de BOM sur le premier fichier, c'est du binaire, de l'ASCII ou de l'ANSI, donc on copie tout.
+rem On prend chaque fichier suivant avec une boucle while en utilisant un nom de variable dynamique (avec la commande ""goto"").
+set /a count_loop=2
+set ""CURRENT_FILE=!FILE_%count_loop%!""
+rem Cette concaténation de variables ne fonctionne pas dans un bloc if.
+:while_loop_1
+    if ""%FIRST_FILE_BOM%""==""NONE"" (
+        copy /V /Y /B ""%OUTPUT_FILE%"" + /B ""%CURRENT_FILE%"" ""%OUTPUT_FILE%"" /B
+    ) else (goto end_loop_1)
+    set /a count_loop=count_loop+1
+    set ""CURRENT_FILE=!FILE_%count_loop%!""
+    if exist ""%CURRENT_FILE%"" (goto while_loop_1)
+    echo.
+    echo %end_message%
+    echo.
+    pause
+    exit /b 0
+:end_loop_1
+
+set /a count_loop=2
+set ""CURRENT_FILE=!FILE_%count_loop%!""
+:while_loop_2
+
+    rem On vérifie son BOM.
+    set ""FILE_BOM=NONE""
+    call:my_function_read_bom ""!CURRENT_FILE!"",!FILE_BOM!
+    echo !CURRENT_FILE! : !FILE_BOM!
+
+    rem Si le BOM est différent, on stoppe avec le code d'erreur -2.
+    if not ""!FILE_BOM!""==""!FIRST_FILE_BOM!"" (
+        echo.
+        set /a switch=1
+        goto define_variable
+        :variable_defined
+        echo %error_message_2%
+        echo.
+        pause
+        exit /b -2
+    )
+
+    rem On crée une copie temporaire du fichier à ajouter mais sans son BOM.
+    if ""!FILE_BOM!""==""UTF8"" (set /a SIZE_OF_BOM=3)
+    if ""!FILE_BOM!""==""UTF16LE"" (set /a SIZE_OF_BOM=2)
+    if ""!FILE_BOM!""==""UTF16BE"" (set /a SIZE_OF_BOM=2)
+    if ""!FILE_BOM!""==""UTF32LE"" (set /a SIZE_OF_BOM=4)
+    if ""!FILE_BOM!""==""UTF32BE"" (set /a SIZE_OF_BOM=4)
+    if ""!FILE_BOM!""==""NONE"" (exit /b -3)
+    call:my_function_split_file ""!CURRENT_FILE!"",!SIZE_OF_BOM!
+
+    rem On ajoute la copie temporaire.
+    copy /V /Y /B ""%OUTPUT_FILE%"" + /B ""!CURRENT_FILE!_part.2"" ""%OUTPUT_FILE%"" /B
+    echo.
+
+    rem Puis on supprime le fichier temporaire.
+    del /F /Q ""!CURRENT_FILE!_part.2"" >nul 2>&1
+
+    rem Tous les programmes (donc toutes les commandes) ont 3 flux :
+    rem Standard Input  = Le flux des entrées (clavier pour la console)
+    rem Standard Output = Le flux des sorties (interface utilisateur et écran)
+    rem Standard Error  = Le flux des erreurs (messages d'erreur affichés)
+    rem L'indicatif 1>nul ou par défaut >nul annule le flux des sorties, la commande n'affiche rien sauf en cas d'erreur.
+    rem L'indicatif 2>nul annule le flux des erreurs, la commande affiche tout sauf les erreurs.
+    rem L'indicatif 2>&1  permet de réorienter le flux des erreurs sur le flux des sorties.
+    rem Donc >nul 2>&1 permet de ne jamais rien afficher, même en cas d'erreur.
+
+    set /a count_loop=count_loop+1
+    set CURRENT_FILE=!FILE_%count_loop%!
+    if exist ""%CURRENT_FILE%"" (goto while_loop_2)
+echo.
+echo %end_message%
+echo.
+pause
+exit /b 0
+rem Il ne faut pas oublier le ""exit"" sinon les fonctions qui suivent seront à nouveau lues comme du code simple et cela causera des problèmes.
+
+
+
+rem ___________________________________________________________________________
+
+:my_function_read_bom
+    rem On supprime le fichier temporaire s'il existe déjà.
+    del /F /Q ""%TEMP_FILE_1%"" >nul 2>&1
+    del /F /Q ""%TEMP_FILE_OUTPUT_1%"" >nul 2>&1
+
+    rem On crée le fichier temporaire et on le remplit de zéros selon la taille à comparer.
+    rem Arrêt si le fichier temporaire n'a pas pu être créé.
+    fsutil file createnew ""%TEMP_FILE_1%"" !BOM_MAX_SIZE! >nul || goto :eof
+
+    set /a COUNT_LINE=1
+    >%TEMP_FILE_OUTPUT_1% (
+        rem Pour lire le fichier en binaire, on utilise un hack de la commande ""fc"".
+        rem La commande ""fc"" permet d'afficher une comparaison binaire octet par octet entre deux fichiers.
+        rem Elle n'affiche que les octets qui ne correspondent pas, donc elle n'affichera pas les zéros.
+        rem On utilise la boucle ""for /f"" pour extraire les octets du résultats de la commande ""fc"".
+        rem Avec ""skip"", on saute la première ligne.
+        rem Avec ""delims"", on sépare chaque ligne selon les caractères deux-points et espace.
+        rem Avec ""tokens"", on place le contenu séparé dans 2 variables (i et j).
+        rem Donc la variable i contiendra l'offset et la variable j contiendra l'octet.
+        for /f ""skip=1 tokens=1,2 delims=: "" %%i in ('fc /b %1 ""%TEMP_FILE_1%""') do (
+            if not ""%%i""==""FCÿ"" (
+                set /a OFFSET=0x%%i
+
+                rem Si l'octet est 00, la commande ""fc"" ne les affiche pas.
+                for /l %%k in (!COUNT_LINE!,1,!OFFSET!) do (<nul set /p ""=00"")
+
+                rem On écrit l'octet dans le fichier.
+                <nul set /p ""=%%j""
+
+                set /a COUNT_LINE=OFFSET+2
+            )
+        )
+        rem Si les derniers octets sont 00, la commande ""fc"" ne les affiche pas.
+        for /l %%i in (!COUNT_LINE!,1,!BOM_MAX_SIZE!) do (<nul set /p ""=00"")
+    )
+    del /F /Q ""%TEMP_FILE_1%"" >nul 2>&1
+
+    rem Le fichier de sortie contient les premiers octets du fichier à lire.
+    rem On lit les premiers caractères de ce fichier de sortie.
+    rem On utilise la boucle ""for /f"" pour lire le fichier ligne par ligne.
+    rem Avec ""usebackq"", on peut lire les noms de fichiers ayant des espaces.
+    for /f ""usebackq tokens=* delims="" %%i in (""%TEMP_FILE_OUTPUT_1%"") do (
+        set ""LINE_READ=%%i""
+
+        rem On en déduit le BOM du fichier.
+        if ""!FILE_BOM!""==""NONE"" (
+            set BOM_READ=!LINE_READ:~0,8!
+            if !BOM_READ!==%BOM_UTF32_LE% (set ""FILE_BOM=UTF32LE"")
+        )
+        if ""!FILE_BOM!""==""NONE"" (
+            set BOM_READ=!LINE_READ:~0,8!
+            if !BOM_READ!==%BOM_UTF32_BE% (set ""FILE_BOM=UTF32BE"")
+        )
+        if ""!FILE_BOM!""==""NONE"" (
+            set BOM_READ=!LINE_READ:~0,6!
+            if !BOM_READ!==%BOM_UTF8% (set ""FILE_BOM=UTF8"")
+        )
+        if ""!FILE_BOM!""==""NONE"" (
+            set BOM_READ=!LINE_READ:~0,4!
+            if !BOM_READ!==%BOM_UTF16_LE% (set ""FILE_BOM=UTF16LE"")
+        )
+        if ""!FILE_BOM!""==""NONE"" (
+            set BOM_READ=!LINE_READ:~0,4!
+            if !BOM_READ!==%BOM_UTF16_BE% (set ""FILE_BOM=UTF16BE"")
+        )
+    )
+    del /F /Q ""%TEMP_FILE_OUTPUT_1%"" >nul 2>&1
+goto :eof
+
+:my_function_split_file
+    rem On importe le nom du fichier et on retire les guillemets.
+    set INPUT_FILE=%1
+    set INPUT_FILE=%INPUT_FILE:""=%
+    set /a BUFFER=7800
+
+    rem Cette ligne permet de remplacer le caractère "" par [rien].
+    rem Pour remplacer "" par ', il faut écrire : set INPUT_FILE=%INPUT_FILE:""='%
+    rem Pour remplacer World par Bob (insensible à la casse) :
+    rem set variable=""Hello World!""
+    rem set variable=%variable:World=Bob%
+
+    rem On supprime les fichiers temporaires.
+    rem Le préfixe ""/A:H"" est indispensable pour pouvoir aussi supprimer les fichiers cachés.
+    del /F /Q ""%TEMP_FILE_2%"" >nul 2>&1
+    del /F /Q /A:H ""%TEMP_FILE_OUTPUT_2%_part.*"" >nul 2>&1
+
+    rem Pour écrire dans un fichier en binaire, on utilise un hack de la commande ""certutil"".
+    rem Cette commande crée un fichier texte plus gros que le fichier d'origine.
+    rem La commande crée un fichier texte contenant une vue du fichier à la façon d'un éditeur hexadécimal.
+
+    rem Elle découpe le fichier en lignes de 16 octets. Chaque ligne se compose de...
+    rem Trois caractères qui indiquent un numéro de ligne : 000, 001, 002... 009, 00a, 00b... 00f, 010, 011, 012... fff.
+    rem La commande est donc limitée à 4096 lignes (de 0 à fff). Donc la taille du fichier est limitée à 65536 octets.
+    rem Puis il y a un 0 (30) et une tabulation (09).
+    rem Puis le code hexadécimal est écrit au format ASCII en deux groupes de 8 octets séparés par un espace.
+    rem Puis il y a 3 espaces (ou plus, pour que la partie suivante arrive à la colonne 57 du fichier texte).
+    rem Puis le code binaire du fichier est recopié en remplaçant chaque caractère non-textuel par un point (2E).
+    rem Exemple d'un fichier en UTF-8 contenant la ligne ""abcdefghijklm"".
+    rem Cela donne ""0000    EF BB BF 61 62 63 64 65  66 67 68 69 6a 6b 6c 6d   ...abcdefghijklm"".
+    rem Enfin la ligne se termine par un retour à la ligne (0D0A).
+
+    rem Le paramètre ""f"" sert à écraser le fichier existant (force overwrite).
+    certutil -encodehex -f ""%INPUT_FILE%"" ""%TEMP_FILE_2%"" >nul
+
+    set /a SIZE=%2
+
+    if not defined SIZE (echo SIZE undefined. & goto :eof)
+    if !SIZE! LEQ 0 (echo SIZE not valid. & goto :eof)
+
+    rem Si SIZE est la taille du fichier à séparer donc un nombre d'octets,
+    rem et si LENGTH la longueur de la chaîne de caractères écrivant ces octets,
+    rem alors il faut multiplier par 2 car un octet s'écrit avec 2 caractères.
+    set /a LENGTH=%SIZE%*2
+
+    set ""HEXADECIMAL_STRING=""
+    set /a HEXADECIMAL_STRING_LENGTH=0
+    set /a PART=1
+
+    rem On lit le fichier texte créé, et on le découpe en mettant chaque ligne en un fichier différent.
+    rem Le délimitateur est le caractère ""Tabulation"" (09).
+    for /f ""usebackq tokens=2 delims=   "" %%i in (""%TEMP_FILE_2%"") do (
+        set ""CURRENT_LINE=%%i""
+
+        rem On extrait les 48 premiers caractères pour n'obtenir que la partie hexadécimale.
+        rem Avec notre exemple, on obtient donc : ""ef bb bf 61 62 63 64 65  66 67 68 69 6a 6b 6c 6d"".
+        set HEXADECIMAL_STRING=!HEXADECIMAL_STRING!!CURRENT_LINE:~0,48!
+
+        rem On supprime les espaces.
+        rem Avec notre exemple, on obtient donc : ""efbbbf6162636465666768696a6b6c6d"".
+        set HEXADECIMAL_STRING=!HEXADECIMAL_STRING: =!
+
+        if !HEXADECIMAL_STRING_LENGTH! GEQ 32 (
+            set /a HEXADECIMAL_STRING_LENGTH=HEXADECIMAL_STRING_LENGTH+32
+        )
+        if !HEXADECIMAL_STRING_LENGTH! LSS 32 (
+            call:my_function_strlen HEXADECIMAL_STRING_LENGTH HEXADECIMAL_STRING
+        )
+        echo %INPUT_FILE% : !HEXADECIMAL_STRING_LENGTH! / %BUFFER%
+
+        rem Si la taille de la ligne est >= la taille à extraire,
+        rem donc si on a atteint la fin de la partie à extraire,
+        rem on sauvegarde la partie à extraire dans un fichier.
+        if !HEXADECIMAL_STRING_LENGTH! GEQ !LENGTH! (
+            set /a REST=HEXADECIMAL_STRING_LENGTH-LENGTH
+            for %%i in (!REST!) do (
+                (echo(!HEXADECIMAL_STRING:~0,-%%i!)>>%TEMP_FILE_OUTPUT_2%_part.!PART!
+                rem Avec notre exemple, on obtient donc : ""ef bb bf"" suivi d'un retour à la ligne (0D0A).
+
+                rem On cache le fichier. Mettre ""-h"" pour le démasquer.
+                attrib +h ""%TEMP_FILE_OUTPUT_2%_part.!PART!"" >nul
+
+                rem La variable contient le reste de la ligne, dans notre exemple : ""6162636465666768696a6b6c6d"".
+                set HEXADECIMAL_STRING=!HEXADECIMAL_STRING:~-%%i!
+                set /a HEXADECIMAL_STRING_LENGTH=REST
+            )
+            rem On utilise ""certutil"" pour créer un fichier binaire à partir d'un fichier texte contenant une chaîne de caractères hexadécimaux.
+            certutil -decodehex -f ""%TEMP_FILE_OUTPUT_2%_part.!PART!"" ""%INPUT_FILE%_part.!PART!"" >nul
+
+            set /a PART=PART+1
+            set /a LENGTH=%SIZE%*2
+        )
+        rem Si la taille de la ligne est >= une taille maximum de sécurité,
+        rem on sauvegarde la ligne dans un fichier et on réinitialise.
+        if !HEXADECIMAL_STRING_LENGTH! GEQ !BUFFER! (
+            (echo(!HEXADECIMAL_STRING!)>>%TEMP_FILE_OUTPUT_2%_part.!PART!
+            attrib +h ""%TEMP_FILE_OUTPUT_2%_part.!PART!"" >nul
+            set ""HEXADECIMAL_STRING=""
+            set /a HEXADECIMAL_STRING_LENGTH=0
+
+            set /a LENGTH=!LENGTH!-!BUFFER!
+            if !LENGTH! LSS 0 (set /a LENGTH=0)
+        )
+    )
+    rem Au final, il reste la variable contenant le reste de la ligne, on l'extrait dans un autre fichier.
+    echo !HEXADECIMAL_STRING!>>%TEMP_FILE_OUTPUT_2%_part.!PART!
+    attrib +h ""%TEMP_FILE_OUTPUT_2%_part.!PART!"" >nul
+    certutil -decodehex -f ""%TEMP_FILE_OUTPUT_2%_part.!PART!"" ""%INPUT_FILE%_part.!PART!"" >nul
+
+    del /F /Q ""%TEMP_FILE_2%"" >nul 2>&1
+    del /F /Q /A:H ""%TEMP_FILE_OUTPUT_2%_part.*"" >nul 2>&1
+
+    rem Inutile ici mais pour créer un fichier vide, il faut écrire :
+    rem echo. 2>""fichier_vide.txt""
+
+    rem On fusionne toutes les autres parties dans la deuxième.
+    if !PART! GEQ 3 (
+        for /l %%i in (3,1,!PART!) do (
+            copy /V /Y /B ""%INPUT_FILE%_part.2"" + /B ""%INPUT_FILE%_part.%%i"" ""%INPUT_FILE%_part.2"" /B >nul
+            del /F /Q ""%INPUT_FILE%_part.%%i"" >nul 2>&1
+        )
+    )
+
+    rem On supprime la première partie.
+    del /F /Q ""%INPUT_FILE%_part.1"" >nul 2>&1
+goto :eof
+
+:my_function_strlen
+    set ""STRING_TO_COUNT=!%~2!""
+    rem Écrire %~2 au lieu %2 permet de supprimer les guillemets.
+
+    rem Attention, les caractères comme ! ^ ou % ne sont pas gérés, ils tronquent la chaîne.
+    rem echo String to count: %STRING_TO_COUNT%
+
+    rem Cette astuce permet de faire 3 boucles quelle que soit le nombre de caractères.
+    set /a STRING_LENGTH=1
+    for %%i in (4096 2048 1024 512 256 128 64 32 16 8 4 2 1) do (
+        if ""!STRING_TO_COUNT:~%%i,1!"" NEQ """" ( 
+            set /a ""STRING_LENGTH+=%%i""
+            set ""STRING_TO_COUNT=!STRING_TO_COUNT:~%%i!""
+        )
+    )
+    set /a %1=%STRING_LENGTH%
+goto :eof

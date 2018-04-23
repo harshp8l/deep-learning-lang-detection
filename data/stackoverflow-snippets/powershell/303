@@ -1,0 +1,23 @@
+ForEach ($User In $Users)
+{
+    # Retrieve values from the csv.
+    $ID = $User.HRRef
+    $ID | Out-File $logfile -Append
+
+    # Retrieve the SAMAccountName of the user from AD.
+    $UserDN = (Get-ADUser -LDAPFilter ""(employeeID=$ID)"").SAMAccountName
+
+    #Retrieve the Description of the user from AD.
+    $Description = (Get-ADUser -Identity $UserDN -Properties description).Description
+    $Description | Out-File $logfile -Append
+
+    # Make sure there is only one user with this employeeID.
+    If ($UserDN.Count -eq 1 -and $Description -notlike ""*$IDString*"")
+    {
+        Set-ADUser -Identity $UserDN -Description ""$ID - $Description""
+    }
+    Else
+    {
+        ""User with ID $ID either not found, or more than one user found."" | Out-File $logfile -Append
+    }
+}

@@ -1,0 +1,41 @@
+import { Component, NgModule, ModuleWithProviders, Type, InjectionToken, Inject } from '@angular/core';
+
+export interface ILibService {
+  aFunction(): string;
+}
+
+export const LIB_SERVICE = new InjectionToken<ILibService>('LIB_SERVICE');
+
+export interface MyLibConfig {
+  myService: Type<ILibService>;
+}
+
+export class DefaultLibService implements ILibService {
+  aFunction() {
+    return 'default';
+  }
+}
+
+@Component({
+  // whatever
+})
+export class MyLibComponent {
+  constructor(@Inject(LIB_SERVICE) libService: ILibService) {
+    console.log(libService.aFunction());
+  }
+}
+
+@NgModule({
+  declarations: [MyLibComponent],
+  exports: [MyLibComponent]
+})
+export class LibModule {
+  static forRoot(config?: MyLibConfig): ModuleWithProviders {
+    return {
+      ngModule: LibModule,
+      providers: [
+        { provide: LIB_SERVICE, useClass: config && config.myService || DefaultLibService }
+      ]
+    };
+  }
+}

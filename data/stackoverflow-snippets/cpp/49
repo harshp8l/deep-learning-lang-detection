@@ -1,0 +1,78 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+
+// Class to hold line data
+class line {
+    public:
+    int m, b;
+
+    // Returns true if this line intersects y at an x which is an integer
+    bool intersects_y(int y)
+    {
+        // m * x + b = y
+        // m * x = y - b
+        // x = (y - b) / m
+        double x = (y - b) / (double)m;
+        return std::floor(x) == x;
+    }
+
+    bool operator==(const line& l)
+    {
+        return m == l.m && b == l.b;
+    }
+};
+
+// Input a line (m and b)
+std::istream& operator>>(std::istream& in, line& l)
+{
+    in >> l.m >> l.b;
+    return in;
+}
+// Output a line
+std::ostream& operator<<(std::ostream& out, const line& l)
+{
+    out << ""y = "" << l.m << ""x + "" << l.b;
+    return out;
+}
+
+int main() {
+    // Use a vector to store the lines
+    std::vector<line> lines;
+
+    int num_commands;
+    std::cin >> num_commands;
+
+    line tmp;
+    int to_check;
+    int matches;
+
+    for (int i = 0; i < num_commands; i++) {
+        char op;
+        std::cin >> op;
+        switch (op) {
+            case '+':
+                // Input a line and put into vector
+                std::cin >> tmp;
+                lines.push_back(tmp);
+                break;
+            case '?':
+                std::cin >> to_check;
+                matches = 0;
+                // Check each line in the list
+                for (auto l : lines) {
+                    if (l.intersects_y(to_check)) {
+                        matches += 1;
+                    }
+                }
+                std::cout << matches << '\n';
+                break;
+            case '-':
+                std::cin >> tmp;
+                lines.erase(std::find(lines.begin(), lines.end(), tmp));
+                break;
+        }
+    }
+    return 0;
+}

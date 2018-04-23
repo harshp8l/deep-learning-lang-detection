@@ -1,0 +1,68 @@
+val left = Json.parse(""""""{""array"":[1,2,4],""boolean"":true,""null"":null,""number"":123,""object"":{""a"":""b"",""c"":""d"",""e"":""f""},""string"":""Hello World"",""absent-in-right"":true,""different-types"":123}"""""").asInstanceOf[JsObject]
+val right = Json.parse(""""""{""array"":[1,2,3],""boolean"":true,""null"":null,""number"":456,""object"":{""a"":""b"",""c"":""d"",""e"":""ff""},""string"":""India"",""absent-in-left"":true,""different-types"":""YES""}"""""").asInstanceOf[JsObject]
+
+// '*' - for the root node
+showJsDiff(left, right, ""*"", Seq.empty[String])
+
+def showJsDiff(left: JsValue, right: JsValue, parent: String, path: Seq[String]): Unit = {
+  val newPath = path :+ parent
+  if (left.getClass != right.getClass) {
+    println(s""Cannot compare ${left.getClass.getSimpleName} and ${right.getClass.getSimpleName} "" +
+      s""in '${getPath(newPath)}'"")
+  }
+  else {
+    left match {
+      // Primitive types are pretty easy to handle
+      case JsNull => logIfNotEqual(JsNull, right.asInstanceOf[JsNull.type], newPath)
+      case JsBoolean(value) => logIfNotEqual(value, right.asInstanceOf[JsBoolean].value, newPath)
+      case JsNumber(value) => logIfNotEqual(value, right.asInstanceOf[JsNumber].value, newPath)
+      case JsString(value) => logIfNotEqual(value, right.asInstanceOf[JsString].value, newPath)
+      case JsArray(value) =>
+        // For array we have to call showJsDiff on each element of array
+        val arr1 = value
+        val arr2 = right.asInstanceOf[JsArray].value
+        if (arr1.length != arr2.length) {
+          println(s""Arrays in '${getPath(newPath)}' have different length. ${arr1.length} != ${arr2.length}"")
+        }
+        else {
+          arr1.indices.foreach { idx =>
+            showJsDiff(arr1(idx), arr2(idx), s""($idx)"", newPath)
+          }
+        }
+      case JsObject(value) =>
+        val leftFields = value.keys.toSeq
+        val rightJsObject = right.asInstanceOf[JsObject]
+        val rightFields = rightJsObject.fields.map { case (name, value) => name }
+
+        val absentInLeft = rightFields.diff(leftFields)
+        if (absentInLeft.nonEmpty) {
+          println(""Next fields are absent in LEFT: "")
+          absentInLeft.foreach { fieldName =>
+            println(s""\t ${getPath(newPath :+ fieldName)}"")
+          }
+        }
+        val absentInRight = leftFields.diff(rightFields)
+        if (absentInRight.nonEmpty) {
+          println(""Next fields are absent in RIGHT: "")
+          absentInRight.foreach { fieldName =>
+            println(s""\t ${getPath(newPath :+ fieldName)}"")
+          }
+        }
+        // For common fields we have to call showJsDiff on them
+        val commonFields = leftFields.intersect(rightFields)
+        commonFields.foreach { field =>
+          showJsDiff(value(field), rightJsObject(field), field, newPath)
+        }
+
+    }
+  }
+}
+
+
+def logIfNotEqual[T](left: T, right: T, path: Seq[String]): Unit = {
+  if (left != right) {
+    println(s""'${getPath(path)}' => $left != $right"")
+  }
+}
+
+def getPath(path: Seq[String]): String = path.mkString(""\\"")

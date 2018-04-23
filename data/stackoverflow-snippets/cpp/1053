@@ -1,0 +1,32 @@
+// sample conditions for integers. Most strict condition is
+// an even integer greater than 2 and less than 10
+const std::vector<std::function<bool(int)>> conditions{
+    [](int elem) {return elem < 10;},
+    [](int elem) {return elem > 2;},
+    [](int elem) {return elem % 2 == 0;}
+    // add as many more conditions you wish...
+    // top condition is the one that will be relaxed first
+};
+
+
+// This will bit-by bit relax the conditions by ignoring more and more of them
+auto start_iterator = conditions.begin();
+while (start_iterator != conditions.end())
+{
+    for (const auto& elem : list)
+    {
+        bool fulfills_all = std::all_of(start_iterator, conditions.end(), [] (std::function<bool(int)> cond) {
+            // for each active condition, test the condition on the element
+            return cond(elem);
+        });
+
+        if (fulfills_all)
+            return elem;
+    }
+
+    // If we get here, that means no element fulfilled all the conditions. 
+    // Relax them by ignoring one more
+    start_iterator++;
+}
+
+// If we reach this point, then no element fulfilled even the most relaxed condition

@@ -1,0 +1,13 @@
+    auto set = [](auto member, auto p) {
+        auto propagate = [member](auto& ctx) {
+            traits::move_to(_attr(ctx), _val(ctx).*(member));
+        };
+        return as_parser(p)[propagate];
+    };
+
+    using T = ast::ShowSymbolsCommand;;
+    return qualifier(""all"")  >> set(&T::all, attr(true))
+         | qualifier(""full"") >> set(&T::full, attr(true))
+         | qualifier(""out"")  >> set(&T::out, '=' >> Filespec)
+         | qualifier(""type"") >> set(&T::types, '=' >> SymbolTypes)
+         | set(&T::wildcard, Wildcard);

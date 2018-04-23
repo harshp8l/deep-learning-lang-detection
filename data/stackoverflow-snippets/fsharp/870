@@ -1,0 +1,29 @@
+// BST - binary search tree
+type BST<'a when 'a: comparison> = | Leaf
+                                   | Node of BST<'a> * 'a * BST<'a>
+
+let rec rmMaxBST = function
+    | Leaf              -> failwith ""Tree was empty""
+    | Node(tL, x, Leaf) -> x, tL
+    | Node(tL, x, tR  ) -> let m, newTR = rmMaxBST tR
+                           m, Node(tL, x, newTR)
+
+let rec rmMinBST = function
+    | Leaf              -> failwith ""Tree was empty""
+    | Node(Leaf, x, tR) -> x, tR
+    | Node(tL,   x, tR) -> let m, newTL = rmMinBST tL
+                           m, Node(newTL, x, tR)
+
+let mergeBST t1 t2 =
+    match t1, t2 with
+    | (Leaf, Leaf)      -> Leaf
+    | (t1,   Leaf)      -> let x, t = rmMaxBST t1
+                           Node(t, x, Leaf)               
+    | (t1,   t2  )      -> let x, t = rmMinBST t2
+                           Node(t1, x, t)              
+
+let rec delBST x = function
+    | Leaf                       -> Leaf
+    | Node(tL, a, tR) when x < a -> Node(delBST x tL, a,          tR)
+    | Node(tL, a, tR) when a < x -> Node(         tL, a, delBST x tR)
+    | Node(tL, _, tR)            -> mergeBST tL tR

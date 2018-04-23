@@ -1,0 +1,22 @@
+awk -v OFS='\t' -F, -v wrds='new,old' 'BEGIN {
+   n = split(wrds, a, /,/) # split input words list by comma with int index
+   for(i=1; i<=n; i++)     # store words in another array with key as words
+      b[a[i]]=a[i]
+}
+FNR==1 { 
+   next # skip first row from all the files
+}
+$2 in b {
+   freq[FILENAME][$2]++ # store filename and word frequency in 2-dimesional array
+}
+END { # print formatted result
+   printf ""%s"", ""file"" OFS
+   for(i=1; i<=n; i++)
+      printf ""count(%s)%s"", a[i], (i==n?ORS:OFS)
+
+   for(f in freq) {
+      printf ""%s"", f OFS
+      for(i=1; i<=n; i++)
+         printf ""%s%s"", freq[f][a[i]], (i==n?ORS:OFS)
+   }
+}' a.log b.log

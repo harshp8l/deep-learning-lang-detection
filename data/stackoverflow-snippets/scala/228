@@ -1,0 +1,26 @@
+import cats.free._
+import cats.implicits._
+
+def filterList(l: List[Any]): Trampoline[Option[Any]] = {
+  l.foldLeft[Trampoline[Option[List[Any]]]](Trampoline.done(Option.empty[List[Any]])) {
+    case (acc, next) =>
+      acc.flatMap {
+        case None => filter1(next).map(_.map(_ :: Nil))
+        case v =>
+          filter1(next).map (r => v.map(_ ++ r))
+      }
+  }.map(_.map(identity[Any]))
+}
+
+def filter1(a: Any): Trampoline[Option[Any]] = a match {
+  case 1 => Trampoline.done(Option.empty[Any])
+  case l: List[Any] => Trampoline.defer(filterList(l))
+  case t => Trampoline.done(Some(t))
+}
+
+def filter(l: List[Any]): List[Any] = {
+  filterList(l).run match {
+    case Some(l: List[Any]) => l
+    case _ => Nil
+  }
+}

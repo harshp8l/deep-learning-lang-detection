@@ -1,0 +1,32 @@
+val words = sc.textFile(""somefile.txt"").flatMap(_.split("" ""))
+words.persist()
+
+val nbrOfWords = words.count()
+val occurencesNeeded = (0.03 * nbrOfWords).ceil
+
+val wordCounts = words.map(word => (word, 1)).reduceByKey(_ + _).cache()
+
+words.unpersist()
+wordCounts.persist()
+
+val countThreshold =
+  wordCounts.values.collect.sorted
+    // (accumulator, threshold, reachedThreshold)
+    .foldRight(0, Int.MaxValue, false) {
+      case (count, (accumulator, threshold, false)) => {
+        if (accumulator + count <= occurencesNeeded)
+          (accumulator + count, count, false)
+        else (accumulator, threshold, true)
+      }
+      // If threshold has already been found, we skip the rest:
+      case (count, (accumulator, threshold, true)) =>
+        (accumulator, threshold, true)
+    }
+    ._2
+
+val result =
+  wordCounts.filter { case (word, count) => count >= countThreshold }
+
+wordCounts.unpersist()
+
+result.collect.foreach(println)

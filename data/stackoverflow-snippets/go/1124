@@ -1,0 +1,49 @@
+type node struct {
+    children []*node
+    parent   *node
+    value    int
+}
+
+func (n *node) deleteChild(index int) {
+    n.children = append(n.children[:index], n.children[index+1:]...)
+}
+
+func (n *node) delete(index int) {
+    if n.parent != nil {
+        n.parent.deleteChild(index)
+    }
+}
+
+func (n *node) apply(index int, f func(int, *node)) {
+    f(index, n)
+    for childIndex, child := range n.children {
+        child.apply(childIndex, f)
+    }
+}
+
+func main() {
+    t := &node{}
+    t.children = []*node{
+        &node{
+            children: []*node{
+                &node{value: 2},
+            },
+            value:    1,
+            parent:   t,
+        },
+    }
+
+    // extract all values in nodes
+    values := []int{}
+    t.apply(0, func(index int, n *node) {
+        values = append(values, n.value)
+    })
+    fmt.Println(values) // [0 1 2]
+
+    // delete a node
+    fmt.Println(t.children) // [0xc4.....]
+    t.apply(0, func(index int, n *node) {
+        n.delete(index)
+    })
+    fmt.Println(t.children) // []
+}

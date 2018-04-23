@@ -1,0 +1,8 @@
+select rep_signup_date, rep_id,  
+       (case when count(client_id) over (partition by rep_id order by client_registration_date rows between unbounded preceding and current row) >= 3 then '3'
+             when count(client_id) over (partition by rep_id order by client_registration_date rows between unbounded preceding and current row) = 2 then '2'
+             when count(client_id) over (partition by rep_id order by client_registration_date rows between unbounded preceding and current row) = 1 then '1'
+        end) as status
+from reps r left join
+     clients c
+     on c.rep_id = r.id;

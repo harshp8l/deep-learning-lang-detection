@@ -1,0 +1,24 @@
+Schema::create('order_product', function (Blueprint $table) {
+    // Also, you would need to make `order_id` and `product_id` unsigned,
+    // assuming your other `id` columns are `autoincrement` (which are unsigned by default)
+    $table->integer('order_id')->unsigned();
+    $table->integer('product_id')->unsigned();
+    $table->float('price');
+    $table->integer('amount');
+    $table->primary(array('order_id', 'product_id'));
+    $table->timestamps();
+
+    // Adds foreign key to orders
+    $table->foreign('order_id')
+        ->references('id')
+        ->on('orders')
+        // Automatically deletes the pivot, when related order is deleted
+        ->onDelete('cascade');
+
+    // Adds foreign key to products
+    $table->foreign('product_id')
+        ->references('id')
+        ->on('products')
+        // Automatically deletes the pivot, when related cart is deleted
+        ->onDelete('cascade');
+});

@@ -1,0 +1,27 @@
+DROP FUNCTION IF EXISTS hello;
+DELIMITER //
+CREATE FUNCTION hello (_list CHAR(20))
+RETURNS INT
+BEGIN
+    DECLARE _next TEXT DEFAULT NULL;
+    DECLARE _nextlen INT DEFAULT NULL;
+    DECLARE _value TEXT DEFAULT NULL;
+
+iterator:
+LOOP
+  IF LENGTH(TRIM(_list)) = 0 OR _list IS NULL THEN
+    LEAVE iterator;
+  END IF;
+
+  SET _next = SUBSTRING_INDEX(_list,',',1);
+  SET _nextlen = LENGTH(_next);
+  SET _value = TRIM(_next);
+
+  INSERT INTO t11 (id) VALUES (_next);
+
+  SET _list = INSERT(_list,1,_nextlen + 1,'');
+
+END LOOP;
+    RETURN 1;
+END //
+DELIMITER  ;

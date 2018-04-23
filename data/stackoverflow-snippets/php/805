@@ -1,0 +1,21 @@
+//changing it to a ""model"" string, we are going to add the correct file number later
+$url = ""/home/station/content/file"";
+$contents = file('playlist.lst', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+$count = 0;
+$AddCount = 1;
+//Loop until there is nothing left in our radio list
+while ($count < sizeof($contents)) {
+    //if we have a multiple of 5, we are inserting an ad
+    if (($count % 5) == 0) {
+        // to know wich ad to add we use our AddCounter
+        $tmp = $url . strval($AddCount) . "".mp3"";
+        //As suggested by Justinas, don't forget that each time you had a line you need to also increase the index for the next one using $count%5 to know how many lines you already added
+        array_splice($contents, $count - 1 + ($count % 5) , 0, array($tmp));
+        $AddCount += 1;
+        if ($AddCount > 10)
+            $AddCount = 1;
+    }
+    $count += 1;
+}
+$contents = implode(""\n"", $contents);
+file_put_contents('playlist.lst', $contents);

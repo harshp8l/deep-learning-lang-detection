@@ -1,0 +1,21 @@
+SELECT m.message, 
+       m.message_read,
+       m.message_date,
+       CASE WHEN m.sender = @userA_ID
+            THEN m.receiver
+            ELSE m.sender
+       END as friend_id,           
+       CASE WHEN m.sender = @userA_ID
+            THEN p2.nickname
+            ELSE p1.nickname
+       END as name,
+       CASE WHEN m.sender = @userA_ID
+            THEN p2.image
+            ELSE p1.image
+       END as image
+FROM message as m
+JOIN profile as p1
+  ON m.sender = p1.user_id    -- sender
+JOIN profile as p2 
+  ON m.receiver = p1.user_id  -- receiver
+WHERE @userA_ID IN (m.sender, m.receiver)

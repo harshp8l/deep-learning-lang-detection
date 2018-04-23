@@ -1,0 +1,43 @@
+class MyForm : public QWidget
+{
+/*...*/
+void updateGui();
+};
+
+class Worker : public QObject
+{
+/*...*/
+signals:
+  void updateRequest();
+
+public:
+  explicit Worker( QObject *parent = nullptr );
+
+private:
+  void heavyTask();
+
+private:
+  SlotProxy _proxy;
+};
+
+Worker::Worker( QObject *parent )
+  : QObject{ parent }
+{
+  connect( _proxy, &SlotProxy::triggered, this, &Worker::updateRequest );
+}
+
+void Worker::heavyTask()
+{
+  for ( auto i = 0; i < 1000; i++ )
+  {
+    /*...*/
+    _proxy.trigger();
+  }
+}
+
+MyForm form;
+Worker worker;
+
+QObject::connect( &worker, &Worker::updateRequest, &form, &MyForm::updateGui );
+worker.heavyTask();
+// here you will have only 1 slot MyForm::updateGui in queue

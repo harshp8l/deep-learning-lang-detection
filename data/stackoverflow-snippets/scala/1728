@@ -1,0 +1,23 @@
+import javax.inject.{Inject, Singleton}
+
+import play.api.http.DefaultHttpFilters
+import play.api.http.EnabledFilters
+import play.api.mvc.{EssentialAction, EssentialFilter}
+
+import scala.concurrent.ExecutionContext
+
+// Our example filter
+@Singleton
+class ExampleFilter @Inject()(implicit ec: ExecutionContext) extends EssentialFilter {
+  override def apply(next: EssentialAction) = EssentialAction { request =>
+    next(request).map { result =>
+      result.withHeaders(""X-ExampleFilter"" -> ""foo"")
+    }
+  }
+}
+
+// All our filters
+class Filters @Inject()(
+   defaultFilters: EnabledFilters, // respect play.filters.enabled and play.filters.disabled
+   exampleFilter: ExampleFilter, // you can pass user-defined filter
+) extends DefaultHttpFilters(defaultFilters.filters: _*)

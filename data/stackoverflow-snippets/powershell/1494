@@ -1,0 +1,18 @@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
+$myurl = ""https://localhost/Portal"";
+
+$response = Invoke-WebRequest -Uri $myurl -Method Get
+
+$form = $response.Forms[0]
+
+$form.Fields[""DBUser""] = ""user""
+$form.Fields[""DBPassword""] = ""pass""
+
+$response = Invoke-WebRequest -Uri ($myurl + $form.Action) -SessionVariable mySession -Method Post -Body $form.Fields
+
+$response.statusDescription
+
+$struggle = ""https://localhost/Portal/Dashboard.aspx?selection=1001""
+
+$pagedownload = Invoke-WebRequest -Uri ($struggle) -SessionVariable mySession

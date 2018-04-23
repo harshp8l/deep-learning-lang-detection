@@ -1,0 +1,54 @@
+(ns scratch.core
+  (:require [oauth.client :as oauth]
+            [clj-http.client :as http]))
+
+(def consumer-key ""your_key"")
+(def consumer-secret ""your_secret"")
+
+;Step 1: Create an oath consumer object
+(def consumer (oauth/make-consumer consumer-key
+                                   consumer-secret
+                                   ""https://www.goodreads.com/oauth/request_token""
+                                   ""https://www.goodreads.com/oauth/access_token""
+                                   ""https://www.goodreads.com/oauth/authorize""
+                                   :hmac-sha1))
+;Step 2: Create a request token.  These can only be used once.  They usually expire as well.
+(def request-token (oauth/request-token consumer nil))
+
+;Step 3:  Have the goodreads user approve your application.  They can approve your application by visting the url
+; produced by the call below.
+(oauth/user-approval-uri consumer
+                         (:oauth_token request-token))
+
+;Step 4:  Once the goodreads user has approved your application, you can exchange the request token for an access token.
+;An access token is per-user.  Goodreads in particular will only issue 1 per user, so don not lose this access token.
+(def access-token-response (oauth/access-token consumer
+                                               request-token
+                                               nil))
+
+;Step 5: Get the user id of the user who approved your application.
+;you can parse the user id out from this.  I used clojure.zip, clojure.data.zip.xml, and clojure.data.xml to parse this out.
+(defn get-user-id []
+  (let [url ""https://www.goodreads.com/api/auth_user""
+        credentials (oauth/credentials consumer
+                                       (:oauth_token access-token-response)
+                                       (:oauth_token_secret access-token-response)
+                                       :GET
+                                       url)]
+    (http/get url {:query-params credentials})))
+
+(get-user-id)
+
+;Step 6: Get the friends of the user.
+(defn get-friends [user-id]
+  (let [url (str ""https://www.goodreads.com/friend/user/"" user-id)
+        params {:format ""xml""}
+        credentials (oauth/credentials consumer
+                                       (:oauth_token access-token-response)
+                                       (:oauth_token_secret access-token-response)
+                                       :GET
+                                       url
+                                       params)]
+    (http/get url {:query-params (merge credentials params)})))
+
+(get-friends <a user id>)

@@ -1,0 +1,70 @@
+#include <iostream>
+#include <deque>
+
+using namespace std;
+
+//old version for whole collection
+void ConsecutiveOnesAndZeros(deque<uint32_t> values, deque<uint8_t> &outCount)
+{
+    int i;
+    if (!values.empty()) {
+        uint8_t count = 0, lastBit = (values[0] & 1);
+        for (uint32_t &value : values)
+        {
+            for (i = 0; (i < 32) && (value != 0); i++)
+            {
+                if (lastBit != uint8_t((value >> i) & 1))
+                {
+                    outCount.push_back(count);
+                    count = 0;
+                    lastBit = !lastBit;
+                }
+                count++;
+            }
+            if (i < 32) count += (32 - i);
+        }
+        outCount.push_back(count);
+    }
+}
+
+//stream version for receiving integer
+void ConsecutiveOnesAndZeros(uint32_t value, uint8_t &count, uint8_t &lastBit, deque<uint8_t> &outCount)
+{
+    int i;
+    for (i = 0; (i < 32) && (value != 0); i++)
+    {
+        if (lastBit != uint8_t((value >> i) & 1))
+        {
+            if(count) outCount.push_back(count);
+            count = 0;
+            lastBit = !lastBit;
+        }
+        count++;
+    }
+    if (i < 32) count += (32 - i);
+}
+
+int main()
+{
+    deque<uint8_t> outCount;
+    deque<uint32_t> stream = { 4294967295u,4194303u,3758096384u };
+
+    ConsecutiveOnesAndZeros(stream, outCount);
+    for (auto res : outCount) {
+        printf_s(""%d,"", res);
+    }
+    printf_s(""\n"");
+
+    uint8_t count = 0, bit = 0;
+    outCount.clear();
+    for (auto val : stream) 
+        ConsecutiveOnesAndZeros(val, count, bit, outCount);
+    if (count) outCount.push_back(count);
+
+    for (auto res : outCount) {
+        printf_s(""%d,"", res);
+    }
+    printf_s(""\n"");
+
+    system(""pause"");
+}

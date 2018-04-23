@@ -1,0 +1,31 @@
+from concurrent.futures import ThreadPoolExecutor
+import time
+
+find_work_pool = ThreadPoolExecutor(max_workers=3)
+do_work_pool = ThreadPoolExecutor(max_workers=3)
+
+def find_work_inputs(dummy_file):
+    print(""{}: Finding work..."".format(dummy_file))
+    time.sleep(1)
+    work = range(0, dummy_file)
+    print(""{}: Work is {}"".format(dummy_file, work))
+
+    futures = []
+    for work_input in work:
+        futures.append((dummy_file, work_input, do_work_pool.submit(do_work, dummy_file, work_input)))
+    return futures
+
+def do_work(dummy_file, work_input):
+    print(""{}: {}"".format(dummy_file, work_input))
+    print(""{}: Doing work {}..."".format(dummy_file, work_input))
+    time.sleep(1)
+    return work_input * work_input
+
+dummy_files = [1,2,3,4,5]
+
+futures = []
+for dummy_file in dummy_files:
+    futures.extend(find_work_pool.submit(find_work_inputs, dummy_file).result())
+
+for dummy_file, work_input, future in futures:
+    print(""Result from file:{} input:{} is {}"".format(dummy_file, work_input, future.result()))

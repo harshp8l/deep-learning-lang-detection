@@ -1,0 +1,34 @@
+;; [instaparse ""1.3.5""]
+(require '[instaparse.core :as insta])
+
+(def p (insta/parser ""
+
+S = Group*
+Group = GroupHeader GroupComment GroupBody
+GroupHeader = #'[A-Za-z]+' ': ' #'[A-Za-z]+' '\n'
+GroupComment = ws? '\""' #'[^\""]+' '\""\n'
+GroupBody = Line*
+Line = #'.*' '\n'
+ws = #'\\s+'
+
+""))
+
+(p ""Foo: B
+  \""This is instance B of type Foo\""
+  Bar: X
+Foo: C
+  \""This is instance C of type Foo\""
+  Bar: Y
+"")
+;;=
+[:S
+ [:Group
+  [:GroupHeader ""Foo"" "": "" ""B"" ""\n""]
+  [:GroupComment [:ws ""  ""] ""\"""" ""This is instance B of type Foo"" ""\""\n""]
+  [:GroupBody
+   [:Line ""  Bar: X"" ""\n""]]]
+ [:Group
+  [:GroupHeader ""Foo"" "": "" ""C"" ""\n""]
+  [:GroupComment [:ws ""  ""] ""\"""" ""This is instance C of type Foo"" ""\""\n""]
+  [:GroupBody
+   [:Line ""  Bar: Y"" ""\n""]]]]

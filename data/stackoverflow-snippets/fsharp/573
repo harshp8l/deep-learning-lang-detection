@@ -1,0 +1,18 @@
+type FakeDbSet<'TEntity when 'TEntity : not struct>(items: seq<'TEntity>) =
+    inherit DbSet<'TEntity>()
+    let data = ObservableCollection<'TEntity>(items)
+    let query = data.AsQueryable()
+    new() = FakeDbSet(Seq.empty)
+    override __.Add(item: 'TEntity) = data.Add(item); item
+    override __.Remove(item: 'TEntity) = data.Remove(item) |> ignore; item
+    override __.Attach(item: 'TEntity) = data.Add(item); item
+    override __.Create() = Activator.CreateInstance<'TEntity>()
+    override __.Local with get() = data
+    interface System.Collections.Generic.IEnumerable<'TEntity> with
+        member __.GetEnumerator() = data.GetEnumerator() :> System.Collections.Generic.IEnumerator<_>
+    interface System.Collections.IEnumerable with
+        member __.GetEnumerator() = data.GetEnumerator() :> System.Collections.IEnumerator
+    interface IQueryable<'TEntity> with
+        member __.ElementType = typeof<'TEntity>
+        member __.Expression = query.Expression
+        member __.Provider = query.Provider

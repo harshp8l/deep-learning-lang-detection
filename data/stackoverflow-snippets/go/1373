@@ -1,0 +1,75 @@
+package main
+
+import (
+   ""fmt""
+   ""os""
+   ""encoding/csv""
+   ""log""
+)
+
+type DataItem struct {
+     name string
+}
+
+type DataContainer struct {
+     Items []DataItem
+}
+
+func (box *DataContainer) AddItem(item DataItem) []DataItem {
+     box.Items = append(box.Items, item)
+     return box.Items
+}
+
+func appendStruct() DataContainer{
+      items := []DataItem{}
+      container := DataContainer{items}
+
+      item1 := DataItem{name: fmt.Sprintf(""Item1"")}
+      item2 := DataItem{name: fmt.Sprintf(""Item2"")}
+
+       container.AddItem(item1)
+       container.AddItem(item2)
+
+return container
+}
+
+
+func (c DataItem) ToSlice() []string {
+     row := make([]string, 1, 1)
+     row[0] = c.name
+ return row
+}
+
+func checkError(message string, err error) {
+    if err != nil {
+    log.Fatal(message, err)
+     }
+}
+
+
+func main() {
+
+container := appendStruct()
+
+var ss = fmt.Sprint(container)
+println(ss)
+
+
+file, err := os.Create(""result.csv"")
+checkError(""Cannot create file"", err)
+defer file.Close()
+
+w := csv.NewWriter(file)
+
+for _, record := range container.Items {
+    values := record.ToSlice()
+    if err := w.Write(values); err != nil {
+        log.Fatalln(""error writing record to csv:"", err)
+    }
+}
+
+w.Flush()
+
+if err := w.Error(); err != nil {
+    log.Fatal(err)
+}

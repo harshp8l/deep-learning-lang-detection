@@ -1,0 +1,22 @@
+$QUERY = ""SELECT * FROM Table1""
+$DataVariable = Invoke-Sqlcmd -ServerInstance ""MyInstance"" -Database ""MyDB"" -Query $QUERY 
+
+$filename = ""MYReport_$(get-date -f yyyy-MM-dd).csv""
+$OutputFile = ""\\server\c$\Output\$filename""
+
+$DataVariable | Export-Csv $OutPutFile -NoTypeInformation
+
+$emailAcc = ""youraccount@gmail.com""
+
+$Cred = Get-Credential -UserName $emailAcc -Message ""Enter gmail password for $emailAcc""
+
+$MsgParam = @{                        
+    From = $emailAcc
+    To   = ""recipient@domain.com""
+
+    Subject     = $filename
+    Body        = 'blah blah sending $filename'
+    Attachments = $OutPutFile
+    SmtpServer  = ""smtp.gmail.com""
+}                        
+Send-MailMessage @MsgParam -UseSSL -cred $Cred

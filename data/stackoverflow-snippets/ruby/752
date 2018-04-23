@@ -1,0 +1,40 @@
+def read_chunks(io, byte_interval: 200 * 1024, time_interval: 5)
+  buffer = last = nil
+  reset = lambda do
+    buffer = ''
+    last = Time.now
+  end
+  reset.call
+  mutex = Mutex.new
+  cv = ConditionVariable.new
+  [
+    lambda do
+      IO.select [io]
+      mutex.synchronize do
+        begin
+          chunk = io.readpartial byte_interval
+          buffer.concat chunk
+        rescue EOFError
+          raise StopIteration
+        ensure
+          cv.signal
+        end
+      end
+    end,
+    lambda do
+      mutex.synchronize do
+        until io.eof? || Time.now > (last + time_interval) || buffer.length > byte_interval
+          cv.wait mutex, time_interval
+        end
+        unless buffer.empty?
+          buffer_io = StringIO.new buffer
+          yield buffer_io.read byte_interval until buffer_io.eof?
+          reset.call
+        end
+        raise StopIteration if io.eof?
+      end
+    end,
+  ].map do |function|
+    Thread.new { loop { function.call } }
+  end.each(&:join)
+end

@@ -1,0 +1,42 @@
+public static class FloydWarshallSingleStage
+{
+    const int BlockWidth = 16;
+
+    /// <summary>
+    /// Kernel for parallel Floyd Warshall algorithm on GPU.
+    /// </summary>
+    /// <param name=""u"">Number vertex of which is performed relaxation paths [v1, v2]</param>
+    /// <param name=""n"">Number of vertices in the graph G:=(V,E), n := |V(G)|</param>
+    /// <param name=""d"">Matrix of shortest paths d(G)</param>
+    /// <param name=""p"">Matrix of predecessors p(G)</param>
+    public static void KernelSingleStage(int u, int[,] d, int[,] p)
+    {
+        var n = d.GetLength(0);
+        var v1 = blockDim.y * blockIdx.y + threadIdx.y;
+        var v2 = blockDim.x * blockIdx.x + threadIdx.x;
+
+        if (v1 < n && v2 < n)
+        {
+            var newPath = d[v1, u] + d[u, v2];
+            var oldPath = d[v1, v2];
+            if (oldPath > newPath)
+            {
+                d[v1, v2] = newPath;
+                p[v1, v2] = p[u, v2];
+            }
+        }
+    }
+
+    [GpuManaged]
+    public static void Run(Gpu gpu, int[,] d, int[,] p)
+    {
+        var n = d.GetLength(0);
+        var gridDim = new dim3((n - 1) / BlockWidth + 1, (n - 1) / BlockWidth + 1, 1);
+        var blockDim = new dim3(BlockWidth, BlockWidth, 1);
+        var lp = new LaunchParam(gridDim, blockDim);
+        for (var u = 0; u < n; u++)
+        {
+            gpu.Launch(KernelSingleStage, lp, u, d, p);
+        }
+    }
+}

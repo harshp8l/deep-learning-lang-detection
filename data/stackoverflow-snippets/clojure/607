@@ -1,0 +1,19 @@
+(defmacro explanation-map
+  ""Produce a hashmap from string representations of the unevaluated expressions
+  exprs to the results of evaluating each expression in exprs, including
+  Exceptions should they arise.""
+  [& exprs]
+  (into {}
+        (map (fn [expr]
+               `[~(str expr)
+                 (try ~expr (catch Exception e# (str e#)))])
+             exprs)))
+
+(clojure.pprint/pprint
+ (let [y 37]
+   (explanation-map
+    (* 42 42)
+    (let [x 19] (* x y))
+    (let [y 19] (* y y))
+    (* y y)
+    (/ 6 0))))

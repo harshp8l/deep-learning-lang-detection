@@ -1,0 +1,46 @@
+// Interval struct is used to describe something with a start and end. End must
+// be greater than start.
+type Interval struct {
+    Start int64
+    End   int64
+}
+
+// Overlaps returns true if this interval overlaps with the supplied one.
+func (i *Interval) Overlaps(j Interval) bool {
+    // https://nedbatchelder.com/blog/201310/range_overlap_in_two_compares.html
+    return i.End >= j.Start && j.End >= i.Start
+}
+
+// Intervals type is a slice of Interval.
+type Intervals []Interval
+
+// Difference returns any portions of iv that do not overlap with any of our
+// intervals. Assumes that all of our intervals have been Merge()d in.
+func (ivs Intervals) Difference(iv Interval) (diffs Intervals) {
+    diffs = append(diffs, iv)
+    for _, prior := range ivs {
+        for i := 0; i < len(diffs); {
+            if left, right, overlapped := prior.Difference(diffs[i]); overlapped {
+                if len(diffs) == 1 {
+                    diffs = nil
+                } else {
+                    diffs = append(diffs[:i], diffs[i+1:]...)
+                }
+
+                if left != nil {
+                    diffs = append(diffs, *left)
+                }
+                if right != nil {
+                    diffs = append(diffs, *right)
+                }
+            } else {
+                i++
+            }
+        }
+        if len(diffs) == 0 {
+            break
+        }
+    }
+
+    return
+}

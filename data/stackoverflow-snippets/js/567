@@ -1,0 +1,21 @@
+run(navigationInstruction, next) {
+    return new Promise((resolve, reject) => {
+      firebase.auth().onAuthStateChanged(user => {
+        let currentRoute = navigationInstruction.config;
+        let loginRequired = currentRoute.auth && currentRoute.auth === true;
+
+        if (!user && loginRequired) {
+          return resolve(next.cancel(new Redirect('')));
+        }
+
+        // hasRole checks the user roles for the role set on the route
+        if (currentRoute.settings && currentRoute.settings.role) {
+           if (!user.hasRole(currentRoute.settings.role) {
+              return resolve(next.cancel(new Redirect('')));
+           }
+        }
+
+        return resolve(next());
+      });
+    });
+  }

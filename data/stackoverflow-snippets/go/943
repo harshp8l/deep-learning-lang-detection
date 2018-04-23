@@ -1,0 +1,48 @@
+package main
+
+import (
+    ""fmt""
+    ""sync""
+)
+
+var final [][]int32
+var wg sync.WaitGroup
+var receiver chan []int32
+func main() {
+    final = [][]int32{}
+    mapTarget := make(map[int32][]int32)
+    mapSource := make(map[int32][]int32)
+    mapSource[1] = []int32{3, 4}
+    mapSource[5] = []int32{9, 10}
+
+    mapTarget[1] = []int32{1, 2, 3}
+    mapTarget[2] = []int32{2, 3}
+    mapTarget[3] = []int32{1, 2}
+    wg = sync.WaitGroup{}
+    receiver = make(chan []int32)
+    go func() {
+        for elem := range receiver {
+            final = append(final, elem)
+            wg.Done()
+        }
+    }()
+    for k := range mapSource {
+        if _, ok := mapTarget[k]; ok {
+            wg.Add(1)
+            go permutate(mapSource[k], mapTarget[k])
+        }
+    }
+    wg.Wait()
+    fmt.Println(final)
+
+}
+
+func permutate(a, b []int32) {
+    for i := 0; i < len(a); i++ {
+        for j := 0; j < len(b); j++ {
+            wg.Add(1)
+            receiver <- []int32{a[i], b[j]}
+        }
+    }
+    wg.Done()
+}

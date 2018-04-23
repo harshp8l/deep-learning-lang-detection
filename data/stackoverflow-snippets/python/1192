@@ -1,0 +1,27 @@
+import http.client
+import socket
+
+
+activeTanks = 4  # no semicolon here
+myTanks = [100, 100, 100, 100]
+
+for tank in range(0, activeTanks):
+    tankAddress = (""192.168.1.4"" + str(tank))
+    conn = http.client.HTTPConnection(tankAddress, timeout=1)
+
+    try:
+        conn.request(""GET"", ""/Switch=Read"")
+    except socket.timeout as st:
+        # do some stuff, log error, etc.
+        print('timeout received')
+    except http.client.HTTPException as e:
+        # other kind of error occured during request
+        print('request error')
+    else:  # no error occurred
+        r1 = conn.getresponse()
+        # do some stuff with response
+        myTanks[tank] = int(r1.read().decode('ASCII').split(""..."")[1])
+    finally:  # always close the connection
+        conn.close()
+
+print(myTanks)

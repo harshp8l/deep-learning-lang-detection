@@ -1,0 +1,47 @@
+class X {};
+
+class A
+{
+    public:
+        A( int, double) {}
+        A( X* ){}
+};
+
+class B: public A
+{
+    public:
+        using A::A;
+};
+
+using Key = int;
+
+template<class t>
+class AddToClass
+{   
+    private:
+        std::map<Key, std::shared_ptr<t>> collection;
+
+    public:
+        template<typename... Args>
+            void addTo(const Key& key, Args...args)
+            {
+                collection.emplace( key, std::make_shared<t>(std::forward<Args>(args)...));
+            }
+
+        template < typename U, typename std::enable_if< std::is_base_of<t, U>::value, U>::type* = nullptr >
+            void addTo( const Key &key, U* ptr, X* = 0 )
+            {
+                collection.emplace( key, ptr );
+            }
+};
+
+int main()
+{
+    AddToClass<A> instance;
+    Key key = 9;
+    instance.addTo(key,12,2.2); //this is how it already works
+    instance.addTo(key, new B{12,3.5}); //this is how I also want it to work
+    instance.addTo(key, new A{ new X});
+    instance.addTo(key, new B{ new X});
+    instance.addTo(key, new X);
+}

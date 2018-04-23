@@ -1,0 +1,59 @@
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/filtered_graph.hpp>
+#include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/kruskal_min_spanning_tree.hpp>
+#include <iostream>
+
+#include <string>
+#include <vector>
+
+typedef boost::property<boost::edge_weight_t, double> EdgeWeightProperty;
+typedef boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, boost::no_property, EdgeWeightProperty>
+    MyGraph;
+
+typedef MyGraph::edge_descriptor Edge;
+
+struct MyVisitor : boost::default_dfs_visitor {
+    template <typename Graph>
+    void tree_edge(Edge e, const Graph& g) {
+        std::cout << ""Visiting: "" << e << "" with weight "" << get(boost::edge_weight, g, e) << ""\n"";
+    }
+};
+
+void run_mst_test() {
+    MyGraph g;
+    boost::add_edge(0, 1, 0.7, g);
+    boost::add_edge(0, 2, 0.1, g);
+
+    boost::add_edge(1, 2, 0.3, g);
+    boost::add_edge(1, 0, 0.7, g);
+    boost::add_edge(1, 3, 0.8, g);
+    boost::add_edge(1, 4, 0.2, g);
+
+    boost::add_edge(2, 1, 0.3, g);
+    boost::add_edge(2, 0, 0.1, g);
+    boost::add_edge(2, 5, 0.1, g);
+    boost::add_edge(2, 4, 0.5, g);
+
+    boost::add_edge(3, 1, 0.8, g);
+
+    boost::add_edge(4, 1, 0.2, g);
+    boost::add_edge(4, 2, 0.5, g);
+
+    boost::add_edge(5, 2, 0.1, g);
+
+    struct InSpanning {
+        std::set<Edge> edges;
+        bool operator()(Edge e) const { return edges.count(e); }
+    } spanning;
+
+    boost::kruskal_minimum_spanning_tree(g, std::inserter(spanning.edges, spanning.edges.end()));
+
+    MyVisitor vis;
+    boost::filtered_graph<MyGraph, InSpanning, boost::keep_all> mst(g, spanning, {});
+    boost::depth_first_search(mst, visitor(vis));
+}
+
+int main() {
+    run_mst_test();
+}

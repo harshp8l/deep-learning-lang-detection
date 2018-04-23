@@ -1,0 +1,69 @@
+ALTER procedure [dbo].[GetViewData] AS
+
+IF EXISTS( SELECT * FROM dbo.CONFIG )
+BEGIN
+
+    IF OBJECT_ID('tempdb..#DataSetResult') IS NOT NULL
+        DROP TABLE #DataSetResult
+
+    CREATE TABLE #DataSetResult (
+        Unit VARCHAR(100),
+        CO2Data VARCHAR(100),
+        HumidData VARCHAR(100),
+        TempData VARCHAR(100),
+        TimeStamp DATETIME)
+
+    DECLARE @count INT = (select count(Id) FROM dbo.CONFIG)
+
+    DECLARE @TimeFrom as DATETIME
+    DECLARE @TimeTo as DATETIME
+    DECLARE @unit as INTEGER
+
+    WHILE (@count >= 1)
+    BEGIN
+
+        SET @TimeFrom = (select TimeStampFrom from CONFIG where Id = @count);
+        SET @TimeTo = (select TimeStampTo from CONFIG where Id = @count);
+        SET @unit = (select Unit from CONFIG where Id = @count);
+
+        EXECUTE dbo.GetDataSet 
+            @Timestampfrom = @timeFrom,
+            @TimestampTo = @timeTo, 
+            @Unit = @unit;
+
+        SET @count = @count - 1;
+    END
+
+    -- Display results
+    SELECT * FROM #DataSetResult AS D
+
+END
+
+GO
+
+
+ALTER procedure [dbo].[GetDataSet]
+    @Timestampfrom DATETIME,
+    @TimestampTo DATETIME,
+    @Unit INTEGER
+AS
+BEGIN
+
+    INSERT INTO #DataSetResult (
+        Unit,
+        CO2Data,
+        HumidData,
+        TempData,
+        TimeStamp)
+    select
+        DATA.Unit,
+        DATA.CO2Data,
+        DATA.HumidData,
+        DATA.TempData,
+        DATA.TimeStamp
+    from 
+        DATA 
+    where 
+        Unit = @Unit and 
+        TimeStamp between @Timestampfrom and @TimestampTo;
+END

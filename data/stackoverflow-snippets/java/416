@@ -1,0 +1,23 @@
+public class UserDAO extends BasicDAO<User, String> {
+    private final String collectionName;
+
+    public UserDAO(MongoClient mongoClient, Morphia morphia, String dbName, String collectionName) {
+        super(mongoClient, morphia, dbName);
+        this.collectionName = collectionName;
+    }
+
+    @Override
+    public Key<User> save(User entity) {
+
+        return ((AdvancedDatastore)getDatastore()).save(collectionName, entity);
+    }
+
+    @Override
+    public WriteResult delete(User entity) {
+        return ((AdvancedDatastore)getDatastore()).delete(collectionName, User.class, entity.getId());
+    }
+
+    public User getByName(String userName) {
+        return ((AdvancedDatastore)getDatastore()).createQuery(collectionName, User.class).field(""name"").equal(userName).get();
+    }
+}

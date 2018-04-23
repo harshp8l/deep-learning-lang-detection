@@ -1,0 +1,17 @@
+// Folder name filter for Inbox, Completed, Inprogress, and Sent folders:
+SearchFilter searchFilter1 = new SearchFilter.IsEqualTo(FolderSchema.DisplayName, ""Inbox"");
+SearchFilter searchFilter2 = new SearchFilter.IsEqualTo(FolderSchema.DisplayName, ""Completed"");
+SearchFilter searchFilter3 = new SearchFilter.IsEqualTo(FolderSchema.DisplayName, ""In Progress"");
+SearchFilter.SearchFilterCollection searchFilterCollection = new SearchFilter.SearchFilterCollection(LogicalOperator.Or);
+searchFilterCollection.Add(searchFilter1);
+searchFilterCollection.Add(searchFilter2);
+searchFilterCollection.Add(searchFilter3);
+
+// Find folders:
+FindFoldersResults findResults = service.FindFolders(
+        WellKnownFolderName.MsgFolderRoot, searchFilterCollection,
+        new FolderView(int.MaxValue) { Traversal = FolderTraversal.Deep }
+);
+
+// Add SentItems to the findResults:
+findResults.Folders.Add(Folder.Bind(service, WellKnownFolderName.SentItems));

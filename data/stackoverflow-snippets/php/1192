@@ -1,0 +1,35 @@
+    SELECT
+        s.student_id as 'Student_Number',
+        CONCAT(
+            IFNULL(s.student_fname,''),
+            ' ',
+            IFNULL(s.student_mname,''),
+            ' ',
+            FNULL(s.student_lname,'')
+        ) 'Student_Name',
+        s.student_program as 'Program',
+        (SUM(IF(stat.status_description='Late',1,0))) 'Total_Lates',
+        (SUM(IF(stat.status_description='Absent',1,0))) 'Total_Absences',
+        Floor((SUM(IF(stat.status_description='Late',1,0))) / 3 + (SUM(IF(stat.status_description='Absent',1,0)))) 'Total_Absence_with_Lates'  
+    FROM
+        attendance_tbl a
+    LEFT JOIN
+        student_tbl s ON s.student_id=a.entity_id
+    LEFT JOIN
+        status_tbl stat ON stat.status_id=a.status_id
+    left join
+        announcement_tbl ann on ann.announcement_date=a.date
+    where
+        a.course_id='SS019'
+    and
+        a.entity_type='Student'
+    and
+        CONCAT(IFNULL(s.student_fname,''),' ', IFNULL(s.student_mname,''),' ', IFNULL(s.student_lname,''))
+    and
+        a.date!=ann.announcement_date
+    and
+        ann.announcement_description!='holiday'
+    GROUP BY
+        a.entity_id, CONCAT(IFNULL(s.student_fname,''),' ', IFNULL(s.student_mname,''),' ', IFNULL(s.student_lname,''))
+    order by
+        Student_Name A

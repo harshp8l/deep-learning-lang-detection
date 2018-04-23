@@ -1,0 +1,19 @@
+#[100 rows x 10 columns]
+mm_dates_base = pd.concat([df] * 100, ignore_index=True)
+In [41]: %%timeit
+    ...: 
+    ...: for col in varlist2:
+    ...:     a = pd.to_datetime(mm_dates_base[col], errors='coerce', dayfirst=True)
+    ...:     b = pd.to_datetime(mm_dates_base[col], errors='coerce', format='%d%b%Y')
+    ...:     mm_dates_base[col] = a.combine_first(b)
+    ...:     
+5.13 ms ± 46.4 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+
+
+In [43]: %%timeit
+    ...: df1 = mm_dates_base[varlist2].apply(pd.to_datetime, errors='coerce', dayfirst=True)
+    ...: df2 = mm_dates_base[varlist2].apply(pd.to_datetime, errors='coerce', format='%d%b%Y')
+    ...: 
+    ...: mm_dates_base[varlist2] = df1.combine_first(df2)
+    ...: 
+14.1 ms ± 92.3 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)

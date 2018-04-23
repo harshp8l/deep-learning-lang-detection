@@ -1,0 +1,21 @@
+namespace demo {
+    struct employee {
+        typedef employee self_type;
+        char10 name;
+        employee() : name() {}
+        employee(self_type const &) = default;
+        employee(self_type &&) = default;
+        template <typename Seq>
+            employee(Seq const &seq, typename boost::disable_if<boost::is_convertible<Seq const &, char10> >::type * = 0)
+            : name(boost::fusion::deref(boost::fusion::advance_c<0>(boost::fusion::begin(seq)))) {}
+        self_type &operator=(self_type const &) = default;
+        self_type &operator=(self_type &&) = default;
+        template <typename Seq> self_type &operator=(Seq const &seq) {
+            typedef typename boost::fusion::result_of::begin<Seq const>::type I0;
+            I0 i0 = boost::fusion::begin(seq);
+            name = boost::fusion::deref(i0);
+            return *this;
+        }
+        explicit employee(boost::call_traits<char10>::param_type arg) : name(arg) {}
+    };
+} // namespace demo

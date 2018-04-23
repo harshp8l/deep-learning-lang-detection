@@ -1,0 +1,27 @@
+import numba as nb
+
+@nb.jit(nopython=True)
+def resize_np_array(np_array, new_size, fill_value):
+    if new_size <= np_array.shape[0]:
+        return np_array
+    else:
+        new_shape = new_size
+
+        new_np_array = np.empty(shape=new_shape, dtype=np_array.dtype)
+
+        for i in range(np_array.shape[0]):
+            new_np_array[i] = np_array[i]
+
+        for i in range(np_array.shape[0], new_shape):
+            new_np_array[i] = fill_value
+
+        return new_np_array
+
+@nb.jit(nopython=True)   
+def test_function():
+    x = np.zeros(10, dtype=np.int64)
+    x = resize_np_array(x, 20, 1)
+
+    return x
+
+x = test_function()

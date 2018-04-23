@@ -1,0 +1,25 @@
+val env = StreamExecutionEnvironment.getExecutionEnvironment()
+val consumer = new FlinkKafkaConsumer08[String](...)
+consumer.setStartFromGroupOffsets()
+
+val stream = env.addSource(consumer)
+
+/* Logic to group transactions from 3 days */
+/* I need more info, but it should be a Sliding or Fixed windows Keyed by the id of the transactions*/
+
+val windowSize = 1 // number of days that the window use to group events
+val windowStep = 1 // window slides 1 day
+
+val reducedStream = stream
+    .keyBy(""transactionId"") // or any field that groups transactions in the same group
+    .timeWindow(Time.days(windowSize),Time.days(windowStep))
+    .map(transaction => {
+        transaction.numberOfTransactions = 1
+        transaction
+    }).sum(""numberOfTransactions"");
+
+val streamFormatedAsJson = reducedStream.map(functionToParseDataAsJson) 
+// you can use a library like GSON for this
+// or a scala string template
+
+streamFormatedAsJson.sink(yourFavoriteSinkToWriteYourData)

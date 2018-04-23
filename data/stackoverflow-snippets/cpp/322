@@ -1,0 +1,171 @@
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
+#include <boost/beast.hpp>
+
+using tcp = boost::asio::ip::tcp;    // from <boost/asio/ip/tcp.hpp>
+namespace ssl = boost::asio::ssl;    // from <boost/asio/ssl.hpp>
+namespace http = boost::beast::http; // from <boost/beast/http.hpp>
+
+static void load_root_certificates(ssl::context &ctx);
+
+int main() try {
+    // Check command line arguments.
+    auto const target = ""www.boost.org:443"";
+    auto const host = ""www.boost.org"";
+    int version = 11;
+
+    // The io_context is required for all I/O
+    boost::asio::io_context ioc;
+
+    // These objects perform our I/O
+
+    ssl::context ctx{ ssl::context::sslv23_client };
+
+    load_root_certificates(ctx);
+
+    tcp::resolver resolver{ ioc };
+    ssl::stream<tcp::socket> stream{ ioc, ctx };
+
+    stream.next_layer().connect({boost::asio::ip::address_v4::from_string(""192.116.142.153""), 8080});
+
+    {
+        http::request<http::string_body> req1{ http::verb::connect, target, version };
+        req1.set(http::field::host, target);
+
+        http::write(stream.next_layer(), req1);
+
+        boost::beast::flat_buffer buffer;
+
+        http::response<http::empty_body> res;
+        http::parser<false, http::empty_body> p(res);
+        p.skip(true);
+        http::read(stream.next_layer(), buffer, p);
+
+        // Write the message to standard out
+        std::cout << res << std::endl;
+    }
+
+    // Perform the SSL handshake
+    stream.handshake(ssl::stream_base::client);
+
+    // Set up an HTTP GET request message
+    {
+        http::request<http::string_body> req{ http::verb::get, ""/users/license.html"", version };
+        req.set(http::field::host, host);
+        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+
+        // Send the HTTP request to the remote host
+        http::write(stream, req);
+
+        boost::beast::flat_buffer buffer;
+        http::response<http::dynamic_body> res;
+        http::read(stream, buffer, res);
+        // Write the message to standard out
+        std::cout << res << std::endl;
+    }
+
+    getchar();
+
+    // Gracefully close the stream
+    boost::system::error_code ec;
+    stream.next_layer().shutdown(boost::asio::ip::tcp::socket::shutdown_send);
+    if (ec == boost::asio::error::eof) {
+        // Rationale:
+        // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
+        ec.assign(0, ec.category());
+    }
+    if (ec)
+        throw boost::system::system_error{ ec };
+    // If we get here then the connection is closed gracefully
+} catch (std::exception const &e) {
+    std::cerr << ""Error: "" << e.what() << std::endl;
+    return EXIT_FAILURE;
+}
+
+
+namespace detail {
+
+static void load_root_certificates(ssl::context &ctx, boost::system::error_code &ec) {
+    std::string const cert =
+        /*  This is the DigiCert root certificate.
+
+            CN = DigiCert High Assurance EV Root CA
+            OU = www.digicert.com
+            O = DigiCert Inc
+            C = US
+
+            Valid to: Sunday, ?November ?9, ?2031 5:00:00 PM
+
+            Thumbprint(sha1):
+            5f b7 ee 06 33 e2 59 db ad 0c 4c 9a e6 d3 8f 1a 61 c7 dc 25
+        */
+        ""-----BEGIN CERTIFICATE-----\n""
+        ""MIIDxTCCAq2gAwIBAgIQAqxcJmoLQJuPC3nyrkYldzANBgkqhkiG9w0BAQUFADBs\n""
+        ""MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3\n""
+        ""d3cuZGlnaWNlcnQuY29tMSswKQYDVQQDEyJEaWdpQ2VydCBIaWdoIEFzc3VyYW5j\n""
+        ""ZSBFViBSb290IENBMB4XDTA2MTExMDAwMDAwMFoXDTMxMTExMDAwMDAwMFowbDEL\n""
+        ""MAkGA1UEBhMCVVMxFTATBgNVBAoTDERpZ2lDZXJ0IEluYzEZMBcGA1UECxMQd3d3\n""
+        ""LmRpZ2ljZXJ0LmNvbTErMCkGA1UEAxMiRGlnaUNlcnQgSGlnaCBBc3N1cmFuY2Ug\n""
+        ""RVYgUm9vdCBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMbM5XPm\n""
+        ""+9S75S0tMqbf5YE/yc0lSbZxKsPVlDRnogocsF9ppkCxxLeyj9CYpKlBWTrT3JTW\n""
+        ""PNt0OKRKzE0lgvdKpVMSOO7zSW1xkX5jtqumX8OkhPhPYlG++MXs2ziS4wblCJEM\n""
+        ""xChBVfvLWokVfnHoNb9Ncgk9vjo4UFt3MRuNs8ckRZqnrG0AFFoEt7oT61EKmEFB\n""
+        ""Ik5lYYeBQVCmeVyJ3hlKV9Uu5l0cUyx+mM0aBhakaHPQNAQTXKFx01p8VdteZOE3\n""
+        ""hzBWBOURtCmAEvF5OYiiAhF8J2a3iLd48soKqDirCmTCv2ZdlYTBoSUeh10aUAsg\n""
+        ""EsxBu24LUTi4S8sCAwEAAaNjMGEwDgYDVR0PAQH/BAQDAgGGMA8GA1UdEwEB/wQF\n""
+        ""MAMBAf8wHQYDVR0OBBYEFLE+w2kD+L9HAdSYJhoIAu9jZCvDMB8GA1UdIwQYMBaA\n""
+        ""FLE+w2kD+L9HAdSYJhoIAu9jZCvDMA0GCSqGSIb3DQEBBQUAA4IBAQAcGgaX3Nec\n""
+        ""nzyIZgYIVyHbIUf4KmeqvxgydkAQV8GK83rZEWWONfqe/EW1ntlMMUu4kehDLI6z\n""
+        ""eM7b41N5cdblIZQB2lWHmiRk9opmzN6cN82oNLFpmyPInngiK3BD41VHMWEZ71jF\n""
+        ""hS9OMPagMRYjyOfiZRYzy78aG6A9+MpeizGLYAiJLQwGXFK3xPkKmNEVX58Svnw2\n""
+        ""Yzi9RKR/5CYrCsSXaQ3pjOLAEFe4yHYSkVXySGnYvCoCWw9E1CAx2/S6cCZdkGCe\n""
+        ""vEsXCS+0yx5DaMkHJ8HSXPfqIbloEpw8nL+e/IBcm2PN7EeqJSdnoDfzAIJ9VNep\n""
+        ""+OkuE6N36B9K\n""
+        ""-----END CERTIFICATE-----\n""
+        /*  This is the GeoTrust root certificate.
+
+            CN = GeoTrust Global CA
+            O = GeoTrust Inc.
+            C = US
+            Valid to: Friday, ‎May ‎20, ‎2022 9:00:00 PM
+
+            Thumbprint(sha1):
+            ‎de 28 f4 a4 ff e5 b9 2f a3 c5 03 d1 a3 49 a7 f9 96 2a 82 12
+        */
+        ""-----BEGIN CERTIFICATE-----\n""
+        ""MIIDxTCCAq2gAwIBAgIQAqxcJmoLQJuPC3nyrkYldzANBgkqhkiG9w0BAQUFADBs\n""
+        ""MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3\n""
+        ""d3cuZGlnaWNlcnQuY29tMSswKQYDVQQDEyJEaWdpQ2VydCBIaWdoIEFzc3VyYW5j\n""
+        ""ZSBFViBSb290IENBMB4XDTA2MTExMDAwMDAwMFoXDTMxMTExMDAwMDAwMFowbDEL\n""
+        ""MAkGA1UEBhMCVVMxFTATBgNVBAoTDERpZ2lDZXJ0IEluYzEZMBcGA1UECxMQd3d3\n""
+        ""LmRpZ2ljZXJ0LmNvbTErMCkGA1UEAxMiRGlnaUNlcnQgSGlnaCBBc3N1cmFuY2Ug\n""
+        ""RVYgUm9vdCBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMbM5XPm\n""
+        ""+9S75S0tMqbf5YE/yc0lSbZxKsPVlDRnogocsF9ppkCxxLeyj9CYpKlBWTrT3JTW\n""
+        ""PNt0OKRKzE0lgvdKpVMSOO7zSW1xkX5jtqumX8OkhPhPYlG++MXs2ziS4wblCJEM\n""
+        ""xChBVfvLWokVfnHoNb9Ncgk9vjo4UFt3MRuNs8ckRZqnrG0AFFoEt7oT61EKmEFB\n""
+        ""Ik5lYYeBQVCmeVyJ3hlKV9Uu5l0cUyx+mM0aBhakaHPQNAQTXKFx01p8VdteZOE3\n""
+        ""hzBWBOURtCmAEvF5OYiiAhF8J2a3iLd48soKqDirCmTCv2ZdlYTBoSUeh10aUAsg\n""
+        ""EsxBu24LUTi4S8sCAwEAAaNjMGEwDgYDVR0PAQH/BAQDAgGGMA8GA1UdEwEB/wQF\n""
+        ""MAMBAf8wHQYDVR0OBBYEFLE+w2kD+L9HAdSYJhoIAu9jZCvDMB8GA1UdIwQYMBaA\n""
+        ""FLE+w2kD+L9HAdSYJhoIAu9jZCvDMA0GCSqGSIb3DQEBBQUAA4IBAQAcGgaX3Nec\n""
+        ""nzyIZgYIVyHbIUf4KmeqvxgydkAQV8GK83rZEWWONfqe/EW1ntlMMUu4kehDLI6z\n""
+        ""eM7b41N5cdblIZQB2lWHmiRk9opmzN6cN82oNLFpmyPInngiK3BD41VHMWEZ71jF\n""
+        ""hS9OMPagMRYjyOfiZRYzy78aG6A9+MpeizGLYAiJLQwGXFK3xPkKmNEVX58Svnw2\n""
+        ""Yzi9RKR/5CYrCsSXaQ3pjOLAEFe4yHYSkVXySGnYvCoCWw9E1CAx2/S6cCZdkGCe\n""
+        ""vEsXCS+0yx5DaMkHJ8HSXPfqIbloEpw8nL+e/IBcm2PN7EeqJSdnoDfzAIJ9VNep\n""
+        ""+OkuE6N36B9K\n""
+        ""-----END CERTIFICATE-----\n"";
+
+    ctx.add_certificate_authority(boost::asio::buffer(cert.data(), cert.size()), ec);
+    if (ec)
+        return;
+}
+
+} // namespace detail
+
+static void load_root_certificates(ssl::context &ctx) {
+    boost::system::error_code ec;
+    detail::load_root_certificates(ctx, ec);
+    if (ec)
+        throw boost::system::system_error{ ec };
+}

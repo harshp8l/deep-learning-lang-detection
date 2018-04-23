@@ -1,0 +1,46 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+)
+
+type Order struct {
+    SalesId     string `json:""sales_id""`
+    Customer    string `json:""customer_name""`
+    TotalPrice  string `json:""totalprice""`
+}
+
+type OrderDetails struct {
+    SalesId   string `json:""sales_id""`
+    ItemName  string `json:""item_name""`
+    Qty       string `json:""qty""`
+    Price     string `json:""price""`
+}
+
+type Temp struct {
+    Salesorder Order                  `json:""Salesorder""`
+    Salesorderdetails []OrderDetails  `json:""OrderDetails""`
+}
+
+func main() {
+    jsonByteArray := []byte(`[{""Salesorder"":{""sales_id"":""SOO1"",""customer_name"":""CUST1"",""totalprice"":""200""}, ""OrderDetails"":[{""sales_id"":""SOO1"",""item_name"":""ITEM1"",""qty"":""2"",""price"":""100""},{""sales_id"":""SOO2"",""item_name"":""ITEM2"",""qty"":""3"",""price"":""200""}]}]`)
+
+    var temp []Temp
+
+    err := json.Unmarshal(jsonByteArray, &temp)
+    if err != nil {
+        panic(err)
+    }
+
+    //fmt.Printf(""%+v\n"", temp)
+
+    // Printing all Orders with some details
+    for _, order := range temp {
+        fmt.Println(""Customer:"", order.Salesorder.Customer)
+
+        for _, details := range order.Salesorderdetails {
+            fmt.Printf(""    ItemName: %s, Price: %s\n"", details.ItemName, details.Price)
+        }
+    }
+}

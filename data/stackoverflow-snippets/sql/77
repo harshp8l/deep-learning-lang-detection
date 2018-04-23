@@ -1,0 +1,41 @@
+CREATE FUNCTION [dbo].[udf_GetUnsplitGivenData]
+(
+@string nvarchar(max)
+)
+RETURNS  @OutTable TABLE
+(
+COl1 nvarchar(max),
+COl2 nvarchar(max)
+)
+AS
+BEGIN
+
+    DECLARE @Temp AS TABLE
+    (
+    DATA nvarchar(max)
+    )
+    INSERT INTO @Temp
+    SELECT @string
+
+
+    INSERT INTO @OutTable(COl1,COl2)
+    SELECT  SUBSTRING(Data,1,CHARINDEX(':',Data )-1) AS COl1,
+            SUBSTRING(Data,CHARINDEX(':',Data )+1,LEN(Data)) AS COl2
+    FROM
+    (
+    SELECT  Split.a.value('.','nvarchar(100)') AS Data 
+    FROM
+    (
+    SELECT 
+    CAST( '<S>'+REPLACE(Data,';','</S><S>')+'</S>' AS XML ) AS Data 
+    FROM @Temp
+    ) AS A
+    CROSS APPLY data.nodes('S') AS Split(a)
+    )dt
+
+
+RETURN
+END
+SELECT * FROM [dbo].[udf_GetUnsplitGivenData] (
+  'YR:136;YR:50;JN:275;YM:138;IN:477;WO:150;G1:10;F2:10')
+GO

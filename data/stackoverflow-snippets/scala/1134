@@ -1,0 +1,58 @@
+import java.sql.{Connection, DriverManager}
+
+object AutoCleanJdbcConnection {
+
+  val url = ""someUrl""
+  val user = ""someUser""
+  val password = ""somePwd""
+
+  def queryDb(): Option[Seq[String]] = {
+
+    autoClean(dbConnection) { connection =>
+
+      autoClean(connection.createStatement()) { statement =>
+
+        autoClean(statement.executeQuery(""SELECT column FROM table"")) { result =>
+
+          new Iterator[String] {
+            def hasNext: Boolean = result.next()
+
+            def next(): String = result.getString(1)
+          }.toSeq
+
+        }
+      }
+    }.flatten.flatten
+
+  }
+
+  def dbConnection: Connection = {
+    Class.forName(""mySql"")
+    DriverManager.getConnection(url, user, password)
+  }
+
+  def main(args: Array[String]): Unit = {
+    queryDb().foreach { data =>
+      println(data)
+    }
+  }
+
+  def autoClean[A <: AutoCloseable, B](resource: A)(ops: A => B): Option[B] = cleanly(resource)(_.close())(ops)
+
+  /**
+    * can be returning Either[B, Throwable]
+    */
+  def cleanly[A, B](resource: => A)(resourceCleanupCode: A => Unit)(operationCode: A => B): Option[B] = {
+    try {
+      val res = resource
+      try {
+        Some(operationCode(res))
+      }
+      finally {
+        resourceCleanupCode(res)
+      }
+    } catch {
+      case e: Exception => None
+    }
+  }
+}

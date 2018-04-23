@@ -1,0 +1,45 @@
+package main
+
+import (
+    ""fmt""
+    ""os""
+    ""time""
+)
+
+func monthInterval(t time.Time) (firstDay, lastDay time.Time) {
+    y, m, _ := t.Date()
+    loc := t.Location()
+    firstDay = time.Date(y, m, 1, 0, 0, 0, 0, loc)
+    lastDay = time.Date(y, m+1, 1, 0, 0, 0, -1, loc)
+    return firstDay, lastDay
+}
+
+func main() {
+    t := time.Now()
+    fmt.Println(t.Round(0))
+    first, last := monthInterval(t)
+    fmt.Println(first)
+    fmt.Println(last)
+
+    dstLoc, err := time.LoadLocation(""America/Los_Angeles"")
+    if err != nil {
+        fmt.Fprintln(os.Stderr, err)
+        return
+    }
+    // Sunday, March 12, 2017, 2:00:00 am to Sunday, March 12, 2017, 3:00:00 am
+    dstStart := time.Date(2017, 03, 12, 2+1, 0, 0, 0, dstLoc)
+    // Sunday, November 5, 2017, 2:00:00 am to Sunday, November 5, 2017, 1:00:00 am
+    dstEnd := time.Date(2017, 11, 5, 2-1, 0, 0, 0, dstLoc)
+    t = dstStart
+    fmt.Println()
+    fmt.Println(t)
+    first, last = monthInterval(t)
+    fmt.Println(first)
+    fmt.Println(last)
+    t = dstEnd.Add(time.Hour)
+    fmt.Println()
+    fmt.Println(t)
+    first, last = monthInterval(t)
+    fmt.Println(first)
+    fmt.Println(last)
+}

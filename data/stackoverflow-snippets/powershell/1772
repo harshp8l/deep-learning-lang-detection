@@ -1,0 +1,72 @@
+    @echo off
+REM    Copyright (C) 2013  
+REM    user49828
+REM
+REM    Batch file for creating Wifi Hotspot
+if _%1_==_payload_  goto :payload
+
+:getadmin
+    echo %~nx0: elevating self
+    set vbs=%temp%\getadmin.vbs
+    echo Set UAC = CreateObject^(""Shell.Application""^)                >> ""%vbs%""
+    echo UAC.ShellExecute ""%~s0"", ""payload %~sdp0 %*"", """", ""runas"", 1 >> ""%vbs%""
+    ""%temp%\getadmin.vbs""
+    del ""%temp%\getadmin.vbs""
+goto :eof
+
+:payload
+    echo %~nx0: running payload with parameters:
+    echo %*
+    echo ---------------------------------------------------
+    cd /d %2
+    shift
+    shift
+    rem put your code here
+    rem e.g.: perl myscript.pl %1 %2 %3 %4 %5 %6 %7 %8 %9
+    :start
+@ECHO off
+ECHO  Pleae select one of the options Programmed By Overflown.com  ""user49828""
+ECHO  --------------------------------------------------------------------------------------------------------------------------
+ECHO  1 Hotspot settings
+ECHO  2 Start Hotspot
+ECHO  3 Stop  Hotspot
+ECHO  --------------------------------------------------------------------------------------------------------------------------
+
+SET /p option=Please enter one of the options:
+
+if %option%==1  ( goto setup )      else set /a er=1
+if %option%==2  ( goto start1 )      else set /a er=er+1
+if %option%==3  ( goto stop )       else set /a er=er+1
+
+:noOption
+if %er% GEQ 3 ( 
+Echo Error!
+Echo Please enter a correct option
+@pause
+cls  
+goto start
+)
+
+:setup
+SET /p ssid=Please enter the Hotspot name:
+SET /p key=Please enter the Hotspot password greater the 8 digits:
+netsh wlan set hostednetwork mode=allow ssid=%ssid% key=%key% 
+if %errorlevel%==0 (
+ECHO Setup complete
+)
+@pause
+cls  
+goto start
+
+:start1
+netsh wlan start hostednetwork
+@pause
+cls  
+goto start
+
+:stop
+netsh wlan stop hostednetwork
+@pause
+cls  
+goto start
+goto :eof

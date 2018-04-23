@@ -1,0 +1,233 @@
+package main
+
+import (
+    dcl ""github.com/docker/docker/client""
+    ""context""
+    ""html/template""
+    ""github.com/docker/docker/api/types""
+    ""log""
+    ""net/http""
+    ""flag""
+    ""github.com/gorilla/websocket""
+    ""fmt""
+    ""io""
+    ""bufio""
+    ""time""
+    ""unicode/utf8""
+)
+
+var inout chan []byte
+var output chan []byte
+
+var addr = flag.String(""addr"", ""localhost:8080"", ""http service address"")
+
+var upgrader = websocket.Upgrader{}
+
+func echo(w http.ResponseWriter, r *http.Request) {
+    conn, err := upgrader.Upgrade(w, r, nil)
+    if err != nil {
+        log.Print(err)
+        return
+    }
+    defer conn.Close()
+
+    cli, err := dcl.NewEnvClient()
+    if err != nil {
+        log.Print(err)
+        conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+        return
+    }
+
+    ctx := context.Background()
+    execConfig := types.ExecConfig{
+        AttachStderr: true,
+        AttachStdin:  true,
+        AttachStdout: true,
+        Cmd:          []string{""/bin/sh""},
+        Tty:          false,
+        Detach:       false,
+    }
+
+    //set target container
+    exec, err := cli.ContainerExecCreate(ctx, ""vigorous_mclean"", execConfig)
+    if err != nil {
+        log.Print(err)
+        conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+        return
+    }
+    execAttachConfig := types.ExecStartCheck{
+        Detach: false,
+        Tty:    false,
+    }
+    containerConn, err := cli.ContainerExecAttach(ctx, exec.ID, execAttachConfig)
+    if err != nil {
+        log.Print(err)
+        conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+        return
+    }
+    defer containerConn.Close()
+
+    bufin := bufio.NewReader(containerConn.Reader)
+
+    // Write to docker container
+    go func(w io.WriteCloser) {
+        for {
+            data, ok := <-inout
+            log.Println(""Received to send to docker"", data)
+            if !ok {
+                fmt.Println(""!ok"")
+                w.Close()
+                return
+            }
+
+            w.Write(append(data, '\n'))
+        }
+    }(containerConn.Conn)
+
+    // Received of Container Docker
+    go func() {
+        for {
+            buffer := make([]byte, 4096, 4096)
+            c, err := bufin.Read(buffer)
+            if err != nil {
+                fmt.Println(err)
+            }
+            //c, err := containerConn.Reader.Read(buffer)
+            if c > 0 {
+                output <- buffer[:c]
+            }
+            if c == 0 {
+                output <- []byte{' '}
+            }
+            if err != nil {
+                break
+            }
+        }
+    }()
+
+    for {
+        conn.CloseHandler()
+        mt, message, err := conn.ReadMessage()
+        log.Println(mt)
+        if err != nil {
+            log.Println(""read:"", err)
+            break
+        } else {
+            log.Printf(""recv: %s\n"", message)
+            inout <- message
+            select {
+            case data := <-output:
+                stringData := string(data[:])
+                if !utf8.ValidString(stringData) {
+                    v := make([]rune, 0, len(stringData))
+                    for i, r := range stringData {
+                        if r == utf8.RuneError {
+                            _, size := utf8.DecodeRuneInString(stringData[i:])
+                            if size == 1 {
+                                continue
+                            }
+                        }
+                        v = append(v, r)
+                    }
+                    stringData = string(v)
+                }
+                err = conn.WriteMessage(mt, []byte(stringData))
+                if err != nil {
+                    log.Println(""write:"", err)
+                }
+
+            case <-time.After(time.Second * 1):
+                log.Println(""Timeout"")
+
+            }
+        }
+
+    }
+}
+
+func home(w http.ResponseWriter, r *http.Request) {
+    homeTemplate.Execute(w, ""ws://""+r.Host+""/echo"")
+}
+
+func main() {
+
+    inout = make(chan []byte)
+    output = make(chan []byte)
+
+    http.HandleFunc(""/echo"", echo)
+    http.HandleFunc(""/"", home)
+    log.Fatal(http.ListenAndServe(*addr, nil))
+}
+
+var homeTemplate = template.Must(template.New("""").Parse(`
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=""utf-8"">
+<script>
+window.addEventListener(""load"", function(evt) {
+    var output = document.getElementById(""output"");
+    var input = document.getElementById(""input"");
+    var ws;
+    var print = function(message) {
+        var d = document.createElement(""div"");
+        d.innerHTML = message;
+        output.appendChild(d);
+    };
+    document.getElementById(""open"").onclick = function(evt) {
+        if (ws) {
+            return false;
+        }
+        ws = new WebSocket(""{{.}}"");
+        ws.onopen = function(evt) {
+            print(""OPEN"");
+        }
+        ws.onclose = function(evt) {
+            print(""CLOSE"");
+            ws = null;
+        }
+        ws.onmessage = function(evt) {
+            print(""RESPONSE: "" + evt.data);
+        }
+        ws.onerror = function(evt) {
+            print(""ERROR: "" + evt.data);
+        }
+        return false;
+    };
+    document.getElementById(""send"").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+        print(""SEND: "" + input.value);
+        ws.send(input.value);
+        return false;
+    };
+    document.getElementById(""close"").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+        ws.close();
+        return false;
+    };
+});
+</script>
+</head>
+<body>
+<table>
+<tr><td valign=""top"" width=""50%"">
+<p>Click ""Open"" to create a connection to the server,
+""Send"" to send a message to the server and ""Close"" to close the connection.
+You can change the message and send multiple times.
+<p>
+<form>
+<button id=""open"">Open</button>
+<button id=""close"">Close</button>
+<p><input id=""input"" type=""text"" value=""ls"">
+<button id=""send"">Send</button>
+</form>
+</td><td valign=""top"" width=""50%"">
+<div id=""output""></div>
+</td></tr></table>
+</body>
+</html>
+`))

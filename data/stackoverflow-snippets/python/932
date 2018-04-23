@@ -1,0 +1,33 @@
+def fileUploadJob(BUCKET_NAME,AWS_REGION):
+serialNo = getserial()
+yesterday_date=date.today() - timedelta(1)
+
+while True:
+    if is_connected():
+        conn = boto.s3.connect_to_region(<Aws-region>,<Access_key>
+              ,<secert-key>,
+            is_secure=True,
+            calling_format = boto.s3.connection.OrdinaryCallingFormat(),
+            )
+        bucket = conn.get_bucket(BUCKET_NAME)
+
+        FILE_PATH=""/home/pi/Desktop/bme280_elf_new/reading/""+
+                 str(yesterday_date)+"".csv"" 
+
+        print ('Uploading %s to Amazon S3 bucket %s' % 
+        (FILE_PATH, BUCKET_NAME))
+
+        def percent_cb(complete, total):
+            sys.stdout.write('.')
+            sys.stdout.flush()
+
+
+        k = Key(bucket)
+        k.key = str(serialNo)+'-'+str(yesterday_date)+'.csv'
+        k.set_contents_from_filename(FILE_PATH,
+            cb=percent_cb, num_cb=10)
+        time.sleep(10)
+
+        break
+    else:
+        time.sleep(5)

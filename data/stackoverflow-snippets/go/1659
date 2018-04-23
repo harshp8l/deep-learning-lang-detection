@@ -1,0 +1,31 @@
+type wrapTransProp struct {
+    A []int
+    B []float64
+}
+
+func (p transProp) MarshalBinary() ([]byte, error) {
+    //Wrap struct
+    w := wrapTransProp{p.a, p.b}
+
+    //use default gob encoder
+    var buf bytes.Buffer
+    enc := gob.NewEncoder(&buf)
+    if err := enc.Encode(w); err != nil {
+        return nil, err
+    }
+    return buf.Bytes(), nil
+}
+func (p *transProp) UnmarshalBinary(data []byte) error {
+    w := wrapTransProp{}
+
+    //Use default gob decoder
+    reader := bytes.NewReader(data)
+    dec := gob.NewDecoder(reader)
+    if err := dec.Decode(&w); err != nil {
+        return err
+    }
+
+    p.a = w.A
+    p.b = w.B
+    return nil
+}

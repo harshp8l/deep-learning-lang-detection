@@ -1,0 +1,48 @@
+public class Teams {
+
+    private static String[][] teamsToAvoid = {{""James"", ""Miller""}, {""John"", ""Hal""}};
+    private static String[][] teamsFormed = new String[3][2];
+
+    public static void main(String[] args){
+        String[] names = {""John"", ""James"", ""George"", ""Miller"", ""Hal"", ""Dan""};
+        List<String> namesList = new ArrayList<>(Arrays.asList(names));
+        Collections.shuffle(namesList);
+
+        do {
+            formTeam(namesList, 0, 1);
+        } while(namesList != null && !namesList.isEmpty());
+
+        for(String[] team : teamsFormed){
+            System.out.println(""Team: {"" + team[0] + "", "" + team[1] + ""}"");
+        }
+    }
+
+    private static void formTeam(List<String> namesList, int firstPlayerIndex, int secondPlayerIndex) {
+        if(isTeamPossible(namesList.get(firstPlayerIndex), namesList.get(secondPlayerIndex))){
+            String firstPlayer = namesList.get(firstPlayerIndex);
+            String secondPlayer = namesList.get(secondPlayerIndex);
+            teamsFormed[getFormedTeamNextIndex()] = new String[]{firstPlayer, secondPlayer};
+            namesList.remove(namesList.indexOf(firstPlayer));
+            namesList.remove(namesList.indexOf(secondPlayer));
+        } else {
+            formTeam(namesList, firstPlayerIndex, ++secondPlayerIndex);
+        }
+    }
+
+    private static boolean isTeamPossible(String player1, String player2) {
+        for(String[] teamToAvoid : teamsToAvoid){
+            if(Arrays.asList(teamToAvoid).contains(player1) && Arrays.asList(teamToAvoid).contains(player2)){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static int getFormedTeamNextIndex() {
+        for(int i = 0; i < teamsFormed.length; i++){
+            if(teamsFormed[i][0] == null && teamsFormed[i][1] == null)
+                return i;
+        }
+        return 0;
+    }
+}

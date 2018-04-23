@@ -1,0 +1,32 @@
+template<class C, class V>
+using has_push_back_impl = decltype(std::declval<C>().push_back(std::declval<V>()));
+
+template<class C, class V>
+constexpr bool has_push_back = std::experimental::is_detected_v<has_push_back_impl, C, V>;
+
+template<typename Collection>
+class MySack {
+private:
+    Collection c;
+
+public:
+    typedef typename Collection::value_type value_type;
+
+    void add(const value_type& value) {
+        if constexpr (has_push_back<Collection, value_type>) {
+            std::cout << ""push_back.\n"";
+            c.push_back(value);
+        } else {
+            std::cout << ""insert.\n"";
+            c.insert(value);
+        }
+    }
+};
+
+int main() {
+    MySack<std::set<int>> f;
+    f.add(23);
+
+    MySack<std::vector<int>> g;
+    g.add(23);
+}

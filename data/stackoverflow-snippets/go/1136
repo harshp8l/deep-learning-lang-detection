@@ -1,0 +1,51 @@
+func ping(w http.ResponseWriter, a Ping) {
+
+    cmdName := ""ping""
+    cmdArgs := []string{""-c"", a.Count, a.Ip}
+
+    cmd := exec.Command(cmdName, cmdArgs...)
+    cmdReader, err := cmd.StdoutPipe()
+    if err != nil {
+        fmt.Fprintln(os.Stderr, ""Error creating StdoutPipe for Cmd"", err)
+        http.Error(w, ""Error creating StdoutPipe for Cmd\n""+err.Error(), 500)
+        return
+    }
+
+    // the following is used to print output of the command
+    // as it makes progress...
+    scanner := bufio.NewScanner(cmdReader)
+    go func() {
+        for scanner.Scan() {
+            fmt.Printf(""%s\n"", scanner.Text())
+            //
+            // TODO:
+            // send output to server
+        }
+    }()
+
+    err = cmd.Start()
+    if err != nil {
+        fmt.Fprintln(os.Stderr, ""Error starting Cmd"", err)
+        http.Error(w, ""Error starting Cmd\n""+err.Error(), 500)
+        return
+    }
+
+    // not sending response here anymore. Using the channel instead
+
+    errChan := make(chan error)
+
+    go func(ec chan error) {
+        err = cmd.Wait()
+        if err != nil {
+            errChan <- err
+        }
+    }(errChan)
+
+    select {
+    case err := <-errChan:
+        http.Error(w, ""Error: ""+err.Error(), 500)
+    // timeout 50ms just in case. But I presume you would get an error (if there is one in cmd) even before execution will get to this point
+    case <-time.After(time.Millisecond * 50):
+        fmt.Fprintf(w, ""ping started"")
+    }
+}

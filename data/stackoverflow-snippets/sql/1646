@@ -1,0 +1,31 @@
+declare @H table (id int primary key, par int);
+insert into @H values 
+       (1, NULL)              
+     , (2, 1)
+     , (3, 2)
+     , (4, 1);
+DECLARE @Feature AS TABLE
+(
+    ClassID int,
+    FeatureID char(1)
+)
+INSERT INTO @Feature (ClassID, FeatureID) VALUES
+(1, 'A'), (1, 'B'),
+(2, 'C'), (2, 'D'),
+(3, 'E'), 
+(4, 'F'),
+(5, 'G');
+with cte as 
+(  select h.id,   h.par,   h.id as tree 
+   from @H h
+   union all 
+   select cte.id, cte.par, h.par
+   from cte 
+   join @H H 
+     on cte.tree = h.id
+)
+select * from cte 
+join @Feature f 
+  on f.ClassID = cte.tree
+where cte.tree is not null
+order by cte.id, cte.par, cte.tree

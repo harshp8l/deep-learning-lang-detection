@@ -1,0 +1,54 @@
+open System.Text
+open System.Net
+open System.IO
+
+let get projectId = 
+    let un = ""USERNAME""
+    let pw = ""password""    
+
+
+    let cookieCont = 
+        let token = 
+            printfn ""getting token..""
+            let req1 = HttpWebRequest.Create ""https://app.sablono.com/sap/hana/xs/formLogin/token.xsjs"" :?> HttpWebRequest
+            req1.Headers.Add(""X-CSRF-Token"", ""Fetch"") //You have to add the X-CSRF-Token = Fetch so that the system can reply with the other token   
+            let resp = req1.GetResponse()
+            resp.Headers.Get(""X-CSRF-Token"") //The first time the token is ""unsafe""
+
+        let jar = new CookieContainer()
+        let req2 = HttpWebRequest.Create ""https://app.sablono.com/sap/hana/xs/formLogin/login.xscfunc"" :?> HttpWebRequest
+        let byteArray = 
+            let postData = ""xs-username="" + un + ""&xs-password="" + pw
+            Encoding.UTF8.GetBytes(postData)
+
+        req2.CookieContainer <- jar
+        req2.Method <- ""POST""
+        req2.Headers.Add(""X-CSRF-Token"", token)
+        req2.ContentType <-""application/x-www-form-urlencoded charset=UTF-8""
+        req2.ContentLength <- int64 byteArray.Length
+
+        //Put username and password inside the body
+        use dataStream = req2.GetRequestStream()
+        dataStream.Write(byteArray, 0, byteArray.Length)
+
+        let _ = // this is to avoid 401 error
+            let login_resp = req2.GetResponse()
+            login_resp.GetResponseStream() 
+
+        dataStream.Close()
+        jar
+
+    printfn ""downloading JSON ..""     
+    let req3 =  HttpWebRequest.Create (""https://app.sablono.com/api/projectStatus.xsjs?project="" + projectId)  :?> HttpWebRequest
+    req3.AutomaticDecompression <- DecompressionMethods.GZip
+    req3.CookieContainer <- cookieCont
+    req3.ContentType <- ""application/jsoncharset=UTF-8""
+    req3.Accept <- ""application/json""
+
+    let resultJSON = 
+        let resp = req3.GetResponse()
+        let respStream = resp.GetResponseStream()
+        use reader = new StreamReader(respStream)
+        reader.ReadToEnd()
+
+    resultJSON

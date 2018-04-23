@@ -1,0 +1,97 @@
+namespace dj::example {
+
+    template<class T>
+    class my_vec
+    {
+    public:
+
+        // constructors
+        my_vec()
+           : mSize(0)
+           , mArray(nullptr)
+        {}
+
+        explicit 
+        my_vec(std::size_t size) 
+            : mSize(size)
+            , mArray(new T[mSize]) // Can throw when size is huge
+        {}
+
+        // copy-constructor
+        my_vec(const my_vec& other)
+            : mSize(other.mSize)
+            , mArray(new T[mSize]) // Can throw when size is huge
+        {
+            // For Visual C++
+            // Put _SCL_SECURE_NO_WARNINGS in vc++ preprocessor 
+            // to shut up VC++ about ""deprecated"" std::copy
+            std::copy(other.mArray, other.mArray + mSize, mArray);
+        }
+
+        // destructor
+        virtual ~my_vec()  // Make virtual in case my_vec is used as base class.
+        {
+            delete [] mArray;  
+        }
+
+        // Specialize external swap! Necessary for assignment operator below,
+        // and for ADL (argument-dependant lookup).
+        friend void swap(my_vec& first, my_vec& second) noexcept
+        {
+            // enable ADL (best practice)
+            using std::swap; 
+
+            // by swapping all the members of two objects,
+            // they are effectively swapped
+            swap(first.mSize, second.mSize); 
+            swap(first.mArray, second.mArray);
+        }
+
+        // Assignment operator. Note that the argument ""other"" is passed by value.
+        // This is the copy-and-swap pattern (best practice).
+        // It assures that noexcept is true.
+        my_vec& operator=(my_vec other) noexcept
+        {
+            swap(*this, other); // Uses specialized swap above. It must.
+            return *this;
+        } 
+
+        // move constructor - construct and swap idiom (best practice)
+        my_vec(my_vec&& other) noexcept
+            : my_vec()
+        {
+            swap(*this, other);
+        }
+
+
+    // xxxxxxxxxxx
+    // Everything below here is only to make my_vec a working example.
+        // Member functions and typedefs below are for testing the example
+        // ... not part of schema.
+
+        using const_iterator = const T*;
+        using iterator = T*;
+        using size_type = std::size_t;
+        using value_type = T;
+        using type = my_vec<T>;
+
+        iterator begin() { return mArray; }
+        iterator end() { return mArray + mSize; }
+        const_iterator begin() const { return mArray; }
+        const_iterator end()  const { return mArray + mSize; }
+        const_iterator cbegin() const { return mArray; }
+        const_iterator cend()  const { return mArray + mSize; }
+        T operator[](int i) const {
+            return *(begin()+i);
+        }
+        T& operator[](int i) {
+            return *(begin()+i);
+        }
+        std::size_t size()  const { return mSize; }
+
+    private:
+        std::size_t mSize;
+        T* mArray;
+    };
+
+} // namespace dj

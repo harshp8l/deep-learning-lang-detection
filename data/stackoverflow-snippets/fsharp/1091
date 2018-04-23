@@ -1,0 +1,21 @@
+// Detect the compiled or optimized form of a 'for <elemVar> in <startExpr> .. <finishExpr>  do <bodyExpr>' expression over integers
+// Detect the compiled or optimized form of a 'for <elemVar> in <startExpr> .. <step> .. <finishExpr>  do <bodyExpr>' expression over integers when step is positive
+let (|CompiledInt32ForEachExprWithKnownStep|_|) g expr = 
+    match expr with 
+    | Let (_enumerableVar, RangeInt32Step g (startExpr, step, finishExpr), _, 
+           Let (_enumeratorVar, _getEnumExpr, spBind,
+              TryFinally (WhileLoopForCompiledForEachExpr (_guardExpr, Let (elemVar,_currentExpr,_,bodyExpr), m), _cleanupExpr))) -> 
+
+        let spForLoop = match spBind with SequencePointAtBinding(spStart) -> SequencePointAtForLoop(spStart) |  _ -> NoSequencePointAtForLoop 
+
+        Some(spForLoop,elemVar,startExpr,step,finishExpr,bodyExpr,m)
+    | _ -> 
+        None
+
+let DetectFastIntegerForLoops g expr = 
+    match expr with 
+    | CompiledInt32ForEachExprWithKnownStep g (spForLoop,elemVar,startExpr,step,finishExpr,bodyExpr,m) 
+         // fast for loops only allow steps 1 and -1 steps at the moment
+         when step = 1 || step = -1 -> 
+            mkFastForLoop  g (spForLoop,m,elemVar,startExpr,(step = 1),finishExpr,bodyExpr)
+    | _ -> expr

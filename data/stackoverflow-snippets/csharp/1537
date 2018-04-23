@@ -1,0 +1,40 @@
+public class CommClass
+{
+    private static byte[] portReturn = null;
+
+    // ManualResetEvents are great for signaling events across threads
+    private static ManualResetEvent dataReceivedEvent = new ManualResetEvent(false);
+
+    private void setUpDevice()
+    {
+        byte[] command = { 0x11,0X51 };
+        try
+        {
+            port.DataReceived += new SerialDataReceivedEventHandler(serialPortDataReceived);
+            port.Write(command, 0, command.Length);
+
+            // Wait for the event to be set without spinning in a loop.
+            // Can also specify a timeout period to wait in case the data never comes.
+            dataReceivedEvent.WaitOne();
+
+            // Reset the event so that you can use it again later if necessary
+            dataReceivedEvent.Reset();
+
+            port.DataReceived -= serialPortDataReceived;
+        }
+        catch(Exception ex)
+        {
+            //to do
+        }
+    }
+
+
+    private void serialPortDataReceived(object sender, SerialDataReceivedEventArgs e)
+    {
+        var servicePort = (SerialPort)sender;
+        portReturn = servicePort.ReadByte();
+
+        // Set the event to let the main thread know you have received data
+        dataReceivedEvent.Set();
+    }
+}

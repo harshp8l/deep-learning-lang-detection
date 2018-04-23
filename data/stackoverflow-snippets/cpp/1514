@@ -1,0 +1,84 @@
+#include <iostream>
+#include <vector>
+
+template <typename T>
+struct Range {
+    Range(T& vec, std::size_t start, std::size_t end) :
+        m_vector(vec),
+        m_start(start),
+        m_end(end),
+        m_size(end-start+1) {}
+
+    auto begin() {
+        auto it = m_vector.begin();
+        std::advance(it, m_start);
+        return it;
+    }
+    auto end() {
+        auto it = m_vector.begin();
+        std::advance(it, m_end + 1);
+        return it;
+    }
+
+    std::size_t size() {
+        return m_size;
+    }
+
+    void update(std::size_t start, std::size_t end) {
+        m_start = start;
+        m_end = end;
+        m_size = end - start + 1;
+    }
+
+    Range copy(T& other_vec) {
+        return Range(other_vec, m_start, m_end);
+    }
+
+    typename T::reference operator[](std::size_t index) {
+        return m_vector[m_start + index];
+    }
+
+    private:
+    T& m_vector;
+    std::size_t m_start, m_end, m_size;
+};
+
+// This can be used if c++17 is not supported, to avoid
+// having to specify template parameters
+template <typename T>
+Range<T> make_range(T& t, std::size_t start, std::size_t end) {
+    return Range<T>(t, start, end);
+}
+
+int main() {
+    std::vector<int> v1 {1, 2, 3, 4, 5};
+    std::vector<double> v2 {0.5, 1., 1.5, 2., 2.5};
+
+    Range more_then_2(v1, 1, 4); // Only works in c++17 or later
+    auto more_then_1 = make_range(v2, 2, 4);
+
+    for (auto v : more_then_2)
+        std::cout << v << ' ';
+
+    std::cout << std::endl;
+
+    for (auto v : more_then_1)
+        std::cout << v << ' ';
+
+    std::cout << std::endl;
+
+    more_then_2.update(2,4);
+
+    for (auto v : more_then_2)
+        std::cout << v << ' ';
+
+    std::cout << std::endl;
+
+    auto v3 = v1;
+    auto more_then_2_copy = more_then_2.copy(v3);
+
+    for (unsigned i=0; i < more_then_2_copy.size(); ++i)
+        std::cout << more_then_2_copy[i] << ' ';
+
+    return 0;
+}

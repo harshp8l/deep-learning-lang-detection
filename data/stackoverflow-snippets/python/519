@@ -1,0 +1,47 @@
+def improve_sort(items, N=4):
+    """"""Take every pair of dominos and try to build a sequence that will maybe reduce the loss.
+    N is the threshold for the size of the subsequence""""""
+    ret = items
+    ret = (items, compute_loss(items))
+    for i in range(len(items)):
+        for j in range(i+1, len(items)):
+            # for every couple of indices
+            r = try_to_find_better_swap_sequence(ret, [i, j], N)
+            if r[1] < ret[1]:
+                ret = r
+
+    return ret
+
+def try_to_find_better_swap_sequence(ret, indices, N):
+    """"""Try to swap dominos until the local loss is greater than in the previous sequence""""""
+    stack = [(indices, ret[0])] # for an iterative DFS
+    while stack:
+        indices, items = stack.pop()
+
+        # pop the last indices
+        j = indices.pop()
+        i = indices.pop()
+        # create a copy and swap the i-th and the j-th element
+        items2 = list(items)
+        items2[i] = items[j]
+        items2[j] = items[i]
+        loss = compute_loss(items2)
+        if loss < ret[1]:
+            ret = (items2, loss)
+        if len(indices) <= N-3: # at most N indices in the sequence
+            # continue if there is at least one local improvement
+            if local_loss(items2, i) < local_loss(items, i): # i was improved
+                stack.extend((indices+[i,j,k], items2) for k in range(j+1, len(items2)))
+            if local_loss(items2, j) < local_loss(items, j): # j was improved
+                stack.extend((indices+[j,i,k], items2) for k in range(i+1, len(items2)))
+
+    return ret
+
+def local_loss(items, i):
+    """"""This is the loss on the left and the right of the domino""""""
+    if i==0:
+        return (items[i][1] - items[i+1][0])**2
+    elif i==len(items)-1:
+        return (items[i-1][1] - items[i][0])**2
+    else:
+        return (items[i-1][1] - items[i][0])**2+(items[i][1] - items[i+1][0])**2

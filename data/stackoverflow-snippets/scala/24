@@ -1,0 +1,15 @@
+  case class LazyFuture[+A](f: Unit => Future[A]) {
+    def apply() = f()
+  }
+
+  object LazyFuture {
+    def apply[A](f: => A)(implicit ec: ExecutionContext): LazyFuture[A] = LazyFuture(_ => Future(f))
+
+    def apply[A](f: => Future[A])(implicit ec: ExecutionContext): LazyFuture[A] = LazyFuture(_ => f)
+  }
+
+  def executeBatch[A](list: List[LazyFuture[A]])(concurFactor: Int)(implicit ec: ExecutionContext): Future[List[A]] =
+    list.grouped(concurFactor).foldLeft(Future.successful(List.empty[A])) { (r, c) =>
+      val batch = Future.sequence(c.map(_ ()))
+      r.flatMap(rs => batch.map(values => rs ++ values))
+    }

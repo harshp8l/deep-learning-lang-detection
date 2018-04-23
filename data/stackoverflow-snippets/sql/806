@@ -1,0 +1,8 @@
+SELECT c.column_name, c.data_type, c.character_maximum_length,
+CASE WHEN EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.constraint_column_usage k WHERE c.table_name = k.table_name and k.column_name = c.column_name) 
+     THEN true ELSE false END as primary_key, 
+CASE WHEN EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.key_column_usage k WHERE c.table_name = k.table_name and k.column_name = c.column_name) AND 
+          EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.referential_constraints f INNER JOIN INFORMATION_SCHEMA.key_column_usage k ON k.constraint_name = f.constraint_name WHERE k.column_name = c.column_name) 
+     THEN true ELSE false END as foreign_key 
+FROM INFORMATION_SCHEMA.COLUMNS c 
+WHERE c.table_name='my_table';

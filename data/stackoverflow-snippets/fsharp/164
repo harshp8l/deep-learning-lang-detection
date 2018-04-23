@@ -1,0 +1,28 @@
+let rawData =
+    [ 0, None, 0.0
+      1, Some 0, 100.00
+      2, Some 0, 110.00
+      3, Some 1, 50.00
+      4, Some 1, 75.00
+      5, Some 2, 80.00
+      6, Some 0, 92.00 ]
+
+let flatList =
+    rawData
+    |> List.map (fun (id, superId, sales) -> 
+                     {Id = id; SupervisorId = superId; PersonalSales = sales})
+
+let getTree salesPeople =
+    // To do : validate root
+    let root = salesPeople |> List.find (fun p -> p.SupervisorId = None)
+    let children supervisorId = 
+        salesPeople |> List.filter (fun p -> p.SupervisorId = Some supervisorId)
+
+    let rec loop employee = 
+      match children employee.Id with
+      | [] -> SalesPerson employee
+      | list -> Supervisor (employee, List.map loop list)
+
+    loop root
+
+let salesForce = getTree flatList 

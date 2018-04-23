@@ -1,0 +1,50 @@
+$data = [];
+$result_num = false;
+// get rows num if have any
+$result_count_res = sqlsrv_query( 
+                        $conn, 
+                        $query, 
+                        [],  
+                        [ ""Scrollable"" => SQLSRV_CURSOR_KEYSET ]
+                    );
+
+if( $result_count_res === false) {
+    echo ""Row count false"";
+}else{
+    // set row num
+    $result_num = sqlsrv_num_rows( $result_count_res ); 
+} 
+
+if($result_num){
+
+    // run another query to retrive results
+    $result_res = sqlsrv_query( 
+                $conn, 
+                $query, 
+                [],  
+                [ ""Scrollable"" => SQLSRV_CURSOR_FORWARD ]
+            );
+
+    if( $result_res === false) {
+
+        // get errors from query
+        die( print_r( sqlsrv_errors(), true) );
+
+    }else{
+
+        // run through ""for"" loop to retrive all results
+        for($i = 0; $i < $result_num; $i++){
+            $data[] = sqlsrv_fetch_array( $result_res, SQLSRV_FETCH_ASSOC);
+        }
+
+    }   
+
+    sqlsrv_free_stmt( $result_res );
+
+}else{
+    echo ""Row count false"";
+}
+
+echo '<pre>';
+var_dump($data);
+echo '</pre>';

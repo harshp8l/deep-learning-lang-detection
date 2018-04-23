@@ -1,0 +1,48 @@
+#include <iostream>
+#include <string>
+#include <random>
+
+int main() {
+    static std::random_device rd;
+    static std::mt19937 gen;
+    gen.seed( rd() );
+    static std::uniform_int_distribution<> dist( 1, 100 );
+
+    int hiddenNumber = dist( gen ); 
+    int guess = 0;
+    int attempts = 0;
+    std::string userResponse;
+
+    do {            
+        if ( attempts == 0 ) {
+            std::cout << ""Enter a number between 1 and 100: "";
+        }
+        std::cin >> guess;
+        ++attempts;
+
+        if ( guess < hiddenNumber ) {           
+            std::cout << ""\nYour guess was to low: Please try again!\n"";
+        } else if ( guess > hiddenNumber ) {
+            std::cout << ""\nYour guess was to high: Please try again!\n"";
+        } else {
+            std::cout << ""\nYou guessed it in "" << attempts << "" tries!\n"";
+            std::cout << ""\nWould you like to try again yes/no?\n\n"";
+
+            userResponse.clear(); // clear out string first.
+            std::cin >> userResponse;
+
+            if ( userResponse == ""yes"" || userResponse == ""Yes"" ) {
+                attempts = 0;
+                hiddenNumber = dist( gen );
+                continue;
+            } else if ( userResponse == ""no"" || userResponse == ""No"" ) {
+                std::cout << ""Goodbye!"" << std::endl;
+                break;
+            }
+        }
+    } while ( guess != hiddenNumber );
+
+    std::cout << ""/nPress any key to quit."";
+    std::cin.get();
+    return 0;
+} 

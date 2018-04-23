@@ -1,0 +1,56 @@
+template<class T>
+struct slotted_data {
+  std::size_t I;
+  T t;
+};
+template<class T>
+using sink = std::function<void(T)>;
+template<class T, std::size_t N>
+struct async_slots {
+  bool produce( slotted_data<T> data ) {
+    if (terminate || data.I>=N) return false;
+    {
+      auto l = lock();
+      if (slots[data.I]) return false;
+      slots[data.I] = std::move(data.t);
+    }
+    cv.notify_one();
+    return true;
+  }
+  // rare use of non-lambda cv.wait in the wild!
+  bool consume(sink<slotted_data<T>> f) {
+    auto l = lock();
+    while(!terminate) {
+      for (auto& slot:slots) {
+        if (slot) {
+          auto r = std::move(*slot);
+          slot = std::nullopt;
+          f({std::size_t(&slot-slots.data()), std::move(r)}); // invoke in lock
+          return true;
+        }
+      }
+      cv.wait(l);
+    }
+    return false;
+  }
+  // easier and safer version:
+  std::optional<slotted_data<T>> consume() {
+    std::optional<slotted_data<T>> r;
+    bool worked = consume([&](auto&& data) { r = std::move(data); });
+    if (!worked) return {};
+    return r;
+  }
+  void finish() {
+      {
+        auto l = lock();
+        terminate = true;
+      }
+      cv.notify_all();
+  }
+private:
+  auto lock() { return std::unique_lock<std::mutex>(m); }
+  std::mutex m;
+  std::condition_variable cv;
+  std::array< std::optional<T>, N > slots;
+  bool terminate = false;
+};

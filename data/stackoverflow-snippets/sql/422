@@ -1,0 +1,12 @@
+select p.ItemCode, p.ProductName, 
+       max(case when pr.PriceGroupCode = 'B2B' then pr.price end) B2BPrice,
+       max(case when pr.PriceGroupCode = 'B2C' then pr.price end) B2CPrice   
+from (select *, 
+             row_number() over(partition by ItemCode, PriceGroupCode 
+                                      order by LastUpdatedDate desc) Seq
+     from Prices 
+     where PriceGroupCode  in ('B2B', 'B2C')) pr 
+inner join products p on p.ItemCode = pr.ItemCode
+where pr.Seq = 1 and 
+      p.ItemCode = 8680972060039 
+group by p.ItemCode, p.ProductName;  

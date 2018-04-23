@@ -1,0 +1,81 @@
+internal class DynamicProxy<T> : RealProxy
+    where T : MarshalByRefObject,new()
+{
+    private T _target;
+
+    private IMethodCallMessage callMethod = null;
+
+    private IMethodReturnMessage returnMethod = null;
+
+    public DynamicProxy(T target) : base(typeof(T))
+    {
+        _target = target;
+    }
+
+    public override IMessage Invoke(IMessage msg)
+    {
+        callMethod = msg as IMethodCallMessage;
+        MethodInfo targetMethod = callMethod.MethodBase as MethodInfo;
+
+        FilterInfo Attrs = new FilterInfo(_target, targetMethod);
+
+
+        ExcuteingContext excuting = Excuting(Attrs.ExcuteFilters);
+        if (excuting.Result != null)
+        {
+            returnMethod = GetReturnMessage(excuting.Result, excuting.Args);
+        }
+        else
+        {
+            InvokeMethod(targetMethod, excuting);
+
+            ExcutedContext excuted = Excuted(Attrs.ExcuteFilters);
+        }
+
+        return returnMethod;
+    }
+
+    private void InvokeMethod(MethodInfo targetMethod, ExcuteingContext excuting)
+    {
+        object result = targetMethod.Invoke(_target, excuting.Args);
+        returnMethod = GetReturnMessage(result, excuting.Args);
+    }
+
+
+    private ExcutedContext Excuted(IList<IExcuteFilter> filters)
+    {
+        ExcutedContext excutedContext = new ExcutedContext(returnMethod);
+
+        foreach (var filter in filters)
+        {
+            filter.OnExcuted(excutedContext);
+            if (excutedContext.Result != null)
+                break;
+        }
+
+        return excutedContext;
+    }
+
+    private ExcuteingContext Excuting(IList<IExcuteFilter> filters)
+    {
+        ExcuteingContext excuteContext = new ExcuteingContext(callMethod);
+
+        foreach (var filter in filters)
+        {
+            filter.OnExcuting(excuteContext);
+            if (excuteContext.Result != null)
+                break;
+        }
+
+        return excuteContext;
+    }
+
+    private ReturnMessage GetReturnMessage(object result, object[] args)
+    {
+        return new ReturnMessage(result,
+                                    args,
+                                    args.Length,
+                                    callMethod.LogicalCallContext,
+                                    callMethod);
+    }
+}    

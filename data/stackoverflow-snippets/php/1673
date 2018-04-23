@@ -1,0 +1,22 @@
+//query for our 5 questions and their answers(using SQL explained above)
+//init data variable
+$data = [];
+//while each questions&answers as row
+while($row = mysqli_fetch_assoc($result)) {
+   // - create a key based of the question id, for convenience
+   $key = 'question_'.$row['q_id'];
+   // - check if question is in data
+   if(!isset( $data[$key] ) ){
+       //--if no, add question with a key we can match to it
+       $data[$key] = [
+            'q_id' => $row['q_id'],
+            'question' => $row['question'],
+            'children' => []  //you can call this whatever you want, i choose ""children"" because there is a field named ""answers""
+       ];
+   }
+   //- remove data specific to question (redundant data) [optional]
+   unset($data['q_id'], $data['question']);
+   //- add answers to data[question]
+   $data[$key]['answers'][] = $row;
+}
+//return data

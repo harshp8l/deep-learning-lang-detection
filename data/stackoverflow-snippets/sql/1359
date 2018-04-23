@@ -1,0 +1,16 @@
+CREATE OR REPLACE FUNCTION free_ticket(_eid integer, OUT _row_ct int) AS
+$func$
+DECLARE
+   coupon_code text;  -- semicolon required
+BEGIN
+   INSERT INTO purchases (cid, pdate, eid, ccode)
+   SELECT cid, now()::date, _eid
+       , (SELECT code FROM couponCode WHERE eid = _eid AND percentage = 100)
+   FROM   purchase
+   GROUP  BY cid
+   HAVING COUNT(*) > 5  -- count(*) is faster
+   ORDER  BY cid;       -- ORDER BY is *not* pointless.
+
+   GET DIAGNOSTICS _row_ct := ROW_COUNT;
+END
+$func$  LANGUAGE plpgsql;

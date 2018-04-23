@@ -1,0 +1,47 @@
+package main
+
+import (
+    ""fmt""
+    ""reflect""
+)
+
+type Foo struct {
+    Name string
+    Date int
+}
+
+func (f *Foo) EqualExcept(other *Foo, ExceptField string) bool {
+    val := reflect.ValueOf(f).Elem()
+    otherFields := reflect.Indirect(reflect.ValueOf(other))
+
+    for i := 0; i < val.NumField(); i++ {
+        typeField := val.Type().Field(i)
+        if typeField.Name == ExceptField {
+            continue
+        }
+
+        value := val.Field(i)
+        otherValue := otherFields.FieldByName(typeField.Name)
+
+        if value.Interface() != otherValue.Interface() {
+            return false
+        }
+    }
+    return true
+}
+
+func main() {
+    f := &Foo{
+        ""Drew"",
+        30,
+    }
+
+    f2 := &Foo{
+        ""Drew"",
+        50,
+    }
+
+    fmt.Println(f.EqualExcept(f2, ""Date""))
+    fmt.Println(f.EqualExcept(f2, ""Name""))
+
+}

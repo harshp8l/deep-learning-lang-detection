@@ -1,0 +1,28 @@
+$checkbox1 = New-Object System.Windows.Forms.CheckBox
+$checkbox1.Location = New-Object System.Drawing.Size(10,5)
+$checkbox1.Size = New-Object System.Drawing.Size(13,13)
+$checkbox1.Visible = $true
+$checkbox1.add_Click({
+    if($checkbox1.Checked){
+        for($i = 0; $i -lt $datagrid1.RowCount;$i++){
+            $datagrid1.Rows[$i].Cells[0].Value = $true
+        }
+    }
+    else{
+        for($i = 0; $i -lt $datagrid1.RowCount;$i++){
+            $datagrid1.Rows[$i].Cells[0].Value = $false
+        }
+    }
+})
+$form.Controls.Add($checkbox1)
+
+#Handle Events:
+$DataGrid1.add_CellContentClick({
+    $datagrid1.EndEdit() #otherwise the cell value won't have changed yet
+    [System.Windows.Forms.DataGridViewCellEventArgs]$e = $args[1]
+    if($e.columnIndex -eq 0){
+        if($datagrid1.rows[$e.RowIndex].Cells[$e.ColumnIndex].value -eq $false){
+            $checkbox1.CheckState = 'unchecked'
+        }
+    }
+})

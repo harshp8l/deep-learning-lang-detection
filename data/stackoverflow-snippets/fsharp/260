@@ -1,0 +1,31 @@
+open System
+open System.Threading
+
+let mutable thread1 = new Thread( fun () -> () )
+let mutable thread2 = new Thread( fun () -> () )
+
+let threadProc () =
+    printfn ""\n\nCurrent Thread: %s"" Thread.CurrentThread.Name
+
+    if ( Thread.CurrentThread.Name = ""Thread 1"" && 
+         thread2.ThreadState <> ThreadState.Unstarted ) then 
+             thread2.Join ();
+
+    Thread.Sleep(4000)
+    Console.WriteLine( ""\n\nCurrent thread: {0}"", 
+                        Thread.CurrentThread.Name )
+    Console.WriteLine(""Thread 1: {0}"", thread1.ThreadState)
+    Console.WriteLine(""Thread 2: {0}\n"", thread2.ThreadState)
+
+thread1 <- new Thread(threadProc)
+thread1.Name <- ""Thread 1""
+
+thread2 <- new Thread(threadProc)
+thread2.Name <- ""Thread 2""
+
+let main () = 
+    thread1.Start()
+    thread2.Start()
+    System.Console.ReadKey () |> ignore
+
+do main () 

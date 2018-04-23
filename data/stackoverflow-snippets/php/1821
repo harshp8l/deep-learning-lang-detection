@@ -1,0 +1,27 @@
+// Transpose resulting 2x2 matrix using array_map behavior of
+// tacking an arbitrary number of arrays and zipping elements, when null
+// giving as a callback.
+$evaluated = array_map(null, ...array_map(function ($factors) {
+    return array_map(function ($factor) {
+        // Explode fraction (into array with two elements)
+        // and destruct it into variables.
+        // `@` will silent the notice if not a fraction given (array with one
+        // element).
+        @list($dividend, $divisor) = explode('/', $factor); // **
+
+        // If divisor is given then calculate a fraction.
+        return $divisor
+            ? floatval($dividend) / floatval($divisor)
+            : floatval($dividend);
+    }, explode('x', $factors));
+}, $values));
+
+// Assign values array by reference as a last element.
+$evaluated[] =& $values;
+
+// Unpack all arrays (three columns of fractions and given array) and pass
+// them to `array_multisort` function, that will sort in turns by each of
+// the columns.
+array_multisort(...$evaluated);
+
+print_r($values);

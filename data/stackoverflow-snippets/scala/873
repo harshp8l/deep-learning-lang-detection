@@ -1,0 +1,12 @@
+Dataset<String> words = df
+                //converted the DataFrame to a Dataset of String using .as(Encoders.STRING())
+//                .selectExpr(""CAST(value AS STRING)"")
+                .select( callUDF(""mode"", col(""value"")) )
+                .as(Encoders.STRING())
+                .flatMap(
+                        new FlatMapFunction<String, String>() {
+                            @Override
+                            public Iterator<String> call(String x) {
+                                return Arrays.asList(x.split("" "")).iterator();
+                            }
+                        }, Encoders.STRING());

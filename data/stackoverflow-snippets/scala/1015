@@ -1,0 +1,27 @@
+--1. Create a Hive table stored as textfile
+USE test;
+CREATE TABLE csv_table (
+student_id INT,
+subject_id INT,
+marks INT)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' 
+STORED AS TEXTFILE;
+
+--2. Load csv_table with student.csv data
+LOAD DATA LOCAL INPATH ""/path/to/student.csv"" OVERWRITE INTO TABLE test.csv_table;
+
+--3. Create another Hive table using AvroSerDe
+CREATE TABLE avro_table
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+TBLPROPERTIES (
+    'avro.schema.literal'='{
+      ""namespace"": ""com.rishav.avro"",
+      ""name"": ""student_marks"",
+      ""type"": ""record"",
+      ""fields"": [ { ""name"":""student_id"",""type"":""int""}, { ""name"":""subject_id"",""type"":""int""}, { ""name"":""marks"",""type"":""int""}]
+    }');
+
+--4. Load avro_table with data from csv_table
+INSERT OVERWRITE TABLE avro_table SELECT student_id, subject_id, marks FROM csv_table;

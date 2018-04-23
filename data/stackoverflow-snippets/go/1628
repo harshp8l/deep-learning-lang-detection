@@ -1,0 +1,50 @@
+//Method must be pointer receiver since p will be used 
+//as temporary placeholder for parent properties/attributes.
+func (p *Property) injectRecursive(v reflect.Value, it reflect.Type, pv reflect.Value) {
+    switch v.Kind() {
+    case reflect.Struct:
+        vt := v.Type()
+        //Embedded struct is a 'value' type implement Injectable
+        if vt.Implements(it) {
+            //Inject value to embedded struct
+            ot := pv.Type()
+            for k := 0; k < pv.NumField(); k++ {
+                name := ot.Field(k).Name
+                f := v.FieldByName(name)
+                if f.CanSet() {
+                    f.Set(pv.Field(k))
+                }
+            }
+        } else {
+            for k := 0; k < v.NumField(); k++ {
+                fv := v.Field(k)
+
+                //Match by field name.
+                //For more robust and generic solution
+                //consider using other approach, e.g. tag
+                f := pv.FieldByName(vt.Field(k).Name)
+                if f.CanSet() {
+                    f.Set(fv)
+                } else {
+                    p.injectRecursive(fv, it, pv)
+                }
+            }
+        }
+    case reflect.Slice, reflect.Array:
+        for k := 0; k < v.Len(); k++ {
+            p.injectRecursive(v.Index(k), it, pv)
+        }
+    case reflect.Ptr:
+        if v.IsValid() {
+            p.injectRecursive(v.Elem(), it, pv)
+        }
+    }
+}
+
+//InjectTo must be Value (not pointer) receiver
+func (p Property) InjectTo(s interface{}) {
+    sv := reflect.Indirect(reflect.ValueOf(s))
+    pv := reflect.Indirect(reflect.ValueOf(&p))
+    it := reflect.TypeOf((*Injectable)(nil)).Elem()
+    p.injectRecursive(sv, it, pv)
+}

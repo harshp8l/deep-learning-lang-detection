@@ -1,0 +1,46 @@
+package main
+
+import ""fmt""
+
+type User struct {
+    Name string
+    Gender string
+    Age int
+}
+
+type UserIterable interface {
+    FindAll() []User
+}
+
+type FakeUserRepository struct {}
+
+func (ur FakeUserRepository) FindAll() []User {
+    return []User{
+        User{Name:""Alex"", Gender:""male"", Age:19},
+        User{Name:""Max"", Gender:""male"", Age:34},
+        User{Name:""Maria"", Gender:""female"", Age:12},
+    }
+}
+
+type UserService struct {
+    userRepository UserIterable
+}
+
+func (us *UserService) MaleUsers() []User {
+    all := us.userRepository.FindAll()
+    maleUsers := []User{}
+    for _, u := range all {
+        if u.Gender == ""male"" {
+            maleUsers = append(maleUsers, u)
+        }
+    }
+    return maleUsers
+}
+
+func main() {
+    us := UserService{
+        userRepository: FakeUserRepository{},
+    }
+    males := us.MaleUsers()
+    fmt.Println(males)
+}

@@ -1,0 +1,38 @@
+import os, sys, re
+
+fileNameList =[]
+patho = os.path.dirname(os.path.realpath(sys.argv[0])) 
+
+def renamer(fpath):
+    for path, subdirs, files in os.walk(fpath):
+        for name in files:
+            if re.findall(r""(?ix)(\.ini)"", name, re.I) == None:
+                if re.search(r""(?ix)(\(\d{4}\_\d{2}_\d{2}\s\d{2}\_\d{2}\_\d{2}\sutc\))"", name, re.I) != None:
+                    old_name = os.path.join(path,name)
+                    print(old_name)
+                    new_name = re.sub(r""(?ix)(\s\(\d{4}\_\d{2}_\d{2}\s\d{2}\_\d{2}\_\d{2}\sutc\))"", """", old_name, re.I)
+                    print(new_name)
+                    try:
+                        os.replace(old_name,new_name)
+                    except:
+                        print(old_name)
+                        fileNameList.append(old_name)
+
+def log_errors_directories(fileNameList):
+    filename = ""Log of error filenames.txt""
+    if len(fileNameList) != 0:
+        log = open(filename, ""a"")
+        log.write(""###########################################################\n"")
+        i = 1
+        for line in fileNameList:
+            nr_line = str(i) + ""  "" + str(line)
+            log.write(str(nr_line))
+            log.write(""\n"")
+            i += 1
+        log.write(""###########################################################\n\n"")
+        log.close()
+
+
+
+renamer(patho)
+log_errors_directories(fileNameList)

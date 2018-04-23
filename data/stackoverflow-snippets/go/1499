@@ -1,0 +1,81 @@
+func UploadStreamImage(w http.ResponseWriter, r *http.Request) {
+    file, handler, err := r.FormFile(""file"")
+    if err != nil {
+        log_errors("" error on upload"", err.Error(), w)
+        fmt.Println(""Error Uploading Image"")
+        return
+    }
+    defer file.Close()
+
+    // Suggestion: You can calculate the file size from bytes.
+    // instead getting it from form; since after resize image will change
+    imgSize, err := strconv.Atoi(r.FormValue(""imgsize""))
+    if err != nil {
+        println(""Error converting to integer"")
+        log_errors(""Error converting to integer"", err.Error(), w)
+        return
+    }
+
+    img, err := imaging.Decode(file)
+    if err != nil {
+        print(""Imaging Open error"")
+        log_errors(""Error decoding"", err.Error(), w)
+        return
+    }
+
+    b := img.Bounds()
+    heightImg := b.Max.Y
+    widthImg := b.Max.X
+
+    // resize image
+    height := int(float64(heightImg) * .23)
+    width := int(float64(widthImg) * .23)
+
+    if imgSize < 401 {
+        height = int(float64(heightImg) * 1)
+        width = int(float64(widthImg) * 1)
+
+    } else if imgSize >= 401 && imgSize < 900 {
+        height = int(float64(heightImg) * .68)
+        width = int(float64(widthImg) * .68)
+        println(""Middle Image"")
+    } else if imgSize >= 900 && imgSize < 1300 {
+        height = int(float64(heightImg) * .45)
+        width = int(float64(widthImg) * .45)
+    } else if imgSize >= 1301 && imgSize < 1700 {
+        height = int(float64(heightImg) * .40)
+        width = int(float64(widthImg) * .40)
+    }
+
+    new_img := imaging.Resize(img, width, height, imaging.Lanczos)
+    // end resize
+
+    var buf bytes.Buffer
+    err = imaging.Encode(&buf, new_img, imaging.JPEG)
+    if err != nil {
+        log.Println(err)
+        log_errors("" error encoding file"", err.Error(), w)
+        return
+    }
+
+    fileType := http.DetectContentType(buf.Bytes())
+    fileSize := buf.Len()
+    path := handler.Filename
+    params := &s3.PutObjectInput{
+        Bucket: aws.String(""bucket name""),
+        Key:    aws.String(path),
+        Body:   bytes.NewReader(buf.Bytes()),
+
+        ContentLength: aws.Int64(fileSize),
+        ContentType:   aws.String(fileType),
+    }
+
+    resp, err := svc.PutObject(params)
+    if err != nil {
+        fmt.Printf(""bad response: %s"", err)
+        log_errors(""error in putObject"", err.Error(), w)
+        return
+    }
+
+    fmt.Println(""Done"", resp)
+}

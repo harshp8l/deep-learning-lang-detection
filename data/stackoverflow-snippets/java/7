@@ -1,0 +1,46 @@
+private void Refresh(){
+    mTextViewResult = findViewById(R.id.text_view_test);
+    OkHttpClient client = new OkHttpClient();
+
+    String url = ""https://api.coinmarketcap.com/v1/ticker/"";
+    Request request = new Request.Builder().url(url).build();
+
+    client.newCall(request).enqueue(new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+            e.printStackTrace();
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            if (response.isSuccessful()) {
+                final String myResponce = response.body().string();
+
+                StringBuilder display = new StringBuilder("""");
+
+                try {
+                    JSONArray coins = new JSONArray(myResponce);
+                    for(int i = 0; i < coins.length(); i++){
+                        ///Log.d(""DEBUG"", ""TEST"");
+                        try {
+                            JSONObject coin = coins.getJSONObject(i);
+                            String name = coin.getString(""name"");
+                            String price = coin.getString(""price_usd"");
+                            String change = coin.getString(""percent_change_24h"");
+
+                            coinlist.add(new Coin(name, price, change));
+                            // Call update method here.
+                            Update();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                final String finalDisplay = display.toString();
+            }
+        }
+    });
+}

@@ -1,0 +1,98 @@
+Function Compare-InlineIf  
+{  
+[CmdletBinding()]  
+    Param(  
+        [Parameter(  
+            position=0,  
+            Mandatory=$false,  
+            ValueFromPipeline=$false  
+        )]  
+        $Condition,  
+        [Parameter(  
+            position=1,  
+            Mandatory=$false,  
+            ValueFromPipeline=$false  
+        )]  
+        $IfTrue,  
+        [Parameter(  
+            position=2,  
+            Mandatory=$false,  
+            ValueFromPipeline=$false  
+        )]  
+        $IfFalse  
+    )  
+    Begin{  
+        Function Usage  
+        {  
+            write-host @""  
+Syntax  
+    Compare-InlineIF [[-Condition] <test>] [[-IfTrue] <String> or <ScriptBlock>]  
+ [[-IfFalse] <String> or <ScriptBlock>]  
+Inputs  
+    None  
+    You cannot pipe objects to this cmdlet.  
+
+Outputs  
+    Depending on the evaluation of the condition statement, will be either the IfTrue or IfFalse suplied parameter values  
+Examples  
+   .Example 1: perform Compare-InlineIf :  
+    PS C:\>Compare-InlineIf -Condition (6 -gt 5) -IfTrue ""yes"" -IfFalse ""no""  
+
+    yes
+
+   .Example 2: perform IIF :  
+    PS C:\>IIF (6 -gt 5) ""yes"" ""no""  
+
+    yes  
+
+   .Example 3: perform IIF :  
+    PS C:\>IIF `$object ""`$true"",""`$false""  
+
+    False  
+
+   .Example 4: perform IIF :  
+    `$object = Get-Item -ErrorAction SilentlyContinue ""HKCU:\AppEvents\EventLabels\.Default\""  
+    IIf `$object {`$_.GetValue(""DispFilename"")}  
+
+    @mmres.dll,-5824  
+""@  
+        }  
+    }  
+    Process{  
+        IF($IfTrue.count -eq 2 -and -not($IfFalse)){  
+            $IfFalse = $IfTrue[1]  
+            $IfTrue = $IfTrue[0]  
+        }elseif($iftrue.count -ge 3 -and -not($IfFalse)){  
+            Usage  
+            break  
+        }  
+        If ($Condition -IsNot ""Boolean"")  
+        {  
+            $_ = $Condition  
+        } else {}  
+        If ($Condition)  
+        {  
+            If ($IfTrue -is ""ScriptBlock"")  
+            {  
+                &$IfTrue  
+            }  
+            Else  
+            {  
+                $IfTrue  
+            }  
+        }  
+        Else  
+        {  
+            If ($IfFalse -is ""ScriptBlock"")  
+            {  
+                &$IfFalse  
+            }  
+            Else  
+            {  
+                $IfFalse  
+            }  
+        }  
+    }  
+    End{}  
+}  
+Set-Alias -Name IIF -Value Compare-InlineIf  

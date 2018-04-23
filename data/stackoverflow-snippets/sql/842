@@ -1,0 +1,28 @@
+CREATE OR REPLACE FUNCTION base58_encode (num bigint)
+RETURNS text AS
+$body$
+declare
+  --alphabet text = '123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
+  alphabet text[] = array[
+    '1','2','3','4','5','6','7','8','9', 
+    'a','b','c','d','e','f','g','h','i','j','k','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+    'A','B','C','D','E','F','G','H','J','K','L','M','N','P','Q','R','S','T','U','V','W','X','Y','Z'
+  ];
+  cnt integer = 58;
+  dst text = '';
+  mod integer;
+begin
+  while (num >= cnt) loop
+    num = num / cnt;
+    mod = num % cnt + 1;
+    dst = alphabet[mod] || dst;
+  end loop;
+
+  return alphabet[num] || dst;
+end;
+$body$
+LANGUAGE 'plpgsql'
+IMMUTABLE
+CALLED ON NULL INPUT
+SECURITY INVOKER
+COST 100;

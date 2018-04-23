@@ -1,0 +1,17 @@
+(defn export-customers 
+  [db search-criteria]
+  (->> 
+    ;; logical part - Datalog-based, eager
+    (d/q '[:find [?customer ...] :in % $ ?search-criteria :where
+           (customer-matches-criteria ?search-criteria ?customer)]
+      (my-rules) db search-criteria)
+    ;; content part - Entity API based, lazy
+    (map (fn [eid]
+           (let [customer (d/entity db eid)]
+             (select-keys customer 
+               [:customer/id 
+                :customer/email
+                :customer/firstName
+                :customer/lastName
+                :customer/subscription-time]))))
+    ))

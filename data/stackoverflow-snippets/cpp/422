@@ -1,0 +1,24 @@
+template<typename C, typename F, typename... Args>
+struct task
+{
+    C* c;
+    F C::* f;
+    std::tuple<typename std::decay<Args>::type...> args;
+
+    task(C* c, F C::* f, Args&&... args) 
+      : c{c}, f{f}, args{std::forward<Args>(args)...} {}
+
+    void execute()
+    {
+        auto l = [&](Args&... args) {
+            (c->*f)(args...);
+        };
+        std::apply(l, args);
+    }
+};
+
+template<typename C, typename F, typename... Args>
+auto create_task(C& c, F C::* f, Args&&... args) -> task<C, F, Args...>
+{
+    return {&c, f, std::forward<Args>(args)...};
+}

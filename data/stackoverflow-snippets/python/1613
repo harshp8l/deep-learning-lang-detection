@@ -1,0 +1,24 @@
+def my_translate(arr, x=0):
+    arr = arr.copy()
+    if x == 0:
+        return arr.copy()
+    elif x > 0:
+        replacement1 = np.zeros(arr.shape)
+        replacement1[:-x] = arr[x:]
+    else:
+        replacement1 = np.zeros(arr.shape)
+        replacement1[-x:] = arr[:x]
+    replacement2 = np.zeros(arr.shape)+255 # Array filled with 255 for second logic
+    l = [np.repeat(i,arr.shape[1]) for i in range(arr.shape[0])]
+    firstlooplogic1 = np.asarray(l)+x < arr.shape[0]
+    firstlooplogic2 = np.asarray(l)+x > 0
+    secondlooplogic1 = np.asarray(l)+x > arr.shape[0]
+    secondlooplogic2 = np.asarray(l)+x < 0
+
+    part1logic = np.logical_and(firstlooplogic1,firstlooplogic2)
+    part2logic = np.logical_or(secondlooplogic1,secondlooplogic2)
+
+    part1 = part1logic*replacement1
+    part2 = part2logic*replacement2
+    part3 = ((part1 == 0) * (part2 == 0)) * arr       
+    return (part1 + part2 +part3).astype(arr.dtype)

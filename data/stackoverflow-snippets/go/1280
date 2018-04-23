@@ -1,0 +1,35 @@
+func GetFlow(a *AppContext, w http.ResponseWriter, r *http.Request) (int, error) {
+    return GetThing(a,w,r,""flow"",new(Flow))
+}
+
+func GetProcess(a *AppContext, w http.ResponseWriter, r *http.Request) (int, error) {
+    return GetThing(a,w,r,""process"",new(Process))
+}
+
+func GetThing(a *AppContext, w http.ResponseWriter, r *http.Request, t string, ob Elastible{}) (int, error) {
+    hit, code, err := a.GetByID(t, mux.Vars(r)[""id""], r)
+    if code != 200 {
+        return code, err
+    }
+
+    err = json.Unmarshal(*hit.Source, ob)
+    if err != nil {
+        return 500, err
+    }
+
+    ob.SetESID(hit.Id)
+
+    b := new(bytes.Buffer)
+    json.NewEncoder(b).Encode(ob)
+    w.Header().Set(""Content-Type"", ""application/json"")
+    w.Write(b.Bytes())
+    return 200, nil
+}
+
+type Elastible interface {
+    SetESID(id ESIDType)    // whatever type ESID is, not clear from example
+}
+
+func (f *Flow) SetESID(id ESIDType) {
+    f.ESID = id
+}

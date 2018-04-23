@@ -1,0 +1,32 @@
+package main
+
+import (
+    ""fmt""
+    ""unsafe""
+)
+
+// Float32Align32 returns make([]float32, n) 32-byte aligned.
+func Float32Align32(n int) []float32 {
+    // align >= size && align%size == 0
+    const align = 32 // SIMD AVX byte alignment
+    const size = unsafe.Sizeof(float32(0))
+    const pad = int(align/size - 1)
+    if n <= 0 {
+        return nil
+    }
+    s := make([]float32, n+pad)
+    p := uintptr(unsafe.Pointer(&s[0]))
+    i := int(((p+align-1)/align*align - p) / size)
+    j := i + n
+    return s[i:j:j]
+}
+
+func main() {
+    f := Float32Align32(8) // SIMD AVX
+    fmt.Printf(
+        ""SIMD AVX: %T %d %d %p %g\n"",
+        f, len(f), cap(f), &f[0], f,
+    )
+    CFuncArg := &f[0]
+    fmt.Println(""CFuncArg:"", CFuncArg)
+}

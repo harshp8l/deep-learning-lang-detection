@@ -1,0 +1,20 @@
+mu() {
+  history | 
+  perl -ane '
+    BEGIN {
+      @a = @ARGV;   # read parameters to @a
+      @ARGV = ();   # clear parameters to avoid reading form file
+    }
+    $F[$_+1] eq $a[$_] or next LINE for 0..$#a; # loop over parameters check are equal to line fields otherwise continue with next line
+    ++$H{$F[@a+1]};      # increment hash value whose key is field after last parameter
+    ++$tot;              # increment total
+    END {
+      @r = sort { $H{$b} <=> $H{$a} }  # numeric sort over values
+        keys %H;
+      if (@r>10) {
+         @r = @r[0..9]
+      }
+      printf ""%s\t%.2f%%\t%s\n"", $H{$_}, 100*$H{$_}/$tot, $_ for @r
+    }
+  ' ""$@""    # pass parameter arguments
+}

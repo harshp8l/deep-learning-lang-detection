@@ -1,0 +1,52 @@
+func GetUser(db *sql.DB, id int) (*User, error) {
+    u := new(User)
+    err := db.QueryRow(`
+        SELECT
+            Id,
+            First,
+            Last
+        FROM
+            user
+        WHERE Id = ?   
+    `, id).Scan(
+        &u.Id,
+        &u.First,
+        &u.Last,
+    )
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return nil, nil
+        }
+        return nil, err
+    }
+
+    rows, err := db.Query(`
+        SELECT
+            Id,
+            Location
+        FROM
+            addresses
+        WHERE UserId = ?
+    `, id)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    for rows.Next() {
+        var address Address
+        err := rows.Scan(
+            &address.Id,
+            &address.Location,
+        )
+        if err != nil {
+            return nil, err
+        }
+        u.Adds = append(u.Adds, address)
+    }
+
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+
+    return u, nil
+}

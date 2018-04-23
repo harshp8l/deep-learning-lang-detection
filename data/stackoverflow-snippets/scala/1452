@@ -1,0 +1,16 @@
+val pointsRDD = sc.parallelize(List((-33.6408083223936, -64.9772376007928, 80.7265625, 1566.79488),
+                     (-33.6408082393936, -64.9772375927928, 80.7265625, 1566.77192),
+                     (-33.6408084473936, -64.9772376347928, 80.7265625, 1566.77520),
+                     (-33.6408083223936, -64.9772377197928, 80.7265625, 1566.81129),
+                     (-33.6408085303936, -64.9772377197928, 80.7265625, 1200.07590)))
+
+case class yieldrow(Elevation:Double,DryYield:Double)
+
+val ftRdd : RDD[Feature[Point,yieldrow]]= pointsRDD.map(tuple =>  Feature(Point(tuple._2,tuple._1), yieldrow(tuple._3,tuple._4)))
+
+println(ftRdd.count)
+ftRdd.take(2).foreach(println)
+
+//Now reproject and have Error: org.apache.spark.SparkException: Task not serializable
+
+ftRdd.map(_.mapGeom(_.reproject(crsFrom, crsTo)))

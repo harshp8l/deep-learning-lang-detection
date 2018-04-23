@@ -1,0 +1,14 @@
+select m.user_id, 
+       f.name as first_survey, 
+       f.created_at as first_survey_created,
+       l.name as last_survey, 
+       l.created_at last_survey_created
+from (
+    select user_id, 
+           min(created_at) as first_created, 
+           max(created_at) as last_created
+    from survey_results 
+    group by user_id
+) m
+  join survey_results f on f.user_id = m.user_id and f.created_at = m.first_created
+  join survey_results l on l.user_id = m.user_id and l.created_at = m.last_created;

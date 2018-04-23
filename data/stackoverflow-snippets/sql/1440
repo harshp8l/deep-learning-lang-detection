@@ -1,0 +1,18 @@
+select  orders.orderid, 
+        products.productname, 
+        customers.CompanyName,
+        computed.orderdate,
+        computed.newshippeddate,
+        computed.ordercost
+
+    from orders`enter code here`
+    INNER JOIN orderdetails ON orders.orderid = orderdetails.orderid
+    INNER JOIN products ON orderdetails.productid = products.productid
+    INNER JOIN customers ON orders.customerid = customers.customerid
+    CROSS APPLY (
+    SELECT 
+            orderdate = CONVERT(char(11), orders.orderdate, 100),
+            newshippeddate = CONVERT(char(11), orders.shippeddate + 10 , 100),
+            ordercost = (OrderDetails.Quantity * Products.UnitPrice)
+    ) computed
+    where (computed.orderdate BETWEEN 'Jan 1 1992' AND 'Mar 30 1992') AND computed.ordercost >= 1500.00

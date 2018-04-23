@@ -1,0 +1,24 @@
+import org.apache.spark.sql.functions._
+val interval = 5
+df.withColumn(""range"", $""age"" - ($""age"" % interval))
+  .withColumn(""range"", concat($""range"", lit("" - ""), $""range"" + interval)) //optional one
+  .groupBy($""range"")
+  .agg(collect_list($""name"").as(""names"")) //change it to needed agg function or anything
+  .show(false)
+
++--------+------------------------------------+
+|range   |names                               |
++--------+------------------------------------+
+|10 to 15|[user191, user254, user310, user373]|
+|50 to 55|[user114, user170, user233, user352]|
+|5 to 10 |[user128, user247, user366]         |
+|55 to 60|[user177, user296, user359]         |
+|45 to 50|[user107, user226, user289, user345]|
+|35 to 40|[user156, user219, user275, user338]|
+|25 to 30|[user149, user205, user268, user387]|
+|30 to 35|[user212, user331, user394]         |
+|0 to 5  |[user121, user184, user240, user303]|
+|20 to 25|[user142, user261, user324, user380]|
+|15 to 20|[user135, user198, user317]         |
+|40 to 45|[user100, user163, user282]         |
++--------+------------------------------------+

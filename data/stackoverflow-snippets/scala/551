@@ -1,0 +1,42 @@
+object InterruptTest {
+
+    // still around: The Scanner-guy:
+    val sc = new java.util.Scanner (System.in)
+    // ... but now with volatile:
+    @volatile
+    var interrupted = false
+
+    // ... and Meanwhiler:
+    object Meanwhiler extends Thread {
+        override def run () : Unit = {
+            if (sc.hasNext) {
+                val token = sc.next ()
+                if (token.trim () == ""q"") {
+                    println (""User request: quit, incomplete result!"")
+                    interrupted = true
+                }
+                else println (""unknown user request: "" + token + "" will proceed, use 'q' to quit."")
+            }
+        }
+    }
+
+    @annotation.tailrec
+    def partition (count: Int, ziel: Int, sofar: Vector [Vector [Int]]) : Vector [Vector [Int]] = {
+        println (s""i: $count\tlen: ${sofar.size}"")
+        if (count == ziel || interrupted ) sofar else {
+            val ll = Vector (sofar.view.map (li => (li.head + 1) +: li.tail), sofar.view.map (li => 1 +: li)).flatten.map(_.sorted).distinct
+            partition (count+1, ziel, ll)
+        }
+    }
+
+    // time scala -J-Xms512m -J-Xmx4G Partition 80
+    def main (args: Array[String]) : Unit = {
+        val mw = Meanwhiler
+        mw.start ()
+        args.map (s => partition (1, s.toInt, Vector (Vector (1))))
+        mw.join ()
+    }
+}
+
+val test = InterruptTest
+test.main (Array (""45""))

@@ -1,0 +1,21 @@
+(defn- local-session-options
+  [options cookie-store]
+  {:store        (options :store cookie-store)
+   :cookie-name  (options :cookie-name ""ring-session"")
+   :cookie-attrs (merge {:path ""/""
+                         :http-only true}
+                        (options :cookie-attrs)
+                        (if-let [root (options :root)]
+                          {:path root}))})
+
+
+
+(defn local-wrap-session
+  [handler]
+  (let [store (mem/memory-store)]
+    (fn [request]
+        (let [cookie-max_age (get-max-age request) ; add additional setting and calculation here
+              options (local-session-options {:cookie-name ""name"" :cookie-attrs {:max-age cookie-max_age}} store)
+              new-request (rms/session-request request options)]
+          (-> (handler new-request)
+              (rms/session-response new-request options))))))

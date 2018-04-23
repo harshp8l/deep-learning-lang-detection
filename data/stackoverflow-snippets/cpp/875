@@ -1,0 +1,32 @@
+#include <utility>
+#include <iostream>
+#include <type_traits>
+
+struct A { int open (std::string const &) { return 0; } };
+struct B {  };
+
+template <typename T, typename ... Args>
+constexpr auto withOpenHelper (int)
+   -> decltype(std::declval<T>().open(std::declval<Args>()...),
+               std::true_type{} );
+
+template <typename ... Args>
+constexpr std::false_type withOpenHelper (long);
+
+template <typename T, typename ... Args>
+using withOpen = decltype( withOpenHelper<T, Args...>(0) );
+
+template <typename T>
+std::enable_if_t<withOpen<T, std::string>::value> Func (T & writer)
+ {
+      writer.open(""hello.log"");
+ }
+
+int main ()
+ {
+   A a;
+   B b;
+
+   Func(a);
+   //Func(b); // compilation error
+ }

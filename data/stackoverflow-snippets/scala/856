@@ -1,0 +1,36 @@
+class HttpContextWrapperExecutorService(val delegateEc: ExecutorService) extends AbstractExecutorService {
+  override def isTerminated = delegateEc.isTerminated
+
+  override def awaitTermination(timeout: Long, unit: TimeUnit) = delegateEc.awaitTermination(timeout, unit)
+
+  override def shutdownNow() = delegateEc.shutdownNow()
+
+  override def shutdown() = delegateEc.shutdown()
+
+  override def isShutdown = delegateEc.isShutdown
+
+  override def execute(command: Runnable) = {
+    val newContext = Http.Context.current.get()
+    delegateEc.execute(() => {
+      val oldContext = Http.Context.current.get() // might be null!
+      Http.Context.current.set(newContext)
+      try {
+        command.run()
+      }
+      finally {
+        Http.Context.current.set(oldContext)
+      }
+    })
+  }
+}
+
+
+class HttpContextExecutorServiceConfigurator(config: Config, prerequisites: DispatcherPrerequisites) extends ExecutorServiceConfigurator(config, prerequisites) {
+  val delegateProvider = new ForkJoinExecutorConfigurator(config.getConfig(""fork-join-executor""), prerequisites)
+
+  override def createExecutorServiceFactory(id: String, threadFactory: ThreadFactory): ExecutorServiceFactory = new ExecutorServiceFactory {
+    val delegateFactory = delegateProvider.createExecutorServiceFactory(id, threadFactory)
+
+    override def createExecutorService: ExecutorService = new HttpContextWrapperExecutorService(delegateFactory.createExecutorService)
+  }
+}

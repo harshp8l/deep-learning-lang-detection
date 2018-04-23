@@ -1,0 +1,21 @@
+# Determine the target workbooks' sheet name and cell address to extract.
+$targetSheet = 'SHEET NAME'
+$row = 8
+$col = 3
+
+# Create the Excel instance *once*.
+$xl = New-Object -ComObject Excel.Application
+
+# Loop over all workbooks of interest and extract the information of interest
+# and collect the values in array $cellVals
+# (There is no strict need for this intermediate step; omit `$cellValues = `
+#  to output the values directly.)
+$cellVals = Get-ChildItem C:\Users\xxx\xxx -File -Recurse -Filter *.xlsm | ForEach-Object {
+  $wb = $xl.WorkBooks.Open($_.fullName)
+  # Output the cell value of interest.
+  $wb.WorkSheets($targetSheet).Cells($row, $col).text
+  $wb.Close()
+}
+
+# Output the collected cell values.
+$cellVals

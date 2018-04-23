@@ -1,0 +1,44 @@
+#include <boost/program_options.hpp>
+#include <boost/iostreams/stream.hpp>
+#include <fstream>
+#include <iostream>
+
+namespace po = boost::program_options;
+
+po::variables_map boostrap_command_line(int argc, char** argv) {
+    po::options_description desc{ ""Bootstrap Options"" };
+    desc.add_options()
+        (""ini"", po::value<std::string>()->default_value(""""), ""INI file path."");
+
+    po::variables_map vm;
+    po::store(po::command_line_parser(argc, argv).options(desc).allow_unregistered().run(), vm);
+    po::notify(vm);
+    return vm;
+}
+
+int main(int argc, char** argv) {
+    po::options_description desc{ ""Options"" };
+
+    auto boostrap = boostrap_command_line(argc, argv);
+
+    desc.add_options()
+        (""abc"", po::wvalue<std::wstring>()->required(), ""Path to abc.txt"")
+        (""ini"", po::wvalue<std::wstring>(), ""INI file path."");
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+
+    if (boostrap.count(""ini"")) {
+        // Sidenote: the standard does not allow `std::wifstream` to construct from
+        // `std::wstring`, see
+        // http://en.cppreference.com/w/cpp/io/basic_ifstream/basic_ifstream
+        std::wifstream ifs(boostrap[""ini""].as<std::string>());
+        if (ifs) {
+            store(po::parse_config_file(ifs, desc, true), vm);
+        }
+    }
+
+    po::notify(vm);
+
+    std::wcout << ""abc option: "" << vm[""abc""].as<std::wstring>() << ""\n"";
+}

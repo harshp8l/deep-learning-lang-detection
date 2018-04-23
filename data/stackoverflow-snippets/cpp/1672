@@ -1,0 +1,44 @@
+#include <boost/units/systems/si.hpp>
+using namespace boost::units;
+using SiTime = quantity<boost::units::si::time, double>;
+using SiLength = quantity<boost::units::si::length, double>;
+
+template <typename TIME, typename LENGTH> struct Kernel {
+    using time_t = TIME;
+    using length_t = LENGTH;
+};
+
+using KernelD  = Kernel<double, double>;
+using KernelSi = Kernel<SiTime, SiLength>;
+
+template <typename KERNEL> struct Foo {
+    typename KERNEL::length_t length;
+    typename KERNEL::time_t time;
+
+    template <typename K2> explicit operator Foo<K2>() const { return { 
+        quantity_cast<typename K2::length_t>(length),
+        quantity_cast<typename K2::time_t>(time) };
+    }
+};
+
+using FooSi = Foo<KernelSi>;
+using FooD = Foo<KernelD>;
+
+template <typename KERNEL> struct Bar {
+    Foo<KERNEL> a;
+    Foo<KERNEL> b;
+
+    template <typename K2> explicit operator Bar<K2>() const { 
+        return { static_cast<Foo<K2>>(a), static_cast<Foo<K2>>(b) };
+    }
+};
+
+using BarSi = Bar<KernelSi>;
+using BarD = Bar<KernelD>;
+
+int main() {
+    FooSi fooSi;
+    FooD fooD = static_cast<FooD>(fooSi);
+    BarSi barSi;
+    BarD barD = static_cast<BarD>(barSi);
+}

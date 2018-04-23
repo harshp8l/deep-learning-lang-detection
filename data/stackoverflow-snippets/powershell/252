@@ -1,0 +1,16 @@
+$myfile = Get-ChildItem -Path $myfileSource *.csv
+
+$myfileData = Import-Csv $myfile.FullName | 
+#For Each ""Element"" Group
+Group-Object Element | Foreach-Object {
+    $Ten = $_.Group | Where-Object { $_.IndicatorType -eq '10' }
+    $ND = $_.Group | Where-Object { $_.IndicatorType -eq 'ND' }
+
+    if(('!','' -contains $Ten.Indicator) -and ('!','' -contains $ND.Indicator)) {
+        #if Indicator='!' or '' for BOTH IndicatorTypes(ie '10','ND'), Select group where indicatorType=ND
+        $ND
+    } elseif (('!','' -contains $Ten.Indicator) -and ('o','u' -contains $ND.Indicator)) {
+        #ELSE if Indicator='!' or '' for IndicatorType = 10 and Indicator='o' or 'u' for IndicatorType=ND Select group where indicatorType=10
+        $Ten
+    }
+} | Export-Csv -Path $myFile.FullName -Force -NoTypeInformation

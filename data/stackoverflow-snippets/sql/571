@@ -1,0 +1,19 @@
+DECLARE @Run varchar(9) = '123456789';
+
+WITH Nums AS (
+    SELECT 1 AS i
+    UNION ALL
+    SELECT i + 1
+    FROM Nums
+    WHERE i + 1 <= 9),
+Ranges AS (
+    SELECT SUBSTRING(@Run, N1.I, N2.I) AS Run
+    FROM Nums N1
+         JOIN Nums N2 ON N2.I >= 4
+                     AND N1.I + N2.I <= 10)
+SELECT *
+FROM YourTable YT
+     CROSS JOIN Ranges R --yes, I know this turns into an implicit JOIN 
+                         --I just felt it was easier to display by using the WHERE
+WHERE YT.YourColumn LIKE '%' + R.Run + '%'
+   OR YT.YourColumn LIKE '%' + REVERSE(R.Run) + '%';

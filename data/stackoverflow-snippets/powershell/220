@@ -1,0 +1,19 @@
+Function Select-WithMetaData {
+  [CmdletBinding()] # Make this an advanced function with common-parameter support.
+  param(
+    # Declare -File as accepting a single file directly or multiple files via the pipeline.
+    [Parameter(ValueFromPipeline, Mandatory)] [object] $File,
+    [switch] $NotPresent
+  )
+
+  # Invoked once with a directly passed -File argument bound to $File,
+  # and for each input object, also bound to $File, if used in the pipeline.
+  process { 
+    $haveAllMetaData = $True
+    foreach ($propName in 'Vendor', 'Company', 'Product', 'Description') {
+      if ($File.$propName -le 1) { $haveAllMetaData = $False; break }
+    }
+    if ($haveAllMetaData -ne $NotPresent) { $File }
+  }
+
+}

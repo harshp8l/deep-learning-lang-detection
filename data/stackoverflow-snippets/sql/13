@@ -1,0 +1,25 @@
+DECLARE @sql nvarchar(max)
+SET @sql = 'SELECT '
+
+DECLARE @output nvarchar(max)
+
+SELECT
+    @output = COALESCE(@output + '+', N'') + '[' + COLUMN_NAME + ']'
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'PointingSystem' AND COLUMN_NAME LIKE '%output%'
+
+SET @sql = @sql + @output + ' AS ''Output'', '
+
+
+DECLARE @input nvarchar(max)
+
+SELECT
+    @input = COALESCE(@input + '+', N'') + '[' + COLUMN_NAME + ']'
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'PointingSystem' AND COLUMN_NAME LIKE '%input%'
+
+SET @sql = @sql + @input + ' AS ''Input'''
+
+SET @sql = @sql + ',(' + @output + ')-(' + @input  +') as Period FROM PointingSystem'
+
+EXEC(@sql)

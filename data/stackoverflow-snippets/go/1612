@@ -1,0 +1,45 @@
+// RDBTransaction is a function which abstracts a sql transaction
+// into a function with an isolation level (isolvl) parameter.
+// the following integers represent the available isolation levels (isolvl)
+//  1: SERIALIZABLE
+//  2: REPEATABLE READ
+//  3: READ COMMITTED
+//  4: READ UNCOMMITTED
+func RDBTransaction(db *sql.DB, isolvl int, fn func(*sql.Tx) error) (err error) {
+    var tx *sql.Tx
+    tx, err = db.Begin()
+    if err != nil {
+        return err
+    }
+
+    // transaction isolation level setting
+    switch isolvl {
+    case 1:
+        _, err = tx.Exec(`set transaction isolation level serializable`)
+    case 2:
+        _, err = tx.Exec(`set transaction isolation level repeatable read`)
+    case 3:
+        _, err = tx.Exec(`set transaction isolation level read committed`)
+    case 4:
+        _, err = tx.Exec(`set transaction isolation level read uncommitted`)
+    default:
+        _, err = tx.Exec(`set transaction isolation level serializable`)
+    }
+    if err != nil {
+        return err
+    }
+
+    // catch all, commit/rollback
+    defer func() {
+        if err != nil {
+            tx.Rollback()
+            return
+        }
+        err = tx.Commit()
+    }()
+
+    // run transaction
+    err = fn(tx)
+
+    return err
+}

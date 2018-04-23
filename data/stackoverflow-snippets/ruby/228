@@ -1,0 +1,31 @@
+class LineItemsController < ApplicationController
+
+  before_action :set_cart, only: [:create, :destroy]
+
+  # POST /line_items
+  def create
+     @product = Product.find(params[:line_item][:product_id])
+     if @cart.products.include?(@product)
+       @cart.line_items
+            .find_by!(product: @product)
+            .increment!(:quantity)
+     else
+       @cart.products << @product
+     end
+
+     redirect_to @cart
+  end
+
+  # DELETE /line_items/:id
+  def destroy
+    @line_item = LineItem.find(params[:id])
+    @line_item.destroy
+    redirect_to @cart
+  end
+
+  # ...
+
+  def set_cart
+    @cart = current_user.cart
+  end
+end

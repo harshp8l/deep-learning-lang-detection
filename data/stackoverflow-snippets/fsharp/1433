@@ -1,0 +1,19 @@
+// Join the two series to align frames with the same work order code
+Series.zip workOrders workOrderScores
+|> Series.map(fun _ (orders, scores) -> 
+    match orders, scores with
+    | OptionalValue.Present s1, OptionalValue.Present s2 ->
+        // There is a frame with some rows with the specified code in both 
+        // work orders and work order scores - we return a cross product of their rows
+        [ for r1 in s1.Rows.Values do
+          for r2 in s2.Rows.Values do 
+          // Drop workOrderCode from one series (they are the same in both)
+          // and append the two rows & return that as the result
+          yield Series.append r1 (Series.filter (fun k _ -> k <> ""workOrderCode"") r2) ]
+        |> Frame.ofRowsOrdinal
+    // If left or right value is missing, we just return the columns
+    // that are available (others will be filled with NaN)
+    | OptionalValue.Present s, _ 
+    | _, OptionalValue.Present s -> s)
+|> Frame.unnest
+|> Frame.indexRowsOrdinally

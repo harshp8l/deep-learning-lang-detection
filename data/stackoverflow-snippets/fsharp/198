@@ -1,0 +1,32 @@
+open System
+open Microsoft.FSharp.Quotations
+open Microsoft.FSharp.Quotations.DerivedPatterns
+open Microsoft.FSharp.Reflection
+open System.Reflection
+open FSharp.Reflection.FSharpReflectionExtensions
+
+let tryGetReflectedModules (a : Assembly) : seq<TypeInfo>  = 
+    a.DefinedTypes 
+    |> Seq.filter 
+        (fun dt -> 
+            dt.CustomAttributes
+            |> Seq.map (fun cad -> cad.AttributeType)
+            |> Seq.filter ((=) (typeof<ReflectedDefinitionAttribute>))
+            |> Seq.isEmpty
+            |> not
+        )
+
+let astFromReflectedDefinition (mi : MethodInfo) : Expr option =
+    mi :> MethodBase |> Expr.TryGetReflectedDefinition
+
+let reflectedMethodsOfAModule (m : System.Type) : (MethodInfo * Expr) [] =
+    m.GetMethods()
+    |> Array.map (fun m -> (m,astFromReflectedDefinition m))
+    |> Array.filter (snd >> Option.isSome)
+    |> Array.map (fun (x,y) -> (x, Option.get y))
+
+let reflectAssembly (assemblyPath : string) =
+    let a = System.Reflection.Assembly.LoadFile(assemblyPath) 
+    a 
+    |> tryGetReflectedModules
+    |> Seq.map (fun x -> (x,reflectedMethodsOfAModule (x.AsType())))

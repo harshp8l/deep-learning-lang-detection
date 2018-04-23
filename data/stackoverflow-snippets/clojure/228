@@ -1,0 +1,39 @@
+(ns de.hh.new-test
+ (:require [clojure.test :refer :all]
+           [com.stuartsierra.component :as component]))
+
+
+;;; Macro to start and stop component
+(defmacro with-started-components [bindings & body]
+    `(let [~(bindings 0) (component/start ~(bindings 1))]
+       (try
+          (let* ~(destructure (vec (drop 2 bindings)))
+            ~@body)
+       (catch Exception e1#)
+       (finally
+         (component/stop ~(bindings 0))))))
+
+;; Test Component
+(defprotocol Action
+  (do-it [self]))
+
+(defrecord TestComponent [state]
+   component/Lifecycle
+   (start [self]
+      (println ""====> start"")
+      (assoc self :state (atom state)))
+   (stop [self]
+      (println ""====> stop""))
+
+   Action
+    (do-it [self]
+       (println ""====> do action"")
+       @(:state self)))
+
+;: TEST
+(deftest ^:focused component-test
+   (with-started-components
+      [system (component/system-map :test-component (->TestComponent""startup-state""))
+       test-component (:test-component system)]
+
+    (is (= ""startup-state"" (do-it test-component)))))

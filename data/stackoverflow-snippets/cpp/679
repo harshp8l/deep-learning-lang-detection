@@ -1,0 +1,65 @@
+#include ""./HWC.hh""
+
+#include <iostream>  // std::cout, std::endl; std::cerr
+#include <iomanip>   // std::setw
+#include <thread>    // std::this_thread::sleep_for
+
+// diagnotic only
+std::stringstream* ssDiag = nullptr;  // definition
+
+HelloWorld_t::HelloWorld_t ()
+   : screen00  (nullptr)
+   , screen01  (nullptr)
+   , devFileW  (stdout)
+   , devFileR  (stdin)    // initialization list is macro free
+{
+   cursesInit();
+   yammInit();      // init yet-another-macro-mess
+   init(); // macro-free
+}
+
+HelloWorld_t::~HelloWorld_t()
+{
+   cursesEnd();  // shut off curses output,
+   yammEnd();    // so yamm output goes to std::cout
+   end();        //
+}
+
+int HelloWorld_t::exec()
+{
+   int retVal = cursesExec();
+   // tbd - yammExec?
+   // tbd - more things to do
+   return (retVal);
+}
+
+void HelloWorld_t::init()
+{
+   if(ssDiag) (*ssDiag) << ""\n  init()"";
+   // do stuff
+}
+
+void HelloWorld_t::end()
+{
+   if(ssDiag) (*ssDiag) << ""\n  end()"";
+   // do stuff
+}    
+
+int main(int /*argc*/, char** /*argv[]*/ )
+{
+   // comment out to disable all diag output
+   std::stringstream ss;  ssDiag = &ss;  
+
+   {
+      HelloWorld_t  helloWorld;  // ctor
+      helloWorld.exec();
+   }  //<-------------------------- dtor invoked
+   if(ssDiag)
+      std::cout << ""\n  "" << ssDiag->str() << std::endl;  // report
+   return 0;
+}
+//
+// The Trouble with Tribbles is that Tribbles are bullies.
+//
+// The Trouble with macros   is that macros have only one clumsy scope-range.
+//

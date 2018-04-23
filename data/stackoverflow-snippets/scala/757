@@ -1,0 +1,24 @@
+val first_join_df = arcs_df.join(nodes, arcs_df.col(""node_from"") === nodes.col(""node""), ""leftouter"")
+  .drop(""node_from"", ""node"", ""group"")
+  .withColumnRenamed(""id"", ""node_from"")
+first_join_df.show()
+
++-------+------+---------+
+|node_to|weight|node_from|
++-------+------+---------+
+|    BBB|     1|        1|
+|    CCC|     1|        2|
++-------+------+---------+
+
+val second_join_df = first_join_df.join(nodes, first_join_df.col(""node_to"") === nodes.col(""node""), ""leftouter"")
+  .drop(""node_to"", ""node"", ""group"")
+  .withColumnRenamed(""id"", ""node_to"")
+  .select(""node_from"", ""node_to"", ""weight"")
+second_join_df.show()
+
++---------+-------+------+
+|node_from|node_to|weight|
++---------+-------+------+
+|        1|      2|     1|
+|        2|      3|     1|
++---------+-------+------+

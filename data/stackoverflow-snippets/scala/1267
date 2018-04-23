@@ -1,0 +1,35 @@
+val dfIP = Seq(
+  (""76.83.179.64""),
+  (""76.83.179.64""),
+  (""187.42.62.209""),
+  (""89.142.219.5"")
+).toDF(""ip"")
+
+val dfRange = Seq(
+  (1000000000L, 1500000000L, ""Country A""),
+  (1500000000L, 3000000000L, ""Country B""),
+  (3000000000L, 4000000000L, ""Country C"")
+).toDF(""ip_from"", ""ip_to"", ""country_name"")
+
+def ipToLong = udf(
+  (ip: String) =>
+    ip.split(""\\."").reverse.zipWithIndex.map(
+      a => a._1.toInt * math.pow(256,a._2).toLong
+    ).sum
+)
+
+val dfJoined = dfIP.join(
+  dfIPRange,
+  ipToLong($""ip"") >= $""ip_from"" && ipToLong($""ip"") < $""ip_to"",
+  ""left_outer""
+)
+
+dfJoined.show
++-------------+----------+----------+------------+
+|           ip|   ip_from|     ip_to|country_name|
++-------------+----------+----------+------------+
+| 76.83.179.64|1000000000|1500000000|   Country A|
+| 76.83.179.64|1000000000|1500000000|   Country A|
+|187.42.62.209|3000000000|4000000000|   Country C|
+| 89.142.219.5|1500000000|3000000000|   Country B|
++-------------+----------+----------+------------+

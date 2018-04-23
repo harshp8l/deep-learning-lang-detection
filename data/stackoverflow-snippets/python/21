@@ -1,0 +1,89 @@
+import sqlite3
+import xml.sax
+
+class MoviesHandler(xml.sax.ContentHandler):
+    def __init__(self):
+        self.sql_attr_name = None
+        self.nodes = []
+        self.sql_attrs = dict()
+        self.conn = None
+
+    def startDocument(self):
+        self.conn = sqlite3.connect('moviez_sax.db')
+        c = self.conn.cursor()
+        c.execute('DROP TABLE IF EXISTS MOVIE')
+        c.execute('''
+                    CREATE TABLE IF NOT EXISTS Movie (
+                Id           INTEGER        NOT NULL,
+                Title        VARCHAR (1000) NOT NULL,
+                Duration     TIME           NOT NULL,
+                Description  VARCHAR (5000),
+                Release_Date DATE           NOT NULL,
+                Image_URL    VARCHAR (1000),
+                Country      VARCHAR (150), 
+                PRIMARY KEY (Id)
+            );''');
+
+    def endDocument(self):
+        self.conn.commit()
+        self.conn.close()
+
+
+    def startElement(self, xml_name, xml_attrs):
+        #print(""start element"", xml_name)
+        if xml_name.lower() == 'movierating':
+            pass
+        if xml_name.lower() == 'genre':
+            self.nodes.append(xml_name)
+            self.sql_attrs[xml_name] = {
+                'Title': '',
+                'Description': '',
+            }
+        if xml_name.lower() == 'movie':
+            self.nodes.append(xml_name)
+            self.sql_attr_name = None
+            self.sql_attrs[xml_name] = {
+                'Id' : '',
+                'Title' : '',
+                'Duration' : '',
+                'Description' : '',
+                'Release_Date' : '',
+                'Image_URL' : '',
+                'Country':''
+            }
+            self.sql_attrs[xml_name]['Id'] += xml_attrs['Id']
+        elif xml_name.lower() in ['id', 'title', 'duration', 'description' , 'release_date', 'image_url','country']:
+            self.sql_attr_name = xml_name
+        else:
+            self.sql_attr_name = None
+            pass
+
+    def characters(self, text):
+        if self.sql_attr_name is None or len(self.nodes) == 0:
+            return
+
+        if self.sql_attrs[self.nodes[-1]] is not None:
+            self.sql_attrs[self.nodes[-1]][self.sql_attr_name] += text
+
+    def endElement(self, xml_name):
+        if xml_name.lower() in ['movie', 'genre']:
+            self.nodes.pop()
+
+        if xml_name.lower() == 'movie':
+            c = self.conn.cursor()
+            c.execute('INSERT INTO MOVIE(Id,Title,Duration,\
+                       Description,Release_Date,Image_URL, Country) VALUES \
+                       (?,?,?,?,?,?,?)',
+                      (self.sql_attrs[xml_name]['Id'].strip(),
+                       self.sql_attrs[xml_name]['Title'].strip(),
+                       self.sql_attrs[xml_name]['Duration'].strip(),
+                       self.sql_attrs[xml_name]['Description'].strip(),
+                       self.sql_attrs[xml_name]['Release_Date'].strip(),
+                       self.sql_attrs[xml_name]['Image_URL'].strip(),
+                       self.sql_attrs[xml_name]['Country'].strip()))
+
+
+if __name__ == '__main__':
+    parser = xml.sax.make_parser()
+    parser.setContentHandler(MoviesHandler())
+    parser.parse(open('movies.xml','r'))

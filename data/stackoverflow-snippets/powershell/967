@@ -1,0 +1,93 @@
+function Restore-MsSqlDatabase {
+<#
+.Synopsis
+  Restore MSSQL database using Microsoft.SQLServer.Management.Smo.{BackupDeviceItem,Restore,RelocateFile}
+.Description
+  Restore MSSQL database using Microsoft.SQLServer.Management.Smo.{BackupDeviceItem,Restore,RelocateFile}
+.Example
+  Restore-MsSqlDatabase -BackupFile 'D:\backups\aateam_20491005.bak' -Verbose
+.Example
+  Restore-MsSqlDatabase -BackupFile 'D:\backups\aateam_20491005.bak' -SqlHost SQL-SERVER001 -Verbose
+#>
+  [CmdletBinding()]
+  Param(
+    [Parameter(Position=0)] [ValidateNotNullOrEmpty()]
+    [string]$BackupFile,
+    [Parameter(Position=1)] [ValidateNotNullOrEmpty()]
+    [string]$SqlHost=""localhost""
+  )
+  Begin{
+    Write-Verbose (""$(Get-Date) - INFO - Load assembly for Microsoft.SqlServer.SMO"")
+    $null=[System.Reflection.Assembly]::LoadWithPartialName(""Microsoft.SqlServer.SMO"")
+    Write-Verbose (""$(Get-Date) - INFO - Load assembly for Microsoft.SqlServer.SMOExtended"")
+    $null=[System.Reflection.Assembly]::LoadWithPartialName(""Microsoft.SqlServer.SMOExtended"")
+    Write-Verbose (""$(Get-Date) - INFO - New connection object"")
+    $MsSqlConnection=New-Object Microsoft.SqlServer.Management.Smo.Server $SqlHost
+    Write-Verbose (""$(Get-Date) - INFO - Initialize connection"")
+    $null=$MsSqlConnection.Initialize()
+  }
+  Process{
+    Try{
+      Write-Verbose (""$(Get-Date) - INFO - New backup device item"")
+      $BackupDeviceItem=New-Object Microsoft.SQLServer.Management.Smo.BackupDeviceItem
+      $BackupDeviceItem.Name=$backupFile
+      $BackupDeviceItem.DeviceType=""File""
+      Write-Verbose (""$(Get-Date) - INFO - New restore device"")
+      $RestoreDevice=New-Object Microsoft.SQLServer.Management.Smo.Restore
+      $RestoreDevice.Action=""Database""
+      $RestoreDevice.ReplaceDatabase=$true
+      $RestoreDevice.NoRecovery=$false
+      Write-Verbose (""$(Get-Date) - INFO - Add backup device item to restore device"")
+      $RestoreDevice.Devices.Add($BackupDeviceItem)
+      Write-Verbose (""$(Get-Date) - INFO - Read backup header"")
+      $BackupHeader=$RestoreDevice.ReadBackupHeader($MsSqlConnection)
+      Write-Verbose (""$(Get-Date) - INFO - Set databse name in restore device"")
+      $RestoreName=$BackupHeader.Rows[0].DatabaseName
+      $RestoreDevice.Database=$RestoreName
+      Write-Verbose (""$(Get-Date) - INFO - Read backup file list"")
+      $FileList=$RestoreDevice.ReadFileList($MsSqlConnection)
+      Write-Verbose (""$(Get-Date) - INFO - Relocate mdf,ldf,ndf files"")
+      ForEach ($File in $FileList) {
+        Write-Verbose (""$(Get-Date) - INFO - New relocate device"")
+        $RelocateFile=New-Object Microsoft.SqlServer.Management.Smo.RelocateFile
+        Switch ($File.FileId) {
+          1 {
+            Write-Verbose (""$(Get-Date) - INFO - New physical path for mdf file"")
+            $NewPhysicalPath=""{0}\{1}.mdf"" -f $MsSqlConnection.DefaultFile,$RestoreName
+          }
+          2 {
+            Write-Verbose (""$(Get-Date) - INFO - New physical path for ldf file"")
+            $NewPhysicalPath=""{0}\{1}.ldf"" -f $MsSqlConnection.DefaultFile,$RestoreName
+          }
+          Default {
+            Continue
+          }
+        }
+        Write-Verbose (""$(Get-Date) - INFO - Relocate files"")
+        $RelocateFile.LogicalFileName=$File.LogicalName
+        $RelocateFile.PhysicalFileName=$NewPhysicalPath
+        $null=$RestoreDevice.RelocateFiles.Add($RelocateFile)
+      }
+      Write-Verbose (""$(Get-Date) - INFO - Test if database already exists"")
+      If($MsSqlConnection.Databases[$RestoreName]){
+        Write-Verbose (""$(Get-Date) - INFO - Kill all processes connected to database"")
+        $MsSqlConnection.KillAllProcesses($RestoreName)
+        Write-Verbose (""$(Get-Date) - INFO - Set database offline"")
+        $MsSqlConnection.Databases[$RestoreName].SetOffline()
+      }
+      Else{
+        Write-Verbose (""$(Get-Date) - INFO - Databse currently not present in SQL instance"")
+      }
+      Write-Verbose (""$(Get-Date) - INFO - Restore device"")
+      $RestoreDevice.SQLRestore($MsSqlConnection)
+      $MsSqlConnection.Databases.Refresh()
+      Write-Verbose (""$(Get-Date) - INFO - Set database online"")
+      $MsSqlConnection.Databases[$RestoreName].SetOnline()
+    }
+    Catch{
+      Write-Verbose (""$(Get-Date) - ERROR - {0}"" -f $_.Exception.Message)
+    }
+    Finally{}
+  }
+  End{}
+}

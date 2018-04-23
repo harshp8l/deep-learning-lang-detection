@@ -1,0 +1,14 @@
+class ArrayMerger[A:Ordering](arrA:Array[A], arrB:Array[A]) extends Iterator[A] {
+  import math.Ordering.Implicits._
+  private val a: BufferedIterator[A] = arrA.toIterator.buffered
+  private val b: BufferedIterator[A] = arrB.toIterator.buffered
+
+  override def hasNext: Boolean = a.hasNext || b.hasNext
+  override def next(): A =
+    if      (!a.hasNext) b.next()
+    else if (!b.hasNext) a.next()
+    else if (a.head < b.head) a.next() else b.next()
+}
+
+val am = new ArrayMerger(Array('a','c','t','y'),Array('b','w','z'))//Iterator[Char]
+am.toArray  // Array(a, b, c, t, w, y, z)  <-- iterator consumed

@@ -1,0 +1,14 @@
+public class ClassIterator {
+    public void forEachSuperclasses(final Class<?> initialClass, final Consumer<Class<?>> action) {
+        generateStream(initialClass).distinct().forEach(action);
+    }
+
+    private Stream<Class<?>> generateStream(final Class<?> clazz) {
+        if (clazz == null) {
+            return Stream.empty();
+        }
+        return Stream.concat(
+               Stream.concat(Stream.of(clazz), generateStream(clazz.getSuperclass())),
+                    Arrays.stream(clazz.getInterfaces()).flatMap(this::generateStream));
+    }
+}

@@ -1,0 +1,48 @@
+#include <GL/glew.h>
+#include <GL/glut.h>
+
+GLuint tex = 0;
+void display()
+{
+    glClear( GL_COLOR_BUFFER_BIT );
+
+    glEnable( GL_TEXTURE_1D );
+    glBindTexture( GL_TEXTURE_1D, tex );
+    glBegin(GL_TRIANGLES);
+    glTexCoord1f( 0.0f );
+    glVertex2f( -0.5f, -0.5f );
+    glTexCoord1f( 0.5f );
+    glVertex2f( 0.5f, -0.5f );
+    glTexCoord1f( 1.0f );
+    glVertex2f( 0.0f, 0.5f );
+    glEnd();
+
+    glutSwapBuffers();
+}
+
+int main( int argc, char** argv )
+{
+    glutInit( &argc, argv );
+    glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE );
+    glutInitWindowSize( 400, 400 );
+    glutCreateWindow( ""GLUT"" );
+    glewInit();
+
+    glGenTextures( 1, &tex );
+    glBindTexture( GL_TEXTURE_1D, tex );
+    unsigned char pixels[] =
+    {
+        255, 0, 0, 255,
+        0, 255, 0, 255,
+        0, 0, 255, 255,
+    };
+    glTexImage1D( GL_TEXTURE_1D, 0, GL_RGBA, 3, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels );
+    glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL );
+    glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+
+    glutDisplayFunc( display );
+    glutMainLoop();
+    return 0;
+}

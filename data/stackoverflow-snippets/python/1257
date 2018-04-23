@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+if [ $# -lt 2 ]
+then
+    echo ""Usage: $(basename ""$0"") input_file string1 [string2 ...]""
+    exit 1
+fi
+
+function find_all_matches()
+(
+    infile=""$1""
+    shift
+
+    IFS=$'\n'
+    newline_separated_list_of_strings=""$*""
+    grep -o -F ""$newline_separated_list_of_strings"" ""$infile""
+)
+
+string_count=$(($# - 1))
+matched_string_count=$(find_all_matches ""$@""|sort -u|wc -l)
+
+if [ ""$matched_string_count"" -eq ""$string_count"" ]
+then
+    echo ""ALL strings matched""
+    exit 0
+else
+    echo ""Some strings DID NOT match""
+    exit 1
+fi

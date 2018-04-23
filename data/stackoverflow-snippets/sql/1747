@@ -1,0 +1,15 @@
+#standardSQL
+WITH `project.dataset.table` AS (
+  SELECT [STRUCT<created_time  DATETIME, 
+            `from` STRUCT<id STRING, name STRING, email STRING>, 
+            id STRING, 
+            message STRING>
+      (DATETIME '2018-01-01 13:00:00', ('1', 'mike', 'zzz@ccc'), 'a', 'abc'),
+      (DATETIME '2018-01-02 14:00:00', ('2', 'john', 'yyy@bbb'), 'b', 'xyz')
+    ] messages
+)
+SELECT messages,
+  ARRAY(SELECT AS STRUCT * REPLACE (SAFE_CAST(created_time AS STRING) AS created_time) 
+    FROM UNNEST(messages) message
+  ) casted_messages
+FROM `project.dataset.table`

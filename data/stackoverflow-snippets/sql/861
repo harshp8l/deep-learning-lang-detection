@@ -1,0 +1,39 @@
+declare @tmp table (id int, Name varchar(10),Parent1 int,Parent2 int,Parent3 int,Parent4 int,Parent5 int)
+
+
+insert into @tmp
+SELECT 1,'Microsoft',NULL,NULL,NULL,NULL,NULL
+union
+SELECT 2,'Google',1,NULL,NULL,NULL,NULL
+union
+SELECT 3,'HP',NULL,2,NULL,NULL,NULL
+union
+SELECT 4,'Amazone',NULL,NULL,3,NULL,NULL
+union
+SELECT 5,'FB',NULL,NULL,NULL,4,NULL
+ union
+SELECT 6,'Yahoo',NULL,NULL,NULL,4,NULL
+ union
+SELECT 7,'Intel',NULL,NULL,2,NULL,NULL
+union
+SELECT 8,'Apple',7,5,NULL,NULL,NULL
+
+
+select * from @tmp
+
+;with name_tree as (
+   select *
+   from @tmp
+   where id = 2 
+   union all
+   select c.*
+   from @tmp c
+     join name_tree p on (p.id = c.parent1 or p.id = c.parent2 or p.id = c.parent3 or p.id = c.parent4 or p.id = c.parent5)
+) 
+
+
+delete from t
+from @tmp t
+JOIN name_tree c on t.id=c.id
+
+select * from @tmp

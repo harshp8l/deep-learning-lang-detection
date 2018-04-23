@@ -1,0 +1,33 @@
+Param(
+    [string]$location,
+    [string]$branch_name
+)
+Try{
+    $output = """"
+    $loc = Resolve-Path -path $location
+    if ($loc -eq $null) {throw ""$location not found""}
+    Set-Location $loc
+    $output+= ""At location $loc`n""
+
+    $curr_branch = git rev-parse --abbrev-ref HEAD
+    if ($curr_branch -ne $branch_name){
+    $output+= git checkout $branch_name
+    $output+= ""`n""
+    }
+    if ($? -eq $false) {throw ""GIT checkout failed""}
+
+    $output+= git reset --hard origin/$branch_name
+    $output+= ""`n""
+    if ($? -eq $false) {throw ""GIT reset failed""}
+
+    $output+= git pull
+    $output+= ""`n""
+    if ($? -eq $false) {throw ""GIT pull failed""}
+
+    Write-Output $output
+}
+Catch{
+    $exc = $_.Exception | format-list -force
+    Write-Output $exc
+    Throw $exc
+}

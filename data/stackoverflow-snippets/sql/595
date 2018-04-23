@@ -1,0 +1,25 @@
+with RemaindersByCustomerCTE as
+(
+    select
+        Detail.CustomerId,
+        AdultsRemaining = sum(Detail.AdultsRemaining),
+        ChildrenRemaining = sum(Detail.ChildrenRemaining)
+    from
+        @RegistrationDetail Detail
+    group by
+        Detail.CustomerId
+)
+select
+    Rem.CustomerId
+from
+    RemaindersByCustomerCTE Rem
+where
+    exists
+    (
+        select 1
+        from
+            @RegistrationDetail Detail
+        where
+            Detail.AdultsIncluded <= (Rem.AdultsRemaining - Detail.AdultsRemaining) and
+            Detail.ChildrenIncluded <= (Rem.ChildrenRemaining - Detail.ChildrenRemaining)
+    );

@@ -1,0 +1,106 @@
+#include <iostream>
+#include <string>
+
+
+class T589_t
+{
+public:
+
+   int exec(int argc, char* argv[])
+      {
+         if (argc < 2)
+         {
+            std::cerr << ""\n  please provide one or more string(s) to test"" 
+                      << std::endl;
+            return -1;
+         }
+
+         for (int i = 0; i < argc; ++i)
+         {
+            std::string s = argv[i];
+            {
+               std::string yesno = (isPalindromeIterative(s) ? "" is"" : "" is not"");
+               std::cout << ""\n  '"" << s << ""'"" << yesno << "" a palindrome (iterative)"" << std::flush;
+            }
+            std::cout << std::endl;
+            {
+               std::string yesno = (isPalindromeRecursive(s) ? "" is"" : "" is not"");
+               std::cout << ""  '"" << s << ""'"" << yesno << "" a palindrome (recursive)"" << std::endl;
+            }
+         } // for 0..argc
+
+         return 0;
+      }
+
+private: // methods
+
+
+   bool isPalindromeIterative(const std::string& s1)
+      {  //         ^^^^^^^^^
+         bool retVal = false;                           // guess s1 is not palindrome
+         int   left  = 0;                               // index of left most char
+         int   right = static_cast<int>(s1.size()) - 1; // index of right most char
+
+         do { // iterative loop
+
+            if (s1[left] != s1[right]) break; // when not equal, is not palindrome
+
+            left += 1;  right -= 1;  // iterate!
+
+            if (left >= right)  // all chars tested?
+            {
+               retVal = true;   // confirm palindrome
+               break;           // exit
+            }
+
+         } while (true); 
+
+         return retVal;
+      }
+
+   // Notes    './dumy589'  // odd length 9
+   //           ^-------^   [0] vs [8]
+   //            ^-----^    [1] vs [7]
+   //             ^---^     [2] vs [6]
+   //              ^-^      [3] vs [5]
+   //               ^       [4] == [4]  // left >= right, break
+
+   // Notes     'abccba'    // even length 6
+   //            ^----^     [0] vs [5]
+   //             ^--^      [1] vs [4]
+   //              ^^       [2] vs [3]
+   //                       [3] vs [2]  // left >= right, break
+
+   // Notes     'abcba'     // odd length 5
+   //            ^---^      [0] vs [4]
+   //             ^-^       [1] vs [3]
+   //              ^        [2] vs [2]  // left >= right, break
+
+
+   // and bonus: tail recursion based on above iterative     
+   //               vvvvvvvvv
+   bool isPalindromeRecursive(const std::string& s1)
+      {
+         // index of left most char
+         int   left  = 0;          
+         // index of right most char
+         int   right = static_cast<int>(s1.size()) - 1; 
+
+         return (isPalindromeRecursive(s1, left, right));
+      }
+
+   bool isPalindromeRecursive(const std::string& s1, int left, int right)
+      {
+         if (s1[left] != s1[right]) return false;
+         left += 1;   right -= 1;
+         if (   left  >=    right ) return true;
+         return (isPalindromeRecursive(s1, left, right));
+      }
+}; // class T589_t
+
+
+int main(int argc, char* argv[])
+{
+   T589_t  t589;
+   return  t589.exec(argc, argv);
+}

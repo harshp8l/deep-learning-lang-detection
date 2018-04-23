@@ -1,0 +1,78 @@
+// java.c
+#include <stdio.h>
+#include <stdbool.h>
+#include <jni.h>
+
+// Uninitialized Java natural interface
+JNIEnv *env;
+JavaVM *jvm;
+
+// JClass for Clojure
+jclass clojure, ifn, longClass;
+jmethodID readM, varM, varQualM, // defined on 'clojure.java.api.Clojure'
+          invoke[2],             // defined on 'closure.lang.IFn'
+          longValueM, longC;     // defined on 'java.lang.Long'
+
+// Initialize the JVM with the Clojure JAR on classpath. 
+bool create_vm() {
+  // Configuration options for the JVM
+  JavaVMOption opts = {
+    .optionString =  ""-Djava.class.path=./clojure-1.8.0.jar"",
+  };
+  JavaVMInitArgs args = {
+    .version = JNI_VERSION_1_6,
+    .nOptions = 1,
+    .options = &opts,
+    .ignoreUnrecognized = false,
+  };
+
+  // Make the VM
+  int rv = JNI_CreateJavaVM(&jvm, (void**)&env, &args);
+  if (rv < 0 || !env) {
+    printf(""Unable to Launch JVM %d\n"",rv);
+    return false;
+  }
+  return true;
+}
+
+// Lookup the classes and objects we need to interact with Clojure.
+void load_methods() {
+
+  clojure    = (*env)->FindClass(env, ""clojure/java/api/Clojure"");
+  readM      = (*env)->GetStaticMethodID(env, clojure, ""read"", ""(Ljava/lang/String;)Ljava/lang/Object;"");
+  varM       = (*env)->GetStaticMethodID(env, clojure, ""var"",  ""(Ljava/lang/Object;)Lclojure/lang/IFn;"");
+  varQualM   = (*env)->GetStaticMethodID(env, clojure, ""var"",  ""(Ljava/lang/Object;Ljava/lang/Object;)Lclojure/lang/IFn;"");
+
+  ifn        = (*env)->FindClass(env, ""clojure/lang/IFn"");
+  invoke[0]  = (*env)->GetMethodID(env, ifn, ""invoke"", ""()Ljava/lang/Object;"");
+  invoke[1]  = (*env)->GetMethodID(env, ifn, ""invoke"", ""(Ljava/lang/Object;)Ljava/lang/Object;"");
+  invoke[2]  = (*env)->GetMethodID(env, ifn, ""invoke"", ""(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"");
+  // Obviously we could keep going here. The Clojure API has 'invoke' for up to 20 arguments...
+
+  longClass  = (*env)->FindClass(env, ""java/lang/Long"");
+  longValueM = (*env)->GetMethodID(env, longClass, ""longValue"", ""()J"");
+  longC      = (*env)->GetMethodID(env, longClass, ""<init>"",    ""(J)V"");
+}
+
+// call the 'invoke' function of the right arity on 'IFn'.
+jobject invokeFn(jobject obj, unsigned n, jobject *args) {
+  return (*env)->CallObjectMethodA(env, obj, invoke[n], (jvalue*)args);
+}
+
+// 'read' static method from 'Clojure' object.
+jobject readObj(const char *cStr) {
+  jstring str = (*env)->NewStringUTF(env, cStr);
+  return (*env)->CallStaticObjectMethod(env, clojure, readM, str);
+}
+
+// 'var' static method from 'Clojure' object.
+jobject varObj(const char* fnCStr) {
+  jstring fn = (*env)->NewStringUTF(env, fnCStr);
+  return (*env)->CallStaticObjectMethod(env, clojure, varM, fn);
+}
+// qualified 'var' static method from 'Clojure' object.
+jobject varObjQualified(const char* nsCStr, const char* fnCStr) {
+  jstring ns = (*env)->NewStringUTF(env, nsCStr);
+  jstring fn = (*env)->NewStringUTF(env, fnCStr);
+  return (*env)->CallStaticObjectMethod(env, clojure, varQualM, ns, fn);
+}

@@ -1,0 +1,159 @@
+from turtle import Turtle, Screen
+from random import randint
+
+NUMBER_OF_ENEMIES = 5
+FONT = (""Arial"", 14, ""normal"")
+
+# fonas
+wn = Screen()
+wn.bgcolor(""black"")
+wn.title(""Space Invaders"")
+# wn.bgpic(""new background.gif"")
+
+# wn.register_shape(""invader.gif"")
+# wn.register_shape(""player.gif"")
+# wn.register_shape(""lazer.gif"")
+
+# Sienos
+border_pen = Turtle(visible=False)
+border_pen.speed(""fastest"")
+border_pen.color(""white"")
+border_pen.pensize(3)
+
+border_pen.penup()
+border_pen.setposition(-300, -300)
+border_pen.pendown()
+
+for _ in range(4):
+    border_pen.fd(600)
+    border_pen.lt(90)
+
+# Taškai
+score = 0
+score_pen = Turtle(visible=False)
+score_pen.speed(""fastest"")
+score_pen.color(""white"")
+score_pen.penup()
+score_pen.setposition(-290, 280)
+scorestring = ""Score: %s"" % score
+score_pen.write(scorestring, align=""left"", font=FONT)
+
+# žaidėjas
+player = Turtle(""turtle"")
+player.color(""blue"")
+# player.shape(""player.gif"")
+player.speed(""fastest"")
+player.penup()
+player.setposition(0, -250)
+player.setheading(90)
+
+playerspeed = 15
+
+# Žaidėjo kūlka
+bullet = Turtle(""circle"", visible=False)
+bullet.color(""yellow"")
+# bullet.shape(""lazer.gif"")
+bullet.shapesize(0.5)
+bullet.speed(""fastest"")
+bullet.penup()
+bullet.setheading(90)
+
+# Pasiruošti šauti
+# Šauti
+bulletspeed = 20
+
+# Blogiečiai
+enemyspeed = 2
+enemies = []
+
+for _ in range(NUMBER_OF_ENEMIES):
+    enemy = Turtle(""turtle"")
+    enemy.settiltangle(270)
+    enemy.color(""red"")
+    # enemy.shape(""invader.gif"")
+    enemy.speed(""fastest"")
+
+    enemy.penup()
+    x = randint(-200, 200)
+    y = randint(100, 250)
+    enemy.setposition(x, y)
+
+    enemies.append(enemy)
+
+# Judejimas
+
+def move_left():
+    x = max(-280, player.xcor() - playerspeed)
+    player.setx(x)
+
+def move_right():
+    x = min(280, player.xcor() + playerspeed)
+    player.setx(x)
+
+def fire_bullet():
+    if not bullet.isvisible():
+        x, y = player.position()
+        bullet.setposition(x, y + 10)
+        bullet.showturtle()
+
+def isCollision(t1, t2):
+    return t1.distance(t2) < 15
+
+# Blogiečių judėjimas
+def move():
+    global enemyspeed, score
+
+    gameover = False
+
+    # Kūlka juda
+    if bullet.isvisible():
+        bullet.forward(bulletspeed)
+
+    if bullet.ycor() > 275:
+        bullet.hideturtle()
+
+    for enemy in enemies:
+
+        if isCollision(bullet, enemy):
+            bullet.hideturtle()
+            bullet.setposition(0, -400)
+            x = randint(-200, 200)
+            y = randint(100, 250)
+            enemy.setposition(x, y)
+
+            # Taškai
+            score += 10
+            scorestring = ""Score %s"" % score
+            score_pen.clear()
+            score_pen.write(scorestring, align=""left"", font=FONT)
+
+        x = enemy.xcor() + enemyspeed
+        enemy.setx(x)
+
+        if x < -280 or x > 280:
+            for e in enemies:
+                y = e.ycor() - 40
+                e.sety(y)
+                # pakeičia jų krypti
+            enemyspeed *= -1
+
+        if isCollision(player, enemy):
+            player.hideturtle()
+            enemy.hideturtle()
+            gameover = True
+            break
+
+    if gameover:
+        print(""Game over"")
+        raw_input(""Press enter to finish."")
+    else:
+        wn.ontimer(move, 25)
+
+wn.onkey(move_left, ""Left"")
+wn.onkey(move_right, ""Right"")
+wn.onkey(fire_bullet, ""space"")
+wn.listen()
+
+move()
+
+wn.mainloop()

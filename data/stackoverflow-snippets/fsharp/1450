@@ -1,0 +1,111 @@
+/////////////////////////////////////////////////////////////////////////////////////
+// Definition of the state 
+/////////////////////////////////////////////////////////////////////////////////////
+type StateFunc<'State, 'T> = 'State -> 'T * 'State
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+// Definition of the State monad 
+/////////////////////////////////////////////////////////////////////////////////////
+type StateMonadBuilder<'State>() =
+
+    // M<'T> -> M<'T>
+    member b.ReturnFrom a : StateFunc<'State, 'T> = a
+
+    // 'T -> M<'T>
+    member b.Return a : StateFunc<'State, 'T> = ( fun s ->  a, s)
+
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    member b.Bind(p : StateFunc<_, 'T>, rest : 'T -> StateFunc<_,_>) : StateFunc<'State, 'U>  = 
+        (fun s ->
+            let a, s' = p s
+            rest a s')
+
+    member b.Zero() = fun s -> (), s
+
+    member b.Delay (f : unit -> StateFunc<_,_>) : StateFunc<'State, 'T> =
+        b.Bind (b.Return (), f)
+
+    // Getter for the whole state, this type signature is because it passes along the state & returns the state
+    member b.getState : StateFunc<'State, _> = (fun s -> s, s)
+
+    // Setter for the state
+    member b.putState (s:'State) : StateFunc<'State, _> = (fun _ -> (), s) 
+
+    // (unit -> bool) * M<'T> -> M<'T>
+    member this.While (guard, body : StateFunc<_,_>) : StateFunc<'State, unit> =
+        if guard () then
+            this.Bind (body, (fun () -> this.While (guard, body)))
+        else
+            this.Zero ()
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+// The agent
+/////////////////////////////////////////////////////////////////////////////////////
+
+let state = StateMonadBuilder<int> ()
+
+type SonM (sonName: string) =
+    let name = sonName
+    member this.GetMoneyFromDad (x: int) = state {
+        printfn "" I am getting money from dad""
+        let! currState = state.getState
+        do! state.putState (currState + x)  
+        do! this.ToConsole () }
+    member this.GoShopping (x: int) = state {
+        printfn "" I am taken to the mall""
+        let! currState = state.getState   
+        do! state.putState (currState - x) 
+        do! this.ToConsole () }
+    member this.TellDad = state {
+        printfn "" I'll tell dad my balance ""
+        return! state.getState }
+    member this.ToConsole () = state {
+        let! mystate = state.getState
+        printfn "" Balance: %i"" mystate }
+
+type Agent<'T> = MailboxProcessor<'T>
+
+type message = 
+    | Shopping of int
+    | Allowance of int
+    | GetBalance
+    | Stop
+
+let setupAgent iv = Agent.Start (fun inbox ->   
+
+    let aSon = new SonM (""Paul"")
+
+    let processMsg msg = state {
+        match msg with
+        | Shopping money ->
+            printfn ""Go shopping with %i "" money
+            do! (aSon.GoShopping money)
+        | Allowance money -> 
+            printfn "" I got some money for you, son""
+            do! (aSon.GetMoneyFromDad money) 
+        | GetBalance -> 
+            printfn "" Calling: TellDad""
+            let! balance = aSon.TellDad
+            printfn "" Current Balance: %i"" balance 
+        | _ -> do printfn ""Nothing to do.."" }
+
+    let rec loop s = async {
+            let! msg = inbox.Receive() 
+            let processedMsg = processMsg msg 
+            let _, s' = s |> processedMsg
+            return! loop s' }
+    loop iv )
+
+
+let agent = setupAgent 100
+agent.Post (GetBalance)    
+agent.Post(Allowance 15)
+agent.Post (GetBalance)    
+agent.Post (Shopping 10)
+agent.Post (Stop)

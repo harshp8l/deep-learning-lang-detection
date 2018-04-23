@@ -1,0 +1,24 @@
+open System
+open System.Windows.Forms
+open System.Reactive.Linq
+open FSharp.Charting
+
+[<EntryPoint>]
+[<STAThread>]
+let main argv = 
+
+    Application.EnableVisualStyles()
+    Application.SetCompatibleTextRenderingDefault false
+
+    let form = new Form(Visible = true, TopMost = true, 
+                            Width = 700, Height = 500)
+    let rand = new Random()
+    let obs = Observable.Interval(TimeSpan.FromSeconds(1.0)).
+                 ObserveOn(WindowsFormsSynchronizationContext.Current)
+                |> Observable.map(fun _ -> DateTime.Now.ToShortTimeString(),rand.Next(0,21))
+
+    let one  = LiveChart.FastLineIncremental(obs,Name=""Simple Example"")
+
+    one.ShowChart()
+    Application.Run form
+    0 

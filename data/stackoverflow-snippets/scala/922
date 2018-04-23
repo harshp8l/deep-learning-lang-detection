@@ -1,0 +1,38 @@
+import io.github.javathought.commons.xml.Macros.{xmlAccessorType, xmlRootElement, xmlAttribute, xmlElement}
+
+
+import scala.annotation.meta.field
+
+object Macros {
+  type xmlRootElement = XmlRootElement @companionClass
+  type xmlAccessorType = XmlAccessorType @companionClass
+  type xmlElement = XmlElement @field
+  type xmlAttribute = XmlAttribute @field
+
+}
+
+@xmlAccessorType(XmlAccessType.FIELD)
+case class Session(
+                    @xmlAttribute(name=""TYPE"")
+                    sessionType: String
+                  ) {
+  def this() = this("""")
+}
+
+@xmlRootElement(name = ""FOO-BAR"")
+@xmlAccessorType(XmlAccessType.FIELD)
+case class FooBar(
+                   @xmlElement(name = ""SESSION"")
+                   session: Session
+                 ) {
+  def this() = this(new Session())
+}
+
+val hHonors = new FooBar(new Session(""Hi""))
+
+val context = JAXBContext.newInstance(classOf[FooBar])
+val fooBar = FooBar(Session(""mysession""))
+val stringWriter = new StringWriter()
+val marshaller = context.createMarshaller()
+marshaller.marshal(hHonors, stringWriter)
+println(stringWriter.toString)

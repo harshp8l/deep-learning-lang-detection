@@ -1,0 +1,26 @@
+function Test-GACPresence {
+    param(
+        [Parameter(Mandatory=$true,ParameterSetName='Path')]
+        [string]$Path,
+
+        [Parameter(Mandatory=$true,ParameterSetName='LiteralPath',ValueFromPipelineByPropertyName=$true)]
+        [Alias('PsPath')]
+        [string]$LiteralPath
+    ) 
+
+    $LiteralPath = if($PSCmdlet.ParameterSetName -eq 'Path'){
+        (Resolve-Path $Path).ProviderPath
+    } else {
+        (Resolve-Path $LiteralPath).ProviderPath
+    }
+
+    try{
+        return [System.Reflection.Assembly]::ReflectionOnlyLoad([System.Reflection.AssemblyName]::GetAssemblyName($LiteralPath)).GlobalAssemblyCache
+    }
+    catch{
+        return $false
+    }
+}
+
+$ExistsInGAC = Get-ChildItem ""path\to\test"" -Filter *.dll -Recurse |?{$_|Test-GACPresence}
+$ExistsInGAC |Remove-Item 

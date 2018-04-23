@@ -1,0 +1,40 @@
+let rec getAllDUCases fNonUnionArg t : obj list =
+    let getAllDUCases = getAllDUCases fNonUnionArg
+    // taken from http://stackoverflow.com/questions/6497058/lazy-cartesian-product-of-multiple-sequences-sequence-of-sequences
+    let cartesian_product2 sequences = 
+        let step acc sequence = seq {
+            for x in acc do
+            for y in sequence do
+            yield seq { yield! x; yield y}}
+        Seq.fold step (Seq.singleton Seq.empty) sequences
+
+    let makeCaseTypes (fUnion:Type-> obj list) (fNonUnionArg:Type -> obj) (uc: UnionCaseInfo) : UnionCaseInfo*(obj list list) =
+        let constructorArgs = 
+            uc.GetFields() 
+            |> Seq.map (fun f -> 
+                if FSharpType.IsUnion f.PropertyType then 
+                    let childTypes = fUnion f.PropertyType 
+                    if 
+                        childTypes
+                        |> Seq.exists (fun ct -> FSharpType.IsUnion (ct.GetType()) |> not) then
+                            failwithf ""fUnion returned a bad type in list %A"" childTypes
+                    childTypes
+                else [ fNonUnionArg f.PropertyType] )
+            |> List.ofSeq
+        let allCombinationsOfFieldPossibles = 
+            cartesian_product2 constructorArgs
+            |> Seq.map List.ofSeq
+            |> List.ofSeq
+        uc, allCombinationsOfFieldPossibles
+    // with help from http://stackoverflow.com/a/4470670/57883
+    let result =
+        FSharpType.GetUnionCases t
+        |> Seq.map (makeCaseTypes getAllDUCases fNonUnionArg)
+        |> List.ofSeq
+    let result = 
+        result
+        |> Seq.map (fun (uc,allFieldComboCases) -> allFieldComboCases |> Seq.map (fun args-> FSharpValue.MakeUnion(uc,args |> Array.ofList)))
+        |> Seq.collect id
+        |> Seq.map box
+        |> List.ofSeq
+    result

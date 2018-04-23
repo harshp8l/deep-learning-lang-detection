@@ -1,0 +1,37 @@
+require ""logger""
+require ""sequel""
+
+db = Sequel.connect ""postgres://localhost/postgres"", :logger => Logger.new(STDOUT)
+
+db.drop_table :artists, :cascade => true if db.table_exists?(:artists)
+db.create_table :artists do
+  primary_key :id
+  foreign_key :album_id, :albums
+end
+
+db.drop_table :albums, :cascade => true if db.table_exists?(:albums)
+db.create_table :albums do
+  primary_key :id
+  foreign_key :artist_id, :artists
+end
+
+class Artist < Sequel::Model(db[:artists])
+  one_to_one :album
+end
+class Album < Sequel::Model(db[:albums])
+  one_to_one :artist
+end
+
+artist_1 = Artist.create
+album_1  = Album.create
+
+artist_1.update :album => album_1
+album_1.reload
+puts album_1.artist.nil?
+
+artist_2 = Artist.create
+album_2  = Album.create
+
+album_2.update :artist => artist_2
+artist_2.reload
+puts artist_2.album.nil?

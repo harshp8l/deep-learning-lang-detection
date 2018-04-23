@@ -1,0 +1,10 @@
+string[] pipeline = new string[3];
+pipeline[0] = ""{ '$project':{ 'arrayofkeyvalue':{ '$objectToArray':'$$ROOT'}}}"";
+pipeline[1] = ""{ '$unwind':'$arrayofkeyvalue'}"";
+pipeline[2] = ""{ '$group':{'_id':null,'fieldKeys':{'$addToSet':'$arrayofkeyvalue.k'}}}"";
+var stages = pipeline.Select(s => BsonDocument.Parse(s)).ToList();
+var result = await database.GetCollection<BsonDocument>(collection).AggregateAsync<BsonDocument>(stages);
+foreach (BsonValue fieldName in result.Single().GetElement(""fieldKeys"").Value.AsBsonArray)
+{
+    Debug.WriteLine(fieldName.AsString);
+}

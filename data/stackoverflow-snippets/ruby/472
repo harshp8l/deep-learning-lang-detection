@@ -1,0 +1,53 @@
+# Helper for AWS KMS encryption / decryption:
+#
+# Example:
+#
+# cipherdata = Aws::KMS.encrypt('boring plain text')
+#
+# => ""AQICAkSXnpkzAJrrzNcjlMxRK78jbKHnkPohQdSZ445Xv29z6C2ty433pG2rcs96IujEj4IXAa1rmSzJXfiQqw4LaFcluh3CYsFQOlOfhgh0LhPdiQhnIP7d0BzlIu3uRFzHLrhIpg2JssVsjnCLZstNkzerfiwYtGSNTpltVjaqJblz3kktSFNxnMoVOcJSlvTbuMdiD9yplGMDD3LC0YKjUZtEZIqEjt==""
+#
+# Aws::KMS.decrypt( cipherdata )
+#
+# => ""boring plain text""
+#
+#
+# Protects from AWS KMS calls if we are in TEST environment
+#
+module Aws::KMS
+
+  def self.encrypt(plaintext)
+    if Rails.env.test? || Rails.env.development?
+      ['not_encrypted_in_test', plaintext].join('|') # faking encryption so we can test this without AWS
+    else
+      cipherdata = client.encrypt({
+        key_id: ENV['KMS_ARN'],
+        plaintext: plaintext,
+      }).ciphertext_blob
+      Base64.strict_encode64(cipherdata)
+    end
+  end
+
+  def self.decrypt(ciphertext)
+    if Rails.env.test? || Rails.env.development?
+      ciphertext.split('|').second # faking decryption so we can test this without AWS
+    else
+      cipherdata = Base64.strict_decode64( ciphertext )
+
+      client.decrypt({
+        ciphertext_blob: cipherdata
+      }).plaintext
+    end
+  end
+
+  # this helper method can be called to check if the ENV variables are configured correctly:
+  def self.setup_correct?
+    plaintext = 'Hey, it works!'
+    cipherdata = Aws::KMS.encrypt( plaintext )
+    Aws::KMS.decrypt( cipherdata ) == plaintext
+  end
+
+  def self.client
+    Aws::KMS::Client.new
+  end
+
+end

@@ -1,0 +1,38 @@
+#include <iostream>
+#include <memory>
+#include <type_traits>
+
+template<class T, class... Args>
+std::unique_ptr<T> makeFunc(Args&&... args) {
+  if constexpr (std::is_aggregate_v<T>) {
+    return std::unique_ptr<T>(new T{std::forward<Args>(args)...});
+  }
+  else {
+    return std::make_unique<T>(std::forward<Args>(args)...);
+  }
+}
+
+struct Aggregate {
+  int a, b;
+};
+
+class No_Aggregate {
+  int a, b;
+public:
+  explicit No_Aggregate(int a, int b) : a{a}, b{b} {}
+  auto get_a() {
+    return a;
+  }
+  auto get_b() {
+    return b;
+  }
+};
+
+int main() {
+  auto agg = makeFunc<Aggregate>(1, 2);
+  std::cout << std::is_aggregate_v<Aggregate> << ' '
+            << agg->a << ' ' << agg->b << '\n';
+  auto n_agg = makeFunc<No_Aggregate>(3, 4);
+  std::cout << std::is_aggregate_v<No_Aggregate> << ' ' 
+            << n_agg->get_a() << ' ' << n_agg->get_b() << '\n';
+}

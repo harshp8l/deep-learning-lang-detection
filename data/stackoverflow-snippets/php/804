@@ -1,0 +1,22 @@
+$url = ""/home/station/content/file%d.mp3""; // use %d to use using sprintf()
+$line_number = 5; //add above URL on line number 5
+$counter = 1;
+
+$contents = file('playlist.lst', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+// split in group of $line_number
+$groups = array_chunk($contents, $line_number);
+// for each group:
+$groups = array_map(function($arr) use ($url, &$counter) { // pass $counter as reference
+    // format the link 
+    $adv = sprintf($url, $counter++) ;
+    // restart to 1 if greater than 10
+    if ($counter > 10) $counter = 1;
+    // append to group
+    $arr[] = $adv;
+    return $arr ;
+},$groups);
+// transform to linear array
+$contents = array_reduce($groups, 'array_merge', array());
+// save new file
+file_put_contents('playlist.lst', implode(""\n"", $contents));

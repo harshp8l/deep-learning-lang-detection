@@ -1,0 +1,33 @@
+import math
+
+def has_valid_subset(votes, m):
+    n = len(votes)
+    sum_min = math.ceil(0.25 * m * n + 1)
+    sum_max = math.floor(sum(votes) - 0.25 * m * n - 1)
+    n_half = n // 2
+    K = [[[(False, 0) for elements in range(min(n_half + 1, index + 1))]
+          for index  in range(len(votes) + 1)]
+         for weight in range(sum_max + 1)]
+    for weight in range(sum_max + 1):
+        for index in range(len(votes) + 1):
+            if index == 0:
+                K[weight][index][0] = (True, 0)
+                continue
+            v = votes[index - 1]
+            for elements in range(min(n_half + 1, index)):
+                if v > weight:
+                    K[weight][index][elements] = K[weight][index - 1][elements]
+                else:
+                    skip_ok, skip_w = K[weight][index - 1][elements]
+                    add_ok, add_prev_w = K[weight - v][index - 1][elements - 1]
+                    add_w = add_prev_w + v
+                    if skip_ok and add_ok:
+                        K[weight][index][elements] = (True, max(skip_w, add_w))
+                    elif skip_ok:
+                        K[weight][index][elements] = (True, skip_w)
+                    elif add_ok:
+                        K[weight][index][elements] = (True, add_w)
+    b_max, w_max = K[-1][-1][-1]
+    if not b_max:
+        return False
+    return w_max >= sum_min

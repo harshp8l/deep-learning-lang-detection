@@ -1,0 +1,16 @@
+function archiveLogs ( [string]$OriginalLocation, [string]$NewLocation ){
+
+## Age of files to be archived
+$DeleteOlderThan = 30
+
+# Create temp folder to store files to be archived
+New-Item c:\Temp\_tempfolder -type directory
+# Get all children of specific directory older than 'X' days and of "".log"" file type and move to temp folder
+get-childitem -Path $OriginalLocation\*.log |
+    where-object {$_.LastWriteTime -lt (get-date).AddDays(-$DeleteOlderThan)} | 
+    move-item -destination ""C:\Temp\_tempfolder"" 
+
+## Zip all .log files in temp folder and save to '$NewLocation\(DATE)_Archive'
+& ""C:\temp\7za.exe"" a -tzip $NewLocation\$((Get-Date).ToString('yyyy-MM-dd HH-mm'))_Archive -r c:\Temp\_tempfolder\*.log
+## Delete temp folder
+Remove-Item c:\temp\_tempfolder -recurse -ErrorAction SilentlyContinue

@@ -1,0 +1,11 @@
+# Read in the file as a single string. Skipping the package wrapper since it has no leading spaces.
+$classBlock = Get-Content $dest | Where-Object{$_.StartsWith("" "")} 
+
+# Get the class name and the number of leading spaces. 
+$classBlock[0] -match ""^(\s+)class (\w+)"" | Out-Null
+$leadingSpacesToRemove = $matches[1].Length
+$className = $matches[2]
+
+# Output the new declaration and the trimmed block. 
+# Using an array to start so that piping output will be in one pipe
+@(""function $className()"") + ($classBlock | Select -Skip 1) -replace ""^\s{$leadingSpacesToRemove}""

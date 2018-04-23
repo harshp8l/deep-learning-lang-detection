@@ -1,0 +1,89 @@
+import tkinter as tk
+from tkinter import ttk
+
+
+def edit(event):
+
+    if tree.identify_region(event.x, event.y) == 'cell':
+        # the user clicked on a cell
+
+        def ok(event):
+            """"""Change item value.""""""
+            tree.set(item, column, entry.get())
+            entry.destroy()
+
+        column = tree.identify_column(event.x)  # identify column
+        item = tree.identify_row(event.y)  # identify item
+        x, y, width, height = tree.bbox(item, column) 
+        value = tree.set(item, column)
+
+    elif tree.identify_region(event.x, event.y) == 'heading': 
+        # the user clicked on a heading
+
+        def ok(event):
+            """"""Change heading text.""""""
+            tree.heading(column, text=entry.get())
+            entry.destroy()
+
+        column = tree.identify_column(event.x) # identify column
+        # tree.bbox work sonly with items so we have to get the bbox of the heading differently
+        x, y, width, _ = tree.bbox(tree.get_children('')[0], column) # get x and width (same as the one of any cell in the column)
+        # get vertical coordinates (y1, y2)
+        y2 = y
+        # get bottom coordinate
+        while tree.identify_region(event.x, y2) != 'heading':  
+            y2 -= 1
+        # get top coordinate
+        y1 = y2
+        while tree.identify_region(event.x, y1) == 'heading':
+            y1 -= 1
+        height = y2 - y1
+        y = y1
+        value = tree.heading(column, 'text')
+
+    elif tree.identify_region(event.x, event.y) == 'nothing': 
+        column = tree.identify_column(event.x) # identify column
+        # check whether we are below the last row:
+        x, y, width, height = tree.bbox(tree.get_children('')[-1], column)
+        if event.y > y:
+
+            def ok(event):
+                """"""Change item value.""""""
+                # create item
+                item = tree.insert("""", ""end"", values=("""", """"))
+                tree.set(item, column, entry.get())
+                entry.destroy()
+
+            y += height
+            value = """"
+        else:
+            return
+    else:
+        return
+    # display the Entry   
+    entry = ttk.Entry(tree)  # create edition entry
+    entry.place(x=x, y=y, width=width, height=height,
+                anchor='nw')  # display entry on top of cell
+    entry.insert(0, value)  # put former value in entry
+    entry.bind('<FocusOut>', lambda e: entry.destroy())  
+    entry.bind('<Return>', ok)  # validate with Enter
+    entry.focus_set()
+
+
+myApp = tk.Tk()
+
+tree = ttk.Treeview(myApp, show='headings', columns=(""1"", ""2""))
+tree['show'] = 'headings'
+
+tree.column(""1"", width=230)
+tree.heading(""1"", text=""Name"")
+tree.column(""2"", width=230)
+tree.heading(""2"", text=""Price"")
+for i in range(10):
+    item = tree.insert("""", ""end"", values=(""item %i"" % i, i))
+    tree.item(item, tags=item)
+tree.bind('<1>', edit)
+
+tree.pack(fill='both', expand=True)
+
+myApp.mainloop()

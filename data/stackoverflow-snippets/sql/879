@@ -1,0 +1,22 @@
+SET @RowNumber = 0;
+SET @PreviousGroup = NULL;
+SET @PreviousName = NULL;
+
+SELECT
+  @PreviousGroup AS PreviousGroup,
+  @PreviousName AS PreviousName,
+  CASE 
+    WHEN @PreviousGroup = `group` AND @PreviousName = `name` THEN (@RowNumber := @RowNumber + 1)
+    ELSE @RowNumber := 0
+  END AS `Counter`,
+  CASE 
+    WHEN @PreviousGroup = `group` AND @PreviousName = `name` THEN CONCAT(`name`,'- Copy ',@RowNumber)
+    ELSE `name`
+  END AS `Name`,
+  @PreviousGroup := `group` AS RawGroup,
+  @PreviousName := `name` AS RawName
+FROM
+  tbl1
+ORDER BY
+  `group` ASC,
+  `name` ASC;

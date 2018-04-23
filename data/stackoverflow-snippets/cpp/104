@@ -1,0 +1,151 @@
+#include <iostream>
+#include <cstdlib>
+#include <iomanip>
+#include <immintrin.h>
+
+constexpr int N = 4;
+// Power factor tells us how many matrices need to be multiplied.
+// For the standard Wilson action, this is 4.
+// For the first improvement, 6.
+// But the relative runtime ration is independent of this.
+constexpr int POWER_FACTOR = 4;
+constexpr int ITERATIONS = 10 * 1000 * 1000;
+constexpr bool GENERATE_NEW_RANDOMS = false;
+
+typedef double FP_TYPE;
+
+struct Matrix
+{
+  FP_TYPE m[N][N] __attribute__ ((aligned (32)));
+};
+
+typedef void (*multiply_method)(const Matrix&, const Matrix&, Matrix&);
+
+Matrix source_matrices[POWER_FACTOR];
+
+FP_TYPE random (FP_TYPE min, FP_TYPE max);
+void randomize_source_matrices ();
+void test_run (multiply_method method, const std::string &method_name);
+void multiply_plain (const Matrix &a, const Matrix &b, Matrix &c);
+void multiply_intrinsics (const Matrix &a, const Matrix &b, Matrix &c);
+
+FP_TYPE random (FP_TYPE min, FP_TYPE max)
+{
+  return min + (max - min) * FP_TYPE(rand()) / FP_TYPE(RAND_MAX);
+}
+
+void randomize_source_matrices ()
+{
+  // Assign random numbers to imaginary and real parts
+  for (int j = 0; j < N; j++)
+    {
+      for (int k = 0; k < N; k++)
+        {
+          for (int i = 0; i < POWER_FACTOR; i++)
+            {
+              source_matrices[i].m[j][k] = random(-1.0, 1.0);
+            }
+        }
+    }
+}
+
+void multiply_plain (const Matrix &a, const Matrix &b, Matrix &c)
+{
+  for (int j = 0; j < N; j++)
+    {
+      for (int k = 0; k < N; k++)
+        {
+          c.m[j][k] = 0.0;
+          for (int i = 0; i < N; i++)
+            {
+              c.m[j][k] += a.m[j][i] * b.m[i][k];
+            }
+        }
+    }
+}
+
+void multiply_intrinsics (const Matrix &a, const Matrix &b, Matrix &c)
+{
+  //__m256d *B256 = (__m256d *) B;
+  //__m256d *C256 = (__m256d *) C;
+
+  // load values from B
+  __m256d b0 = _mm256_loadu_pd (&b.m[0][0]);
+  __m256d b1 = _mm256_loadu_pd (&b.m[1][0]);
+  __m256d b2 = _mm256_loadu_pd (&b.m[2][0]);
+  __m256d b3 = _mm256_loadu_pd (&b.m[3][0]);
+
+  for (size_t i = 0; i < 4; i++)
+    {
+      // load values from A
+      __m256d a0 = _mm256_set1_pd (a.m[i][0]);
+      __m256d a1 = _mm256_set1_pd (a.m[i][1]);
+      __m256d a2 = _mm256_set1_pd (a.m[i][2]);
+      __m256d a3 = _mm256_set1_pd (a.m[i][3]);
+
+      __m256d sum;
+      sum = _mm256_mul_pd (a0, b0);
+      sum = _mm256_fmadd_pd (a1, b1, sum);
+      sum = _mm256_fmadd_pd (a2, b2, sum);
+      sum = _mm256_fmadd_pd (a3, b3, sum);
+
+      //   asm (""vmovupd %1, %0"" : ""=m""(C256[i]) : ""x""(sum));
+      _mm256_storeu_pd(&c.m[i][0], sum);
+    }
+}
+
+void test_run (multiply_method method, const std::string &method_name)
+{
+  clock_t timer = clock ();
+
+  Matrix matrix_dummy1 = {0};
+  Matrix matrix_dummy2 = {0};
+  Matrix matrix_dummy3 = {0};
+
+  Matrix matrices[POWER_FACTOR];
+  FP_TYPE trace = 0.0;
+
+  // Read source matrices in own data format
+  // We do the whole process ITERATIONS times to get less error for the runtime .
+  for (int n = 0; n < ITERATIONS; n++)
+    {
+      for (int j = 0; j < N; j++)
+        {
+          for (int k = 0; k < N; k++)
+            {
+              for (int i = 0; i < POWER_FACTOR; i++)
+                {
+                  if (GENERATE_NEW_RANDOMS)
+                    {
+                      matrices[i].m[j][k] = random (-1.0, 1.0);
+                    }
+                  else
+                    {
+                      matrices[i].m[j][k] = source_matrices[i].m[j][k] + 1.0 / (double)(n + 1);
+                    }
+                }
+            }
+        }
+      method (matrices[0], matrices[1], matrix_dummy1);
+      method (matrices[2], matrices[3], matrix_dummy2);
+      method (matrix_dummy1, matrix_dummy2, matrix_dummy3);
+
+      for (int j = 0; j < N; j++)
+        {
+          trace += matrix_dummy3.m[j][j];
+        }
+    }
+  std::cout << std::setprecision(15);
+  std::cout << ""Trace "" << method_name << "" = \t"";
+  std::cout << trace / (double) ITERATIONS;
+  std::cout << ""    took "";
+  std::cout << (double) (clock() - timer) / CLOCKS_PER_SEC << ""s\n\n"";
+}
+
+int main ()
+{
+  std::cout << ""Beginning computation\n\n"";
+  randomize_source_matrices ();
+  test_run (multiply_plain, ""For Point"");
+  test_run (multiply_intrinsics, ""Intrinsics"");
+}

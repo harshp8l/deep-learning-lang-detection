@@ -1,0 +1,49 @@
+class $(val text2D: Array[String]) {
+  def ^(that: $): $ = {
+    if (this.text2D.length == 0)
+      that
+    else if (that.text2D.length == 0)
+      this
+    else {
+      val thisW = this.text2D(0).length
+      val thatW = that.text2D(0).length
+
+      // cross-pad arrays to have the same width
+      val padThisRight = "" "" * thatW
+      val padThatLeft = "" "" * thisW
+      val thisPaddedW = this.text2D.map(_ + padThisRight)
+      val thatPaddedW = that.text2D.map(padThatLeft + _)
+      // first lines comes from that!
+      new $(thatPaddedW ++ thisPaddedW)
+    }
+  }
+
+  def +(that: $): $ = {
+    if (this.text2D.length == 0)
+      that
+    else if (that.text2D.length == 0)
+      this
+    else {
+      val thisH = this.text2D.length
+      val thatH = that.text2D.length
+      val thisW = this.text2D(0).length
+      val thatW = that.text2D(0).length
+
+      // pad arrays to have the same height
+      val emptyThis = "" "" * thisW
+      val emptyThat = "" "" * thatW
+      val thisPaddedH = if (thisH >= thatH) this.text2D else Array.fill(thatH - thisH)(emptyThis) ++ this.text2D
+      val thatPaddedH = if (thisH <= thatH) that.text2D else Array.fill(thisH - thatH)(emptyThat) ++ that.text2D
+
+      new $(thisPaddedH.zip(thatPaddedH).map(p => p._1 + p._2))
+    }
+  }
+
+  override def toString = text2D.mkString(""\n"")
+}
+
+object $ {
+  def apply(x: String): $ = {
+    new $(Array[String](x))
+  }
+}

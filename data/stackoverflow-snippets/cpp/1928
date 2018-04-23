@@ -1,0 +1,58 @@
+private static void CallFooBar()
+{
+    // L_0000: newobj instance void InterfaceDemo.CFoo::.ctor()
+    CFoo foo = new CFoo();
+
+    // Note that the next call (since the variable was typed CFoo) is not calling
+    // the interface implementation.
+    //                                              VVVV
+    // L_0005: callvirt instance void InterfaceDemo.CFoo::Bar()
+    foo.Bar();
+
+    // L_000a: ret
+}
+
+private static void CallFooIFooBar()
+{
+    // Note that the type cast does not affect the value reference on the
+    // stack (no cast is performed).  The instantiation looks identical to
+    // CallFooBar above. 
+    // 
+    // L_0000: newobj instance void InterfaceDemo.CFoo::.ctor()
+    CFoo foo = new CFoo();
+    IFoo ifoo = foo;
+
+    // Note that the call is made to the interface method (to be dispatched
+    // through the interface method tables)
+    //                                              VVVV
+    // L_0005: callvirt instance void InterfaceDemo.IFoo::Bar()
+    ifoo.Bar();
+
+    // L_000a: ret
+}
+
+private static void CallFooIFooBar2()
+{
+    // Note that all of the compiled IL is identical to CallFooIFooBar
+    //
+    // L_0000: newobj instance void InterfaceDemo.CFoo::.ctor()
+    IFoo foo = new CFoo();
+
+    // L_0005: callvirt instance void InterfaceDemo.IFoo::Bar()
+    foo.Bar();
+
+    // L_000a: ret
+}
+
+private static void CallCFoo2Bar()
+{
+    // Note that all of the IL excepting for the newobj call is identical.
+    // virtual method resolution takes place at runtime (or at JIT) - not 
+    // at compile time.
+    // 
+    // L_0000: newobj instance void InterfaceDemo.CFoo2::.ctor()
+    IFoo foo = new CFoo2();
+    // L_0005: callvirt instance void InterfaceDemo.IFoo::Bar()
+    foo.Bar();
+    // L_000a: ret
+}

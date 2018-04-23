@@ -1,0 +1,28 @@
+#standardSQL
+-- create a table to work with:
+WITH tabl AS (
+  Select  
+    Date_trunc(X.first_order, week) as cohort, 
+    count(distinct Y.customerId) as G_0,
+    count(distinct IF(date_diff(Y.order_time, X.first_order, week) = 1, Y.customerId, NULL )) G_1_cust,
+    count(distinct IF(date_diff(Y.order_time, X.first_order, week) = 2, Y.customerId, NULL )) G_2_cust,
+    count(distinct IF(date_diff(Y.order_time, X.first_order, week) = 3, Y.customerId, NULL )) G_3_cust,
+    count(distinct IF(date_diff(Y.order_time, X.first_order, week) = 4, Y.customerId, NULL )) G_4_cust
+    -- etc
+
+  from 
+    (Select customerId, Date(orderProcessingTime) as order_time from UserData.Table_1) as Y 
+  left join
+    (SELECT customerId, min(Date(orderProcessingTime)) as first_order FROM UserData.Table_1 group by 1) as X
+  on Y.customerId = X.customerId
+  group by 1
+)
+
+-- work with that table
+SELECT 
+  cohort,
+  DIV(G_1_cust * 100, G_0) AS G_1,
+  DIV(G_2_cust * 100, G_0) AS G_2
+  -- etc
+FROM tabl
+ORDER BY 1

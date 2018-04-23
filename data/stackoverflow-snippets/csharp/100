@@ -1,0 +1,31 @@
+class CancelableDelay
+    {
+        Thread delayTh;
+        Action action;
+        int ms;
+
+        public static CancelableDelay StartAfter(int milliseconds, Action action)
+        {
+            CancelableDelay result = new CancelableDelay() { ms = milliseconds };
+            result.action = action;
+            result.delayTh = new Thread(result.Delay);
+            result.delayTh.Start();
+            return result;
+        }
+
+        private CancelableDelay() { }
+
+        void Delay()
+        {
+            try
+            {
+                Thread.Sleep(ms);
+                action.Invoke();
+            }
+            catch (ThreadAbortException)
+            { }
+        }
+
+        public void Cancel() => delayTh.Abort();
+
+    }

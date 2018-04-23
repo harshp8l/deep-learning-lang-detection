@@ -1,0 +1,30 @@
+$inFile = 'D:\temp\feed.xml'
+$outFile = 'D:\temp\feed-updated.xml'
+
+# Read the input file into an in-memory XML document (object model).
+$xml = [xml] (Get-Content -Raw $inFile)
+
+# Loop over all <Product> elements (anywhere in the document)
+# Note: Since we already have an in-memory XML document, using method
+#       .SelectNodes() is more efficient than using the Select-Xml cmdlet.
+#       Similarly, the use of collection operator .ForEach() is more efficient
+#       than use of the ForEach-Object cmdlet.
+$xml.SelectNodes('//Product').ForEach({
+
+  # $_ is the <Product> element at hand, and its child elements
+  # can simply be accessed with *dot notation*.
+
+  # Get the model number...
+  $modelNo = $_.ModelNumbers.ModelNumber
+
+  # ... and use it to update the <ImageUrl> child element
+  $_.ImageUrl = 'xxx.xxx.com/image/getdvimage/{0}/1/false/200/200/' -f $modelNo
+
+})
+
+# Save the modified in-memory XML document back to disk.
+# Note: 
+#   * Creates a file with BOM-less UTF-8 encoding.
+#   * Be sure to use an *absolute* file path, because the .NET framework's
+#     current directory typically differs from PowerShell's.
+$xml.Save($outFile)

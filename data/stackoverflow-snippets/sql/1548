@@ -1,0 +1,26 @@
+DECLARE @myTable TABLE(Customer varchar(50), Month int, Amount int);
+
+INSERT INTO @myTable(Customer, Month, Amount)
+VALUES
+    ('Tom', 1, 10),
+    ('Kate', 1, 60),
+    ('Ali', 1, 70),
+    ('Tom', 2, 50),
+    ('Kate', 2, 40),
+    ('Tom', 3, 80),
+    ('Ali', 3, 20);
+
+
+DECLARE @FullTable TABLE(Customer varchar(50), Month int, Amount int);
+
+INSERT INTO @FullTable(Customer, Month, Amount)
+SELECT c.Customer, m.Month, ISNULL(mt.Amount, 0)
+FROM (SELECT DISTINCT [Month] FROM @myTable) AS m
+CROSS JOIN (SELECT DISTINCT Customer FROM @myTable) AS c
+LEFT JOIN @myTable AS mt ON m.Month = mt.Month AND c.Customer = mt.Customer
+
+
+SELECT t1.Customer, t1.Month, t1.Amount, (t1.Amount + ISNULL(t2.sm, 0)) AS AmountSum
+FROM @FullTable AS t1
+CROSS APPLY (SELECT SUM(Amount) AS sm FROM @FullTable AS t WHERE t.Customer = t1.Customer AND t.Month < t1.Month) AS t2
+ORDER BY Month, Customer

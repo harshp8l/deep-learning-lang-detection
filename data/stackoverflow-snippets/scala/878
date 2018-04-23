@@ -1,0 +1,94 @@
+val input = """"""ID:   12343-7888
+Name:  Mary, Bob, Jason, Jeff, Suzy
+           Harry, Steve
+           Larry, George
+City:   New York, Portland, Dallas, Kansas City
+        Tampa, Bend
+ID: 567865-676
+Name: Alex, Bob 
+  Chris, Dave 
+     Evan, Frank
+   Gary
+City: Los Angeles, St. Petersburg
+   Washington D.C., Phoenix
+""""""
+
+case class Entry(id: String, names: List[String], cities: List[String])
+
+def parseMessyInput(input: String): List[Entry] = {
+
+  // just a first rought approximation of the structure of the input
+  sealed trait MessyInputLine { def content: String }
+  case class IdLine(content: String) extends MessyInputLine
+  case class NameLine(content: String) extends MessyInputLine
+  case class UnlabeledLine(content: String) extends MessyInputLine
+  case class CityLine(content: String) extends MessyInputLine
+
+  val lines = input.split(""\n"").toList
+
+  // a helper function for checking whether a line starts with a label
+  def tryParseLabeledLine
+    (label: String, line: String)
+    (cons: String => MessyInputLine)
+  : Option[MessyInputLine] = {
+    if (line.startsWith(label + "":"")) {
+      Some(cons(line.drop(label.size + 1)))
+    } else {
+      None
+    }
+  }
+
+  val messyLines: List[MessyInputLine] = for (line <- lines) yield {
+    (
+      tryParseLabeledLine(""Name"", line){NameLine(_)} orElse
+      tryParseLabeledLine(""City"", line){CityLine(_)} orElse
+      tryParseLabeledLine(""ID"", line){IdLine(_)}
+    ).getOrElse(UnlabeledLine(line))
+  }
+
+  /** Combines the content of the first line with the content
+    * of all unlabeled lines, until the next labeled line or
+    * the end of the list is hit. Returns the content of 
+    * the first few lines and the list of the remaining lines.
+    */
+  def readUntilNextLabel(messyLines: List[MessyInputLine])
+  : (List[String], List[MessyInputLine]) = {
+    messyLines match {
+      case Nil => (Nil, Nil)
+      case h :: t => {
+        val (unlabeled, rest) = t.span {
+          case UnlabeledLine(_) => true
+          case _ => false
+        }
+        (h.content :: unlabeled.map(_.content), rest)
+      }
+    }
+  }
+
+  /** Glues multiple lines to entries */
+  def combineToEntries(messyLines: List[MessyInputLine]): List[Entry] = {
+    if (messyLines.isEmpty) Nil
+    else {
+      val (idContent, namesCitiesRest) = readUntilNextLabel(messyLines)
+      val (namesContent, citiesRest) = readUntilNextLabel(namesCitiesRest)
+      val (citiesContent, rest) = readUntilNextLabel(citiesRest)
+      val id = idContent.head.trim
+      val names = namesContent.map(_.split("","").map(_.trim).toList).flatten
+      val cities = citiesContent.map(_.split("","").map(_.trim).toList).flatten
+      Entry(id, names, cities) :: combineToEntries(rest)
+    }
+  }
+
+  // invoke recursive function on the entire input
+  combineToEntries(messyLines)
+}
+
+// how to use
+val entries = parseMessyInput(input)
+
+// output
+for (Entry(id, names, cities) <- entries) {
+  println(id)
+  println(names.mkString("", ""))
+  println(cities.mkString("", ""))
+}

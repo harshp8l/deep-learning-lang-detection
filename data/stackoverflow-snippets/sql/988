@@ -1,0 +1,16 @@
+CREATE OR REPLACE FUNCTION  new_bolshek(parent_id bigint, _key text, _value text, enabled boolean)
+  RETURNS SETOF bolshekter AS
+  $BODY$
+  DECLARE
+    new_id integer;
+    returnrec bolshekter;
+  BEGIN
+        INSERT INTO bolshekter(parent_id, content_key, content_value, enabled)
+        VALUES(parent_id, _key, _value, enabled) RETURNING id INTO new_id;
+        FOR returnrec IN SELECT * FROM bolshekter where id=new_id LOOP
+            RETURN NEXT returnrec;
+        END LOOP;
+  END;
+  $BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;

@@ -1,0 +1,23 @@
+{ 
+    public static IRegistrationBuilder<TDelegate, SimpleActivatorData, SingleRegistrationStyle> RegisterDelegate<TDelegate, TSource>( 
+        this ContainerBuilder builder,  
+        Func<TSource, TDelegate> extractDelegate,  
+        string sourceComponentName = null,  
+        string registeredComponentName = null)  
+        where TDelegate : class
+    {
+        var registrationFunction = new Func<IComponentContext, TDelegate>(context => 
+        { 
+            var c = context.Resolve<IComponentContext>(); 
+            var source = sourceComponentName == null 
+                ? c.Resolve<TSource>() 
+                : c.ResolveNamed<TSource>(sourceComponentName); 
+            return extractDelegate(source); 
+        }); 
+
+        return registeredComponentName == null ? 
+            builder.Register(registrationFunction) : 
+            builder.Register(registrationFunction) 
+                .Named<TDelegate>(registeredComponentName); 
+    } 
+}

@@ -1,0 +1,22 @@
+// outside of the agent
+type Timeouts = {
+    load : int
+    connect : int
+    agent : int
+    awaiter : int
+}
+
+let timeouts = { load = 5000; connect = 2000; agent = 1000; awaiter = 100 }
+
+// a static member in a class that wraps my agent
+let tryCommand command timeout = async {
+    let! answer = a.PostAndTryAsyncReply (command, timeout)
+    match answer with
+    | Some state -> return State state
+    | None -> return NotResponding
+}        
+
+// regular members of the wrapper
+member x.Connect () = tryCommand Commands.Connect (timeouts.connect + timeouts.agent)
+member x.Reload () = tryCommand Commands.Reload (timeouts.load + timeouts.agent)
+member x.Close () = tryCommand Commands.Close timeouts.agent

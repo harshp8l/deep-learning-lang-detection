@@ -1,0 +1,52 @@
+struct Data {
+  ...
+}
+
+...
+
+std::mutex lock;
+volatile const Data* value;  // The protected data
+volatile int current_value_version = 0;
+
+...
+
+bool modifyProtectedValue() {
+  // Initialize.
+  int version_on_entry = value_version;
+
+  // Compute the new value, using the current value.
+  // We don't have any lock here, so it's fine to make heavy
+  // computations or block on I/O.
+  Data* new_value = new Data;
+  compute_new_value(value, new_value);
+
+  // Commit or fail.
+  bool success;
+  lock.lock();
+  if (current_value_version == version_on_entry) {
+    value = new_value;
+    current_value_version++;
+    success = true;
+  } else {
+    success = false;
+  }
+  lock.unlock();
+
+  // Roll back in case of failure.
+  if (!success) {
+    delete new_value;
+  }
+
+  // Inform caller about success or failure.
+  return success;
+}
+
+// It's cleaner to keep retry logic separately.
+bool retryModification(int retries = 5) {
+  for (int i = 0; i < retries; ++i) {
+    if (modifyProtectedValue()) {
+      return true;
+    }
+  }
+  return false;
+}

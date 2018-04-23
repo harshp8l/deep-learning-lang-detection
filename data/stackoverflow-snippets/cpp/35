@@ -1,0 +1,57 @@
+long double DESTINATION_CALCULATION_plusplus ( double phi, double lambda, double S, double azimuth,
+            double a, double b, double *phi2, double* lambda2, double* azimuth2){
+
+    phi = phi*M_PI/180;
+    lambda = lambda*M_PI/180;
+    double A1;
+    double eu2 = (pow(a, 2) - pow(b, 2)) / pow(b, 2); //second eccentricity
+    double c = pow(a,2) / b;
+    double v = sqrt(1 + (eu2 * pow(cos(phi) , 2)));
+    double beta1 = tan(phi) / v;
+    double Aeq = asin( cos(beta1) * sin(azimuth) );
+    double f = (a - b) / a; //flattening
+    double beta = atan((1-f)*tan(phi));
+    double u2 = pow(cos(Aeq),2)*eu2;
+    //////////////////////////////----------------------------------------------
+    long double sigma1 = atan( tan(beta1)/ cos(azimuth) );
+    long double A = 1 + u2*(4096 + u2*(-768+u2*(320-175*u2))) / 16384;
+    long double B = u2*(256 + u2*(-128+u2*(74-47*u2)))/1024;
+    long double sigma = S /  (b*A);
+    long double sigmaM = (2*sigma1 + sigma) /2;
+    long double d_w;
+    long double d_sigma;
+    ////////////////////////////------------------------------------------------
+    double C;
+    double d_lambda;
+    long double sigma_last=invalid_constant;
+       do{
+          if(sigma_last != invalid_constant){
+            sigma = sigma_last;
+         }
+         sigma1 = atan( tan(beta1) / cos(A1) );
+         sigmaM = (2*sigma1 + sigma) / 2;
+
+         d_sigma = B*sin(sigma)*(cos(2*sigmaM)+(1/4)*B*(cos(sigma)
+                         *(-1+2*pow(cos(2*sigmaM),2)))-(1/6)*B*cos(2*sigmaM)
+                         *(-3+4*pow(sin(sigma),2))*(-3+4*pow(cos(2*sigmaM),2)));
+         sigma_last = sigma + d_sigma;
+       }
+       while(set_precision_14(sigma)<= set_precision_14(sigma_last) || set_precision_14(sigma)>= set_precision_14(sigma_last));
+
+       sigma = sigma_last;
+       *phi2 = atan((sin(beta1)*cos(sigma)+cos(beta1)*sin(sigma)*cos(azimuth))/((1-f)
+       *sqrt(pow(sin(Aeq),2)+pow((sin(beta1)*sin(sigma)-cos(beta1)*cos(sigma)*cos(azimuth)),2))));
+
+        d_w = (sin(sigma)*sin(azimuth))/(cos(beta1)*cos(sigma) - sin(beta1)* sin(sigma)*cos(azimuth));
+        C   = (f/16)*pow(cos(Aeq),2)*(4+f*(4-3*pow(cos(Aeq),2)));
+        d_lambda = d_w - (1-C)*f*sin(azimuth)*(sigma + C*sin(sigma)*
+                   (cos(2*sigmaM)+C*cos(sigma)*(-1+2*pow(cos(2*sigmaM),2))));
+
+        *lambda2 = lambda + d_lambda;
+        *azimuth2 = sin(Aeq) / (-sin(beta1)*sin(sigma)+cos(beta1)*cos(sigma)*cos(azimuth));
+
+        *azimuth2 = *azimuth2 * 180/M_PI;
+        *lambda2 = *lambda2 * 180/M_PI;
+        *phi2 = *phi2 * 180/M_PI;
+
+}

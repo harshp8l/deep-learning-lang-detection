@@ -1,0 +1,35 @@
+public function login() {
+    $this->form_validation->set_rules('username', 'Username', 'required');
+    $this->form_validation->set_rules('password', 'Password', 'required|min_length[5]');
+    if ($this->form_validation->run() == TRUE) {
+
+        $username = $_POST['username'];
+        /**
+         * Do not md5 your passwords!
+         * Use password_hash and password_verify!!
+         */
+        $password = md5($_POST['password']); // DO NOT MD5 your passwords!
+
+        //check user in db
+        // this should be in a model!
+        $this->db->select('*');
+        $this->db->from('users');
+        $this->db->where(array('username' => $username, 'password' => $password));
+        $query = $this->db->get();
+
+        if ($query->num_rows() == 1) {
+            $user = $query->row();
+            $this->session->set_flashdata(""success"", ""You are logged in."");
+
+            $_SESSION['user_logged'] = TRUE;
+            $_SESSION['username'] = $user->username;
+
+            //redirect to profile page
+            redirect(""user/profile"", ""refresh"");
+        } else {
+            $this->session->set_flashdata(""error"", ""NO such account exists"");
+            //redirect(""auth/login"", ""refresh"");
+        }
+    }
+    $this->load->view('login');
+}

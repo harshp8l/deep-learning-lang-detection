@@ -1,0 +1,20 @@
+declare function my-ns:transfer-records(
+    $record as element(record),
+    $database as xs:string,
+    $host as xs:string)
+{
+  let $response :=
+    xdmp:set-request-time-limit(600,
+    xdmp:http-post(""http://"" || $host || "":"" || $PORT || ""/doc_transfer.xqy?database="" || $database,
+        <options xmlns=""xdmp:http"">
+            <headers>
+                <content-type>application/gzip</content-type>
+            </headers>
+            <timeout>900</timeout>
+        </options>,
+        xdmp:gzip($record)
+    )
+  )
+  return
+    xdmp:set-response-code($response[1]//*:code, $response[1]//*:message)
+};

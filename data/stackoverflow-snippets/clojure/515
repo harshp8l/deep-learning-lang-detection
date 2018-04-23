@@ -1,0 +1,25 @@
+(defonce app-state (r/atom 0))
+
+(defn Clicker []
+  [:h2 {:on-click #(swap! app-state inc)} ""Click me""])
+
+(defn Displayer [n]
+  (let [a (r/atom (js/console.log ""Component generated!""))]
+    (fn [n]
+      [:p ""Hello, yes I ignore my input""])))
+
+(defn Intermediate1 [n]
+  [Displayer n])
+
+(defn Intermediate2 [n]
+  (let [Subcomponent (fn [x] [Displayer x])]
+    [Subcomponent n]))
+
+(defn my-app []
+  [:div
+   [Clicker]
+   [Intermediate2 @app-state]])
+
+(r/render
+  [my-app]
+  (js/document.getElementById ""app""))

@@ -1,0 +1,37 @@
+--Create the Tally Table
+CREATE TABLE #Tally (I int);
+
+WITH ints AS(
+    SELECT 0 AS i
+    UNION ALL
+    SELECT i + 1
+    FROM ints
+    WHERE i + 1 <= 10)
+--And in the numbers go!
+INSERT INTO #Tally
+SELECT i
+FROM ints;
+GO
+
+--Create the sample table
+CREATE TABLE #Sample (ID int IDENTITY(1,1),
+                      MinP int,
+                      MaxP int);
+
+--Sample data    
+INSERT INTO #Sample (Minp, MaxP)
+VALUES (0,2),
+       (1,4);
+GO
+
+--And the solution
+SELECT S.ID,
+       T.I AS P
+FROM #Sample S
+     JOIN #Tally T ON T.I BETWEEN S.MinP AND S.MaxP
+ORDER BY S.ID, T.I;
+GO
+
+--Clean up    
+DROP TABLE #Sample;
+DROP TABLE #Tally;

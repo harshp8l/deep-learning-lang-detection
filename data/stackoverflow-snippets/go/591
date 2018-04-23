@@ -1,0 +1,31 @@
+pipe := c.Pipe([]bson.M{
+    {
+        ""$match"": bson.M{
+            ""_event_id"":    eventID,            // Boost for the specific event
+            ""is_published"": true,               // Boost is active
+            ""start_date"":   bson.M{""$lt"": now}, // now is between start and end
+            ""end_date"":     bson.M{""$gt"": now}, // now is between start and end
+        },
+    },
+    {
+        ""$lookup"": bson.M{
+            ""from"":         ""campaigns"",
+            ""localField"":   ""_campaign_id"",
+            ""foreignField"": ""_id"",
+            ""as"":           ""campaign"",
+        },
+    },
+    {""$unwind"": ""$campaign""},
+    {
+        ""$match"": bson.M{
+            ""campaign.is_published"": true,      // Attached campaign is active
+        },
+    },
+    {""$limit"": 1},             // Fetch at most 1 result
+    {
+        ""$project"": bson.M{
+            ""_id"":   0,        // We don't even need the EventBoost's ID
+            ""level"": ""$level"", // We do need the level and nothing more
+        },
+    },
+})

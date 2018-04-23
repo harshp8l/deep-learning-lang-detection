@@ -1,0 +1,39 @@
+#include ""mex.h""
+#include <Eigen/Sparse>
+using namespace Eigen;
+
+
+Map<SparseMatrix<double> >
+matlab_to_eigen_sparse(const mxArray * mat)
+{
+    mwSize     m = mxGetM (mat);
+    mwSize     n = mxGetN (mat);
+    mwSize    nz = mxGetNzmax (mat);
+    double  * pr = mxGetPr (mat);
+    mwIndex * ir = mxGetIr (mat);
+    mwIndex * jc = mxGetJc (mat);
+    Map<SparseMatrix<double> > result(m, n, nz, jc, ir, pr);
+    return result;
+}
+
+mxArray* 
+eigen_to_matlab_sparse(const Ref<const SparseMatrix<double>,StandardCompressedFormat>& mat)
+{
+    mxArray * result = mxCreateSparse (mat.rows(), mat.cols(), mat.nonZeros(), mxREAL);
+    const SparseMatrix<double>::StorageIndex* ir = mat.innerIndexPtr();
+    const SparseMatrix<double>::StorageIndex* jc = mat.outerIndexPtr();
+    const double* pr = mat.valuePtr();
+
+    mwIndex * ir2 = mxGetIr (result);
+    mwIndex * jc2 = mxGetJc (result);
+    double  * pr2 = mxGetPr (result);
+
+    for (mwIndex i = 0; i < mat.nonZeros(); i++) {
+        pr2[i] = pr[i];
+        ir2[i] = ir[i];
+    }
+    for (mwIndex i = 0; i < mat.cols() + 1; i++) {
+        jc2[i] = jc[i];
+    }
+    return result;
+}

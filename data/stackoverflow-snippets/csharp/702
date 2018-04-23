@@ -1,0 +1,25 @@
+    public static IEnumerable<TNode> Flatten<TNode>(
+        this IEnumerable<TNode> nodes, 
+        Func<TNode, bool> filterBy = null,
+        Func<TNode, IEnumerable<TNode>> selectChildren = null
+        )
+    {
+        if (nodes == null) yield break;
+        if (filterBy != null) nodes = nodes.Where(filterBy);
+
+        foreach (var node in nodes)
+        {
+            yield return node;
+
+            var children = (selectChildren == null)
+                ? node as IEnumerable<TNode>
+                : selectChildren(node);
+
+            if (children == null) continue;
+
+            foreach (var child in children.Flatten(filterBy, selectChildren))
+            {
+                yield return child;
+            }
+        }
+    }

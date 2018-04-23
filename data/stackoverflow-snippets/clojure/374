@@ -1,0 +1,33 @@
+(def paths [[:a :b :c]
+            [:a :b :d]
+            [:b :d]
+            [:b :e]
+            [:b :e :a]])
+
+(defn update-with-path
+  [tree-map path-vec]
+  (assoc-in tree-map path-vec nil) )
+
+(defn build-tree [paths]
+  (reduce
+    update-with-path
+    {} paths )
+  )
+
+(deftest t-global
+  (is= {:a nil} (update-with-path {} [:a]))
+  (is= {:a {:b nil}} (update-with-path {} [:a :b]))
+  (is= {:a {:b {:c nil}}} (update-with-path {} [:a :b :c]))
+
+  (is= (build-tree paths)
+    { :a
+      { :b
+        { :c nil
+          :d nil}}
+      :b
+      {
+        :d nil
+        :e
+          { :a nil }}}
+    )
+  )

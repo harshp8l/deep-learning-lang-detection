@@ -1,0 +1,44 @@
+    var express = require('express');
+var ejs = require('ejs');
+var bodyParser = require('body-parser');
+var mysql = require('mysql');
+
+var connect = mysql.createConnection({
+    host: ""localhost"",
+    user: ""root"",
+    password: """",
+    database: ""artbook""
+});
+
+var app = express();
+app.set('view engine', 'ejs');
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.get('/', function(req, res){
+    res.render('./index');
+});
+app.post('/', function(req, res){
+    console.log(req.body.login + req.body.password);
+    connect.connect(function(err){
+        connect.on('error', function(err) {
+            console.log(""mysql error"",err);
+        });
+        var sql = 'SELECT imie FROM konta WHERE imie = ""'+req.body.login+'"" AND nazwisko = ""'+req.body.password+'"";'
+        connect.query(sql, function (err, rows){
+            connect.on('error', function(err) {
+                console.log(""query error"",err);
+            });
+            for(var i in rows) {
+                if(req.body.login === rows[i].imie && req.body.password === rows[i].nazwisko){
+                    console.log('done');
+                    res.render('./login')
+                } 
+                console.log(rows[i].imie + rows[i].nazwisko);
+            }
+        });
+    });
+});
+
+app.listen(3000);
+console.log('Port serwera: 3000');`enter code here`

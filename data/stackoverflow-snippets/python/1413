@@ -1,0 +1,53 @@
+<html>
+<head>
+    <title>Form</title>
+    <script type=""text/javascript"" src=""https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js""> </script>
+    <script type = ""text/javascript"" 
+         src = ""https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js""></script>
+<script src=""https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js""></script>
+<script charset=""utf-8"" type=""text/javascript"">
+    $(function() {
+        var dropdown = {
+            customer: $('#select_customer'),
+            product: $('#select_product')
+        };
+
+        // function to call XHR and update product dropdown
+        function updateproduct() {
+            var customer = dropdown.customer.val();
+            dropdown.product.attr('disabled', 'disabled');
+            console.log(customer);
+
+            if (customer.length) {
+                dropdown.product.empty();
+                $.getJSON(""{{ url_for('productChange') }}"", {customer: customer}, function(data) {
+                    console.log(data);
+                    data.forEach(function(item) {
+                        dropdown.product.append(
+                            $('<option>', {
+                                value: item.vals,
+                                text: item.vals
+                            })
+                        );
+                    });
+                    dropdown.product.removeAttr('disabled');
+                });
+            }
+        }
+
+        // event listener to customer dropdown change
+        dropdown.customer.on('change', function() {
+            updateproduct();
+        });
+
+    });
+</script>
+</head>
+<body>
+    <form action=""/runpage/"" method=""POST"" >
+        {{ form.customer}}
+        {{ form.product }}
+        <input type=""submit"">
+    </form>
+</body>
+</html>

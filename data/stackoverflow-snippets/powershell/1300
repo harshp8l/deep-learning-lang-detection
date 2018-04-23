@@ -1,0 +1,49 @@
+function Add-ListViewItem
+{
+    [CmdletBinding()]
+    [OutputType([System.Void])]
+    param
+    (
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [System.Windows.Forms.ListView]$ListView,
+        [ValidateNotNullOrEmpty()]
+        [PSCustomObject]$Items,
+        [System.Management.Automation.SwitchParameter]$Append
+    )
+    begin
+    {
+        $ListView.Update()
+    }
+    process
+    {
+        #Clear listview
+        if (!$Append)
+        {
+            $ListView.Items.Clear()
+        }
+
+        #Create the ListViewItem
+        [System.Windows.Forms.ListViewItem[]]$ListViewItems = $null
+        foreach ($Item in $Items)
+        {
+
+            $ListViewItem = New-Object -TypeName System.Windows.Forms.ListViewItem
+            $ListViewItem.Text = $Item.NoteProperty1
+            $ListViewItem.SubItems.Add($Item.NoteProperty2)
+
+            $ListViewItems += $ListViewItem
+        }
+
+        #Add the items to the listview
+        if ($ListViewItems -ne $null)
+        {
+            $ListView.Items.AddRange($ListViewItems)
+        }
+
+    }
+    end
+    {
+        $ListView.EndUpdate()
+    }
+}

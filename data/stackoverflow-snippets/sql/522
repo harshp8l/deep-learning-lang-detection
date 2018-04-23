@@ -1,0 +1,23 @@
+CREATE OR REPLACE FUNCTION v_Telecontagem_func()
+    RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $function$
+    BEGIN
+        IF TG_OP = 'INSERT' THEN
+            INSERT INTO Fonte (id, nome, tipo_fonte) VALUES (DEFAULT, NEW.fonte_nome, NEW.fonte_tipo_fonte) RETURNING id INTO NEW.telecontagem_id_fonte;
+            INSERT INTO Telecontagem (id_fornecedor, fornecedor, nome, id_fonte) VALUES (NEW.telecontagem_id_fornecedor, NEW.telecontagem_fornecedor, NEW.telecontagem_nome, NEW.telecontagem_id_fonte);
+            RETURN NEW;
+        ELSIF TG_OP = 'UPDATE' THEN
+            -- UPDATE HERE
+            RETURN NEW;
+        ELSIF TG_OP = 'DELETE' THEN
+            -- DELETE HERE
+            RETURN NULL;
+        END IF;
+        RETURN NEW;
+    END;
+$function$;
+
+CREATE TRIGGER v_Telecontagem__trig
+    INSTEAD OF INSERT OR UPDATE OR DELETE ON
+    v_Telecontagem FOR EACH ROW EXECUTE PROCEDURE v_Telecontagem_func();

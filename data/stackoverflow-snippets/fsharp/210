@@ -1,0 +1,19 @@
+type PTD = ProvidedTypeDefinition -> ProvidedTypeDefinition
+
+type ProvidedTypeBuilder () =
+    member __.Zero () : PTD =
+        id
+    member __.Return _ : PTD =
+        id
+    member __.Bind(m, f : unit -> PTD) =
+        fun ptd -> (f ()) (m ptd)
+    member x.Combine(m1 : PTD, m2 : PTD) : PTD =
+        x.Bind(m1, fun () -> m2)
+
+    [<CustomOperation(""addMember"", MaintainsVariableSpaceUsingBind = true)>]
+    member x.AddMember(ptd, member') =
+        let func =
+          fun (instance : ProvidedTypeDefinition) ->
+              instance.AddMember member'
+              instance
+        x.Bind(ptd, fun () -> func)

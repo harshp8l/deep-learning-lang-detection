@@ -1,0 +1,67 @@
+package main
+
+import (
+    ""errors""
+    ""fmt""
+    ""log""
+    ""regexp""
+    ""github.com/golang/protobuf/jsonpb""
+    _ ""github.com/golang/protobuf/proto""
+)
+
+var ins = []string{
+    `id=1, name=peter, age=24`,
+    `id=2, age=30`,
+    `name=mary, age=31`,
+    `id=100`,
+    `name=bob`,
+    `age=11`,
+}
+
+var ParseError = errors.New(""bad parser input"")
+var Regex *regexp.Regexp
+
+type Test struct {
+    ID   *string `protobuf:""bytes,1,opt,name=id,json=id"" json:""id,omitempty""`
+    Name *string `protobuf:""bytes,2,opt,name=name,json=name"" json:""name,omitempty""`
+    Age  *string `protobuf:""bytes,3,opt,name=age,json=age"" json:""age,omitempty""`
+}
+
+func (t *Test) Reset() {
+    *t = Test{}
+}
+
+
+func (*Test) ProtoMessage() {}
+func (*Test) Descriptor() ([]byte, []int) {return []byte{}, []int{0}}
+
+func (t *Test) String() string {
+    return fmt.Sprintf(""ID: %v, Name: %v, Age: %v"", t.ID, t.Name, t.Age)
+}
+
+func main() {
+    var err error
+    Regex, err = regexp.Compile(`([^,\s]*)=([^,\s]*)`)
+    if err != nil {
+        log.Panic(err)
+    }
+    for _, v := range ins {
+
+        test, err := ParseLine(v)
+        if err != nil {
+            fmt.Println(err)
+            log.Panic(err)
+        }
+        fmt.Println(test)
+    }
+}
+
+func ParseLine(inp string) (*Test, error) {
+    JSON := fmt.Sprintf(""{%s}"", Regex.ReplaceAllString(inp, `""$1"" : ""$2""`))
+    test := &Test{}
+    err := jsonpb.UnmarshalString(JSON, test)
+    if err != nil {
+        return nil, err
+    }
+    return test, nil
+}

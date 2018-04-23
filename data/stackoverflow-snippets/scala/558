@@ -1,0 +1,21 @@
+val logRegression = new LogisticRegression()
+  .setFeaturesCol(columnNames.features)
+  .setPredictionCol(columnNames.prediction)
+  .setRawPredictionCol(columnNames.rawPrediciton)
+  .setLabelCol(columnNames.label)
+
+val svmEstimator = new LinearSVC()
+  .setFeaturesCol(columnNames.features)
+  .setPredictionCol(columnNames.prediction)
+  .setRawPredictionCol(columnNames.rawPrediciton)
+  .setLabelCol(columnNames.label)
+
+val delegatingEstimator = new DelegatingEstimator(logRegression, svmEstimator)
+
+val paramGrid = new ParamGridBuilder()
+  .addGrid(delegatingEstimator.selectedEstimator, Array(0, 1))
+  .build()
+
+val model = crossValidator.fit(data)
+
+val bestModel = model.bestModel.asInstanceOf[DelegatingEstimatorModel].delegate

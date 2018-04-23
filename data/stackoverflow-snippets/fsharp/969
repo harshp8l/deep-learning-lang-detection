@@ -1,0 +1,28 @@
+type SemaphoreCommand =
+  |Release
+  |Wait of AsyncReplyChannel<unit>
+
+let semaphore slots =
+    Agent.Start
+    <| fun inbox ->
+        let rec loop c (w:AsyncReplyChannel<unit> list) =
+          async {
+            let! command = inbox.Receive()
+            match command with
+            |Release -> if (c + 1) = slots then w |> List.iter(fun t -> t.Reply()) 
+                        else return! loop (c + 1) w
+            |Wait a -> return! loop c (a::w)
+        }
+        loop 0 []
+
+let slotWaiter = semaphore 100
+
+//Events will fill up slots
+Release |> slotWaiter.Post
+Release |> slotWaiter.Post
+
+async{
+  //Wait for all slots to be filled
+  do! slotWaiter.PostAndAsyncReply(fun t -> Wait t)
+  //All slots filled - continue
+}

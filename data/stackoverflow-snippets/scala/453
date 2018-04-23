@@ -1,0 +1,26 @@
+class FiniteBruteForce[X](possibilities: List[X])
+extends BruteForce[X] {
+  def engageBruteForceAttack(constraint: X => Boolean) = possibilities.find(constraint)
+}
+
+object FiniteBruteForce {
+  def apply[X](xs: X*) = new FiniteBruteForce[X](xs.toList)
+}
+
+class ProductBruteForce[A, B](a: BruteForce[A], b: BruteForce[B])
+extends BruteForce[(A, B)] {
+  def engageBruteForceAttack(constraint: ((A, B)) => Boolean) = {
+    var solution: Option[(A, B)] = None
+    a.engageBruteForceAttack { x => 
+      b.engageBruteForceAttack { y => 
+        if (constraint((x, y))) {
+          solution = Some((x, y))
+          true
+        } else {
+          false
+        }
+      }.map(_ => true).getOrElse(false)
+    }
+    solution
+  }
+}

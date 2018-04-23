@@ -1,0 +1,80 @@
+open System
+open System.Text.RegularExpressions
+open System.Linq.Expressions
+
+let printfRegex = Regex(@""^(?<text>[^%]*)((?<placeholder>%(%|((0|-|\+| )?([0-9]+)?(\.[0-9]+)?b|c|s|d|i|u|x|X|o|e|E|f|F|g|G|M|O|A|\+A|a|t)))(?<text>[^%]*))*$"", RegexOptions.ExplicitCapture ||| RegexOptions.Compiled)
+
+type PrintfExpr =
+| K of Expression
+| F of ParameterExpression * Expression
+
+let sprintf' (c:System.Globalization.CultureInfo) (f:Printf.StringFormat<'a>) : 'a =
+    //'a has form 't1 -> 't2 -> ... -> string
+
+    let cultureExpr = Expression.Constant(c) :> Expression
+
+    let m = printfRegex.Match(f.Value)
+    let prefix = m.Groups.[""text""].Captures.[0].Value
+
+    let inputTypes = 
+        let rec loop t = 
+            if Reflection.FSharpType.IsFunction t then
+                let dom, rng = Reflection.FSharpType.GetFunctionElements t
+                dom :: loop rng
+            else
+                if t <> typeof<string> then
+                    failwithf ""Unexpected return type: %A"" t
+                []
+        ref(loop typeof<'a>)
+
+    let pop() = 
+        let (t::ts) = !inputTypes
+        inputTypes := ts
+        t  
+
+    let exprs =
+        K(Expression.Constant(prefix)) ::
+        [for i in 0 .. m.Groups.[""placeholder""].Captures.Count - 1 do
+            let ph = m.Groups.[""placeholder""].Captures.[i].Value
+            let text = m.Groups.[""text""].Captures.[i+1].Value
+            // TODO: handle flags, width, precision, other placeholder types, etc.
+            if ph = ""%%"" then yield K(Expression.Constant(""%"" + text))
+            else
+                match ph with
+                | ""%f"" -> 
+                    let t = pop() 
+                    if t <> typeof<float> && t <> typeof<float32> then
+                        failwithf ""Unexpected type for %%f placeholder: %A"" t
+                    let e = Expression.Variable t
+                    yield F(e, Expression.Call(e, t.GetMethod(""ToString"", [| typeof<System.Globalization.CultureInfo> |]), [cultureExpr]))
+                | ""%s"" ->
+                    let t = pop() 
+                    if t <> typeof<string> then
+                        failwithf ""Unexpected type for %%s placeholder: %A"" t
+                    let e = Expression.Variable t
+                    yield F(e, e)
+                | _ -> 
+                    failwithf ""unhandled placeholder: %s"" ph
+                yield K (Expression.Constant text)]
+
+    let innerExpr = 
+        Expression.Call(typeof<string>.GetMethod(""Concat"", [|typeof<string[]>|]), Expression.NewArrayInit(typeof<string>, exprs |> Seq.map (fun (K e | F(_,e)) -> e)))
+        :> Expression
+
+    let funcConvert = 
+        typeof<FuncConvert>.GetMethods()    
+        |> Seq.find (fun mi -> mi.Name = ""ToFSharpFunc"" && mi.GetParameters().[0].ParameterType.GetGenericTypeDefinition() = typedefof<Converter<_,_>>)
+
+    let body =
+        List.foldBack (fun pe (e:Expression) ->
+                match pe with
+                | K _ -> e
+                | F(p,_) -> 
+                    let m = funcConvert.MakeGenericMethod(p.Type, e.Type)
+                    Expression.Call(m, Expression.Lambda(m.GetParameters().[0].ParameterType, e, p))
+                    :> Expression) exprs innerExpr
+
+
+    Expression.Lambda(body, [||]).Compile().DynamicInvoke() :?> 'a
+
+sprintf' (Globalization.CultureInfo.GetCultureInfo ""fr-FR"") ""%s %f > %f"" ""It worked!"" 1.5f -12.3

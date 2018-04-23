@@ -1,0 +1,54 @@
+--------1. CTE  Bring in only PA and NJ market
+
+With
+
+Memb AS (
+Select Distinct 
+  mbc.Hsc_Id                                   AS  Auth_Number,
+  mbc.POL_ISS_ST_CD                            AS  Policy_State
+
+ From icue.HSC_MBR_COV mbc
+     Where mbc.POL_ISS_ST_CD = 'PA' 
+  And  (mbc.LOB_TYP_ID = '12' OR mbc.CLM_PLTFM_ID  = 'A9')
+
+  Union 
+
+
+  Select Distinct 
+    mbc.hsc_id                         AS Auth_Number,
+    mbc.POL_ISS_ST_CD                  AS  Policy_State
+
+ From icue.HSC_MBR_COV mbc
+     Where mbc.POL_ISS_ST_CD = 'NJ' 
+  And  (mbc.LOB_TYP_ID = '12' OR mbc.CLM_PLTFM_ID  = 'A9')  
+
+
+
+),
+  ---select * from Memb
+
+
+----------- 2.CTE Fax Flag 
+
+
+  Fax_Flag AS(
+
+SELECT Distinct
+  cmt.CNTC_NM                     As Provider_Name,
+  cmt.FAX_NBR                     AS Fax_Number,
+  --cmt.HSC_ID                      AS Auth_Number,
+
+
+  CASE When cmt.FAX_NBR ='201-553-7889' THEN 'Yes'
+     ELSE 'No'
+       END  AS Fax_Flag
+
+   From Memb mbc
+
+  Left Join icue.cmnct_trans cmt
+   On mbc.Auth_Number = cmt.hsc_id ----- needed to update mbc.HSC_ID to mbc.auth_number
+     And cmt.CNTC_NM ='CHILDRENS HOSP PHILADELPHIA'
+
+   )
+
+   Select * From Fax_Flag

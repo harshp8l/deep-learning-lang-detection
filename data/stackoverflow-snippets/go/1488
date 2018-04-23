@@ -1,0 +1,36 @@
+package main
+
+import (
+    ""fmt""
+
+    ""github.com/aws/aws-sdk-go/aws""
+    ""github.com/aws/aws-sdk-go/aws/endpoints""
+    ""github.com/aws/aws-sdk-go/aws/session""
+    ""github.com/aws/aws-sdk-go/service/dynamodb""
+)
+
+func main() {
+
+    sess := session.Must(session.NewSession(&aws.Config{
+        Region: aws.String(endpoints.UsWest2RegionID),
+    }))
+
+    svc := dynamodb.New(sess)
+
+    input := &dynamodb.GetItemInput{
+        Key: map[string]*dynamodb.AttributeValue{
+            ""year"": {
+                N: aws.String(""1999""),
+            },
+            ""title"": {
+                S: aws.String(""MyMovie""),
+            },
+        },
+        TableName: aws.String(""Movies""),
+    }
+
+    result, err := svc.GetItem(input)
+
+    fmt.Println(result)
+    fmt.Println(err)
+}

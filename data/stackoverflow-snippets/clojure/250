@@ -1,0 +1,48 @@
+(ns macro-fun
+  (:require
+   [clojure.spec.alpha :as s]
+   [clojure.core.specs.alpha :as core-specs]))
+
+(s/fdef syms-in-binding
+  :args (s/cat :b ::core-specs/binding-form)
+  :ret (s/coll-of simple-symbol? :kind vector?))
+
+(defn syms-in-binding
+  ""Returns a vector of all symbols in a binding form.""
+  [b]
+  (letfn [(step [acc coll]
+            (reduce (fn [acc x]
+                      (cond (coll? x) (step acc x)
+                            (symbol? x) (conj acc x)
+                            :else acc))
+                    acc, coll))]
+    (if (symbol? b) [b] (step [] b))))
+
+(s/fdef defs
+  :args (s/cat :binding ::core-specs/binding-form, :body any?))
+
+(defmacro defs
+  ""Like def, but can take a binding form instead of a symbol to
+   destructure the results of the body.
+   Doesn't support docstrings or other metadata.""
+  [binding body]
+  `(let [~binding ~body]
+     ~@(for [sym (syms-in-binding binding)]
+         `(def ~sym ~sym))))
+
+
+;; Usage
+
+(defs {:keys [foo bar]} {:foo 42 :bar 36})
+
+foo ;=> 42
+
+bar ;=> 36
+
+(defs [a b [c d]] [1 2 [3 4]])
+
+[a b c d] ;=> [1 2 3 4]
+
+(defs baz 42)
+
+baz ;=> 42

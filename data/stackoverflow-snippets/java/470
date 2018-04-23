@@ -1,0 +1,59 @@
+public class Output {
+    public static void main(String[] args) {
+        String toPrint = ""Hello, my name is Voldemort, but few call me that."";
+        StringPrinter printer = new StringPrinter();
+        printer.print(toPrint, Output::byCharacter, 30);
+        System.out.println();
+        printer.print(toPrint, Output::byWord, 150);
+    }
+
+    private static List<String> byWord(String toSplit) {
+        Iterable<String> it = () -> new Scanner(toSplit);
+        return StreamSupport.stream(it.spliterator(), false).map(s -> s + "" "").collect(Collectors.toList());
+    }
+
+    private static List<String> byCharacter(String toSplit) {
+        return toSplit.chars().mapToObj(i -> """" + (char) i).collect(Collectors.toList());
+    }
+}
+
+class StringPrinter implements Runnable {
+    // using an array to be most efficient
+    private String[] output;
+    private int currentIndex;
+
+    // the service providing the milliseconds delay
+    private ScheduledExecutorService printExecutor;
+
+    public void print(String toOutput, Function<String, List<String>> split, int delay) {
+        if (printExecutor != null) {
+            throw new IllegalStateException();
+        }
+        printExecutor = Executors.newSingleThreadScheduledExecutor();
+        List<String> list = split.apply(toOutput);
+        output = list.toArray(new String[list.size()]);
+        currentIndex = 0;
+
+        printExecutor.scheduleWithFixedDelay(this, 0, delay, TimeUnit.MILLISECONDS);
+
+        // wait until output has finished
+        synchronized (this) {
+            while (printExecutor != null)
+                try {
+                    wait(); // wait for printing to be finished
+                } catch (InterruptedException e) {}
+        }
+    }
+
+    @Override
+    public void run() {
+        if (currentIndex < output.length) {
+            System.out.print(output[currentIndex++]);
+        } else {
+            // mark this print run as finished
+            printExecutor.shutdown();
+            printExecutor = null;
+            synchronized (this) { notifyAll(); }
+        }
+    }
+}

@@ -1,0 +1,11 @@
+type TreeNode<'a> = { Key: int; Val: 'a }
+type Tree<'a> =  { TreeNode: TreeNode<'a>; RT: Tree<'a> option; LT: Tree<'a> option; }
+
+//insert a node according to Binary Tree operation
+let rec insert (node: TreeNode<'a>) (tree: Tree<'a> option) =
+    match tree with
+    | None -> {LT = None; RT = None; TreeNode = node }
+    | Some t when node.Key < t.TreeNode.Key -> {TreeNode = t.TreeNode; LT = Some(insert node t.LT); RT = t.RT}
+    | Some t when node.Key > t.TreeNode.Key -> {TreeNode = t.TreeNode; RT = Some(insert node t.RT); LT = t.LT}
+
+let t = seq { for i in 1 .. 10-> { Key = i; Val = i } }|> Seq.fold (fun a i -> Some(insert i a)) None

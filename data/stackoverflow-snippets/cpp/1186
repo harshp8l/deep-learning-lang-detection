@@ -1,0 +1,28 @@
+Data* AtID_NoLock(uint32_t ID)
+{
+    auto iter = m_IndexTable.find(ID);
+    if (iter == m_IndexTable.end())
+        return nullptr;
+
+    return &*(iter->second);
+}
+
+Data* AtID(uint32_t ID)
+{
+    std::lock_guard<std::mutex> l(mx_lock);
+    return AtID_NoLock(ID);
+}
+
+bool PacketManager::AppendPacket(const Packet& pk)
+{
+    std::lock_guard<std::mutex> l(l_ConnQueues.mx_lock);
+
+    PacketQueue *queue = l_ConnQueues.AtID_NoLock(pk.ownerID);
+    if (!queue)
+        return false;
+
+    std::lock_guard<std::mutex> l2(queue->_mx);
+    queue->OutPackets.push(pk);
+
+    return true;
+}

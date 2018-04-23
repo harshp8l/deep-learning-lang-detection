@@ -1,0 +1,26 @@
+//Extend UserDefinedAggregateFunction to write custom aggregate function
+//You can also specify any constructor arguments. For instance you can have
+//CustomConcat(arg1: Int, arg2: String)
+class CustomConcat() extends org.apache.spark.sql.expressions.UserDefinedAggregateFunction {
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.expressions.MutableAggregationBuffer
+import org.apache.spark.sql.Row
+// Input Data Type Schema
+def inputSchema: StructType = StructType(Array(StructField(""description"", StringType)))
+// Intermediate Schema
+def bufferSchema = StructType(Array(StructField(""groupConcat"", StringType)))
+// Returned Data Type.
+def dataType: DataType = StringType
+// Self-explaining
+def deterministic = true
+// This function is called whenever key changes
+def initialize(buffer: MutableAggregationBuffer) = {buffer(0) = "" "".toString}
+// Iterate over each entry of a group
+def update(buffer: MutableAggregationBuffer, input: Row) = { buffer(0) = buffer.getString(0) + input.getString(0) }
+// Merge two partial aggregates
+def merge(buffer1: MutableAggregationBuffer, buffer2: Row) = { buffer1(0) = buffer1.getString(0) + buffer2.getString(0) }
+// Called after all the entries are exhausted.
+def evaluate(buffer: Row) = {buffer.getString(0)}
+}
+val newdescription = new CustomConcat
+val newdesc1=newdescription($""description"").over(windowspec)

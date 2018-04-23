@@ -1,0 +1,36 @@
+func idleTimeoutCopy(dst io.Writer, src io.Reader, timeout time.Duration,
+    ctx context.Context, cancel context.CancelFunc) (written int64, err error) { 
+    read := make(chan int)
+    go func() {
+        for {
+            select {
+            case <-ctx.Done():
+                return
+            case <-time.After(timeout):
+                cancel()
+            case <-read:
+            }
+        }
+    }()
+
+    buf := make([]byte, 32*1024)
+    for {
+        nr, er := src.Read(buf)
+        if nr > 0 {
+            read <- nr
+            nw, ew := dst.Write(buf[0:nr])
+            written += int64(nw)
+            if ew != nil {
+                err = ew
+                break
+            }
+        }
+        if er != nil {
+            if er != io.EOF {
+                err = er
+            }
+            break
+        }
+    }
+    return written, err
+}

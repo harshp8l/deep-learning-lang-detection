@@ -1,0 +1,17 @@
+import org.apache.spark.sql.functions._
+import spark.implicits._
+
+// creating new array column out of all df2 columns:
+val df2AsArray = df2.select($""col0"", array(df2.columns.map(col): _*) as ""new_arr_col"")
+
+val result = df1.join(df2AsArray, ""col0"")
+  .groupBy(df1.columns.map(col): _*) // grouping by all df1 columns
+  .agg(collect_list(""new_arr_col"") as ""new_arr_col"") // collecting array of arrays
+  .drop(""col0"")
+
+result.show(false)
+// +---+-----+----+--------------------------------------------------------+
+// |pk |col1 |col2|new_arr_col                                             |
+// +---+-----+----+--------------------------------------------------------+
+// |1  |100.1|10  |[WrappedArray(2, 9, a2, b2), WrappedArray(1, 9, a1, b1)]|
+// +---+-----+----+--------------------------------------------------------+

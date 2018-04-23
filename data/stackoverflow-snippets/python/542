@@ -1,0 +1,16 @@
+def main():
+    thread_1_scheduler = ThreadPoolScheduler(1)
+
+    thread = ExternalDummyService()
+    external_obs = thread.subject.publish()
+
+    external_obs \
+        .flat_map(lambda msg: Observable.just(msg).subscribe_on(thread_1_scheduler)) \
+        .to_sorted_list(key_selector=lambda msg: msg.timestamp) \
+        .flat_map(lambda msglist: Observable.from_iterable(msglist)) \
+        .scan(seed=State(0, None), accumulator=slow_scan_msg) \
+        .subscribe(log, print, lambda: print(""SLOW FINISHED""))
+
+    external_obs.connect()
+
+    thread.start()

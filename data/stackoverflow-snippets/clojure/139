@@ -1,0 +1,19 @@
+(dotest
+  (with-forest (new-forest)
+    (let [xml-str         ""<?xml version=\""1.0\""?>
+                            <root>
+                              <a>1</a>
+                              <b>2</b>
+                           </root>""
+          enlive-tree     (->> xml-str
+                            java.io.StringReader.
+                            enlive-html/xml-resource
+                            only)
+          root-hid        (add-tree-enlive enlive-tree)
+          bush-blanks     (spyx-pretty (hid->bush root-hid))
+
+          blank-leaf-hids (keep-if blank-leaf-hid? (all-leaf-hids))
+          >>              (apply remove-hid blank-leaf-hids)
+          bush-no-blanks  (spyx-pretty (hid->bush root-hid))
+
+          leaf-hids       (find-leaf-hids root-hid [:** :*])]

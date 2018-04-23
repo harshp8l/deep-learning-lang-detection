@@ -1,0 +1,17 @@
+(let [email (mailer {....email configuration})]
+  (streams
+   (where (service ""log"")
+          (smap
+           (fn [events]
+             (let [count-of-failures (count ; <--- count only takes one argument
+                                      (filter #(= ""failed"" (:Status %)) events)
+                                      and
+                                      (filter #(= ""UK"" (:Country %)) events))] ;Calculate the count for matched value
+               (event
+                {:status ""Failure""
+                 :metric  count-of-failures
+                 :total-fail (>= count-of-failures 2)})))
+
+           (where (and (= (:status event) ""Failure"")
+                       (:total-fail event))
+                  (email ""xxx@xx.com"")) prn))))

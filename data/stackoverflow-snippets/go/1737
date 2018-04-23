@@ -1,0 +1,64 @@
+package main
+
+import (
+    ""fmt""
+    ""time""
+)
+
+type Publisher struct {
+    subscription map[string]chan string
+}
+
+func (p *Publisher)Subscribe(interest string) chan string{
+    if p.subscription == nil {
+        p.subscription = make(map[string]chan string)
+    }
+    p.subscription[interest] = make(chan string)
+    return p.subscription[interest]
+}
+
+func (p *Publisher) Add(val string) {
+    if p.subscription[val] != nil {
+        fmt.Println(""Adding "" + val)
+        p.subscription[val] <- ""added "" + val
+    }
+}
+func (p *Publisher) Remove(val string) {
+    if p.subscription[val] != nil {
+        p.subscription[val] <- ""removed "" + val
+    }
+}
+
+type Subscriber struct {
+    subscriptions [] chan string
+    publisher *Publisher
+}
+
+func (s *Subscriber) RegisterInterest(interest string){
+    s.subscriptions = append(s.subscriptions, s.publisher.Subscribe(interest))
+}
+func (s *Subscriber) run(channel chan string) {
+    for  {
+        fmt.Println(""Waiting for message"")
+        m := <- channel
+        fmt.Println(""Got message : "" + m)
+    }
+}
+func (s *Subscriber) Listen()  {
+    for _, elem := range s.subscriptions {
+        go s.run(elem)
+    }
+
+}
+func main() {
+    pub := Publisher{}
+    sub := &Subscriber{publisher: &pub}
+    sub.RegisterInterest(""m"")
+    sub.RegisterInterest(""n"")
+    sub.Listen()
+    pub.Add(""m"")
+    pub.Add(""n"")
+    pub.Remove(""m"")
+    pub.Remove(""n"")
+    time.Sleep(time.Second * 10)
+}

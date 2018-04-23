@@ -1,0 +1,48 @@
+abstract class GenericObject {
+
+    /**
+    *
+    *
+    *
+    */
+
+    const AUTO_GENERATE_ACCESSORS = true;
+
+    /**
+    *
+    *
+    *
+    */
+
+    public function __construct(array $data = []) {
+        foreach ($data as $name => $value) {
+            $this->{$name} = $value;
+
+            if (!static::AUTO_GENERATE_ACCESSORS)
+                continue;
+
+            $label = strtolower(str_replace('_', null, $name));
+
+            if (!property_exists($this, $method = 'get' . $label) && !method_exists($this, $method))
+                $this->{$method} = function() use ($name) { return $this->{$name}; };
+
+            if (!property_exists($this, $method = 'set' . $label) && !method_exists($this, $method))
+                $this->{$method} = function($value) use ($name) { $this->{$name} = $value; };
+        }
+    }
+
+    /**
+    *
+    *
+    *
+    */
+
+    final public function __call(string $method, array $arguments = []) {
+        array_unshift($arguments, $this);
+
+        if (isset($this->{($lcmethod = strtolower($method))}) && ($function = $this->{$lcmethod}) instanceOf \Closure)
+            return $function->call(... $arguments);
+
+        throw new \Error(sprintf('Call to undefined method %s::%s()', get_called_class(), $method));
+    }
+}

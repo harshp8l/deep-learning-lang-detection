@@ -1,0 +1,16 @@
+let parseWindow testStartTime testEndTime (window:(string[] * bool) ref) =
+    match (snd window.Value) with
+    | true ->
+        [||]
+    | false ->
+        let lineArray = Array.map (fun (line:string) -> if (isBetweenStartAndEndTime testStartTime testEndTime line) then line else """") (fst window.Value)
+        let cleansedArray = Array.partition (fun (line:string) -> line <> """") lineArray
+                                |> fst
+
+        match cleansedArray.Length > 0 with
+        | true ->
+            ()
+        | false ->
+            window.Value <- ((fst window.Value), true)
+
+        cleansedArray

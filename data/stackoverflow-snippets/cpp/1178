@@ -1,0 +1,54 @@
+#include <locale>
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
+
+class swallow_line_facet : public std::codecvt<char, char, std::mbstate_t> {
+public:
+    swallow_line_facet(std::size_t ref = 0)
+        : std::codecvt<char, char, std::mbstate_t>(ref) {}
+
+protected:
+    result do_out(
+        state_type &,
+        const intern_type* from,
+        const intern_type* from_end,
+        const intern_type*& from_next,
+        extern_type* to,
+        extern_type* to_end,
+        extern_type*& to_next) const override
+    {
+        if (is_done)
+            return std::codecvt_base::noconv;
+
+        for (; (from < from_end) && (to < to_end); from++) {
+            char c = *from;
+
+            if (is_done)
+                *to++ = c;
+
+            if (c == '\n')
+                is_done = true;
+        }
+
+        from_next = from;
+        to_next = to;
+
+        return from == from_end
+            ? std::codecvt_base::ok
+            : std::codecvt_base::partial;
+    }
+
+    virtual bool do_always_noconv() const noexcept override {
+        return is_done;
+    }
+
+private:
+    mutable bool is_done = false;
+};
+
+std::ostream& swallow_line(std::ostream& out)
+{
+    out.imbue(std::locale(out.getloc(), new swallow_line_facet));
+    return out;
+}

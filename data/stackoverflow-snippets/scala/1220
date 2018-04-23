@@ -1,0 +1,25 @@
+private def responseValidationFlow[L, R](responsePair: ResponsePair)(
+  implicit ev1: FromByteStringUnmarshaller[L], ev2: FromByteStringUnmarshaller[R]
+): Source[Either[L, R], Any] = {
+  responsePair match {
+    case (Success(response), _) => {
+      response.entity.dataBytes
+        .via(Framing.delimiter(ByteString(""\n""), maximumFrameLength = 8192))
+        .mapAsyncUnordered(Runtime.getRuntime.availableProcessors()) { body =>
+          if (response.status == OK) {
+            val obj: Future[R] = Unmarshal(body).to[R]
+            obj.foreach(x => log.debug(""Received {}."", x.getClass.getSimpleName))
+            obj.map(Right(_))
+          } else {
+            log.error(""Non 200 response status: {}."", response.status.intValue())
+            Unmarshal(body).to[L]
+              .map(Left(_))
+          }
+        }
+    }
+    case (Failure(t), _) => {
+      log.error(t, ""Request failed."")
+      Source.empty
+    }
+  }
+}

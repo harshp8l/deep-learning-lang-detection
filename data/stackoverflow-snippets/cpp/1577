@@ -1,0 +1,29 @@
+#include <boost/range.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+
+using namespace boost::adaptors;
+
+class X {
+public:
+   void nonConst() {}
+   void constF() const {}
+};
+
+class A{
+std::vector<std::unique_ptr<X>> v;
+
+    public:
+    A() : v(10) {}
+    auto get_container() {
+        return v | transformed( [](std::unique_ptr<X> const& x) -> X const* {return x.get();});
+    }
+};
+
+int main()  {
+A a;
+
+auto const& v = a.get_container();
+a.get_container()[0]->constF();
+a.get_container()[0]->nonConst();
+    return 0;
+}

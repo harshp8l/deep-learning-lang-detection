@@ -1,0 +1,27 @@
+(defn goal? [[val]]
+  (true? val))
+
+(defn leaf? [tree]
+  (= 1 (count tree)))
+
+(defn tree-val [tree]
+  (first tree))
+
+(defn children [tree]
+  (rest tree))
+
+(defn queue [& vals]
+  (apply conj clojure.lang.PersistentQueue/EMPTY vals))
+
+(defn bfs [root]
+  (loop [q (queue {:tree root :path []})]
+    (when-let [{:keys [tree path]} (peek q)]
+      (cond
+        (goal? tree) path
+        (leaf? tree) (recur (pop q))
+        :else
+        (let [new-path (conj path (tree-val tree))
+              wrap     (fn [t] {:tree t :path new-path})]
+          (recur (->> (children tree)
+                      (map wrap)
+                      (apply conj (pop q)))))))))

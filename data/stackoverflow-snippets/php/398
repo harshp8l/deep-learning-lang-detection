@@ -1,0 +1,23 @@
+if(flock(fopen(""throttle.file"",""w+),LOCK_NB|LOCK_EX|LOCK_SU))
+{ 
+     //request allowed (because throttle.file successfully locked)
+     if(verify_credentials() || continue_to_wait())
+     {
+         dologin();
+         send_response();
+     }
+     // keep execution thread running for the ""mininum interval length""
+     usleep(1000/($maximum_frequency));
+     // after that end script, thus automatically 
+     // a) close file and b) relase file lock
+     wait(0);
+}
+else
+{
+     // disallowed, excessive request
+
+     http_response_code( 429); // too many requests
+     header(""Retry-After:"".min(1,sin(1/$maximum_frequency)));
+     echo ""429 too many request, please try again"";
+     wait((int)time_to_throttle);
+}

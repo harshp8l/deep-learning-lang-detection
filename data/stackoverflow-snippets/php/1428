@@ -1,0 +1,58 @@
+function search_modifications_callback() {
+
+    // Ensure we have the data we need to continue
+    if( ! isset( $_POST ) || empty( $_POST ) || ! is_user_logged_in() ) {
+        header( 'HTTP/1.1 400 Empty POST Values' );
+        echo 'Could Not Verify POST Values.';
+        exit;
+    }
+
+    $user_id = get_current_user_id();  // Get our current user ID
+    $search_term  = $_POST['saved_search'];
+
+    // Get user's saved search terms
+    $user_saved_search_terms = get_user_meta( $user_id, 'saved_search' );
+
+    // User has some previously saved search terms
+    if (
+        $user_saved_search_terms
+        && is_array( $user_saved_search_terms )
+        && !empty( $user_saved_search_terms )
+    ) {
+
+        // This search term doesn't exist in our saved search terms array yet, so let's add it
+        if ( !in_array($search_term, $user_saved_search_terms) ) {
+            $user_saved_search_terms[] = $search_term;
+
+            /**
+             * You'll want to add here some logic
+             * to limit the array to N search terms
+             *
+             * For example:
+             */
+
+            /*
+            // User has more than 5 saved search terms already,
+            // let's remove the oldest one
+            if ( count($user_saved_search_terms) > 5 ){
+                $user_saved_search_terms = array_shift( $user_saved_search_terms );
+            }
+            */
+        }
+    } // User does not have any search terms saved yet
+    else {
+        $user_saved_search_terms = array( $search_term );
+    }
+
+    // Finally, save the data
+    update_user_meta( $user_id, 'saved_search', $user_saved_search_terms );
+
+    // What is this for?
+    wp_update_user( array(
+        'ID'            => $user_id
+    ) );
+
+    exit;
+}
+add_action( 'wp_ajax_nopriv_search_ss', 'search_modifications_callback' );
+add_action( 'wp_ajax_search_ss', 'search_modifications_callback' );

@@ -1,0 +1,29 @@
+#! /usr/bin/awk -f
+BEGIN {
+    FS = "",""
+    split("""", data) # accumulated data for a project
+    split("""", line) # keep track of textline for data
+    split("""", idx)  # index into above to maintain input order
+    sz = 0
+}
+$2 in idx { # have seen this projectname
+    i = idx[$2]
+    x =   ORS ""textline = "" ++line[i]
+    x = x ORS ""textdata = "" $1
+    data[i] = data[i] x
+    next
+}
+{ # new projectname
+    i = sz++
+    idx[$2] = i
+    x =       ""textline = 1""
+    x = x ORS ""projectname = "" $2
+    x = x ORS ""textline = 2""
+    x = x ORS ""projectdata = "" $1
+    data[i] = x
+    line[i] = 2
+}
+END {
+    for (i=0; i<sz; ++i)
+        print data[i]
+} 

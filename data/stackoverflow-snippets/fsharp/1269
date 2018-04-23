@@ -1,0 +1,16 @@
+let read (conn : IEventStoreConnection) stream startFrom = 
+    let size = 10000
+    let rec loop startFrom =
+       seq {
+           let slice = conn.ReadStreamEventsForwardAsync(stream, startFrom, size, true).Result
+
+           Console.WriteLine(""Events in slice: "" + slice.Events.Count().ToString())
+
+           if (slice.IsEndOfStream) 
+           then
+              yield slice
+           else
+              yield slice // here
+              yield! loop (startFrom + 1 * size)
+       }
+    loop startFrom

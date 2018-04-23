@@ -1,0 +1,24 @@
+(d/transact conn [{:db/id        (d/tempid :db.part/user)
+                   :e1/guid      (str (d/squuid))
+                   :e1/createdAt #inst ""2016-10-21""
+                   :e1/e2s       [{:db/id        (d/tempid :db.part/user)
+                                   :e2/guid      (str (d/squuid))
+                                   :e2/startedAt #inst ""2016-10-23""
+                                   :e2/stoppedAt #inst ""2016-10-25""}]}])
+
+
+(d/q '[:find (max ?inst)
+       :in $ ?d
+       :where
+       [?e1 :e1/createdAt ?create]
+       [?e1 :e1/e2s ?e2]
+       [?e2 :e2/startedAt ?start]
+       [?e2 :e2/stoppedAt ?stop]
+       [(compare ?d ?create) ?c1]
+       [(compare ?d ?start) ?c2]
+       [(compare ?d ?stop) ?c3]
+       (not [(pos? ?c1)] [(pos? ?c2)] [(pos? ?c3)])
+       [?e1 ?attr _ ?tx]
+       [?tx :db/txInstant ?inst]]
+     (d/history (d/db conn))
+     #inst ""2016-10-24"")

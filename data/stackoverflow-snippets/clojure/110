@@ -1,0 +1,18 @@
+(require '[clojure.zip :as z])
+
+(defn replace-deepest [data replacer]
+  (->> data
+       z/seq-zip
+       (iterate z/next)
+       (take-while (complement z/end?))
+       (apply max-key #(if (seq? (z/node %))
+                         (count (z/path %))
+                         -1))
+       (#(z/replace % replacer))
+       z/root))
+
+user> (replace-deepest '(+ [* a b] (* c d) (* e (/ f g))) :asd)
+;;=> (+ [* a b] (* c d) (* e :asd))
+
+user> (replace-deepest '(+ [* a b] (* c (+ x (* y z)) d) (* e (/ f g))) :asd)
+;;=> (+ [* a b] (* c (+ x :asd) d) (* e (/ f g)))

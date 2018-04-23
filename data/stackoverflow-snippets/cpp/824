@@ -1,0 +1,145 @@
+#include ""Logger.h""
+#include ""TextFileWriter.h""
+
+#include <iostream>
+#include <iomanip>
+#include <mutex>
+// #include <shared_mutex>
+
+namespace linx {
+
+static Logger* s_pLogger = nullptr;
+
+std::mutex  g_mutex;  // also removed the static storage qualifier.
+//static std::shared_mutex s_mutex; // this was a wrong implementation
+
+// White Text On Red Background
+static const WORD WHITE_ON_RED = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY | BACKGROUND_RED; 
+
+Logger::Logger( const std::string& logFilename ) :
+Singleton( TypeLogger ),
+_logFilename( logFilename ),
+_maxCharLength( 0 ),
+_unknownLogType( ""UNKNOWN"" ) {
+    // Order must match types defined in Logger::LoggerType enum
+    _logTypes[0] = ""Info"";
+    _logTypes[1] = ""Warning"";
+    _logTypes[2] = ""Error"";
+    _logTypes[3] = """"; // Console
+
+    // Find widest log type string
+    _maxCharLength = _unknownLogType.size();
+    for ( const std::string& logType : _logTypes ) {
+        if( _maxCharLength < logType.size() ) {
+            _maxCharLength = logType.size();
+        }
+    }
+
+    // this was wrong
+    //std::shared_lock<std::shared_mutex> lock( s_mutex );
+
+    { // scope for lock_guard
+        std::lock_guard<std::mutex> lock( g_mutex );
+
+        // Start Log File
+        TextFileWriter file( _logFilename, false, false );
+
+        // Prepare Console  - Windows Console (can substitute with your OS)
+        _hConsoleOutput = GetStdHandle( STD_OUTPUT_HANDLE );
+
+        CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+        GetConsoleScreenBufferInfo( _hConsoleOutput, &consoleInfo );
+        _consoleDefualtColor = consoleInfo.wAttributes;
+        // End - Windows Console specific
+
+        s_pLogger = this;
+    } // end scope: lock_guard must be destroyed here 
+
+    // Must destroy lock_guard to unlock mutex before calling this function
+    // this function is derived from Singleton but it calls Logger::log() static method which in turn uses the same mutex to lock.
+    logMemoryAllocation( true );
+}
+
+Logger::~Logger() {
+    logMemoryAllocation( false );
+    s_pLogger = nullptr;
+}
+
+void Logger::log( const std::string& text, LoggerType logType ) {
+    log( text.c_str(), logType );
+}
+
+void Logger::log( const std::ostringstream& text, LoggerType logType ) {
+    log( text.str().c_str(), logType );
+}
+
+void Logger::log( const char* text, LoggerType logType ) {
+    if( nullptr == s_pLogger ) {
+        std::cout << ""Logger has not been initialized, can not log "" << text << '\n';
+        return;
+    }
+
+    // this is wrong
+    //std::shared_lock<std::shared_mutex> lock( s_mutex );
+
+    std::lock_guard<std::mutex> lock( g_mutex );
+
+    std::ostringstream stream;
+
+    // Default White Text On Red Background
+    WORD textColor = WHITE_ON_RED;
+
+    // Choose log type text string, display ""UNKNOWN"" if logType is out of range
+    stream << std::setfill( ' ' ) << std::setw( s_pLogger->_maxCharLength );
+
+    try {
+        if( TypeConsole != logType ) {
+            stream << s_pLogger->_logTypes.at( logType );
+        }
+        if( TypeWarning == logType ) {
+            // Yellow
+            textColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY | BACKGROUND_RED | BACKGROUND_GREEN;
+        } else if( TypeInfo == logType ) {
+            // Green
+            textColor = FOREGROUND_GREEN;
+        } else if( TypeConsole == logType ) {
+            // Cyan
+            textColor = FOREGROUND_GREEN | FOREGROUND_BLUE;
+        }
+    } catch( ... ) {
+        stream << s_pLogger->_unknownLogType;
+    }
+
+    // Date & Time
+    if( TypeConsole != logType ) {
+        SYSTEMTIME time;
+        GetLocalTime( &time );
+
+        stream << "" ["" << time.wYear << '.'
+            << std::setfill( '0' ) << std::setw( 2 ) << time.wMonth << '.'
+            << std::setfill( '0' ) << std::setw( 2 ) << time.wDay << ' '
+            << std::setfill( ' ' ) << std::setw( 2 ) << time.wHour << ':'
+            << std::setfill( '0' ) << std::setw( 2 ) << time.wMinute << ':'
+            << std::setfill( '0' ) << std::setw( 2 ) << time.wSecond << '.'
+            << std::setfill( '0' ) << std::setw( 3 ) << time.wMilliseconds << ""] "";
+    }
+    stream << text << '\n';
+
+    // Log Message
+    SetConsoleTextAttribute( s_pLogger->_hConsoleOutput, textColor );
+    std::cout << stream.str();
+
+    // Save same message to file
+    try {
+        TextFileWriter file( s_pLogger->_logFilename, true, false );
+        file.write( stream.str() );
+    } catch( ... ) {
+        // Ignore, not saved in log file
+        std::cout << __FUNCTION__ << "" failed to write to file: "" << stream.str() << '\n';
+    }
+
+    // Reset to default color
+    SetConsoleTextAttribute( s_pLogger->_hConsoleOutput, s_pLogger->_consoleDefualtColor );
+}
+
+} // namespace linx

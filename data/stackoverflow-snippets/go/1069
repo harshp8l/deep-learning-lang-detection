@@ -1,0 +1,28 @@
+type DBS struct {
+    name     string
+
+    URL      string `json:url`
+    Port     string `json:port`
+    Uname    string `json:uname`
+    Pass     string `json:pass`
+    Authdb   string `json:authdb`
+    Replicas []DBS  `json:replicas`
+}
+
+func (db *DBS) UnmarshalJSON(data []byte) error {
+    raw := map[string]json.RawMessage{}
+    if err := json.Unmarshal(data, &raw); err != nil {
+        return err
+    }
+    if len(raw) > 1 {
+        return fmt.Errorf(""fail"")
+    }
+
+    type _DBS DBS
+    _db := (*_DBS)(db)
+    for name, v := range raw {
+        db.name = name
+        return json.Unmarshal(v, _db)
+    }
+    return nil
+}

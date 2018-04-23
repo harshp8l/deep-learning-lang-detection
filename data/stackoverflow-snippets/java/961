@@ -1,0 +1,24 @@
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
+public class CommandFactory {
+  private <T extends Command> Class<T> findCommandClass(WsMessage message) {
+    // switch on message, or lookup in a Map<WsMessage,Class<? extends Command>>, or,...
+    // throw exception if no registered class
+    throw new RuntimeException(String.format(""No known command for message %s"", message));
+}
+
+  private <T extends Command> T createInstance(Class<T> clazz, Session session, WsMessage message) {
+    try {
+        Constructor<T> constructor = clazz.getConstructor(Session.class, WsMessage.class);
+        return constructor.newInstance(session, message);
+    } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        throw new RuntimeException(String.format(""Could not instantiate  %s"", clazz), e);
+    }
+  }
+
+public Command createCommand(Session session, WsMessage message) {
+    Class<Command> commandClass = findCommandClass(message);
+    return createInstance(commandClass, session, message);
+}
+}

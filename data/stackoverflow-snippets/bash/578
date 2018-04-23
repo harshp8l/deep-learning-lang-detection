@@ -1,0 +1,35 @@
+$ cat wget.sh
+#!/bin/bash
+
+wget_bg()
+{
+    > ./wget.pids # Start with empty pidfile
+    urlfile=""$1""
+    maxn=$2
+    cnt=0;
+    while read -r url
+    do
+        if [ $cnt -lt $maxn ] && [ ! -z ""$url"" ]; then # Only maxn processes will run in the background
+            echo -n ""wget $url ...""
+            wget ""$url"" &>/dev/null &
+            pidwget=$! # This gets the backgrounded pid
+            echo ""$pidwget"" >> ./wget.pids # fill pidfile
+            echo ""pid[$pidwget]""
+            ((cnt++));
+        fi
+        while [ $cnt -eq $maxn ] # Start monitoring as soon the maxn process hits
+        do
+            while read -r pids
+            do
+                if ps -p $pids > /dev/null; then # Check pid running
+                  :
+                else
+                  sed -i ""/$pids/d"" wget.pids # If not remove it from pidfile
+                  ((cnt--)); # decrement counter
+                fi
+            done < wget.pids
+        done
+    done < ""$urlfile""
+}    
+# This runs 10 wget processes at a time in the bg. Modify for more or less.
+wget_bg ./test.txt 10 

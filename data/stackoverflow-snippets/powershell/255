@@ -1,0 +1,23 @@
+$folder = '\\localhost\c$\tmp'
+$filter = '*.*'
+$destination = '\\localhost\c$\tmp_destination\' 
+
+$fsw = New-Object IO.FileSystemWatcher
+$fsw.Path = $folder
+$fsw.Filter = $filter
+$fsw.IncludeSubdirectories = $true
+$fsw.EnableRaisingEvents = $true  
+$fsw.NotifyFilter = [IO.NotifyFilters]'FileName, LastWrite'
+
+$action = { 
+    $path = $Event.SourceEventArgs.FullPath
+    $name = $Event.SourceEventArgs.Name
+    $changeType = $Event.SourceEventArgs.ChangeType
+    $timeStamp = $Event.TimeGenerated
+    Write-Host ""The file '$name' was $changeType at $timeStamp""
+    Copy-Item $path -Destination $destination -Force -Verbose    
+}  
+
+$created = Register-ObjectEvent $fsw Created -Action $action
+
+while ($true) {sleep 1}

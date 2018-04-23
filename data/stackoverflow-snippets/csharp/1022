@@ -1,0 +1,25 @@
+Public Function AfterReceiveRequest(ByRef message As System.ServiceModel.Channels.Message, ByVal channel As IClientChannel, ByVal instanceContext As InstanceContext) As Object Implements IDispatchMessageInspector.AfterReceiveRequest
+
+ Try
+      Dim msgBuffer As MessageBuffer = message.CreateBufferedCopy(Int32.MaxValue)
+        message = msgBuffer.CreateMessage()
+        Dim copy As Message = msgBuffer.CreateMessage()
+        Dim writer As XmlWriter = XmlWriter.Create(Console.OpenStandardOutput(), Me.xws)
+        copy.WriteMessage(writer)
+        writer.Flush()
+        Console.WriteLine()
+        msgBuffer.Close()
+
+        Dim buffer As MessageBuffer = message.CreateBufferedCopy(Int32.MaxValue)
+        message = buffer.CreateMessage()
+        Dim copym As Message = buffer.CreateMessage()
+        Dim bodyReader As XmlDictionaryReader = copym.GetReaderAtBodyContents()
+        Dim newMessage = System.ServiceModel.Channels.Message.CreateMessage(MessageVersion.[Default], ""newAction"", bodyReader)
+
+        Dim content As String = bodyReader.ReadOuterXml()
+        Console.WriteLine(message.Properties.Via)
+        Console.WriteLine(content)
+            Catch ex As Exception
+        Throw GetFaultException(""ReportGenerator Request - error: "", """", ex)
+    End Try
+End Sub

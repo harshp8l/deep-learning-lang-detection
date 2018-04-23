@@ -1,0 +1,18 @@
+(ns my-project.core
+  (:require [clojure.string :as cs])
+  (:import java.util.zip.ZipInputStream
+           [org.reflections
+            Reflections
+            scanners.ResourcesScanner
+            scanners.Scanner
+            util.ClasspathHelper
+            util.ConfigurationBuilder])
+  (:gen-class))
+
+(defn -main [& args]
+  (let [conf (doto (ConfigurationBuilder.)
+               (.setScanners (into-array Scanner [(ResourcesScanner.)]))
+               (.setUrls (ClasspathHelper/forClassLoader (make-array ClassLoader 0))))]
+    (println
+     (filter #(cs/starts-with? % ""a/"")
+             (.getResources (Reflections. conf) #"".*"")))))

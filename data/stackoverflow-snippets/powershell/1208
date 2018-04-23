@@ -1,0 +1,21 @@
+$server = New-Object Microsoft.SqlServer.Management.Smo.Server($databaseServer)
+$server.ConnectionContext.ConnectionString = $connectionString
+
+
+$script = Get-Content ""$sqlScriptsPath\$scriptName.sql""
+
+$ScriptArr = $script -split ""GO""
+
+$ScriptArr | foreach {
+   try
+   {
+      $server.ConnectionContext.BeginTransaction()
+      $server.ConnectionContext.ExecuteNonQuery($_)
+      $server.ConnectionContext.CommitTransaction()
+   }
+   catch
+   {
+      $server.ConnectionContext.RollBackTransaction()
+      throw
+   }
+}

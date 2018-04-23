@@ -1,0 +1,22 @@
+    import(
+       ""ioutil""
+       ""net/http""
+    )
+//check all posible errors, I´m assuming you just have one file per key
+    func handler(w http.ResponseWriter, r *http.Request) {
+        r.ParseMultipartForm(1000000) //1 MB in memory, the rest in disk
+        datas := r.MultipartForm
+        for k, headers := range datas.File {
+            auxiliar, _ := headers[0].Open() //first check len(headers) if it's correct
+            fileName:=headers[0].Filename
+            file, _ := ioutil.ReadAll(auxiliar)
+            // do what you need to do with the file
+    }
+}
+at the frontEnd you should have some javascript like this:
+
+function handleFile(url,file){
+  let data=new FormData();
+  data.append(""key"",file); //this is the key when ranging over map at backEnd
+  fetch(url,{method:""PUT"",body:data})
+}

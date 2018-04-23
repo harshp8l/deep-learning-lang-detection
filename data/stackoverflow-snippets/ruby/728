@@ -1,0 +1,26 @@
+class CustomError < StandardError; end
+
+response_data = {
+  ""transaction_type"" => ""void"",
+  # ""status"" => ""error"",
+  ""unique_id"" => ""ec8b1e786efe64f667ad19ff1b39fb92"",
+  ""transaction_id"" => ""kcyplptlpk966yifmuct6jj0od"",
+  # ""code"" => ""410"",
+  ""technical_message"" => ""no approved reference transaction found"",
+  ""message"" => ""Something went wrong, please contact support!"",
+  ""mode"" => ""test"",
+  ""timestamp"" => ""2017-11-24T08:07:40Z"",
+  ""descriptor"" => ""rwgwg"",
+  ""sent_to_acquirer"" => ""false""
+}
+
+response_data.default_proc = proc do |hash, key|
+  raise CustomError.new('Message') if key.eql?('code') || key.eql?('status')
+end
+
+data = {
+  'response_data' => response_data
+}
+
+data['response_data']['code'] # Custom error will be raised if code is not present
+data['response_data']['status'] # Custom error will be raised if status is not present

@@ -1,0 +1,33 @@
+class Object():   
+    def __init__(self, data):
+        self.__dict__ = data
+
+def groupBy(data, fields):
+    hashes = {}
+    items = {}
+    for d in data:  
+        group = {g: d[g] for g in d.keys() if g in fields}        
+        h = sum([hash(d[value]) for value in group])
+        if hashes.get(h) == None:
+            hashes[h] = group
+
+        item = {f: d[f] for f in d.keys() if f not in fields}
+        if items.get(h) == None:
+            items[h] = []
+        items[h].append(item)
+
+    return [{**hashes[h], **{'data': items[h]}} for h in hashes]
+
+def joinedDictToObjects(data, mapping):
+    mappedFields = [field for m in mapping for field in mapping[m]]
+    groupFields = [field for field in data[0].keys() if field not in mappedFields]
+    grouped = groupBy(data, groupFields)
+
+    result = []    
+    for g in grouped:
+        objRaw = {key: g[key] for key in g if key not in ['data']}
+        for m in mapping:
+            objRaw[m] = [Object({a: g['data'][i][a] for a in g['data'][i] if a in mapping[m]}) for i, item in enumerate(g['data'])]
+        result.append(Object(objRaw))
+
+    return result

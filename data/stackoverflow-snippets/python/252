@@ -1,0 +1,23 @@
+def save(self, commit=True):
+    # Get the unsaved Pizza instance
+    instance = forms.ModelForm.save(self, False)
+
+    # Prepare a 'save_m2m' method for the form,
+    old_save_m2m = self.save_m2m
+
+    def save_m2m():
+        old_save_m2m()
+        # This is where we actually link the pizza with toppings
+        instance.course_set.clear()
+        for course in self.cleaned_data['courses']:
+            instance.course_set.add(course)
+
+    self.save_m2m = save_m2m
+
+    # Do we need to save all changes now?
+    # Just like this
+    # if commit:
+    instance.save()
+    self.save_m2m()
+
+    return instance

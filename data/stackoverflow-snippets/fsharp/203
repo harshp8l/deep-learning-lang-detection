@@ -1,0 +1,16 @@
+let login username password (certPath:string) (certPassword:string) (apiKey:string) = 
+    let handler = new WebRequestHandler()
+    let certificate = new X509Certificate2(certPath, certPassword)
+    handler.ClientCertificates.Add certificate |> ignore
+    let client = new HttpClient(handler,BaseAddress = Uri(""https://identitysso.betfair.com""))
+
+    async {    
+        let values = dict[""username"", username ; ""password"", password ] 
+        let content = new FormUrlEncodedContent(values)
+        content.Headers.Add( ""X-Application"" ,apiKey)    
+
+        let! response = client.PostAsync(""api/certlogin"",content) |> Async.AwaitTask
+        response.EnsureSuccessStatusCode() |> ignore
+        let! responseString = response.Content.ReadAsStringAsync() |> Async.AwaitTask
+        return responseString
+    }

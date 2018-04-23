@@ -1,0 +1,12 @@
+$accounts = 'https://api.coinbase.com/v2/accounts'
+$time = 'https://api.coinbase.com/v2/time'
+$epochtime = [string]((Invoke-WebRequest $time | ConvertFrom-Json).data).epoch
+
+$method = 'GET'
+$requestpath = '/v2/accounts'
+$secret_key = (Get-CoinBaseAPIKeys).Secret
+
+$sign = $epochtime + $method + $requestpath
+$hmacsha = New-Object System.Security.Cryptography.HMACSHA256
+$hmacsha.key = [Text.Encoding]::UTF8.GetBytes($secret_key)
+$computeSha = $hmacsha.ComputeHash([Text.Encoding]::UTF8.GetBytes($sign))

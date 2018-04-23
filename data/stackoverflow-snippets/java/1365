@@ -1,0 +1,34 @@
+    private File profilePic;
+    private Uri photoFileUri;
+
+
+    /**
+     * Method below will work for Camera Intent.
+     */
+    private void clickPicture() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+
+            try {
+                photoFile = AppUtils.getInstance().createImageFile(); // Create the File where the photo should go
+                outputFileUri = FileProvider.getUriForFile(SignUpActivity.this, getApplicationContext().getPackageName() + "".provider"", photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+                startActivityForResult(takePictureIntent, CAMERA_IMAGE_REQUEST);
+            } catch (IOException io) {
+                io.printStackTrace(); // Error occurred while creating the File
+            }
+            //outputFileUri = Uri.fromFile(photoFile);//At this Uri the image captured will get saved.
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == Activity.RESULT_OK) {
+            switch (requestCode) {
+
+                case AppConstants.MediaConstants.REQUEST_CAPTURE_IMAGE:
+                    profilePic = new            File(AppUtils.getInstance().getRealPathFromURI(photoFileUri, mActivity));
+                    break;
+            }
+        }
+    }

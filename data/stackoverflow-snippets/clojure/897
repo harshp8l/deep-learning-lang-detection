@@ -1,0 +1,8 @@
+(defmacro defecho ; overloads stripped for brevity
+  [f assertions assert-failed-message]
+  (let [args-sym (gensym ""body"")] ; define a symbol for function arglist
+    `(defn ~f [& ~args-sym]                ; define a function
+       ~(when-not (nil? assertions)        ; if given a function for input validation
+          `(assert (apply ~assertions ~args-sym) ; define the function to assert this as true
+                   ~assert-failed-message)) ; with a given error message
+       (conj ~args-sym (quote ~f)))))

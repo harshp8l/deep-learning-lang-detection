@@ -1,0 +1,4 @@
+val isApproved = df.withColumn(""state"", when($""k"" === ""yes"" && $""i"" =!= """" && (lit(max_date) - lit(target_date) < 0) && $""j"" =!= """", ""approved"").otherwise(null))
+val isPending = isApproved.withColumn(""state"", coalesce($""state"", when($""k"" === ""yes"" && $""i"" =!= """" && (lit(max_date) - lit(target_date) < 0) && $""j"" === """", ""pending"").otherwise(null)))
+val isExpired = isPending.withColumn(""state"", coalesce($""state"", when($""k"" === ""yes"" && $""i"" =!= """" && (lit(max_date) - lit(target_date) >= 0), ""expired"").otherwise(null)))
+val finalDf = isExpired.withColumn(""state"", coalesce($""state"", lit("""")))

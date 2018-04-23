@@ -1,0 +1,54 @@
+def measureTime[U](repeats: Long)(block: => U): Double = {
+  val start = System.currentTimeMillis
+
+  var iteration = 0
+  while (iteration < repeats) {
+    iteration += 1
+    block
+  }
+
+  val end = System.currentTimeMillis
+  (end - start).toDouble / repeats
+}
+
+val n: Long = 2000000000L
+val emptyTime = measureTime(n) {
+  /* do nothing */
+}
+
+val mapTime = {
+  val list = List(1, 2)
+  var sum = 0L
+
+  val mapTime = measureTime(n) {
+    sum += list.headOption.map(x => x * 42).getOrElse(0)
+  }
+
+  assert(sum == 42 * n)
+
+  mapTime
+}
+
+val matchTime = {
+  val list = List(1, 2)
+  var sum = 0L
+
+  val t = measureTime(n) {
+    sum += (list.headOption match {
+      case Some(x) => x * 42
+      case None => 0
+    })
+  }
+
+  assert(sum == 42 * n)
+
+  t
+}
+
+println(""empty:          "" + emptyTime)
+println(""Map  :          "" + mapTime)
+println(""match:          "" + matchTime)
+println(""map-empty:      "" + (mapTime - emptyTime))
+println(""match-empty:    "" + (matchTime - emptyTime))
+println(""(map / match):  "" + (mapTime / matchTime))
+println(""((mp - e) / (mt - e)): "" + ((mapTime - emptyTime) / (matchTime - emptyTime)))

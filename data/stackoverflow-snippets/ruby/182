@@ -1,0 +1,126 @@
+class PaymentProfilesController < ApplicationController
+  include AuthorizeNet::API
+  before_action :set_subscription
+  layout false, only: :anedit
+
+  def edit
+    unless @subscription.authorizenet
+      create_empty_customer_profile
+    else
+      get_customer_profile # update profile as they may have added a payment profile (or not)
+    end
+  end
+
+  def anedit
+    unless @subscription.authorizenet # in case #edit failed to create a new empty profile
+      render plain: ""No customer profile available to edit. Please try again later."" and return
+    end
+    @payment_profile_id = @subscription.authorizenet.customer_payment_profile_id
+    if Rails.env == 'production'
+      if @payment_profile_id
+        @action_url = ""https://accept.authorize.net/customer/editPayment""
+      else
+        @action_url = ""https://accept.authorize.net/customer/addPayment""
+      end
+    else
+      if @payment_profile_id
+        @action_url = ""https://test.authorize.net/customer/editPayment""
+      else
+        @action_url = ""https://test.authorize.net/customer/addPayment""
+      end
+    end
+
+    # show hosted form
+    ...
+    setting5 = SettingType.new
+    setting5.settingName = SettingNameEnum::HostedProfileBillingAddressRequired
+    setting5.settingValue = true
+
+    settings = Settings.new([setting1, setting2, setting3, setting4, setting5, setting6])
+
+    request = GetHostedProfilePageRequest.new
+    request.customerProfileId = @subscription.authorizenet.customer_profile_id
+    request.hostedProfileSettings = settings
+
+    response = transaction.get_hosted_profile_page(request)
+
+    if response.messages.resultCode == MessageTypeEnum::Ok
+      # puts ""Successfully got Accept Customer page token.""
+      # puts ""  Response code: #{response.messages.messages[0].code}""
+      # puts ""  Response message: #{response.messages.messages[0].text}""
+      # puts ""  Token: #{response.token}""
+      @token = response.token
+    else
+      # puts ""#{response.messages.messages[0].code}""
+      # puts ""#{response.messages.messages[0].text}""
+      render plain: ""Failed to get hosted profile page with customer profile ID #{request.customerProfileId}: #{response.messages.messages[0].code} #{response.messages.messages[0].text}""
+      return
+    end
+  end
+
+  # create authorize.net customer profile
+  def create_empty_customer_profile
+    # Build the request object
+    request = CreateCustomerProfileRequest.new
+    # Build the profile object containing the main information about the customer profile
+    request.profile = CustomerProfileType.new
+    request.profile.merchantCustomerId = @user.id
+    request.profile.email = @user.email
+
+    response = transaction.create_customer_profile(request)
+
+    if response != nil
+      puts response.messages.resultCode
+      if response.messages.resultCode == MessageTypeEnum::Ok
+        puts ""Successfully created a customer profile with id: #{response.customerProfileId}""
+        puts ""  Customer Payment Profile Id List:""
+        response.customerPaymentProfileIdList.numericString.each do |id|
+          puts ""    #{id}""
+        end
+        puts ""  Customer Shipping Address Id List:""
+        response.customerShippingAddressIdList.numericString.each do |id|
+          puts ""    #{id}""
+        end
+        @subscription.create_authorizenet user: @user, customer_profile_id: response.customerProfileId #, customer_payment_profile_id: response.customerPaymentProfileIdList.numericString.first
+      else
+        puts response.messages.messages[0].code
+        puts response.messages.messages[0].text
+        flash.now.alert = ""Failed to create a new customer profile: #{response.messages.messages[0].code} #{response.messages.messages[0].text}""
+        #render :new
+      end
+    else
+      puts ""Response is null""
+      flash.now.alert = ""Failed to create a new customer profile.""
+    end
+  end
+
+  def get_customer_profile
+    request = GetCustomerProfileRequest.new
+    request.customerProfileId = @subscription.authorizenet.customer_profile_id
+
+    response = transaction.get_customer_profile(request)
+
+    if response.messages.resultCode == MessageTypeEnum::Ok
+      puts ""Successfully retrieved customer profile of customer ID #{request.customerProfileId}.""
+      response.profile.paymentProfiles.each do |paymentProfile|
+        puts ""  Payment Profile ID #{paymentProfile.customerPaymentProfileId}"" 
+        puts ""  Payment Details:""
+        if paymentProfile.billTo != nil
+          puts ""    Last Name: #{paymentProfile.billTo.lastName}""
+          puts ""    Address: #{paymentProfile.billTo.address}""    
+        end
+      end
+      if response.subscriptionIds != nil && response.subscriptionIds.subscriptionId != nil
+        puts ""  List of subscriptions: ""
+        response.subscriptionIds.subscriptionId.each do |subscriptionId|
+          puts ""    #{subscriptionId}""
+        end
+      end
+      # now update the payment profile id
+      @subscription.authorizenet.update customer_payment_profile_id: response.profile.paymentProfiles.first&.customerPaymentProfileId
+    else
+      puts response.messages.messages[0].text
+      flash.alert = ""Failed to get profile of customer ID #{request.customerProfileId}.""
+    end 
+    return response
+  end

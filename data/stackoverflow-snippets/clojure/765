@@ -1,0 +1,15 @@
+(defn hierarchy [keyseq xs]
+  (reduce (fn [m [ks x]]
+            (update-in m ks conj x))
+          {}
+          (for [x xs]
+            [(map x keyseq) (apply dissoc x keyseq)])))
+
+user> (hierarchy [:a :b :c] '[{:a ""X"", :b ""M"", :c ""K"", :d 10}
+                              {:a ""Y"", :b ""M"", :c ""K"", :d 20}
+                              {:a ""Y"", :b ""M"", :c ""F"", :d 30}
+                              {:a ""Y"", :b ""P"", :c ""G"", :d 40}])
+{""Y"" {""P"" {""G"" ({:d 40})},
+      ""M"" {""F"" ({:d 30}),
+           ""K"" ({:d 20})}},
+ ""X"" {""M"" {""K"" ({:d 10})}}}

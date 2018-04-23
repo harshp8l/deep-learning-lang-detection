@@ -1,0 +1,22 @@
+# Variables for sending the report
+$sender = ""serviceaccount@domain.com""
+$receiver = ""administrator@domain.no""
+
+$computers = Get-ADComputer -filter * -properties operatingsystem | where {$_.operatingsystem -match ""server""} | select name
+
+# Set the Threshold Limit and Deadline
+$Threshold = -30
+$Deadline = (Get-Date).AddDays($Threshold)
+
+$Remote_Credentials = Get-Credentials
+#Run a check on all the servers to see if the uptime is longer than the threshold
+    ForEach ($computer in $computers) 
+    {
+        #Remotly invoke the Commands to check uptime
+        $uptime = (Get-Date) - ((Get-WmiObject win32_operatingsystem).ConvertToDateTime((Get-WmiObject win32_operatingsystem -ComputerName $computer -Credential $Remote_Credentials).lastbootuptime))
+
+        If ($uptime -ge $Deadline) 
+        {
+          Send-MailMessage -From $sender -To $receiver -Subject ""Server $computer need to be rebooted"" -Body ""Server has been up for more than $Threshold days"" -Priority High -dno onSuccess, onFailure -SmtpServer ""mailserver.domain.com""a
+        }
+    }

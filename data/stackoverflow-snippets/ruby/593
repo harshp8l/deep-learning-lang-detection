@@ -1,0 +1,65 @@
+<!-- language: ruby -->
+require 'json'
+
+class MyJsonParser
+  def initialize
+    @items = []
+  end
+
+  def parse(json)
+    result = JSON.parse(json)
+    generate_items(result)
+
+    items
+  end
+
+  private
+
+  attr_reader :items
+
+  def generate_items(result)
+    result['mods']['listItems'].each {|item_detail| items << Item.new(item_detail)}
+  end
+end
+
+class Item
+  attr_reader :details
+
+  def initialize(detail='')
+    @details = ''
+    before_initialize
+    details << detail
+    after_initialize
+  end
+
+  private
+
+  def before_initialize
+    details << '<li>'
+  end
+
+  def after_initialize
+    details << '</li>'
+  end
+end
+
+json_str = '{
+  ""mods"": {
+    ""listItems"":
+      [
+        ""Can also work with any bluetooth-enabled smartphones and\ntablets"",
+        ""For calls and music, Hands-free"",
+        ""Very stylish design and lightweight"",
+        ""Function:Bluetooth,Noise Cancelling,Microphone"",
+        ""Compatible:For Any Device With Bluetooth Function"",
+        ""Chipset: CSR4.0"",
+        ""Bluetooth Version:Bluetooth 4.0"",
+        ""Transmission Distance:10 Meters""
+      ]
+  }
+}'
+
+result = MyJsonParser.new.parse(json_str)
+result.each do |i|
+  p i.details
+end

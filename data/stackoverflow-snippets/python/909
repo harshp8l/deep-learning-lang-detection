@@ -1,0 +1,17 @@
+def save(self, *args, **kwargs):
+    super().save(*args, **kwargs)
+    previous_menu = self.__previous_menu
+    if self.menu != previous_menu:
+        # delete old image if changed
+        if previous_menu:
+            os.remove('{}/{}'.format(
+                settings.MEDIA_ROOT,previous_menu.name).replace(""\\"",""/""))
+
+        org_file = self.menu
+        # resize logic here
+
+        self.__previous_menu = self.menu # to avoid infinite loop
+        # remove original version of new image
+        os.remove('{}/{}'.format(
+            settings.MEDIA_ROOT,org_file.name).replace(""\\"",""/""))
+        self.save()

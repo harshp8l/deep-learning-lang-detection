@@ -1,0 +1,29 @@
+<?php
+if($_SERVER['REQUEST_METHOD']=='POST')
+{
+    $fields = ['email', 'password', 'confirm', 'username'];
+    foreach($fields as $name)
+        $input[$name] = $_POST[$name] ?? '';
+    // All fields require a value.
+    foreach($input as $k => $v)
+        if($v == '')
+            $errors[$k] = 'Field required.';
+    // Check valid email.
+    if(
+        $input['email'] &&
+        filter_var($input['email'], FILTER_VALIDATE_EMAIL) === false
+    )
+        $errors['email'] = 'Email invalid.';
+    // Check passwords match.
+    if(
+        $input['password'] && $input['confirm']
+        && $input['password'] != $input['confirm']
+    )
+        $errors['password'] = $errors['confirm'] = 'Passwords must match.';
+
+    if(!count($errors)) {
+        // All good.
+    } else {
+        var_dump($errors);
+    }
+}

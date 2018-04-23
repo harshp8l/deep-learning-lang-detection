@@ -1,0 +1,23 @@
+(defn inc-foo [ctx amount]
+  (let [{:keys [foo bar]} ctx
+        foo-new (+ foo amount)
+        ctx-new (assoc ctx :foo foo-new)]
+       ctx-new ))
+
+(defn inc-bar [ctx amount]
+  (let [{:keys [foo bar]} ctx
+        bar-new (+ bar amount)
+        ctx-new (assoc ctx :bar bar-new)]
+     ctx-new ))
+
+(dotest
+  (loop [i   0
+         ctx {:foo 0 :bar 0}]
+    (let [{:keys [foo bar]} ctx
+          >>      (println (format ""i =%2d   foo =%3d   bar =%3d   "" i foo bar))
+          ctx-new (cond-> ctx
+                    (zero? (mod i 2)) (inc-foo i)
+                    (zero? (mod i 3)) (inc-bar i))]
+         (if (< 9 i)
+           ctx-new
+           (recur (inc i) ctx-new)))))

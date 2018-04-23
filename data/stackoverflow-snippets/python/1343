@@ -1,0 +1,38 @@
+class EndDevice:
+    def __init__(self, entities_num):
+        self.entities = list(range(entities_num))
+
+    @property
+    def count_entities(self):
+        return len(self.entities)
+
+    def get_entity(self, i):
+        return str(i)
+
+
+class Device:
+    def __init__(self, sub_devices):
+        self.sub_devices = sub_devices
+
+    @property
+    def count_entities(self):
+        return sum(sd.count_entities for sd in self.sub_devices)
+
+    def get_entity(self, i):
+        c = 0
+        for index, sd in enumerate(self.sub_devices):
+            if c <= i < sd.count_entities + c:
+                return str(index) + "" "" + sd.get_entity(i - c)
+            c += sd.count_entities
+        raise IndexError(i)
+
+
+SystemManager = Device # Are the exact same. This also means you can stack that infinite
+
+sub_devices1 = [EndDevice(4) for _ in range(2)]
+sub_devices2 = [EndDevice(4) for _ in range(2)]
+system_manager = SystemManager([Device(sub_devices1), Device(sub_devices2)])
+
+print(system_manager.get_entity(0))
+print(system_manager.get_entity(5))
+print(system_manager.get_entity(15))

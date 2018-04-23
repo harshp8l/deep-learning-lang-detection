@@ -1,0 +1,41 @@
+std::string GetNtDllVersion()
+  {
+    std::string versionString;
+    DWORD someHandle;
+    wchar_t systemFolderPath[ _MAX_PATH + 1 ];
+    UINT systemFolderPathSize = GetSystemDirectory( systemFolderPath, _MAX_PATH );
+    if ( systemFolderPathSize > 0 )
+    {
+      std::wstring ntDllPath( systemFolderPath, systemFolderPathSize );
+      ntDllPath += L""\\ntoskrnl.exe"";
+      DWORD versionSize = GetFileVersionInfoSize( ntDllPath.c_str(), &someHandle );
+      if ( versionSize > 0 )
+      {
+        LPVOID dataPtr = malloc( versionSize );
+        if ( dataPtr != NULL )
+        {
+          if ( GetFileVersionInfo( ntDllPath.c_str(), 0, versionSize, dataPtr ))
+          {
+            UINT length;
+            LPVOID outputPtr;
+            if ( VerQueryValue( dataPtr, L""\\"", &outputPtr, &length ))
+            {
+              VS_FIXEDFILEINFO* versionStructPtr = ( VS_FIXEDFILEINFO* )outputPtr;
+              if ( versionStructPtr->dwSignature == 0xFEEF04BD )
+              {
+                versionString = std::to_string( HIWORD( versionStructPtr->dwFileVersionMS ));
+                versionString += ""."";
+                versionString += std::to_string( LOWORD( versionStructPtr->dwFileVersionMS ));
+                versionString += ""."";
+                versionString += std::to_string( HIWORD( versionStructPtr->dwFileVersionLS ));
+                versionString += ""."";
+                versionString += std::to_string( LOWORD( versionStructPtr->dwFileVersionLS ));
+              }
+            }
+          }
+          free( dataPtr );
+        }
+      }
+    }
+    return versionString;
+  }

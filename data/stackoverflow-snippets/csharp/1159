@@ -1,0 +1,24 @@
+let blob = new Blob([response.data], { type: extractContentType(response) }),
+                downloadUrl = window.URL.createObjectURL(blob),
+                filename = """",
+                disposition = response.headers[""content-disposition""];
+
+if (disposition && disposition.indexOf(""attachment"") !== -1) {
+    let filenameRegex = /filename[^;=\n]*=((['""]).*?\2|[^;\n]*)/,
+        matches = filenameRegex.exec(disposition);
+
+    if (matches != null && matches[1]) {
+        filename = matches[1].replace(/['""]/g, '');
+    }
+}
+
+var a = document.createElement(""a"");
+// safari doesn't support this yet
+if (typeof a.download === 'undefined') {
+    window.location.href = downloadUrl;
+} else {
+    a.href = downloadUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+}

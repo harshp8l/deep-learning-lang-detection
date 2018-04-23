@@ -1,0 +1,16 @@
+select
+    trunc (acc.creation_date), 
+    count(distinct acc.account_id), 
+    count (distinct fo.account_id) 
+from account acc 
+left outer join web_link mp
+    on acc.account_id = mp.account_id
+left outer join web_action_log fo
+    on mo.session_id = fo.session_id 
+    and acc.creation_date > fo.log_time 
+    and fo.web_action = 'open_dd_form'
+where   acc.program_distributor = 'brinks'
+    and acc.channel = 'online'
+    and acc.creation_year = 2017
+group by trunc(acc.creation_date)
+order by 1;

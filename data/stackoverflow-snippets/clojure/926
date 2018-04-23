@@ -1,0 +1,57 @@
+(defn root' [content]
+  (fn []
+    {:tag :root :content (content)}))
+
+(defn lazy-elements' [n tag content]
+  (repeatedly n (fn [] {:tag tag :content (content)})))
+
+(defn level-1' [content]
+  (fn []
+    (lazy-elements' 3 :A content)))
+
+(defn level-2' [n]
+  (fn []
+    (concat (lazy-elements' 10 :X (fn [] '(:leaf)))
+            (lazy-elements' n :Y (fn [] '(:leaf))))))
+
+(defn remove-nodes [node]
+  (remove #(= (:tag %) :Y) node))
+
+(defn run []
+  (let [root-builder (root' (level-1' (level-2' 1e8)))]
+    (->> (root-builder)
+         :content
+         (map :content)       
+         (map remove-nodes))))
+
+user> (pprint (run))
+(({:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)})
+ ({:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)})
+ ({:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}
+  {:tag :X, :content (:leaf)}))

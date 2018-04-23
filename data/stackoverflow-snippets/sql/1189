@@ -1,0 +1,28 @@
+;MERGE  [Table2] [T]
+USING   (
+            SELECT       [T1].[Id]
+                        ,[T1].[StartDate]
+                        ,CAST(LEAD(EOMONTH(DATEADD(DAY, -1, [T1].[StartDate])), 1, [T1].[EndDate]) OVER (PARTITION BY [T1].[Id] ORDER BY [T1].[StartDate]) AS DATETIME) AS [EndDate]
+                        ,[T1].[Designation]
+            FROM        [dbo].[Table1] [T1]
+        ) [S]
+ON ([T].[Id] = [S].[Id] AND [T].[StartDate] = [S].[StartDate])
+WHEN MATCHED THEN 
+    UPDATE 
+            SET [T].[EndDate] = [S].[EndDate],
+                [T].[Designation] = [S].[Designation]
+WHEN NOT MATCHED BY TARGET THEN
+    INSERT
+    (
+      [Id],
+      [StartDate],
+      [EndDate],
+      [Designation]
+    )
+    VALUES
+    (
+        [S].ID,
+        [S].StartDate,
+        [S].EndDate,
+        [S].Designation
+    );

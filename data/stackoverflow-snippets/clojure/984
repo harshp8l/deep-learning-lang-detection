@@ -1,0 +1,62 @@
+(require '[schema.core :as s])
+(require '[schema.coerce :as sco])
+(require '[schema.utils :as scu])
+
+(deftype ^:private GarbageType [])
+(def ^:private garbage-const (GarbageType.))
+
+(def Garbage ""Garbage schema, use it to flag schema attributes to be removed by `cleaner`."" GarbageType)
+
+(defn garbage-flagging-matcher ""schema.coerce matcher to detect and flag garbage values."" [schema]
+  (cond (= schema Garbage) (constantly garbage-const)
+        :else identity))
+
+(defn- garbage-flagger ""Accepts a schema (supposedly that uses Garbage as a sub-schema), and returns a function that flags garbage values by coercing them to `garbage-const`""
+  [schema] (sco/coercer schema garbage-flagging-matcher))
+
+(defn clean-garbage ""Accepts a clojure data structures, and removes the values equal to `garbage-const.""
+  [v]
+  (cond
+    (= garbage-const v) nil
+    (map? v) (->> v seq
+                  (reduce (fn [m [k nv]]
+                            (if (= garbage-const nv)
+                              (dissoc m k)
+                              (assoc m k (clean-garbage nv)))
+                            ) v))
+    (vector? v) (->> v (remove #(= % garbage-const)) (map clean-garbage) vec)
+    (sequential? v) (->> v (remove #(= % garbage-const)) (map clean-garbage) doall)
+    :else v
+    ))
+
+(defn cleaner ""Accepts a Schema, which presumably uses Garbage to match illegal values, and returns a function that accepts a data structure (potentially an instance of the schema) and will remove its values that are not anticipated in the schema, e.g illegal map keys.""
+  [schema]
+  (let [flag (garbage-flagger schema)]
+    (fn [data]
+      (-> data flag clean-garbage)
+      )))
+
+;; Example
+
+(def MySchema {:a s/Int
+               :b {:c  s/Str
+                   (s/optional-key :d) s/Bool
+                   s/Any Garbage}
+               :e [{:f s/Inst
+                    s/Any Garbage}]
+               s/Any Garbage})
+
+((cleaner MySchema) {:a 1
+                       :garbage-key ""hello""
+                       :b {:c ""Hellow world""
+                           :d false
+                           42432424 23/2}
+                       :e [{:f #inst ""2015-07-23T15:49:33.073-00:00""
+                            'a-garbage-key ""remove me!!""
+                            ""another garbage key"" :remove-me!!}
+                           {:f #inst ""2015-07-23T15:53:33.073-00:00""}]})
+  => {:a 1
+      :b {:c ""Hellow world""
+          :d false}
+      :e [{:f #inst ""2015-07-23T15:49:33.073-00:00""}
+          {:f #inst ""2015-07-23T15:53:33.073-00:00""}]}

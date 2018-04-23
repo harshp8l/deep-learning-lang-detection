@@ -1,0 +1,14 @@
+(def longest-decreasing
+   (fn [rf]
+     (let [longest (volatile! [])
+           current (volatile! [])
+           tail (volatile! nil)]
+       (fn
+         ([] (rf))
+         ([result] (transduce identity rf result))
+         ([result x] (do (if (or (nil? @tail) (< x @tail))
+                           (if (> (count (vswap! current conj (vreset! tail x)))
+                                  (count @longest))
+                             (vreset! longest @current))
+                           (vreset! current [(vreset! tail x)]))
+                         @longest)))))))

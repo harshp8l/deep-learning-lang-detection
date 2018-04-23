@@ -1,0 +1,58 @@
+import (
+ ""sync""
+)
+
+const (
+    ONLYONECALLER_LOCK = ""onlyonecaller""
+    ANOTHER_LOCK = ""onlyonecaller""
+)
+
+var locks = map[string]bool{}
+
+var mutex = &sync.Mutex{}
+
+func Lock(lock string) bool {
+    mutex.Lock()
+    defer mutex.Unlock()
+
+    locked, ok := locks[lock]
+    if !ok {
+        locks[lock] = true
+        return true
+    }
+
+    if locked {
+        return false
+    }
+
+    locks[lock] = true
+    return true
+}
+
+func IsLocked(lock string) bool {
+    mutex.Lock()
+    defer mutex.Unlock()
+
+    locked, ok := locks[lock]
+    if !ok {
+        return false
+    }
+
+    return locked
+}
+
+func Unlock(lock string) {
+    mutex.Lock()
+    defer mutex.Unlock()
+
+    locked, ok := locks[lock]
+    if !ok {
+        return
+    }
+
+    if !locked {
+        return
+    }
+
+    locks[lock] = false
+}

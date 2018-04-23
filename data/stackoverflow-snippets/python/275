@@ -1,0 +1,24 @@
+def sol_dict (df_s, df_w): # answer with a dict
+    dict_w = pd.Series(df_w['value'].values,index=df_w['word']).to_dict()
+    df_s['value'] = df_s['sentence'].apply(lambda x: sum([dict_w[word] for word in x.split(' ') if word in dict_w.keys()]))
+    return df_s
+
+def sol_wen(df_s, df_w): # answer of Wen
+    s=df_s.sentence.str.split(' ',expand=True).stack()
+    df_s['value']=s[s.isin(df_w.word)].replace(dict(zip(df_w.word,df_w.value))).sum(level=0)
+    return df_s
+
+def sol_pi (df_s, df_w): # answer of piRSquared
+    dw = lambda x: dict(zip(df_w.word, df_w.value)).get(x, 0)
+    df_s.assign(value=[sum(map(dw, s.split())) for s in df_s.sentence])
+    # or df_s['value'] = [sum(map(dw, s.split())) for s in df_s.sentence]
+    return df_s
+
+def sol_merge(df_s, df_w): # answer with merge 
+    df_s['value'] = df_s['sentence'].apply(lambda x: sum(pd.merge(pd.DataFrame({'word':x.split(' ')}),df_w)['value']))
+    return df_s
+
+def sol_stack(df_s, df_w): # answer with stack and merge
+    df_stack = pd.DataFrame({'word': df_s['sentence'].str.split(' ',expand=True).stack()})
+    df_s['value'] = df_stack.reset_index().merge(df_w).set_index(['level_0','level_1'])['value'].sum(level=0)
+    return df_s

@@ -1,0 +1,12 @@
+declare @TestTable table (ID int,  PolicyNumber varchar(50), PolicyType varchar(50))
+insert into @TestTable values 
+                       (001, 'ENV1','Primary'),
+                       (002, 'ENV1',NULL),
+                       (003, 'ENV2','Claim Made'),
+                       (004, 'ENV3','Claim Made'),
+                       (005, 'ENV3',NULL)
+
+select  ID,  
+        PolicyNumber, 
+        PolicyType = case when PolicyType is null then lag(PolicyType) over (partition by PolicyNumber order by ID) else PolicyType end
+from @TestTable

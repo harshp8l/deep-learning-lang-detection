@@ -1,0 +1,26 @@
+  import shapeless.{::, HList, HNil}
+  import scala.reflect.ClassTag
+
+  def parse[C: ClassTag]: C = implicitly[ClassTag[C]].runtimeClass.getCanonicalName match {
+    case ""int"" ⇒ 10.asInstanceOf[C]
+    case ""double"" ⇒ 10d.asInstanceOf[C]
+    case ""java.lang.String"" ⇒ ""qwerty"".asInstanceOf[C]
+  }
+
+  def parseAll[T <: HList](implicit p: ParseAll[T]): T = p.apply
+
+  trait ParseAll[T <: HList] {
+    def apply: T
+  }
+
+  object ParseAll {
+    implicit def hCons[H: ClassTag, T <: HList](implicit p: ParseAll[T]): ParseAll[H :: T] = new ParseAll[H :: T] {
+      override def apply: H :: T = parse[H] :: p.apply
+    }
+
+    implicit val hNil: ParseAll[HNil] = new ParseAll[HNil] {
+      override def apply: HNil = HNil
+    }
+  }
+
+  parseAll[Int :: Double :: String :: HNil] // 10 :: 10.0 :: ""qwerty"" :: HNil

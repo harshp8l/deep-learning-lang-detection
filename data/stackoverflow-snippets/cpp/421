@@ -1,0 +1,34 @@
+//  int to type mapper
+template<int BITS>
+struct BitsToTypesMap
+{
+    typedef void TYPE;  //  default
+};
+
+//  pointwise mapping 
+template<>
+struct BitsToTypesMap<32>{  typedef int TYPE;   };
+template<>
+struct BitsToTypesMap<8>{   typedef char TYPE;  };
+template<>
+struct BitsToTypesMap<16>{  typedef short TYPE; };
+
+//  cute wrapping
+template<int BITS> using MyScalarType = typename BitsToTypesMap<BITS>::TYPE;
+
+//  TEST
+template<int BITS>
+MyScalarType<BITS>
+Add ( MyScalarType<BITS> x, MyScalarType<BITS> y )
+{
+    return x+y;
+}
+
+int
+test()
+{
+    MyScalarType<32> i=Add<32>(1,2);
+    MyScalarType<8 > b=Add<8 >(1,2);
+    MyScalarType<16> s=Add<16>(1,2);
+    return i+b+s;
+}

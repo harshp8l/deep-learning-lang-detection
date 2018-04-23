@@ -1,0 +1,73 @@
+class Event
+{
+public:
+
+    Event() : _signalled(false) {}
+
+    void notify()
+    {
+        std::cout << ""notifying"" << '\n' << std::flush;
+
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            _completed = false;
+            _signalled = true;
+        }
+
+        _condvar.notify_one();
+
+        {
+            // now wait for completion
+            std::unique_lock<std::mutex> lock(_mutex);
+            _condvar.wait(lock, [&] { return _completed; });
+        }
+
+        std::cout << ""completed"" << '\n' << std::flush;
+    }
+
+    void wait()
+    {
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            _condvar.wait(lock, [&] { return _signalled; });
+            _signalled = false;
+        }
+
+        // do stuff
+
+        auto n = hol::random_number(10);
+
+        std::cout << ""doing "" << n << "" different things"" << std::flush;
+        for(int i = 0; i < n; ++i)
+        {
+            std::cout << '.' << std::flush;
+            std::this_thread::sleep_for(std::chrono::milliseconds(hol::random_number(3000)));
+        }
+        std::cout << "" done stuff"" << '\n' << std::flush;
+
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            _completed = true;
+        }
+
+        _condvar.notify_one();
+    }
+
+private:
+
+    std::mutex _mutex;
+    std::condition_variable _condvar;
+    bool _signalled;
+    bool _completed;
+};
+
+int main()
+{
+    Event e;
+
+    std::thread wait([&]{ e.wait(); });
+
+    e.notify();
+
+    wait.join();
+}

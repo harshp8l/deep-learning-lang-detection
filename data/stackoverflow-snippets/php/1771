@@ -1,0 +1,20 @@
+add_action( 'woocommerce_cart_totals_before_shipping', 'display_cart_volume_total', 20 );
+add_action( 'woocommerce_review_order_before_shipping', 'display_cart_volume_total', 20 );
+function display_cart_volume_total() {
+    $total_volume = 0;
+
+    // Loop through cart items and calculate total volume
+    foreach( WC()->cart->get_cart() as $cart_item ){
+        $product_volume = (float) get_post_meta( $cart_item['product_id'], '_item_volume', true );
+        $total_volume  += $product_volume * $cart_item['quantity'];
+    }
+
+    if( $total_volume > 0 ){
+
+        // The Output
+        echo ' <tr class=""cart-total-volume"">
+            <th>' . __( ""Total Shipping Volume"", ""woocommerce"" ) . '</th>
+            <td data-title=""total-volume"">' . number_format($total_volume, 2) . ' m3</td>
+        </tr>';
+    }
+}

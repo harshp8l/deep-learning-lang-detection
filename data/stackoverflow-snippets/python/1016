@@ -1,0 +1,39 @@
+def new_record():
+
+    #set environment variables.
+    arcpy.env.workspace = r'F:\MyProject\Assignment\folklore.gdb'
+    myPath = r'F:\MyProject\Assignment\folklore.gdb'
+    editRows = arcpy.da.InsertCursor('folklore', '*')
+    print editRows.fields
+
+    # get the centroid of the townland from townland_centroid (fc) based on the
+    # townland the user enters.
+    database = r'F:\MyProject\Assignment\folklore.gdb'
+    fc = database + '/' + 'townland_centroid'
+
+    the_townland=str(text_search_townland.get())
+    fields = ['NAME_TAG', 'X_coord', 'Y_coord']
+    whereClause = '""NAME_TAG""' + "" = '"" + the_townland + ""'""
+
+    with arcpy.da.SearchCursor(fc, fields, whereClause) as cursor:
+        for row in cursor:
+            print('{0}, {1}, {2}'.format(row[0], row[1], row[2]))
+    X_coord = str(row[1])
+    Y_coord = str(row[2])
+    del cursor
+
+    # Set variables with values that will populate 'folklore' featureclass.
+    OID = 1
+    ptShape = arcpy.Point(0,0)
+    townland = text_search_townland.get()
+    county = var_county2.get()
+    category = var_category.get()
+    URL = text_search_URL.get()
+    spec_location = ""text_search_speclocation.get()""
+    date_entered = text_search_date_entered.get()
+    story_year = int(text_search_story_year.get())
+    X_coord_put = X_coord
+    Y_coord_put = Y_coord
+    newRecord = [OID, ptShape, townland, county, URL, spec_location, date_entered, story_year, category, X_coord, Y_coord]
+    editRows.insertRow(newRecord)
+    del editRows

@@ -1,0 +1,21 @@
+// Default website always has id 1
+int defaultSiteId = 1;
+
+// Get Server Manager
+ServerManager serverManager = new ServerManager();
+
+// Get default website (Always has id 1)
+var defaultSite = serverManager.Sites.First(s => s.Id == defaultSiteId);
+
+// Get reference to config file where host configuration is stored
+Configuration config = serverManager.GetApplicationHostConfiguration();
+
+// Get reference to the section that has the SSL settings for the website
+ConfigurationSection accessSection = config.GetSection(""system.webServer/security/access"", defaultSite.Name);
+
+// Change the sslFlags to require ssl
+// (See here for reference: https://docs.microsoft.com/en-us/iis/configuration/system.webServer/security/access )
+accessSection.SetAttributeValue(""sslFlags"", ""Ssl"");
+
+// Save and apply the changes
+serverManager.CommitChanges();

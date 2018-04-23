@@ -1,0 +1,42 @@
+def projection_plot(X, Y, Z, V):
+    """"""X,Y,Z and V are arrays with matching dimensions""""""
+
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+
+    # Plot the 3D surface and wireframe
+    ax.plot_surface(X, Y, Z, rstride=1, cstride=1, alpha=0.9, 
+    cmap='Greys_r', vmin=-10, vmax=45)
+    ax.plot_wireframe(X, Y, Z, rstride=1, cstride=1, lw=0.5, 
+    colors='k')
+
+    # Plot projections of the contours for each dimension.  By choosing offsets
+    # that match the appropriate axes limits, the projected contours will sit on
+    # the 'walls' of the graph
+    sc12 = ax.contourf(X,Y, V, vmin=0, vmax=100, cmap='viridis_r', alpha=0.9, zdir='z', offset=50, levels=np.linspace(0,100,11))
+    sc1 = ax.contour(X, Y, V, colors='w', alpha=1, zdir='z', offset=50.1, linewidths=0.3, levels=np.linspace(0,100,11))
+
+    # Set axis properties
+    ax.set_zlim(0, 50)
+    ax.zaxis.set_rotate_label(False)  # disable automatic rotation
+    ax.set_zlabel('\n Speed', rotation=90, fontsize=9)
+    ax.set_xlabel('Total Information', fontsize=7)
+    ax.set_ylabel('Participation Inequality', fontsize=7)
+    ax.set_xticks([10,40,70,100,130])
+    ax.set_yticks([0, 25, 50, 75, 100])
+    ax.tick_params(axis='both', which='major', labelsize=9)
+
+    ax.view_init(30, 225)
+    ax.set_frame_on(True)
+    ax.clabel(sc1, inline=1, fontsize=10, fmt='%2.0f')
+
+    cbar = fig.colorbar(sc12, shrink=0.6, aspect=10)
+    cbar.ax.text(2.30, 0.98, '%', fontsize=7)
+    cbar.ax.text(1.77, -0.015, '%', fontsize=7)
+    cbar.ax.set_title('Accuracy \n', fontsize=9)
+    # cbar.set_label('Accuracy', rotation=0, y=1.1, labelpad=-20)
+    cbar.set_ticks([0,10,20,30,40,50,60,70,80,90,100] + [np.min(consensus_ratesc), np.max(consensus_ratesc)])
+    cbar.set_ticklabels([0,10,20,30,40,50,60,70,80,90,100]+['     min', '     max'])
+    cbar.ax.tick_params(labelsize=7)
+
+    plt.show()

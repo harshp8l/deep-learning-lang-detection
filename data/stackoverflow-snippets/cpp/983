@@ -1,0 +1,59 @@
+template <typename Device>
+class ActiveObject {
+    private:
+        Device servant;
+        std::thread worker;
+        std::vector<std::unique_ptr<IWorkPackage>> work_queue;
+        std::atomic<bool> done;
+        std::mutex queue_mutex;
+        std::condition_variable cv;
+        void worker_thread() {
+            while(done.load() == false) {
+                std::unique_ptr<IWorkPackage> wp;
+                {
+                    std::unique_lock<std::mutex> lck {queue_mutex};
+
+                    cv.wait(lck, [this] {return !work_queue.empty() || done.load() == true;});
+                    if(done.load() == true) continue;
+
+                    wp = std::move(work_queue.back());
+                    work_queue.pop_back();
+                }
+
+                if(wp) wp->execute();
+            }
+        }
+    public:
+
+        ActiveObject(): done(false) {
+            worker = std::thread {&ActiveObject::worker_thread, this};
+        }
+
+        ~ActiveObject() {
+            {
+                std::unique_lock<std::mutex> lck{queue_mutex};
+                done.store(true);
+            }
+            cv.notify_one();
+            worker.join();
+        }
+
+        template<typename R, typename ...Args, typename ...Params>
+        std::future<R> async(R (Device::*function)(Params...), Args... args) {
+            std::unique_ptr<WorkPackage<R>> wp {new WorkPackage<R> {std::packaged_task<R()> { std::bind(function, &servant, args...) }}};
+            std::future<R> fut = wp->get_future();
+            {
+                std::unique_lock<std::mutex> lck{queue_mutex};
+                work_queue.push_back(std::move(wp));
+            }
+            cv.notify_one();
+
+            return fut;
+        }
+
+        // In case you want to call some functions directly on the device
+        Device* operator->() {
+            return &servant;
+        }
+
+};

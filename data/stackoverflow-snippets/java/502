@@ -1,0 +1,18 @@
+#!/bin/bash -e
+
+JAVA_VER=$(javadd -version 2>&1 | sed -n ';s/.* version ""\(.*\)\.\(.*\)\..*""/\1\2/p;')
+
+if [ ""${JAVA_VER}"" != ""18"" ]; then
+    file_name=""jdk-8u172-linux-x64.tar.gz""
+    cd ~
+    sudo mkdir -p /opt/jdk
+    sudo tar -zxf ~/${file_name} -C /opt/jdk
+
+    sudo apt-get remove -y --purge openjdk-\* || true
+    cd /opt/jdk/jdk1.8.0_172/bin
+
+    for j in `ls j*`; do
+        sudo update-alternatives --force --install /usr/bin/${j} ${j} /opt/jdk/jdk1.8.0_172/bin/${j} 100
+    done
+    sudo update-alternatives --display java
+fi

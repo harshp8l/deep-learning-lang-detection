@@ -1,0 +1,121 @@
+$script:xml = [xml] @""
+<FLOW>
+    <TASK FROM =""B"" TO =""C""/>
+    <TASK FROM =""C"" TO =""E1""/>
+    <TASK FROM =""C"" TO =""F1""/>
+    <TASK FROM =""A1"" TO =""A2""/>
+    <TASK FROM =""A2"" TO =""A3""/>
+    <TASK FROM =""A3"" TO =""C""/>
+    <TASK FROM =""C"" TO =""D1""/>
+    <TASK FROM =""D2"" TO =""D3""/>
+    <TASK FROM =""D1"" TO =""D2""/>
+    <TASK FROM =""E1"" TO =""E2""/>
+    <TASK FROM =""Start"" TO =""B""/>
+    <TASK FROM =""E2"" TO =""E3""/>
+    <TASK FROM =""F1"" TO =""F2""/>
+    <TASK FROM =""F2"" TO =""F3""/>
+    <TASK FROM =""F3"" TO =""G""/>
+    <TASK FROM =""Start"" TO =""A1""/>
+    <TASK FROM =""G"" TO =""Finish""/>
+    <TASK FROM =""E3"" TO =""G""/>
+    <TASK FROM =""D3"" TO =""G""/>
+</FLOW>
+""@
+
+Function GetNextNode {
+    param($node)
+
+    $nextNode = $xml.FLOW.TASK |
+                    Where-Object {$_.FROM -eq $node.TO} |
+                    Sort-Object TO
+    return $nextNode
+
+}
+
+Function GetPrevNode {
+    param($node)
+
+    $nextNode = $xml.FLOW.TASK |
+                    Where-Object {$_.TO -eq $node.FROM} |
+                    Sort-Object TO
+    return $nextNode
+
+}
+
+$startNode   = $xml.FLOW.TASK | Where-Object {$_.FROM -eq ""Start""} | Sort-Object TO
+
+do{
+    # deal with the start node as it's a special case
+    if(-not [string]::IsNullOrEmpty($startNode)){
+
+        # start node is the start of the chain
+        [array]$mainChain = $startNode[0]
+
+        # if you have two or more nodes, store them for now. They will be referenced later
+        if($startNode.Count -gt 1){
+            [array]$splitterNode  = $startNode
+        }
+
+        # take the first start node and find out which node it leads to
+        [array]$nextNode = GetNextNode -node $startNode[0]
+
+        # add one of the nodes. set $oldNode for next iteration
+        [array]$mainChain += $nextNode[0]
+        [array]$oldNode  = $nextNode[0]
+
+        # this is only for the first node, don't run through again
+        $startNode = $null
+        continue
+
+    }
+
+
+    # get the next node AND previus nodes for that next node
+    [array]$nextNode   = GetNextNode -node $oldNode[0]
+    [array]$prevNode   = GetPrevNode -node $nextNode[0]
+
+    if($prevNode.Count -ne 1){
+
+        # if there are multiple previous nodes, go back and deal with them
+        # to do this, go back to the $splitterNode
+        if(-not [string]::IsNullOrEmpty($splitterNode)){
+
+            # exclude anything already added
+            [array]$remainingNodes = $splitterNode | Where-Object {$_ -notin $mainChain}
+
+            # if that leaves only one node, others have been dealt with
+            # there is no longer a split
+            if($remainingNodes.Count -eq 1){               
+                $splitterNode = $null
+            }
+
+            [array]$oldNode = $remainingNodes[0]
+            $mainChain += $remainingNodes[0]
+            continue
+
+        }else{
+
+            # if there is no $splitterNode, all previous nodes should already be in the chain
+            # check
+            foreach($node in $prevNode){
+                if($node -notin $mainChain){
+                    Write-Host ""Broken chain""
+                    Exit
+                }
+            }
+
+        }
+    }
+
+    # if this node is a splitter, set it so it can be referenced later
+    if($nextNode.Count -gt 1){
+        $splitterNode = $nextNode
+    }
+
+    # add this node to the chain. 
+    [array]$mainChain += $nextNode[0]
+    [array]$oldNode = $nextNode[0]
+
+}while($oldNode.To -ne ""Finish"")
+
+($mainChain.FROM | Select-Object -Unique) + ""Finish"" | Out-Host

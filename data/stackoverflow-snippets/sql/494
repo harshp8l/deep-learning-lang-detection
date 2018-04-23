@@ -1,0 +1,21 @@
+select 
+  qn.QueueName AS [Queue],
+  q.[#ofUnassignedEnvelopes],
+  q.[OldestEnvelope]
+FROM (select distinct QueueName from VehicleReg_Documents_QueueTypes) qn
+LEFT JOIN
+(
+  SELECT       qt.QueueName,
+               COUNT ( qt.QueueName ) AS [#ofUnprocessedEnvelopes] ,
+               COUNT (   CASE WHEN dq.AssignedToUserID = 0 THEN 1
+                              ELSE NULL
+                         END
+                     ) AS [#ofUnassignedEnvelopes] ,
+               MIN ( dq.DocumentDate ) AS [OldestEnvelope]
+  FROM         dbo.VehicleReg_Documents_QueueTypes AS [qt]
+  JOIN         dbo.VehicleReg_Documents_Queue AS [dq] ON dq.QueueID = qt.QueueTypeID
+  WHERE        dq.IsProcessed = 0
+               AND dq.PageNumber = 1
+) q ON q.QueueName = qn.QueueName
+GROUP BY ALL qn.QueueName
+ORDER BY     qn.QueueName ASC;

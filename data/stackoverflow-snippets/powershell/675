@@ -1,0 +1,25 @@
+$html = @'
+some sort of html code
+<hr> an unclosed tab so it's messy like html / unlike xml
+<table>
+<tr><th>Program Name</th><th>version</th><th>install date</th><th>computer name</th><th>ID</th><th>Installed</th></tr>
+<tr><td>Adobe Acrobat Reader DC</td><td>18.009.20050</td><td>20171130</td><td>kratos.kcprod1.com</td><td>4104917a-93f2-46e5-941a-c4efd54504b7</td><td>True</td></tr>
+<tr><td>Adobe Flash Player 28 ActiveX</td><td>28.0.0.137</td><td></td><td>kratos.kcprod1.com</td><td>4104917a-93f2-46e5-941a-c4efd54504b7</td><td>True</td></tr>
+<tr><td /><td>123</td><td></td><td>hello.com</td><td>456</td><td>True</td></tr>
+</table>
+etc...
+'@
+
+$Parser = New-Object -ComObject 'HTMLFile' #see https://msdn.microsoft.com/en-us/library/aa752574(v=vs.85).aspx
+$Parser.IHTMLDocument2_write($html) #if you're using PS4 or below use instead: $Parser.IHTMLDocument2_write($html)
+
+$parser.documentElement.getElementsByTagName('tr') | %{
+    $tr = $_
+    $a,$b,$c,$d = $tr.getElementsByTagName('td') | select-object -first 4 | %{""$($_.innerText)""} #we do this istead of `select -expand innerText` to ensure nulls are returned as blanks; not ignored
+    (New-Object -TypeName 'PSObject' -Property ([ordered]@{
+        AppName = $a
+        Version = $b
+        InstallDate = $c
+        ComputerName = $d
+    }))
+} 

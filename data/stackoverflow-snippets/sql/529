@@ -1,0 +1,26 @@
+;WITH numCTE AS(
+  SELECT
+    *,
+    ROW_NUMBER()OVER(PARTITION BY PersonID ORDER BY [Date],ID) N
+  FROM
+    (
+      SELECT ID,PersonID,[Date]
+      FROM TestData
+
+      UNION ALL
+
+      SELECT DISTINCT NULL,PersonID,@FromDate -- add phantom rows for some people
+      FROM TestData p
+      WHERE NOT EXISTS(SELECT * FROM TestData d WHERE d.[Date] BETWEEN @FromDate AND @ToDate AND d.PersonID=p.PersonID)
+    ) q
+)
+SELECT n.*
+FROM
+  (
+    SELECT PersonID,MIN(N)-1 MinN,MAX(N)+1 MaxN
+    FROM numCTE
+    WHERE [Date] BETWEEN @FromDate AND @ToDate
+    GROUP BY PersonID
+  ) q
+JOIN numCTE n on n.PersonID=q.PersonID AND n.N BETWEEN q.MinN AND q.MaxN
+WHERE ID IS NOT NULL -- exclude phantom rows from result

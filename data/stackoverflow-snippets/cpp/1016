@@ -1,0 +1,46 @@
+bool recvAll(SOCKET s, void *buf, int len)
+{
+    char *pbuf = (char*) buf;
+    while (len > 0)
+    {
+        int recvd = recv(s, pbuf, len, 0);
+        if (recvd <= 0) // -1 on error, 0 on disconnect
+            return false;
+        pbuf += recvd;
+        len -= recvd;
+    }
+    return true;
+}
+
+bool recvInt(SOCKET s, int &value)
+{
+    u_long temp;
+    bool result = recvAll(s, &temp, sizeof(temp));
+    if (result) value = ntohl(temp);
+    return result;
+}
+
+bool winsock_server::receive_frame(frame &f)
+{
+    if (!recvInt(server_socket, f.length))
+        return false;
+
+    f.body = new int[f.length];
+
+    for(int i = 0; i < f.length; ++i)
+    {
+        if (!recvInt(server_socket, f.body[i]))
+        {
+            delete[] f.body;
+            return false;
+        }
+    }
+
+    if (!recvInt(server_socket, f.tail))
+    {
+        delete[] f.body;
+        return false;
+    }
+
+    return true;
+}

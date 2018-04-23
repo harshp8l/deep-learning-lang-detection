@@ -1,0 +1,15 @@
+open System
+open System.Threading.Tasks
+open Microsoft.WindowsAzure.Storage.Blob
+open Microsoft.WindowsAzure.Storage
+
+let containerClient : CloudBlobClient = null
+
+let GetBlobsFromContainer(containerName : string) : Task<string[]> =
+    async {
+        let container = containerClient.GetContainerReference(containerName)
+        return! container.ListBlobs()
+               |> Seq.cast<CloudBlockBlob>
+               |> Seq.map (fun b -> b.DownloadTextAsync() |> Async.AwaitTask)
+               |> Async.Parallel
+    } |> Async.StartAsTask

@@ -1,0 +1,33 @@
+export class AppComponent implements OnInit{
+  video: any;
+  canvas: any;
+
+  ngOnInit() {
+    this.startup();
+  }
+
+  startup(): void {
+    this.video = document.getElementById('video');
+    this.canvas = document.getElementById('canvas');
+
+    const nav = <any>navigator;
+    nav.getUserMedia = nav.getUserMedia || nav.mozGetUserMedia || nav.webkitGetUserMedia;
+
+    const self = this;
+    navigator.mediaDevices.getUserMedia({video: true, audio: false})
+      .then(function (stream) {
+        self.video.srcObject = stream;
+        self.video.play();
+      });
+  }
+
+  onBtnClicked(event: Event): void {
+    this.takePicture();
+    event.preventDefault();
+  }
+
+  takePicture() {
+    const context = this.canvas.getContext('2d');
+      context.drawImage(this.video, 0, 0, 100, 100);
+  }
+}

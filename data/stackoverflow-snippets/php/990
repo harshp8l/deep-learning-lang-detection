@@ -1,0 +1,40 @@
+<?php
+
+echo ""Test with php_pdo_sqlsrv (PDO)\n"";
+
+$serverName = ""(local)"";
+try
+{
+    $dbh = new PDO(""sqlsrv:server=$serverName; Database=Test"", ""sa"", ""..."");
+    $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $tsql = ""select 1 value"";
+    $result = $dbh->prepare($tsql)->execute();
+
+    echo $result;
+}
+catch(PDOException $e)
+{  
+    print_r($e->getMessage());
+}
+
+
+echo ""\nTest with php_sqlsrv (not PDO)\n"";
+
+$serverName = ""(local)"";
+$connectionInfo = array( ""Database""=>""Test"", ""UID""=>""sa"", ""PWD""=>""..."");
+try
+{
+    $conn = sqlsrv_connect($serverName, $connectionInfo);
+
+    $tsql = ""select 2 value"";
+    $result = sqlsrv_query($conn, $tsql);
+    $obj = sqlsrv_fetch_object($result);
+    echo $obj->value;   
+}
+catch(Exception $ex)
+{
+    print_r($ex->getMessage());
+}
+
+?>

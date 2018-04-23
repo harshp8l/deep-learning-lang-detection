@@ -1,0 +1,51 @@
+(use 'clojure.java.io)
+
+(defn get-lines [fname]
+  (with-open [r (reader fname)]
+    (doall (map read-string (line-seq r)))))
+
+(def numbers (get-lines ""numbers.dat""))
+
+(defn merge-lists [left right]
+  (loop [head [] L left R right]
+    (if (empty? L) (concat head R)
+    (if (empty? R) (concat head L)
+    (if (> (first L) (first R))
+      (recur (conj head (first R)) L (rest R))
+      (recur (conj head (first L)) (rest L) R))))))
+
+(defn naive-merge-sort [list]
+  (if (< (count list) 2) list
+    (apply merge-lists
+      (map naive-merge-sort
+        (split-at (/ (count list) 2) list)))))
+
+(defn parallel-merge-sort-2 [list]
+  (if (< (count list) 2) list
+    (apply merge-lists
+      (pmap naive-merge-sort
+        (split-at (/ (count list) 2) list)))))
+
+(defn parallel-merge-sort-4 [list]
+  (if (< (count list) 2) list
+    (apply merge-lists
+      (pmap parallel-merge-sort-2
+        (split-at (/ (count list) 2) list)))))
+
+(defn parallel-merge-sort-8 [list]
+  (if (< (count list) 2) list
+    (apply merge-lists
+      (pmap parallel-merge-sort-4
+        (split-at (/ (count list) 2) list)))))
+
+(defn parallel-merge-sort-16 [list]
+  (if (< (count list) 2) list
+    (apply merge-lists
+      (pmap parallel-merge-sort-8
+        (split-at (/ (count list) 2) list)))))
+
+(defn parallel-merge-sort-32 [list]
+  (if (< (count list) 2) list
+    (apply merge-lists
+      (pmap parallel-merge-sort-16
+        (split-at (/ (count list) 2) list)))))

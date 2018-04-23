@@ -1,0 +1,37 @@
+create sequence s_time_key START WITH 1;
+
+insert into dim_time (
+  time_key,
+  full_date,
+  day_name,
+  day_of_week,
+  day_number_in_month,
+  day_name_abbrevated,
+  weekday_flag,
+  week_of_the_year,
+  week_begin_date,
+  month_number,
+  month_name,
+  month_abbrevated,
+  quarter,
+  year,
+  last_day_in_month_flag
+)
+select
+  s_time_key.nextval,
+  d,
+  to_char(d,'Day'),   --Monday
+  to_char(d,'D'),     --1-7, monday=2 in some countries, 1 in others (NLS)
+  to_char(d,'DD'),    --1-31
+  to_char(d,'Dy'),    --Su, Mo, ...
+  decode(to_char(d,'Dy'),'Sa','N','Su','N','Y'),
+  to_char(d,'IW'),    --week num ISO standard
+--to_char(d,'WW'),    --week num other
+  d+1-to_char(d,'D'), --first day in week, depending on NLS
+  to_number(to_char(d,'MM')),
+  to_char(d,'Month'),
+  to_char(d,'MON'),
+  to_char(d,'YYYYQ'),
+  to_char(d,'YYYY'),
+  decode(to_char(d+1,'DD'),'01','Y','N')
+from (select distinct shift_date d from shift);

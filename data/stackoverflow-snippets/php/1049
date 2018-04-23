@@ -1,0 +1,51 @@
+     $monthArg = $_GET['m'];
+// calc dates and weekdays
+            if ($monthArg == null || $monthArg == '')       
+                $currMonth= date(""m"");              
+            else
+                $currMonth = intval($monthArg); 
+
+            $currYear = $_GET['y'];
+            $startDate = strtotime($currYear . ""-"" . $currMonth . ""-01 00:00:01"");
+            $startDay= date(""N"", $startDate);
+            $monthName = date(""M"",$startDate );
+
+            //echo(""start day="". $startDay . ""<br>"");
+
+            $daysInMonth = cal_days_in_month(CAL_GREGORIAN, date(""m"", $startDate), date( ""Y"", $startDate));
+            $endDate = strtotime($currYear . ""-"" . $currMonth . ""-"" .  $daysInMonth ."" 00:00:01"");
+
+            //echo(date(""Y"", $endDate) . ""-"" . date(""m"", $endDate) . ""-"". date(""d"", $endDate));
+            $endDay = date(""N"", $endDate);
+            //echo(""end day="" . $endDay . ""<br>"");      
+
+            // initialize structure array matching the calendar grid
+            // 6 rows and 7 columns
+
+                // php date sunday is zero
+            if ($startDay> 6)
+                $startDay = 7 -$startDay;
+
+            $currElem = 0;
+            $dayCounter = 0;
+            $firstDayHasCome = false;
+            $arrCal = array();
+            for($i = 0; $i <= 5; $i ++) {
+                for($j= 0; $j <= 6; $j++) {
+                            // decide what to show in the cell
+                    if($currElem < $startDay && !$firstDayHasCome)          
+                        $arrCal[$i][$j] = """";
+                    else if ($currElem == $startDay && !$firstDayHasCome) {
+                        $firstDayHasCome= true;
+                        $arrCal[$i][$j] = ++$dayCounter;
+                    }
+                    else if ($firstDayHasCome) {
+                        if ($dayCounter < $daysInMonth)
+                            $arrCal[$i][$j] = ++ $dayCounter; 
+                        else
+                            $arrCal[$i][$j] = """";   
+                    }                           
+
+                    $currElem ++;               
+                }
+            }

@@ -1,0 +1,14 @@
+UPDATE Detail
+SET Detail.[Entry Type] = REPLACE(Detail.[Entry Type], '2', 'factura')
+
+FROM dbo.MBS_tabela_21Detailed_NAV16 AS Detail
+INNER JOIN dbo.MBS_tabela_21_NAV16 AS Cust
+  ON Detail.[Cust_ Ledger Entry No_] = Cust.[Entry No_]
+INNER JOIN dbo.Integracao_Periodo_NAV16 AS Integr
+  ON YEAR(Detail.[Posting Date]) = Integr.Ano
+  AND MONTH(Detail.[Posting Date]) = Integr.Mes
+
+WHERE (Detail.[Document No_] LIKE '%REC%'
+OR Detail.[Document No_] LIKE '%L%')
+AND (Detail.[Entry Type] = 2)
+AND (Cust.[Global Dimension 1 Code] = 'LMR')

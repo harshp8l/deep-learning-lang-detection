@@ -1,0 +1,45 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Data;
+using System.Xml;
+using System.Xml.Linq;
+using System.IO;
+
+namespace ConsoleApp2
+
+{
+
+    class Program
+    {
+        const string FILENAME = @""c:\temp\text.csv"";
+        static void Main()
+        {
+
+            string[] filenames = Directory.GetFiles(@""c:\temp"", ""*.xml"");
+            StreamWriter writer = new StreamWriter(FILENAME);
+
+            foreach (string filename in filenames)
+            {
+                XDocument doc = XDocument.Load(filename);
+
+                string amount = (string)doc.Descendants(""TotalAmount"").FirstOrDefault();
+
+                foreach (XElement line in doc.Descendants(""Line""))
+                {
+                    writer.WriteLine(string.Join("","",
+                        filename,
+                        (string)line.Element(""LineID""),
+                        (string)line.Element(""Quantity""),
+                        (string)line.Element(""LineAmount""),
+                        amount));
+                }
+            }
+            writer.Flush();
+            writer.Close();
+        }
+    }
+
+
+}

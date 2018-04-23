@@ -1,0 +1,20 @@
+import spark.implicits._
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions
+
+case class Input(movieId: Int, a: Option[Double], b: Option[Double], c: Option[Double])
+
+val data = Input(1, None, Option(3.5), Option(1.4)) :: 
+        Input(2, Option(4.2), Option(1.34), None) :: 
+        Input(3, Option(1.11), None, Option(3.32)) :: Nil
+
+val df = sc.parallelize(data).toDF
+
+// Exclude the PK column from the map
+val mapKeys = df.columns.filterNot(_ == ""movieId"")
+
+// Build the sequence of key, value, key, value, ..
+val pairs = mapKeys.map(k => Seq(lit(k), col(k))).flatten
+
+val mapped = df.select($""movieId"", functions.map(pairs:_*) as ""map"")
+mapped.show(false) 

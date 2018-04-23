@@ -1,0 +1,23 @@
+let comparer = 
+    let rec compareQuots vs = function
+    | Quotations.ExprShape.ShapeLambda(v,e), Quotations.ExprShape.ShapeLambda(v',e') ->
+        compareQuots (vs |> Map.add v v') (e,e')
+    | Quotations.ExprShape.ShapeCombination(o,es), Quotations.ExprShape.ShapeCombination(o',es') ->
+        o = o' && (es.Length = es'.Length) && List.forall2 (fun q1 q2 -> compareQuots vs (q1, q2)) es es'
+    | Quotations.ExprShape.ShapeVar v, Quotations.ExprShape.ShapeVar v' when Map.tryFind v vs = Some v' && v.Type = v'.Type -> 
+        true
+    | _ -> false
+
+    let rec hashQuot n vs = function
+    | Quotations.ExprShape.ShapeLambda(v,e) -> 
+        hashQuot (n+1) (vs |> Map.add v n) e
+    | Quotations.ExprShape.ShapeCombination(o,es) -> 
+        es |> List.fold (fun h e -> 31 * h + hashQuot n vs e) (o.GetHashCode())
+    | Quotations.ExprShape.ShapeVar v -> 
+        Map.find v vs
+
+    { new System.Collections.Generic.IEqualityComparer<_> with 
+        member __.Equals(q1,q2) = compareQuots Map.empty (q1,q2)
+        member __.GetHashCode q = hashQuot 0 Map.empty q }
+
+let cache = ConcurrentDictionary<Expr, Module>(comparer)

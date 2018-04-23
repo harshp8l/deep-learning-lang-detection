@@ -1,0 +1,17 @@
+static ChronoFormatter<LocalDate> createParser(String pattern) {
+    return ChronoFormatter // maybe consider caching the immutable formatter per pattern
+        .ofPattern(
+            pattern,
+            PatternType.CLDR,
+            Locale.ROOT, // locale-sensitive patterns require another locale
+            PlainDate.axis(TemporalType.LOCAL_DATE) // converts to java.time.LocalDate
+        )
+        .withDefault(PlainDate.YEAR, 1970)
+        .with(Leniency.STRICT);
+}
+
+public static void main(String[] args) throws Exception {
+    System.out.println(createParser(""uuuu/MM/dd"").parse(""2018/12/06"")); // 2018-12-06
+    System.out.println(createParser(""yyyy/MM/dd"").parse(""2018/12/06"")); // 2018-12-06
+    System.out.println(createParser(""MM/dd"").parse(""12/06"")); // 1970-12-06
+}

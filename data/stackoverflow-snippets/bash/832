@@ -1,0 +1,28 @@
+#!/bin/bash
+
+get_racks(){
+    # query that outputs a list of racks
+    echo rack01
+}
+export -f get_racks
+
+get_hosts() {
+    # query that outputs a list of hosts by rack(passed as param to the func)
+    echo host01
+    echo host02
+}
+export -f get_hosts
+
+get_gw() {
+    # query that outputs a list of gateways
+    echo gw1
+    echo gw2
+}
+export -f get_gw
+
+ping_gw() {
+    rack=""$1""
+    get_hosts ""$rack"" | parallel -S - --onall ping -c 5 ::: ""`get_gw`""
+}
+export -f ping_gw
+get_racks | parallel ping_gw && echo All hosts and gws are up

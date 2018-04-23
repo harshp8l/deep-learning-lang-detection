@@ -1,0 +1,40 @@
+  # Build the model.
+  inks, lengths, labels = _get_input_tensors(features, labels)
+  convolved, lengths = _add_conv_layers(inks, lengths)
+  final_state = _add_rnn_layers(convolved, lengths)
+  logits = _add_fc_layers(final_state)
+
+  # Compute current predictions.
+  predictions = tf.argmax(logits, axis=1)
+
+  if mode == tf.estimator.ModeKeys.PREDICT:
+      preds = {
+          ""class_index"": predictions,
+          #""class_index"": predictions[:, tf.newaxis],
+          ""probabilities"": tf.nn.softmax(logits),
+          ""logits"": logits
+      }
+      #preds = {""logits"": logits, ""predictions"": predictions}
+
+      return tf.estimator.EstimatorSpec(mode, predictions=preds)
+      # Add the loss.
+  cross_entropy = tf.reduce_mean(
+      tf.nn.sparse_softmax_cross_entropy_with_logits(
+          labels=labels, logits=logits))
+
+  # Add the optimizer.
+  train_op = tf.contrib.layers.optimize_loss(
+      loss=cross_entropy,
+      global_step=tf.train.get_global_step(),
+      learning_rate=params.learning_rate,
+      optimizer=""Adam"",
+      # some gradient clipping stabilizes training in the beginning.
+      clip_gradients=params.gradient_clipping_norm,
+      summaries=[""learning_rate"", ""loss"", ""gradients"", ""gradient_norm""])
+
+  return tf.estimator.EstimatorSpec(
+      mode=mode,
+      predictions={""logits"": logits, ""predictions"": predictions},
+      loss=cross_entropy,
+      train_op=train_op,
+      eval_metric_ops={""accuracy"": tf.metrics.accuracy(labels, predictions)})

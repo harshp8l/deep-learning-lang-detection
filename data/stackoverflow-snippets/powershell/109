@@ -1,0 +1,18 @@
+$csv = Import-Csv C:\Powershell\network.csv
+$uri = ""https://172.16.16.16:4444/webconsole/APIController?reqxml=""
+
+$csv | ForEach-Object {
+    $Name = $_.name
+    $IPAddress =$_.ipaddress
+
+    $RestMethod = Invoke-RestMethod -Uri $uri""<Request><Login><Username>admin</Username><Password>admin</Password></Login><Set operation='add'><IPHost><Name>$Name</Name><IPFamily>IPv4</IPFamily><HostType>IP</HostType><IPAddress>$IPAddress</IPAddress></IPHost></Set></Request>""
+
+    $Export = [pscustomobject] @{
+        'code' = $RestMethod.Response.IPHost.Status.Code
+        'text' = $RestMethod.Response.IPHost.Status.text
+        'name' = $Name
+        'ipaddress' = $IPAddress
+    }
+
+    $Export | Export-csv -Append -Path ""C:\Powershell\output.csv"" -NoTypeInformation 
+} 

@@ -1,0 +1,18 @@
+ (defn testspeed-unhinted-longs
+   ""test array bit manipulating tight loop speeds.""
+   []
+   (let [lps 1000,
+         len (bit-shift-left 1 12),
+         bits (bit-shift-left 1 17)]
+     (let [buf (long-array len)]
+       (letfn [(doit []
+                 (loop [i 0]
+                   (if (< i bits)
+                     (let [w (bit-shift-right i 5)]
+                       (do
+                         (aset buf w (bit-or (aget buf w)
+                                             (bit-shift-left 1 (bit-and i 31))))
+                         (recur (inc i)))))))]
+         (dorun lps (repeatedly doit)))))))
+user=> (time (testspeed-unhinted-longs))
+""Elapsed time: 221.025048 msecs""

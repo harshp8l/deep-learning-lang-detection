@@ -1,0 +1,24 @@
+val df = sc.parallelize(Seq((""a"",""b""),(""c"",""d""),(""e"",""f""))).toDF(""one"",""two"")
+
+
+val myUDF = udf((input:Map[String,String]) => {
+  // do something with the input
+  input(""one"")==""a""
+})
+
+df
+  .withColumn(""udf_args"",map(
+    lit(""one""),$""one"",
+    lit(""two""),$""one""
+  )
+ )
+ .withColumn(""udf_result"", myUDF($""udf_args""))
+ .show()
+
++---+---+--------------------+----------+
+|one|two|            udf_args|udf_result|
++---+---+--------------------+----------+
+|  a|  b|Map(one -> a, two...|      true|
+|  c|  d|Map(one -> c, two...|     false|
+|  e|  f|Map(one -> e, two...|     false|
++---+---+--------------------+----------+

@@ -1,0 +1,23 @@
+module Constrained =
+    type Constrained< ^a when ^a : (member Condition : bool) > =
+        private Constrained of ^a with
+        static member inline Create (x:^a ) =
+            if (^a : (member Condition : bool) x) then Some (Constrained x)
+            else None
+        member inline this.Value : ^a = match this with Constrained v -> v
+
+type PosInt = PosInt of int with member this.Condition = this |> fun (PosInt x) -> x > 0
+type NonEmptyString = NonEmptyString of string with member this.Condition = this |> fun (NonEmptyString x) -> x.Length > 0
+
+open Constrained
+
+Constrained.Create (PosInt -1) // None
+Constrained.Create (NonEmptyString """") // None
+
+(Constrained.Create (PosInt 1)) // Some (Constrained (PosInt 1))
+(Constrained.Create (NonEmptyString ""a"")) // Some (Constrained (NonEmptyString ""a""))
+
+let f (x:Constrained<PosInt>) =
+    match x.Value with PosInt i -> i + 1
+
+Constrained (PosInt -1) // Compile error. The private union case constructor cannot be used outside of the Constrained module

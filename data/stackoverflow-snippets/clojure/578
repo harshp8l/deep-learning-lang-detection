@@ -1,0 +1,62 @@
+(ns clj.core
+  (:require [tupelo.core :as t] 
+            [clojure.set :as set] ))
+(t/refer-tupelo)
+
+(def x
+  [ {:id 1,   :obs/A ""11"",    :obs/value 2.0,    :obs/color ""yellow""}
+    {:id 2,   :obs/A ""12"",    :obs/value 4.0,    :obs/color ""blue""}
+    {:id 3,   :obs/A ""13"",    :obs/value 3.0,    :obs/color ""green""}
+    {:id 3,   :obs/A ""15"",    :obs/value 7.0,    :obs/color ""red""} ] )
+
+(def y
+  [ {:id 2,   :obs/A ""11"",    :obs/value 7.0,    :obs/shape ""square""}
+    {:id 2,   :obs/A ""13"",    :obs/value 4.0,    :obs/shape ""circle""}
+    {:id 6,   :obs/A ""15"",    :obs/value 3.0,    :obs/shape ""triangle""} ] )
+
+(newline) (println ""x"") (pretty x)
+(newline) (println ""y"") (pretty y)
+
+; Note this assumes that :obs/A is unique in each sequence x and y
+(def xa (group-by :obs/A x))
+(def ya (group-by :obs/A y))
+(newline) (println ""xa"") (pretty xa)
+(newline) (println ""ya"") (pretty ya)
+
+(def common-a (set/intersection (set (keys xa)) (set (keys ya))))
+(newline) (spyx common-a)
+
+(def values-map
+  (apply glue
+    (for [aval common-a]
+      { (-> aval xa only :obs/value)
+        (-> aval ya only :obs/value) } )))
+(newline) (spyx values-map)
+
+
+> lein run
+x
+[{:id 1, :obs/A ""11"", :obs/value 2.0, :obs/color ""yellow""}
+ {:id 2, :obs/A ""12"", :obs/value 4.0, :obs/color ""blue""}
+ {:id 3, :obs/A ""13"", :obs/value 3.0, :obs/color ""green""}
+ {:id 3, :obs/A ""15"", :obs/value 7.0, :obs/color ""red""}]
+
+y
+[{:id 2, :obs/A ""11"", :obs/value 7.0, :obs/shape ""square""}
+ {:id 2, :obs/A ""13"", :obs/value 4.0, :obs/shape ""circle""}
+ {:id 6, :obs/A ""15"", :obs/value 3.0, :obs/shape ""triangle""}]
+
+xa
+{""11"" [{:id 1, :obs/A ""11"", :obs/value 2.0, :obs/color ""yellow""}],
+ ""12"" [{:id 2, :obs/A ""12"", :obs/value 4.0, :obs/color ""blue""}],
+ ""13"" [{:id 3, :obs/A ""13"", :obs/value 3.0, :obs/color ""green""}],
+ ""15"" [{:id 3, :obs/A ""15"", :obs/value 7.0, :obs/color ""red""}]}
+
+ya
+{""11"" [{:id 2, :obs/A ""11"", :obs/value 7.0, :obs/shape ""square""}],
+ ""13"" [{:id 2, :obs/A ""13"", :obs/value 4.0, :obs/shape ""circle""}],
+ ""15"" [{:id 6, :obs/A ""15"", :obs/value 3.0, :obs/shape ""triangle""}]}
+
+common-a => #{""15"" ""13"" ""11""}
+
+values-map => {7.0 3.0, 3.0 4.0, 2.0 7.0}

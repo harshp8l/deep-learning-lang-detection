@@ -1,0 +1,31 @@
+UPDATE event_registrations xta
+SET (event_start_date,
+     event_end_date,
+     planned_hours,
+     user_status,
+     last_updated_date,
+     last_updated_by,
+     last_update_sec) =
+     (SELECT xcat.event_start_date,
+          CASE
+              WHEN xt.event_status = g_closed_s THEN xta.event_end_date
+              WHEN xt.event_status = g_open_s THEN xcat.event_end_date
+          END,
+          xcat.planned_hours,
+          CASE
+              WHEN xt.event_status = g_closed_s THEN g_status_done
+              WHEN xt.event_status = g_open_s THEN g_status_inprogress
+          END,
+          SYSDATE,
+          p_login_user,
+          to_number(TO_CHAR(SYSDATE, g_time_format))
+
+   FROM     event_registrations_temp xcat
+   LEFT     OUTER JOIN EVENTS xt ON xt.ext_system_id = xcat.alm_id
+   WHERE    xcat.action = g_action_modification
+   AND      xcat.error_flag = g_err_flag_not_processed
+   AND      xcat.event_registration_id = xta.ext_event_registration_id)
+   WHERE    xta.ext_event_registration_id =xcat.event_registration_id)
+  where  exists (SELECT 1
+      FROM event_registrations_temp xcat
+     WHERE xcat.event_registration_id = xta.ext_event_registration_id)

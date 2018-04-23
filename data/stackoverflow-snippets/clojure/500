@@ -1,0 +1,20 @@
+(use '(incanter core stats charts datasets))
+
+(import
+   '[org.jfree.chart ChartFactory ChartUtilities JFreeChart StandardChartTheme]
+   '[org.jfree.chart.axis NumberAxis]
+   '[org.jfree.chart.labels StandardCategoryItemLabelGenerator ItemLabelPosition ItemLabelAnchor]
+   '[org.jfree.chart.plot CategoryPlot]
+   '[org.jfree.chart.renderer.category StackedBarRenderer]
+   '[java.text DecimalFormat])
+
+(with-data (get-dataset :airline-passengers)
+  (view 
+   (let [chart (stacked-bar-chart :month :passengers :group-by :year :legend true)
+         plot (-> chart .getCategoryPlot)
+         range-axis (-> plot .getRangeAxis)
+         percent-format (DecimalFormat. ""#%"") ;;""#.0%""
+         _ (.setNumberFormatOverride range-axis percent-format)
+         renderer (-> plot .getRenderer) 
+         _ (.setRenderAsPercentages renderer true)] 
+     chart)))

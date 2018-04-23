@@ -1,0 +1,95 @@
+public function createNewCustomer(&$input, $forConnect = false) {
+  try {
+    // Create new stripe customer
+    if ($forConnect) {
+      $cu = \Stripe\Customer::create(array(
+        'email' => $input['email'],
+        'source' => $input['connect_token']
+      ), array(""stripe_account"" => $input['txn_account_id']));
+
+      $input['txn_customer_id'] = $cu->id;
+    }
+    else {
+      $cu = \Stripe\Customer::create(array(
+        'email' => $input['email'],
+        'source' => $input['stripe_token']
+      ));
+
+      $input['stripe_customer_id'] = $cu->id;
+      $input['txn_customer_id'] = $cu->id;
+    }
+  } catch (\Stripe\Error\Base $e1) {
+    // log error
+    \Log::error($e1);
+    return false;
+  } catch(\Stripe\Error\Card $e2) {
+    \Log::error($e2);
+    return false;
+  } catch (Exception $e) {
+    \Log::error($e);
+    return false;
+  }
+
+  return true;
+}
+
+public function chargeMonthly(&$input, $qty = 1) {
+  $plan_name = 'yourplatformname-' . $input['amount'] .'-' . $input['banner_slug'];
+
+  // attempt to retrieve monthly plan
+  // if not found, create new plan
+  try {
+    $plan = \Stripe\Plan::retrieve($plan_name, array(""stripe_account"" => $input['txn_account_id']));
+  } catch(\Stripe\Error\InvalidRequest $e1) {
+    // ignore error
+    // \Log::error($e1);
+  } catch(Exception $e) {
+    // ignore error
+    // \Log::error($e);
+  }
+
+  try {
+    // create new if not found
+    if(empty($plan)) {
+      $plan = \Stripe\Plan::create(array(
+          'amount'    => $input['amount'],
+          'interval'  => 'month',
+          'currency'  => 'usd',
+          'id'        => $plan_name,
+          ""product"" => array(
+            ""name""    => $plan_name
+          )
+        ), array(""stripe_account"" => $input['txn_account_id']));
+    }
+
+    $token = \Stripe\Source::create(array(
+      'customer' => $input['stripe_customer_id'],
+      'usage' => 'reusable'
+    ), array(""stripe_account"" => $input['txn_account_id']));
+
+    $input['connect_token'] = $token->id;
+    $this->createNewCustomer($input, true);
+
+    $sub = \Stripe\Subscription::create(array(
+      'customer'                => $input['txn_customer_id'],
+      'plan'                    => $plan->id,
+      'quantity'                => $qty,
+      'application_fee_percent' => $input['application_fee_percent']),
+      array('stripe_account' => $input['txn_account_id'])
+    );
+
+    $input['txn_id'] = $sub->id;
+    $input['txn_log'] = json_encode($sub);
+    $input['recurrence_name'] = $plan->id;
+
+    // success
+    return true;
+  } catch(\Stripe\Error\InvalidRequest $e1) {
+    // ignore error
+    \Log::error($e1);
+    return false;
+  } catch(Exception $e) {
+    \Log::error($e);
+    return false;
+  }
+}

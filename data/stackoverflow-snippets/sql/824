@@ -1,0 +1,110 @@
+ALTER TRIGGER trigger_CreateTable
+    ON DATABASE
+    AFTER CREATE_TABLE, ALTER_TABLE
+AS
+BEGIN
+    --SELECT EVENTDATA()
+
+    DECLARE @Prefix AS nvarchar(256) = N'PleaseUseView_'
+
+    DECLARE @Event AS XML = EVENTDATA()
+    DECLARE @SchemaName AS nvarchar(255) = (@Event.value('(/EVENT_INSTANCE/SchemaName)[1]',  'NVARCHAR(255)')) 
+    DECLARE @TableName AS nvarchar(255) = (@Event.value('(/EVENT_INSTANCE/ObjectName)[1]',  'NVARCHAR(255)')) 
+    DECLARE @ObjectType AS nvarchar(255) = (@Event.value('(/EVENT_INSTANCE/ObjectType)[1]',  'NVARCHAR(255)'))
+    DECLARE @TableWithSchema AS nvarchar(512) = '[' + @SchemaName + '].[' + @TableName + ']'
+
+    CREATE TABLE #SchemaBindingDependencies
+    (
+        [id] int NOT NULL IDENTITY,
+        [schema] nvarchar(256) NOT NULL,
+        [name] nvarchar(256) NOT NULL
+    )
+
+    INSERT INTO #SchemaBindingDependencies([schema], [name])
+        SELECT DISTINCT s.name AS [schema], o.name
+        FROM sys.objects AS o
+            INNER JOIN sysdepends AS d
+                ON d.id = o.[object_id]
+            INNER JOIN sys.schemas AS s
+                ON s.[schema_id] = o.[schema_id]
+        WHERE     o.type ='V' AND d.depid = OBJECT_ID(@TableWithSchema)
+              AND SUBSTRING(@TableName, LEN(@Prefix) + 1, 256) LIKE o.[name]
+
+    IF (EXISTS(SELECT 1 FROM #SchemaBindingDependencies))
+    BEGIN
+        DECLARE @Index AS int = (SELECT MAX(id) FROM #SchemaBindingDependencies)
+        WHILE (@Index > 0)
+        BEGIN
+            DECLARE @ViewName1 AS nvarchar(256) = (SELECT [name] FROM #SchemaBindingDependencies WHERE id = @Index)
+            IF (@ViewName1 IS NOT NULL)
+            BEGIN
+                DECLARE @SchemaName1 AS nvarchar(256) = (SELECT [schema] FROM #SchemaBindingDependencies WHERE id = @Index)
+                DECLARE @DropSchemaBoundViewQuery AS nvarchar(1000) = 'DROP VIEW [' + @SchemaName + '].[' + @ViewName1 + ']'
+
+                EXEC(@DropSchemaBoundViewQuery)
+            END
+
+            SET @Index = @Index - 1
+        END
+    END
+
+    IF (SUBSTRING(@TableName, 1, LEN(@Prefix)) <> @Prefix)
+    BEGIN
+        DECLARE @NewTableName AS nvarchar(512) = @Prefix + @TableName + ''
+        DECLARE @NewTableWithSchema AS nvarchar(512) = '[' + @SchemaName + '].[' + @NewTableName + ']'
+
+        EXEC sp_rename @TableWithSchema, @NewTableName
+
+        SET @TableName = @NewTableName
+        SET @TableWithSchema = '[' + @SchemaName + '].[' + @NewTableName + ']'
+    END
+
+    DECLARE @Columns AS nvarchar(max) = (STUFF((SELECT ',[' + x.[name] + ']' FROM (
+        SELECT c.[name]
+        FROM sys.columns AS c
+            INNER JOIN sys.tables AS t
+                ON t.[object_id] = c.[object_id]
+            INNER JOIN sys.schemas AS s
+                ON s.[schema_id] = t.[schema_id]
+        WHERE t.[name] = @TableName AND s.[name] = @SchemaName) AS x FOR XML PATH('')), 1, 1, ''))
+
+    DECLARE @ViewName AS nvarchar(256) = SUBSTRING(@TableName, LEN(@Prefix) + 1, 256)
+    DECLARE @ViewWithSchema AS nvarchar(512) = '[' + @SchemaName + '].[' + @ViewName + ']'
+
+    DECLARE @Query AS nvarchar(max) =
+        N'CREATE VIEW ' + @ViewWithSchema + N' ' + CHAR(10) + CHAR(13) +
+        N'WITH SCHEMABINDING ' + CHAR(10) + CHAR(13) +
+        N'AS ' + CHAR(10) + CHAR(13) +
+        N'  SELECT ' + @Columns + ' ' + CHAR(10) + CHAR(13) +
+        N'  FROM ' + @TableWithSchema + N' '
+    --SELECT @Query
+    EXEC(@Query)
+
+    SET @Query =
+        N'CREATE UNIQUE CLUSTERED INDEX [CIX_' + @ViewName + N'] ' + CHAR(10) + CHAR(13) +
+        N'ON ' + @ViewWithSchema + N'(' + @Columns + N')'
+    EXEC(@Query)
+
+    -- TODO: Use the below double commented to build a variable insert statement for the ""Instead of TRIGGER""
+    --
+    ----DECLARE @tv_source TABLE (id int)
+    ----declare @XML xml;
+    ----set @XML = 
+    ----  (
+    ----  select top(0) *
+    ----  from @tv_source
+    ----  for XML RAW, ELEMENTS, XMLSCHEMA  
+    ----  );
+    ----SELECT T.c.query('.'), T.c.value('@name', 'nvarchar(256)')
+    ----FROM @XML.nodes('/*/*/*/*/*') AS T(c)
+    --
+    --SET @Query =
+    --  N'CREATE TRIGGER [Trigger_' + @ViewName + N'] ' + CHAR(10) + CHAR(13) +
+    --  N'ON ' + @ViewWithSchema + N' ' + CHAR(10) + CHAR(13) +
+    --  N'INSTEAD OF INSERT ' + CHAR(10) + CHAR(13) +
+    --  N'AS BEGIN ' + CHAR(10) + CHAR(13) +
+    --  N'BEGIN TRY ' + CHAR(10) + CHAR(13) +
+    --  N' INSERT INTO ' + @TableWithSchema + N'(' + @Columns + N')'
+    --  N'   SELECT ' + @Columns + 
+    --EXEC(@Query)
+END

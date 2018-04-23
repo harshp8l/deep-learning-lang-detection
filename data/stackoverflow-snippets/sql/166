@@ -1,0 +1,33 @@
+CREATE TABLE TagTable (ID INT IDENTITY
+                      ,FKOriginal INT NOT NULL CONSTRAINT FK_TagTable_OriginalTable FOREIGN KEY REFERENCES OriginalTable(UniqueId)
+                      ,Tag VARCHAR(100) NOT NULL);
+
+--an index to support the fk
+CREATE NONCLUSTERED INDEX IX_TagTable_FKOriginal ON TagTable(FKOriginal);
+GO
+
+--shift the existing data
+INSERT INTO TagTable --you might use DISTINCT...
+SELECT UniqueId,Tag
+FROM OriginalTable;
+GO
+
+--delete duplicated rows
+WITH cte AS
+(
+    SELECT *
+          ,ROW_NUMBER() OVER(PARTITION BY UniqueId ORDER BY UniqueId) AS RowId --Find a better sort column if needed
+    FROM OriginalTable 
+)
+DELETE FROM cte
+WHERE RowId>1; --Only the first remains
+GO
+
+--throw away the tag column in the original table
+ALTER TABLE OriginalTable DROP COLUMN Tag;
+GO
+
+--See the result via JOIN-Select
+SELECT *
+FROM OriginalTable AS o
+INNER JOIN TagTable AS t ON o.UniqueId=t.FKOriginal;

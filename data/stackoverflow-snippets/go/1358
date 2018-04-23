@@ -1,0 +1,37 @@
+var data = `
+array:
+  - name: myvar
+    val: 1
+  - name: mymap
+    val: [1, 2]
+`
+
+type Data struct {
+    Array []struct {
+        Name string
+        Val  interface{}
+    }
+}
+
+func main() {
+    d := Data{}
+    err := yaml.Unmarshal([]byte(data), &d)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    for i := range d.Array {
+        switch val := d.Array[i].(type) {
+        case int:
+            fmt.Println(val) // is integer
+        case []int:
+            fmt.Println(val) // is []int
+        case []string:
+            fmt.Println(val) // is []string
+            //  .... you get the idea
+        default:
+            log.Fatalf(""Type unaccounted for: %+v\n"", d.Array[i])
+        }
+    }
+
+}

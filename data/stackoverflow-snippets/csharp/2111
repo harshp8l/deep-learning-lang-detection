@@ -1,0 +1,32 @@
+using NAudio.Wave;
+
+namespace NaudioVoiceChat
+{
+    public partial class Server: Form
+    {
+        #region Codes for NAudio ------->>>> This is for NAudio
+        private BufferedWaveProvider bwp;
+        WaveIn wi;
+        WaveOut wo;
+        public Server()
+        {
+            InitializeComponent();
+
+            #region Code for Naudio
+            wo = new WaveOut();
+            wi = new WaveIn();
+
+            wi.DataAvailable += new EventHandler<WaveInEventArgs>(wi_DataAvailable);
+
+            bwp = new BufferedWaveProvider(wi.WaveFormat);
+            bwp.DiscardOnBufferOverflow = true;
+
+            wo.Init(bwp);
+            wi.StartRecording();
+        }
+
+        void wi_DataAvailable(object sender, WaveInEventArgs e)
+        {
+            bwp.AddSamples(e.Buffer, 0, e.BytesRecorded);
+            server.SendData(""Client-1"", e.Buffer);
+        }

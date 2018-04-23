@@ -1,0 +1,34 @@
+func UnmarshalApps(zipPath string, fileName string) ApplicationRoot {
+    // Open a zip archive for reading.
+    reader, err := zip.OpenReader(zipFilePath)
+    if err != nil {
+        log.Fatal(`ERROR:`, err)
+    }
+
+    defer reader.Close()
+
+    /* 
+     * START OF ANSWER
+     */
+    var appRoot ApplicationRoot
+    for _, file := range reader.File {
+        // check if the file matches the name for application portfolio xml
+        if file.Name == fileName {
+            rc, err := file.Open()
+            if err != nil {
+                log.Fatal(`ERROR:`, err)
+            }
+
+            // Prepare buffer
+            buf := new(bytes.Buffer)
+            buf.ReadFrom(rc)
+
+            // Unmarshal bytes
+            xml.Unmarshal(buf.Bytes(), &appRoot)
+            rc.Close()
+        }
+    }   
+     /* 
+     * END OF ANSWER
+     */     
+}

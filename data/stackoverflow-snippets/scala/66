@@ -1,0 +1,78 @@
+import collections
+
+class Vertex:
+    def __init__(self,val):
+        self.color=""W""
+
+class Graph:
+    def __init__(self):
+        self.master_vertex={}                                                                        
+        self.Q=[]                                                                                    
+        self.visit=[]                                                                                
+        self.adj_vertex=collections.defaultdict(list)                                                
+        self.cycle=0                                                                                 
+
+    def add_vertex(self,vert):
+        nv=Vertex(vert)
+        self.master_vertex[vert]=nv
+
+    def add_edge(self,src,dest):                                                                     
+        self.adj_vertex[src].append(dest)
+
+
+
+def DFS_Visit(graph):
+        for ver in list(graph.master_vertex.keys()):
+            if ver not in graph.visit and graph.master_vertex[ver].color==""W"":
+            DFS_iterative(graph,ver)
+        if graph.cycle==1:
+            return True
+        else:
+            return False
+
+
+def DFS_iterative(graph,start):
+    recur_stack=[]                                                                                      
+    graph.Q.append(start)
+
+    while len(graph.Q)>0:
+        start=graph.Q[len(graph.Q)-1]                                                               
+        recur_stack.append((graph.Q.pop()))
+        graph.master_vertex[start].color=""G""  
+
+        if len(graph.adj_vertex[start])==0:                                                         
+            graph.master_vertex[start].color=""B""   
+        for ver in graph.adj_vertex[start]:
+            if start==ver or (graph.master_vertex[ver].color==""G"" and ver in recur_stack):          
+                graph.cycle=1
+            if graph.master_vertex[ver].color==""W"" and ver not in graph.Q:
+                graph.Q.append(ver)
+        graph.visit.append(start)
+
+    while len(recur_stack)>0:
+        x=recur_stack.pop()
+        if graph.master_vertex[x].color==""G"":
+            graph.master_vertex[x].color=""B""   
+
+
+if __name__=='__main__':
+
+    g=Graph()
+    for i in range(1,7):
+        g.add_vertex(str(input()))
+
+    g.add_edge('u','v')
+    g.add_edge('u','x')
+    g.add_edge('v','y')
+    g.add_edge('y','x')
+    g.add_edge('x','v')
+    g.add_edge('w','y')
+    g.add_edge('w','z')
+    g.add_edge('z','z')
+    print g.adj_vertex
+    print ""Iterative DFS: ""
+    if DFS_Visit(g):
+        print ""graph contains cycle""
+    else:
+        print ""graph does not contain cycle""
+    print g.visit

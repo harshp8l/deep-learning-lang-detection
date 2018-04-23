@@ -1,0 +1,28 @@
+;WITH rows AS
+(
+    SELECT  
+        *, ROW_NUMBER() OVER (ORDER BY TIME_OCCUR) AS rn
+    FROM    
+        [TBL_CURRENT_STATUS]
+    WHERE 
+        SUB_ID IS NOT NULL
+)
+SELECT  
+    op.[ID], 
+    op.[INDEXNO], 
+    op.[PO_NO], 
+    op.[ITEM_CD], 
+    op.[PROC_NO], 
+    op.[SEQ], 
+    op.[STATUS], 
+    op.[TIME_OCCUR], 
+    op.[MC_NO],
+    DATEDIFF(minute, mc.[TIME_OCCUR], mp.[TIME_OCCUR]) as OPT_TIME, 
+    op.[SUB_ID]   
+FROM    
+    rows mc
+JOIN
+    rows mp ON mc.rn = mp.rn - 1 
+RIGHT JOIN
+   TBL_CURRENT_STATUS op
+ON op.id=mp.id

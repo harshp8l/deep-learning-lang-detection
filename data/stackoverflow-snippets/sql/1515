@@ -1,0 +1,15 @@
+select distinct s.name_s
+from suppliers s
+left join
+prices p
+on s.s_id = p.s_id
+where p.s_id not in (
+select distinct s_id from prices p1 -- suppliers of low cost components
+inner join
+(select a.c_id, price_min.min_cost
+  from widgets as w 
+  left join assemblies as a on a.w_id = w.w_id 
+  left join (select c_id, min(cost) as min_cost from prices group by c_id) as price_min 
+  on price_min.c_id = a.c_id ) t -- component price details before sum()
+on p1.cost = t.min_cost and 
+   p1.c_id = t.c_id  )

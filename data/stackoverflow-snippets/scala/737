@@ -1,0 +1,25 @@
+public interface MyTest<T> extends Test {
+    public void setSut(T toTest);
+    public void setProperties(Properties props);
+}
+
+public enum Features {
+    Feature1(Feature1UnitTest::new), 
+    Feature2(Feature2UnitTest::new);
+
+    private Supplier<? extends Test> createTest;
+    private Features(Supplier<? extends Test> sup) {
+        createTest = sup;
+    }
+}
+
+public class MyTestSuite<T> extends TestSuite {
+    public MyTestSuite(T toTest, Properties testProperties, Features... supported) {
+        for (Features f : supported) {
+            MyTest<T> test = (MyTest<T>) f.createTest();
+            test.setSut(toTest);
+            test.setProperties(testProperties);
+            addTest(test);
+        }
+    }
+}

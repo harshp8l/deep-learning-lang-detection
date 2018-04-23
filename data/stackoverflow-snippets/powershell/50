@@ -1,0 +1,39 @@
+$sendEmailUrl = ""https://api.sendgrid.com/v3/mail/send""
+$apiKey = ""<insert api key here>""
+
+$headers = @{}
+$headers.Add(""Authorization"",""Bearer $apiKey"")
+
+$ct = ""application/json""
+
+$jsonRequest = [ordered]@{
+   personalizations= @(@{
+    to = @(
+        @{
+            email = ""<email address of recipient>""
+            name = ""<name of recipient>""
+        }
+    )
+    subject = ""hello world!""
+  })
+  from = @{
+    email = ""sam.smith@example.com""
+    name = ""Sam Smith""
+  }
+  reply_to = @{
+    email = ""sam.smith@example.com""
+    name = ""Sam Smith""
+  }
+  content = @(
+    @{
+        type = ""text/plain""
+        value =""just a test email""
+    }
+  )
+} | ConvertTo-Json -Depth 10
+
+Invoke-RestMethod -Method Post `
+    -Headers $headers `
+    -Body $jsonRequest `
+    -ContentType $ct `
+    -Uri $sendEmailUrl

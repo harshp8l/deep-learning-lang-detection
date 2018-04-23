@@ -1,0 +1,33 @@
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.{SparkConf, SparkContext}
+
+object Main {
+
+  val conf = new SparkConf().setAppName(""myapp"").setMaster(""local[*]"")
+  val sc = new SparkContext(conf)
+  val sqlContext = new SQLContext(sc)
+
+  case class xxx(a: Int, b: Int)
+
+  def main(args: Array[String]): Unit = {
+
+    val df = sqlContext.createDataFrame(sc.parallelize(Seq(xxx(1, 1), xxx(2, 2), xxx(3,3))))
+
+    val acc = sc.accumulator[Long](0)
+
+    val filteredRdd = df.rdd.filter(r => {
+      if (r.getAs[Int](""a"") > 2) {
+        true
+      } else {
+        acc.add(1)
+        false
+      }
+    })
+
+    val filteredRddDf = sqlContext.createDataFrame(filteredRdd, df.schema)
+
+    filteredRddDf.show()
+
+    println(acc.value)
+  }
+}

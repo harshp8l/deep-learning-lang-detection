@@ -1,0 +1,24 @@
+module SOANS = 
+
+open System
+
+let first   = [| 2.00;   3.00;   5.00;   7.00;   11.00 |]
+let second  = [| ""ABCD""; ""ABCE""; ""ABDE""; ""ACDE""; ""BCDE"" |]
+let fltr    = [| ""AC"";   ""BD"";   ""CE"" |]
+
+let filterProduct (first:float[]) (second:string[]) (fltr:string) = 
+    Array.zip first second
+    |> Array.filter (fun (_, s) ->
+        Seq.forall (fun c -> s.Contains (string c)) fltr)
+    |> Array.map fst
+    |> Array.reduce (*)
+
+let third = 
+    [for i in [0..fltr.Length - 1] do
+        yield (filterProduct first second fltr.[i])]
+    |> List.toArray
+
+printfn ""Third: %A"" third
+
+// Expected Result: Third: [| 42.0; 110.0; 231.0 |]
+// Actual Result    Third: [| 42.0; 110.0; 231.0 |]

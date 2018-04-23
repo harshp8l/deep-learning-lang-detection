@@ -1,0 +1,33 @@
+    <?php
+
+$array_with_elements = array();
+
+$sql = mysqli_query($db_conx,""SELECT * FROM wp_posts WHERE post_status = 'publish' AND post_title !='Hello world!' AND post_title !='' ORDER BY post_title"");
+
+while ($row = mysqli_fetch_array($sql ,MYSQLI_ASSOC)) { 
+  $array_with_elements[$row['post_parent']][] = $row;
+}
+
+
+function add_children($array_with_elements, $wp_level){
+
+  $nested_array = array();
+  foreach($array_with_elements[$wp_level] as $wp_post){
+    $obj = new stdClass();
+    $obj->title = $wp_post['post_title'];
+    $obj->id = $wp_post['ID'];
+    // check if there are children for this item
+    if(isset($array_with_elements[$wp_post['ID']])){
+      $obj->children = add_children($array_with_elements, $wp_post['ID']); // and here we use this nested function again (and again)
+    }
+    $nested_array[] = $obj;
+  }
+  return $nested_array;
+}
+
+// starting with level 0
+$return_arr = add_children($array_with_elements, 0);
+
+// and convert this to json
+echo json_encode($return_arr);
+?>

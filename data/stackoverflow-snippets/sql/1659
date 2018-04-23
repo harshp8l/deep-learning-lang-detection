@@ -1,0 +1,22 @@
+select *
+  from (select prodline, prodparent,
+               ""JUN'13"", ""JUL'13"", ""AUG'13"", ""SEP'13"", ""OCT'20"", ""NOV'20"",
+               case when (""JUN'13"" like '%.%') then 'color:#FF7755;font-weight;' 
+                            else 'color:#000000;' end flag_jun,
+               case when (""JUL'13"" like '%.%') then 'color:#FF7755;font-weight;' 
+                            else 'color:#000000;' end flag_jul,
+               ... 4 more case statements
+          from (select buscat as prodline, prod_parent as prodparent, year_month, volume, 
+                       load_source, tstamp                      
+                   from HISTORY where id>0)
+         pivot (max (volume) for year_month in ('2013-06' as ""JUN'13"", '2013-07' as ""JUL'13"",
+                                                '2013-08' as ""AUG'13"", '2013-09' as ""SEP'13"",
+                                                '2020-10' as ""OCT'20"", '2020-11' as ""NOV'20""))
+        ) query_1 join
+       (select max(id) id, prod_parent, buscat 
+          from HISTORY 
+         group by buscat,prod_parent
+        ) query_2 on  query_1.prodline = query_2.buscat 
+                  and query_1.prodparent = query_2.prod_parent
+ where load_source = 'Soft'
+ order by id;

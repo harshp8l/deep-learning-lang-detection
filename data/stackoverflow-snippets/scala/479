@@ -1,0 +1,23 @@
+def sample1[T <% Ordered[T]](x:T) = { x < (x) }
+def sample2(x:Ordered[Int]) = { x < 1 }
+def sample3(x:Int) = { x < 1 }
+val r = new Random()
+
+
+def measure(f: => Unit): Long = {
+  val start1 = System.nanoTime
+  f
+  System.nanoTime - start1
+}
+val n = 1000000
+
+(1 to n).map(_ => measure {val k = r.nextInt();sample1(k)})
+(1 to n).map(_ => measure {val k = r.nextInt();sample2(k)})
+(1 to n).map(_ => measure {val k = r.nextInt();sample3(k)})
+
+val avg1 = (1 to n).map(_ => measure {val k = r.nextInt();sample1(k)}).sum / n
+println(avg1)
+val avg2 = (1 to n).map(_ => measure {val k = r.nextInt();sample2(k)}).sum / n
+println(avg2)
+val avg3 = (1 to n).map(_ => measure {val k = r.nextInt();sample3(k)}).sum / n
+println(avg3)

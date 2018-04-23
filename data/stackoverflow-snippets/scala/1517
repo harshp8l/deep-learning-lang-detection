@@ -1,0 +1,18 @@
+import scala.language.dynamics
+
+object CcyPair2 extends Enumeration with Dynamic {
+  val byCcy: Map[(Ccy.Value, Ccy.Value), Value] =
+    Ccy.values.toSeq.combinations(2).map {
+      case Seq(c1, c2) =>
+        (c1, c2) -> Value(c1.toString + c2.toString)
+    }.toMap
+
+  def forCcy(ccy1: Ccy.Value, ccy2: Ccy.Value): Value = {
+    assert(ccy1 != ccy2, ""currencies should be different"")
+    if (ccy1 < ccy2) byCcy((ccy1, ccy2))
+    else byCcy((ccy2, ccy1))
+  }
+
+  def selectDynamic(pairName: String): Value =
+    withName(pairName)
+}

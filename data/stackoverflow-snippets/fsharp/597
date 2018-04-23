@@ -1,0 +1,74 @@
+open System
+open System.IO
+open FSharp.Core.Operators
+open MathNet.Numerics
+open MathNet.Numerics.LinearAlgebra
+open MathNet.Numerics.LinearAlgebra.Double
+open MathNet.Numerics.Distributions
+open DiffSharp.Numerical.Float64
+open NLoptNet
+
+let (.*) (m1 : Matrix<float>) (m2 : Matrix<float>) =
+    m1.Multiply(m2)
+
+let (.+) (m1 : Matrix<float>) (m2 : Matrix<float>) =
+    m1.Add(m2)
+
+let (.-) (m1 : Matrix<float>) (m2 : Matrix<float>) =
+    m1.Subtract(m2)
+
+
+let V = matrix [[1.;      0.5;    0.2]
+                [0.5;      1.;    0.]
+                [0.2;      0.;    1.]]
+let dat = (DenseMatrix.init 200 3 ( fun i j -> Normal.Sample(0., 1.) )) .* V.Cholesky().Factor
+let y = DenseMatrix.init 200 1 (fun i j -> 0.)
+let x0 = DenseMatrix.init 200 1 (fun i j -> 0.)
+let x1 = DenseMatrix.init 200 1 (fun i j -> 0.)
+for i in 0 .. 199 do
+    y.[i, 0] <- dat.[i, 0]
+    x0.[i, 0] <- dat.[i, 1]
+    x1.[i, 0] <- dat.[i, 2]
+
+let ll (th : float array) =
+    let t1 = x0.Multiply(th.[0]) .+ x1.Multiply(th.[1])
+    let res = (y .- t1).PointwisePower(2.)
+    res.ColumnAbsoluteSums().Sum() / 200.
+
+let oFunc (th : float array) (gradvec : float array) =
+    match gradvec with
+    | null  -> ()
+    | _     -> (grad ll th).CopyTo(gradvec, 0)
+
+    ll th
+
+let cFunc (th : float array) (gradvec : float array) =
+    match gradvec with
+    | null  -> ()
+    | _     -> (grad ll th).CopyTo(gradvec, 0)
+
+    th.[0] + th.[1]
+
+let fitFunc () =
+    let solver = new NLoptSolver(NLoptAlgorithm.LN_COBYLA, uint32(2), 1e-7, 100000)
+    solver.SetLowerBounds([|-10.; -10.;|])
+    solver.SetUpperBounds([|10.; 10.;|])
+    //solver.AddEqualZeroConstraint(cFunc)
+    solver.SetMinObjective(oFunc)
+    let initialValues = [|1.; 2.;|]
+    let objReached, finalScore = solver.Optimize(initialValues)
+    objReached |> printfn ""%A""
+    let fittedParams = initialValues
+    fittedParams |> printfn ""%A""
+    fittedParams
+
+let fittedParams = fitFunc() |> DenseVector
+let yh = DenseMatrix.init 200 1 (fun i j -> 0.)
+for i in 0 .. 199 do
+    yh.[i, 0] <- dat.[i, 1] * fittedParams.[0] + dat.[i, 2] * fittedParams.[1]
+
+
+Chart.Combine([Chart.Line(y.Column(0), Name=""y"")
+               Chart.Line(yh.Column(0), Name=""yh"")
+               |> Chart.WithLegend(Title=""Model"", Enabled=true)] )
+               |> Chart.Show        

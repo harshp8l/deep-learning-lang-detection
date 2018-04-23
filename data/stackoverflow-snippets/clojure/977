@@ -1,0 +1,14 @@
+(ns crypto-tutorial.lib.hmac-test
+  (:require [clojure.test :refer :all]
+            [crypto-tutorial.lib.util :refer :all]
+            [crypto-tutorial.lib.hmac :as hmac]))
+
+(defn sha-1-hmac-reference-impl [key bytes]
+  (let [java-bytes (->java-bytes bytes)
+        java-key (->java-bytes key)]
+    (->>
+      (doto (javax.crypto.Mac/getInstance ""HmacSHA1"")
+        (.init (javax.crypto.spec.SecretKeySpec. java-key ""HmacSHA1"")))
+      (#(.doFinal % java-bytes))
+      (map (partial format ""%02x""))
+      (apply str))))

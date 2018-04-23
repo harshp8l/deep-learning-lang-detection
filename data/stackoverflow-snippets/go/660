@@ -1,0 +1,33 @@
+func (c *CallClient) Wallet(method string, req, rep interface{}) error {
+    client := &http.Client{}
+    data, err := EncodeClientRequest(method, req)
+    if err != nil {
+        return err
+    }
+    reqest, err := http.NewRequest(""POST"", c.endpoint, bytes.NewBuffer(data))
+    if err != nil {
+        return err
+    }
+    resp, err := client.Do(reqest)
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+
+    // get a reader that can be ""rewound""
+    buf := bytes.NewBuffer(nil)
+    if _, err := io.Copy(buf, resp.Body); err != nil {
+        return err
+    }
+    br := bytes.NewReader(buf.Bytes())
+
+    if _, err := io.Copy(ioutil.Discard, br); err != nil {
+        return err
+    }
+
+    // rewind
+    if _, err := br.Seek(0, 0); err != nil {
+        return err
+    }
+    return DecodeClientResponse(br, rep)
+}

@@ -1,0 +1,48 @@
+$LogFile = ""c:\temp\BCPEXPORTLOG_{0:MM-dd-yyyy_hh-mm-ss}.log"" -f (Get-Date)
+$database = ""database""
+$schema = ""dbo""
+
+#split with 'table:'
+$Split1=(Get-Content c:\temp\CUBTableList.txt) -split 'table:'
+
+#split fields and take only tablename <>'' and table have field
+$Elements=$Split1 | %{
+$Split2=$_ -split 'field:'
+$table=$Split2[0];
+[pscustomobject]@{TableName=$Split2[0].Trim(); Fields=$Split2[1..$($Split2.Length)] | %{$_.Trim()}} | where {$_.TableName -ne '' -and $_.Fields -ne $null}
+}
+
+$bcp_command=@()
+
+#build bcp commands
+$Elements | %{
+
+    $TableName=$_.TableName
+
+    $_.Fields | %{
+
+    $bcp_command+=""bcp 'SELECT * FROM {0}.{1}.{2} WHERE {3} <= DATEADD(ms, -3, GETDATE())' QUERYOUT 'D:\BCPOut\{0}_{2}_{3}.txt'  -c -U 'user' -P 'password'"" -f $database, $schema, $TableName, $_
+
+    }
+}
+
+#run commands
+$bcp_command | %{
+
+   $_ | out-file $LogFile -Append
+
+   try
+   {
+       $result=Invoke-Expression $_
+   }
+   catch
+   {
+       $result=$_.Exception.Message
+   }
+   finally
+   {
+       $result | Out-File $LogFile -Append
+   }
+
+
+}

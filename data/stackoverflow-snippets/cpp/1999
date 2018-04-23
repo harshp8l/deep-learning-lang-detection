@@ -1,0 +1,131 @@
+#include <iostream>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/wait.h>
+
+using namespace std;
+
+int main(int argc, const char * argv[]) {
+
+    bool quit=0;
+    char command1[128],
+         command2[128],
+         quitArray[] = ""quit"";
+    int pipeReturnValue,
+        fork1ReturnValue,
+        fork2ReturnValue,
+        checkForQuit,
+        pipefd[2];
+
+    //Loop where each iteration prompts for two single-line inputs
+    while (!quit) {
+
+        //Get command 1
+        printf(""Enter command 1: "");
+        fgets(command1,128,stdin);
+        command1[strlen(command1) -1] = 0;
+
+        //Exit if user enters quit
+        checkForQuit = strncmp(command1, quitArray, 4);
+        if (checkForQuit == 0) {
+            quit = 1;
+            exit(0);
+        }
+
+        //Get command 2 and trim trailing new line character
+        printf(""Enter command 2: "");
+        fgets(command2,128,stdin);
+        command2[strlen(command2) -1] = 0;
+
+        //Exit if user enters quit
+        checkForQuit = strncmp(command2, quitArray, 4);
+        if (checkForQuit == 0) {
+            quit = 1;
+            exit(0);
+        }
+
+        //Fork to create 1st child process, return error if fork fails
+        fork1ReturnValue = fork();
+        if(fork1ReturnValue < 0) {
+            perror(""Fork 1 failed"");
+            exit(1);
+        }
+
+        //Open pipe, return error if fork fails
+        pipeReturnValue = pipe(pipefd);
+        if (pipeReturnValue < 0) {
+            perror(""Pipe failed"");
+            exit(1);
+        }
+
+        //First child process
+        else if (fork1ReturnValue == 0) {
+
+            //Fork to create 2nd child process, return error if fork fails
+            fork2ReturnValue = fork();
+            if (fork2ReturnValue < 0) {
+                perror(""Fork 2 failed"");
+            }
+
+            //Second child process
+            else if (fork2ReturnValue == 0) {
+
+                //close read end of pipe
+                close(pipefd[0]);
+
+                //Parse command 1 arguments, store tokens in an array
+                char *arguments[6] = {};
+                arguments[0] = strtok(command1, "" "");
+                int tokenCounter = 0;
+                while (arguments[tokenCounter] != NULL) {
+                    tokenCounter++;
+                    arguments[tokenCounter] = strtok(NULL, "" "");
+                }
+
+                //Dup standard output to write side of pipe
+                dup2(pipefd[1], 1);
+
+                //Execute arguments from command 1
+                execvp(arguments[0], arguments);
+            }
+
+            //First child code continued
+            else {
+
+                //Wait for child 2 to to terminate
+                wait(&fork2ReturnValue);
+
+                //Close write end of pipe
+                close(pipefd[1]);
+
+                //Parse command 2 arguments, store tokens in array
+                char *arguments[6] = {};
+                arguments[0] = strtok(command2, "" "");
+                int tokenCounter = 0;
+                while (arguments[tokenCounter] != NULL) {
+                    tokenCounter++;
+                    arguments[tokenCounter] = strtok(NULL, "" "");
+                }
+
+                //dup standard input to read side of pipe
+                dup2(pipefd[0], 0);
+
+                //Execute arguments from command 2
+                execvp(arguments[0], arguments);
+            }
+        }
+
+        //Parent process continued
+        else {
+
+            //Wait for child 1 to terminate
+            wait(&fork1ReturnValue);
+        }
+
+        //return to top of loop
+    }
+    return 0;
+}

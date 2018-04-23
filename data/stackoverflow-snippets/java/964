@@ -1,0 +1,31 @@
+import com.ibm.msg.client.jms.JmsFactoryFactory
+import com.ibm.msg.client.wmq.WMQConstants
+
+import javax.jms.Session
+
+// 1
+def hostName = ""127.0.0.1""
+def hostPort = 1414
+def channelName = ""DEV.APP.SVRCONN""
+def queueManagerName = ""QM1""
+def queueName = ""DEV.QUEUE.1""
+
+// 2
+def ff = JmsFactoryFactory.getInstance(WMQConstants.WMQ_PROVIDER)
+def cf = ff.createConnectionFactory()
+
+// 3
+cf.setStringProperty(WMQConstants.WMQ_HOST_NAME, hostName)
+cf.setIntProperty(WMQConstants.WMQ_PORT, hostPort)
+cf.setStringProperty(WMQConstants.WMQ_CHANNEL, channelName)
+cf.setIntProperty(WMQConstants.WMQ_CONNECTION_MODE, WMQConstants.WMQ_CM_CLIENT)
+cf.setStringProperty(WMQConstants.WMQ_QUEUE_MANAGER, queueManagerName)
+
+// 4
+def conn = cf.createConnection(""app"", """")
+def sess = conn.createSession(false, Session.AUTO_ACKNOWLEDGE)
+
+// 5
+def destination = sess.createQueue(queueName)
+
+conn.start()

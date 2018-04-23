@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+
+int main()
+{
+  // shape, stride & data of the matrix
+  size_t shape  [] = {  2, 3, 4, 5};
+  size_t strides[] = {60, 20, 5, 1};
+  std::vector<double> data(2 * 3 * 4 * 5);
+
+  size_t rshape  [] = { 2, 4, 5};
+  size_t rstrides[] = {3, 5, 1};
+  std::vector<double> rdata(2 * 4 * 5, 0.0);
+
+  const unsigned int NDIM = 4;
+  unsigned int axis = 1;
+
+  for (size_t i = 0 ; i < data.size() ; ++i) data[i] = 1;
+
+  // How many elements to advance after each reduction
+  size_t step_axis = strides[NDIM - 1];
+  if (axis == NDIM - 1)
+  {
+      step_axis = strides[NDIM - 2];
+  }
+  // Position of the first element of the current reduction
+  size_t offset_base = 0;
+  size_t offset = 0;
+  size_t s = 0;
+  for (auto &v : rdata)
+  {
+      // Current reduced element
+      size_t offset_i = offset;
+      for (unsigned int i = 0; i < shape[axis]; i++)
+      {
+          // Reduce
+          v += *(data.data() + offset_i);
+          // Advance to next element
+          offset_i += strides[axis];
+      }
+      s = (s + 1) % strides[axis];
+      if (s == 0)
+      {
+          offset_base += strides[axis - 1];
+          offset = offset_base;
+      }
+      else
+      {
+          offset += step_axis;
+      }
+  }
+
+  // Print
+  for ( size_t a = 0 ; a < rshape[0] ; ++a )
+    for ( size_t b = 0 ; b < rshape[1] ; ++b )
+      for ( size_t c = 0 ; c < rshape[2] ; ++c )
+        std::cout << ""("" << a << "","" << b << "","" << c << "") "" << \
+        rdata[ a*rstrides[0] + b*rstrides[1] + c*rstrides[2] ] << std::endl;
+
+  return 0;
+}

@@ -1,0 +1,30 @@
+DECLARE @MonthId INT
+SELECT  TOP 1
+        @MonthId = Month_Id
+FROM    CVBAT_Mart.dbo.Fact_AE_CurrentMonth WITH (NOLOCK)
+
+SELECT  Site_Churn_Cd,
+        SUM( FAE.Site_Count ) AS Site_Count,
+        SUM( FAE.Account_Count ) AS Account_Count,
+        FORMAT( SUM( TY_DailyVolume ), '0,0,' ) AS TY_ADV,
+        FORMAT( SUM( LY_DailyVolume ), '0,0' ) AS LY_ADV,
+        Site_Churn_Cd_color = CASE
+                                  WHEN Site_Churn_Cd = 'D' THEN 'f8bd19'
+                                  WHEN Site_Churn_Cd = 'G' THEN '33ccff'
+                                  WHEN Site_Churn_Cd = 'L' THEN 'ccff66'
+                                  WHEN Site_Churn_Cd = 'N' THEN 'ffcccc'
+                                  WHEN Site_Churn_Cd = 'U' THEN 'c0c0c0'
+                                  ELSE Site_Churn_Cd
+                              END
+FROM    CVBAT_Mart.dbo.vFact_AE_Service_Category_TT AS FAE WITH (NOLOCK)
+JOIN    common_ESTAT.dbo.SR_Hierarchy_ESTAT_Promoted_Monthly AS ESTAT WITH (NOLOCK)
+    ON  ESTAT.SR_Level_1_ID = FAE.Enprs_Employee_Id
+JOIN    CVBAT_Mart.dbo.DIM_Geography AS DG WITH (NOLOCK)
+    ON  DG.Organization_Active_Ind = 1
+    AND DG.Region_Num = ESTAT.SR_Level_1_Region_Num
+    AND DG.District_Num = ESTAT.SR_Level_1_District_Num
+WHERE   c_Excluded_Flag = 'N'
+    AND c_Site_Primary_AE = '1'
+    AND Customer_Shipment_Role_Cd = '03'
+    AND FAE.Month_Id = @MonthId
+GROUP BY Site_Churn_Cd

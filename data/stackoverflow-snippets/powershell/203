@@ -1,0 +1,31 @@
+#Create samplefile
+@""
+ID,Desc,Obs
+1234,""Some text, More Text, Text again"",""Text""
+5678,""Some text, More Text, Text again and again"",Text2
+$(1..100000 | % { ""$_,`""Some text$_, More Text$_, Text again and again$_`"",Text$_`n"" })
+""@ -split ""`n"" | % { $_.trim() } | Set-Content D:\Downloads\test.txt
+
+
+$datatable = New-Object System.Data.DataTable
+$src = ""D:\Downloads\test.txt""
+$reader = New-Object IO.StreamReader($src)
+
+#Get header and split to columns
+$columns = $reader.ReadLine() -split ','
+
+foreach ($column in $columns) {
+    $datatable.columns.add($column)
+}
+
+while(($line = $reader.ReadLine()) -ne $null){
+    #Let ConvertFrom-CSV do the heavy-lifting by making it convert one ""csv-file"" per line using a known header
+    $obj = $line | ConvertFrom-Csv -Header $columns
+
+    $row = $datatable.NewRow()
+    $row.ID = $obj.ID
+    $row.Desc = $obj.Desc
+    $row.Obs = $obj.Obs
+
+    $datatable.Rows.Add($row)
+}

@@ -1,0 +1,43 @@
+  def build_datasets(self):
+    """""" Creates a train_iterator and test_iterator from the two datasets. """"""
+    self.imgs_4d_uint8_placeholder = tf.placeholder(tf.uint8, [None, 32, 32, 3], 'load_images_placeholder')
+    self.imgs_4d_float32_placeholder = tf.placeholder(tf.float32, [None, 32, 32, 3], 'load_images_float32_placeholder')
+    self.labels_1d_uint8_placeholder = tf.placeholder(tf.uint8, [None], 'load_labels_placeholder')
+    self.load_data_train = tf.data.Dataset.from_tensor_slices({
+      'data': self.imgs_4d_uint8_placeholder,
+      'labels': self.labels_1d_uint8_placeholder
+    })
+    self.load_data_test = tf.data.Dataset.from_tensor_slices({
+      'data': self.imgs_4d_uint8_placeholder,
+      'labels': self.labels_1d_uint8_placeholder
+    })
+    self.load_data_adversarial = tf.data.Dataset.from_tensor_slices({
+      'data': self.imgs_4d_float32_placeholder,
+      'labels': self.labels_1d_uint8_placeholder
+    })
+
+    # Train dataset pipeline
+    dataset_train = self.load_data_train
+    dataset_train = dataset_train.shuffle(buffer_size=50000)
+    dataset_train = dataset_train.repeat()
+    dataset_train = dataset_train.map(self._img_augmentation, num_parallel_calls=8)
+    dataset_train = dataset_train.map(self._img_preprocessing, num_parallel_calls=8)
+    dataset_train = dataset_train.batch(self.hyperparams['batch_size'])
+    dataset_train = dataset_train.prefetch(2)
+    self.iterator_train = dataset_train.make_initializable_iterator()
+
+    # Test dataset pipeline
+    dataset_test = self.load_data_test
+    dataset_test = dataset_test.map(self._img_preprocessing, num_parallel_calls=8)
+    dataset_test = dataset_test.batch(self.hyperparams['batch_size'])
+    self.iterator_test = dataset_test.make_initializable_iterator()
+
+
+
+  def init(self, sess):
+    self.cifar10 = Cifar10()    # a class I wrote for loading cifar10
+    self.handle_train = sess.run(self.iterator_train.string_handle())
+    self.handle_test = sess.run(self.iterator_test.string_handle())
+    sess.run(self.iterator_train.initializer, feed_dict={self.handle: self.handle_train,
+                                                         self.imgs_4d_uint8_placeholder: self.cifar10.train_data,
+                                                         self.labels_1d_uint8_placeholder: self.cifar10.train_labels})

@@ -1,0 +1,37 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+    ""html/template""
+    ""net/http""
+)
+
+func main() {
+    jsonData := make(map[string]interface{})
+
+    body := []byte(`{
+            ""userId"": 1,
+            ""id"": 1,
+            ""title"": ""sunt aut facere repellat provident occaecati excepturi optio reprehenderit"",
+            ""body"": ""quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto""
+        }`)
+
+    json.Unmarshal(body, &jsonData)
+
+    mTemplate := `<p>UserID: {{ index . ""userId"" }}</p>
+        <p>ID: {{ index . ""id"" }}</p>
+        <p>Title: {{ index . ""title"" }}</p>
+        <p>Body: {{ index . ""body"" }}</p>`
+
+    http.HandleFunc(""/"", func(w http.ResponseWriter, req *http.Request) {
+        templ := template.New(""CompiledTemplate"")
+        templ = template.Must(templ.Parse(mTemplate))
+
+        templ.Execute(w, jsonData)
+    })
+
+    // Iniciamos el servidor, y retornamos el presunto error que pueda dar.
+    fmt.Printf(""\nEscuchando en el puerto %d\n"", 9090)
+    http.ListenAndServe("":""+fmt.Sprint(9090), nil)
+}

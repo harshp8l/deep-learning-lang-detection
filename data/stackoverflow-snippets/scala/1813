@@ -1,0 +1,18 @@
+  val flow = Http().cachedHostConnectionPoolHttps[NotUsed](""akka.io"").mapAsync(1) {
+
+    // Able to reach the API.
+    case (Success(HttpResponse(StatusCodes.OK, _, entity, _)), _) =>
+      // Unmarshal the json response.
+      Unmarshal(entity).to[String]
+
+    // Failed to reach the API.
+    case (Success(HttpResponse(code, _, entity, _)), _) =>
+      entity.discardBytes()
+      Future.successful(code.toString())
+
+    case (Failure(e), _) ⇒
+      throw e
+  }
+
+  // Run stream
+  source.map(_ → NotUsed).via(flow).runWith(...)

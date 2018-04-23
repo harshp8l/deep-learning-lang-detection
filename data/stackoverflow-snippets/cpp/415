@@ -1,0 +1,56 @@
+template <unsigned int BYTES>
+class BasePrinter
+{
+protected:
+    unsigned char CtrlCodes[BYTES] = { 0xFF };
+
+public:
+    BasePrinter()
+    {
+        SendCtrlCode(CtrlCodes[0]);  //Initialize the printer
+    }
+};
+
+template <unsigned int BYTES, typename DerivedPrinter = BasePrinter<BYTES>>  //DerivedPrinter should be optional. If it is not specified then it should default to PrinterTpl.
+class PrinterTpl : public BasePrinter<BYTES>
+{
+public:
+    PrinterTpl() : BasePrinter<BYTES>()
+    {
+    }
+
+    DerivedPrinter& print(const char* d)
+    {
+        printf(""Data: %s\n"", d);
+        return static_cast<DerivedPrinter&>(*this);     //Return a reference to the Derived Printer a la CRTP
+    }
+};
+
+template <unsigned int BYTES>
+class MonoPrinter : public PrinterTpl<BYTES, MonoPrinter<BYTES>>
+{
+public:
+    MonoPrinter() : PrinterTpl<BYTES, MonoPrinter<BYTES>>()
+    {
+    }
+};
+
+template <unsigned int BYTES>
+class ColorPrinter : public PrinterTpl<BYTES, ColorPrinter<BYTES>>
+{
+public:
+    ColorPrinter() : PrinterTpl<BYTES, ColorPrinter<BYTES>>()
+    {
+        static_assert(sizeof(this->CtrlCodes) >= 4, ""CtrlCodes too small"");
+        this->CtrlCodes[1] = 0xC1;
+        this->CtrlCodes[2] = 0xC2;
+        this->CtrlCodes[3] = 0xC3;
+    }
+
+    ColorPrinter& SetColor(int c)
+    {
+        assert(c < sizeof(this->CtrlCodes));
+        SendCtrlCode(this->CtrlCodes[c+1]);
+        return *this;
+    }
+};

@@ -1,0 +1,21 @@
+ val dbAction = for {
+      nodeId <- (nodes.all returning nodes.all.map(_.id)) += Node(typeId)
+      languageId <- (languages.all filter (_.code === languageCode)).map(_.id).result.head
+      _ <- DBIO.seq(properties.values.map
+      {
+        property =>
+          val id = property.id
+          val name = property.key
+          val value = property.value
+
+          if(id == 0) {
+            for {
+              currentPropId <- this.properties.all.map(_.id).max.result
+              propertyId <- (this.properties.all returning this.properties.all.map(_.id)) += Property(languageId, currentPropId.get + 1, name)
+              _ <- this.nodeProperties.all += NodeProperty(nodeId, propertyId, value)
+            } yield ()
+          } else {
+            this.nodeProperties.all += NodeProperty(nodeId, id, value)
+          }
+      }: _*)
+    } yield ()

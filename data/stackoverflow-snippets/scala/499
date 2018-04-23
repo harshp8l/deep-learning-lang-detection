@@ -1,0 +1,17 @@
+// Do runtime reflection on classes loaded by current ClassLoader
+val currentMirror: universe.Mirror = scala.reflect.runtime.currentMirror
+
+// Use symbols to navigate to pick out the methods and fields we want to invoke
+// Notice explicit symbol casting with the `.as*` methods.
+val classSymbol: universe.ClassSymbol = currentMirror.staticClass(""com.example.Foo"")
+val constructorSymbol: universe.MethodSymbol = classSymbol.primaryConstructor.asMethod
+val fooSymbol: Option[universe.TermSymbol] = classSymbol.toType.members.find(_.name.toString == ""foo"").map(_.asTerm)
+
+// Get mirrors for performing constructor and field invocations
+val classMirror: universe.ClassMirror = currentMirror.reflectClass(classSymbol)
+val fooInstance: Foo = classMirror.reflectConstructor(constructorSymbol).apply().asInstanceOf[Foo]
+val instanceMirror: universe.InstanceMirror = currentMirror.reflect(fooInstance)
+
+// Do the actual invocation
+val fooValue: String = instanceMirror.reflectField(fooSymbol.get).get.asInstanceOf[String]
+println(fooValue) // Prints the value of the val ""foo"" of the object ""fooInstance""

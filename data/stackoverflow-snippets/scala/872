@@ -1,0 +1,39 @@
+import cats._
+import cats.data._
+import cats.free._
+import cats.implicits._
+
+case class Property(id: Int, post: String)
+
+
+sealed trait AppAction[A] {
+  def lift: Script[A] = Free.liftF(this)
+}
+case class FetchById(propertyId: Int) extends AppAction[Property]
+case class Save(property: Property) extends AppAction[Unit]
+case class Log(message: String) extends AppAction[Unit]
+
+type Script[A] = Free[AppAction, A]
+
+def fetchById(id: Int): Script[Property] = FetchById(id).lift
+def save(property: Property): Script[Unit] = Save(property).lift
+def log(message: String): Script[Unit] = Log(message).lift
+
+def updatePost(propertyId: Int, post: String): Script[Unit] = {
+  for {
+    property <- fetchById(propertyId)
+    p1 = property.copy(post = post)
+    _ <- log(""Updating"")
+    _ <- save(p1)
+  } yield()
+}
+
+object TestInterp extends (AppAction ~> Id) {
+  def apply[A](fa: AppAction[A]): Id[A] = fa match {
+    case FetchById(_) => Property(1, ""2000"")
+    case Save(_) => ()
+    case Log(msg) => println(msg)
+  }
+
+  def run[A](script: Script[A]) = script.foldMap(this)
+}

@@ -1,0 +1,13 @@
+val tvalues: Array[Double] = Array(1.866393526974307, 2.864048126935307, 4.032486069215076, 7.876169953355888, 4.875333799256043, 14.316322626848278)
+val pvalues: Array[Double] = Array(0.064020056478447, 0.004808399479386827, 8.914865448939047E-5, 7.489564524121306E-13, 2.8363794106756046E-6, 0.0)
+
+val conf = new SparkConf().setAppName(""Simple Application"").setMaster(""local[2]"");
+val sc = new SparkContext(conf)
+val df = sc.parallelize(tvalues zip pvalues)
+val sb = StringBuilder.newBuilder
+val broadcastVar = sc.broadcast(sb)
+df.foreach(x => {
+  println(""x = "", x)
+  broadcastVar.value.append(x)
+})
+println(""sb = "", broadcastVar.value)

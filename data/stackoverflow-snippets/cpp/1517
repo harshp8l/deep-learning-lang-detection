@@ -1,0 +1,74 @@
+#include <memory>
+
+struct A {
+  int a;
+};
+
+struct B : public A {
+  int b;
+};
+
+template<typename T>
+struct A1 {
+  T **t;
+  A1() {}
+  T operator[](int idx) {
+    return *t[idx];
+  }
+  template<typename T2>
+  A1(A1<T2>* o) {
+    t = (T*)o->t;
+  }
+  template<typename T2>
+  A1(A1<T2> o) {
+    t = (T*)o.t;
+  }
+};
+
+template<typename T>
+struct A2 {
+  A1<T> *t;
+  A2() {}
+  A1<T> operator[](int idx) {
+    return t[idx];
+  }
+  template<typename T2>
+  A2(A2<T2>* o) {
+    t = (A1<T>*)o->t;
+  }
+  template<typename T2>
+  A2(A2<T2> o) {
+    t = (A1<T>*)o.t;
+  }
+};
+
+template<typename T>
+struct A3 {
+  A2<T> *t;
+  A3() {}
+  A2<T> operator[](int idx) {
+    return t[idx];
+  }
+  template<typename T2>
+  A3(A3<T2>* o) {
+    t = (A2<T>*)o->t;
+  }
+  template<typename T2>
+  A3(A3<T2> o) {
+    t = (A2<T>*)o.t;
+  }
+};
+
+int main() {
+  A3<B> b3;
+  A3<A> a3 = b3;
+  A2<A> a2_ = b3[5];
+
+  A2<A> a2 = a3[1];
+
+  A a = a3[5][2][1];
+
+  A3<int> i1;
+
+  return 0;
+}

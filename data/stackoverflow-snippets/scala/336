@@ -1,0 +1,8 @@
+val productsRDD = sc.textFile(""products"").filter(x=>x.split("","")(4)!="""")
+val productsRDDmap = productsRDD.map(a => (a.split("","")(0).toInt, a.split("","")(1).toInt, a.split("","")(2), a.split("","")(4).toFloat))
+val productsRDDmapDF = productsRDDmap.toDF(""product_id"",""product_category_id"", ""product_name"", ""product_price"")
+productsRDDmapDF.registerTempTable(""products"")
+val query = """"""
+select  product_id , product_category_id, product_price,  row_number() over(partition by product_category_id  order by product_price  desc) as p_order from products  """"""
+val result = sqlContext.sql(query)
+result.where(""p_order<=3"").show(200)

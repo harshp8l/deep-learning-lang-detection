@@ -1,0 +1,27 @@
+Name          : Get-OutputFilePath
+ModuleName    : 
+Module        : @{Name=}
+CommandType   : Function
+Definition    : 
+                [CmdletBinding()]
+                Param(
+                    [String]$Filter = ""All Files (*.*)|*.*"",
+                    [String]$InitialDirectory,
+                    [Parameter(ValueFromPipelineByPropertyName,ValueFromPipeline)]
+                    [Alias('DefaultFileName')]
+                    [String]$FullName,
+                    [Switch]$Force)
+                    BEGIN{
+                        [void][System.Reflection.Assembly]::LoadWithPartialName(""System.windows.forms"")
+                    }
+                    PROCESS{
+                        If($FullName -match ""\\.+$"" -and !$InitialDirectory){$InitialDirectory = Split-Path $FullName;$FullName = Split-Path $FullName -Leaf}ElseIf(!$InitialDirectory){$InitialDirectory=[Environment]::GetFolderPath('Desktop')}
+                        $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+                        $SaveFileDialog.initialDirectory = $InitialDirectory
+                        Try{$SaveFileDialog.filter = $Filter}Catch{Throw $_;Break}
+                        $SaveFileDialog.FileName = $FullName
+                        $SaveFileDialog.OverwritePrompt = !$Force
+                        If($SaveFileDialog.ShowDialog() -eq ""OK""){$SaveFileDialog.FileName}
+                    }
+
+ParameterSets : {@{Name=__AllParameterSets; IsDefault=False; Parameters=System.Management.Automation.PSObject[]}}

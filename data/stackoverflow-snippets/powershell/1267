@@ -1,0 +1,17 @@
+$csvFile = ""test.csv""
+
+# Count columns in CSV file
+$columnCount = (Get-Content $csvFile |
+  Select-Object -Index 1,2 |
+  ConvertFrom-Csv |
+  Get-Member -MemberType NoteProperty |
+  Measure-Object).Count
+
+# Create list of generic property names (no duplicates)
+$propertyNames = 1..$columnCount |
+  ForEach-Object { ""Property{0}"" -f $_ }
+
+# Get CSV file content, skip header line, and convert from CSV using generic header
+Get-Content $csvFile |
+  Select-Object -Skip 1 |
+  ConvertFrom-Csv -Header $propertyNames

@@ -1,0 +1,27 @@
+ // Create the filtering object: downsample the dataset using a leaf size
+    pcl::VoxelGrid<PointXYZIR> avg;
+    avg.setInputCloud(cloudInput);
+    avg.setLeafSize(0.25f, 0.25f, 0.25f);
+    avg.filter(*cloudFiltered);
+
+    //searchPoint
+    PointXYZIR searchPoint = cloudFiltered->at(0) ;
+
+    //result from radiusSearch()
+    std::vector<int> pointIdxRadiusSearch;
+    std::vector<float> pointRadiusSquaredDistance;
+
+    //kdTree
+    pcl::KdTreeFLANN<PointXYZIR> kdtree;
+    kdtree.setInputCloud (cloudFiltered);
+    kdtree.setSortedResults(true);
+
+    if ( kdtree.radiusSearch (searchPoint, 100, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 )
+    {
+        //delete every point in target
+        for (size_t j = 0; j < pointIdxRadiusSearch.size (); ++j)
+        {
+            //is this the way to erase correctly???
+            cloud_out.push_back(cloudFiltered->points[pointIdxRadiusSearch[j]]);
+        }
+    }

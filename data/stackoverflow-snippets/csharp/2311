@@ -1,0 +1,24 @@
+    let calc_Dumetrulo (s : string) =
+        let inline getnum (c : char) = int c - 48
+        let inline isnum c = c >= '0' && c <= '9'
+        let inline isop c =
+            c = '+' || c = '-' || c = '*' || c = '/'
+        let inline runop f a b =
+            match f with
+            | '+' -> a + b
+            | '-' -> a - b
+            | '*' -> a * b
+            | '/' -> a / b
+            | _ -> failwith ""illegal op""
+        let rec parse i f a c =
+            if i >= s.Length then
+                if c = -1 then a else runop f a c
+            else
+                let k, j = s.[i], i + 1
+                if isnum k then
+                    let n = if c = -1 then 0 else c
+                    parse j f a (10 * n + getnum k)
+                elif isop k then parse j k a c
+                elif c = -1 then parse j f a c
+                else parse j f (runop f a c) -1
+        parse 0 '+' 0 -1

@@ -1,0 +1,32 @@
+open FSharp.Reflection
+
+/// Record with Option-typed fields
+type RM = { a: int option; b: string option; c: bool option }
+
+/// Record with same fields, but non-optional
+type R = { a: int; b: string; c: bool }
+
+/// Determines if the given property is of type option<_>
+let isOption (f: System.Reflection.PropertyInfo) = 
+    f.PropertyType.IsGenericType && f.PropertyType.GetGenericTypeDefinition() = typedefof<option<_>>
+
+/// Returns an array of pairs (propertyInfo, value) for every field of the given record.
+let fieldsWithValues (r: 'a) =
+    Array.zip (FSharpType.GetRecordFields typeof<'a>) (FSharpValue.GetRecordFields r)
+
+/// Determines if the given record has any option-type fields whose value is None.
+let anyNones (r: 'a) = 
+    fieldsWithValues r |> Seq.exists (fun (f, value) -> isOption f && isNull value)
+
+/// Given two records, 'a and 'b, where 'a is expected to contain some option-typed
+/// fields, and 'b is expected to contain their non-option namesakes, creates a new
+/// record 'b with all non-None option values copied from 'a.
+let copyOptionFields (from: 'a) (to': 'b) : 'b =
+    let bFields = FSharpValue.GetRecordFields to'
+    let aFields = Array.zip (FSharpType.GetRecordFields typeof<'a>) (FSharpValue.GetRecordFields from)
+    for idx, (f, value) in aFields |> Array.indexed do
+        if isOption f && not (isNull value) then
+            let _, values = FSharpValue.GetUnionFields( value, f.PropertyType )
+            bFields.[idx] <- values.[0] // We know that this is a `Some` case, and it has only one value
+
+    FSharpValue.MakeRecord( typeof<'b>, bFields ) :?> 'b

@@ -1,0 +1,17 @@
+ActiveSupport::Notifications.subscribe 'process_action.action_controller' do |*args|
+  event = ActiveSupport::Notifications::Event.new(*args)
+
+  # opening a file here is probably a performance nightmare, but you'd be doing something with statsd, not a file, anyway
+  open('metrics.txt', 'a') do |f|
+    # get the action status, this code is from the ActionController::LogSubscriber
+    status = event.payload[:status]
+
+    if status.nil? && event.payload[:exception].present?
+      exception_class_name = event.payload[:exception].first
+
+      status = ActionDispatch::ExceptionWrapper.status_code_for_exception(exception_class_name)
+    end
+
+    f.puts ""process_action.action_controller controller: #{event.payload[:controller]} - action: #{event.payload[:action]} - path: #{event.payload[:path]} - status: #{status}""
+  end
+end

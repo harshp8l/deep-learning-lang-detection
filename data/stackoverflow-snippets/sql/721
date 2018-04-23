@@ -1,0 +1,22 @@
+SQL> create table booking (stageid number);
+
+Table created.
+
+SQL> create table hallseat (availabletickets number, stageid number);
+
+Table created.
+
+SQL> create or replace trigger booked_ticket before insert OR UPDATE on booking for each row
+  2  declare
+  3      v_available NUMBER;
+  4  begin
+  5    SELECT AVAILABLETICKETS into v_available from HALLSEAT WHERE HALLSEAT .STAGEID=:NEW.STAGEID;
+  6  IF v_available<1 THEN
+  7   Raise_Application_Error(-20343, 'You cant book');
+  8  END IF;
+  9  end;
+ 10  /
+
+Trigger created.
+
+SQL>

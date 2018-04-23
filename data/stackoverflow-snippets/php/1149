@@ -1,0 +1,69 @@
+$posts = json_decode('[{""exists"":true,""post_id"":""2983"",""parent_id"":3058,""data"":{""name"":""Product Downloader"",""description"":"""",""icon"":"""",""locked"":0},""id"":6},{""exists"":false,""post_id"":""2985"",""parent_id"":2983,""data"":{""name"":""Plugins"",""description"":"""",""icon"":"""",""locked"":0},""id"":8},{""exists"":false,""post_id"":""2987"",""parent_id"":2985,""data"":{""name"":""Module 1"",""description"":"""",""icon"":"""",""locked"":0},""id"":9},{""exists"":true,""post_id"":""3058"",""parent_id"":0,""data"":{""name"":""Support"",""description"":"""",""icon"":"""",""locked"":0},""id"":3},{""exists"":true,""post_id"":""3065"",""parent_id"":3058,""data"":{""name"":""Protection Services"",""description"":"""",""icon"":"""",""locked"":0},""id"":4},{""exists"":false,""post_id"":""3279"",""parent_id"":3058,""data"":{""name"":""Tutorials & How-Tos"",""description"":"""",""icon"":"""",""locked"":0},""id"":10},{""exists"":false,""post_id"":""3471"",""parent_id"":2985,""data"":{""name"":""Module 2"",""description"":"""",""icon"":"""",""locked"":0},""id"":11},{""exists"":false,""post_id"":""3472"",""parent_id"":2985,""data"":{""name"":""Module 3"",""description"":"""",""icon"":"""",""locked"":0},""id"":12},{""exists"":false,""post_id"":""3475"",""parent_id"":2985,""data"":{""name"":""Module 4"",""description"":"""",""icon"":"""",""locked"":0},""id"":13},{""exists"":false,""post_id"":""3476"",""parent_id"":2985,""data"":{""name"":""Module 5"",""description"":"""",""icon"":"""",""locked"":0},""id"":14},{""exists"":false,""post_id"":""3979"",""parent_id"":2985,""data"":{""name"":""Module 6"",""description"":"""",""icon"":"""",""locked"":0},""id"":15},{""exists"":true,""post_id"":""4683"",""parent_id"":3058,""data"":{""name"":""Protection Services Advanced"",""description"":"""",""icon"":"""",""locked"":0},""id"":5},{""exists"":false,""post_id"":""6618"",""parent_id"":2985,""data"":{""name"":""Module 7"",""description"":"""",""icon"":"""",""locked"":0},""id"":16},{""exists"":false,""post_id"":""6618"",""parent_id"":2985,""data"":{""name"":""Module 7"",""description"":"""",""icon"":"""",""locked"":0},""id"":16}]');
+
+$categories = array();
+
+class Category {
+    public $name;
+    public $id;
+    public $subcategories;
+
+    public function __construct($post) {
+        $this->name = $post->data->name;
+        $this->id = $post->post_id;
+        $this->subcategories = array();
+    }
+}
+
+class Subcategory {
+    public $name;
+    public $id;
+    public $tags;
+
+    public function __construct($post) {
+        $this->name = $post->data->name;
+        $this->id = $post->post_id;
+        $this->tags = array();
+    }
+}
+
+class Tag {
+    public $name;
+    public $id;
+
+    public function __construct($post) {
+        $this->name = $post->data->name;
+        $this->id = $post->post_id;
+    }
+}
+
+function find_tags($id, $posts) {
+    $tags = array();
+    foreach ($posts as $post) {
+        if ($post->parent_id == $id) {
+            $tags[] = new Tag($post);
+            // any subcategories below this?
+            $tags = array_merge($tags, find_tags($post->post_id, $posts));
+        }
+    }
+    return array_unique($tags, SORT_REGULAR);  
+}
+
+// find all the categories
+foreach ($posts as $post) {
+    if (!$post->parent_id) {
+        $categories[] = new Category($post);
+    }
+}
+
+// now find all the sub-categories and tags
+foreach ($categories as $category) {
+    foreach ($posts as $post) {
+        if ($post->parent_id == $category->id) {
+            $thisSubcategory = new Subcategory($post);
+            $thisSubcategory->tags = find_tags($post->post_id, $posts);
+            $category->subcategories[] = $thisSubcategory;
+        }
+    }
+}
+
+print_r($categories);

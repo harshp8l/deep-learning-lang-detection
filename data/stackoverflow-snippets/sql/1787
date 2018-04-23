@@ -1,0 +1,10 @@
+select h1.hubstore, h1.hubdid,
+       h1.spokestore, h1.spokedid,
+       count(distinct if(c2.recordid is null or c1.did!=h1.hubdid, null, c1.recordid)) as initiated, 
+       count(distinct if(c2.did!=h1.hubdid, null, c2.recordid)) as received     
+from hub_directory h1 
+left join (select * from call_history where calldirection='Initiated') c1 
+    on c1.did=h1.hubdid or c1.did=h1.spokedid
+left join (select * from call_history where calldirection='Received') c2 
+    on c2.callid = c1.callid and c2.did=if(c1.did=h1.hubdid, h1.spokedid, h1.hubdid)
+group by h1.hubstore, h1.spokestore

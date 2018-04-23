@@ -1,0 +1,36 @@
+  def emails_exist
+    raise 'Missing file parameter' if !params[:file]
+    csv_path = params[:file].tempfile.path
+    send_data csv_of_emails_matching_users(csv_path), filename: 'emails.csv', type: 'text/csv'
+  end
+
+  private
+
+  def csv_of_emails_matching_users(input_csv_path)
+    total = 0
+    CSV.generate(headers: true) do |result|
+      result << %w{email exists}
+      emails = []
+      CSV.foreach(input_csv_path) do |row|
+        total += 1
+        if total > 10001
+          raise 'User Validation limited to 10000 emails'
+        end
+        emails.push(row[0])
+        if emails.count > 99
+          append_to_csv_info_for_emails(result, emails)
+        end
+      end
+      if emails.count > 0
+        append_to_csv_info_for_emails(result, emails)
+      end
+    end
+  end
+
+  def append_to_csv_info_for_emails(csv, emails)
+    user_emails = User.where(email: emails).pluck(:email).to_set
+    emails.each do |email|
+      csv << [email, user_emails.include?(email)]
+    end
+    emails.clear
+  end

@@ -1,0 +1,51 @@
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/connected_components.hpp>
+#include <iostream>
+
+using namespace boost;
+using namespace std;
+
+int main() {
+    int N = 10000;
+
+    struct status_t { typedef vertex_property_tag kind; };
+    typedef property<status_t, string> status;
+    typedef adjacency_list<vecS, vecS, bidirectionalS, status> MyGraph;
+
+    MyGraph g(N);
+
+    // add some random edges
+    add_edge(0, 1, g);
+    add_edge(100, 153, g);
+    add_edge(634, 12, g);
+
+    add_edge(93, 94, g);
+    add_edge(94, 3, g);
+
+    property_map<MyGraph, status_t>::type status_map = get(status_t(), g);
+
+    for (int i = 0; i < 10; i++) {
+        status_map[i] = ""S"";
+    }
+
+    {
+        auto neighbours = boost::adjacent_vertices(94, g);
+        for (auto vd : make_iterator_range(neighbours))
+            std::cout << ""94 has adjacent vertex "" << vd << ""\n"";
+
+        // prints
+        // for undirected:
+        //  94 has adjacent vertex 93
+        //  94 has adjacent vertex 3
+        // for directed/bidirectionalS:
+        //  94 has adjacent vertex 3
+    }
+
+    {   // for bidirectionalS:
+        for (auto ed : make_iterator_range(boost::out_edges(94, g)))
+            std::cout << ""outgoing: "" << ed << ""\n"";
+        for (auto ed : make_iterator_range(boost::in_edges(94, g)))
+            std::cout << ""incident: "" << ed << ""\n"";
+    }
+
+}

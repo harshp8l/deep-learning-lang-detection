@@ -1,0 +1,33 @@
+import io.getquill._
+import io.getquill.context.jdbc.JdbcContext
+import io.getquill.context.sql.idiom.SqlIdiom
+
+case class Laptop(id: Long, name: String)
+
+class LaptopDaoQuill[I <: SqlIdiom, N <: NamingStrategy](implicit ctx: JdbcContext[I, N]) {
+
+  import ctx._
+
+  def insert(obj: Laptop) = {
+    val laptops = quote {
+      querySchema[Laptop](""laptops"")
+    }
+    implicit val personInsertMeta = insertMeta[Laptop](_.id)
+
+    val q = quote {
+      laptops.insert(lift(obj))
+    }
+    ctx.run(q)
+  }
+}
+
+object Main {
+  def main(args: Array[String]): Unit = {
+//    implicit val ctx = new SqlMirrorContext(MirrorSqlDialect, Literal)
+    implicit val ctx = new PostgresJdbcContext(SnakeCase, ""ctx"")
+
+    val laptopDao = new LaptopDaoQuill
+
+    laptopDao.insert(Laptop(10L, ""laptop""))
+  }
+}

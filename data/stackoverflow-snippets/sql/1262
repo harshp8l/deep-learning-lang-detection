@@ -1,0 +1,57 @@
+$stmt = $conn->prepare(""
+    SELECT `Points` FROM `Profile` 
+    WHERE `UserID` = :user_id
+    LIMIT 1;
+"");
+if (!$stmt) {
+    // your error handling
+    echo ""\nPDO::errorInfo():\n"";
+    print_r($conn->errorInfo());
+    // see http://php.net/manual/de/pdo.errorinfo.php
+    exit;
+}
+$params = ['user_id' => $UserID];
+if ($stmt->execute($params)) {
+    echo ""\nPDOStatement::errorInfo():\n"";
+    $arr = $stmt->errorInfo();
+    print_r($arr);
+    // see http://php.net/manual/de/pdostatement.errorinfo.php
+    exit;
+}
+
+// no while needed
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+if (is_array($result) and isset($result['Points'])) {
+    $points = $result['Points'];
+    $pointsDeduction = -20;
+
+    if($daysLeft == $End) {
+        $stmt = $conn->prepare(""
+            UPDATE `Profile` 
+            SET `Points` = :points 
+            WHERE `UserID` = :user_id 
+            LIMIT 1;
+        "");
+        if (!$stmt) {
+            // your error handling
+            echo ""\nPDO::errorInfo():\n"";
+            print_r($conn->errorInfo());
+            // see http://php.net/manual/de/pdo.errorinfo.php
+            exit;
+        }
+        $params = [
+            'points' => $points + $pointsDeduction,
+            'user_id' => $UserID,
+        ];
+        if ($stmt->execute($params)) {
+            echo ""\nPDOStatement::errorInfo():\n"";
+            $arr = $stmt->errorInfo();
+            print_r($arr);
+            // see http://php.net/manual/de/pdostatement.errorinfo.php
+            exit;
+        }
+        echo"" - 20 points will be deducted</h4></center></h4>"";
+    }
+} else {
+    // user not found - your error handling here
+}

@@ -1,0 +1,41 @@
+    class Base {
+            public:
+                    Args invoke(std::string name, Args a) {
+                            auto foundMethod = methods_.find(name);
+
+                            if (foundMethod == methods_.end())
+                            {
+                                    throw NoSuchMethod();
+                            }
+
+                            (*foundMethod)(a);
+                    }
+            protected:
+                    std::map<std::string, std::function<void(Args)>> methods_;
+    };
+
+    class One: public Base {
+                    int q;
+            public:
+                    One(int q_): q(q_)
+                    {
+                            methods_[""test""] = std::bind(&One::test, this, std::placeholders::_1);
+                    };
+
+                    Args test(Args a) {
+                            printf(""One::test() -> q = %d"", q);
+                    };
+    };
+
+    class Two: public Base {
+                    std::string s;
+            public:
+                    Two(std::string s_): s(s_)
+                    {
+                            methods_[""test2""] = std::bind(&Two::test, this, std::placeholders::_1);
+                    };
+
+                    Args test2(Args a) {
+                            printf(""Two::test2() -> t = %s"", s.c_str());
+                    };
+    };

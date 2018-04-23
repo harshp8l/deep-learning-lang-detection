@@ -1,0 +1,169 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+
+using namespace std ;
+
+template <class T> 
+class LinkedList {
+  struct Node {
+      T *x;
+      Node *next;
+  };
+  private:
+    Node *head;
+  public:
+    LinkedList(){
+        printf(""constructor:%p\n"", this) ;
+        head = NULL;
+    }
+
+    ~LinkedList(){
+        printf(""destructor:%p\n"", this) ;
+        Node *next = head;
+        while(next) {  
+            Node *deleteMe = next;
+            next = next->next;
+            printf(""delete node:%p\n"", deleteMe) ;
+            delete deleteMe->x ;    // x
+            delete deleteMe;
+        }
+    }
+
+    LinkedList* Dup() {
+        LinkedList *newList = new LinkedList<T>() ;
+        Node *n = head ;
+        while (n != NULL) {
+            T *newx = new T(); 
+            *newx=*(n->x) ;
+//          newList->addTail(n->x) ;
+            newList->addTail(newx) ;
+            n = n->next;
+        }
+        return newList ;
+    }
+
+    // prepend a new value to the beginning of the list
+    // val : caller must allocate memory.
+    void add(T *val){
+        Node *n = new Node();
+        printf("" addhead: new alloc node %p\n"", n) ;
+//      T *newval = new T();
+//      *newval = *val ;
+//        n->x = newval;
+        n->x = val ;
+        n->next = head;
+        head = n;
+    }
+
+    // add to end
+    // val : caller must allocate memory.
+    void addTail(T *val) {
+        Node *n = new Node();
+        Node *l = head ;
+
+        printf("" addtail: new alloc node %p\n"", n) ;
+//      T *newval = new T();
+//      *newval = *val ;
+//        n->x = newval;
+        n->x = val ;
+        n->next = NULL ;
+        if ( l==NULL ) {
+            head = n ;
+            return ;
+        }
+        while(l->next!=NULL) {
+            l = l->next ;
+        }
+        l->next = n ;
+    }
+
+    void forEach(void (*callback)(T*)) {
+      Node *n = head;
+      while (n != NULL) {
+        (*callback)(n->x);
+        n = n->next;
+      }
+      printf(""\n"");
+    }
+};
+
+void printInt(int *x) {
+//  Serial.print(x);
+    printf(""%d "", *x) ;
+}
+
+void printBoard(LinkedList<int> *x) {
+  x->forEach(printInt);
+}
+
+int main() {
+  //Serial.begin(9600); 
+
+  printf(""make A\n"") ;
+  int avail_Afree=0 ;
+
+#if 0
+    // use stack memory
+  LinkedList<int> A;
+  LinkedList<int> *pA=&A;
+#else
+    // use heap
+  LinkedList<int> *pA = new LinkedList<int>();
+  avail_Afree=1 ;
+#endif
+  int val=0 ;
+
+  for (int i=1; i<=7; i++) {
+    printf(""add node:%d\n"", i) ;
+//    val=i ;
+    int *pval = new int() ;
+    *pval = i ;
+//    pA->add(&val);
+    pA->add(pval);
+  }
+  pA->forEach(printInt);
+
+
+    // prepare copied data.
+  LinkedList<int> *pA2, *pA3 ;
+printf(""make A2\n"") ;
+  pA2 = pA->Dup() ;
+  pA2->forEach(printInt) ;
+
+printf(""make A3\n"") ;
+  pA3 = pA->Dup() ;
+  pA3->forEach(printInt) ;
+
+
+    // make board
+  LinkedList<LinkedList<int> > *pBoard;
+  printf(""make Board\n"") ;
+  pBoard = new LinkedList<LinkedList<int> > () ;
+
+    printf(""  Board add: A2\n"") ;
+  pBoard->add(pA2);
+
+    printf(""  Board add: A3\n"") ;
+  pBoard->add(pA3);
+
+    printf("" print Board\n"") ;
+  pBoard->forEach(printBoard); // returns nothing
+
+  if ( avail_Afree ) {
+    printf(""delete pA:%p\n"", pA) ;
+    delete pA ;
+  }
+
+/* 
+  printf(""delete pA2:%p\n"", pA2) ;
+  delete pA2 ;
+  printf(""delete pA3:%p\n"", pA3) ;
+  delete pA3 ;
+  // pBoard will free A2,A3.
+*/
+  printf(""delete pBoard:%p\n"", pBoard) ;
+  delete pBoard ;
+
+  return 0 ;
+}

@@ -1,0 +1,25 @@
+struct CharPtrOrString
+{
+    const char* p_;
+    std::string s_;
+
+    explicit CharPtrOrString(const char* p) : p_{p} { }
+    CharPtrOrString(std::string s) : p_{nullptr}, s_{std::move(s)} { }
+
+    bool operator==(const CharPtrOrString& x) const
+    {
+        return p_ ? x.p_ ? std::strcmp(p_, x.p_) == 0
+                         : p_ == x.s_
+                  : x.p_ ? s_ == x.p_
+                         : s_ == x.s_;
+    }
+
+    struct Hash
+    {
+        size_t operator()(const CharPtrOrString& x) const
+        {
+            std::string_view sv{x.p_ ? x.p_ : x.s_.c_str()};
+            return std::hash<std::string_view>()(sv);
+        } 
+    };
+};

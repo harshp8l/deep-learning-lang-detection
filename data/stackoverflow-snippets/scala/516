@@ -1,0 +1,28 @@
+val collectedData: Seq[(Int, Seq[Seq[Int]])] =
+  Array((1, List(List(97), List(98), List(99), List(100))),
+    (2,List(List(97, 98), List(97, 99), List(97, 101))),
+    (3,List(List(97, 98, 99),List(99, 102, 103))))
+val rdd = sc.parallelize(collectedData, 4)
+
+val uniqueSuffix = UUID.randomUUID()
+
+// expected to run on Spark executors
+rdd.saveAsTextFile(s""file:///tmp/just-testing/$uniqueSuffix/test3"")
+
+// expected to run on Spark driver and find NO files
+println(""Files on driver:"")
+val driverHostName = InetAddress.getLocalHost.getHostName
+Files.walk(Paths.get(s""/tmp/just-testing/$uniqueSuffix/test3""))
+  .toArray.map(driverHostName + "" : "" + _).foreach(println)
+
+// just a *hack* to list files on every executor and get output to the driver
+// PLEASE DON'T DO THAT IN PRODUCTION CODE
+val outputRDD = rdd.mapPartitions[String] { _ =>
+  val hostName = InetAddress.getLocalHost.getHostName
+  Seq(Files.walk(Paths.get(s""/tmp/just-testing/$uniqueSuffix/test3""))
+    .toArray.map(hostName + "" : "" + _).mkString(""\n"")).toIterator
+}
+
+// expected to list files as was seen on executor nodes - multiple files should be present
+println(""Files on executors:"")
+outputRDD.collect().foreach(println)

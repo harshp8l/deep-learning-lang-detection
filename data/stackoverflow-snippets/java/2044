@@ -1,0 +1,225 @@
+package justtest;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.io.IOException;
+import java.util.Calendar;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+
+import org.json.JSONException;
+
+import net.aksingh.owmjapis.CurrentWeather;
+import net.aksingh.owmjapis.OpenWeatherMap;
+
+public class WeatherView {
+    public static void main(String[] args) throws Exception{
+        SwingUtilities.invokeLater(new Runnable(){
+
+            @Override
+            public void run() {
+                JFrame f = new JFrame();
+                f.setSize(320, 480);
+                try {
+                    new Main(f, ""Korea"");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }});
+
+    }
+
+}
+
+class Main {
+
+    private static int hour;
+    private static int minute;
+    private static int minutetext;
+    private static int hourtext;
+
+    //OWM owm = new OWM("""");
+    private OpenWeatherMap owm = new OpenWeatherMap(""your registration code here!!"");
+    private CurrentWeather cwd;
+
+    public double getMaxTemperatureInCelsius()
+    {
+
+        double farenheitTemperature = cwd.getMainInstance().getMaxTemperature();//Farenheit
+        return (farenheitTemperature  -  32.0) *5.0/9.0;
+    }
+
+    private void setCurrentWeather(String cityName) {
+        try {
+            cwd = owm.currentWeatherByCityName(cityName);
+        } catch (JSONException | IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public Main(final JFrame f, final String cityName) throws Exception{
+        setCurrentWeather(cityName);
+
+        int tempcorrect = 273;
+        double temp = getMaxTemperatureInCelsius();
+        double tempreal = (int) (temp - tempcorrect);
+
+        JPanel mp = new JPanel();
+        JPanel tp = new JPanel();
+        JPanel bp = new JPanel();
+
+        JButton b1 = new JButton(""Set Alarm"");
+        JButton b2 = new JButton(""Stop"");
+        JLabel l1 = new JLabel(""Temperature in "" + cwd.getCityName() + "" is "" + tempreal + "" C"");
+        JLabel rl = new JLabel(""There is a "" + cwd.getMainInstance().getHumidity() + ""% chance of rain"");
+
+        bp.add(b1);
+        bp.add(b2);
+        mp.add(l1);
+        mp.add(rl);
+
+        bp.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+
+        mp.add(tp, BorderLayout.NORTH);
+        mp.add(bp, BorderLayout.SOUTH);
+
+        DigitalClock myClock = new DigitalClock();
+        tp.add(myClock);
+
+        f.add(mp);
+        f.setVisible(true);
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        b1.addActionListener(e -> {
+            JDialog jd = new JDialog();
+            JPanel j1 = new JPanel();
+            jd.setSize(320, 240);
+            j1.setSize(180, 200);
+            j1.setAlignmentY(100);
+            FlowLayout f1 = new FlowLayout();
+            jd.setLayout(f1);
+            jd.add(j1);
+
+            JLabel l2 = new JLabel(""Alarm Time (24hrs)"");
+            JTextField t1 = new JTextField();
+            t1.setToolTipText(""Hour"");
+            JTextField t2 = new JTextField();
+            t2.setToolTipText(""Minutes"");
+
+            t1.setColumns(2);
+            t2.setColumns(2);
+
+            JButton b21 = new JButton(""Set Alarm"");
+            t1.setLocation(80, 300);
+
+            j1.add(l2);
+
+            j1.add(t1);
+            j1.add(t2);
+
+            j1.add(b21);
+
+            b21.addActionListener(e1 -> {
+                //Player player = new Player();
+                hourtext = Integer.parseInt(t1.getText());
+                minutetext = Integer.parseInt(t2.getText());
+
+                // int v =1;
+                if ((hourtext == hour) && (minutetext == minute)) {
+                    System.out.println(hour + "" : "" + minute);
+                    //player.play(""A A A A A A "");
+                    DigitalClock.setStringTime(hourtext, minutetext);
+                } else {
+                    System.out.println(""alarm not active"");
+
+                }
+
+                DigitalClock.setStringTime(hourtext, minutetext);
+            });
+
+            jd.setVisible(true);
+
+        });
+
+    }
+
+
+    static class DigitalClock extends JPanel {
+        private static final long serialVersionUID = 1L;
+        public static String stringTime;
+
+        private static String correctionHour, correctionMinute, correctionSecond;
+        private static int second;
+        private static Calendar now;
+
+        DigitalClock()
+        {
+            Timer t1 = new Timer(1000, e -> repaint());
+
+            t1.start();
+
+            now = Calendar.getInstance();
+        }
+
+        public static void setStringTime() {
+            //stringTime = xyz;
+            now = Calendar.getInstance();
+
+            if(hour != 0)
+                now.set(Calendar.HOUR_OF_DAY, hour);
+            if(minute != 0)
+                now.set(Calendar.MINUTE, minute);
+
+            hour = now.get(Calendar.HOUR_OF_DAY);
+            minute = now.get(Calendar.MINUTE);
+            second = now.get(Calendar.SECOND);
+
+            correctionHour = (hour < 10) ? ""0"" : """";
+            correctionMinute = (minute < 10) ? ""0"" : """";
+            correctionSecond = (second < 10) ? ""0"" : """";
+
+            stringTime = correctionHour + hour + "":"" + correctionMinute+ minute + "":"" + correctionSecond + second;
+        }
+
+        public static void setStringTime(int _hour, int _minute) {
+            hour = _hour;
+            minute = _minute;
+        }
+
+        public int findMinimumBetweenTwoNumbers(int a, int b) {
+            return (a <= b) ? a : b;
+        }
+
+        @Override
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            setStringTime();
+            //setStringTime(correctionHour + hour + "":"" + correctionMinute+ minute + "":"" + correctionSecond + second);
+            g.setColor(Color.BLACK);
+            int length = findMinimumBetweenTwoNumbers(this.getWidth(),this.getHeight());
+            Font myFont = new Font(""SansSerif"", Font.PLAIN, length / 5);
+            g.setFont(myFont);
+            g.drawString(stringTime, length /6, length/2);
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            return new Dimension(200, 200);
+        }
+
+    }
+}

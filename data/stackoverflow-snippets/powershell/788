@@ -1,0 +1,97 @@
+[CmdletBinding(SupportsShouldProcess)]
+Param (
+    [string[]]$computer = $global:LoggedOnUser.Computer,
+    [string]$group = ""administrators"",
+    [System.Management.Automation.PSCredential]$creds = $global:AdminUser.Credentials
+)
+Begin {
+    # Initialise output array
+    $groupArray = @()
+
+    # Check C:\Temp exists locally
+    if (!(Test-Path C:\Temp)) { New-Item -Path C:\Temp -ItemType Directory -Force }
+
+    # Run this locally with second administrator account in a new process
+    $secondAccountSB = {
+        param([System.Management.Automation.PSCredential]$creds = $creds,$c = $c, $group = $group)
+        $prcsi = New-Object System.Diagnostics.ProcessStartInfo ""PowerShell""
+        $prcsi.Arguments = ""-File C:\Temp\Local_Group_Check.ps1 -c $c -group $group""
+        $prcsi.RedirectStandardError = $true
+        $prcsi.RedirectStandardOutput = $true
+        $prcsi.LoadUserProfile = $false
+        $prcsi.UserName = $creds.UserName
+        $prcsi.Password = $creds.Password
+        $prcsi.Domain = ""Domain""
+        $prcsi.UseShellExecute = $false
+        $prcsi.WorkingDirectory = ""C:\Temp""
+        $prc = New-Object System.Diagnostics.Process
+        $prc.StartInfo = $prcsi
+        $prc.Start() | Out-Null
+        $prc.WaitForExit()
+        $output = $prc.StandardOutput.ReadToEnd()
+        $failed = $prc.StandardError.ReadToEnd()
+        $output
+        $failed
+    }
+
+    # Create string for a script
+    $groupReportSB = ""
+        param(`$c,`$group)
+        # Add Directory Services .NET Type
+        Add-Type -AssemblyName System.DirectoryServices.AccountManagement
+        `$ctype = [System.DirectoryServices.AccountManagement.ContextType]::Machine
+
+        # Initialise array
+        `$localGroups = @()
+
+        # Connect to local Directory Services
+        `$context = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext -ArgumentList `$ctype,`$c
+        `$idtype = [System.DirectoryServices.AccountManagement.IdentityType]::SamAccountName
+        Try { `$lg = [System.DirectoryServices.AccountManagement.GroupPrincipal]::FindByIdentity(`$context,`$idtype,`$group) }
+        Catch [System.Management.Automation.MethodInvocationException] {
+            `$errorMessage = `$_.Exception.InnerException.Message
+            Write-Host `""`$($`c.ToUpper()): `$(`$errorMessage.Trim())`"" -ForegroundColor Yellow -BackgroundColor Black
+            continue
+        }
+
+        # Obtain a list of each local group's members
+        `$members = `$lg.Members
+
+        # Create PSObject
+        foreach (`$member in `$members) {
+            if ((`$member.StructuralObjectClass -eq `$null) -or (`$member.StructuralObjectClass -ilike `""user`"")) {
+                `$groupMembers = `""N/A`""
+            }
+            else { [string]`$groupMembers = `$member.Members -join `""; `"" }
+            `$gm = New-Object -TypeName psobject
+            `$gm | Add-Member -MemberType NoteProperty -Name Account -Value `$member.SamAccountName
+            `$gm | Add-Member -MemberType NoteProperty -Name Computer -Value `$c.ToUpper()
+            `$gm | Add-Member -MemberType NoteProperty -Name Description -Value `$member.Description
+            `$gm | Add-Member -MemberType NoteProperty -Name Object -Value `$member.StructuralObjectClass
+            `$gm | Add-Member -MemberType NoteProperty -Name Group -Value `$lg.Name
+            `$gm | Add-Member -MemberType NoteProperty -Name Members -Value `$groupMembers
+            `$gm | Add-Member -MemberType NoteProperty -Name Context -Value `$member.ContextType
+            `$gm | Add-Member -MemberType NoteProperty -Name Scope -Value `$member.GroupScope
+            `$localGroups += `$gm
+        }
+
+        # Return Local Groups for this machine
+        `$localGroups
+    ""
+}
+Process {
+    $count = 1
+    $total = $computer.Count
+    foreach ($c in $computer) {
+        Write-Host ""[$($count)/$($total)] Collecting information from $c...""
+        if (Test-Path C:\Temp\Local_Group_Check.ps1) { Remove-Item C:\Temp\Local_Group_Check.ps1 -Force }
+        $groupReportSB | Out-File -FilePath C:\Temp\Local_Group_Check.ps1 -Force -NoClobber
+        $returnedOutput = & $secondAccountSB -c $c -group $group
+        $groupArray += ConvertTo-WinPSObject -inputObject $returnedOutput -dataType LocalGroups
+        $count ++
+    }
+}
+End {
+    # Return Group Array
+    $groupArray
+}

@@ -1,0 +1,17 @@
+RECT client_rect_in_screen_space(HWND const hWnd) {
+    RECT rc{ 0 };
+    if (!::GetClientRect(hWnd, &rc)) {
+        auto const err_val{ ::GetLastError() };
+        throw std::system_error(err_val, std::system_category());
+    }
+
+    ::SetLastError(ERROR_SUCCESS);
+    if(::MapWindowPoints(hWnd, nullptr, reinterpret_cast<POINT*>(&rc), 2) == 0) {
+        auto const err_val{ ::GetLastError() };
+        if (err_val != ERROR_SUCCESS) {
+            throw std::system_error(err_val, std::system_category());
+        }
+    }
+
+    return rc;
+}

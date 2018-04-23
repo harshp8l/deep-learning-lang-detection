@@ -1,0 +1,22 @@
+def func(src: DataFrame, trgt: DataFrame, join_key: Array[String], select_keys: Array[String]) ={
+  import org.apache.spark.sql.functions._
+  //joining and selecting appropriate columns
+  val select_columns = Array(""trgt.DIM_ID"") ++ select_keys.map(x => ""src.""+x)
+  val joined_df = src.as(""src"").join(trgt.as(""trgt""), Seq(join_key: _*), ""left"")
+    .select(select_columns.map(col):_*)
+
+  //separating joined dataframe for populating DIM_ID for null values
+  val matched_df = joined_df.filter(col(""DIM_ID"").isNotNull)
+  val not_matched_df = joined_df.filter(col(""DIM_ID"").isNull)
+
+  //extracting the max DIM_ID for populating in the not-matched table
+  val max_dim_id = matched_df.select(max(""DIM_ID"")).take(1)(0).getAs[Int](0)
+
+  //generating DIM_ID for null values increasing from the max DIM_ID, which is expensive though
+  import org.apache.spark.sql.expressions._
+  val not_matched_df_with_id = not_matched_df.withColumn(""DIM_ID"", row_number().over(Window.orderBy(""Account_nbr""))+max_dim_id)
+
+  //merge both separated dataframes and return with REF_IN column modified according the your desire
+  matched_df.withColumn(""REF_IN"", concat_ws("" - "", col(""REF_IN""), lit(""(Type 1 update)"")))
+    .union(not_matched_df_with_id.withColumn(""REF_IN"", concat_ws("" - "", col(""REF_IN""), lit(""(New Insert-1st Occurance)""))))
+}

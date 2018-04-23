@@ -1,0 +1,23 @@
+#include ""Common.h""
+
+thread_local IContext* IContext::g_ctx = nullptr;
+
+// pointers to setDllThreadContext from each loaded DLL (engine plugins use case)
+/*static*/ std::vector<void(*)(IContext*)> GameEngine::modules;
+
+class Context : public IContext
+{
+public:
+
+    void print(int) override {...}
+
+    void setThreadContext() override
+    {
+        g_ctx = this; // sets context for this module (where setThreadContext is compiled)
+
+        for(auto setDllContext : GameEngine::modules)
+        {
+            setDllContext(this); // sets context for module where setDllContext was compiled
+        }
+    }
+};

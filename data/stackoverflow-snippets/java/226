@@ -1,0 +1,34 @@
+import java.util.concurrent.locks.ReentrantLock;
+
+public class Example {
+
+    ReentrantLock lock = new ReentrantLock();
+
+    void method1() {
+        lock.lock();
+        try {
+            if (lock.getHoldCount() == 1) { 
+                System.out.println(""call method1 directly"");
+            } else if (lock.getHoldCount() == 2) {
+                System.out.println(""call method1 from method2"");
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    void method2() {
+        lock.lock();
+        try {
+            method1();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static void main(String[] args) {
+        Example example = new Example();
+        example.method1(); // call method1 directly
+        example.method2();  // call method2 from method2
+    }
+}

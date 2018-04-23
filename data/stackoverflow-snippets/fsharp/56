@@ -1,0 +1,21 @@
+let charsToString chars = chars |> Array.ofSeq |> System.String
+let split (s: string) =
+  let rec loop acc words rest =
+    match rest with
+    | ' '::xs ->
+      if Seq.isEmpty acc then
+        loop Seq.empty words xs
+      else
+        let newWord = charsToString acc
+        loop Seq.empty (Seq.append words [newWord]) xs
+    | x::xs -> loop (Seq.append acc [x]) words xs
+    | [] -> // terminal case, we've reached end of string
+      if Seq.isEmpty acc then
+        words
+      else
+        let newWord = charsToString acc
+        Seq.append words [newWord]
+  loop Seq.empty Seq.empty (List.ofSeq s)
+
+> split ""Hello my friend""
+val it : seq<System.String> = seq [""Hello""; ""my""; ""friend""]

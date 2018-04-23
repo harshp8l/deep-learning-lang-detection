@@ -1,0 +1,48 @@
+import cats.Semigroupal
+import cats.data.Validated.{Invalid, Valid}
+import cats.data.ValidatedNel
+import cats.data.NonEmptyList
+import cats.syntax.apply._     // for `mapN`
+import cats.syntax.validated._ // for `validNel`
+
+case class FieldErrorInfo(name: String, error: String)
+
+type FieldName = String
+
+type ValidationResult[A] = ValidatedNel[FieldErrorInfo, A]
+
+trait SingleFieldValidationRule[U] extends ((U, FieldName) => ValidationResult[U])
+
+trait ModelValidationRule[M] extends (M => ValidationResult[M])
+
+object ValidateNameRule extends SingleFieldValidationRule[String] {
+  override def apply(v1: String, name: String): ValidationResult[String]  = {
+    if (v1.contains(""cats""))
+      v1.validNel
+    else
+      FieldErrorInfo(name, ""Some Error"").invalidNel
+  }
+}
+
+object ValidateQuantityRule extends SingleFieldValidationRule[Int] {
+  override def apply(v1: Int, name: String): ValidationResult[Int] =
+    if (v1 > 0)
+      v1.validNel
+    else FieldErrorInfo(name, ""Some Error"").invalidNel
+}
+
+case class SampleModel(name: String, quantity: Int)
+
+object ValidateSampleModel extends ModelValidationRule[SampleModel] {
+  override def apply(v1: SampleModel): ValidationResult[SampleModel] = {
+    val stage1: ValidatedNel[FieldErrorInfo, String] = ValidateNameRule(v1.name, ""name"")
+    val stage2: ValidatedNel[FieldErrorInfo, Int] = ValidateQuantityRule(v1.quantity, ""quantity"")
+
+    implicit val sga: Semigroupal[NonEmptyList] = new Semigroupal[NonEmptyList] {
+      override def product[A, B](fa: NonEmptyList[A], fb: NonEmptyList[B]): NonEmptyList[(A, B)] = fa.flatMap(a => fb.map(b => a -> b))
+    }
+
+
+    (stage1, stage2).mapN(SampleModel)
+  }
+}

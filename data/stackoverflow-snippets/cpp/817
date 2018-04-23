@@ -1,0 +1,60 @@
+float wetDryMix = 0.5f;
+float wetFactor = wetDryMix;
+float dryFactor = 1.0f - wetDryMix;
+float feedback = 0.6f;
+
+int sampleRate = 44100;
+int sampleCount = sampleRate * 10;
+float[] leftInSamples = new float[sampleCount];
+float[] rightInSamples = new float[sampleCount];
+float[] leftOutSamples = new float[sampleCount];
+float[] rightOutSamples = new float[sampleCount];
+
+int delayBufferSize = sampleRate * 3;
+float[] delayBufferLeft = new float[delayBufferSize];
+float[] delayBufferRight = new float[delayBufferSize];
+
+int delaySamples = sampleRate / 2;
+int delayReadIndex = 0;
+int delayWriteIndex = delaySamples;
+
+
+for(int sampleIndex = 0; sampleIndex < sampleCount; sampleIndex++) {
+    //Read samples in from input
+    leftChannel = leftInSamples[sampleIndex];
+    rightChannel = rightInSamples[sampleIndex];
+
+    //Make sure delay ring buffer indices are within range
+    delayReadIndex = delayReadIndex % delayBufferSize;
+    delayWriteIndex = delayWriteIndex % delayBufferSize;
+
+    //Get the current output of delay ring buffer                              
+    float delayOutLeft = delayBufferLeft[delayReadIndex];
+    float delayOutRight = delayBufferRight[delayReadIndex];    
+
+    //Calculate what is put into delay buffer. It is the current input signal plus the delay output attenuated by the feedback factor
+    //Notice that the right delay output is fed into the left delay and vice versa
+    //In this version sound from each stereo channel will ping pong back and forth
+    float delayInputLeft = leftChannel + delayOutRight * feedback;
+    float delayInputRight = rightChannel + delayOutLeft * feedback;
+
+    //Alternatively you could use a mono signal that is pushed to one delay channel along with the current feedback delay
+    //This will ping-pong a mixed mono signal between channels
+    //float delayInputLeft = leftChannel + rightChannel + delayOutRight * feedback;
+    //float delayInputRight = delayOutLeft * feedback;  
+
+    //Push the calculated delay value into the delay ring buffers
+    delayBufferLeft[delayWriteIndex] = delayInputLeft;
+    delayBufferRight[delayWriteIndex] = delayInputRight;
+
+    //Calculate resulting output by mixing the dry input signal with the current delayed output
+    float outputLeft = leftChannel * dryFactor + delayOutLeft * wetFactor;
+    float outputRight = rightChannel * dryFactor + delayOutRight * wetFactor;
+
+    leftOutSamples[sampleIndex] = outputLeft;
+    rightOutSamples[sampleIndex] = outputRight; 
+
+    //Increment ring buffer indices
+    delayReadIndex++;
+    delayWriteIndex++;
+}

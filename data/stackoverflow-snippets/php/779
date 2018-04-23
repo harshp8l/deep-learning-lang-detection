@@ -1,0 +1,15 @@
+$per_page = 8;
+$start = $page * $per_page;
+$page = sanitize_text_field($_POST['page']);
+
+$category_name = $_POST['category_name'];
+
+$wpdb->get_results($wpdb->prepare(""SELECT * FROM $wpdb->posts   
+LEFT JOIN $wpdb->term_relationships ON($wpdb->posts.ID = $wpdb->term_relationships.object_id)
+LEFT JOIN $wpdb->term_taxonomy ON($wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id)
+LEFT JOIN $wpdb->terms ON($wpdb->term_taxonomy.term_id = $wpdb->terms.term_id)
+WHERE $wpdb->terms.name = ''
+AND $wpdb->term_taxonomy.taxonomy LIKE '%"".$category_name.""%'
+AND $wpdb->posts.post_status = 'publish'
+AND $wpdb->posts.post_type = 'articles' 
+ORDER BY post_date DESC LIMIT %d, %d"", $start, $per_page));

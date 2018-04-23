@@ -1,0 +1,25 @@
+function Get-Tables
+{
+    param([Parameter(ValueFromPipeline=$true)]$Json)
+
+    process
+    {
+        foreach ($table in ($Json | ConvertFrom-Json).tables)
+        {
+            foreach ($row in $table.rows)
+            {
+                $result = New-Object PSObject
+                $columnIndex = 0
+
+                foreach ($column in $table.columns)
+                {
+                    Add-Member -InputObject $result -MemberType NoteProperty -Name $column.Name -Value ($row[$columnIndex++])
+                }
+
+                $result
+            }
+        }
+    }
+}
+
+$json | Get-Tables | Export-Csv

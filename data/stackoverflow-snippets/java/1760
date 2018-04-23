@@ -1,0 +1,30 @@
+public static boolean copyFile(File src, File[] dst) {
+    boolean result = true;
+    if (src.exists()) {
+        String srcName = src.getName();
+        for (File file : dst) {
+            String to = file.getPath();
+            try {
+                File destination = new File(to, srcName);
+                if (destination.createNewFile()) {
+                    FileChannel srcChnl = new FileInputStream(src).getChannel();
+                    FileChannel dstChnl = new FileOutputStream(destination).getChannel();
+                    dstChnl.transferFrom(srcChnl, 0, srcChnl.size());
+                    srcChnl.close();
+                    dstChnl.close();
+                } else {
+                    result = false;
+                    System.out.println(""Unable to create destination "" + destination.getPath());
+                }
+            } catch (Exception e) {
+                result = false;
+                System.out.println(e.getMessage());
+                break;
+            }
+        }
+    } else {
+        result = false;
+        System.out.println(""File "" + src.getPath() + "" doesn't exist."");
+    }
+    return result;
+}

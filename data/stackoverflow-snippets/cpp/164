@@ -1,0 +1,14 @@
+  size_t cmp_axis = 1, axis_count = sizeof shape/ sizeof *shape;
+  std::vector<size_t> adjusted_strides;
+  //adjusted strides is basically same as strides
+  //only difference being that the first element is the 
+  //total number of elements in the n dim array.
+
+  //The only reason to introduce this array was
+  //so that I don't have to write any if-elses
+  adjusted_strides.push_back(shape[0]*strides[0]);
+  adjusted_strides.insert(adjusted_strides.end(), strides, strides + axis_count);
+  for(size_t i = 0; i < data.size(); ++i) {
+    size_t ni = i/adjusted_strides[cmp_axis]*adjusted_strides[cmp_axis+1] + i%adjusted_strides[cmp_axis+1];
+    rdata[ni] += data[i];
+  }

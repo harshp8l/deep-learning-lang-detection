@@ -1,0 +1,36 @@
+#include <memory>
+
+card::card()
+    : number(0), suit(0), next(nullptr)
+{
+}
+
+card::card(const card &src, card *n)
+    : number(src.number), suit(src.suit), next(n)
+{
+}
+
+card& card::operator=(const card &rhs)
+{
+    if (&rhs != this)
+    {
+        number = rhs.number;
+        suit = rhs.suit;
+        // don't copy 'next'!
+        next = nullptr;
+    }
+    return *this;
+}
+
+void collection::add(const card &a)
+{
+    start = new card(a, start);
+}
+
+card collection::deal()
+{
+    if (!start) throw std::runtime_error(""deck is empty!"");
+    std::unique_ptr<card> temp(start);
+    start = start->next;
+    return *temp;
+}

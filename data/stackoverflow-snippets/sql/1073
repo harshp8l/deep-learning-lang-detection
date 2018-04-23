@@ -1,0 +1,12 @@
+Select rownum
+      ,respnum
+      ,C.*
+ From YourTable A
+ Cross Apply ( values (cast((Select A.* for XML RAW) as xml))) B(XMLData)
+ Cross Apply (
+                Select question = a.value('local-name(.)','varchar(100)')
+                      ,answer   = a.value('.','varchar(max)') 
+                 From  B.XMLData.nodes('/row')  as C1(n)
+                 Cross Apply C1.n.nodes('./@*') as C2(a)
+                 Where a.value('local-name(.)','varchar(100)') not in ('rownum','respnum')
+             ) C

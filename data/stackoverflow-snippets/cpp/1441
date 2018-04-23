@@ -1,0 +1,23 @@
+std::vector<std::vector<Card>> reorganize(std::vector<Card> cards)
+{
+    std::sort(cards.begin(), cards.end(),
+              [](const Card& lhs, const Card& rhs){
+                  return std::tie(rhs.width, rhs.height) < std::tie(lhs.width, lhs.height);
+              });
+
+    std::vector<std::vector<Card>> res;
+
+    for (const auto& card : cards) {
+        auto it = std::find_if(res.begin(), res.end(),
+                               [&](const auto& stack) {
+                                    return card.height <= stack.back().height;
+                               });
+
+        if (it == res.end()) {
+            res.push_back({card});
+        } else {
+            (*it).push_back(card);
+        }
+    }
+    return res;
+}

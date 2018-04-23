@@ -1,0 +1,28 @@
+import org.apache.spark.sql.functions._
+import org.apache.spark.mllib.linalg.DenseVector
+import org.apache.spark.sql.Row
+
+val fList = Seq(
+  (Seq(2.5046410000000003, 2.1487149999999997, 1.0884870000000002, 3.5877090000000003)),
+  (Seq(0.9558040000000001, 0.9843780000000002, 0.545025, 0.9979860000000002))
+).toDF(""features"")
+
+def seqToVec = udf(
+  (s: Seq[Double]) => new DenseVector(s.toArray)
+)
+
+val fListVec = fList.withColumn(""features"", seqToVec($""features""))
+// fListVec: org.apache.spark.sql.DataFrame = [features: vector]
+
+val fListrdd = fListVec.rdd.
+  map{ case Row(features: DenseVector) => features }.
+  zipWithIndex.
+  toDF(""features"", ""rowId"")  
+
+fListrdd.show
+// +--------------------+-----+
+// |            features|rowId|
+// +--------------------+-----+
+// |[2.50464100000000...|    0|
+// |[0.95580400000000...|    1|
+// +--------------------+-----+

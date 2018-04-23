@@ -1,0 +1,21 @@
+input = ""..."" # could be taken from ARGF
+input.
+  split($/).
+  each_with_object(result: Hash.new {|h, k| h[k] = []}, level: 0) do |line, acc|
+    acc[:level] += 1 if line.include?('=begin')
+    (1..acc[:level]).each do |level|
+      acc[:result][""Level: #{level}""] << line
+    end
+    acc[:level] -= 1 if line.include?('=end');
+  end[:result]
+
+#⇒ {
+#    ""Level: 1"" => [
+#      ""=begin This is a multiline comment and con spwan as many lines as you like."",
+#      ""But =begin and =end should come in the first line only."",
+#      ""=end""
+#    ],
+#    ""Level: 2"" => [
+#      ""But =begin and =end should come in the first line only.""
+#    ]
+# }

@@ -1,0 +1,24 @@
+func executeTemplate(tmpls *template.Template, tmplName string, w io.Writer, data interface{}) error {
+    var err error
+    layout := tmpls.Lookup(""layout.html"")
+    if layout == nil {
+        return errNoLayout
+    }
+
+    layout, err = layout.Clone()
+    if err != nil {
+        return err
+    }
+
+    t := tmpls.Lookup(tmplName)
+    if t == nil {
+        return errNoTemplate
+    }
+
+    _, err = layout.AddParseTree(""content"", t.Tree)
+    if err != nil {
+        return err
+    }
+
+    return layout.Execute(w, data)
+}

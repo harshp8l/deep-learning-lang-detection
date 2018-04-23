@@ -1,0 +1,50 @@
+type StringSliceReader interface {
+    Read() ([]string, error)
+}
+
+type NewReader func(r io.Reader) StringSliceReader
+
+func newCSVReader(r io.Reader) StringSliceReader {
+    return csv.NewReader(r)
+}
+
+func newFWReader(r io.Reader) StringSliceReader {
+    return fw.NewReader(r)
+}
+
+func getDataFrom(file string, data *Data, newReader NewReader) error {
+    f, err := os.Open(file)
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+
+    r := charmap.ISO8859_1.NewDecoder().Reader(f)
+    reader := newReader(r)
+    for i := 1; ; i++ {
+        rec, err := reader.Read()
+        if i == 1 {
+            continue
+        }
+        if err != nil {
+            if err == io.EOF {
+                break
+            }
+            log.Fatal(err)
+        }
+        addWorkbook(rec, data)
+    }
+    return nil
+}
+
+func getDataFromFiles(files []string, newReader NewReader) (Data, error) {
+    data := Data{}
+    for _, file := range files {
+        err := getDataFrom(file, newReader, &data)
+        if err != nil {
+            panic(err)
+            return data, err
+        }
+    }
+    return data, nil
+}

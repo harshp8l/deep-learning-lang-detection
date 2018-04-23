@@ -1,0 +1,26 @@
+add_action( 'woocommerce_before_calculate_totals', 'auto_add_remove_coupon' );
+function auto_add_remove_coupon( $cart ) {
+    if ( is_admin() && !defined('DOING_AJAX') ) return;
+
+    $coupon_code = 'boxpersonnalisable';
+    $targeted_product_ids = array( 1362 );
+    $found = false;
+
+    // Loop through cart items
+    foreach ( $cart->get_cart() as $cart_item ){
+        if( in_array( $cart_item['product_id'], $targeted_product_ids ) ){
+            $found = true;
+            break;
+        }
+    }
+
+    if ( ! $cart->has_discount( $coupon_code ) && $found ) {
+        $cart->add_discount( $coupon_code );
+        wc_clear_notices();
+        wc_add_notice( __(""Your custom notice - coupon added (optional)"",""woocommerce""), 'notice');
+    } elseif  ( $cart->has_discount( $coupon_code ) && ! $found ) {
+        $cart->remove_coupon( $coupon_code );
+        wc_clear_notices();
+        wc_add_notice( __(""Your custom notice - coupon removed (optional)"",""woocommerce""), 'notice');
+    }
+}

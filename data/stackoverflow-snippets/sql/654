@@ -1,0 +1,116 @@
+/*------------------------------------------------------------------------------------------------------
+Declare all variables and worktables
+------------------------------------------------------------------------------------------------------*/
+CREATE TABLE #temp 
+(
+    instrid     INT
+,   startdate   DATETIME
+,   enddate     DATETIME
+,   ratingname  VARCHAR(MAX)
+,   ratingvalue VARCHAR(MAX)
+)
+
+CREATE TABLE #distincttemp 
+(
+    instrid     INT
+,   startdate   DATETIME
+,   enddate     DATETIME
+)
+
+INSERT #temp VALUES
+(1234,    '2014-09-05 00:00:00.000', '2016-06-26 23:59:59.000', 'FitchIntLT',  'AA+'),
+(1234,    '2014-09-05 00:00:00.000', '2017-09-21 23:59:59.000', 'MoodyIntLT',  'Aa1'),
+(1234,    '2014-09-05 00:00:00.000', NULL                    ,'SPIntLT',     'NR'),
+(1234,    '2016-06-27 00:00:00.000', NULL                    ,'FitchIntLT',  'AA'),
+(1234,    '2017-09-22 00:00:00.000', NULL                    ,'MoodyIntLT',  'Aa2')
+
+/*------------------------------------------------------------------------------------------------------
+#temp data
+------------------------------------------------------------------------------------------------------*/
+SELECT * FROM #temp
+ORDER BY instrid, ratingname, startdate
+
+/*------------------------------------------------------------------------------------------------------
+Distinct changes per instrument ID over time
+------------------------------------------------------------------------------------------------------*/
+;;WITH CTE AS(
+                SELECT 
+                        a.instrid
+                    ,   a.startdate
+
+                FROM                
+                (
+                    SELECT 
+                            instrid 
+                        ,   ratingname      
+                        ,   startdate   
+                        ,   ISNULL(enddate,'9999-12-31 23:59:59.000') AS enddate
+
+                    FROM #temp
+                    ) AS a
+
+                GROUP BY a.instrid, a.startdate
+            )
+
+INSERT INTO #distincttemp
+    SELECT  
+            CTE.instrid     
+        ,   CTE.startdate   
+        ,   LEAD(DATEADD(s,-1,CTE.startdate),1,null) OVER (PARTITION BY CTE.instrid ORDER BY CTE.instrid, CTE.startdate) AS enddate
+
+    FROM CTE AS CTE
+    ORDER BY CTE.instrid, CTE.startdate
+
+SELECT * FROM #distincttemp
+
+/*------------------------------------------------------------------------------------------------------
+Flattened view
+------------------------------------------------------------------------------------------------------*/
+SELECT 
+        d.instrid       
+    ,   d.startdate 
+    ,   d.enddate
+    ,   FitchIntLT.ratingvalue  AS FitchIntLT
+    ,   MoodyIntLT.ratingvalue  AS MoodyIntLT
+    ,   SPIntLT.ratingvalue     AS SPIntLT
+
+FROM #distincttemp AS d
+
+    LEFT OUTER JOIN #temp AS FitchIntLT
+        ON FitchIntLT.instrid = d.instrid
+        AND FitchIntLT.ratingname = 'FitchIntLT'
+        AND (
+                (
+                    d.startdate BETWEEN FitchIntLT.startdate AND ISNULL(FitchIntLT.enddate,d.enddate)
+                    AND d.enddate <= ISNULL(FitchIntLT.enddate,d.enddate)
+                )
+                OR ISNULL(d.enddate,'9999-01-01') = ISNULL(FitchIntLT.enddate,'9999-01-01')
+            )
+
+    LEFT OUTER JOIN #temp AS MoodyIntLT
+        ON MoodyIntLT.instrid = d.instrid
+        AND MoodyIntLT.ratingname = 'MoodyIntLT'
+        AND (
+                (
+                    d.startdate BETWEEN MoodyIntLT.startdate AND ISNULL(MoodyIntLT.enddate,d.enddate)
+                    AND d.enddate <= ISNULL(MoodyIntLT.enddate,d.enddate)
+                )
+                OR ISNULL(d.enddate,'9999-01-01') = ISNULL(MoodyIntLT.enddate,'9999-01-01')
+            )
+
+    LEFT OUTER JOIN #temp AS SPIntLT
+        ON SPIntLT.instrid = d.instrid
+        AND SPIntLT.ratingname = 'SPIntLT'
+        AND (
+                (
+                    d.startdate BETWEEN SPIntLT.startdate AND ISNULL(SPIntLT.enddate,d.enddate)
+                    AND d.enddate <= ISNULL(SPIntLT.enddate,d.enddate)
+                )
+                OR ISNULL(d.enddate,'9999-01-01') = ISNULL(SPIntLT.enddate,'9999-01-01')
+            )
+
+/*------------------------------------------------------------------------------------------------------
+Clean up
+------------------------------------------------------------------------------------------------------*/
+DROP TABLE #temp
+DROP TABLE #distincttemp

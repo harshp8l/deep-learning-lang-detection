@@ -1,0 +1,25 @@
+  def main(args: Array[String]): Unit = {
+
+    //for each id from ids, call fetch method and if record exists call fetchRecordDetail
+    //and after that upload RecordDetail, collect all UploadResults into seq
+    //and call notifyUploaded with that seq and await result, you should see ""notified ...."" in console
+
+    def runWithOption[A, B](f: A => Future[B], oa: Option[A]): Future[Option[B]] = oa match {
+      case Some(a) => f(a).map(b => Some(b))
+      case None => Future.successful(None)
+    }
+
+    val ids: Seq[String] = Seq(""a"", ""b"", ""c"", ""d"")
+
+    val resultSeq: Seq[Future[Option[UploadResult]]] = ids.map(id => {
+      for (or: Option[Record] <- fetch(id);
+           ord: Option[RecordDetail] <- runWithOption(fetchRecordDetail, or);
+           our: Option[UploadResult] <- runWithOption(upload, ord)
+      ) yield our
+    })
+
+    val filteredResult: Future[Seq[UploadResult]] = Future.sequence(resultSeq).map(s => s.collect({ case Some(ur) => ur }))
+    val result: Future[Seq[UploadResult]] = filteredResult.andThen({ case Success(s) => notifyUploaded(s) })
+
+    Await.ready(result, Duration.Inf)
+  }

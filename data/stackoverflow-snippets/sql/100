@@ -1,0 +1,27 @@
+WITH cte AS (
+    SELECT
+        CONVERT(VARCHAR(10), DateTime, 111) AS DateTime,
+        UserName,
+        COUNT(CASE WHEN 60*DATEPART(HOUR, DateTime) +
+                  DATEPART(MINUTE, DateTime) >= 450 AND
+                  60*DATEPART(HOUR, DateTime) +
+                  DATEPART(MINUTE, DateTime) < 1170 THEN 1 END) AS m_cnt,
+        COUNT(CASE WHEN 60*DATEPART(HOUR, DateTime) +
+                  DATEPART(MINUTE, DateTime) < 450 OR
+                  60*DATEPART(HOUR, DateTime) +
+                  DATEPART(MINUTE, DateTime) >= 1170 THEN 1 END) AS e_cnt
+    FROM yourTable
+    GROUP BY CONVERT(VARCHAR(10), DateTime, 111), UserName
+)
+
+SELECT
+    UserName,
+    CASE WHEN m_cnt > e_cnt
+         THEN DateTime + ' 07:30:00' ELSE DateTime + ' 19:30:00' END AS DateTime
+FROM cte
+ORDER BY
+    DateTime, UserName;
+
+    UserName    DateTime
+1   User1       2017-01-01 07:30:00
+2   User2       2017-01-01 19:30:00

@@ -1,0 +1,139 @@
+Param(
+   [string]$baseurl = ""http://server:8080/tfs/DefaultCollection"",  
+   [string]$projectName = ""ProjectName"",
+   [string]$keepForever = ""true"",
+   [string]$user = ""username"",
+   [string]$token = ""password""
+)
+
+# Base64-encodes the Personal Access Token (PAT) appropriately
+$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes((""{0}:{1}"" -f $user,$token)))
+
+#Need to change revision every time
+
+function CreateJsonBody
+{
+
+    $value = @""
+        {
+            ""tasks"": [
+                {
+                    ""displayName"": ""PowerShell Script"",
+                    ""alwaysRun"": false,
+                    ""continueOnError"": false,
+                    ""condition"": ""succeeded()"",
+                    ""enabled"": true,
+                    ""timeoutInMinutes"": 0,
+                    ""inputs"": {
+                        ""scriptType"": ""filePath"",
+                        ""scriptName"": ""$/TFVC-Scrum2018/ConsoleApp1/PS/0129-GetIISsites.ps1"",
+                        ""arguments"": """",
+                        ""workingFolder"": """",
+                        ""inlineScript"": ""# You can write your powershell scripts inline here. \n# You can also pass predefined and custom variables to this scripts using arguments\n\n Write-Host \""Hello World\"""",
+                        ""failOnStandardError"": ""true""
+                    },
+                    ""task"": {
+                        ""id"": ""e213ff0f-5d5c-4791-802d-52ea3e7be1f1"",
+                        ""versionSpec"": ""1.*"",
+                        ""definitionType"": ""task""
+                    }
+                },
+                {
+                    ""displayName"": ""PowerShell Script"",
+                    ""alwaysRun"": false,
+                    ""continueOnError"": false,
+                    ""condition"": ""succeeded()"",
+                    ""enabled"": true,
+                    ""timeoutInMinutes"": 0,
+                    ""inputs"": {
+                        ""scriptType"": ""filePath"",
+                        ""scriptName"": ""$/TFVC-Scrum2018/ConsoleApp1/PS/0129.ps1"",
+                        ""arguments"": """",
+                        ""workingFolder"": """",
+                        ""inlineScript"": ""# You can write your powershell scripts inline here. \n# You can also pass predefined and custom variables to this scripts using arguments\n\n Write-Host \""Hello World\"""",
+                        ""failOnStandardError"": ""true""
+                    },
+                    ""task"": {
+                        ""id"": ""e213ff0f-5d5c-4791-802d-52ea3e7be1f1"",
+                        ""versionSpec"": ""1.*"",
+                        ""definitionType"": ""task""
+                    }
+                }
+            ],
+            ""visibility"": [
+                ""Build"",
+                ""Release""
+            ],
+            ""runsOn"": [
+                ""Agent"",
+                ""DeploymentGroup""
+            ],
+            ""owner"": ""d122de31-36a7-415c-aa42-b6d09295d5a0"",
+            ""revision"": 2,
+            ""createdBy"": {
+                ""id"": ""d122de31-36a7-415c-aa42-b6d09295d5a0"",
+                ""displayName"": ""xxx"",
+                ""uniqueName"": ""xxx""
+            },
+            ""createdOn"": ""2018-02-02T07:17:45.25Z"",
+            ""modifiedBy"": {
+                ""id"": ""d122de31-36a7-415c-aa42-b6d09295d5a0"",
+                ""displayName"": ""xxx"",
+                ""uniqueName"": ""xxx""
+            },
+            ""modifiedOn"": ""2018-02-02T07:17:45.25Z"",
+            ""id"": ""4c8c1d32-52bc-492e-ba4d-c9b1b363bcdf"",
+            ""name"": ""0203"",
+            ""version"": {
+                ""major"": 1,
+                ""minor"": 0,
+                ""patch"": 0,
+                ""isTest"": false
+            },
+            ""serverOwned"": false,
+            ""contentsUploaded"": true,
+            ""iconUrl"": ""/tfs/_static/tfs/Dev16.M122.5/_content/icon-meta-task.png"",
+            ""hostType"": null,
+            ""packageType"": """",
+            ""packageLocation"": """",
+            ""sourceLocation"": """",
+            ""minimumAgentVersion"": ""*"",
+            ""friendlyName"": ""0203"",
+            ""description"": ""test0203"",
+            ""category"": ""Build"",
+            ""helpMarkDown"": """",
+            ""definitionType"": ""metaTask"",
+            ""author"": ""xxx"",
+            ""demands"": [],
+            ""groups"": [
+                {
+                    ""name"": ""PowerShell Script"",
+                    ""displayName"": ""PowerShell Script"",
+                    ""isExpanded"": true,
+                    ""visibleRule"": """"
+                },
+                {
+                    ""name"": ""PowerShell Script"",
+                    ""displayName"": ""PowerShell Script"",
+                    ""isExpanded"": true,
+                    ""visibleRule"": """"
+                }
+            ],
+            ""inputs"": [],
+            ""satisfies"": [],
+            ""sourceDefinitions"": [],
+            ""dataSourceBindings"": [],
+            ""instanceNameFormat"": ""Task group: 0203 "",
+            ""execution"": {}
+        } 
+
+""@
+
+ return $value
+}
+
+$json = CreateJsonBody
+
+$uri = ""$baseurl/$($projectName)/_apis/distributedtask/taskgroups?api-version=4.0-preview.1""
+Write-Host $uri
+$result = Invoke-RestMethod -Uri $uri -Method Put -Body $json -ContentType ""application/json"" -Headers @{Authorization=(""Basic {0}"" -f $base64AuthInfo)}

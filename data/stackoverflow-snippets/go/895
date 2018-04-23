@@ -1,0 +1,58 @@
+package main
+
+import (
+    ""context""
+    ""fmt""
+    ""log""
+    ""net/http""
+
+    ""github.com/julienschmidt/httprouter""
+    ""github.com/justinas/alice""
+)
+
+// m1 is middleware 1
+func m1(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        //do something with m1
+        log.Println(""m1 start here"")
+        next.ServeHTTP(w, r)
+        log.Println(""m1 end here"")
+    })
+}
+
+// m2 is middleware 2
+func m2(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        //do something with m2
+        log.Println(""m2 start here"")
+        next.ServeHTTP(w, r)
+        log.Println(""m2 end here"")
+    })
+}
+
+func index(w http.ResponseWriter, r *http.Request) {
+    // get httprouter.Params from request context
+    ps := r.Context().Value(""params"").(httprouter.Params)
+    fmt.Fprintf(w, ""Hello, %s"", ps.ByName(""name""))
+}
+
+// wrapper wraps http.Handler and returns httprouter.Handle
+func wrapper(next http.Handler) httprouter.Handle {
+    return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+        //pass httprouter.Params to request context
+        ctx := context.WithValue(r.Context(), ""params"", ps)
+        //call next middleware with new context
+        next.ServeHTTP(w, r.WithContext(ctx))
+    }
+}
+
+func main() {
+    router := httprouter.New()
+
+    chain := alice.New(m1, m2)
+
+    //need to wrap http.Handler to be compatible with httprouter.Handle
+    router.GET(""/user/:name"", wrapper(chain.ThenFunc(index)))
+
+    log.Fatal(http.ListenAndServe("":9000"", router))
+}

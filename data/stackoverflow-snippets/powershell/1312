@@ -1,0 +1,30 @@
+[Reflection.Assembly]::LoadFile(""C:\temp\HtmlAgilityPack\lib\Net45\HtmlAgilityPack.dll”) | Out-Null
+[HtmlAgilityPack.HtmlWeb]$web = @{}
+$url = ""http://lansweeper:81/user.aspx?username=sam&userdomain=mydomain""
+$webclient = new-object System.Net.WebClient
+
+    $cred = new-object System.Net.NetworkCredential
+    $defaultCredentials =  $cred.UseDefaultCredentials
+
+$proxyAddr = (get-itemproperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings').ProxyServer
+$proxy = new-object System.Net.WebProxy
+$proxy.Address = $proxyAddr
+$proxy.useDefaultCredentials = $true 
+$proxy
+
+[HtmlAgilityPack.HtmlDocument]$doc = $web.Load($url,""GET"",""$proxy"",$defaultCredentials ) 
+[HtmlAgilityPack.HtmlNodeCollection]$nodes = $doc.DocumentNode.SelectNodes(""//html[1]/body[1]"")
+
+$nodes
+
+<# USER RESOURCES
+https://msdn.microsoft.com/en-us/library/system.net.webclient.usedefaultcredentials(v=vs.110).aspx
+https://forums.asp.net/t/2027997.aspx?HtmlAgilityPack+Stuck+trying+to+understand+HtmlWeb+Load+NetworkCredential
+https://msdn.microsoft.com/en-us/library/system.net.webclient.usedefaultcredentials.aspx
+https://stackoverflow.com/questions/571429/powershell-web-requests-and-proxies
+
+TypeName   : HtmlAgilityPack.HtmlWeb
+Name       : Load
+HtmlAgilityPack.HtmlDocument Load(string url, string proxyHost, int proxyPort, string userId, string password), 
+HtmlAgilityPack.HtmlDocument Load(string url, string method, System.Net.WebProxy proxy, System.Net.NetworkCredential credentials)
+#>

@@ -1,0 +1,43 @@
+#include <atomic>
+#include <condition_variable>
+#include <iostream>
+#include <mutex>
+#include <thread>
+
+std::atomic_size_t i{0};
+std::mutex mut;
+std::condition_variable cv;
+
+void f1() {
+  while (1) {
+    std::size_t ii;
+    {
+      std::unique_lock<std::mutex> lk(mut);
+      cv.wait(lk, []() { return i.load() > 0; });
+      ii = --i;
+      cv.notify_one();
+    }
+    std::cout << ""i = "" << ii << std::endl;
+  }
+}
+
+void f2() {
+  while (1) {
+    std::size_t ii;
+    {
+      std::unique_lock<std::mutex> lk(mut);
+      cv.wait(lk, []() { return i.load() < 1; });
+      ii = ++i;
+      cv.notify_one();
+    }
+    std::cout << ""i = "" << ii << std::endl;
+  }
+}
+
+int main() {
+  std::thread t1(f1);
+  std::thread t2(f2);
+  t1.join();
+  t2.join();
+  return 0;
+}

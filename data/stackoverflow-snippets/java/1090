@@ -1,0 +1,22 @@
+AtomicInteger total = new AtomicInteger();
+ConcurrentLinkedQueue<Integer> q = new ConcurrentLinkedQueue<>();
+Thread thread = new Thread(() -> {
+    int remaining = 10000;
+    while (remaining != 0) {
+        total.incrementAndGet();
+        if (q.poll() != null) {
+            remaining--;
+        }
+    }
+});
+Integer[] first100 = new Integer[100];
+for (int i = 0 ; i != 100 ; i++) {
+    first100[i] = i;
+}
+long start = System.nanoTime();
+thread.start();
+for (int i = 0 ; i != 10000 ; i++) {
+    q.add(first100[i%100]);
+}
+thread.join();
+long runtime = System.nanoTime() - start;

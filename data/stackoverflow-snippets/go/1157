@@ -1,0 +1,69 @@
+package xasession
+
+import (
+    ""syscall""
+    ""unsafe""
+)
+
+// NewXASession casts your ppv from above to a *XASession
+func NewXASession(ppv uintptr) *XASession {
+    return (*XASession)(unsafe.Pointer(ppv))
+}
+
+// XASession is the wrapper object on which to call the wrapper methods.
+type XASession struct {
+    vtbl *xaSessionVtbl
+}
+
+type xaSessionVtbl struct {
+    // every COM object starts with these three
+    QueryInterface uintptr
+    AddRef         uintptr
+    Release        uintptr
+    // here are all additional methods of this COM object
+    ConnectServer    uintptr
+    DisconnectServer uintptr
+}
+
+func (obj *XASession) AddRef() uint32 {
+    ret, _, _ := syscall.Syscall(
+        obj.vtbl.AddRef,
+        1,
+        uintptr(unsafe.Pointer(obj)),
+        0,
+        0,
+    )
+    return uint32(ret)
+}
+
+func (obj *XASession) Release() uint32 {
+    ret, _, _ := syscall.Syscall(
+        obj.vtbl.Release,
+        1,
+        uintptr(unsafe.Pointer(obj)),
+        0,
+        0,
+    )
+    return uint32(ret)
+}
+
+func (obj *XASession) ConnectServer(id int) int {
+    ret, _, _ := syscall.Syscall(
+        obj.vtbl.ConnectServer, // function address
+        2, // number of parameters to this function
+        uintptr(unsafe.Pointer(obj)), // always pass the COM object address first
+        uintptr(id), // then all function parameters follow
+        0,
+    )
+    return int(ret)
+}
+
+func (obj *XASession) DisconnectServer() {
+    syscall.Syscall(
+        obj.vtbl.DisconnectServer,
+        1,
+        uintptr(unsafe.Pointer(obj)),
+        0,
+        0,
+    )
+}

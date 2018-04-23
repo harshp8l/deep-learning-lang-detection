@@ -1,0 +1,29 @@
+create or replace trigger staff_allocation_limit
+for update or insert on staff_allocation
+compound trigger
+
+  type t_empcnt is record (sid staff_allocation.sid%type);
+  type r_empcnt is table of t_empcnt index by pls_integer;
+  g_empcnt r_empcnt;
+
+  after each row is
+  begin
+    g_empcnt(g_empcnt.count + 1).sid := :new.sid;
+  end after each row;
+
+  after statement is
+    l_cnt number;
+  begin
+    for i in 1 .. g_empcnt.count loop
+      select count(*) into l_cnt
+        from staff_allocation
+        where sid = g_empcnt(i).sid
+          and staff_start_date >= trunc(sysdate) - 8;
+
+      if l_cnt > 8 then
+        raise_application_error(-20000, 'Only 8 schedules can be created for a staff per week');
+      end if;
+    end loop;
+  end after statement;
+end;
+/

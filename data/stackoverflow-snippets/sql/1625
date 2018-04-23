@@ -1,0 +1,42 @@
+'With SQL:
+
+Sub UpdateX1()
+
+Dim db As DAO.Database
+Dim rs1 As DAO.Recordset
+Dim rs2 As DAO.Recordset
+
+Set db = CurrentDb()
+Set rs1 = db.OpenRecordset(""Tabl1"")
+Set rs2 = db.OpenRecordset(""Tabl2"")
+
+
+'dans un tel cas, ne pas oublier de régler les warnings à false
+DoCmd.SetWarnings False
+rs1.MoveFirst
+Do Until rs1.EOF
+
+rs2.MoveFirst
+
+ Do Until rs2.EOF
+
+    sqlstr = ""UPDATE Tabl2 "" & _
+             ""SET fld2 = '"" & rs1![fld2] & ""'"" & _
+             ""WHERE [fld1] = '"" & rs1![fld1] & ""';""
+    DoCmd.RunSQL sqlstr
+
+ rs2.MoveNext
+ Loop
+ rs1.MoveNext
+Loop
+DoCmd.SetWarnings True
+
+rs1.Close
+rs2.Close
+Set rs1 = Nothing
+Set rs2 = Nothing
+Set db = Nothing
+
+ MsgBox ""Done""
+
+End Sub

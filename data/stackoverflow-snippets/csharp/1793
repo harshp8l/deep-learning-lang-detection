@@ -1,0 +1,30 @@
+  /// <summary>
+  /// Method to use the GNU diff.exe program to create a .diff file for a Roslyn file which has 
+  /// been modified.
+  /// 
+  /// This currently uses the GNU diff.exe program that happens to have been installed on my 
+  /// developer PC as part of the GitHub Desktop for Windows program installation.
+  /// </summary>
+  private static void CreateDiffFile(string archiveFileName, string currentFileName)
+  {
+     const string CGnuDiffExe = 
+        @""C:\Users\rp\AppData\Local\GitHub\PortableGit_f02737a78695063deace08e96d5042710d3e32db\usr\bin\diff.exe"";
+
+     string diffFileName = GetDiffFileName(currentFileName) + "".diff"";
+     Directory.CreateDirectory(Path.GetDirectoryName(diffFileName));
+
+     using (Process windowsProcess = new Process())
+     {
+        windowsProcess.StartInfo.UseShellExecute = false;
+        windowsProcess.StartInfo.FileName = CGnuDiffExe;
+        windowsProcess.StartInfo.Arguments = 
+                                ""-u -r \"""" + archiveFileName + ""\"" \"""" + currentFileName + ""\"""";
+        windowsProcess.StartInfo.RedirectStandardOutput = true;
+        if (!windowsProcess.Start())
+           DisplayErrorOrInfo(""Unexpected result for Process.Start()"");
+        File.WriteAllText(diffFileName, windowsProcess.StandardOutput.ReadToEnd());
+        windowsProcess.WaitForExit();
+     }
+
+     Console.WriteLine(""Diff file created: "" + diffFileName);
+  }

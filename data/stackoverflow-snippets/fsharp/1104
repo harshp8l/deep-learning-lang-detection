@@ -1,0 +1,54 @@
+open Akka
+open Akka.Actor
+open Akka.FSharp
+
+type Greet = 
+| Greet of string
+| Hello of AsyncReplyChannel<bool>
+| Hello2 
+
+type Consume =
+| Response
+| SetSender
+
+[<EntryPoint>]
+let main argv =
+
+    let system = System.create ""MySystem"" <| Configuration.load()    
+    let greeter = spawn system ""greeter"" <| fun mailbox ->
+        let rec loop() = actor {
+            let! msg = mailbox.Receive()
+            let sender = mailbox.Sender()
+            match msg with
+                | Greet who -> () // printf ""Hello, %s!\n"" who
+                | Hello2 -> sender.Tell(Response)
+                | _ -> ()
+            return! loop()
+            }
+        loop()
+
+    let consumer = spawn system ""consumer"" <| fun mailbox ->
+        let rec loop(count,sender : IActorRef) = actor {
+            if count = 1000000 then sender.Tell(true)
+            let! msg = mailbox.Receive()
+            match msg with
+            | Response -> return! loop(count+1,sender)
+            | SetSender -> return! loop(count,mailbox.Sender())
+
+        }  
+        loop(0,null)      
+
+    let n = 1000000
+
+    let t1 = System.Diagnostics.Stopwatch()
+    t1.Start()   
+    for i = 1 to n do        
+        greeter.Tell(Hello2,consumer)
+
+    let workdone = consumer.Ask SetSender
+    workdone.Wait()
+
+    printfn ""elapsed Akka:%A"" t1.ElapsedMilliseconds
+    System.Console.ReadLine () |> ignore
+
+    0

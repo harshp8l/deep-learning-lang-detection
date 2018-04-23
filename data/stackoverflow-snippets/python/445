@@ -1,0 +1,23 @@
+import unittest
+
+from mock import patch, Mock, call
+
+
+def some_other_function(x):
+    return 2 * x
+
+
+def some_function_under_test(some_list_type_arg):
+    return map(some_other_function, some_list_type_arg)
+
+
+class Tests(unittest.TestCase):
+    def test_thing(self):
+        with patch('__main__.some_other_function', Mock(side_effect=some_other_function)) as other_mock:
+            self.assertEqual(list(some_function_under_test([1, 2, 3])),
+                             [2, 4, 6])
+        self.assertEqual(other_mock.call_args_list,
+                         [call(1), call(2), call(3)])
+
+
+unittest.main()

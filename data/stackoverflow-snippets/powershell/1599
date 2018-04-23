@@ -1,0 +1,18 @@
+    $pw = ConvertTo-SecureString 'PASSWORD' -AsPlainText -Force
+   $cred = New-Object -TypeName System.Management.Automation.PSCredential -argumentList 792\opmanager, $pw
+$TotalUpdates = Invoke-Command -ComputerName IP -ScriptBlock{
+$UpdateSession = [activator]::CreateInstance([type]::GetTypeFromProgID(""Microsoft.Update.Session"")) 
+$UpdateSearcher = $UpdateSession.CreateUpdateSearcher()             
+$SearchResult = $UpdateSearcher.Search(""IsAssigned=1 and IsHidden=0 and IsInstalled=0"")
+            $Critical = $SearchResult.updates | where { $_.MsrcSeverity -eq ""Critical"" }
+                $important = $SearchResult.updates | where { $_.MsrcSeverity -eq ""Important"" }
+                $other = $SearchResult.updates | where { $_.MsrcSeverity -eq $nul}
+                $totalUpdates = $($SearchResult.updates.count)
+                if($totalUpdates -gt 0)
+                {
+                    $updatesToInstall = $true
+                }
+                else { $updatesToInstall = $false }
+Return $totalUpdates
+} -Credential $cred
+$TotalUpdates

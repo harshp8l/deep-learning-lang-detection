@@ -1,0 +1,27 @@
+SELECT p.id
+     , concat_ws(' ', u.first, u.last) AS hostname  -- concat_ws!
+     , p.time
+     , p.groupid
+     , p.newp
+     , paid.paidguests
+     , paid.confirm
+     , paid.reminder
+FROM   plans      p
+LEFT   JOIN users u  ON u.id = p.hostid
+LEFT   JOIN LATERAL (         -- LATERAL join
+   SELECT array_agg(sub.paidguest) AS paidguests
+        , array_agg(sub.confirm)   AS confirm
+        , array_agg(sub.reminder)  AS reminder
+   FROM  (
+      SELECT concat_ws(' ', us.first, us.last) AS paidguest, e.confirm, e.reminder
+      FROM   unnest(p.paidid) WITH ORDINALITY AS paid(id, ord)
+      JOIN   users       us ON us.id = paid.id
+      LEFT   JOIN emails e  ON e.email = us.email
+                           AND e.planid = p.planid
+      ORDER  BY paid.ord
+      ) sub
+   ) paid ON true
+WHERE  p.experienceid = $1
+AND    p.date = $2
+-- no GROUP  BY needed
+ORDER  BY cardinality(p.paidid) DESC, p.id;

@@ -1,0 +1,25 @@
+function Get-SSRSReportDataSources{
+    [CmdletBinding()] 
+    param(
+        [Parameter(Position=0,Mandatory=$true)]
+        [Alias(""Proxy"",""SSRSService"")]
+        [Web.Services.Protocols.SoapHttpClientProtocol]$ReportService,
+
+        [Parameter(Position=1,Mandatory=$true)]
+        [Alias(""Path"")]
+        [string]$ReportPath
+    )
+
+    # Test the report path to be sure it is for a valid report
+    if(Test-SSRSPath -ReportService $ReportService -EntityPath $ReportPath -EntityType Report){
+        $ReportService.GetItemDataSources($reportPath) | ForEach-Object{
+            [pscustomobject][ordered]@{
+                ReportPath = $reportPath
+                DataSourceName = $_.name
+                Reference = $_.item.reference
+            }
+        }
+    } else {
+        Write-Error ""$ReportPath is not a valid report path""
+    }
+}

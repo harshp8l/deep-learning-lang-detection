@@ -1,0 +1,20 @@
+QPixmap originalPixmap; // Load this from somewhere
+QRectF minimumBoundingRect = getMinimumBoundingRect( originalPixmap.rect(), angleRads);
+
+QPixmap rotatedPixmap( minimumBoundingRect.width(), minimumBoundingRect.height() );
+QPainter p( &rotatedPixmap );
+p.save();
+
+// Rotate the rotated pixmap paint device around the center...
+p.translate( 0.5 * rotatedPixmap.width(), 0.5 * rotatedPixmap.height() );
+p.rotate( angleDegrees );
+p.translate( -0.5 * rotatedPixmap.width(), -0.5 * rotatedPixmap.height() );
+
+// The render rectangle is simply the originalPixmap rectangle as it would be if placed at the center of the rotatedPixmap rectangle...
+QRectF renderRect( 0.5 * rotatedRect.width() - 0.5 * originalPixmap.width(),
+                   0.5 * rotatedRect.height() - 0.5 * originalPixmap.height(),
+                   originalPixmap.width(),
+                   originalPixmap.height() );
+p.drawPixmap( renderRect, originalPixmap, originalPixmap.rect() );
+
+p.restore();

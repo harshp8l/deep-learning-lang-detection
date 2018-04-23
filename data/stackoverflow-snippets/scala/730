@@ -1,0 +1,41 @@
+sealed trait Condition
+object Eq extends Condition // =
+object Ge extends Condition // >=
+
+sealed trait Status
+object Good extends Status
+object Bad extends Status
+object Error extends Status
+object Ignore extends Status
+
+case class Rule(tag: String,
+                condition: Condition,
+                min: Int,
+                max: Int,
+                status: Status)
+
+def handle(input: Int, rules: List[Rule]): Status =
+  rules
+      .view // lazily iterate the rules
+      .filter { // find matching rules
+        case Rule(_, Eq, x, _, _) if input == x => true
+        case Rule(_, Ge, x, _, _) if input >= x => true
+        case _ => false
+      }
+      .map { matchingRule => matchingRule.status } // return the status
+      .head // find the status of the first matching rule, or throw
+
+
+// Tests
+
+val rules = List(
+  Rule(""abc"", Eq, 0, 0, Good),
+  Rule(""abc"", Eq, 1, 0, Bad),
+  Rule(""abc"", Eq, 2, 0, Error),
+  Rule(""abc"", Ge, 3, 0, Ignore))
+
+assert(handle(0, rules) == Good)
+assert(handle(1, rules) == Bad)
+assert(handle(2, rules) == Error)
+assert(handle(3, rules) == Ignore)
+assert(handle(4, rules) == Ignore)

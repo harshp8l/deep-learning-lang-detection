@@ -1,0 +1,27 @@
+public function index()
+{
+    $YourData = DB::table('users')
+        ->join('packages', 'users.id', '=', 'packages.user_id')
+        ->select('users.*','packages.name as packageName',DB::raw('SUM(packages.entry_nr) as entries'))
+        ->where('users.id', Auth::id())
+        ->get();
+   $LeMiePrenotazioni = $this->LeMiePrenotazioni();
+
+   return view('home', compact('YourData','LeMiePrenotazioni'));
+
+}
+
+public function LeMiePrenotazioni(){
+
+    $id =Auth::user()->id;
+    $lesson = DB::select(""
+        SELECT *
+        FROM lessons t
+        where (t.date > now()) 
+       and NOT EXISTS 
+        (SELECT 1 FROM bookings b
+        WHERE b.lessons_id = t.id AND b.user_id = "".$id."");
+        "")->get();
+        return $lesson;
+
+}

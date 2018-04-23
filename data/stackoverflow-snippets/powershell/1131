@@ -1,0 +1,21 @@
+@echo off
+SetLocal
+REM
+REM This cmd file will launch it's corresponding PowerShell-script. 
+REM
+REM We need to change std character set to support international characters when calling 
+REM a PowerShell script. It's ohh soo 2017
+REM
+chcp 1252 > nul
+Set MyName=%~n0
+Set ErrLog=""%~dp0ERR_%MyName:~3%.log""
+Set LogFile=""%~dp0%MyName:~3%.log""
+
+REM This line will launch with a separate ERROR-log
+PowerShell -File ""%~dp0%MyName:~3%.ps1"" %* >> %LogFile% 2>&1 2>> %ErrLog%
+
+REM Remove log if empty
+findstr ""^"" %ErrLog% || del %ErrLog% >nul 
+
+chcp 850 > nul
+EndLocal

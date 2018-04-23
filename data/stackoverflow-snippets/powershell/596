@@ -1,0 +1,23 @@
+import groovy.util.logging.Log4j
+import org.springframework.stereotype.Component
+
+@Component
+@Log4j
+class PowerShellUtil {
+
+    def exec(debug, command, args){
+
+        def powerShellCommand = "".\\${command} ${args}""
+        def shellCommand = ""powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile  -Command \""${powerShellCommand}\""""
+
+        if (debug) log.debug powerShellCommand
+
+        def process = shellCommand.execute()
+        def out = new StringBuffer()
+        def err = new StringBuffer()
+        process.consumeProcessOutput(out, err)
+        process.waitFor()
+        if(out.size() > 0 && debug) log.debug out
+        if(err.size() > 0) log.error err
+    }
+}

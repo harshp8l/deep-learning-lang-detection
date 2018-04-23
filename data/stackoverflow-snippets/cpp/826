@@ -1,0 +1,63 @@
+#include ""Singleton.h""
+#include ""Logger.h""
+#include ""ExceptionHandler.h""
+
+#include <string>
+#include <array>
+
+namespace linx {
+
+struct SingletonInfo {
+    const std::string singletonName;
+    bool  isConstructed;
+
+    SingletonInfo( const std::string& singletonNameIn ) :
+        singletonName( singletonNameIn ),
+        isConstructed( false ) {}
+};
+
+// Order must match types defined in Singleton::SingletonType
+static std::array<SingletonInfo, 1> s_aSingletons = { SingletonInfo( ""Logger"" ) };
+
+Singleton::Singleton( SingletonType type ) :
+_type( type ) {
+    bool saveInLog = s_aSingletons.at( TypeLogger ).isConstructed;
+
+    try {
+        if( !s_aSingletons.at( type ).isConstructed ) {
+            // Test Initialize Order
+            for( int i = 0; i < type; ++i ) {
+                if( !s_aSingletons.at( i ).isConstructed ) {
+                    throw ExceptionHandler( s_aSingletons.at( i ).singletonName +
+                                            "" must be constructed before constructing "" +
+                                            s_aSingletons.at( type ).singletonName,
+                                            saveInLog );
+                }
+            }
+            s_aSingletons.at( type ).isConstructed = true;
+        } else {
+            throw ExceptionHandler( s_aSingletons.at( type ).singletonName +
+                                    "" can only be constructed once."",
+                                    saveInLog );
+        }
+    } catch( std::exception& ) {
+        // type is out of range
+        std::ostringstream stream;
+        stream << __FUNCTION__ << "" Invalid Singleton Type specified: "" << type;
+        throw ExceptionHandler( stream, saveInLog );
+    }
+}
+
+Singleton::~Singleton() {
+    s_aSingletons.at( _type ).isConstructed = false;
+}
+
+void Singleton::logMemoryAllocation( bool isAllocated ) const {
+    if( isAllocated ) {
+        Logger::log( ""Created "" + s_aSingletons.at( _type ).singletonName );
+    }  else {
+        Logger::log( ""Destroyed "" + s_aSingletons.at( _type ).singletonName );
+    }   
+}
+
+} // namespace linx

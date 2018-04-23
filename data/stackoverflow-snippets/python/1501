@@ -1,0 +1,54 @@
+class _Logging:
+    '''A little namespace for our logging facilities. Don't try to instantiate
+    it: all it does is group together some logging objects and keep them out of
+    the global namespace'''
+    def __init__(self):
+        raise TypeError(""that's not how this works..."")
+
+    @staticmethod
+    def gz_log_rotator(source, dest):
+        '''accept a source filename and a destination filename. copy source to
+        dest and add gzip compression. for use with
+        logging.handlers.RotatingFileHandler.rotator.'''
+        with gzip.open(dest, 'wb', 1) as ofile, open(source, 'rb') as ifile:
+            ofile.write(ifile.read())
+        os.remove(source)
+
+    @staticmethod
+    def gz_log_namer(name):
+        '''accept a filename, and return it with "".gz"" appended. for use with
+        logging.handlers.RotatingFileHandler.namer.'''
+        return name + "".gz""
+
+    @staticmethod
+    def init():
+        global logger
+
+        fmtr = logging.Formatter(
+            '[%(asctime)s:%(name)s:%(thread)05d:%(levelname)-8s] %(message)s')
+
+        gz_rotfile_loghandler = logging.handlers.RotatingFileHandler(
+            '%s.log' % __name__, mode='a', maxBytes=(1024**2 * 20), backupCount=3)
+        gz_rotfile_loghandler.setLevel(5)
+        gz_rotfile_loghandler.setFormatter(fmtr)
+        gz_rotfile_loghandler.rotator = _Logging.gz_log_rotator
+        gz_rotfile_loghandler.namer = _Logging.gz_log_namer
+
+        simplefile_loghandler = logging.FileHandler(
+            '%s.simple.log' % __name__, mode='w')
+        simplefile_loghandler.setLevel(15)
+        simplefile_loghandler.setFormatter(fmtr)
+
+        stream_loghandler = logging.StreamHandler()
+        stream_loghandler.setLevel(25)
+        stream_loghandler.setFormatter(fmtr)
+
+        logger = logging.getLogger(__name__)
+        logger.setLevel(5)
+        logger.addHandler(gz_rotfile_loghandler)
+        logger.addHandler(simplefile_loghandler)
+        logger.addHandler(stream_loghandler)
+
+        [setattr(_Logging, name, value) for name,value in locals().items()]
+
+_Logging.init()

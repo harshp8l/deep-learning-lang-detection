@@ -1,0 +1,22 @@
+class Class : public QObject {
+  Q_OBJECT
+  std::map<QString, SensorData> m_data;
+public:
+  struct SensorData {
+    QPolygonF points{5};
+    qreal value;
+    int index;
+  };
+  void method(const QString &sensorId, const cv::Mat<double> &matrix);
+  Q_SIGNAL void updateDataSignal(const QPolygonF &);
+};    
+
+void Class::method(const QString &sensorId, const cv::Mat<double> &matrix) {
+  auto &data = m_data[sensorId]; // cache the lookup
+  for(int i=0; i<data.points.size(); ++i) {
+    data.value = matrix.at<double>(i);
+    data.points[i] = {(qreal)data.index, data.value};
+    data.index++;
+  }
+  emit updateDataSignal(data.points);
+}

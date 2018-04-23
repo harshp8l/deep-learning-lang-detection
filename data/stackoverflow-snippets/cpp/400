@@ -1,0 +1,119 @@
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/thread.hpp>
+
+static const auto PTIME_INTERVAL = 10;
+static std::atomic_size_t pTimerIterations { 0 };
+
+namespace asio = boost::asio;
+using io_service_ptr = std::shared_ptr<asio::io_service>;
+using work_ptr = std::shared_ptr<asio::io_service::work>;
+
+struct ThreadPoolManager {
+    std::vector<io_service_ptr> io_services_endpoint;
+    std::vector<work_ptr> work_endpoint;
+    boost::thread_group threads_endpoint;
+
+    io_service_ptr createNewService() {
+        io_service_ptr io_service = std::make_shared<asio::io_service>();
+        work_ptr work = std::make_shared<asio::io_service::work>(*io_service);
+        io_services_endpoint.push_back(io_service);
+        work_endpoint.push_back(work);
+        threads_endpoint.create_thread(boost::bind(&asio::io_service::run, io_service));
+
+        return io_service;
+    }
+
+    ~ThreadPoolManager() {
+        for(auto& w : work_endpoint)
+            w.reset();
+
+        threads_endpoint.join_all();
+    }
+};
+
+struct RtpEndpoint {
+};
+
+using rtp_endpoint_ptr = std::shared_ptr<RtpEndpoint>;
+
+struct EndpointGroup : std::enable_shared_from_this<EndpointGroup>, boost::mutex {
+    io_service_ptr _io;
+    asio::high_resolution_timer pTimer;
+    std::vector<rtp_endpoint_ptr> endpoints;
+    std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+
+    EndpointGroup(io_service_ptr io) : _io(io), pTimer(*_io) {}
+
+    void stop() {
+        auto self(shared_from_this());
+        _io->post([self,this] { pTimer.cancel(); });
+    }
+
+    // simply start this function over and over again every 10ms
+    void invokeSendingOnEndpoints(size_t offset) {
+        pTimer.expires_from_now(std::chrono::milliseconds(PTIME_INTERVAL - offset));
+
+        auto self(shared_from_this());
+        pTimer.async_wait([this, self](boost::system::error_code ec) {
+            if (!ec) {
+                std::vector<rtp_endpoint_ptr> iterationEndpoints;
+                {
+                    boost::lock_guard<EndpointGroup> guard(*this);
+                    iterationEndpoints = endpoints;
+                }
+                for (rtp_endpoint_ptr endpoint : iterationEndpoints) {
+                    // do fancy stuff
+                }
+                ++pTimerIterations;
+                // check how many milliseconds passed since start of the function
+                invokeSendingOnEndpoints(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                             (std::chrono::high_resolution_clock::now() - start))
+                                             .count() /
+                                         (pTimerIterations * PTIME_INTERVAL));
+            } else {
+                // just write error happend....
+            }
+        });
+    }
+
+    bool addEndpoint(const rtp_endpoint_ptr &endpoint) {
+        boost::lock_guard<EndpointGroup> guard(*this);
+        endpoints.push_back(endpoint);
+        return true;
+    }
+};
+
+using group_ptr = std::shared_ptr<EndpointGroup>;
+
+#include <iostream>
+
+int main() {
+    std::cout << ""starting"" << std::endl;
+    {
+        ThreadPoolManager tpm;
+
+        std::vector<group_ptr> groups;
+
+        for (int i = 0; i < 5; ++i) {
+            std::cout << ""Group "" << i << std::endl;
+            auto epg = std::make_shared<EndpointGroup>(tpm.createNewService());
+            epg->invokeSendingOnEndpoints(i*2);
+
+            for (int j = 0; j < rand()%10; ++j) {
+                epg->addEndpoint(std::make_shared<RtpEndpoint>());
+                std::cout << "" - RtpEndpoint "" << i << ""."" << j << std::endl;
+            }
+
+            groups.push_back(epg);
+        }
+
+        std::cout << ""waiting..."" << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(4));
+        std::cout << ""shutting down"" << std::endl;
+
+        for(auto& g : groups)
+            g->stop();
+    }
+    std::cout << ""done, "" << pTimerIterations << "" iterations"" << std::endl;
+}

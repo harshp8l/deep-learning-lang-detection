@@ -1,0 +1,79 @@
+import cats._
+import cats.free.Free
+import java.io._
+import org.apache.commons.csv._
+import scala.collection.JavaConverters._
+
+trait Action[A] {
+  def run(): A
+}
+
+object F {
+
+  import Free.liftF
+
+  case class GetReader(fileName: String) extends Action[Reader] {
+    override def run(): Reader = new FileReader(fileName)
+  }
+
+  case class CloseReader(reader: Reader) extends Action[Unit] {
+    override def run(): Unit = reader.close()
+  }
+
+  def getReader(fileName: String): Free[Action, Reader] = liftF(GetReader(fileName))
+
+  def close(reader: Reader): Free[Action, Unit] = liftF(CloseReader(reader))
+}
+
+object C {
+
+  import Free.liftF
+
+  case class ReadCSV(reader: Reader) extends Action[CSVParser] {
+    override def run(): CSVParser = CSVFormat.DEFAULT.parse(reader)
+  }
+
+  def readCSV(reader: Reader): Free[Action, CSVParser] = liftF(ReadCSV(reader))
+}
+
+object I {
+
+  import Free.liftF
+
+  case class ProcessCSV(parser: CSVParser) extends Action[Unit] {
+    override def run(): Unit = {
+      for (r <- parser.asScala)
+        println(r)
+    }
+  }
+
+  def processCSV(parser: CSVParser): Free[Action, Unit] = liftF(ProcessCSV(parser))
+
+}
+
+object Runner {
+
+  import cats.arrow.FunctionK
+  import cats.{Id, ~>}
+
+  val runner = new (Action ~> Id) {
+    def apply[A](fa: Action[A]): Id[A] = fa.run()
+  }
+
+  def run[A](free: Free[Action, A]): A = {
+    free.foldMap(runner)
+  }
+}
+
+
+def test() = {
+  val free = for {
+    //        reader <- F.getReader(""my_file.csv"")
+    reader <- F.getReader(""AssetsImportCompleteSample.csv"")
+    csvRecords <- C.readCSV(reader)
+    _ <- I.processCSV(csvRecords)
+    _ <- F.close(reader)
+  } yield ()
+
+  Runner.run(free)
+}

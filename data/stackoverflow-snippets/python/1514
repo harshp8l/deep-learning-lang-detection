@@ -1,0 +1,22 @@
+# Read all cryptocurrency data into a dictionary of dataframes.
+currency_data = {}
+df = pd.DataFrame()
+for currency in coin_list['Abbreviation']:
+    df = read_dataset(currency + '_historical_data_daily_updated')
+    df = df.set_index('Timestamp')
+    currency_data[currency] = df
+
+# We store all info in a dataframe with 2-level columns:
+# the first level contains the coin names, the second one, the OHLC prices.
+cryptocurrency_dataset = pd.concat(currency_data.values(), axis=1, keys=currency_data.keys())
+
+'''At first we want to do some correlation analysis between cryptocurrencies'''
+# Therefore we have to extract the close prices of each cryptocurrency
+dataframe = {}
+a = pd.DataFrame()
+for i in coin_list['Abbreviation']:
+    a = cryptocurrency_dataset[i]['close']
+    dataframe[i] = a
+
+close_prices = pd.concat(dataframe.values(), axis=1, keys=dataframe.keys())
+close_prices = close_prices.dropna()

@@ -1,0 +1,20 @@
+open System.Linq.Expressions
+
+let paramExpr:ParameterExpression = Expression.Parameter( typedefof<int>, ""asd"")
+
+let pList = new System.Collections.Generic.List<ParameterExpression>()
+pList.Add(paramExpr)
+
+// This expression represents a lambda expression 
+// that adds 1 to the parameter value.
+let lambdaExpr:LambdaExpression = 
+    Expression.Lambda(
+        Expression.Add(paramExpr, Expression.Constant(1)), pList)
+
+[<EntryPoint>]
+let main argv = 
+    for _ in [1..4] do
+        let sw = Stopwatch.StartNew()
+        [for i in [1..10000] -> lambdaExpr] |> ignore
+        printfn ""Elapsed: %A"" sw.Elapsed
+    0 // return an integer exit code

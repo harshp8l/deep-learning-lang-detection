@@ -1,0 +1,62 @@
+#include <QtWidgets>
+
+class Source : public QWidget {
+   Q_OBJECT
+   Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
+   QHBoxLayout m_layout{this};
+   QLineEdit m_edit;
+   QPushButton m_send{tr(""Send"")};
+   QString m_text;
+public:
+   Source(QWidget *parent = {}) : QWidget(parent) {
+      m_layout.addWidget(&m_edit);
+      m_layout.addWidget(&m_send);
+      connect(&m_send, &QPushButton::clicked, [this]{
+         setText(m_edit.text());
+      });
+   }
+   Q_SLOT void setText(const QString &text) {
+      if (text == m_text) return;
+      m_text = text;
+      emit textChanged(m_text);
+   }
+   QString text() const { return m_text; }
+   Q_SIGNAL void textChanged(const QString &);
+};
+
+class Destination : public QWidget {
+   Q_OBJECT
+   Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
+   QHBoxLayout m_layout{this};
+   QPlainTextEdit m_edit;
+   QString m_text;
+public:
+   Destination(QWidget *parent = {}) : QWidget(parent) {
+      m_layout.addWidget(&m_edit);
+      connect(this, &Destination::textChanged, &m_edit, &QPlainTextEdit::setPlainText);
+   }
+   Q_SLOT void setText(const QString &text) {
+      if (text == m_text) return;
+      m_text = text;
+      emit textChanged(m_text);
+   }
+   QString text() const { return m_text; }
+   Q_SIGNAL void textChanged(const QString &);
+};
+
+int main(int argc, char **argv) {
+   QApplication app{argc, argv};
+   Source src;
+   Destination dst;
+   QObject::connect(&src, &Source::textChanged, &dst, [&](const QString &text){
+      if (!dst.isVisible()) {
+         dst.move(src.frameGeometry().topRight()); // align the windows
+         dst.show();
+      }
+      dst.setText(text);
+   });
+   src.show();
+   return app.exec();
+}
+
+#include ""main.moc""

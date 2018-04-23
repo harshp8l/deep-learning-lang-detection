@@ -1,0 +1,56 @@
+import tensorflow as tf
+
+xx = (
+    [178.72, 218.38, 171.1],
+    [211.57, 215.63, 173.13],
+    [196.25, 196.69, 116.91],
+    [121.88, 132.07, 85.02],
+    [117.04, 135.44, 112.54],
+    [118.13, 124.04, 97.98],
+    [116.73, 125.88, 99.04],
+    [118.75, 125.01, 110.16],
+    [109.69, 111.72, 69.07],
+    [76.57, 96.88, 67.38],
+    [91.69, 128.43, 87.57],
+    [117.57, 146.43, 117.57]
+)
+
+yy = (212.09, 195.58, 127.6, 116.5, 117.95, 117.55, 117.55,
+      110.39, 74.33, 91.08, 121.75, 127.3)
+
+x = tf.placeholder(tf.float32, [None, 3])
+y = tf.placeholder(tf.float32, [None])
+
+
+def neuralnetwork(data, n1=5, n2=5):
+    hl1 = {'weights': tf.Variable(tf.random_normal([3, n1])), 'biases':
+           tf.Variable(tf.random_normal([n1]))}
+
+    hl2 = {'weights': tf.Variable(tf.random_normal([n1, n2])),
+           'biases': tf.Variable(tf.random_normal([n2]))}
+
+    op = {'weights': tf.Variable(tf.random_normal([n2, 1])), 'biases':
+          tf.Variable(tf.random_normal([1]))}
+
+    l1 = tf.add(tf.matmul(data, hl1['weights']), hl1['biases'])
+    l1 = tf.nn.relu(l1)
+    l2 = tf.add(tf.matmul(l1, hl2['weights']), hl2['biases'])
+    l2 = tf.nn.relu(l2)
+    output = tf.matmul(l2, op['weights']) + op['biases']
+    return output
+
+
+N_EPOCHS = 100
+if __name__ == '__main__':
+    pred = neuralnetwork(x)
+    loss = tf.reduce_mean(tf.squared_difference(pred, y))
+
+    optimizer = tf.train.GradientDescentOptimizer(0.01)
+    train = optimizer.minimize(loss)
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        for epoch in range(N_EPOCHS):
+            epoch_loss = sess.run([train, loss], feed_dict={x: xx, y: yy})[1]
+            print(""Epoch"", epoch, "" completed out of"", N_EPOCHS, ""loss:"",
+                  epoch_loss)

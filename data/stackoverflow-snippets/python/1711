@@ -1,0 +1,72 @@
+import logging
+
+class override_logging_level():
+
+    ""A context manager for temporarily setting the logging level""
+
+    def __init__(self, level, process_handlers=True):
+        self.saved_level      = {}
+        self.level            = level
+        self.process_handlers = process_handlers
+
+    def __enter__(self):
+
+        # Save the root logger
+        self.save_logger('', logging.getLogger())
+
+        # Iterate over the other loggers
+        for name, logger in logging.Logger.manager.loggerDict.items():
+
+            self.save_logger(name, logger)
+
+    def __exit__(self, exception_type, exception_value, traceback):
+
+        # Restore the root logger
+        self.restore_logger('', logging.getLogger())
+
+        # Iterate over the loggers
+        for name, logger in logging.Logger.manager.loggerDict.items():
+
+            self.restore_logger(name, logger)
+
+    def save_logger(self, name, logger):
+
+        # Save off the level
+        self.saved_level[name] = logger.level
+
+        # Override the level
+        logger.setLevel(self.level)
+
+        if not self.process_handlers:
+            return
+
+        # Iterate over the handlers for this logger
+        for handler in logger.handlers:
+
+            # No reliable name. Just use the id of the object
+            self.saved_level[id(handler)] = handler.level
+
+    def restore_logger(self, name, logger):
+
+        # It's possible that some intervening code added one or more loggers...
+        if name not in self.saved_level:
+            return
+
+        # Restore the level for the logger
+        logger.setLevel(self.saved_level[name])
+
+        if not self.process_handlers:
+            return
+
+        # Iterate over the handlers for this logger
+        for handler in logger.handlers:
+
+            # Reconstruct the key for this handler
+            key = id(handler)
+
+            # Again, we could have possibly added more handlers
+            if key not in self.saved_level:
+                continue
+
+            # Restore the level for the handler
+            handler.setLevel(self.saved_level[key])

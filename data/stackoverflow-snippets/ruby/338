@@ -1,0 +1,9 @@
+# you can also move the logic below as a method/scope inside `Team` model (i.e. as `ready` method/scope)
+
+# Example 1 (using JOINS):
+Team.joins(:hunt).where(hunts: { id: Hunt.confirmed })
+# SELECT  ""teams"".* FROM ""teams"" INNER JOIN ""hunts"" ON ""hunts"".""id"" = ""teams"".""hunt_id"" WHERE ""hunts"".""id"" IN (SELECT ""hunts"".""id"" FROM ""hunts"" WHERE ""hunts"".""confirmed"" = ?) LIMIT ?  [[""confirmed"", ""t""], [""LIMIT"", 11]]
+
+# Example 2 (same as Example 1 above but faster and more efficient):
+Team.where(hunt_id: Hunt.confirmed)
+# SELECT  ""teams"".* FROM ""teams"" WHERE ""teams"".""hunt_id"" IN (SELECT ""hunts"".""id"" FROM ""hunts"" WHERE ""hunts"".""confirmed"" = ?) LIMIT ?  [[""confirmed"", ""t""], [""LIMIT"", 11]]

@@ -1,0 +1,60 @@
+version: ""3""
+volumes:
+  [...]
+
+services:
+ ####### use hostname ""smtp"" as SMTP server in your application
+  application:
+    restart: always
+    build: ./application
+    depends_on:
+    - mariadb
+    volumes:
+      [...]
+    ports:
+      - ""80:80""
+      - ""443:443""
+      - ""5669:5669""
+    deploy:
+      restart_policy:
+        window: 300s
+    networks:
+      - smtp_external_network
+      - data_network
+
+  mariadb:
+    restart: always
+    image: mariadb
+    command: mysqld --sql-mode=ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
+    networks:
+      - data_network
+    volumes:
+    [...]
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: ""yes""
+    deploy:
+      restart_policy:
+        window: 300s
+
+networks:
+  smtp_external_network:
+    external:
+      name: [ReplaceForFolderParentNameOfSmtpYmlWithoutSquareBrackets]_smtp
+  data_network:
+    driver: bridge
+
+--- (in your other file)
+
+services:
+ smtp:
+   restart: always
+   build: ./postfix
+   networks:
+     - smtp
+   deploy:
+     restart_policy:
+        window: 300s
+
+networks:
+  smpt:
+    driver: bridge

@@ -1,0 +1,46 @@
+SELECT prod_nm
+,      th_class_1 || ',' || th_class_2 || ',' ||
+       th_class_3 || ',' || th_class_4              AS therapeuticclass
+,      total
+,      qty
+,      mfg
+,      yearmonth/100 as year
+,      MONTHNAME(TO_DATE(yearmonth*100+1,'YYYYMMDD'))      as monthname 
+,      Round(((
+        total / SUM(total) OVER(PARTITION BY 
+                       th_class_4, th_class_3, th_class_2, th_class_1 )
+       )*100),2) AS share 
+FROM
+(   SELECT
+           sd.prod_nm
+    ,      sp.mfg    
+    ,      sp.th_class_4
+    ,      sp.th_class_3
+    ,      sp.th_class_2
+    ,      sp.th_class_1 
+--  ,      sp.store_id      
+--  ,      rs.str_nm 
+    ,      INTEGER(sd.sale_date)/100  AS yearmonth
+    ,      SUM(sd.qty)                AS qty
+    ,      ROUND(SUM(sd.total),2)      AS total
+    FROM        
+                retail_str_sales_detail sd 
+    INNER JOIN  retail_store_prod       sp  ON  sd.prod_nm  = sp.prod_nm 
+                                            AND sd.store_id = sp.store_id
+    INNER JOIN  retail_store            rs  ON  rs.store_id = sp.store_id
+    WHERE
+            sp.th_class_4 NOT IN ('NULL','') 
+    AND     sp.th_class_3 NOT IN ('NULL','') 
+    AND     sp.th_class_2 NOT IN ('NULL','') 
+    AND     sp.th_class_1 NOT IN ('NULL','') 
+    GROUP BY
+            sd.prod_nm 
+    ,       sp.th_class_4
+    ,       sp.th_class_3
+    ,       sp.th_class_2
+    ,       sp.th_class_1 
+    ,       sp.mfg
+--  ,       sp.store_id 
+--  ,       rs.str_nm 
+    ,       INTEGER(sd.sale_date)/100 
+) s

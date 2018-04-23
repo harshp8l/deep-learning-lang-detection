@@ -1,0 +1,21 @@
+var funcList = map[string]interface{}{
+    ""test"": func(ctx context.Context, data interface{}) (interface{}, error) {
+        return ""test-result-data:"" + fmt.Sprint(data), errors.New(""test-error"")
+    },
+}
+
+func Send(funcName string, data interface{}) (interface{}, error) {
+    f := reflect.ValueOf(funcList[funcName])
+    params := []reflect.Value{
+        reflect.ValueOf(context.Background()),
+        reflect.ValueOf(data),
+    }
+    res := f.Call(params)
+
+    ret := res[0].Interface()
+    var err error
+    if v := res[1].Interface(); v != nil {
+        err = v.(error)
+    }
+    return ret, err
+}

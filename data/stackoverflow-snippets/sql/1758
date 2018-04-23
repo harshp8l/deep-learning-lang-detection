@@ -1,0 +1,23 @@
+with recursive t as (
+      select 1 as id, 2 as father, 3 as mother union all
+      select 2, 4, 5 union all
+      select 3, 6, 7 union all
+      select 4, 8, 9 union all
+      select 5, 10, 11
+     ),
+     parents as (
+      select id, father as parent from t union all
+      select id, mother from t
+     ),
+     cte as (
+      select p.id, p.parent
+      from parents p
+      where id = 2  -- or whatever id you want
+      union all
+      select cte.id, p.parent
+      from cte join
+           parents p
+           on cte.parent = p.id
+     )
+select *
+from cte;

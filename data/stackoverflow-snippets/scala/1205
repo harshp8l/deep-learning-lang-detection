@@ -1,0 +1,21 @@
+{
+    import $ivy.`org.json4s::json4s-native:3.6.0-M2`
+    import org.json4s.native.JsonMethods.parse
+    import org.json4s.DefaultFormats
+    import org.json4s.JValue
+
+    case class Entity1(name : String, value : Int)
+    case class Entity2(name : String, value : Long)
+
+    implicit val formats = DefaultFormats
+    def extract[T](input : JValue)(implicit m : Manifest[T]) = input.extract[T]
+
+    val mapping: Map[String, Manifest[_]] = Map(
+        ""entity1"" -> implicitly[Manifest[Entity1]],
+        ""entity2"" -> implicitly[Manifest[Entity2]]
+      )
+
+    val input = parse("""""" { ""name"" : ""abu"", ""value"" : 1 } """""")
+    extract(input)(mapping(""entity1"")) //Entity1(""abu"", 1)
+    extract(input)(mapping(""entity2"")) //Entity2(""abu"", 1L)
+  }

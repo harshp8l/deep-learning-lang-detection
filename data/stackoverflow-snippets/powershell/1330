@@ -1,0 +1,35 @@
+$dailyRecords = @(
+[PSCustomObject]@{StudentId='1'; Date='10/22/2017'; Type='type data'; Description='desc data'}
+[PSCustomObject]@{StudentId='1'; Date='10/23/2017'; Type='type data'; Description='desc data'}
+[PSCustomObject]@{StudentId='1'; Date='10/24/2017'; Type='type data'; Description='desc data'}
+[PSCustomObject]@{StudentId='2'; Date='10/24/2017'; Type='type data'; Description='desc data'}
+[PSCustomObject]@{StudentId='3'; Date='10/23/2017'; Type='type data'; Description='desc data'}
+[PSCustomObject]@{StudentId='3'; Date='10/24/2017'; Type='type data'; Description='desc data'}
+)
+
+$classRecords = @(
+[PSCustomObject]@{StudentId='1'; Date='10/19/2017'; Type='type data'; Description='desc data'; CourseId='1'; SectionNum='1'}
+[PSCustomObject]@{StudentId='1'; Date='10/23/2017'; Type='type data'; Description='desc data'; CourseId='2'; SectionNum='2'}
+[PSCustomObject]@{StudentId='1'; Date='10/24/2017'; Type='type data'; Description='desc data'; CourseId='3'; SectionNum='3'}
+[PSCustomObject]@{StudentId='4'; Date='10/24/2017'; Type='type data'; Description='desc data'; CourseId='1'; SectionNum='1'}
+)
+
+$attendanceRecords = @{}
+
+foreach ($record in $dailyRecords)
+{
+    $key = $record.StudentId + ';' + $record.Date
+    $attendanceRecords.Add($key, $record)
+}
+
+foreach ($record in $classRecords)
+{
+    $key = $record.StudentId + ';' + $record.Date
+    if (-not $attendanceRecords.ContainsKey($key))
+    {
+        $tempRecord = [PSCustomObject]($record | Select-Object StudentId, Date, Type, Description)
+        $attendanceRecords.Add($key, $tempRecord)
+    }
+}
+
+$attendanceRecords.Values | Sort -Property StudentId, Date | ft

@@ -1,0 +1,28 @@
+  /* Bad: same number of emitted and consumed events, i.e. DOES NOT DROP
+  Emitted: 1
+  Emitted: 1
+  Emitted: 1
+  Consumed: 1
+  Emitted: 1
+  Emitted: 1
+  Consumed: 1
+  Consumed: 1
+  Consumed: 1
+  Consumed: 1
+  */
+  def example1() {
+    val c = Source.tick(500 millis, 500 millis, 1)
+      .map(x => {
+        println(""Emitted: "" + x)
+        x
+      })
+      .buffer(1, OverflowStrategy.dropBuffer).async
+      .toMat(Sink.foreach[Int](x => {
+        Thread.sleep(5000)
+        println(""Consumed: "" + x)
+      }))(Keep.left)
+      .run
+    Thread.sleep(3000)
+    c.cancel()
+
+}

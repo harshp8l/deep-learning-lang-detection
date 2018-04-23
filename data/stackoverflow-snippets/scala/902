@@ -1,0 +1,14 @@
+import monocle.Lens
+import monocle.macros.GenLens
+
+case class Nested[A, B](aToB: Lens[A, B], handleB: B => Unit) {
+
+  def from[C](cToA: Lens[C, A]): Nested[C, B] = Nested(cToA composeLens aToB, handleB)
+
+  def nest(nested: Nested[B, _]*): Seq[Nested[A, _]] = this +: nested.map(_.from(aToB))
+}
+
+def traverse[A](handleA: A => Unit)(configure: Nested[A, A] => Seq[Nested[A, _]]): A => Unit =
+  value => configure(Nested(Lens.id[A], handleA)).foreach { case Nested(lens, handler) =>
+    handler(lens.get(value))
+  }

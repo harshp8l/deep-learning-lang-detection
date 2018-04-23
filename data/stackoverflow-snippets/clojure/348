@@ -1,0 +1,14 @@
+;; have a look at juxt
+((juxt + * (fn [_ _ x] x)) 1 1 2) [4 2 2]
+
+;; you can then use it like this:
+(second (iterate (fn [v]
+                   (apply (juxt + * (fn [_ _ x] x)) v)) [1 1 2])) ;; [4 2 2]
+
+;; however it overflows quickly, so use +' *'
+;; also, put it into a function
+(defn add-and-multiply [times nb]
+  (nth (iterate (fn [v]
+                  (apply (juxt +' *' (fn [_ _ x] x)) v)) nb) times))
+
+(add-and-multiply 10 [1 1 2]) ;; [7983075120467448500799760620188561621081118348584N 20456985749705433596250191236583540578087736309004220218432871989995224183078912N 2]

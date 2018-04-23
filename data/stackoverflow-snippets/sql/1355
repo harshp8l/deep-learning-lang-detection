@@ -1,0 +1,19 @@
+WITH sd ( DW_ID, Diag_col, Diag_code ) AS (
+    SELECT DW_ID, Diag_col, Diag_code FROM (
+        SELECT * FROM SEM_IP // your table
+    ) UNPIVOT (
+        Diag_code FOR Diag_col IN
+          ( Diag_1, Diag_2, Diag_3, Diag_4, Diag_5, Diag_6, Diag_7, Diag_8
+          , Diag_9, Diag_10, Diag_11, Diag_12, Diag_13, Diag_14, Diag_15, Diag_16
+          , Diag_17, Diag_18, Diag_19, Diag_20, Diag_21, Diag_22, Diag_23, Diag_24 )
+    )
+)
+SELECT DISTINCT DW_ID
+     , SUBSTRING(
+       ( SELECT ',' + Diag_code AS [text()]
+           FROM sd
+          WHERE sd.DW_ID = T.DW_ID
+          ORDER BY sd.Diag_code
+            FOR XML PATH('')
+       ), 2, 200 ) AS Combined
+  FROM sd AS T;

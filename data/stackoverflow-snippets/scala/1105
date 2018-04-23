@@ -1,0 +1,23 @@
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, Row}
+
+def filterOnlyTopN(data: DataFrame, n: Int = 100): DataFrame = {
+  // For each day in the data, let's find the cutoff # of downloads to make it into the top N
+  val getTopNCutoff = udf((downloads: Seq[Long]) => {
+    val reverseSortedDownloads = downloads.sortBy{- _ }
+    if (reverseSortedDownloads.length >= n)
+      reverseSortedDownloads.drop(n - 1).head
+    else
+      reverseSortedDownloads.last
+  })
+
+  val topNLimitsByDate = data.groupBy($""date"").agg(collect_set($""downloadCount"").as(""downloads""))
+          .select($""date"", getTopNCutoff($""downloads"").as(""cutoff""))
+
+  // And then, let's throw away the records below the top 100
+  data.join(topNLimitsByDate, Seq(""date""))
+    .filter($""downloadCount"" >= $""cutoff"")
+    .drop(""cutoff"", ""downloadCount"")
+}
+
+val relevantData = filterOnlyTopN(baseData)

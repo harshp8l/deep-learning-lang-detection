@@ -1,0 +1,52 @@
+open System
+open FSharp.Data
+open FSharp.Data.JsonExtensions
+
+let json = """"""{
+    ""arr"": [
+        {
+            ""node"": ""xyz"",
+            ""type"": ""string""
+        },
+        {
+            ""node"": {
+                ""moredata"": ""values"",
+                ""otherdata"": ""values2""
+            },
+            ""type"": ""node""
+        }
+    ]
+}""""""
+
+type Node = 
+    | String of string
+    | Complex of string*string
+    with 
+    static member Parse (json:JsonValue) =
+        match json with
+        | JsonValue.String (s) -> String(s)
+        | JsonValue.Record (r) ->            
+            r 
+            |> Map.ofArray // Map<string,JsonValue>
+            |> fun m -> Complex(m.[""moredata""].AsString(),m.[""otherdata""].AsString())
+        | _ -> raise (new Exception(""Can't parse""))
+
+type Simple = 
+    { Node:Node; Type:string}
+    with 
+    static member Parse (json:JsonValue) =
+        // ideally we'd use json?node and json?type to access the properties, but since type is a reserved word.
+        {Node=Node.Parse(json?node); Type=json.GetProperty(""type"").AsString()}
+
+
+[<EntryPoint>]
+let main argv = 
+    let s= 
+        json
+        |> JsonValue.Parse
+        |> fun j -> 
+            seq { for v in j?arr do yield Simple.Parse v}
+        |> Array.ofSeq
+
+    printfn ""%A"" s
+    0 

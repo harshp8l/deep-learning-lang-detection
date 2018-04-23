@@ -1,0 +1,22 @@
+redisPool = &redis.Pool{
+
+    MaxIdle:     AppConfig.DefaultInt(""RedisMaxPool"", 10),
+    IdleTimeout: 240 * time.Second,
+
+    Dial: func() (redis.Conn, error) {
+        c, err := redis.Dial(
+            ""tcp"",
+            AppConfig.DefaultString(""RedisPath"", "":6379""),
+            redis.DialDatabase(AppConfig.DefaultInt(""RedisDB"", 1)),
+        )
+        if err != nil {
+            return nil, err
+        }
+        return c, err
+    },
+
+    TestOnBorrow: func(c redis.Conn, t time.Time) error {
+        _, err := c.Do(""PING"")
+        return err
+    },
+}

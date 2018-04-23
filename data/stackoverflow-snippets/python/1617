@@ -1,0 +1,129 @@
+import itertools
+from collections import namedtuple
+
+import requests
+from bs4 import BeautifulSoup
+
+#saleid = '4793'
+saleid = '4811'
+
+url = 'https://www.johnpyeauctions.co.uk/lot_list.asp?saleid=' + saleid + '&siteid=1&h=0&pageno={}'
+
+auctions = []
+Auction = namedtuple('auction',
+                     ['index', 'picture_link', 'description', 'current_bid', 'time_left'])
+
+for page in itertools.count(start=1):
+    response = requests.get(url.format(page))
+    soup = BeautifulSoup(response.content, 'html.parser')
+    table = soup.find('table', width='97%')
+
+    for tr in table.find_all('tr')[1:]:  # skip the table header
+        tds = tr.contents
+
+        index = tds[0].find('h5').text
+        index_tag = soup.new_tag(""h5"", **{'class':'index'})
+        index_tag.append(index)
+
+        pic_elem = tds[1].find('img')  # html of this img tag is broken, so I create a new one below
+        picture = soup.new_tag('img', **{'class':'image'}, src=pic_elem['src'], width=""160"")
+#        picture = soup.new_tag('img', **{'class':'image'}, src=pic_elem['src'], width=pic_elem['width'])
+
+        description = tds[2].find('h5').text
+        description_tag = soup.new_tag(""h4"", **{'class':'title'})
+        description_tag.append(description)
+
+        current_bid = tds[3].find('h5').text
+        current_bid_tag = soup.new_tag(""h4"", **{'class':'price'})
+        current_bid_tag.append(current_bid)
+
+        time_left = tds[4].find('h5').text
+        time_left_tag = soup.new_tag(""h5"", **{'class':'time'})
+        time_left_tag.append(time_left)
+
+
+
+        auction = Auction(index_tag, picture, description_tag, current_bid_tag, time_left_tag)
+        auctions.append(auction)
+
+    if not soup.find_all('a', string='Next'):
+        break
+
+
+soup = BeautifulSoup(
+    '''
+    <div class=""container"">
+    </div>
+    ''', 'lxml')
+
+for auction in auctions:
+    div_a = soup.new_tag(""div"", **{'class':'auction'})
+    soup.div.append(div_a)
+
+    for value in auction:    
+        div_a.append(value)    
+
+
+# this can also be included in the initial html, no need to do it programmatically
+head = soup.new_tag('head')
+head.append(soup.new_tag('meta', charset='utf-8'))
+head.append(soup.new_tag('style', type='text/css'))
+head.style.append(
+    '''
+* {
+  margin: 0;
+}
+
+.container {
+  font-family: ""Arial"";
+  padding: 5px;
+  display: grid;
+  justify-items: center;
+  grid-gap: 5px;
+  grid-template-columns: repeat(5, 1fr);
+  text-transform: capitalize;
+}
+
+.auction {
+  display: grid;
+  grid-template-columns: 140px auto;
+  grid-template-areas:
+    ""title title time""
+    ""image image image""
+    ""image image image""
+    ""image image image""
+    ""price price index"";
+
+  width: 300px;
+  height: 300px;
+  border: 2px black solid;
+  font-size: 12px;
+}
+
+.image {
+  grid-area: image;
+  margin: left
+}
+.title {
+  grid-area: title;
+  text-transform: lowercase;
+}
+.price {
+  grid-area: price;
+}
+.time {
+  grid-area: time;
+}
+.index {
+  grid-area: index;
+}
+
+.title, .price, .time, .index {
+    padding: 10px;
+}
+    ''')
+
+soup.html.insert(0, head)
+
+with open('auctions.html', 'w') as f:
+    f.write(soup.prettify())

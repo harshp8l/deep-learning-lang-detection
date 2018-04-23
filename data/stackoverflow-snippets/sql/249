@@ -1,0 +1,19 @@
+SELECT s1.id_product
+  , s1.id_category
+  , s1.NameInEnglish
+  , s1.NameInSpanish
+  , s1.NameInFrench
+FROM (
+SELECT 
+    p.id_product
+  , p.id_category
+  , MAX(IF(pl.id_lang=1, CONCAT(pl.name, '[', l.code, ']'),'')) AS NameInEnglish
+  , MAX(IF(pl.id_lang=2, CONCAT(pl.name, '[', l.code, ']'),'')) AS NameInSpanish
+  , MAX(IF(pl.id_lang=7, CONCAT(pl.name, '[', l.code, ']'),'')) AS NameInFrench
+FROM products p 
+LEFT OUTER JOIN products_lang pl ON p.id_product = pl.id_product
+LEFT OUTER JOIN languages l ON pl.id_lang = l.id_lang
+GROUP BY p.id_product
+WITH ROLLUP
+) AS s1
+WHERE s1.id_product IS NOT NULL

@@ -1,0 +1,17 @@
+(defn count-lines
+   ([lines] (count-lines lines 0 0))
+   ([lines count-old count-new]
+     (if-let [line (first lines)]
+        (if (func line)
+           (recur count-old (inc count-new) (rest lines))
+           (recur (inc count-old) count-new (rest lines)))
+        {:new count-new :old count-old})))
+
+
+ (defn generate-report [from to]
+   (with-open [reader (io/reader from)
+               writer (io/writer to)]
+     (let [lines (rest (csv/read-csv reader))
+           frequencies (count-lines lines)]
+         (doseq [line lines]
+            (.write writer (str line ""\n""))))))

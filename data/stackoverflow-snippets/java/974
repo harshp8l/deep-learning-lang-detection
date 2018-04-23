@@ -1,0 +1,22 @@
+// Create a pool with wanted number of threads
+    final ForkJoinPool pool = new ForkJoinPool(4);
+    // We give the entire procedure to the thread pool
+    final int result = pool.submit(() -> {
+        // Generate a hundred counters, initialized on 0 value
+        return IntStream.generate(() -> 0)
+                .limit(100)
+                // Specify we want it processed in a parallel way
+                .parallel()
+                // The map will register processing method
+                .map(in -> incrementMultipleTimes(in, 20))
+                // We ask the merge of processing results
+                .reduce((first, second) -> first + second)
+                .orElseThrow(() -> new IllegalArgumentException(""Empty dataset""));
+    })
+            // Wait for the overall result
+            .get();
+
+    System.out.println(""RESULT: "" + result);
+
+    pool.shutdown();
+    pool.awaitTermination(10, TimeUnit.SECONDS);

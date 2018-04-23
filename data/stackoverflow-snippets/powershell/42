@@ -1,0 +1,61 @@
+[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
+#Build the GUI
+[xml]$xaml = @""
+<Window
+    xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation""
+    xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml""    
+    Title=""Service Desk Tools"" Height=""450"" Width=""800"" WindowStyle=""None"" ResizeMode=""NoResize"" WindowStartupLocation=""CenterScreen"">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Border Name=""Content"" BorderBrush=""Black"" BorderThickness=""0"" HorizontalAlignment=""Left"" Height=""412"" Margin=""139,38,0,0"" VerticalAlignment=""Top"" Width=""661"" Background=""#FFECF0F3""/>
+        <Border Name=""Nav"" BorderBrush=""Black"" BorderThickness=""0"" HorizontalAlignment=""Left"" Height=""450"" VerticalAlignment=""Top"" Width=""139"" Background=""#FF334351"">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius=""16"" Direction=""361"" RenderingBias=""Quality"" Color=""#FFC5BEBE""/>
+            </Border.Effect>
+        </Border>
+        <Border Name=""Top"" BorderBrush=""Black"" BorderThickness=""0"" HorizontalAlignment=""Left"" Height=""38"" Margin=""139,0,0,0"" VerticalAlignment=""Top"" Width=""661"" Background=""#FF6B7B9E"">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius=""16"" Direction=""1"" RenderingBias=""Quality"" Color=""#FFC5BEBE""/>
+            </Border.Effect>
+            <Button Name=""Button_close"" Content=""X"" HorizontalAlignment=""Left"" Height=""38"" Margin=""615,0,0,0"" VerticalAlignment=""Top"" Width=""46"" Foreground=""White"" FontFamily=""Century Gothic"" FontSize=""16"" FontWeight=""Light"" />
+        </Border>
+        <Button Name=""Button_Members"" Content=""Members"" HorizontalAlignment=""Left"" Height=""60"" Margin=""15,162,0,0"" VerticalAlignment=""Top"" Width=""119"" Foreground=""#FF00E8FF"" BorderThickness=""0"" SnapsToDevicePixels=""True"" FontFamily=""Century Gothic"" FontWeight=""Light"" FontSize=""14"" />
+        <Button Name=""Button_Device"" Content=""Device"" HorizontalAlignment=""Left"" Height=""60"" VerticalAlignment=""Top"" Width=""119"" Foreground=""#FF00E8FF"" BorderThickness=""0"" SnapsToDevicePixels=""True"" FontFamily=""Century Gothic"" FontWeight=""Light"" FontSize=""14"" />
+        <Button Name=""Button___Permissions"" Content=""Permissions"" HorizontalAlignment=""Left"" Height=""60"" Margin=""10,73,0,0"" VerticalAlignment=""Top"" Width=""119"" Foreground=""#FF00E8FF"" BorderThickness=""0"" SnapsToDevicePixels=""True"" FontFamily=""Century Gothic"" FontWeight=""Light"" FontSize=""14"" />
+        <Label Name=""Label_members"" Content=""Geben Sie die gewünschte Gruppe ein, für welche Sie eine Liste erstellen wollen:"" HorizontalAlignment=""Left"" Margin=""160,92,0,0"" VerticalAlignment=""Top"" FontFamily=""Century Gothic""/>
+        <TextBox Name=""Box_members"" HorizontalAlignment=""Left"" Height=""23"" Margin=""160,122,0,0"" TextWrapping=""Wrap"" VerticalAlignment=""Top"" Width=""233"" MaxLines=""1"" FontFamily=""Century Gothic""/>
+        <Button Name=""Button_search_members"" Content=""Suchen"" HorizontalAlignment=""Left"" Height=""46"" Margin=""160,361,0,0"" VerticalAlignment=""Top"" Width=""118"" Background=""#FF6B7B9E"" FontFamily=""Century Gothic""/>
+        <Label Name=""Label_device"" Content=""Geben Sie den Computernamen ein, für welchen Sie den Standort herausfinden möchten:"" HorizontalAlignment=""Left"" Margin=""160,92,0,0"" VerticalAlignment=""Top"" FontFamily=""Century Gothic""/>
+        <TextBox Name=""Box_device"" HorizontalAlignment=""Left"" Height=""23"" Margin=""160,122,0,0"" TextWrapping=""Wrap"" VerticalAlignment=""Top"" Width=""233"" MaxLines=""1"" FontFamily=""Century Gothic""/>
+        <Button Name=""Button_search_device"" Content=""Suchen"" HorizontalAlignment=""Left"" Height=""46"" Margin=""160,361,0,0"" VerticalAlignment=""Top"" Width=""118"" Background=""#FF6B7B9E"" FontFamily=""Century Gothic""/>
+        <Label Name=""Label_permissions"" Content=""Von welchem User möchten Sie die Rechte nehmen:"" HorizontalAlignment=""Left"" Margin=""160,92,0,0"" VerticalAlignment=""Top"" FontFamily=""Century Gothic""/>
+        <TextBox Name=""Box_per_set"" HorizontalAlignment=""Left"" Height=""23"" Margin=""160,122,0,0"" TextWrapping=""Wrap"" VerticalAlignment=""Top"" Width=""233"" MaxLines=""1"" FontFamily=""Century Gothic""/>
+        <Label Name=""Label_permissions2"" Content=""Welchem User möchten Sie die Rechte geben:"" HorizontalAlignment=""Left"" Margin=""160,162,0,0"" VerticalAlignment=""Top"" FontFamily=""Century Gothic""/>
+        <TextBox Name=""Box_per_get"" HorizontalAlignment=""Left"" Height=""23"" Margin=""160,199,0,0"" TextWrapping=""Wrap"" VerticalAlignment=""Top"" Width=""233"" MaxLines=""1"" FontFamily=""Century Gothic""/>
+        <Button Name=""Button_search_1to1"" Content=""1:1"" HorizontalAlignment=""Left"" Height=""46"" Margin=""160,361,0,0"" VerticalAlignment=""Top"" Width=""118"" Background=""#FF6B7B9E"" FontFamily=""Century Gothic""/>
+        <Button Name=""Button_search_add"" Content=""Hinzufügen"" HorizontalAlignment=""Left"" Height=""46"" Margin=""333,361,0,0"" VerticalAlignment=""Top"" Width=""118"" Background=""#FF6B7B9E"" FontFamily=""Century Gothic""/>
+
+    </Grid>
+</Window>
+""@ 
+
+#Read XAML
+$reader=(New-Object System.Xml.XmlNodeReader $xaml) 
+$Form=[Windows.Markup.XamlReader]::Load( $reader )
+<#
+try{}
+catch{Write-Host ""Unable to load Windows.Markup.XamlReader. Some possible causes for this problem include: .NET Framework is missing PowerShell must be launched with PowerShell -sta, invalid XAML code was encountered.""; exit}
+#>
+#===========================================================================
+# Store Form Objects In PowerShell
+#===========================================================================
+$xaml.SelectNodes(""//*[@Name]"") | %{Set-Variable -Name ($_.Name) -Value $Form.FindName($_.Name)}
+
+
+#===========================================================================
+# Shows the form
+#===========================================================================
+$Form.ShowDialog() | out-null

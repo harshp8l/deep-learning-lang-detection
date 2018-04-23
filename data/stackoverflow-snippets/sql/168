@@ -1,0 +1,68 @@
+CREATE FUNCTION [dbo].[StrParse]
+            (@delimiter CHAR(1),  
+            @csv       NTEXT)  
+RETURNS @tbl TABLE(Keys  NVARCHAR(255))  
+AS  
+
+BEGIN  
+DECLARE  @len INT  
+SET @len = Datalength(@csv)  
+IF NOT @len > 0  
+    RETURN  
+
+DECLARE  @l INT  
+DECLARE  @m INT  
+
+SET @l = 0  
+SET @m = 0  
+
+DECLARE  @s VARCHAR(255)  
+DECLARE  @slen INT  
+
+WHILE @l <= @len  
+    BEGIN  
+
+    SET @l = @m + 1--current position  
+    SET @m = Charindex(@delimiter,Substring(@csv,@l + 1,255))--next delimiter or 0  
+
+    IF @m <> 0  
+        SET @m = @m + @l  
+    --insert @tbl(keys) values(@m)  
+    SELECT @slen = CASE   
+                        WHEN @m = 0 THEN 255 --returns the remainder of the string  
+                        ELSE @m - @l  
+                    END --returns number of characters up to next delimiter  
+
+    IF @slen > 0  
+        BEGIN  
+        SET @s = Substring(@csv,@l,@slen)  
+        INSERT INTO @tbl  
+                    (Keys)  
+        SELECT @s  
+        END  
+
+    SELECT @l = CASE   
+                    WHEN @m = 0 THEN @len + 1 --breaks the loop  
+                    ELSE @m + 1  
+                END --sets current position to 1 after next delimiter  
+    END  
+
+RETURN  
+END
+
+GO
+
+CREATE TABLE Table1# (RecordNumber int, [Filter] varchar(5), Filters_Applied varchar(100))
+GO
+INSERT INTO Table1# VALUES
+(1,'yes','red, blue')
+,(2,'yes','green')
+,(3,'no ','') 
+,(4,'yes','red, red, blue')
+
+GO
+--This query will return what you are expecting
+SELECT t.RecordNumber,[Filter],Filters_Applied,ltrim(rtrim(keys)), count(*)NumberOfRows
+FROM Table1# t
+CROSS APPLY dbo.StrParse (',', t.Filters_Applied)
+GROUP BY t.RecordNumber,[Filter],Filters_Applied,ltrim(rtrim(keys)) HAVING count(*) >1

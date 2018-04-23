@@ -1,0 +1,24 @@
+import ast
+
+class ExprStatementPrinter(ast.NodeTransformer):
+    def visit_Expr(self, node):  # expression statement node
+        # call the function __print_expr_result__, passing in the expression
+        # contents; replace the original expression contents with that call.
+        new_value = ast.Call(
+            ast.Name('__print_expr_result__', ast.Load()),  # load as a global
+            [node.value], [], None, None)  # node.value is the only argument
+        # to be able to execute, we need to set the lineno and coll_offset; just
+        # reuse the values of the expr node, then fix up any children
+        node.value = ast.copy_location(new_value, node.value)
+        return ast.fix_missing_locations(node)
+
+def print_expr_result(result):
+    if result is not None:
+        print repr(result)
+
+def execfile(filename):
+    with open(filename) as source:
+        tree = ast.parse(source.read())
+    ExprStatementPrinter().visit(tree)  # updates the tree in-place
+    codeobj = compile(tree, filename, 'exec')
+    exec(codeobj, {'__print_expr_result__': print_expr_result})

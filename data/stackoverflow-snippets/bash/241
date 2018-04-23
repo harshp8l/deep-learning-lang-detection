@@ -1,0 +1,9 @@
+runMain() {
+    getName=""$(PGPASSWORD=""$_clpw1"" psql -h myendpoint.com -U ops_readonly -d dev -p 5439 -t -c ""select datname from pg_database where datname not like 'template%' and datname not like 'tealium%' and datname not like 'padb%' and datname not like 'services%' and datname not like 'sales%' and datname not like 'dev%' and datname not like 'demo_%' and datname not like '%_demo' and datname not like 'nt_%';"" 2>&1)""
+    echo ""${getName}"" >> ""${_file}""
+    for db in $(grep -o '[[:alnum:].-][[:alnum:].-]*' ""${_file}"");
+        do
+           getSchema=""$(PGPASSWORD=""$_clpw2"" psql -h myendpoint.com -U masteruser -d  ""${db}"" -p 5439 -t -c ""select distinct 'GRANT SELECT ON ALL TABLES IN SCHEMA ' || table_schema ||' TO ops_readonly;' FROM information_schema.tables where table_catalog='%${db}%' and table_schema not in ('pg_catalog','information_schema');"" 2>&1)"" 
+           echo ""${getSchema}"" >> ""${_script}""
+        done
+}

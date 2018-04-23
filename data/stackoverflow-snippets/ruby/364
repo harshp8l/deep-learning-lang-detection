@@ -1,0 +1,65 @@
+<VirtualHost *:8080>
+  ServerName mywebsite.com
+
+  # Tell Apache and Passenger where your app's 'public' directory is
+  DocumentRoot /var/www/login_app/code/public
+
+  PassengerRuby /usr/local/rvm/gems/ruby-2.3.4/wrappers/ruby
+
+  # Relax Apache security settings
+  <Directory /var/www/login_app/code/public>
+    Allow from all
+    Options -MultiViews
+    # Uncomment this if you're on Apache >= 2.4:
+    Require all granted
+  </Directory>
+
+</VirtualHost>
+
+<VirtualHost *:8081>
+  ServerName mywebsite.com
+
+  # Tell Apache and Passenger where your app's 'public' directory is
+  DocumentRoot /var/www/second_app/code/public
+
+  PassengerRuby /usr/local/rvm/gems/ruby-2.3.4/wrappers/ruby
+
+  # Adding a subapp to the base url
+  Alias /subapp /var/www/second_app/code/public
+  <Location /subapp>
+      PassengerBaseURI /subapp
+      PassengerAppRoot /var/www/second_app/code
+  </Location>
+
+  # Relax Apache security settings
+  <Directory /var/www/second_app/code/public>
+    Allow from all
+    Options -MultiViews
+    # Uncomment this if you're on Apache >= 2.4:
+    Require all granted
+  </Directory>
+</VirtualHost>
+
+<VirtualHost *:8082>
+  ServerName mywebsite.com
+
+  # Tell Apache and Passenger where your app's 'public' directory is
+  DocumentRoot /var/www/third_app/code/public
+
+  PassengerRuby /usr/local/rvm/gems/ruby-2.5.0/wrappers/ruby
+
+  # Adding a subapp to the base url
+  Alias /mea /var/www/third_app/code/public
+  <Location /mea>
+      PassengerBaseURI /mea
+      PassengerAppRoot /var/www/third_app/code
+  </Location>
+
+  # Relax Apache security settings
+  <Directory /var/www/third_app/code/public>
+    Allow from all
+    Options -MultiViews
+    # Uncomment this if you're on Apache >= 2.4:
+    Require all granted
+  </Directory>
+</VirtualHost>

@@ -1,0 +1,28 @@
+testGrouping in test := testGrouping.value.flatMap { group =>
+  group.tests.map { suite =>
+    val fileName = {
+      // foo.bar.baz.TestSuite -> f.b.b.TestSuite
+      val parts = suite.name.split('.')
+      (parts.init.map(_.substring(0, 1)) :+ parts.last).mkString(""."")
+    }
+
+    val forkOptions = ForkOptions(
+      bootJars = Nil,
+      javaHome = javaHome.value,
+      connectInput = connectInput.value,
+      outputStrategy = outputStrategy.value,
+      runJVMOptions = javaOptions.value ++ Seq(
+        ""-Dour.logging.appender=FILE"",
+        s""-Dour.logging.dir=${logDirectory.value / fileName}""
+      ),
+      workingDirectory = Some(baseDirectory.value),
+      envVars = envVars.value
+    )
+
+    group.copy(
+      name = suite.name,
+      runPolicy = Tests.SubProcess(forkOptions),
+      tests = Seq(suite)
+    )
+  }
+}

@@ -1,0 +1,39 @@
+fd_set rfds;
+struct timeval tv;
+int retval;
+
+/* Watch stdin to see when it has input. */
+
+FD_ZERO(&rfds);
+FD_SET(STDIN_FILENO, &rfds);
+
+/* Wait 1 millisecond. */
+
+tv.tv_sec = 0;
+tv.tv_usec = 1000;
+
+int position = 0;
+
+for (int position = 0; position < s.length(); ++position)
+{
+    retval = select(1, &rfds, nullptr, nullptr, &tv);
+
+    if (retval == -1)
+    {
+       perror(""select()"");
+       // exit or throw or deal with error
+    }
+    else if (retval)
+    {
+       // Data available on cin (user pressed enter)
+
+       std::string subString = s.substr(position);
+       std::cout << subString << std::endl;
+       break;
+    }
+    else
+    {
+       // No data on cin, continue printing
+       std::cout << s[position] << std::flush;
+    }
+}

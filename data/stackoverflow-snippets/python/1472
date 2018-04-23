@@ -1,0 +1,32 @@
+from robot.api import logger
+from robot.utils import asserts
+
+from selenium import webdriver
+
+class Singleton(object):
+
+    instance = None
+
+    def __new__(cls, base_url, browser='firefox'):
+
+        if cls.instance is None:
+            i = object.__new__(cls)
+            cls.instance = i
+            cls.base_url = base_url
+            cls.browser = browser
+
+            if browser == ""firefox"":
+                # Create a new instance of the Firefox driver
+                cls.driver = webdriver.Firefox()
+            elif browser == ""remote"":
+                # Create a new instance of the Chrome driver
+                cls.driver = webdriver.Remote(""http://localhost:4444/wd/hub"", webdriver.DesiredCapabilities.HTMLUNITWITHJS)
+            else:
+                # Sorry, we can't help you right now.
+                asserts.fail(""Support for Firefox or Remote only!"")
+
+        else:
+
+            i = cls.instance
+
+        return i

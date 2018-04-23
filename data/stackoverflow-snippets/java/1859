@@ -1,0 +1,99 @@
+import java.util.LinkedList;
+import java.util.Iterator;
+
+class Graph
+{
+    private int V;   
+    private LinkedList<Integer> adj[];
+
+    Graph(int v)
+    {
+        V = v;
+        adj = new LinkedList[v];
+
+        for (int i = 0; i < v; i++) {
+            adj[i] = new LinkedList();
+        }
+    }
+
+    void addEdge(int v, int w)
+    {
+        adj[v].add(w);
+    }
+
+    LinkedList shortest(int from, int to)
+    {
+        LinkedList<Integer> queue = new LinkedList<Integer>();
+        LinkedList<Integer> res = new LinkedList<Integer>();
+
+        int prev[] = new int[V];
+
+        if (from == to) return res;
+        queue.add(from);
+
+        for (int i = 0; i < V; i++) {
+            prev[i] = -1;
+        }        
+
+        while (queue.size() != 0) {
+            int curr = queue.poll();
+            Iterator<Integer> i = adj[curr].listIterator();
+
+            while (i.hasNext()) {
+                int n = i.next();
+
+                if (prev[n] == -1) {                // unvisited?
+                    prev[n] = curr;                 // store previous vertex
+
+                    if (n == to) {                  // we're finally there!
+                        while (n != from) {         // build result list ...
+                            res.addFirst(n);
+                            n = prev[n];
+                        }
+
+                        return res;                 // ... and return it
+                    }                    
+
+                    queue.add(n);
+                }
+            }
+        }
+
+        return res;
+    }
+
+    public static void main(String args[])
+    {
+        Graph g = new Graph(9);
+
+        g.addEdge(0, 5);
+        g.addEdge(0, 7);
+        g.addEdge(1, 5);
+        g.addEdge(1, 4);
+        g.addEdge(1, 2);
+        g.addEdge(2, 1);
+        g.addEdge(2, 4);
+        g.addEdge(2, 3);
+        g.addEdge(3, 4);
+        g.addEdge(3, 2);
+        g.addEdge(4, 5);
+        g.addEdge(4, 1);
+        g.addEdge(4, 2);
+        g.addEdge(4, 3);
+        g.addEdge(5, 0);
+        g.addEdge(5, 1);
+        g.addEdge(5, 4);
+        g.addEdge(6, 7);
+        g.addEdge(7,6);
+        g.addEdge(7,0);
+
+        for (int a = 0; a < 9; a++) {
+            System.out.print(""--- "");
+            System.out.println(a);
+
+            for (int b = 0; b < 9; b++) {
+                System.out.println(g.shortest(a, b));                
+            }
+        }    
+    }
+}

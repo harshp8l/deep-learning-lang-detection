@@ -1,0 +1,17 @@
+ class Appointment < ActiveRecord::Base
+    validate :available_time
+
+    private
+    def available_time
+      other_appointments = Appointment.where(
+                             appointment_date: self.appointment_date,
+                             appointment_time: self.appointment_time,
+                             employee_id: self.employee_id
+                           ) 
+      unless other_appointments.empty?
+        [:appointment_date,:appointment_time].each do |attr|
+          errors.add(attr,""is not available"")
+        end
+      end       
+    end
+ end

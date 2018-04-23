@@ -1,0 +1,32 @@
+#include <codecvt>
+#include <locale>
+#include <string>
+
+class codecvt_latin1 : public std::codecvt<wchar_t,char,std::mbstate_t>
+{
+protected:
+    virtual result do_in(std::mbstate_t&,
+                         const char* from,
+                         const char* from_end,
+                         const char*& from_next,
+                         wchar_t* to,
+                         wchar_t* to_end,
+                         wchar_t*& to_next) const override
+    {
+        while (from != from_end && to != to_end)
+            *to++ = (unsigned char)*from++;
+        from_next = from;
+        to_next = to;
+        return result::ok;
+    }
+};
+
+std::wstring convert(const std::string& input)
+{
+    using codecvt_utf8 = std::codecvt_utf8<wchar_t>;
+    try {
+        return std::wstring_convert<codecvt_utf8>().from_bytes(input);
+    } catch (std::range_error&) {
+        return std::wstring_convert<codecvt_latin1>{}.from_bytes(input);
+    }
+}

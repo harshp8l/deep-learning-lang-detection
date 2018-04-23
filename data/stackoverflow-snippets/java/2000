@@ -1,0 +1,30 @@
+interface HelloGenerator {
+  public static HelloGenerator  createProxy() {
+    // create MethodHandles.Lookup here to get access to the default methods
+    return Utils.createProxy(MethodHandles.lookup(), HelloGenerator.class);
+  }
+  abstract String name();
+  default void sayHello() {
+    System.out.println(""Hello "" + name());
+  }
+}
+
+public class Utils {
+  static <P> P createProxy(MethodHandles.Lookup lookup, Class<P> type) {
+    InvocationHandler handler = (proxy, method, args) -> {
+        if (method.isDefault()) {
+          // can use unreflectSpecial here, but only because MethodHandles.Lookup
+          // instance was created in the interface and passed through
+          return lookup
+              .unreflectSpecial(method, method.getDeclaringClass())
+              .bindTo(proxy)
+              .invokeWithArguments(args);
+        }
+        return ...; // your desired proxy behaviour
+    };
+
+    Object proxy = Proxy.newProxyInstance(
+        type.getClassLoader(), new Class<?>[] {type}, handler);
+    return type.cast(proxy);
+  }
+}

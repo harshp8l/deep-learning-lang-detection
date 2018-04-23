@@ -1,0 +1,37 @@
+#!/bin/bash
+shopt -s extglob
+
+if (( $# != 2 )); then
+  echo Usage: nagios-contacts.sh host-file service-file >&2
+  exit 1
+fi
+
+declare -A CONFIG CONFIGS
+while read KEY VALUE; do
+  [[ $KEY == contact@(s|_groups) ]] && CONFIG[$KEY]=""$VALUE""
+done <$1
+
+while read LINE; do
+  if [[ $LINE == *""define service {""* ]]; then
+    for KEY in ${!CONFIG[*]}; do
+      CONFIGS[$KEY]=0
+    done
+  elif [[ $LINE == *}* ]]; then
+    for KEY in ${!CONFIG[*]}; do
+      [[ ${CONFIGS[$KEY]} == 1 ]] && unset CONFIGS[$KEY]
+    done
+    for KEY in ${!CONFIGS[*]}; do
+      echo $KEY ${CONFIG[$KEY]}
+    done
+    unset CONFIGS
+    declare -A CONFIGS
+  elif [[ $LINE == *contact@(s|_groups)* ]]; then
+    read KEY VALUE <<<""$LINE""
+    CONFIGS[$KEY]=1
+    LINE=""$LINE,${CONFIG[$KEY]}""
+  fi
+  echo ""$LINE""
+done <$2 | tee $2.new
+# maybe:
+#   mv $2.new $2
+echo Saved output to $2.new

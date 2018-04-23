@@ -1,0 +1,12 @@
+#!/bin/bash
+
+name=cm-myapp
+unique_name=cm-myapp-123
+
+# Columns: ConfigMap name, index in volumes, Deployment name.
+kubectl get deployment -o go-template --template=""{{range .items}}{{\$deploymentName := .metadata.name}}{{range \$i, \$v := .spec.template.spec.volumes}}{{if .configMap}}{{.configMap.name}} {{\$i}} {{\$deploymentName}}:{{end}}{{end}}{{end}}"" | tr ':' '\n' |
+    egrep ""^$name-[^-]+ "" | while read l; do
+        i=$(printf '%s\n' ""$l"" | awk '{print $2}')
+        deployment=$(printf '%s\n' ""$l"" | awk '{print $3}')
+        kubectl patch deployment $deployment --type=json -p ""[{ \""op\"": \""replace\"", \""path\"": \""/spec/template/spec/volumes/$i/configMap/name\"", \""value\"": \""$unique_name\"" }]""
+    done

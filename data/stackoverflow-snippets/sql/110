@@ -1,0 +1,16 @@
+with testdata as
+(select 'first' casekey, 1 custom_field_id, 'value1' custom_field_value from dual union all
+ select 'first' casekey, 2 custom_field_id, 'value2' custom_field_value from dual union all
+ select 'first' casekey, 3 custom_field_id, 'value3' custom_field_value from dual union all
+ select 'second' casekey, 6 custom_field_id, 'value1' custom_field_value from dual union all
+ select 'second' casekey, 9 custom_field_id, 'value1' custom_field_value from dual)
+
+select *
+from(
+select casekey, custom_field_id, custom_field_value,
+       rank() over(partition by casekey order by custom_field_id) pivotRank
+from testdata)
+pivot(
+    max(custom_field_id || ':' || custom_field_value)
+    for pivotRank in (1 as CF1, 2 as CF2, 3 as CF3, 4 as CF4, 5 as CF5)
+)

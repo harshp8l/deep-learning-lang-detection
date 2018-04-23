@@ -1,0 +1,25 @@
+import pandas as pd, numpy as np
+from itertools import chain
+
+df = pd.DataFrame({'study_id': [1, 1, 1, 2, 2, 2],
+                   'list_value': [['aaa', 'bbb',], ['aaa'], ['ccc'],['ddd', 'eee', 'aaa'],
+                                  np.nan, ['zzz', 'aaa', 'bbb']]})
+
+counts = df['study_id'].value_counts()
+
+grp = df.dropna(subset=['list_value'])\
+        .groupby('study_id')['list_value']\
+        .apply(lambda x: sorted(set(chain.from_iterable(x))))\
+        .reset_index()
+
+res = pd.concat([pd.concat([grp[grp['study_id'] == x]]*counts[x]) for x in counts.index])\
+        .sort_values('study_id')\
+        .reset_index(drop=True)
+
+#    study_id                 list_value
+# 0         1            [aaa, bbb, ccc]
+# 1         1            [aaa, bbb, ccc]
+# 2         1            [aaa, bbb, ccc]
+# 3         2  [aaa, bbb, ddd, eee, zzz]
+# 4         2  [aaa, bbb, ddd, eee, zzz]
+# 5         2  [aaa, bbb, ddd, eee, zzz]

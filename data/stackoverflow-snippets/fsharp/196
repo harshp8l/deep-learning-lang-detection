@@ -1,0 +1,42 @@
+open Microsoft.FSharp.Quotations
+open Microsoft.FSharp.Quotations.Patterns
+
+let cout (s:string)= System.Console.WriteLine (s)
+
+let rec getName exprs =
+    let fixDeclaringType (dt:string) =
+        match dt with
+        | fsi  when fsi.StartsWith(""FSI_"") -> ""Fsi""
+        | _ -> dt
+    let toStr (xDeclType: System.Type) x = sprintf ""%s.%s"" (fixDeclaringType xDeclType.Name)  x
+    match exprs with
+    | Patterns.Call(_, mi, _) -> 
+        toStr mi.DeclaringType mi.Name
+    | Patterns.Lambda(_, expr) -> 
+        getName expr
+    | Patterns.PropertyGet (e, pi, li) ->  
+        toStr pi.DeclaringType pi.Name
+    | Patterns.FieldGet (_, fi) -> 
+        toStr fi.DeclaringType fi.Name
+    | Patterns.NewUnionCase(uci, _) -> 
+        toStr uci.DeclaringType uci.Name
+    | expresion -> ""unknown_name""
+
+
+let value = """"
+let funcky a = a
+let lambdy = fun(x) -> x*2
+type WithStatic = 
+    | A | B
+    with static member StaticMethod a = a
+let someIP = System.Net.IPAddress.Parse(""10.132.0.48"")
+
+
+getName <@ value @> |> cout
+getName <@ funcky @> |> cout
+getName <@ lambdy @> |> cout
+getName <@ WithStatic.A @> |> cout
+getName <@ WithStatic.StaticMethod @> |> cout
+getName <@ someIP.MapToIPv4 @> |> cout  
+getName <@ System.Net.IPAddress.Parse @> |> cout  
+getName <@ System.Net.IPAddress.Broadcast @> |> cout  

@@ -1,0 +1,21 @@
+ public void onPurchasesUpdated(List<Purchase> purchaseList) {
+
+        for (Purchase purchase : purchaseList) {
+            if (purchase.getSku().equals(SKU_MONTHLY)) {
+                Toast.makeText(getApplicationContext(), ""Subscription is valid! - server"", Toast.LENGTH_SHORT).show();
+                mMonthlySubscribed = true;
+                ParsePush.subscribeInBackground(""SignalChannel"");
+((MainActivity) getActivity()).loadFragment(new FragmentSubscribed());
+            } else {
+                Toast.makeText(getApplicationContext(), ""Subscription is invalid! - server"", Toast.LENGTH_SHORT).show();
+                mMonthlySubscribed = false;
+                ParsePush.unsubscribeInBackground(""SignalChannel"");
+    ((MainActivity) getActivity()).loadFragment(new FragmentUnsubscribed()); 
+            }
+        }
+        // save state 
+        saveSubscriptionStateSharedPreference();
+
+        // todo : notify the current state to the fragment
+
+    }

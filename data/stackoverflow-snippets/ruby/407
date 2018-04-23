@@ -1,0 +1,55 @@
+require 'octokit'
+Client = Octokit::Client.new(access_token: YOUR_GITHUB_TOKEN)
+
+def getCommitsForTag(repo, tagName)
+  previousTag = getPreviousTag repo, tagName
+  (Client.compare repo, previousTag.name, tagName).commits
+end
+
+def getPreviousTag(repo, tagName)
+  tags = Client.tags repo
+  tags.each_with_index { |tag, index|
+    if tag.name == tagName
+      return tags[index+1]
+    end
+  }
+end
+
+def filterCommitsByPrefix(commits, commitPrefixArray)
+  filteredArray = []
+  commits.each { |commit|
+    commitPrefixArray.each { |commitPrefix|
+      if commit.commit.message.start_with?(commitPrefix)
+        filteredArray.push(commit)
+      end
+    }
+  }
+  filteredArray
+end
+
+def getPullRequestsByCommits(commits)
+  query = ""SHA:""
+  commits.each { |commit| 
+    query += ""#{commit.sha},""
+  }
+  Client.search_issues query
+end
+
+
+def getPullRequestsForTag(repo, tag)
+  commitsForTag = getCommitsForTag repo, tag
+  fixCommits = filterCommitsByPrefix commitsForTag, ['fix']
+  featCommits = filterCommitsByPrefix commitsForTag, ['feat']
+  {
+    fixes: getPullRequestsByCommits(fixCommits).items,
+    features: getPullRequestsByCommits(featCommits).items
+  }
+end
+
+#Execute it like this:
+pullRequestsForTag = getPullRequestsForTag 'octokit/octokit.rb', 'v4.8.0'
+
+puts ""Fix pull requests:""
+puts pullRequestsForTag[:fixes]
+puts ""Feat pull requests:""
+puts pullRequestsForTag[:features]

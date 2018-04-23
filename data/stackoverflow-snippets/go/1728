@@ -1,0 +1,26 @@
+func dispatchMessage(params map[string]interface{}) {
+
+    //log.Debugf(""Failover: %t, Len: %d"", shouldFailoverToSQS, len(rabbitQ))
+
+    if !shouldFailoverToSQS {
+        select {
+        case rabbitQ <- params:
+            sentToRabbitMQ++
+        default:
+            select {
+            case sqsQ <- params:
+                sentToSQS++
+            default:
+                log.Error(""Failed to dispatch mesaage to either RabbitMQ or SQS"")
+            }
+        }
+    } else {
+        select {
+        case sqsQ <- params:
+            sentToSQS++
+        default:
+            log.Error(""Failed to dispatch mesaage to either RabbitMQ or SQS"")
+        }
+    }
+
+}

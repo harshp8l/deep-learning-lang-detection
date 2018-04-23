@@ -1,0 +1,43 @@
+scala> m.show
++--------+
+|  ttm_id|
++--------+
+|39622109|
+|39622178|
+|39578322|
++--------+
+
+
+scala> c.show
++----------+--------+
+|__change__|  ttm_id|
++----------+--------+
+|    DELETE|39622109|
+|    DELETE|   50520|
++----------+--------+
+
+
+scala> val q=""""""
+     | select * from masterlist
+     | where not exists (select ttm_id from changeset
+     |                   where masterlist.ttm_id = changeset.ttm_id
+     |                     and changeset.__change__='DELETE')
+     | """"""
+q: String =
+""
+select * from masterlist
+where not exists (select ttm_id from changeset
+                  where masterlist.ttm_id = changeset.ttm_id
+                    and changeset.__change__='DELETE')
+""
+
+scala> val res = spark.sql(q)
+res: org.apache.spark.sql.DataFrame = [ttm_id: int]
+
+scala> res.show
++--------+
+|  ttm_id|
++--------+
+|39622178|
+|39578322|
++--------+

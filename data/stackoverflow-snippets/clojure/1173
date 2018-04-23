@@ -1,0 +1,18 @@
+(defn update-names
+  [tree people projects]
+  (reduce
+   (fn [t [id name]]
+     (let [person-idx (ffirst (filter #(= (:id (second %)) id)
+                                      (map-indexed vector (:people (:data t)))))
+           temp (assoc-in t [:data :people person-idx :name] name)]
+       (reduce
+        (fn [t [id name]]
+          (let [project-idx (ffirst (filter #(= (:id (second %)) id)
+                                            (map-indexed vector (get-in t [:data :people person-idx :projects]))))]
+            (if project-idx
+              (assoc-in t [:data :people person-idx :projects project-idx :name] name)
+              t)))
+        temp
+        projects)))
+   tree
+   people))

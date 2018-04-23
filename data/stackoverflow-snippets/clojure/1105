@@ -1,0 +1,28 @@
+(require '[clojure.edn :as edn])
+
+(deftype EDNSeralizer []
+  ;; See docs of org.mapdb.Serializer for semantics.
+  org.mapdb.Serializer
+  (fixedSize [_]
+    -1)
+  (serialize [_ out obj]
+    (.writeUTF out (pr-str obj)))
+  (deserialize [_ in available]
+    (edn/read-string (.readUTF in)))
+  ;; MapDB expects serializers to be serializable.
+  java.io.Serializable)
+
+(def edn-serializer (EDNSeralizer.))
+
+(import [org.mapdb DB DBMaker])
+(def db (.. (DBMaker/newFileDB (java.io.File. ""/tmp/mapdb""))
+            closeOnJvmShutdown
+            compressionEnable
+            make))
+
+(def more-fruits (.. db
+                     (createTreeMap ""more-fruits"")
+                     (valueSerializer (EDNSeralizer.))
+                     (makeOrGet)))
+(.put more-fruits :banana {:qty 2})
+(.commit db)

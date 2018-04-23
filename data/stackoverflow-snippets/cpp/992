@@ -1,0 +1,70 @@
+#include <Foundation/Foundation.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <Security/Security.h>
+
+#include <openssl/bio.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+
+int main(int argc, const char * argv[]) {    
+
+    NSURL* url = [NSURL URLWithString:@""/Path/To/Your/Codesign/MyApp.app""];
+    CFURLRef path = (__bridge CFURLRef)url;
+
+    SecStaticCodeRef codeRef;
+    SecStaticCodeCreateWithPath(path, kSecCSDefaultFlags, &codeRef);      
+
+    SecCSFlags flags = kSecCSInternalInformation
+    | kSecCSSigningInformation
+    | kSecCSRequirementInformation
+    | kSecCSInternalInformation;
+
+    CFDictionaryRef api;
+    SecCodeCopySigningInformation(codeRef, flags, &api);
+
+    CFArrayRef certChain = (CFArrayRef)CFDictionaryGetValue(api, kSecCodeInfoCertificates);
+
+    // Get the first certificate from the .app 
+    // use the CFIndex count = CFArrayGetCount(certChain); 
+    // If you want to process all certificates in a loop (same to codesign source code).
+    SecCertificateRef cert = SecCertificateRef(CFArrayGetValueAtIndex(certChain, 0));
+    CFDataRef der = SecCertificateCopyData(cert);
+
+    // Use solution from the example or using NSData*.
+    //const unsigned char* data = CFDataGetBytePtr(der);    
+    //int len = CFDataGetLength(der);
+    NSData* data = (__bridge NSData*)der;    
+
+    BIO* bio = BIO_new_mem_buf((void *)[data bytes], (int)[data length]);
+    X509* certssl = NULL;
+    X509_NAME* subName = NULL;
+    X509_NAME_ENTRY* entry = NULL;
+    unsigned char* subjectStr;    
+
+    // Read certificate from the BIO 
+    // Note that SecCertificateRef is in DER format
+    if ( !( certssl = d2i_X509_bio(bio, NULL)))
+        return -1;    
+
+    // Get Subject common name (CN)
+    if( !( subName= X509_get_subject_name(certssl)))
+        return -1;   
+
+    if( !( entry = X509_NAME_get_entry(subName, X509_NAME_get_index_by_NID(subName, NID_commonName, -1))))
+        return -1;   
+
+    ASN1_STRING_to_UTF8(&subjectStr, X509_NAME_ENTRY_get_data(entry));    
+
+    // Extract the certificate's serial number.
+    ASN1_INTEGER* asn1_serial = X509_get_serialNumber(certssl);
+    if (asn1_serial == NULL)
+        return -1;    
+
+    // Convert serial number into a char buffer.
+    BIGNUM* bnser = ASN1_INTEGER_to_BN(asn1_serial, NULL);
+    char* serialStr = BN_bn2hex(bnser);    
+
+    X509_free(certssl);
+    BIO_free_all(bio);
+    return 0;
+}

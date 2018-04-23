@@ -1,0 +1,30 @@
+template <class... Args>
+class buffer_clump_storage {
+    const buffer_clump<Args...> clump;
+    std::vector<char> storage;
+
+public:
+    constexpr auto buffers() noexcept {
+        return clump.buffers(storage.data());
+    }
+
+    template<class... Size_t>
+    buffer_clump_storage(Size_t... lengths)
+    : clump(lengths...), storage(clump.buffer_size())
+    {
+        clump.construct(storage.data());
+    }
+
+    ~buffer_clump_storage()
+    noexcept(noexcept(clump.destroy(nullptr)))
+    {
+        if (storage.size())
+            clump.destroy(storage.data());
+    }
+
+    buffer_clump_storage(buffer_clump_storage&& other) noexcept
+    : clump(other.clump), storage(std::move(other.storage))
+    {
+        other.storage.clear();
+    }
+};

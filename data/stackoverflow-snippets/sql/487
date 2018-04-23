@@ -1,0 +1,31 @@
+SELECT Date(dts.day) AS month_date, 
+   Count(s.id)   AS count_stud 
+FROM   (SELECT '2018-03-01' + INTERVAL t.n - 1 day day 
+    FROM   (SELECT a.n + b.n * 10 + 1 n 
+            FROM   (SELECT 0 AS N 
+                UNION ALL 
+                SELECT 1 UNION ALL 
+                SELECT 2 UNION ALL 
+                SELECT 3 UNION ALL 
+                SELECT 4 UNION ALL 
+                SELECT 5 UNION ALL 
+                SELECT 6 UNION ALL 
+                SELECT 7 UNION ALL 
+                SELECT 8 UNION ALL 
+                SELECT 9) a, 
+               (SELECT 0 AS N 
+                UNION ALL 
+                SELECT 1 UNION ALL 
+                SELECT 2 UNION ALL 
+                SELECT 3 UNION ALL 
+                SELECT 4 UNION ALL 
+                SELECT 5 UNION ALL 
+                SELECT 6 UNION ALL 
+                SELECT 7 UNION ALL 
+                SELECT 8 UNION ALL 
+                SELECT 9) b 
+            ORDER  BY n) t 
+    WHERE  t.n <= Datediff(Last_day('2018-03-01'), '2018-03-01') 
+                  + 1) dts 
+   LEFT OUTER JOIN student_registration s 
+                ON Date(s.date_reg) = Date(dts.day) 

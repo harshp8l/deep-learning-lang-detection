@@ -1,0 +1,33 @@
+val events = ...
+scala> events.show
++----+---+----+
+|type|  t|code|
++----+---+----+
+|   A| 25|  11|
+|   A| 55|  42|
+|   B| 88|  11|
+|   A|114|  11|
+|   B|220|  58|
+|   B|520|  11|
++----+---+----+
+
+// assumed that t is int
+scala> events.printSchema
+root
+ |-- type: string (nullable = true)
+ |-- t: integer (nullable = true)
+ |-- code: integer (nullable = true)
+
+val eventsA = events.
+  where($""type"" === ""A"").
+  as(""a"")
+val eventsB = events.
+  where($""type"" === ""B"").
+  as(""b"")
+val solution = eventsA.
+  join(eventsB, ""code"").
+  where($""a.t"" < $""b.t"").
+  select($""a.t"" as ""t1"", $""b.t"" as ""t2"", $""a.code"").
+  orderBy($""t1"".asc, $""t2"".asc).
+  dropDuplicates(""t1"", ""code"").
+  orderBy($""t1"".asc)

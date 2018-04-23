@@ -1,0 +1,77 @@
+    /// <summary>
+    /// download all files from Document Library
+    /// </summary>
+    /// <param name=""context""></param>
+    /// <param name=""docLibName"">MyDocumentLibrary</param>
+    /// <param name=""path"">C:\\folder\\</param>
+    public static void DownloadAllFilesFromDocLib(ClientContext context, string docLibName, string path)
+    {
+        if (!path.EndsWith(""\\""))
+        {
+            path = path + ""\\"";
+        }
+        Web web = context.Site.RootWeb;
+
+        List doclib = web.Lists.GetByTitle(docLibName);
+
+        context.Load(doclib);
+
+        context.Load(web);
+        context.ExecuteQuery();
+
+        FileCollection filesInRootFolder = doclib.RootFolder.Files;
+        FolderCollection subfolders = doclib.RootFolder.Folders;
+        context.Load(filesInRootFolder);
+        context.Load(subfolders);
+        context.ExecuteQuery();
+
+        //download files from root folders
+        foreach (Microsoft.SharePoint.Client.File file in filesInRootFolder)
+        {
+            FileInformation fileInfo = Microsoft.SharePoint.Client.File.OpenBinaryDirect(context, file.ServerRelativeUrl);               
+            System.IO.Stream fileOutputStream = fileInfo.Stream;
+            System.IO.Stream fileInputputStream = new FileStream(path + file.Name,FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            byte[] bufferByte = new byte[1024 * 100];
+
+            int len = 0;
+            while ((len = fileOutputStream.Read(bufferByte, 0, bufferByte.Length)) > 0)
+            {
+                fileInputputStream.Write(bufferByte, 0, len);
+                fileInputputStream.Flush();
+            }
+            fileInputputStream.Close();
+            fileOutputStream.Close();
+
+        }
+
+        //download files from sub folders
+        foreach (Microsoft.SharePoint.Client.Folder folder in subfolders)
+        {
+            //Remove the default folder ""Forms""
+            if (folder.Name == ""Forms"")
+            {
+                continue;
+            }
+            //create folder in local disk
+            Directory.CreateDirectory(path+folder.Name);
+            context.Load(folder.Files);
+            context.ExecuteQuery();
+
+            foreach (Microsoft.SharePoint.Client.File file in folder.Files)
+            {
+                FileInformation fileInfo = Microsoft.SharePoint.Client.File.OpenBinaryDirect(context, file.ServerRelativeUrl);
+                System.IO.Stream fileOutputStream = fileInfo.Stream;
+                System.IO.Stream fileInputputStream = new FileStream(path+folder.Name + ""\\"" + file.Name, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                byte[] bufferByte = new byte[1024 * 100];
+
+                int len = 0;
+                while ((len = fileOutputStream.Read(bufferByte, 0, bufferByte.Length)) > 0)
+                {
+                    fileInputputStream.Write(bufferByte, 0, len);
+                    fileInputputStream.Flush();
+                }
+                fileInputputStream.Close();
+                fileOutputStream.Close();                  
+            }
+        }
+    }

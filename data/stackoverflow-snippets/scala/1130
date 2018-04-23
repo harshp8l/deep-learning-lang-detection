@@ -1,0 +1,17 @@
+import java.time.LocalDateTime
+
+case class Interval(start:LocalDateTime, end:LocalDateTime)
+
+val dt1: LocalDateTime = ??? //some start DateTime
+val dt2: LocalDateTime = ??? //some end DateTime
+
+// a (potentially) infinite Stream of dates at 15 minute intervals
+// starting at dt1 but ending before dt2
+val dates = Stream.iterate(dt1)(_.plusMinutes(15L))
+                  .takeWhile(_.isBefore(dt2))
+
+val result = dates.sliding(2)  //pair the dates together
+                  .toSeq       //a Seq is easier to append to
+                  .map{case Seq(from,to) => Interval(from,to)}  //make Intervals
+                  .:+(Interval(dates.last,dt2)) //append the final Interval
+                  .toList      //if you need a List result

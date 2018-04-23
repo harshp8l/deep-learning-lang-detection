@@ -1,0 +1,17 @@
+(import [io.netty.buffer Unpooled])
+(require '[clojurewerkz.buffy.core :as buffy]
+         '[clojurewerkz.buffy.types.protocols :as ptypes])
+
+(defn read-from-middle [data spec start-idx]
+  (let [total-size (reduce + (map ptypes/size (map second spec)))
+        tmp-buf (Unpooled/wrappedBuffer data start-idx (- (alength data) start-idx))
+        buffy-buffer (buffy/compose-buffer spec :orig-buffer tmp-buf)]
+    [(buffy/decompose buffy-buffer) (+ start-idx total-size)]))
+
+(let [my-data (byte-array [0 0 0 1 0 0 0 2 0 0 0 3])
+      spec (buffy/spec :foo (buffy/int32-type))
+      idx 0
+      [i1 idx] (read-from-middle my-data spec idx)
+      [i2 idx] (read-from-middle my-data spec idx)
+      [i3 idx] (read-from-middle my-data spec idx)]
+   [i1 i2 i3])

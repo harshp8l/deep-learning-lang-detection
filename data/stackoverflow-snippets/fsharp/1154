@@ -1,0 +1,35 @@
+let (|Async|_|) (ty: Type) =
+    if ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<Async<_>> then
+        Some (ty.GetGenericArguments().[0])
+    else 
+        None
+
+type AsyncApiActionInvoker() =
+    inherit Controllers.ApiControllerActionInvoker()
+
+    static let AsTaskMethod = typeof<AsyncApiActionInvoker>.GetMethod(""AsTask"")
+
+    static member AsTask<'T> (actionContext: Controllers.HttpActionContext, cancellationToken: CancellationToken) =
+        let action = async {
+            let task = 
+                actionContext.ActionDescriptor.ExecuteAsync(
+                    actionContext.ControllerContext, 
+                    actionContext.ActionArguments, 
+                    cancellationToken
+                )
+            let! result = Async.AwaitTask task
+            let! asyncResult = result :?> Async<'T>
+            return actionContext.ActionDescriptor.ResultConverter.Convert(actionContext.ControllerContext, box asyncResult)
+        }
+
+        Async.StartAsTask(action, cancellationToken = cancellationToken)
+
+    override x.InvokeActionAsync(actionContext, cancellationToken) =
+        if actionContext = null then
+            raise <| ArgumentNullException(""actionContext"")
+
+        match actionContext.ActionDescriptor.ReturnType with
+        | Async resultType ->
+            let specialized = AsTaskMethod.MakeGenericMethod(resultType)
+            downcast specialized.Invoke(null, [|actionContext, cancellationToken|])
+        | _ -> base.InvokeActionAsync(actionContext, cancellationToken)

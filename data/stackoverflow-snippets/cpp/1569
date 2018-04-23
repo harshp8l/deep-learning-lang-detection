@@ -1,0 +1,41 @@
+class UblasEncapsulated {
+public:
+    class proxy {
+    public:
+        proxy(UblasEncapsulated* ptr, int i, int j)
+            : ptr_(ptr), i_(i), j_(j)
+        {}
+
+        proxy& operator=(float f) {
+            ptr_->MtrUpdated_ = true;
+            ptr_->mtr_(i_, j_) = f;
+            return *this;
+        }
+
+        operator float() {
+            return ptr_->mtr_(i_, j_);
+        }
+
+    private:
+        UblasEncapsulated* ptr_;
+        int i_;
+        int j_;
+    };      
+
+    proxy operator()(int i, int j) {
+        return proxy(this, i, j);
+    }
+
+    ublas::compressed_matrix<float>::const_reference operator() (int i, int j) const {
+        return mtr_(i, j);
+    }
+
+    UblasEncapsulated()
+        : mtr_(3, 3),
+          MtrUpdated_(false)
+    {}
+
+private:
+    ublas::compressed_matrix<float> mtr_;
+    bool MtrUpdated_;
+};

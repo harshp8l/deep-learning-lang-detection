@@ -1,0 +1,48 @@
+int CFFmpegPlayer::Demuxer(void* opaque)
+{
+    CFFmpegPlayer* player = static_cast<CFFmpegPlayer*>(opaque);
+    int video_stream_index = player->video_context_->stream_index_;
+    int audio_stream_index = player->audio_context_->stream_index_;
+
+    AVPacket* packet;
+    while (!player->quit_){
+        if (player->PauseDemuxer() == 1)
+            continue;
+        player->timeout_ = 1000;
+        player->current_time_ = GetTickCount();
+        player->enable_interrupt_callback_ = 1;
+        packet = av_packet_alloc();
+        int ret = av_read_frame((player->input_format_context_), packet);
+
+        if (ret < 0) {
+            player->enable_interrupt_callback_ = 0;
+            if (ret == (int)AVERROR_EOF){
+                break;  // Eof or error
+            }
+            player->WriteLogMessage(""Error av_read_frame in demuxer"");
+            break;
+        }
+        player->enable_interrupt_callback_ = 0;
+        if (packet->stream_index == video_stream_index){
+            player->CalculateBitrate(packet);
+            if (player->video_context_->packet_queue_->Push(packet) < 0){
+                break;
+            }
+        }
+        else{
+            if (packet->stream_index == audio_stream_index &&     player->audio_context_->has_audio_){
+                if (player->audio_context_->packet_queue_->Push(packet) < 0){
+                break;
+                }
+            }
+        }
+        SafeReleasePacket(&packet);
+    }
+    SafeReleasePacket(&packet);
+    player->video_context_->packet_queue_->Eof();
+    if (player->audio_context_->has_audio_){
+        player->audio_context_->packet_queue_->Eof();
+        player->audio_context_->audio_frame_buffer_->Eof();
+    }
+    return 0;
+}

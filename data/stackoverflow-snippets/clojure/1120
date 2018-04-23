@@ -1,0 +1,49 @@
+(defmulti execute-byte (fn [stack inst point] (nth inst point)))
+
+(defmethod execute-byte 0x00 [stack inst point] ;; nop
+  [stack inst (inc point)])
+
+(defmethod execute-byte 0x01 [stack inst point] ;; push
+  (let [the-bc-after (nth inst (inc point))]
+    [(cons the-bc-after stack) inst (inc (inc point))]))
+
+(defmethod execute-byte 0x02 [stack inst point] ;; del
+  [(rest stack) inst (inc point)])
+
+(defmethod execute-byte 0x03 [stack inst point] ;; jmp
+   (let [the-bc-after (nth inst (inc point))]
+    [stack inst the-bc-after]))
+
+(defmethod execute-byte 0x10 [stack inst point] ;; add
+  (let [f (first stack)
+        s (second stack)]
+   [(cons (+ f s) (nthrest stack 2)) inst (inc point)]))
+
+(defmethod execute-byte 0x11 [stack inst point] ;; sub
+  (let [f (first stack)
+        s (second stack)]
+   [(cons (- f s) (nthrest stack 2)) inst (inc point)]))
+
+(defmethod execute-byte 0x12 [stack inst point] ;; multi
+  (let [f (first stack)
+        s (second stack)]
+   [(cons (* f s) (nthrest stack 2)) inst (inc point)]))
+
+(defmethod execute-byte 0x13 [stack inst point] ;; div
+  (let [f (first stack)
+        s (second stack)]
+   [(cons (/ f s) (nthrest stack 2)) inst (inc point)]))
+
+(defmethod execute-byte :default [stack inst point] ;; just a testing workaround
+  [(cons (nth inst point) stack) inst (inc point)])
+
+
+
+(defn execute-single-stack-step ;; the iterator wrapper for the multimethod
+  [[stack inst point]]
+  (execute-byte stack inst point))
+
+
+(defn execute-bytes
+  [inst stack step]
+  (last (take step (iterate execute-single-stack-step [stack inst 0]))))

@@ -1,0 +1,41 @@
+declare @venue as table(
+    VenueID int identity(1,1) not null primary key clustered
+,   Name_ nvarchar(255) not null
+,   Address_ nvarchar(255) null
+);
+
+declare @venueType as table (
+    VenueTypeID int identity(1,1) not null primary key clustered
+,   VenueType nvarchar(255) not null
+);
+
+declare @venueStuff as table (
+    VenueStuffID int identity(1,1) not null primary key clustered
+,   VenueID int not null -- constraint back to venueid
+,   VenueTypeID int not null -- constraint to dim or lookup table for ... attribute types
+,   AttributeValue nvarchar(255) not null
+);
+
+insert into @venue (Name_)
+select 'Bob''s Funhouse'
+
+insert into @venueStuff (VenueID, VenueTypeID, AttributeValue)
+select 1, 1, 'Scarrrrry' union all
+select 1, 2, 'Food Avaliable' union all
+select 1, 3, 'Game tables provided' union all
+select 1, 4, 'Creepy';
+
+insert into @venueType (VenueType)
+select 'Haunted House Theme' union all
+select 'Gaming' union all
+select 'Concessions' union all
+select 'post apocalyptic'; 
+
+select a.Name_
+     , b.AttributeValue
+     , c.VenueType
+  from @venue a
+  join @venueStuff b
+    on a.VenueID = b.VenueID
+  join @venueType c
+    on c.VenueTypeID = b.VenueTypeID

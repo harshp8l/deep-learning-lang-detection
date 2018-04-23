@@ -1,0 +1,32 @@
+// pro: simple, fast in practice
+// con: 2-pass (once to get length, once to select nth element)
+let method1 lst (rng : Random)  =
+    List.nth lst (rng.Next(List.length lst))
+
+// pro: ~1 pass, list length is not bound by int32
+// con: more complex, slower in practice
+let method2 lst (rng : Random) =
+    let rec step remaining picks top =
+        match (remaining, picks) with
+        | ([], []) -> failwith ""Don't pass empty list""
+        //  if only 1 element is picked, this is the result
+        | ([], [p]) -> p
+        // if multiple elements are picked, select randomly from them
+        | ([], ps) -> step ps [] -1
+        | (h :: t, ps) ->
+            match rng.Next() with
+            // if RNG makes new top number, picks list is reset
+            | n when n > top -> step t [h] n
+            // if RNG ties top number, add current element to picks list
+            | n when n = top -> step t (h::ps) top
+            // otherwise ignore and move to next element
+            | _ -> step t ps top
+    step lst [] -1
+
+// pro: exactly 1 pass
+// con: more complex, slowest in practice due to tuple allocations
+let method3 lst (rng : Random) =
+    snd <| List.fold (fun (i, pick) elem ->
+               if rng.Next(i) = 0 then (i + 1, elem)
+               else (i + 1, pick)
+           ) (0, List.head lst) lst

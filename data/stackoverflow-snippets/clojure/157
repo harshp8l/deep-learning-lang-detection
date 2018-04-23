@@ -1,0 +1,17 @@
+(require '[clojure.core.reducers :as r])
+(import '[java.util HashMap Collections Map]
+        'java.util.concurrent.atomic.AtomicInteger
+        'java.util.concurrent.ConcurrentHashMap)
+
+(quick-bench
+  (let [concurrency-level (.availableProcessors (Runtime/getRuntime))
+        m (ConcurrentHashMap. (quot (count data) 2) 0.75 concurrency-level)
+        combinef (fn ([] m) ([_ _]))  ; just return `m` from the combine step
+        rf (fn [^Map m k]
+             (let [^AtomicInteger v (or (.get m k) (.putIfAbsent m k (AtomicInteger. 1)))]
+               (when v (.incrementAndGet v))
+               m))
+        reducef ((comp (keep :samplevalue) (map int)) rf)]
+    (r/fold combinef reducef data)
+    (into {} m)))
+;; My execution time mean: 70 ms

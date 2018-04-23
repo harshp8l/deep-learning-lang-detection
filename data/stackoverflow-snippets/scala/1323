@@ -1,0 +1,40 @@
+sealed abstract class HRT[+H, +R, +T] {
+  val isHeader: Boolean
+  val isRow: Boolean
+  val isTrailer: Boolean
+}
+
+final case class Header[+H, +R, +T](h: H) extends HRT[H, R, T] {
+  override val isHeader: Boolean = true
+  override val isRow: Boolean = false
+  override val isTrailer: Boolean = false
+}
+
+final case class Row[+H, +R, +T](r: R) extends HRT[H, R, T] {
+  override val isHeader: Boolean = false
+  override val isRow: Boolean = true
+  override val isTrailer: Boolean = false
+}
+
+final case class Trailer[+H, +R, +T](t: T) extends HRT[H, R, T] {
+  override val isHeader: Boolean = false
+  override val isRow: Boolean = false
+  override val isTrailer: Boolean = true
+}
+
+object Demo {
+  def getEntries(): Seq[HRT[Float, Long, String]] =
+    List(
+      Header(3.14f),
+      Row(42),
+      Trailer(""good bye"")
+    )
+
+  val entries = getEntries()
+
+  entries.foreach {
+    case Header(f) => printf(""header: %f\n"", f)
+    case Row(l) => printf(""row: %d\n"", l)
+    case Trailer(s) => printf(""trailer: %s\n"", s)
+  }
+}

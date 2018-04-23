@@ -1,0 +1,18 @@
+timeout=300
+wait() {
+    sleep 1 # sleep for one second
+    echo -n . # show that we are still waiting
+    [ `ps|grep $pid|wc -l` -gt 0 ] && { # background process still running?
+        [ `ps -p $pid -o etimes|grep [0-9]` -gt $timeout ] && { # running too long?
+            echo ""Time expired."";
+            kill $pid;
+        } || {
+            wait; # keep waiting
+        }
+    } || {
+        echo ""DONE!"";
+    }
+}
+sleep 20 & # replace this with mycommand &
+pid=$!
+wait

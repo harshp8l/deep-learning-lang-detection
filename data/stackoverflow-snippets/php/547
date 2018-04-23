@@ -1,0 +1,23 @@
+function readUsers($filePath) {
+    if (!file_exists($filePath))
+        return array();
+    $usersArray = array();
+    $file = fopen($filePath, ""r"");
+    while (($line = fgets($file)) !== false) {
+        $usersArray[] = $line;
+    }
+    fclose($file);
+    return $usersArray;
+}
+
+$usersOnline = readUsers(""users.txt""); // Get users online as array
+// The first query for rest the status for all users and set it as NOT LOGIN
+$sql = 'UPDATE `TABLE` SET `status` = false;';
+// The second query for set the new status which is login for array of users.
+$sql .= 'UPDATE `TABLE` SET `status` = true WHERE `user` in ';
+$usersList = '(';
+foreach  ($usersOnline as $value) { // Update user status one by one
+    $usersList .= '\''.trim($value).'\',';
+}
+$sql .= $usersList.');';
+// run query for $sql 

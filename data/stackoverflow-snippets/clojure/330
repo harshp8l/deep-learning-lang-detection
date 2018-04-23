@@ -1,0 +1,25 @@
+(defmacro generate-onstar-m
+  [event-kw]
+  (let [event-str (name event-kw)
+        do-fn-sym (symbol (str ""do-"" event-str))
+        on-fn-sym (symbol (str ""on-"" event-str ""-m""))]
+    (println ""Creating"" on-fn-sym)
+    `(defn ~on-fn-sym []
+       (~do-fn-sym))))
+
+(println \newline ""Using Macro"")
+(generate-onstar-m :foo)
+(on-foo-m)
+
+(defmacro run-macro
+  ""Run the specified macro once for each arg""
+  [root-macro args]
+  `(do
+    ~@(forv [item args]
+      `(~root-macro ~item))))
+
+(println \newline ""Generating on-*-m functions using `run-macro`"")
+(run-macro generate-onstar-m [:foo :bar :baz])
+(on-foo-m)
+(on-bar-m)
+(on-baz-m)

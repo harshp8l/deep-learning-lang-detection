@@ -1,0 +1,17 @@
+    $resourceAppIdURI = ""https://graph.windows.net""
+    # Login to Azure and get a token valid for accessing the graph API
+    $authority = ""https://login.windows.net/$adTenant""
+    $authContext = New-Object ""Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext"" -ArgumentList $authority
+    $authResult = $authContext.AcquireToken($resourceAppIdURI, $clientId, $redirectUri, ""Auto"")
+    # Add the token to the header of all future calls to the graph API
+    $headers = @{""Authorization""=$authResult.CreateAuthorizationHeader();""Content-Type""=""application/json""}
+$uri = [string]::Format(""https://graph.windows.net/{0}/groups/{1}/appRoleAssignments?api-version=1.5"", $adTenant, $groupId)
+$body = @""
+    {
+        ""id"": $appRoleId,
+        ""principalId"": $groupId,
+        ""principalType"": ""Group"",
+        ""resourceId"": $appObjectId
+    }
+""@
+$result = Invoke-RestMethod -Method ""POST"" -Uri $uri -Headers $headers -Body $Body

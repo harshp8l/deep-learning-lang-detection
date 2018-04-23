@@ -1,0 +1,48 @@
+sealed trait Item
+case class IntItem(foo: Int, bar: Int) extends Item
+case class Baz(baz: Int)
+case class BazItem(foo: Int, bar: Baz) extends Item
+
+
+
+import com.fasterxml.jackson.core._
+import com.fasterxml.jackson.databind._
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.databind.util.TokenBuffer
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.node._
+import com.fasterxml.jackson.databind.exc._
+import java.io.IOException
+
+class ItemDeserializer() extends StdDeserializer[Item](classOf[Item]) {
+
+  @throws[IOException]
+  @throws[JsonProcessingException]
+  def deserialize(jp: JsonParser, ctxt: DeserializationContext): Item = {
+    // 1) Buffer current state of the JsonParser
+    // 2) Use firstParser (from the buffer) to parser whole sub-tree into a generic JsonNode
+    // 3) Analyze tree to find out the real type to be parser
+    // 3) Using the buffer roll back history and create objectParser to parse the sub-tree as known type
+    val tb = new TokenBuffer(jp, ctxt)
+    tb.copyCurrentStructure(jp)
+
+    val firstParser = tb.asParser
+    firstParser.nextToken
+    val curNode = firstParser.getCodec.readTree[JsonNode](firstParser)
+
+    val objectParser = tb.asParser
+    objectParser.nextToken()
+
+    val bar = curNode.get(""bar"")
+    if (bar.isInstanceOf[IntNode]) {
+      objectParser.readValueAs[IntItem](classOf[IntItem])
+    }
+    else if (bar.isInstanceOf[ObjectNode]) {
+      objectParser.readValueAs[BazItem](classOf[BazItem])
+    }
+    else {
+      throw ctxt.reportBadDefinition[JsonMappingException](classOf[Item], ""Unknown subtype of Item"") // Jackson 2.9
+      //throw InvalidDefinitionException.from(jp, ""Unknown subtype of Item"", ctxt.constructType(classOf[Item])) // Jackson 2.8
+    }
+  }
+}

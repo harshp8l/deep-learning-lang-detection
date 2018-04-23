@@ -1,0 +1,73 @@
+def read_data():
+    n_train = 100
+    n_test = 50
+    height = 20
+    width = 30
+    channels = 3
+    trainX = (np.random.random(
+        size=(n_train, height, width, channels)) * 255).astype(np.uint8)
+    testX = (np.random.random(
+            size=(n_test, height, width, channels))*255).astype(np.uint8)
+    trainY = (np.random.random(size=(n_train,))*10).astype(np.int32)
+    testY = (np.random.random(size=(n_test,))*10).astype(np.int32)
+    return trainX, testX, trainY, testY
+
+
+trainX, testX, trainY, testY = read_data()
+# trainX [num_image, height, width, channels], these are numpy arrays
+
+
+train_dataset = tf.data.Dataset.from_tensor_slices((trainX, trainY))
+test_dataset = tf.data.Dataset.from_tensor_slices((testX, testY))
+
+
+def map_single(x, y):
+    print('Map single:')
+    print('x shape: %s' % str(x.shape))
+    print('y shape: %s' % str(y.shape))
+    x = tf.image.per_image_standardization(x)
+    # Consider: x = tf.image.random_flip_left_right(x)
+    return x, y
+
+
+def map_batch(x, y):
+    print('Map batch:')
+    print('x shape: %s' % str(x.shape))
+    print('y shape: %s' % str(y.shape))
+    # Note: this flips ALL images left to right. Not sure this is what you want
+    # UPDATE: looks like tf documentation is wrong and you need a 3D tensor?
+    # return tf.image.flip_left_right(x), y
+    return x, y
+
+
+batch_size = 32
+train_dataset = train_dataset.repeat().shuffle(100)
+train_dataset = train_dataset.map(map_single, num_parallel_calls=8)
+train_dataset = train_dataset.batch(batch_size)
+train_dataset = train_dataset.map(map_batch)
+train_dataset = train_dataset.prefetch(2)
+
+test_dataset = test_dataset.map(
+        map_single, num_parallel_calls=8).batch(batch_size).map(map_batch)
+test_dataset = test_dataset.prefetch(2)
+
+
+iterator = tf.data.Iterator.from_structure(train_dataset.output_types, 
+                 train_dataset.output_shapes)
+features, labels = iterator.get_next()
+train_init_op = iterator.make_initializer(train_dataset)
+test_init_op = iterator.make_initializer(test_dataset)
+
+
+with tf.Session() as sess:
+    sess.run(train_init_op)
+    feat, lab = sess.run((features, labels))
+
+    print(feat.shape)
+    print(lab.shape)
+
+    sess.run(test_init_op)
+    feat, lab = sess.run((features, labels))
+
+    print(feat.shape)
+    print(lab.shape)    

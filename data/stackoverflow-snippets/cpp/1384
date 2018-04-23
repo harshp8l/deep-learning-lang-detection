@@ -1,0 +1,155 @@
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <stdlib.h>
+
+using namespace std;
+
+// Class for our add, delete, and view functions.
+class Todo {
+public:
+    void add (string);
+    void del (int);
+    void view();
+};
+
+int main () {
+    Todo l;
+    string item;
+    char command;
+    int serial;
+
+    do
+    {
+        cout << ""\t\tYour ToDo List"" << endl;
+        cout << ""Press + then enter an item to add to the list"" << endl;
+        cout << ""Press - then enter an item serial number to remove"" << endl;
+        cout << ""Press ? to display all items in the list"" << endl;
+        cout << ""Press x to quit the program"" << endl;
+        cin >> command;
+
+        if (command == '+' || command == '-') {
+            getline(cin, item);
+        }
+
+        // Simple menu
+        switch (command)
+        {
+            case '+':
+                l.add(item);
+                break;
+
+            case '-': {
+                istringstream(item) >> serial;
+                l.del(serial);
+                break;
+            }
+
+            case '?':
+                l.view();
+                break;
+
+            case 'x':
+                return 0;
+
+            default:
+                cout << ""Invalid choice."" << endl;
+                break;
+        }
+    }
+    while (true);
+
+    return 0;
+}
+
+// Add function
+void Todo::add(string item) 
+{
+    string info;
+    int next_serial = 1;
+    int serial;
+
+    ifstream in(""ToDo List.txt"");
+    while (getline(in, info))
+    {
+        istringstream(info) >> serial;
+        if (serial >= next_serial)
+            next_serial = serial + 1;
+    }
+    in.close();
+
+    time_t rawtime;
+    struct tm *timeinfo;
+    time (&rawtime);
+    timeinfo = localtime (&rawtime);
+
+    ofstream f(""ToDo List.txt"", ios::app);
+    f << next_serial << "" "" << item << "" "" << timeinfo->tm_mon << "" "" << timeinfo->tm_mday << "" "" << (timeinfo->tm_year + 1900) << endl;
+    f.close();
+
+    cout << endl;
+    cout << ""New item added to the list"";
+    cout << endl;
+    cout << endl;
+}
+
+// Delete function
+void Todo::del(int item)
+{
+    ifstream myfile(""ToDo List.txt"");
+    if (!myfile.is_open()) return;
+
+    ofstream newfile(""temp.txt"");
+    if (!newfile.is_open()) return;
+
+    string info;
+    int serial;
+    bool deleted = false;
+
+    while (getline (myfile, info))
+    {
+        if (!deleted)
+        {
+            istringstream(info) >> serial;
+            if (serial == item)
+            {
+                deleted = true;
+                continue;
+            }
+        }
+
+        newfile << info << endl;
+    }
+
+    if (deleted)
+    {
+        myfile.close();
+        newfile.close();
+
+        remove(""ToDo List.txt"")
+        rename(""temp.txt"", ""ToDo List.txt"");
+
+        cout << endl;
+        cout << ""Item removed from the list"";
+        cout << endl;
+        cout << endl;
+    }
+    else
+    {
+        cout << endl;
+        cout << ""Item not found in the list"";
+        cout << endl;
+        cout << endl;
+    }
+}
+
+void Todo::view()
+{
+    ifstream myfile(""ToDo List.txt"");
+    string info;
+
+    while (getline (myfile, info))
+        cout << info << endl;
+}

@@ -1,0 +1,37 @@
+# Get OS info
+$OsInfo = Get-CimInstance -ClassName Win32_OperatingSystem
+
+Get-Hotfix | # Get HotFixes
+Sort-Object -Property InstalledOnfunction | # Sort them
+Select-Object -Property @( # Select required fields
+
+    # Add Caption property from $OsInfo variable
+    @{
+        Name = 'Caption'
+        Expression = {$OsInfo.Caption}
+    }
+
+    # Add CSDVersion property from $OsInfo variable
+    @{
+        Name = 'CSDVersion'
+        Expression = {$OsInfo.CSDVersion}
+    }
+
+    # Add ServicePackMajorVersion property from $OsInfo variable
+    @{
+        Name = 'ServicePackMajorVersion'
+        Expression = {$OsInfo.ServicePackMajorVersion}
+    }
+
+    # Add BuildNumber property from $OsInfo variable
+    @{
+        Name = 'BuildNumber'
+        Expression = {$OsInfo.BuildNumber}
+    }
+
+    # Add other properties from original HotFix object
+    'HotfixID'
+    'Description'
+    'InstalledOn'
+
+) | Export-Csv -NoTypeInformation -Path 'C:\OS_Info.csv'

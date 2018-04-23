@@ -1,0 +1,67 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+
+vector<int> countfreq (vector<int>& data, int freq)
+{
+    vector<int> freqvals;       /* vector to return */
+    int dsize = data.size(),    /* size of initial check */
+        last = data.front(),    /* first value in data */
+        count = 0,              /* count flag for range loop */
+        seq = 1;                /* sequential values counted */
+
+    if (freq <= 0 || freq > dsize)  /* is freq valid? */
+        return freqvals;
+
+    for (auto& i : data) {      /* loop over data */
+        if (!count) {           /* if first iter, set flag continue */
+            count++;
+            continue;
+        }
+        if (last == i)          /* if current equals last */
+            seq++;              /* increment sequential count */
+        else {  /* otherwise */
+            if (seq == freq)    /* if sequential count == freq */
+                freqvals.push_back(last);   /* add value to vector */
+            seq = 1;            /* reset sequential count = 1 */
+        }
+        last = i;               /* update last */
+    }
+    if (seq == freq)            /* handle last value in data */
+        freqvals.push_back(last);
+
+    return freqvals;            /* return vector */
+}
+
+int main (void) {
+
+    vector<int> data = { 8, 9, 5, 6, 7, 6, 7, 9 };  /* unsorted data */
+    int freq;   /* the frequency of values to find */
+
+    sort (data.begin(), data.end());    /* sort data */
+
+    cout << ""enter requested frequency: "";  /* prompt for freq input */
+    if (!(cin >> freq)) {
+        cerr << ""error: invalid input.\n"";
+        return 1;
+    }
+
+    vector<int> frequency = countfreq (data, freq); /* call function */
+    if (frequency.size()) {             /* does return have elements? */
+        int count = 0;                  /* flag for output control */
+        cout << ""the values matching requested frequency were: "";
+        for (auto& i : frequency)       /* loop over values in return */
+            if (count)
+                cout << "", "" << i;      /* output as csv */
+            else {
+                cout << i;
+                count = 1;
+            }
+        cout << ""\n"";
+    }
+    else    /* otherwise, handle no values returned */
+        cout << ""no values appear with the requested frequency.\n"";
+
+}

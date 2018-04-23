@@ -1,0 +1,56 @@
+package com.test;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
+
+import com.thoughtworks.xstream.XStream;
+
+public class JdomExample {
+    public static void main(String[] args) throws IOException {
+
+        List<String> resultado = listarDatos();
+        XStream xstream = new XStream();
+        String xml = xstream.toXML(resultado);
+        // System.out.println(""xml = "" + xml);
+
+        String adicionar = ""<?xml version = \""1.0\"" encoding= \""UTF-8\""?> \n"";
+        String doctype = ""<!DOCTYPE list \n>"";
+        String xml_m = adicionar + doctype + xml.replace(""<newwebservicematerias.Materia>"", ""<ListaMaterias>"")
+                .replace(""</newwebservicematerias.Materia>"", ""</ListaMaterias>"");
+        // System.out.println(""xml_m = "" + xml_m);
+
+        SAXBuilder saxBuilder = new SAXBuilder();
+        try {
+            Document doc = saxBuilder.build(new StringReader(xml_m));
+            // System.out.println(""doc = "" + doc);
+            Element message = doc.getRootElement();
+            print(message);
+        } catch (JDOMException e) {
+            // handle JDOMException
+        } catch (IOException e) {
+            // handle IOException
+        }
+
+    }
+
+    public static void print(Element element) {
+        XMLOutputter outp = new XMLOutputter();
+        String s = outp.outputString(element);
+        System.out.println(s);
+    }
+
+    private static List<String> listarDatos() {
+        List<String> list = new ArrayList<>();
+        list.add(""hello"");
+        list.add(""world"");
+        return list;
+    }
+}

@@ -1,0 +1,38 @@
+(ns spark-tests.core
+  (:require [flambo.conf :as conf]
+            [flambo.api :as f]
+            [flambo.tuple :as ft])
+  (:import (org.apache.spark.graphx Edge
+                                    Graph)
+           (org.apache.spark.api.java JavaRDD
+                                      StorageLevels)
+           (scala.reflect ClassTag$)))
+
+(defonce c (-> (conf/spark-conf)
+               (conf/master ""local"")
+               (conf/app-name ""flame_princess"")))
+
+(defonce sc (f/spark-context c))
+
+(def users (f/parallelize sc [(ft/tuple 3 [""rxin"" ""student""])
+                              (ft/tuple 7 [""jgonzal"" ""postdoc""])
+                              (ft/tuple 5 [""franklin"" ""prof""])]))
+
+(defn edge
+  [source dest attr]
+  (new Edge (long source) (long dest) attr))
+
+(def relationships (f/parallelize sc [(edge 3 7 ""collab"")
+                                      (edge 5 3 ""advisor"")
+                                      (edge 7 3 ""advisor"")]))
+
+
+(def g (Graph/apply (.rdd users)
+                    (.rdd relationships)
+                    ""collab""
+                    (StorageLevels/MEMORY_ONLY)
+                    (StorageLevels/MEMORY_ONLY)
+                    (.apply ClassTag$/MODULE$ clojure.lang.PersistentVector)
+                    (.apply ClassTag$/MODULE$ java.lang.String)))
+
+(println (.count (.edges g)))

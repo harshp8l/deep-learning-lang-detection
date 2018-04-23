@@ -1,0 +1,39 @@
+import pexpect
+import sys
+from subprocess import Popen, PIPE, STDOUT
+import time
+
+
+REPL_PS = unicode('Prelude> ')
+LOOPS = 100
+
+
+def time_function(func):
+    def decorator(*args, **kwargs):
+        ts = time.time()
+        func(*args, **kwargs)
+        te = time.time()
+        print ""total time"", (te - ts)
+    return decorator
+
+
+@time_function
+def repl_loop():
+    repl = pexpect.spawnu('ghci')
+    repl.expect(REPL_PS)
+    for i in range(LOOPS):
+        repl.sendline('''(\\x y -> x + y) 1 2''')
+        _, haskell_output = repl.readline(), repl.readline()
+        repl.expect(REPL_PS)
+
+
+@time_function
+def subproc_loop():
+    for i in range(LOOPS):
+        proc = Popen('''ghc -e ""(\\x y -> x + y) 1 2""''', shell=True, stdout=PIPE, stderr=STDOUT) 
+        haskell_output = proc.stdout.read().decode('utf-8').strip('n')
+        # print haskell_output
+
+
+repl_loop()
+subproc_loop()

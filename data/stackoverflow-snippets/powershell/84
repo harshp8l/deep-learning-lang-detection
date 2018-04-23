@@ -1,0 +1,32 @@
+//So it doesn't time out
+set_time_limit(0);
+
+$ftp_server = 'ftp.example.com';
+$ftp_user_name = 'user';
+$ftp_user_pass = 'password';
+
+$lines = file(""photos.txt"");
+$dir = ""F://test/"";
+
+//Goes through the file and separates name path and hash
+foreach ($lines as $line) {
+    $parts = explode(""\t"", $line);
+    $imagePath = $parts[1];
+    $imageName = $parts[0];
+    $var1 = $ftp_server.trim($imagePath,'/');
+
+    $ftpUrl = 'ftp://'.$ftp_user_name.':'.$ftp_user_pass.'@'.$ftp_server.'/'.$imagePath;
+
+    // ftp url dump to be sure that something is happening
+    var_dump($ftpUrl);
+
+    $curl = curl_init();
+    $fh   = fopen($dir.$imageName, 'w');
+    curl_setopt($curl, CURLOPT_URL, $ftpUrl);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    $result = curl_exec($curl);
+
+    fwrite($fh, $result);
+    fclose($fh);
+    curl_close($curl);
+}

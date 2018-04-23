@@ -1,0 +1,57 @@
+#include <iostream>     // std::cout, std::endl
+#include <sstream>      // std::stringstream
+#include <iomanip>      // std::setfill, std::setw
+#include <string>       // std::string
+#include <cstring>      // functions to manipulate C strings and arrays
+
+unsigned char * create_hex_array (const std::string * str, size_t * nr_of_elements)
+{
+    size_t index = 0;                       // elements counter       
+    size_t arr_len = str->size () / 2 + 1;  // maximum number or array elements        
+    const char *current = str->c_str ();    // start from the beginning of the string   
+    char *end = NULL;                       // init the end pointer 
+    unsigned char *arr = new unsigned char[arr_len]; // allocate memory for our array
+
+    while (1)
+    {
+        unsigned long hex = strtoul (current, &end, 16);  
+        if (current == end)                 // end of string reached
+            break;
+        arr[index] = (unsigned char) hex;   // store the hex number in the array 
+        index++;                            // increase index to the next slot in array    
+        current = end;                      // move the to next number
+    }
+
+    *nr_of_elements = index;                // return number of elements in the array             
+    return arr;                             // return created array 
+}
+
+void print_hex_array (size_t size, unsigned char *arr)
+{
+    std::cout << ""Nr of elements in the array is = "" << size << std::endl;
+    // Fancy print out:
+    // Getting a buffer into a stringstream in hex representation with zero padding
+    // with 0-padding on small values so  `5` would become `05`
+    std::stringstream ss;
+    ss << std::hex << std::setfill ('0');
+
+    for (size_t i = 0; i < size; i++)
+    {
+        // In C this is enough:  printf(""%02x "", arr[i]);
+        ss << std::setw (2) << static_cast < unsigned >(arr[i]) << "" "";
+    }
+
+    std::cout << ss.rdbuf() << std::endl;
+}
+
+int main ()
+{
+    const std::string hexString = "" 5 8d  77 77 96 1 \t\t bc 95 b9 ab 9d 11 \n"";  
+    size_t arr_size;                    // Number of elements in the array
+
+    unsigned char * array = create_hex_array (&hexString, &arr_size); 
+    print_hex_array (arr_size, array);  // printout with 0- padding.
+
+    delete[]array;                      // release memory
+    return 0;
+}

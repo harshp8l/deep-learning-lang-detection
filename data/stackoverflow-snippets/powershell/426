@@ -1,0 +1,22 @@
+$startdate=""02/01/2018 00:00:01""
+$domains=""aaa.com"",""bbb.com"",""ccc.com""
+$users=""user1"",""user2"",""user3""
+
+$result = $users | ForEach-Object {
+    $user = $_
+    $log = Get-MessageTrackingLog -start $startdate -Recipient $user -resultsize unlimited -EventID Receive
+    $domains | ForEach-Object {
+        $domain = $_
+        [pscustomobject]@{
+            domain = $domain
+            user = $user
+            messages = ($log | Where-Object sender -like ""*@$domain"").Count
+        }
+    }
+}
+
+# output $result to screen...
+$result
+
+# ...or output it to a file
+$result | ConvertTo-Csv -NoTypeInformation | Out-File ""mesages.csv"" -Encoding utf8 

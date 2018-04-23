@@ -1,0 +1,17 @@
+begin
+    for r in (
+        select n.rowid as rwd
+             , n.name_original
+             , n2.name_new as name_shuffled
+        from   ( select n.*, row_number() over(order by dbms_random.value) as seqnum
+                 from   demo n ) n
+               join  
+               ( select n.*, row_number() over(order by dbms_random.value) as seqnum
+                 from   demo n ) n2
+               on n.seqnum = n2.seqnum
+    )
+    loop
+        update demo set name_new = r.name_shuffled
+        where  rowid = r.rwd;
+    end loop;
+end;

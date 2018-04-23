@@ -1,0 +1,27 @@
+class SomeOAuthController < Devise::OmniauthCallbacksController
+    def instagram 
+        @user_ig = User.from_omniauth_instagram(request.env[""omniauth.auth""])
+
+        if @user_ig.provider != :instagram.to_s
+            redirect_to root_path
+        else
+            # store the values that you would need in the subsequent request
+            cookies[:instagram] = {
+                key1: @user_ig.value1,
+                key2: @user_ig.value2,
+                key3: @user_ig.value3,
+            }
+        end
+    end
+
+    def create_instagram_user
+        @user_ig = {}
+        @user_ig['key1'] = cookies[:instagram][:key1]
+        @user_ig['key2'] = cookies[:instagram][:key2]
+        @user_ig['key3'] = cookies[:instagram][:key3]
+        @user_ig['adult'] = params[:user][:adult]
+        @user_ig['email'] = params[:user][:email]
+        # create instagram user with the @user_ig info
+        cookies.delete(:instagram) # some housekeeping
+    end
+end

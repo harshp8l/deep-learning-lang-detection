@@ -1,0 +1,40 @@
+package main
+
+import (
+    ""fmt""
+    ""math/rand""
+    ""sync""
+    ""time""
+)
+
+var mutex sync.Mutex
+var wg sync.WaitGroup
+
+func random_sleep() {
+    r := rand.Intn(3000)
+    time.Sleep(time.Duration(r) * time.Millisecond)
+}
+
+
+func add_to_map(m map[string] string, word string) {
+    defer wg.Done()
+    added_word := word + "" plus more letters""
+    fmt.Println(""Before sleep"")
+    random_sleep()
+    mutex.Lock()
+    defer mutex.Unlock()
+    m[word] = added_word
+    fmt.Println(""Added word %v"", word)
+}
+
+
+func main() {
+    words_map := make(map[string]string)
+    words := []string{""giraffe"", ""cat"", ""dog"", ""turtle""}
+    for _, this_word := range words {
+        wg.Add(1)
+        go add_to_map(words_map, this_word)
+    }
+    wg.Wait()
+    fmt.Println(words_map)
+}

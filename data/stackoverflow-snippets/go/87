@@ -1,0 +1,61 @@
+.PROTO defs
+-------------------------------------------------
+service Updater {
+    rpc GetUpdates(GetUpdatesRequest) returns (GetUpdatesResponse);
+}
+
+message GetUpdatesRequest {
+    int64 last_received_update = 1;
+}
+
+message GetUpdatesResponse {
+    repeated Update updates = 1;
+    int64 update_index = 2;
+}
+
+message Update {
+    // your update structure
+}
+
+
+SERVER
+-----------------------------------------------------------
+class UpdaterServer(UpdaterServicer):
+    def __init__(self):
+        self.condition = threading.Condition()
+        self.updates = []
+
+    def post_update(self, update):
+        """"""
+        Used whenever the clients should be updates about something. It will
+        trigger their long-poll calls to return
+        """"""
+        with self.condition:
+            # TODO: You should probably remove old updates after some time
+            self.updates.append(updates)
+            self.condition.notify_all()
+
+    def GetUpdates(self, req, context):
+        with self.condition:
+            while self.updates[req.last_received_update + 1:] == []:
+                self.condition.wait()
+            new_updates = self.updates[req.last_received_update + 1:]
+            response = GetUpdatesResponse()
+            for update in new_updates:
+                response.updates.add().CopyFrom(update)
+            response.update_index = req.last_received_update + len(new_updates)
+            return response
+
+
+SEPARATE THREAD IN THE CLIENT
+----------------------------------------------
+request = GetUpdatesRequest()
+request.last_received_update = -1
+while True:
+    stub = UpdaterStub(channel)
+    try:
+        response = stub.GetUpdates(request, timeout=60*10)
+        handle_updates(response.updates)
+        request.last_received_update = response.update_index
+    except grpc.FutureTimeoutError:
+        pass

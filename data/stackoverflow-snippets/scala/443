@@ -1,0 +1,39 @@
+import scala.collection.AbstractMap
+
+abstract class TreeMap[K, +V](implicit ev: K => Ordered[K])
+  extends AbstractMap[K, V] {
+  //Implementation omitted.
+  override def +[V1 >: V](key: (K, V1)): TreeMap[K, V1] = this
+  override def -(key: K): TreeMap[K, V] = this
+  override def get(key: K): Option[V]
+  override def iterator: Iterator[(K, V)]
+}
+
+
+case class Node[K, +V](left: TreeMap[K, V],
+                       right: TreeMap[K, V],
+                       key: K,
+                       value: V)(implicit ev: K => Ordered[K]) 
+  extends TreeMap[K, V] {
+  override def get(key: K): Option[V] =
+    if (key == this.key) Some(value)
+    else None
+
+  override def iterator: Iterator[(K, V)] =
+    Iterator((key, value))
+}
+
+case class Empty[K](implicit ev: K => Ordered[K])
+  extends TreeMap[K, Nothing] {
+  override def get(key: K): Option[Nothing] = None
+  override def iterator: Iterator[(K, Nothing)] = Iterator.empty
+}
+
+val tm: TreeMap[Int, String] =
+  Node(Empty(), Empty(), 4, ""ddd"")
+val tm2: TreeMap[Int, String] = Empty()
+
+println(tm) // prints Map(""4->ddd"")
+println(tm2) // prints Map()
+println(Empty[Nothing]()) //prints Map()
+//println(Empty()) //This won't compile

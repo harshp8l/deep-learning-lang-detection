@@ -1,0 +1,9 @@
+CREATE TRIGGER IF NOT EXISTS update_delivery_address AFTER INSERT ON customer_order
+WHEN new.address_street IS NULL
+BEGIN
+    UPDATE customer_order SET address_street = (SELECT customer.preferred_address_street FROM customer WHERE customer.user_id = customer_order.user_id),
+        address_number = (SELECT customer.preferred_address_number FROM customer WHERE customer.user_id = customer_order.user_id),
+        address_zipcode = (SELECT customer.preferred_address_zipcode FROM customer WHERE customer.user_id = customer_order.user_id),
+        address_city = (SELECT customer.preferred_address_city FROM customer WHERE customer.user_id = customer_order.user_id)
+    WHERE customer_order_id = new.customer_order_id;
+END;

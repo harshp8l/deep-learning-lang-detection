@@ -1,0 +1,24 @@
+(defn if-xf
+  ""Takes a predicate and two transducers.
+   Returns a new transducer that routes the input to one of the transducers
+   depending on the result of the predicate.""
+  [pred a b]
+  (fn [rf]
+    (let [arf (volatile! (a rf))
+          brf (volatile! (b rf))
+          a? (volatile! nil)]
+      (fn
+        ([] (rf))
+        ([result]
+         (let [crf (if @a? @arf @brf)]
+           (-> result crf rf)))
+        ([result input]
+         (let [p? (pred input)
+               [xrf crf] (if p? [@arf @brf] [@brf @arf])
+               switched? (some-> @a? (not= p?))]
+           (if switched?
+             (-> result crf (xrf input))
+             (xrf result input))
+           (vreset! a? p?)))))))
+(sequence (if-xf pos? (map #(* % 100)) (partition-all 2)) [0 1 0 1 0 0 0 1])
+; => ([0] 100 [0] 100 [0 0] [0] 100)

@@ -1,0 +1,14 @@
+char *modifiedRawImageBytes = malloc(size);
+memcpy(modifiedRawImageBytes, rawImageBytes, size);
+jint sizeWH = width * height;
+jint quarter = sizeWH/4;
+jint v0 = sizeWH + quarter;
+for (int u = sizeWH, v = v0, o = sizeWH; u < v0; u++, v++, o += 2) {
+        modifiedRawImageBytes[o] = rawImageBytes[v]; // For NV21, V first
+        modifiedRawImageBytes[o + 1] = rawImageBytes[u]; // For NV21, U second
+}
+jWidth = width;
+jHeight = height;
+
+jRawImageBytes = (*env)->NewByteArray(env, size);
+(*env)->SetByteArrayRegion(env, jRawImageBytes, 0, size, modifiedRawImageBytes);

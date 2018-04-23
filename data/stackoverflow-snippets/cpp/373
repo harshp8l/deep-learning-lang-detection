@@ -1,0 +1,72 @@
+#include <stdio.h>
+
+// Helpers declaration, for implementation scroll down
+float getAllOnes(unsigned bits);
+unsigned getMantissaBits();
+
+int main() {
+
+  // Determine mantissa size in bits
+  unsigned mantissaBits = getMantissaBits();
+
+  // Considering mantissa has only 3 bits, we would then get:
+  // a = 0b10   m=1,  e=1
+  // b = 0b110  m=11, e=1
+  // c = 0b1000 m=1,  e=3
+  // a + b = 0b1000, m=100, e=1
+  // a + c = 0b1010, truncated to 0b1000, m=100, e=1
+  // a + b + c result: 0b1000 + 0b1000 = 0b10000, m=100, e=2
+  // a + c + b result: 0b1000 + 0b110 = 0b1110, m=111, e=1
+
+  float a = 2,
+        b = getAllOnes(mantissaBits) - 1,
+        c = b + 1;
+
+  float ab = a + b;
+  float ac = a + c;
+
+  float abc = a + b + c;
+  float acb = a + c + b;
+
+  printf(""\n""
+         ""FP partial invariance issue demo:\n""
+         ""\n""
+         ""Mantissa size = %i bits\n""
+         ""\n""
+         ""a = %.1f\n""
+         ""b = %.1f\n""
+         ""c = %.1f\n""
+         ""(a+b) result: %.1f\n""
+         ""(a+c) result: %.1f\n""
+         ""(a + b + c) result: %.1f\n""
+         ""(a + c + b) result: %.1f\n""
+         ""---------------------------------\n""
+         ""diff(a + b + c, a + c + b) = %.1f\n\n"",
+         mantissaBits,
+         a, b, c,
+         ab, ac,
+         abc, acb,
+         abc - acb);
+
+  return 1;
+}
+
+// Helpers
+
+float getAllOnes(unsigned bits) {
+    return (unsigned)((1 << bits) - 1);
+}
+
+unsigned getMantissaBits() {
+
+    unsigned sz = 1;
+    unsigned unbeleivableHugeSize = 1024;
+    float allOnes = 1;
+
+    for (;sz != unbeleivableHugeSize &&
+          allOnes + 1 != allOnes;
+          allOnes = getAllOnes(++sz)
+          ) {}
+
+    return sz-1;
+}

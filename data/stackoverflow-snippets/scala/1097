@@ -1,0 +1,40 @@
+object ExplicitRuleFormat {
+  implicit val format: OFormat[Rule[_]] = new ExplicitRuleFormat()
+
+  private object InnerFormats {
+
+    final val discriminatorKey = ""$type$""
+    implicit val onlyDuringWorkHoursFormat = Json.format[OnlyDuringWorkHours]
+    final val onlyDuringWorkHoursTypeName = ""OnlyDuringWorkHours""
+    implicit val maxLeadTimeFormat = Json.format[MaxLeadTime]
+    final val maxLeadTimeTypeName = ""MaxLeadTime""
+    implicit val maxDurationFormat = Json.format[MaxDuration]
+    final val maxDurationTypeName = ""MaxDuration""
+  }
+
+}
+
+class ExplicitRuleFormat extends OFormat[Rule[_]] {
+
+  import ExplicitRuleFormat.InnerFormats._
+
+  override def reads(json: JsValue): JsResult[Rule[_]] = {
+    val jsObject = json.asInstanceOf[JsObject]
+    val name = jsObject(discriminatorKey).asInstanceOf[JsString].value
+    name match {
+      case s if onlyDuringWorkHoursTypeName.equals(s) => Json.fromJson[OnlyDuringWorkHours](jsObject)
+      case s if maxLeadTimeTypeName.equals(s) => Json.fromJson[MaxLeadTime](jsObject)
+      case s if maxDurationTypeName.equals(s) => Json.fromJson[MaxDuration](jsObject)
+    }
+  }
+
+  override def writes(r: Rule[_]): JsObject = r match {
+    case rr: OnlyDuringWorkHours => writeImpl(rr, onlyDuringWorkHoursTypeName)
+    case rr: MaxLeadTime => writeImpl(rr, maxLeadTimeTypeName)
+    case rr: MaxDuration => writeImpl(rr, maxDurationTypeName)
+  }
+
+  def writeImpl[R <: Rule[_]](r: R, typeName: String)(implicit w: OWrites[R]): JsObject = {
+    Json.toJsObject(r) + (discriminatorKey, JsString(typeName))
+  }
+}

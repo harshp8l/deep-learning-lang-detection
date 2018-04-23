@@ -1,0 +1,63 @@
+class Camera
+{
+private:
+   Shader shader;
+
+   GLfloat     angle = -90.f;
+
+   glm::vec3   cameraFront = glm::vec3(0.0f, 0.0f, -1.0f),
+               cameraPosition = glm::vec3(0.0f, 0.0f, 0.1f),
+               cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+   glm::mat4   viewMatrix;
+
+   // recompute the view matrix from the camera variables
+   void updateMatrix()
+   {
+      viewMatrix = glm::lookAt(cameraPosition, cameraPosition + cameraFront, cameraUp);
+   }
+
+   // default constructor
+   void defaultNew()
+   {
+      cameraPosition = glm::vec3(0.0f, 0.0f,  0.1f);
+      cameraFront    = glm::vec3(0.0f, 0.0f, -1.0f);
+      cameraUp       = glm::vec3(0.0f, 1.0f,  0.0f);
+      updateMatrix();
+   }
+
+public:
+   Camera() { 
+      defaultNew();
+   }
+   Camera(Shader &shader) { 
+      this->shader = shader;
+      defaultNew();  
+   }
+
+   glm::mat4 GetViewMatrix() const
+   {
+      // if your view matrix is always up-to-date, just return it directly
+      return viewMatrix;
+   }
+
+   // get functions
+   glm::vec3 GetCameraPosition() const { return cameraPosition; }
+   // .. same for Front and Up
+
+   // set functions
+   // call updateMatrix every time you update a variable
+   void SetCameraPosition(glm::vec3 p)
+   {
+      cameraPosition = p;
+      updateMatrix();
+   }
+   // .. same for Front and Up
+
+   // no need to use this-> all the time
+   virtual void Draw()
+   {
+      shader.Use();
+      shader.SetMatrix4(""view"", viewMatrix);
+   }
+};

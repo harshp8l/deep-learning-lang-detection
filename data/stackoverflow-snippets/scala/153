@@ -1,0 +1,19 @@
+#!/bin/bash
+
+tempFile=newCdotO.scala
+inputFile=saved_post.txt
+grep -oE ""^ *val o:.*$"" $inputFile | \
+while read codeLine
+do
+  printf '=%.0s' {0..80}
+  echo """"
+  echo """" > $tempFile
+  echo ""import scala.language.existentials"" >> $tempFile
+  echo ""import scala.language.higherKinds"" >> $tempFile
+  echo ""class C { object O; type T = O.type }"" >> $tempFile
+  echo ""$codeLine"" | tee -a $tempFile
+  printf -- '-%.0s' {0..80}
+  echo """"
+  scala $tempFile 2>&1 | sed 's|^.*error:|error:|g'
+done |
+awk '{print ""    ""$0}'

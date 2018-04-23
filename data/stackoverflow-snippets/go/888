@@ -1,0 +1,24 @@
+var session *mgo.Session
+
+func init() {
+    var err error
+    if session, err = mgo.Dial(""localhost""); err != nil {
+        log.Fatal(err)
+    }
+}
+
+func someHandler(w http.ResponseWriter, r *http.Request) {
+    sess := session.Copy()
+    defer sess.Close() // Must close!
+
+    c := sess.DB(""mapdb"").C(""tiles"")
+    // Do something with the collection, e.g.
+    var tile bson.M
+    if err := c.FindId(""someTileID"").One(&result); err != nil {
+        // Tile does not exist, send back error, e.g.:
+        log.Printf(""Tile with ID not found: %v, err: %v"", ""someTileID"", err)
+        http.NotFound(w, r)
+        return
+    }
+    // Do something with tile
+}

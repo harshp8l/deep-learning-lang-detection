@@ -1,0 +1,32 @@
+-module(simple_storage_cell).
+-export([start/0, get/1, put/2]).
+
+start() ->
+    spawn_link(fun() -> loop([]) end).
+
+get(Pid) ->
+    Pid ! {get, self()}, %% the self() here gets the pid of the 
+                         %% calling process, not the storage cell
+    receive {retrieved, Val} -> Val
+    after 500 -> error(timeout)
+    end.
+
+put(Pid, Val) ->
+    Pid ! {put, self(), Val}, %% see above, in get/1
+    receive {saved, Val} -> Val
+    after 500 -> error(timeout)
+    end.
+
+
+loop(StoredItem) ->
+    receive
+        {get, RequestingPid} ->
+            RequestingPid ! {retrieved, StoredItem},
+            %% we now 'hold' the StoredItem in the cell
+            loop(StoredItem);
+        {put, RequestingPid, NewValue} ->
+            RequestingPid ! {saved, NewValue},
+            %% we lose the old value, keeping NewValue in the cell
+            loop(NewValue);
+        OtherMsg -> error({unexpected_msg, OtherMsg})
+    end.

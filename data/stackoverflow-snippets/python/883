@@ -1,0 +1,38 @@
+class PerfectForm(Form):
+    inputNumber = IntegerField('input a number', default=1, validators=[InputRequired(message='Please input an integer')])
+
+class PerfectRangeForm(Form):
+    startNumber = IntegerField('input a number', default=1, validators=[InputRequired(message='Please input an integer')])
+    endNumber = IntegerField('input a number', default=1, validators=[InputRequired(message='Please input an integer')])
+    aliquot = StringField('input a kind', default='perfect')
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    form1 = PerfectForm(request.form, prefix=""form1"")
+    form2 = PerfectRangeForm(request.form, prefix=""form2"")
+
+    num = 1
+    Classify = classify(num)
+
+    startNumber = 1
+    endNumber = 1
+    aliquot = 'abundant'
+    ListInRange = listInRange(startNumber, endNumber, aliquot)
+
+    if request.form.get('submit') == 'submit-1':
+        if form1.validate_on_submit() and form1.data:
+            num = form1.data['inputNumber']
+            Classify = classify(num)
+    elif request.form.get('submit') == 'submit-2':
+        if form2.validate_on_submit() and form2.data:
+            startNumber = form2.data['startNumber']
+            endNumber = form2.data['endNumber']
+            aliquot = form2.data['aliquot']
+            ListInRange = listInRange(startNumber, endNumber, aliquot)
+    return render_template('index.html',
+        num=num, classify=Classify,
+        startNumber=startNumber, endNumber=endNumber, aliquot=aliquot, ListInRange=ListInRange,
+        form1=form1, form2=form2)
+
+if __name__ == '__main__':
+    app.run(debug=True)

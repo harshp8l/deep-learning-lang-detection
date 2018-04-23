@@ -1,0 +1,35 @@
+# provide bash inline comments having the form
+#     <code> ${__+ <comment>} <code> 
+#     <code> ${__+ <multiline
+#                   comment>} <code>
+
+# utility routines that obviate ""useless use of cat""
+function bashcat { printf '%s\n' ""$(</dev/stdin)""; }
+function scat { 1>&2 bashcat; exit 1; }
+
+# ensure that '__' is unset && remains unset
+[[ -z ${__+x} ]] &&  # if '__' is unset
+  declare -r __ ||   # then ensure that '__' remains unset 
+  scat <<EOF         # else exit with an error
+Error: the parameter __='${__}' is set, hence the
+  comment-idiom '\${__+ <comment text>}' will fail
+EOF
+
+${__+ (example of inline comments)
+------------------------------------------------
+the following inline comment-idiom is supported
+    <code> ${__+ <comment>} <code> 
+    <code> ${__+ <multiline
+                  comment>} <code> 
+(advisory) the parameter '__' must NOT be set;
+  even the null declaration __='' will fail
+(advisory) protect unbalanced delimiters \} and \) 
+(advisory) NO parameter-expansion of <comment> 
+(advisory) NO subprocesses are spawned
+(advisory) a functionally equivalent idiom is 
+    <code> `# <comment>` <code> 
+    <code> `# <multiline
+               comment>` <code>
+however each comment spawns a bash subprocess
+that inelegantly requires ~1ms of computation 
+------------------------------------------------}

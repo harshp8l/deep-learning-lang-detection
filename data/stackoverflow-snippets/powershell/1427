@@ -1,0 +1,12 @@
+$AV = Get-CimInstance -Namespace “root\SecurityCenter2” -Class AntiVirusProduct
+$WD = $AV | Where-Object {$_.displayName -like ""Windows Defender""}
+$installedAV = $AV | Where-Object {$_.displayName -notlike ""Windows Defender""}
+$productState = [int]('{0:X6}' -f $WD.productState).Substring(2,2)
+if ($productState -eq 10) {
+    Add-MpPreference -ExclusionPath ""C:\Temp""
+    Add-MpPreference -ExclusionPath ""C:\Users\ME\Desktop""
+} else {
+    # https://msdn.microsoft.com/en-us/library/x83z1d9f%28v=vs.84%29.aspx?f=255&MSPPError=-2147217396
+    $wshell = New-Object -ComObject Wscript.Shell
+    $wshell.Popup(""Another AV is installed: $($installedAV.displayName)"",0,"""",0x10)
+}

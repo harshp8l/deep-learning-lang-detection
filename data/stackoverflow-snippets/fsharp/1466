@@ -1,0 +1,34 @@
+module CachedFoo =
+
+let mutable private lastAccess:Option<DateTime> = None
+
+// returns a lazy value that initializes the cache when
+// accessed for the first time (safely)
+let private createCacheInitialization() =
+    lazy(
+        let someObject = SomeLongRunningOperation()
+        lastAccess <- Option.Some(DateTime.Now)
+        someObject
+    )
+
+// current cache represented as lazy value
+let mutable private currentCache = createCacheInitialization()
+
+let lockObject = new Object()
+
+let timeout = TimeSpan.FromSeconds (10.0)
+
+// Reset - cache will be re-initialized next time it is accessed
+// (this doesn't actually initialize a cache - just creates a lazy value)
+let MaybeReset() =
+    lock lockObject (fun () ->
+        if (lastAccess.IsSome && DateTime.Now > (lastAccess.Value + timeout)) then
+            let newCache = createCacheInitialization()
+            ignore(newCache.Force())
+            currentCache <- newCache
+    )
+
+let GetCache() =
+    let v = currentCache.Value // to make sure we get the old one
+    async { MaybeReset() } |> Async.Start
+    v

@@ -1,0 +1,186 @@
+// val reverse : l:'a list -> 'a list
+let reverse l =
+    let rec reverseInner l acc =
+        match l with
+        | x::xs -> 
+            let acc = x :: acc
+            reverseInner xs acc
+        | [] -> acc
+    reverseInner l []
+
+reverse [ 3.0; 2.0; 1.0 ]  // val it : float list = [1.0; 2.0; 3.0]    
+
+// val length : l:'a list -> int
+let length l =
+    let rec lengthInner l acc =
+        match l with
+        | x::xs -> 
+            let acc = acc + 1
+            lengthInner xs acc
+        | [] -> acc
+    lengthInner l 0
+
+length [ 3.0; 2.0; 1.0 ]  // val it : int = 3
+
+// val sum : l:float list -> float
+let sum l =
+    let rec sumInner l acc =
+        match l with
+        | x::xs -> 
+            let acc = acc + x
+            sumInner xs acc
+        | [] -> acc
+    sumInner l 0.0
+
+sum [ 1.0; 2.0; 3.0 ]  // val it : float = 6.0
+
+// val square : l:float list -> float list
+let square (l : float list) = 
+    let rec squareInner l acc =
+        match l with
+        | x::xs -> 
+            let acc = (x * x) :: acc
+            squareInner xs acc
+        | [] -> reverse acc
+    squareInner l []
+
+square [ 1.0; 2.0; 3.0 ]  // val it : float list = [1.0; 4.0; 9.0]
+
+// val mean : l:float list -> float
+let mean l = 
+    let rec meanInner l sumacc lengthacc =
+        match l with
+        | x::xs -> 
+            let sumacc = sumacc + x
+            let lengthacc = lengthacc + 1.0
+            meanInner xs sumacc lengthacc
+        | [] -> sumacc / lengthacc
+    meanInner l 0.0 0.0
+
+mean([1.0;2.0;3.0]) // val it : float = 2.0
+
+// val mean_diffs : l:float list -> float list
+let meanDiff l = 
+    let rec meanDiffInner l m acc =
+        match l with
+        | x::xs -> 
+            let diff = (x - m)
+            let acc = diff :: acc
+            meanDiffInner xs m acc
+        | [] -> reverse acc
+    meanDiffInner l (mean l) []
+
+meanDiff [ 1.0; 2.0; 3.0 ]  // val it : float list = [-1.0; 0.0; 1.0]
+
+
+// From: https://en.wikipedia.org/wiki/Variance
+// Suppose a population of numbers consists of 3, 4, 7, and 10. 
+// The arithmetic mean of these numbers, often informally called the ""average"", is (3+4+7+10)÷4 = 6. 
+// The variance of these four numbers is the average squared deviation from this average. 
+// These deviations are (3–6) = –3, (4–6) = –2, (7–6) = 1, and (10–6) = 4. 
+// Thus the variance of the four numbers is ((-3)^2 + (-2)^2 + (1)^2 + (4)^2) / 4 = 15/2 = 7.5
+
+// val variance : l:float list -> float
+let variance l = 
+    let deviations = meanDiff l
+    let rec varianceInner l numeratorAcc denomenatorAcc =
+        match l with
+        | devation::xs ->
+            let numeratorAcc = numeratorAcc + (devation * devation) 
+            let denomenatorAcc = denomenatorAcc + 1.0
+            varianceInner xs numeratorAcc denomenatorAcc
+        | [] -> numeratorAcc / denomenatorAcc
+    varianceInner deviations 0.0 0.0
+
+variance [ 1.0; 2.0; 3.0 ]          // val it : float = 0.6666666667
+variance [ 3.0; 4.0; 7.0; 10.0 ]    // val it : float = 7.5
+
+
+(* End of question 1 *) (* Do not edit this line. *)
+
+(* Question 2 *) (* Do not edit this line. *)
+
+// val memberof : l:'a list -> item:'a -> bool when 'a : equality
+let memberof l item =
+    let rec memberInner l item =
+        match l with
+        | x::xs -> 
+            if x = item then
+                true
+            else 
+                memberInner xs item
+        | [] -> false
+    memberInner l item
+
+memberof [ 1.0; 2.0; 3.0 ] 0.0  // val it : bool = false
+memberof [ 1.0; 2.0; 3.0 ] 1.0  // val it : bool = true
+memberof [ 1.0; 2.0; 3.0 ] 2.0  // trueval it : bool = true
+memberof [ 1.0; 2.0; 3.0 ] 3.0  // val it : bool = true
+memberof [ 1.0; 2.0; 3.0 ] 4.0  // val it : bool = false
+
+// val remove : l:'a list -> item:'a -> 'a list when 'a : equality
+let remove l item =
+    let rec removeInner l item acc =
+        match l with
+        | x::xs ->
+            if x = item then
+                removeInner xs item acc
+            else
+                let acc = x :: acc
+                removeInner xs item acc
+        | [] -> reverse acc
+    removeInner l item []
+
+remove [ 1.0; 2.0; 3.0 ] 0.0    // val it : float list = [1.0; 2.0; 3.0]
+remove [ 1.0; 2.0; 3.0 ] 1.0    // val it : float list = [2.0; 3.0]
+remove [ 1.0; 2.0; 3.0 ] 2.0    // val it : float list = [1.0; 3.0]
+remove [ 1.0; 2.0; 3.0 ] 3.0    // val it : float list = [1.0; 2.0]
+remove [ 1.0; 2.0; 3.0 ] 4.0    // val it : float list = [1.0; 2.0; 3.0]
+
+(* End of question 2 *) (* Do not edit this line *)
+
+(* Question 3 *) (* Do not edit this line *)
+
+// val isolate : list:'a list -> 'a list when 'a : equality
+let isolate list =
+    let rec isolateInner searchList commonlist =
+        match searchList with
+        | x::xs ->
+            if (memberof commonlist x) then
+                isolateInner xs commonlist
+            else
+                let commonlist = (x :: commonlist)
+                isolateInner xs commonlist
+        | [] -> reverse commonlist
+    isolateInner list []
+
+isolate [ 1.0; 2.0; 3.0 ]                                    // val it : float list = [1.0; 2.0; 3.0]
+isolate [ 1.0; 1.0; 2.0; 3.0 ]                               // val it : float list = [1.0; 2.0; 3.0]
+isolate [ 1.0; 2.0; 2.0; 3.0 ]                               // val it : float list = [1.0; 2.0; 3.0]
+isolate [ 1.0; 2.0; 3.0; 3.0 ]                               // val it : float list = [1.0; 2.0; 3.0]
+isolate [ 3.0; 2.0; 1.0; 1.0; 2.0; 3.0; 2.0; 1.0; 1.0; 3.0]  // val it : float list = [3.0; 2.0; 1.0]
+
+(* End of question 3 *) (* Do not edit this line *)
+
+(* Question 4 *) (* Do not edit this line *)
+
+// val common : a:'a list -> b:'a list -> 'a list when 'a : equality
+let common a b = 
+    let rec commonInner a b acc =
+        match (a,b) with
+        | (x::xs,b) ->
+            if (memberof acc x) then
+                commonInner xs b acc
+            else
+                let acc = x :: acc
+                commonInner xs b acc
+        | ([],y::ys) ->
+            if (memberof acc y) then
+                commonInner [] ys acc
+            else
+                let acc = y :: acc
+                commonInner [] ys acc
+        | ([],[]) -> reverse acc
+    commonInner a b []
+
+common [ 1.0; 2.0; 6.0; 10.0] [ 5.0; 6.0; 10.0 ]   // val it : float list = [1.0; 2.0; 6.0; 10.0; 5.0]

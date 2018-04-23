@@ -1,0 +1,62 @@
+using namespace boost::asio;
+using namespace boost::asio::ip;
+
+io_service ioservice;
+
+tcp::endpoint sim_endpoint{ tcp::v4(), 4066 };              //{which connectiontype, portnumber}
+tcp::acceptor sim_acceptor{ ioservice, sim_endpoint };
+std::vector<tcp::socket> sim_sockets;
+
+static int iErgebnis;
+int iSocket = 0;
+
+
+void do_write(int a)                                        //int a is the postion of the socket in the vector
+{
+    int iWSchleife = 1;                                     //to stay connected with putty or something
+    static char chData[32000];
+    std::string sBuf = ""Received!\r\n"";
+
+    while (iWSchleife > 0)          
+    {
+        boost::system::error_code error;
+        memset(chData, 0, sizeof(chData));        //clear the char 
+
+        iErgebnis = sim_sockets[a].read_some(boost::asio::buffer(chData), error);           //recv data from client
+        iWSchleife = iErgebnis;                                                             //if iErgebnis is bigger then 0 it will stay in the loop. iErgebniss is always >0 when data is received
+
+        if (iErgebnis > 0) {
+            printf(""%d data received from client : \n%s\n\n"", iErgebnis, chData);
+            write(sim_sockets[a], boost::asio::buffer(sBuf), error);  //send data to client
+        }
+        else {
+            boost::system::error_code ec;
+            sim_sockets[a].shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);       //close the socket when no data
+            if (ec)
+            {
+                printf(""studown error"");                                                    // An error occurred.
+            }
+        }
+    }
+}
+
+void do_accept(yield_context yield)
+{
+    while (1)                                                   //endless loop to accept limitless clients
+    {
+        sim_sockets.emplace_back(ioservice);                    //look to the link below for more info
+        sim_acceptor.async_accept(sim_sockets.back(), yield);   //waits here to accept an client
+
+        boost::thread dosome(do_write, iSocket);                //when accepted, starts the thread do_write and passes the parameter iSocket
+        iSocket++;                                              //to know the position of the socket in the vector
+
+    }
+}
+
+int main()
+{
+    sim_acceptor.listen();
+    spawn(ioservice, do_accept);            //here you can learn more about Coroutines https://theboostcpplibraries.com/boost.coroutine
+    ioservice.run();                        //from here you jump to do:accept
+    getchar(); 
+}

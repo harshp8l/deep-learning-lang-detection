@@ -1,0 +1,30 @@
+Import-Module ActiveDirectory
+$csv = Import-Csv C:\Users\user\Desktop\Scripts\User.csv
+
+ForEach ($item in $csv)
+{
+    $User = Get-ADUser $item.Username -Properties @('userprincipalname','displayname')
+
+    $Params=@{
+        ErrorAction='Stop'
+
+        To = $item.mgremail
+        From = 'Example@test.com'
+        SmtpServer = 'fwdhost@test.com'
+        Subject = 'Test'
+        Body = @""
+Hi,
+    Name: $($User.displayname)
+    User Logon: $($User.userprincipalname)
+
+Regards,
+    TEST
+""@
+    }
+
+    Try {
+        Send-MailMessage @Params
+    } Catch {
+        Write-Host ('Failed to send email. ' + $PSItem.Exception.Message) -ForegroundColor Red -BackgroundColor White
+    }
+}

@@ -1,0 +1,32 @@
+foreach ($item in $fileContentIMM) {
+    try {
+        # find first matching row in $fileContentMagic using wildcard
+        $objMatch = $fileContentMagic | where { $_.'Matricule' eq $item.'Matricule'
+                                           -and $_.'NOM' -eq $item.'Nom'
+                                           -and $_.'PRENOM' -eq $item.'Prenom'}
+
+
+        ##### check if any match found 
+        if ($objMatch -eq $null) {
+            $IGG = 'noSet'
+        } else {
+            $IGG = ($objMatch.'IGG' -join '/')
+        }
+        $filechecktrue += [pscustomobject]@{
+            'MATRICULE' = $item.'Matricule'
+            'IGG' = $IGG
+            'NAME'  = $item.'Nom'
+            'FIRSTNAME' = $item.'Prenom'
+            'SERVICE' = $item.'Service'
+            'Immeuble'= $item.'Immeuble' 
+            'Niveau' = $item.'Niveau'
+            'Loc.' = $item.'Loc.'
+            'PDT' = $item.'PDT'
+            'Occ.' = $item.'Occ.'
+            'Site' = $item.'Site'
+
+    } catch {
+        ""ERROR: Problem reading line - skipping :"" | Out-File $LogFile -Append -Force
+        $item.nom + $item.prenom + $item.service| Out-File $LogFile -Append -Force
+    }
+}

@@ -1,0 +1,48 @@
+#include <type_traits>
+
+struct A {};  // don't make it too easy, use a UDT
+
+          A f1(A a) { return a; }  // is_constexpr -> false
+constexpr A f2(A a) { return a; }  // is_constexpr -> true
+
+// The following turns anything (in our case a value of A) into an int.
+// This is necessary because non-type template arguments must be integral 
+// (likely to change with C++20).
+template <class T> constexpr int make_int(T &&) { return 0; }
+
+// Helper to turn some function type (e.g. int(float)) into a function
+// pointer type (e.g. int (*)(float)).
+template <class T> struct signature_from;
+template <class R, class... Args> struct signature_from<R(Args...)> {
+    using type = R(*)(Args...);
+};
+
+// See std::void_t for the idea. This does it for ints instead of types.
+template <int...> using void_from_int = void;
+
+// The fallback case: F is not a function pointer to a constexpr function
+template <class T, typename signature_from<T>::type F, class = void_from_int<>>
+struct is_constexpr {
+    static constexpr bool value = false;
+};
+// If void_from_int<make_int(F(Args()...))> doesn't lead to a substitution
+// failure, then this is the preferred specialization. In that case F must
+// be a function pointer to a constexpr function. If it is not, it could
+// not be used in a template argument.
+template <class R, class... Args, typename signature_from<R(Args...)>::type F>
+struct is_constexpr<R(Args...), F, void_from_int<make_int(F(Args()...))>>
+{
+    static constexpr bool value = true;
+};
+
+// proof that it works:
+static_assert(!is_constexpr<A(A), f1>::value, """");
+static_assert( is_constexpr<A(A), f2>::value, """");
+
+#if __cplusplus >= 201703
+// with C++17 the type of the function can be deduced:
+template<auto F> struct is_constexpr2 : is_constexpr<std::remove_pointer_t<decltype(F)>, F> {};
+
+static_assert(!is_constexpr2<f1>::value, """");
+static_assert( is_constexpr2<f2>::value, """");
+#endif

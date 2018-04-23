@@ -1,0 +1,34 @@
+type State<'S,'A> = State of ('S->('A * 'S))
+
+module State =
+    let run (State x) = x :'s->_
+    let get() = State (fun s -> (s , s))  :State<'s,_>
+    let put x = State (fun _ -> ((), x))  :State<'s,_>
+    let result a = State(fun s -> (a, s))
+    let bind (State m) k = State(fun s -> 
+                                    let (a, s') = m s
+                                    let (State u) = (k a) 
+                                    u s')     :State<'s,'b>
+
+    type StateBuilder() =
+        member this.Return op = result op
+        member this.Bind (m, cont) = bind m cont
+
+    let state = StateBuilder()
+
+    let rec loop (i: 'i) (next: 'i -> 'i) (pred: 'i -> 's -> bool) (m: 'i -> State<'s, unit>) =
+        state {
+            let! s = get()
+            do! if pred i s then
+                    state {
+                        do! m i
+                        let i = next i
+                        do! loop i next pred m }
+                else result () }
+
+    let during (pred : 's -> bool) (m : State<'s, unit>) =
+        loop () id (fun _ -> pred) (fun _ -> m)
+
+// test
+open State
+ignore <| run (state { do! during (fun c -> true) (result ()) })  () // boom

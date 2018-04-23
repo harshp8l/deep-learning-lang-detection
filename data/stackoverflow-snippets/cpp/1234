@@ -1,0 +1,46 @@
+#include <boost/variant.hpp>
+#include <string>
+#include <iostream>
+
+namespace mylib {
+
+    struct V;
+    using Pair = std::pair<std::string, V>;
+
+    struct V : boost::variant<int, boost::recursive_wrapper<Pair> > {
+        using base = boost::variant<int, boost::recursive_wrapper<Pair> >;
+
+        V() = default;
+        V(V&&) = default;
+        V(V const&) = default;
+        V& operator=(V&&) = default;
+        V& operator=(V const&) = default;
+
+        V(int i) : base(i) {}
+        V(std::string const& key, V value);
+    };
+
+    V::V(std::string const& key, V value) : base{Pair{std::move(key), std::move(value)}} {}
+
+    static inline std::ostream& operator<<(std::ostream& os, Pair const& p) {
+        return os << ""{"" << p.first << "","" << p.second << ""}"";
+    }
+}
+
+int main() {
+    using mylib::V;
+    V xxx(""s"", mylib::V{});
+    V yyy(""s"", 5);
+    V zzz{};
+    V huh(""s"", {""more"", {""intricate"", {""nested"", { ""truths"", 42} } } });
+
+    V simple = 5;
+    simple = {""simple"", 5};
+    simple = {""not_so_simple"", simple};
+
+    std::cout << ""xxx:"" << xxx << ""\n"";
+    std::cout << ""yyy:"" << yyy << ""\n"";
+    std::cout << ""zzz:"" << zzz << ""\n"";
+    std::cout << ""huh:"" << huh << ""\n"";
+    std::cout << ""simple:"" << simple << ""\n"";
+}

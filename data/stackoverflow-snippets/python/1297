@@ -1,0 +1,25 @@
+import tensorflow as tf
+
+x = tf.constant([[1, 7], [2, 6], [3, 5], [4, 8]], dtype=tf.float32)
+y_true = tf.constant([[0, 4], [-1, 3], [-2, 2], [-3, 1]], dtype=tf.float32)
+
+# The section you want
+r = tf.placeholder(tf.float32, shape=[3, 1])
+global_bias_value = tf.reduce_mean(r)
+global_bias = tf.fill([4, 2], global_bias_value)
+
+w = tf.get_variable('weight', [4, 2])
+y_pred = tf.multiply(x, w) + global_bias
+loss = tf.losses.mean_squared_error(labels=y_true, predictions=y_pred)
+optimizer = tf.train.GradientDescentOptimizer(0.01)
+train = optimizer.minimize(loss)
+
+init = tf.global_variables_initializer()
+sess = tf.Session()
+sess.run(init)
+for i in range(3):
+  _, weight, bias = sess.run((train, w, global_bias),
+                           feed_dict={r: [[1], [2], [3]]})
+  print('Step: ', i)
+  print('Weight: ', weight)
+  print('Bias: ', bias)

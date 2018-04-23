@@ -1,0 +1,37 @@
+for i, w in enumerate(words):
+    matches = re.findall(pattern, w)
+    w_annotations = []
+    if len(matches) > 0:
+        for m in matches:
+            w_annotations.append(annotate(m))
+        splitted_start = re.split(pattern_start, w)
+        # TODO: we assume no word contains more than one annotation
+        if len(splitted_start) > 1:
+            prefix, rest = splitted_start
+            if len(prefix) > 0:
+                tokens = list(nlp(prefix))
+                all_tokens.extend(tokens)
+                # The prefix requires space before, but the tag itself not
+                no_space[len(stripped_words) + 1] = True
+                stripped_words.append(prefix)
+        else:
+            rest = splitted_start[0]
+        splitted_end = re.split(pattern_end, rest)
+        tag = splitted_end[0]
+        stripped_words.append(tag)
+        tokens = list(nlp(tag))
+        n_tokens = len(all_tokens)
+        for j, t in enumerate(tokens):
+            annotations[n_tokens + j] = w_annotations
+        all_tokens.extend(tokens)
+        if len(splitted_end) > 1:
+            suffix = splitted_end[1]
+            if len(suffix) > 0:
+                tokens = list(nlp(suffix))
+                all_tokens.extend(tokens)
+                no_space[len(stripped_words)] = True
+                stripped_words.append(suffix)
+    else:
+        stripped_words.append(w)
+        tokens = list(nlp(w))
+        all_tokens.extend(tokens)

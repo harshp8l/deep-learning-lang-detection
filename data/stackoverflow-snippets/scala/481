@@ -1,0 +1,21 @@
+class LazilyEvaluatedBigData(a: String) {
+  lazy val generate: BigData = new BigData(128)
+}
+
+class BigData(m: Int) {
+  val data = Array.ofDim[Byte](1000000 * m)
+  def process: Seq[Int] = List(1,2,3)
+}
+
+@annotation.tailrec
+def gcFriendlyFlatMap[A](xs: List[LazilyEvaluatedBigData], revAcc: List[A], f: BigData => List[A]): List[A] = {
+  xs match {
+    case h :: t => gcFriendlyFlatMap(t, f(h.generate).reverse ::: revAcc, f)
+    case Nil => revAcc.reverse
+  }
+}
+
+val results1 = gcFriendlyFlatMap(List.fill(100)(new LazilyEvaluatedBigData("""")), Nil, _.process.toList)
+
+println(""run to end without OOM"")
+println(""results1 = "" + results1)

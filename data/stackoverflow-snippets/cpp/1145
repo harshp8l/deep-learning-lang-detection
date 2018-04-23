@@ -1,0 +1,40 @@
+#include ""mainwindow.h""
+#include ""ui_mainwindow.h""
+
+#include <QDebug>
+
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow),
+    qcvChart(new QChartView),
+    chart(new QChart)
+{
+    ui->setupUi(this);
+
+    qcvChart->setChart(chart);
+    qcvChart->setRubberBand(QChartView::HorizontalRubberBand);
+    rubberBand = qcvChart->findChild<QRubberBand *>();
+    rubberBand->installEventFilter(this);
+
+    connect(this, &MainWindow::rubberBandChanged,this, &MainWindow::rubberZoomAdapt);
+
+    setCentralWidget(qcvChart);
+    ...
+}
+
+...
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event)
+{
+    if(watched == rubberBand && event->type() == QEvent::Resize){
+        QPointF fp = chart->mapToValue(rubberBand->geometry().topLeft());
+        QPointF tp = chart->mapToValue(rubberBand->geometry().bottomRight());
+        emit rubberBandChanged(fp, tp);
+    }
+    return QMainWindow::eventFilter(watched, event);
+}
+
+void MainWindow::rubberZoomAdapt(QPointF fp, QPointF tp)
+{
+    qDebug() << ""(rubberZoomAdapt) RubberBand Event: ""<<fp<<tp;
+}

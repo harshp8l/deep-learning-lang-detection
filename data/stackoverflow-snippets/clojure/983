@@ -1,0 +1,30 @@
+(require '[schema.core :as s])
+(require '[schema.coerce :as coerce])
+(require '[schema.utils :as utils])
+
+(defn filter-schema-keys
+  [m schema-keys extra-keys-walker]
+  (reduce-kv (fn [m k v]
+               (if (or (contains? schema-keys k)
+                       (and extra-keys-walker
+                            (not (utils/error? (extra-keys-walker k)))))
+                 m
+                 (dissoc m k)))
+             m
+             m))
+
+(defn map-filter-matcher
+  [s]
+  (when (or (instance? clojure.lang.PersistentArrayMap s)
+            (instance? clojure.lang.PersistentHashMap s))
+    (let [extra-keys-schema (#'s/find-extra-keys-schema s)
+          extra-keys-walker (when extra-keys-schema (s/walker extra-keys-schema))
+          explicit-keys (some->> (dissoc s extra-keys-schema)
+                                 keys
+                                 (mapv s/explicit-schema-key)
+                                 (into #{}))]
+      (when (or extra-keys-walker (seq explicit-keys))
+        (fn [x]
+          (if (map? x)
+            (filter-schema-keys x explicit-keys extra-keys-walker)
+            x))))))

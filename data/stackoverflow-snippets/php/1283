@@ -1,0 +1,37 @@
+SELECT
+    u.store,
+    COALESCE(t1.achieved, 0) AS achieved,
+    COALESCE(t1.hairs_total, 0) AS hairs_total,
+    COALESCE(t1.beard_total, 0) AS beard_total,
+    COALESCE(t1.product_total, 0) AS product_total,
+    COALESCE(t2.month_target 0) AS month_target
+FROM user u
+LEFT JOIN
+(
+    SELECT
+        usr.store,
+        SUM(d.net) AS achieved,
+        SUM(d.hairs_total) AS hairs_total,
+        SUM(d.beard_total) AS beard_total,
+        SUM(d.product_total) AS product_total
+    FROM data d
+    INNER JOIN user usr
+        ON d.uid = usr.id
+    WHERE d.month = 'February'
+    GROUP BY usr.store
+) t1
+    ON u.store = t1.store
+LEFT JOIN
+(
+    SELECT
+        usr.store,
+        SUM(t.monthly_target) AS month_target
+    FROM tbl_goal t
+    INNER JOIN user usr
+        ON t.uid = usr.id
+    WHERE t.month = 'February'
+    GROUP BY usr.store
+) t2
+    ON u.store = t2.store;
+WHERE
+    u.store = 1;

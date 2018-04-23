@@ -1,0 +1,25 @@
+$fileName = 'whatever.txt';
+$linesToDelete = array( 3, 5 );
+
+// Working File
+$file = new SplFileObject( $fileName, 'a+' );
+$file->flock( LOCK_EX );
+// Temp File
+$temp = new SplTempFileObject( 0 );
+$temp->flock( LOCK_EX );
+// Wite the temp file without the lines
+foreach( $file as $key => $line )
+{
+  if( in_array( $key + 1, $linesToDelete ) === false )
+  {
+    $temp->fwrite( $line );
+  }
+}
+// Write Back to the main file
+$file->ftruncate(0);
+foreach( $temp as $line )
+{
+  $file->fwrite( $line );
+}
+$file->flock( LOCK_UN );
+$temp->flock( LOCK_UN );

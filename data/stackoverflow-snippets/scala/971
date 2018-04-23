@@ -1,0 +1,31 @@
+def binaryStringToByteArray(binaryString: String) = {
+  val byteBuffer = ArrayBuffer.empty[Byte]
+
+  var byteStr = """"
+  for (binaryChar <- binaryString) {
+    if (byteStr.length < 7) {
+      byteStr = byteStr + binaryChar
+    }
+    else {
+      try{
+        val byte = java.lang.Byte.parseByte(byteStr + binaryChar, 2)
+        byteBuffer += byte
+        byteStr = """"
+      }
+      catch {
+        case ex: java.lang.NumberFormatException =>
+          val byte = java.lang.Byte.parseByte(byteStr, 2)
+          byteBuffer += byte
+          byteStr = """" + binaryChar
+      }
+    }
+  }
+
+  if (!byteStr.isEmpty) {
+    val byte = java.lang.Byte.parseByte(byteStr, 2)
+    byteBuffer += byte
+    byteStr = """"
+  }
+
+  byteBuffer.toArray
+}

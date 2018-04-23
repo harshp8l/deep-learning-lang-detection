@@ -1,0 +1,38 @@
+(defn valid-time-item? [item]
+  (and (= (:field item) ""timespent"") (:to item) (:from item)))
+
+(defn history->time-items [history]
+  (filter valid-time-item? (:items history)))
+
+(defn history-has-time-items? [history]
+  (not-empty (history->time-items history)))
+
+(defn history-in-date-range? [history from-date to-date]
+  (tcore/within? (tcore/interval from-date to-date)
+                 (tformat/parse (tformat/formatters :date-time) (:created history))))
+
+(defn valid-history? [h from-date to-date]
+  (and (history-has-time-items? h) (history-in-date-range? h from-date to-date)))
+
+(defn issue->histories-with-key [issue]
+  (map #(assoc % :issue-key (:key issue)) (get-in issue [:changelog :histories])))
+
+(defn time-item->time-entry [item date issue-key]
+  (let [get-int (fn [k] (Integer/parseInt (get item k 0)))]
+    {:date date
+     :issue-key issue-key
+     :seconds-spent (- (get-int :to) (get-int :from))}))
+
+(defn history->time-entries [history]
+  (map #(time-item->time-entry % (:created history) (:issue-key history)) (history->time-items history)))
+
+(defn json->time-entries [json opts]
+  (let [{:keys [from-date to-date]} opts]
+    (->> json
+         :issues
+         (mapcat issue->histories-with-key)
+         (filter #(valid-history? % from-date to-date))
+         (mapcat #(history->time-entries %)))))
+
+(defn generate-time-report [opts]
+  (json->time-entries opts (query-jira->json opts)))

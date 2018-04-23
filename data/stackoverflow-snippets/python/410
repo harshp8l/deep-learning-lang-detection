@@ -1,0 +1,50 @@
+# Import PuLP modeler functions
+from pulp import *
+
+#Import data
+import pandas
+df = pandas.read_excel('Test.xlsx')
+
+#Set Items
+IDS=df['ID'].tolist()
+
+final_color=set(df['Color'].tolist())
+
+#Setting Fields to dictionaries
+colors=df.set_index('ID')['Color'].to_dict()
+Numbers=df.set_index('ID')['Number'].to_dict()
+red=df.set_index('ID')['Red'].to_dict()
+blue=df.set_index('ID')['Blue'].to_dict()
+
+
+# Create the 'prob' variable to contain the problem data
+prob = LpProblem(""Color Problem"",LpMinimize)
+
+#Set Variables
+# variable(name, low, upper, discrete/continuous)
+used_vars = LpVariable.dicts(""Used"",IDS,0,1,LpInteger)
+
+# Set Objective Function
+prob += lpSum([Numbers[i]*used_vars[i] for i in IDS]),""Minimum Amount""
+
+#Constraints
+prob += lpSum([used_vars[i] for i in IDS]) == 2, ""Minimum Options""
+prob += lpSum([red[i] * used_vars[i] for i in IDS]) == 1, ""Red""
+prob += lpSum([blue[i] * used_vars[i] for i in IDS]) == 1, ""Blue""
+
+
+# The problem data is written to an .lp file
+prob.writeLP(""colors.lp"")
+
+# The problem is solved using PuLP's choice of Solver
+prob.solve()
+
+# The status of the solution is printed to the screen
+print (""Status:"", LpStatus[prob.status])
+
+# Each of the variables is printed with it's resolved optimum value
+for v in prob.variables():
+    print (v.name, ""="", v.varValue)
+
+# The optimised objective function value is printed to the screen
+print (""Total Cost of Diet = "", value(prob.objective))

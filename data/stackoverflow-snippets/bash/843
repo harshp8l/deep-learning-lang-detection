@@ -1,0 +1,39 @@
+#!/bin/bash
+
+read -p ""tupe your email: "" EMAIL1
+read -p ""type your password: "" PASS1
+EMAIL=$(echo ""$EMAIL1"" | sed 's/\@/\%40/g')
+PASS=$(echo ""$PASS1"" | sed 's/\@/\%40/g')
+
+tempfile1=$(mktemp /tmp/foobar.$$.XXXXXXXXXX)
+tempfile2=$(mktemp /tmp/foobar.$$.XXXXXXXXXX)
+
+curl -s  'https://dashboard.ngrok.com/user/login' -c -|  grep  ""csrf\|session"" \
+| awk '/csrf_token/{print $4};/session/{print $6 ""="" $7}' | sed 's/value=/csrf_token=/g;s/\""//g;s/\#/\%23/g' > $tempfile1
+
+SESSION=$(cat  $tempfile1 | grep ""session"")
+TOKEN=$(cat $tempfile1 | grep ""csrf_token="" | sed 's/csrf_token=//g')
+
+curl  -i -s -k  -X 'POST' \
+-H 'User-Agent: Mozilla/5.0 \
+(X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0' \
+-H 'Referer: https://dashboard.ngrok.com/user/login' \
+-H 'DNT: 1' -H 'Upgrade-Insecure-Requests: 1' \
+-H 'Content-Type: application/x-www-form-urlencoded' \
+-b ''""$SESSION""'' \
+--data-binary $'email='""$EMAIL""'&password='""$PASS""'&csrf_token='""$TOKEN""'' \
+'https://dashboard.ngrok.com/user/login' \
+| awk '/session/{print $2}' > $tempfile2
+
+ SESSION2=$(cat $tempfile2)
+
+
+AUTHOR=$(curl -i -s -k  -X 'GET' \
+-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:52.0) \ Gecko/20100101 Firefox/52.0'\
+-H 'DNT: 1' -H 'Upgrade-Insecure-Requests: 1' \
+-b ''""$SESSION2""'' \
+'https://dashboard.ngrok.com/get-started'| grep ""ngrok\ authtoken"" \
+ |grep -o -P '(?<=authtoken).*(?=\<\/code\>)'|uniq)
+
+ [[ $(echo $AUTHOR |wc -c) -eq  ""0"" ]] && \
+  echo ""authintication is wrong"" || echo $AUTHOR  

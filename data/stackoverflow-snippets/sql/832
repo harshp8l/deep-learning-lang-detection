@@ -1,0 +1,14 @@
+SELECT w.*
+FROM (SELECT wo.WO_Key, wo.Pos_key, wo.Order_date, wo.Order_time / 86400 AS Order_time,
+             n.Note   
+      FROM API3.PUB.Work_order wo LEFT JOIN
+           API3.PUB.Note n
+           ON wo.WO_Key = n.Relate_key
+      UNION ALL  -- unless you really want to incur the overhead of removing duplicates
+      SELECT  wh.WO_Key, wh.Pos_key, wh.Order_date, wh.Order_time / 86400,
+              n.Note AS Note
+      FROM API3.PUB.Work_history wh LEFT JOIN
+           API3.PUB.Note n
+           ON wh.WO_Key = n.Relate_key
+     ) w
+ORDER BY Order_date DESC;

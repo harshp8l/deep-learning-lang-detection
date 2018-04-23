@@ -1,0 +1,19 @@
+# a simple custom activation
+from keras import backend as BK
+def mapping_to_target_range( x, target_min=1, target_max=10 ) :
+    x02 = BK.tanh(x) + 1 # x in range(0,2)
+    scale = ( target_max-target_min )/2.
+    return  x02 * scale + target_min
+
+# create a simple model
+from keras.layers import Input, Dense
+from keras.models import Model
+x = Input(shape=(1000,))
+y = Dense(4, activation=mapping_to_target_range )(x)
+model = Model(inputs=x, outputs=y)
+
+# testing
+import numpy as np 
+a = np.random.randn(10,1000)
+b = model.predict(a)
+print b.min(), b.max()

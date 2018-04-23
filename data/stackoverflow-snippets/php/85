@@ -1,0 +1,88 @@
+add_shortcode(""price_variation_table"", ""custom_available_variations_table"");
+function custom_available_variations_table( $atts ) {
+
+    global $post;
+
+    // Attributes
+    $atts = shortcode_atts(
+        array(
+            'id'    => $post->ID
+        ),
+        $atts, 'price_variation_table'
+    );
+
+    if( is_admin() ) return; // Only on front end
+
+    $product = wc_get_product($atts['id']); // Get the WC_Product Object
+
+    $output = '<div class=""fs-product-data-wrapper"">';
+
+    // Variable products
+    if( $product->is_type('variable'))
+    {
+        // Get available variations in the variable product
+        $available_variations = $product->get_available_variations();
+
+        if( count($available_variations) > 0 ){
+            $variations_ids = array();
+
+            // First loop - set variations Ids in an array with regular prices
+            foreach( $available_variations as $variation ){
+               $product = wc_get_product( $variation['variation_id'] );
+               $price = wc_price( wc_get_price_to_display( $product, array( 'price' => $product->get_regular_price() ) ) );
+               $variations_ids[$variation['variation_id']] = $price;
+            }
+            // Sorting variation Ids using prices from lower to highest
+            natsort($variations_ids);
+
+            // 2nd Loop - Display formatted variation data
+            foreach( array_keys($variations_ids) as $variations_id ){
+               $output .= format_product_data_output( $variations_id );
+            }
+        }
+    }
+    // Simple products
+    elseif( $product->is_type('simple'))
+    {
+        $output .= format_product_data_output( $product->get_id() );
+    }
+    else return; // Exit
+
+    return $output .= '</div>'; // return always for a shortcode
+}
+
+// Utility funtion: getting and formatting product data
+function format_product_data_output( $the_id ){
+    $empty =  __( '<em>(empty)</em>', 'woocommerce' );
+
+    // Get an instance of the WC_Product_Variation object
+    $product = wc_get_product( $the_id );
+
+    // Only wc_get_price_to_display() respect if product is to be displayed with or without including taxes
+    $price = wc_price( wc_get_price_to_display( $product, array( 'price' => $product->get_regular_price() ) ) );
+    $sale_price = wc_get_price_to_display( $product, array( 'price' => $product->get_sale_price() ) );
+    $sale_price = ! empty( $sale_price ) ? wc_price($sale_price) : $empty;
+
+    $size = $product->get_attribute( 'pa_size' );
+    $size = ! empty( $size ) ? get_term_by( 'slug', $size, 'pa_size' )->name : $empty;
+
+    $no_sale_price = ! $product->is_on_sale() ? ' no-sale-price' : '';
+
+    $size = $product->get_attribute( 'pa_size' );
+    $size = ! empty( $size ) ? get_term_by( 'slug', $size, 'pa_size' )->name : $empty;
+
+    $stock_qty = $product->get_stock_quantity();
+    $stock_qty = ! empty( $stock_qty ) ? $stock_qty : '0';
+    $stock_status = $stock_qty <= 0 ? 'stock-sold-out' : 'stock-available';
+
+    $output = '
+    <ul class=""'. $stock_status .'"">
+        <li class=""fs-data-price"">'.$price.' ea.</li>
+        <li class=""fs-data-size"">Size: '.$size.'</li>
+        <li class=""fs-data-sale'. $no_sale_price .'"">'.$sale_price.' ea. Preferred customer price</li>
+        <li class=""fs-data-stock"">Quantity in Stock: '.$stock_qty.'</li>
+        <li class=""fs-data-notice"">Quantities change quickly!</li>
+    </ul>';
+
+    return $output;
+}

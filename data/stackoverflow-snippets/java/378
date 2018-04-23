@@ -1,0 +1,22 @@
+    private IntegrationFlowBuilder integrationFlowBuilder() {
+
+    final List<FileListFilter<File>> defaultFilters = new ArrayList<>(2);
+
+    defaultFilters.add(new IgnoreHiddenFileListFilter());
+    defaultFilters.add(new AcceptOnceFileListFilter<>());
+    defaultFilters.add(new SimplePatternFileListFilter(""*.xml""));
+    defaultFilters.add(myCustomRemovalFilter);
+
+    CompositeFileListFilter fileListFilter = new CompositeFileListFilter<>(defaultFilters);
+
+    return IntegrationFlows.from(
+
+            Files.inboundAdapter(new File(localFilmFolder))
+                    .autoCreateDirectory(true)
+                    .filter(fileListFilter)
+                    .useWatchService(true)
+                    .watchEvents(FileReadingMessageSource.WatchEventType.CREATE, FileReadingMessageSource.WatchEventType.DELETE),
+
+            e -> e.poller(Pollers.fixedDelay(10, TimeUnit.SECONDS)
+            ));
+} 

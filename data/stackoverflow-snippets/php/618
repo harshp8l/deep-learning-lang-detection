@@ -1,0 +1,14 @@
+public function getGeneralPost() {
+    $post = Post::inRandomOrder()->orderBy('created_at', 'DESC')->get();
+    foreach ($post as $item) {
+        $categories = Category::where('id' , $item->post_subtype)->select('category_title')->first();
+        $categories_type = Category::where('id' , $item->post_type)->select('category_title')->first();
+        $item->post_subtype = $categories->category_title;
+        $item->post_type = $categories_type->category_title;
+
+        $item->setKeyType('string');
+        $item->id = str_pad($item->id ,10,'0',STR_PAD_LEFT);
+    }
+    $success['posts'] = $post;
+    return response()->json(['code'=>'success','success' => $success], $this->successStatus);
+}

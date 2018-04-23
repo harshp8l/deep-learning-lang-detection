@@ -1,0 +1,56 @@
+//Inside CapturePhotoWithOrientationAsync method
+...
+Point startPoint = new Point(0, 0);
+Size corpSize = new Size(250, 250);
+// Convert start point and size to integer. 
+uint startPointX = (uint)Math.Floor(startPoint.X);
+uint startPointY = (uint)Math.Floor(startPoint.Y);
+uint height = (uint)Math.Floor(corpSize.Height);
+uint width = (uint)Math.Floor(corpSize.Width);
+// Refine the start point and the size.  
+if (startPointX + width > decoder.PixelWidth)
+{
+    startPointX = decoder.PixelWidth - width;
+}
+
+if (startPointY + height > decoder.PixelHeight)
+{
+    startPointY = decoder.PixelHeight - height;
+}
+
+// Create cropping BitmapTransform to define the bounds. 
+BitmapTransform transform = new BitmapTransform();
+BitmapBounds bounds = new BitmapBounds();
+bounds.X = startPointX;
+bounds.Y = startPointY;
+bounds.Height = height;
+bounds.Width = width;
+transform.Bounds = bounds; 
+
+// Get the cropped pixels within the the bounds of transform. 
+PixelDataProvider pix = await decoder.GetPixelDataAsync(
+    BitmapPixelFormat.Bgra8,
+    BitmapAlphaMode.Straight,
+    transform,
+    ExifOrientationMode.IgnoreExifOrientation,
+    ColorManagementMode.ColorManageToSRgb);
+byte[] pixels = pix.DetachPixelData(); 
+
+StorageFolder storageFolder = KnownFolders.PicturesLibrary;
+var file = await storageFolder.CreateFileAsync(""test.jpeg"", CreationCollisionOption.ReplaceExisting);
+using (var outputStream = await file.OpenAsync(FileAccessMode.ReadWrite))
+{    
+    BitmapEncoder encoder = await BitmapEncoder.CreateForTranscodingAsync(outputStream, decoder);
+    // Set the pixel data to the cropped image. 
+    encoder.SetPixelData(
+        BitmapPixelFormat.Bgra8,
+        BitmapAlphaMode.Straight,
+        width,
+        height,
+        decoder.DpiX,
+        decoder.DpiY,
+        pixels); 
+
+    // Flush the data to file. 
+    await encoder.FlushAsync();
+}

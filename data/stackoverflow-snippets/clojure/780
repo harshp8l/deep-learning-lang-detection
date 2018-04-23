@@ -1,0 +1,18 @@
+(ns clj.core
+  (:require [clojure.string :as str] )
+  (:use tupelo.core)) ; it->
+
+(defn is-title-kw       [arg] (re-matches #"".*-title"" (name arg)))
+(defn title-kw->val-kw  [arg] (it-> arg
+                                    (name it)
+                                    (str/replace it #""-title"" ""-val"")
+                                    (keyword it)))
+
+(defn transform [map-arg]
+  (let [title-kws (filter is-title-kw (keys map-arg)) ]
+    (into {}
+      (for [title-kw title-kws]
+        (let [val-kw      (title-kw->val-kw title-kw)
+              title-str   (title-kw map-arg)
+              val-str     (val-kw   map-arg) ]
+          {title-str val-str} )))))

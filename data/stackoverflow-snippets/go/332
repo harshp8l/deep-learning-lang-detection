@@ -1,0 +1,74 @@
+package main
+
+import (
+    ""bytes""
+    ""encoding/csv""
+    ""encoding/json""
+    ""fmt""
+    ""io""
+    ""log""
+)
+
+var data = `Ignore,Customer,Fruit,Number
+123,A,Apple,1
+123,A,Apple,3
+123,B,Orange,4
+123,C,Melon,5`
+
+type Account struct {
+    Customer  string     `json:""Customer""`
+    LineItems []LineItem `json:""LineItems""`
+}
+
+type LineItem struct {
+    ProductName string `json:""ProductName""`
+    Count       string `json:""Count""`
+}
+
+func main() {
+    reader := csv.NewReader(bytes.NewBufferString(data))
+
+    // Read column label data and discard
+    if _, err := reader.Read(); err != nil {
+        log.Fatal(err)
+    }
+
+    var billData []Account
+    for {
+        line, err := reader.Read()
+        if err == io.EOF {
+            break
+        }
+        if err != nil {
+            log.Fatal(err)
+        }
+        found := false
+        for i := range billData {
+            if billData[i].Customer == line[1] {
+                found = true
+                billData[i].LineItems = append(billData[i].LineItems, LineItem{
+                    ProductName: line[2],
+                    Count:       line[3],
+                })
+                break
+            }
+        }
+        if !found {
+            billData = append(billData, Account{
+                Customer: line[1],
+                LineItems: []LineItem{
+                    {
+                        ProductName: line[2],
+                        Count:       line[3],
+                    },
+                },
+            })
+        }
+    }
+
+    billingJson, err := json.MarshalIndent(billData, """", ""  "")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println(string(billingJson))
+}

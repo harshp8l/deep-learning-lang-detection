@@ -1,0 +1,20 @@
+/*
+ * Get user distinguised name, example: ""user"" -> ""CN=User Name,OU=Groups,OU=Domain Users,DC=company,DC=something,DC=org""
+ * This will be used for our query later
+ */
+String distinguishedName = ldapTemplate.search(
+        query().where(""sAMAccountName"").is(userCN),
+        (AttributesMapper<String>) attrs -> attrs.get(""distinguishedName"").get().toString()
+).get(0); //.get(0): we assume that search will return a result 
+
+/*
+ * This one recursively search for all (nested) group that this user belongs to
+ * ""member:1.2.840.113556.1.4.1941:"" is a magic attribute, Reference: 
+ * https://msdn.microsoft.com/en-us/library/aa746475(v=vs.85).aspx
+ * However, this filter is usually slow in case your ad directory is large.
+ */
+List<String> allGroups = ldapTemplate.search(
+        query().searchScope(SearchScope.SUBTREE)
+                .where(""member:1.2.840.113556.1.4.1941:"").is(distinguishedName),
+        (AttributesMapper<String>) attrs -> attrs.get(""cn"").get().toString()
+);

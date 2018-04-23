@@ -1,0 +1,17 @@
+(defn read-quad-tree [pattern]
+    (loop   [r                   []
+            [s & rs :as stack]   []
+            [p & rp :as pending] (reverse pattern)]
+        (cond
+            (nil? pending)
+                (if (or (seq stack) (not= (count r) 1))
+                    {:error ""Too few 'p'""}
+                    {:tree (first r)})
+            (= (count r) 4)
+                (recur [] (conj stack (into [] (reverse r))) pending)
+            (= p \p) 
+                (if (empty? s)
+                    {:error (format ""'p' at %s lacks %d children"" (count pending) (- 4 (count r)))}
+                    (recur (conj r s) (into [] rs) rp))
+            :else
+                (recur (conj r p) stack rp))))

@@ -1,0 +1,22 @@
+np.random.seed(4545)
+
+N = 10000
+df = pd.DataFrame(np.random.randint(1000,size=N), columns=['ip'])
+print (len(df))
+10000
+
+blacklist = pd.Series(np.random.randint(500,size=int(N/100)))
+print (len(blacklist))
+100
+
+In [320]: %timeit df['ip'].isin(blacklist).astype(np.int8)
+465 µs ± 21.5 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+In [321]: %timeit pd.Categorical(df['ip'].isin(blacklist).astype(np.int8))
+915 µs ± 49.9 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+In [322]: %timeit pd.Categorical(df['ip'], categories = blacklist.unique()).notnull().astype(int)
+1.59 ms ± 20.1 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+In [323]: %timeit df['new_column'] = [1 if x in blacklist.values else 0 for x in df.ip]
+81.8 ms ± 2.72 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)

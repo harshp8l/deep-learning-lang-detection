@@ -1,0 +1,25 @@
+def write(writer: VarCharWriter, idx: Int, 
+  allocator: BufferAllocator, data: String): Unit = {
+  // Set the position to the correct index
+  writer.setPosition(idx)
+  val bytes = data.getBytes()
+  // Apparently the allocator is required again to build a new buffer
+  val varchar = allocator.buffer(bytes.length)
+  varchar.setBytes(0, data.getBytes())
+  writer.writeVarChar(0, bytes.length, varchar)
+}
+
+def toFile(parent: FieldVector, fName: String): Unit = {
+  // Extract a schema from the parent: that's the part I struggled with in the original question
+  val rootSchema = new VectorSchemaRoot(parent)
+  val stream = new FileOutputStream(fName)
+  val fileWriter = new ArrowFileWriter(
+                        rootSchema,
+                        null, // We don't use dictionary encoding.
+                        stream.getChannel)
+  // Write everything to file...
+  fileWriter.start()
+  fileWriter.writeBatch()
+  fileWriter.end()
+  stream.close()
+}

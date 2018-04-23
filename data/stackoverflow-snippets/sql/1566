@@ -1,0 +1,21 @@
+select * 
+from
+(SELECT ROUND(coalesce(SUM(c.ClaimNet), 0), 2) as net, 
+       MAX(c.ClaimID) claimid, count(c.ClaimID) as claims, 
+       MAX(h.TransactionDate) as TransactionDate, 
+       'Resubmission' AS 'Claim Type' 
+FROM Claim c 
+LEFT OUTER JOIN ClaimHeader h on h.HeaderID = c.HeaderPKID 
+INNER JOIN Resubmission r ON r.ClaimID = c.ClaimPKID WHERE h.HeaderType=2 
+
+UNION ALL 
+
+SELECT ROUND(coalesce(SUM(c.ClaimNet), 0), 2) as net, 
+       MAX(c.ClaimID), count(c.ClaimID) as claims, 
+       MAX(h.TransactionDate) as TransactionDate, 
+      'First Submission' AS 'Claim Type' 
+FROM Claim c 
+LEFT OUTER JOIN ClaimHeader h on h.HeaderID = c.HeaderPKID 
+WHERE ClaimPKID NOT IN 
+         ( SELECT ClaimID FROM Resubmission GROUP BY ClaimID ) AND HeaderType=2) claims
+where claims.claims <> 0

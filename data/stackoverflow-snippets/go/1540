@@ -1,0 +1,60 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+    ""log""
+    ""reflect""
+)
+
+const s = `
+{
+         ""localhost"":
+        {
+                ""tag"": ""dev_latest"",
+                ""vhost"": ""localhost.com""
+        },
+        ""development"":
+        {
+                ""tag"": ""dev_latest"",
+                ""vhost"": ""dev.com""
+        }
+}
+`
+
+func flatten(m map[string]interface{}) map[string]string {
+    mm := make(map[string]string)
+    for k, v := range m {
+        switch reflect.TypeOf(v).Kind() {
+        case reflect.Map:
+            mv := flatten(v.(map[string]interface{}))
+            for kk, vv := range mv {
+                mm[k+""-""+kk] = vv
+            }
+        case reflect.Array, reflect.Slice:
+            for kk, vv := range m {
+                if reflect.TypeOf(vv).Kind() == reflect.Map {
+                    mv := flatten(vv.(map[string]interface{}))
+                    for kkk, vvv := range mv {
+                        mm[k+""-""+kkk] = vvv
+                    }
+                } else {
+                    mm[k+""-""+kk] = fmt.Sprint(vv)
+                }
+            }
+        default:
+            mm[k] = fmt.Sprint(v)
+        }
+    }
+    return mm
+}
+
+func main() {
+    var m map[string]interface{}
+    err := json.Unmarshal([]byte(s), &m)
+    if err != nil {
+        log.Fatal(err)
+    }
+    b, _ := json.MarshalIndent(flatten(m), """", ""  "")
+    println(string(b))
+}

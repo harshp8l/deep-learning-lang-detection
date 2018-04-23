@@ -1,0 +1,21 @@
+class DisablingRule implements TestRule {
+    Collection<Features> readFromFile = new ArrayList<>();
+    public DisablingRule(String configfile) {
+        // read config file to find out what features are supposed to be supported 
+        // and add to member
+        Files.readAllLines(Paths.get(configfile), Charset.UTF8).stream()
+              .map(Feature1::valueOf)
+              .forEach(readFromFile::add);
+    }
+    public Statement apply(Statement base, Description d) {
+        return (isFeatureEnabled(d.getAnnotation(FeatureSupport.class)))
+            ? base
+            : () -> { 
+                log(String.format(""Test case %s disabled: feature not supported: %s"", 
+                    d.getDisplayName(), feature)); };
+        }
+    }
+    private boolean isFeatureEnabled(FeatureSupport f) {
+        return f != null || readFromFile.contains(f.getCondition());
+    }
+}

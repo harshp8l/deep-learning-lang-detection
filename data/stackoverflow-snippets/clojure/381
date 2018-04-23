@@ -1,0 +1,24 @@
+(reg-event-fx  
+  :request 
+  (fn [{:keys [db]} [_ method url data]]  
+    {:http-xhrio {:method          method
+                  :uri             url
+                  :params          data
+                  :format          (ajax/json-request-format) 
+                  :response-format (ajax/json-response-format {:keywords? true})
+                  :on-success      [:success-response method url]
+                  :on-failure      [:error-response method url]}
+     :db  (assoc db :processing? true)}))
+
+(reg-event-db
+  :success-response
+  (fn [db [_ method url result]]
+    (assoc db :foobar response
+              :processing? false)}))
+
+(reg-event-db
+  :error
+  (fn [db [_ method url result]]
+    (assoc db :foobar nil 
+              :last-error result
+              :processing? false)}))

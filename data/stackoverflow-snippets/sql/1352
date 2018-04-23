@@ -1,0 +1,13 @@
+CREATE FUNCTION dbo.StrangeSplitter(@SplitThis NVARCHAR(MAX),@FindThis NVARCHAR(MAX))
+RETURNS TABLE
+AS
+RETURN
+    WITH Casted AS
+    (   
+        SELECT CAST('<x>' + REPLACE((SELECT @SplitThis AS [*] FOR XML PATH('')),@FindThis,'</x><x>') + '</x>' AS XML) AS Splitted
+    )
+    SELECT ROW_NUMBER() OVER(ORDER BY (SELECT NULL)) AS FindIndex
+          ,@FindThis + ' ' + x.value('text()[1]','nvarchar(max)') AS YourFragment
+    FROM Casted
+    CROSS APPLY Splitted.nodes('/x') AS A(x)
+GO

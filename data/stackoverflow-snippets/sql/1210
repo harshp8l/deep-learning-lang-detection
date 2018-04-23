@@ -1,0 +1,48 @@
+ WITH CTE AS (
+
+SELECT  HOST_team , 3   AS points
+FROM    matches
+WHERE   host_goals>guest_goals
+
+UNION
+
+SELECT  Guest_team , 3  AS points
+FROM    matches
+WHERE   guest_goals>host_goals
+
+UNION
+
+SELECT  HOST_team , 1   AS points
+FROM    matches
+WHERE   guest_goals=host_goals
+
+UNION
+
+SELECT  guest_team , 1  AS points
+FROM    matches
+WHERE   guest_goals=host_goals
+
+  UNION
+
+  SELECT                team_id, 0
+  FROm              teams
+  LEFT OUTER JOIN       matches     on team_id =host_team or team_id = 
+  guest_team
+  WHERE             matches.guest_team IS NULL
+      AND                   matches.host_team IS NULL       
+
+
+ )
+
+
+
+    SELECT          t.team_id
+           ,t.team_name
+           ,SUM (points)        AS totalpoints
+
+
+    FROM                CTE     AS  c
+    INNER JOIN          teams   AS  t   ON c.host_team=t.team_id
+
+    GROUP BY        t.team_id,t.team_name
+    ORDER BY        totalpoints DESC

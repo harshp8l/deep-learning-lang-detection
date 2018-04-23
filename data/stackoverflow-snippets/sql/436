@@ -1,0 +1,25 @@
+SELECT CheckIn.Userid, 
+    Cast(CheckIn.CheckInTime as Date) as CheckDate, 
+    CONVERT(VARCHAR(8),CheckIn.CheckInTime,108) as CheckIn,
+    CONVERT(VARCHAR(8),CheckOut.CheckOutTime,108) as CheckOut,
+    DATEDIFF(hh,CheckIn.CheckInTime, CheckOut.CheckOutTime) as hours
+From
+    (       
+        SELECT
+            ROW_NUMBER() OVER (PARTITION BY userid ORDER BY checktime) as checkid,
+            Checktime as CheckInTime,
+            Userid
+        From Checkinout
+        WHERE CAST(CheckTime as Time) BETWEEN '09:14:00' AND '16:30:00'     
+    )CheckIn
+    INNER JOIN
+    (
+        SELECT
+            ROW_NUMBER() OVER (PARTITION BY userid ORDER BY checktime) as checkid,
+            CheckTime as CheckOutTime
+            Userid
+            WHERE CAST(CheckTime as Time) BETWEEN '21:00:00' AND '24:00:00' 
+                OR  CAST(CheckTime as Time) BETWEEN '00:00:00' AND '03:00:00'
+        From Checkinout
+    )CheckOut
+    ON CheckIn.CheckID = CheckOut.CheckId

@@ -1,0 +1,24 @@
+case class Worker(in: String)(implicit logger: Logger) {
+  def work(): Unit = {
+    logger.log(s""working on $in"")
+    // doing some work here
+  }
+}
+
+trait Logger {
+  def log(message: String)
+}
+
+case class ConsoleLogger() extends Logger {
+  override def log(message: String): Unit = {
+    // just prints the message
+    println(message)
+  }
+}
+
+object MyApp extends App {
+  implicit val logger: Logger = ConsoleLogger()
+  // logger in current scope (ConsoleLogger) would be injected into worker
+  val worker = Worker(""some work"")
+  worker.work()
+}

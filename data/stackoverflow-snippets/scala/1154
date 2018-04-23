@@ -1,0 +1,12 @@
+/** Tries to add the callback, if already completed, it dispatches the callback to be executed.
+ *  Used by `onComplete()` to add callbacks to a promise and by `link()` to transfer callbacks
+ *  to the root promise when linking two promises togehter.
+ */
+@tailrec
+private def dispatchOrAddCallback(runnable: CallbackRunnable[T]): Unit = {
+  getState match {
+    case r: Try[_]          => runnable.executeWithValue(r.asInstanceOf[Try[T]])
+    case _: DefaultPromise[_] => compressedRoot().dispatchOrAddCallback(runnable)
+    case listeners: List[_] => if (updateState(listeners, runnable :: listeners)) () else dispatchOrAddCallback(runnable)
+  }
+}

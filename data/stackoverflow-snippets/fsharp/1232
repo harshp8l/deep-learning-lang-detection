@@ -1,0 +1,30 @@
+type appointment=
+    | Probationary of int
+    | Fixed
+
+type GradeLevel = 
+    | Junior_Dev of appointment
+    | Dev
+    | Senior_Dev
+    | PM
+    | Architect of int
+
+type person = {gradeLevel: GradeLevel ; title: string; salary: float; name: string}
+
+
+let John_C = {gradeLevel=Dev; title=""Hamster...""; salary= 3500000.0; name= ""John Connor""}
+let James_J = {gradeLevel=Junior_Dev (Probationary 3); title=""Gofer""; salary= 3500000.0; name= ""James Joyce""}
+
+
+let splitter (EmpList: person list) = 
+     let rec splitter remaining (j,d,s,p,a) =
+        match remaining with
+        | [] -> (j,d,s,p,a)
+        | x::xs ->
+            match x.gradeLevel with
+            | Junior_Dev w -> splitter xs (x::j, d, s, p, a)
+            | Dev -> splitter xs (j, x::d, s, p, a)
+            | Senior_Dev -> splitter xs (j, d, x::s, p, a)
+            | PM -> splitter xs (j, d, s, x::p, a)
+            | Architect w -> splitter xs (j, d, s, p, x::a)
+     splitter EmpList ([],[],[],[],[])

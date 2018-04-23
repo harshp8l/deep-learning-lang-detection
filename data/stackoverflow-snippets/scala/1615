@@ -1,0 +1,21 @@
+class MyWebSocketActor(sh: HandleSocket, out: ActorRef) extends Actor {
+  def receive = {
+      case msg: String => {
+        Json.fromJson[SocketParsedMessage](Json.parse(msg)) match {
+          case s: JsSuccess[SocketParsedMessage] => {
+            sh.HandleSocketMessages(out, s.get)
+          }
+          case _: JsError => {
+            out ! PoisonPill
+          }
+        }
+        // println(parsedMsg)
+        // out ! (msg)
+      }
+  }
+
+  override def postStop(): Unit = {
+    // super.postStop()
+    sh.clientDisconnected(out)
+  }
+}

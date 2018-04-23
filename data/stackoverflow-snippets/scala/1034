@@ -1,0 +1,23 @@
+val stats = df.select(df.dtypes.flatMap {
+  case (c, ""StringType"") => 
+    Seq(count(c) as s""valid_${c}"", count(""*"") - count(c) as s""invalid_${c}"")
+  case (c, t) if Seq(""TimestampType"", ""DateType"") contains t => 
+    Seq(min(c), max(c))
+  case (c, t) if (Seq(""FloatType"", ""DoubleType"", ""IntegerType"") contains t) || t.startsWith(""DecimalType"") => 
+    Seq(min(c), max(c), avg(c), stddev(c))
+  case _ => Seq.empty[Column]
+}: _*)
+
+// root
+//  |-- min(v): timestamp (nullable = true)
+//  |-- max(v): timestamp (nullable = true)
+//  |-- min(x): integer (nullable = true)
+//  |-- max(x): integer (nullable = true)
+//  |-- avg(x): double (nullable = true)
+//  |-- stddev_samp(x): double (nullable = true)
+//  |-- valid_y: long (nullable = false)
+//  |-- invalid_y: long (nullable = false)
+//  |-- min(z): decimal(10,2) (nullable = true)
+//  |-- max(z): decimal(10,2) (nullable = true)
+//  |-- avg(z): decimal(14,6) (nullable = true)
+//  |-- stddev_samp(z): double (nullable = true)

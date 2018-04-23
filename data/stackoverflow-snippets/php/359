@@ -1,0 +1,42 @@
+require_once 'initialise.php';
+require_once 'isLoggedIn.php';
+require_once 'isPasswordValid.php';
+require_once 'setLoginSession.php';
+
+// If logged in no need to do the form thing
+if (isLoggedIn() === true) {
+    // Redirect to index
+    // Or echo message ""already logged in"" and exit so not to show the login form
+}
+
+// Initialise vars
+$errorMessage = null;
+$postPassword = null;
+
+// If form submitted
+if (isset($_POST['submit'])) {
+
+    $postPassword = $_POST['password'];
+    $passwordValid = isPasswordValid($postPassword);
+
+    // Password is valid, set their session and send them to index page
+    if ($passwordValid === true) {
+        setLoginSession();
+        header('Location: index.php');
+        exit;
+    }
+
+    // Password not valid (would have redirected above otherwise)
+    $errorMessage = '<div class=""warning"">Password Incorrect !!</div>';
+}
+
+// If we have an error message show it
+if ($errorMessage !== null) {
+    echo $errorMessage;
+}
+
+?>
+    <form action=""#"" method=""post"">
+        <input type=""password"" name=""password"" placeholder=""Enter your password"">
+        <input type=""submit"" name=""submit"" value=""SUBMIT"">
+    </form>

@@ -1,0 +1,121 @@
+#include <iostream>
+#include <string>
+#include <utility>
+#include <tuple>
+#include <vector>
+
+// ostream operator<< for vector<T>
+template<class T>
+std::ostream& operator<<( std::ostream& out, const std::vector<T>& v ) {
+    out << ""{ "";
+    for( auto& a : v )
+        out << a << ' ';
+    out << '}';
+    return out;
+}
+
+// istream operator>> for vector<T>
+template<class T>
+std::istream& operator>>( std::istream& in, std::vector<T>& v ) {
+    int i;
+    std::string line;
+    std::getline( std::cin, line );
+    std::istringstream iss( line );
+    while( iss >> i ) {
+        v.push_back( i );
+    }
+    return in;
+}
+
+// function templates & ostream operator<< for tuple<T>
+template<std::size_t> struct int_ {};
+
+template<class Tuple, size_t Pos>
+std::ostream& print_tuple( std::ostream& out, const Tuple& t, int_<Pos> ) {
+    out << std::get<std::tuple_size<Tuple>::value - Pos>( t ) << ' ';
+    return print_tuple( out, t, int_<Pos - 1>() );
+}
+
+template<class Tuple>
+std::ostream& print_tuple( std::ostream& out, const Tuple& t, int_<1> ) {
+    return out << std::get<std::tuple_size<Tuple>::value - 1>( t );
+}
+
+template<class... Args>
+std::ostream& operator<<( std::ostream& out, const std::tuple<Args...>& t ) {
+    return print_tuple( out, t, int_<sizeof...(Args)>() );
+}
+
+// function templates & istream operator << for tuple<T>
+template<class Tuple, size_t Pos>
+std::istream& write_tuple( std::istream& in, Tuple& t, int_<Pos> ) {
+    in >> std::get<std::tuple_size<Tuple>::value - Pos>( t );
+    return write_tuple( in, t, int_<Pos - 1>() );
+}
+
+template<class Tuple>
+std::istream& write_tuple( std::istream& in, Tuple& t, int_<1> ) {
+    return in >> std::get<std::tuple_size<Tuple>::value - 1>( t );
+}
+
+template<class... Args>
+std::istream& operator>>( std::istream& in, std::tuple<Args...>& t ) {
+    return write_tuple( in, t, int_<sizeof...(Args)>() );
+}
+// --------------------------------------------------
+
+// class proto type for friend operators
+template<class... T>
+class StudentInfo;
+
+template<class... T>
+std::ostream& operator<< <>( std::ostream& out, const StudentInfo<T...>& c );
+
+template<class... T>
+std::istream& operator>> <>( std::istream& in, StudentInfo<T...>& c );
+
+//template<typename... Args>
+template<class...Args>
+class StudentInfo {
+public
+    std::tuple<Args...> members;
+
+
+    explicit StudentInfo(Args&&... args ) {
+        members = std::make_tuple<Args...>( std::move( args )... );
+    } 
+
+    const StudentInfo<Args...>& operator() ( Args&&... args ) {
+        members = std::make_tuple<Args...>( std::forward<Args>( args )... );
+        return *this;
+    }
+
+    const StudentInfo<Args...> operator() ( Args&&... args ) const {
+        members = std::make_tuple<Args...>( std::forward<Args>( args )... );
+        return *this;
+    }
+
+    template<Args...>
+    friend std::ostream& operator<< <>(std::ostream& out, const StudentInfo<Args...>& c);
+
+    template<Args...>
+    friend std::istream& operator>> <>( std::istream& in, StudentInfo<Args...>& c );
+
+    StudentInfo<Args...>& operator=( StudentInfo<Args...>& c ) {
+        if ( members == c.members ) 
+            return *this;
+        members = c.members;
+        return *this;
+    }
+
+};
+
+template<class... T>
+std::ostream& operator<< <>( std::ostream& out, StudentInfo<T...>& c ) {
+    return out << c.members;
+}
+
+template<class... T>
+std::istream& operator>> <>( std::istream& in, StudentInfo<T...>& c ) {
+    return in >> c.members;
+}

@@ -1,0 +1,28 @@
+import scala.concurrent.Future
+import scala.util.Either
+import cats.instances.future._
+import cats.instances.either._
+import cats.instances.option._
+import cats.data.EitherT
+import cats.data.OptionT
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+
+type Error = String        // or whatever...
+type Foo = (Int, Int)      // whatever...
+type Bar = (String, Float) // whatever... 
+
+type FutureEither[A] = EitherT[Future, Error, A]
+type FutureEitherOption[A] = OptionT[FutureEither, A]
+
+def fooServiceCall: FutureEitherOption[Foo] = ???
+def barServiceCall(f: Option[Foo]): FutureEitherOption[Bar] = ???
+
+
+val resFut: Future[Either[Error, Option[Bar]]] = (for {
+  r1 <- fooServiceCall.value // : EitherT[Future, Error, Option[Foo]]
+  r2 <- barServiceCall(r1).value // : EitherT[Future, Error, Option[Bar]]
+} yield r2).value
+
+val res: Either[Error, Option[Bar]] = Await.result(resFut, 10.seconds)

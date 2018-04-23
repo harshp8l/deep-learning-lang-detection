@@ -1,0 +1,27 @@
+// define the extensions
+
+type System.String with  
+    member this.foo n = this + ""!"" + n 
+
+type System.Boolean with  
+    member this.foo n = sprintf ""%A!%A"" this n 
+
+// Once finished with the extensions put them in a class
+// where the first overload should be the generic version.
+type Foo = Foo with
+    static member inline ($) (Foo, this) = fun n -> (^T : (member foo : ^N -> ^S) this, n)
+    static member ($) (Foo, this:string) = fun n -> this.foo n 
+    static member ($) (Foo, this:bool)   = fun n -> this.foo n
+    // Add other overloads
+    static member ($) (Foo, this:int)    = fun n -> this + n 
+
+let inline foo this n = (Foo $ this) n
+
+//later you can define any type with foo
+type MyType() =
+    member this.foo n = printfn ""You called foo on MyType with n = %A"" n; MyType()
+
+// and everything will work
+let x = foo ""hello"" ""world""
+let y = foo true ""world""
+let z = foo (MyType()) ""world""

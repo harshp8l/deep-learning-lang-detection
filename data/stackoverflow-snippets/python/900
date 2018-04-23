@@ -1,0 +1,74 @@
+def get_relevant_class_method_list(class_instance):
+    method_list = [func for func in dir(class_instance) if callable(getattr(class_instance, func)) and not func.startswith(""__"") and not func.startswith(""_"")]
+    return method_list
+
+def make_convert_function_method(name):
+    def _method(self, entity_num, *args):
+        sub_manager, sub_manager_entity_num = self._convert_entity(entity_num)
+        function_to_call = getattr(sub_manager, name)
+        function_to_call(sub_manager_entity_num, *args)        
+    return _method
+
+
+def container_class_init_decorator(function_object):
+    def new_init_function(self, *args):
+        # Call the init function :
+        function_object(self, *args)
+        # Get all relevant methods (Of one sub class is enough)
+        method_list = get_relevant_class_method_list(self.container_list[0])
+        # Dynamically create all sub layer functions :
+        for method_name in method_list:
+            _method = make_convert_function_method(method_name)
+            setattr(type(self), method_name, _method)
+
+    return new_init_function
+
+
+class abs_container_class():
+    @staticmethod
+    def _convert_entity(self):
+        sub_manager = None
+        sub_entity_num = None
+        pass
+
+class system_manager(abs_container_class):
+    @container_class_init_decorator
+    def __init__(self):
+        self.device_manager_list = [] # Initiliaze device list
+        self.device_manager_list.append(device_manager())
+        self.device_manager_list.append(device_manager())
+        self.container_list = self.device_manager_list
+
+    def _convert_entity(self, entity_num):
+        relevant_device_manager = self.device_manager_list[entity_num // 4]
+        relevant_entity         = entity_num % 4
+        return relevant_device_manager, relevant_entity
+
+class device_manager(abs_container_class):
+    @container_class_init_decorator
+    def __init__(self):
+        self.sub_device_manager_list = [] # Initiliaze sub device list
+        self.sub_device_manager_list.append(sub_device_manager())
+        self.sub_device_manager_list.append(sub_device_manager())    
+        self.container_list = self.sub_device_manager_list
+
+    def _convert_entity(self, entity_num):
+        relevant_sub_device_manager = self.sub_device_manager_list[entity_num // 4]
+        relevant_entity         = entity_num % 4
+        return relevant_sub_device_manager, relevant_entity
+
+class sub_device_manager():
+    def __init__(self): 
+        self.entity_list = [0] * 4
+
+    def set_entity_to_value(self, entity_num, required_value):
+        self.entity_list[entity_num] = required_value
+        print(""I set the entity to : {}"".format(required_value))
+
+# This is used for auto completion purposes (Using pep convention)
+class auto_complete_class(system_manager, device_manager, sub_device_manager):
+    pass
+
+
+system_instance = system_manager() # type: auto_complete_class
+system_instance.set_entity_to_value(0, 3)

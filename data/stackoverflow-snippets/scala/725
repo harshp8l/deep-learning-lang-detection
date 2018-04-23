@@ -1,0 +1,16 @@
+def websocketFlow(connectionId: String): Flow[Message, Message, NotUsed] = {
+  val incomingMessages: Sink[Message, NotUsed] =
+    ...
+    .to(Sink.actorRef[ChatMessage](userActor, SourceDied(connectionId)))
+
+  val outgoingMessages: Source[Message, NotUsed] =
+    Source
+      .actorRef[ChatMessage](20, OverflowStrategy.fail)
+      .mapMaterializedValue { outActor =>
+        userActor ! Connect(connectionId, outActor)
+        NotUsed
+      }
+      ...
+
+  Flow.fromSinkAndSource(incomingMessages, outgoingMessages)
+}

@@ -1,0 +1,71 @@
+   import { ComponentFixture,TestBed, async,getTestBed } from '@angular/core/testing';
+  import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+  import { HttpClientModule, HttpClient } from '@angular/common/http';
+
+  import { AppComponent } from './app.component';
+  import { AppService } from './app.service';
+  import { Observable } from 'rxjs/Observable';
+  import { Posts } from './post.interface';
+  import 'rxjs/add/observable/of';
+
+  const mockPosts: Posts = 
+  {userId: 10,
+  id: 10,
+  title: ""post"",
+  body: ""post"",};
+ class MockAppService extends AppService {
+ public getData(){
+    return Observable.of(mockPosts)
+   }
+ }
+
+ describe('AppComponent', () => {
+  let fixture:ComponentFixture<AppComponent>,
+  component:AppComponent,
+  injector:TestBed,
+  service:AppService,
+  httpMock:HttpTestingController,
+  el:HTMLElement;
+ beforeEach(async(() => {
+ TestBed.configureTestingModule({
+   imports: [HttpClientTestingModule],
+  declarations: [
+    AppComponent
+   ],
+   providers: [ 
+    { provide: AppService, useClass: MockAppService }
+   ]
+
+   }).compileComponents();
+    fixture = TestBed.createComponent(AppComponent);
+    component = fixture.componentInstance;
+    service = TestBed.get(AppService)
+    // injector = getTestBed();
+    // service = injector.get(AppService);
+    // httpMock = injector.get(HttpTestingController);
+    spyOn(service,'getData');
+  }));
+
+  afterEach(() => {
+  //httpMock.verify();
+  });
+  fixture = TestBed.createComponent(AppComponent);
+  component = fixture.componentInstance;
+  service = TestBed.get(AppService)
+  // injector = getTestBed();
+  // service = injector.get(AppService);
+  // httpMock = injector.get(HttpTestingController);
+
+  spyOn(service,'getData');
+
+
+  describe('AppComponent onit test', () => {
+  it('should create the app', async(() => {
+    expect(true).toBe(true);
+  }));
+  it('should called appService getData method', async(() => {
+      fixture.detectChanges(); 
+     expect(service.getData).toHaveBeenCalled();
+  }));
+  })
+ });

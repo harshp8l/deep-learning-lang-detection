@@ -1,0 +1,26 @@
+class DocItr(private var prev :Document) extends Iterator[Document] {
+  private var innerItr :Iterator[Document] = _
+  private var line     :String = _
+
+  override def hasNext :Boolean = innerItr.hasNext || {
+    line = io.StdIn.readLine
+    Option(line).fold(false)(_.nonEmpty)
+  }
+
+  override def next() :Document = {
+    if (!innerItr.hasNext) {
+      innerItr = line.split("";"")
+                     .map(_.trim)
+                     .scanLeft(prev)((doc: Document, in: String) =>
+                                                       doc.processInput(in))
+                     .drop(1) // drop the seed
+                     .toIterator
+    }
+    prev = innerItr.next()
+    prev
+  }
+}
+
+for(document <- new DocItr(initialDocument)) {
+  // do something with the document snapshot
+}

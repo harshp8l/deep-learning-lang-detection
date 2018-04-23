@@ -1,0 +1,50 @@
+In [1]: import pandas as pd
+   ...: 
+   ...: df = pd.DataFrame({'Date': ['Jan 2017', 'Jan 2017', 'Feb 2017', 'Feb 2017'],
+   ...:                   'A': 'zywz', 'X': [123, 234, 123, 456]})
+   ...: df = df[['Date', 'A', 'X']]
+   ...: df['Date'] = pd.to_datetime(df['Date'])
+   ...: df.set_index('Date', inplace=True)
+   ...: df  # input dataframe
+   ...:                   
+Out[1]: 
+               A    X
+Date                 
+2017-01-01  zywz  123
+2017-01-01  zywz  234
+2017-02-01  zywz  123
+2017-02-01  zywz  456
+
+In [2]: # cout X values per month
+   ...: wdf = df.reset_index().groupby(['Date', 'X']).X.count().unstack(level='X')
+   ...: wdf
+   ...: 
+Out[2]: 
+X           123  234  456
+Date                     
+2017-01-01  1.0  1.0  NaN
+2017-02-01  1.0  NaN  1.0
+
+In [3]: # detect the changes
+   ...: import numpy as np
+   ...: def get_status(col):
+   ...:     if np.isnan(col[0]) and col[1]:
+   ...:         return 'Added'
+   ...:     if col[0] and np.isnan(col[1]):
+   ...:         return 'Deleted'
+   ...:     return 'no change'
+   ...:     
+   ...: status = wdf.apply(get_status)
+   ...: status.name = 'Changes'
+   ...: 
+
+In [4]: # back to df
+   ...: # securely work on working dataframe to save initial `df`
+   ...: wdf = df.join(status, on='X').reset_index()[['Date', 'X', 'Changes']]
+   ...: wdf[wdf['Changes']!='no change'].set_index('Date')
+   ...: 
+Out[4]: 
+              X  Changes
+Date                    
+2017-01-01  234  Deleted
+2017-02-01  456    Added

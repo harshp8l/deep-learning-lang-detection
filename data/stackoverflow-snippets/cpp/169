@@ -1,0 +1,42 @@
+template<class A, class B>
+struct tie_same;
+
+template<class A, class B>
+using tie_check = typename tie_same<A,B>::type;
+
+template<class D>
+struct structured {
+  friend auto as_tie( structured<D>& s ) {
+    auto& self = static_cast<D&>(s);
+    auto members = get_members(self);
+    return std::apply( [&self](auto...pm) {
+      return std::tie( (self.*pm)... );
+    }, members );
+  }
+  friend auto as_tie( structured<D> const& s ) {
+    auto& self = static_cast<D const&>(s);
+    auto members = get_members(self);
+    return std::apply( [&self](auto...pm) {
+      return std::tie( (self.*pm)... );
+    }, members );
+  }
+
+  template<class T,
+    std::enable_if_t<
+      tie_check<T,D>{},
+      bool
+    > = true
+  >
+  operator T() const& {
+    T tmp;
+    as_tie(tmp) = as_tie( *this );
+    return tmp;
+  }
+};
+
+template<class A, class B>
+struct tie_compatible {
+  template<class X>
+  using tie_type = decltype( as_tie( std::declval<X>() ) );
+  using type = std::is_same< tie_type<A&>, tie_type<B&> >;
+};

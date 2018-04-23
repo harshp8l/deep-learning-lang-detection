@@ -1,0 +1,76 @@
+String range = request.getHeader(""Range"") ;
+RandomAccessFile file = new RandomAccessFile(path , ""r"") ;
+                    if(range != null) {
+                        range = range.trim().substring(""range="".length()) ;
+                        String [] index = range.split(""-"") ;
+                        byte [] buffer = new byte[2048] ;
+                        DataOutputStream dos = new DataOutputStream(response.getOutputStream()) ;
+                        if(index.length > 1) {
+                            long start = Long.parseLong(index[0]) ;
+                            long end = Long.parseLong(index[1]) ;
+                            long contentLength = end - start + 1 ;
+                            System.out.println(""start: "" + start);
+                            System.out.println(""end: "" + end);
+                            if(start < file.length() && end < file.length() && end > start) {
+                                response.setContentType(type);
+                                response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+                                response.setHeader(""Accept-Ranges"", ""bytes"");
+                                response.setContentLengthLong(contentLength);
+                                response.setHeader(""Content-Range"", new StringBuilder(""bytes "").append(start).append(""-"").append(end).append(""/"").append(file.length()).toString());
+                                file.seek(start);
+                                long bytesleft = contentLength ; 
+                                while(file.getFilePointer() <= end) {
+                                    if(bytesleft >= buffer.length) {
+                                        file.readFully(buffer);
+                                        dos.write(buffer);
+                                        dos.flush();
+                                        bytesleft = bytesleft - buffer.length ;
+                                    }
+                                    else {
+                                        file.readFully(buffer , 0 , (int) bytesleft);
+                                        dos.write(buffer , 0 , (int) bytesleft);
+                                        dos.flush();
+                                    }
+                                }
+
+                            }
+                            else {
+                                response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+                            }
+                        }
+                        else {
+
+                            long start = Long.parseLong(index[0]) ;
+                            long end = file.length() - 1 ;
+                            long contentLength = end - start + 1 ;
+                            System.out.println(""start: "" + start);
+                            System.out.println(""end: "" + end);
+                            if(start < file.length()) {
+                                response.setContentType(type);
+                                response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+                                response.setHeader(""Accept-Ranges"", ""bytes"");
+                                response.setContentLengthLong(contentLength);
+                                response.setHeader(""Content-Range"", new StringBuilder(""bytes "").append(start).append(""-"").append(end).append(""/"").append(file.length()).toString());
+                                file.seek(start);
+                                long bytesleft = contentLength ; 
+                                while(file.getFilePointer() <= end) {
+                                    if(bytesleft >= buffer.length) {
+                                        file.readFully(buffer);
+                                        dos.write(buffer);
+                                        dos.flush();
+                                        bytesleft = bytesleft - buffer.length ;
+                                    }
+                                    else {
+                                        file.readFully(buffer , 0 , (int) bytesleft);
+                                        dos.write(buffer , 0 , (int) bytesleft);
+                                        dos.flush();
+                                    }
+                                }
+
+                            }
+                            else {
+                                response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+                            }
+                        }
+                    }
+                    file.close(); 

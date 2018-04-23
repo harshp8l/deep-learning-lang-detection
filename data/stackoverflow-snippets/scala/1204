@@ -1,0 +1,21 @@
+def show(url: String): EssentialAction = Action.async { implicit request: Request[AnyContent] =>
+  // This future will throw ArithmeticException because of division to zero
+  val f: Future[Seq[Int]] = Future.successful(Seq[Int](1, 2, 3, 4 / 0))
+  val fResult: Future[JsObject] = f.map { r =>
+    JsObject(Seq(
+      ""project URL"" -> JsString(url),
+      ""list of commits"" -> Json.toJson(r)))
+  }.recoverWith {
+    case e: ArithmeticException =>
+      val seq: Future[Seq[Int]] = Future.successful(Seq(1, 2, 3, 4))
+
+      seq.map { seq: Seq[Int] =>
+        JsObject(Seq(
+          ""project URL"" -> JsString(url),
+          ""list of commits"" -> Json.toJson(seq)))
+      }
+  }
+  fResult.map { r =>
+    Ok(r)
+  }
+}

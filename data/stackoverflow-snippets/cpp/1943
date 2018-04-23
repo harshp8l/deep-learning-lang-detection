@@ -1,0 +1,29 @@
+// working type (use your existing Quaternion implementation instead)
+struct Quaternion{
+    float w,x,y,z;
+    Quaternion(float w_=1.0f, float x_=0.0f, float y_=0.0f, float z_=0.0f) : w(w_), x(x_), y(y_), z(z_) {}
+};
+
+struct PacketQuaternion
+{
+    enum LargestElement{
+        W=0, X=1, Y=2, Z=3,
+    };
+    LargestElement le : 2; // 2 bits;
+    signed int i1 : 9, i2 : 9, i3 : 9;  // 9 bits each
+
+    PacketQuaternion() : le(W), i1(0), i2(0), i3(0) {}
+
+    operator Quaternion() const { // convert packet quaternion to  regular quaternion
+        const float s = 1.0f/float(1<<8); // scale int to [-1, 1]; you could also scale to [-sqrt(.5), sqrt(.5)]
+        const float f1=s*i1, f2 = s*i2, f3 = s*i3;
+        const float f0 = std::sqrt(1.0f - f1*f1-f2*f2-f3*f3);
+        switch(le){
+        case W: return Quaternion(f0, f1, f2, f3);
+        case X: return Quaternion(f1, f0, f2, f3);
+        case Y: return Quaternion(f1, f2, f0, f3);
+        case Z: return Quaternion(f1, f2, f3, f0);
+        }
+        return Quaternion(); // default, can't happen
+    }
+};

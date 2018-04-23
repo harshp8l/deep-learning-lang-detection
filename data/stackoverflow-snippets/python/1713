@@ -1,0 +1,35 @@
+class MainWindow(QtGui.QMainWindow):
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
+        self.resize(200, 300)
+
+        # OBJECTS - variable containing list of class objects created
+        self.ACTIVE_BAKERS = []
+
+        # CONTROLS
+        self.ui_items = QtGui.QListView()
+        self.ui_items.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.ui_items.customContextMenuRequested.connect(self.open_tasks_contextmenu)
+        self.setCentralWidget(self.ui_items)
+        self.create_context_menu_ui()
+
+
+    # dynamically create the menu
+    def create_context_menu_ui(self):
+        self.add_baker = QtGui.QMenu(""Add"")
+
+        AVAILABLE_BAKERS = [Baker_John(), Baker_Amy(), Baker_Makela(), Baker_Jeff()]
+        for x in AVAILABLE_BAKERS:
+            new_action = MyAction(x, x.name, self)
+            self.add_baker.addAction(new_action)
+
+        self._cmenu = QtGui.QMenu()
+        self._cmenu.addMenu(self.add_baker)
+
+
+    def open_tasks_contextmenu(self, position):
+        action = self._cmenu.exec_(QtGui.QCursor.pos())
+        if isinstance(action, MyAction):
+            obj = action.ui.__class__()
+            if obj not in self.ACTIVE_BAKERS:
+                self.ACTIVE_BAKERS.append(obj)

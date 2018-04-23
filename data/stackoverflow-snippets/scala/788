@@ -1,0 +1,17 @@
+// relevant types: one for actual data, the other to define ranges
+final case class Data(articles: Int)
+final case class Range(from: Int, to: Int)
+
+// the data we want to process
+val dataset = spark.createDataset(
+  Seq(Data(10), Data(99), Data(101), Data(101), Data(10005), Data(1000001), Data(1000001)))
+
+// the ranges we wanto _bucket_ our data in
+val ranges = spark.sparkContext.broadcast(
+  Seq(Range(1, 100), Range(101, 10000), Range(10001, 1000000), Range(1000001, 100000000)))
+
+// the actual operation: group by range and sum the values in each bucket
+dataset.groupByKey {
+  d =>
+    ranges.value.find(r => d.articles >= r.from && d.articles <= r.to).orNull
+}.agg(sum(""articles"").as[Long])

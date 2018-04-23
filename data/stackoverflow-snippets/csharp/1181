@@ -1,0 +1,15 @@
+//query syntax
+var data = (from curr in cx.Offer.Where(x => x.OfferID == OfferID)
+            from prev in cx.Offer
+            where curr.CustomerID == prev.CustomerID && curr.OfferDate >= prev.OfferDate
+            orderby prev.OfferDate descending 
+            select prev).Take(2).ToList();
+
+//fluent syntax
+data = cx.Offer.Where(x => x.OfferID == OfferID)
+.Join(cx.Offer, curr => 0, prev => 0, (curr, prev) => new { curr, prev })
+.Where(x => x.curr.CustomerID == x.prev.CustomerID && x.curr.OfferDate >= x.prev.OfferDate)
+.OrderByDescending(x => x.prev.OfferDate)
+.Select(x => x.prev).Take(2).ToList();
+
+ return new List<Offer>() { data.FirstOrDefault(), data.Count == 2 ? data.Last() : null };

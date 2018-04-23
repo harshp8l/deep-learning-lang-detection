@@ -1,0 +1,51 @@
+func timeTick(flag bool, tick int,doneChan chan bool) {
+    var tickChan *time.Ticker
+    msg := make(<-chan time.Time) // channel receiver
+
+    if flag {
+        tickChan = time.NewTicker(time.Second * time.Duration(tick))
+    }
+
+    if !flag {
+        doneChan <- true    
+        <-msg
+    }
+
+    if tickChan != nil { // Check if nil
+        msg = tickChan.C
+    }
+
+    for {
+        select {
+            case <-msg:
+                fmt.Println(""Ticker ticked "")
+            case <-doneChan:
+                fmt.Println(""Done "")
+                return
+        }
+    }
+}
+
+func main() {
+
+    reader := bufio.NewReader(os.Stdin)
+    doneChan := make(chan bool,1)
+    for 
+    {
+        fmt.Print(""> "")
+        text, _ := reader.ReadString('\n')
+        text = strings.Replace(text, ""\n"", """", -1)
+
+        switch text {
+        case ""one"":
+            go timeTick(true, 1, doneChan)
+        case ""two"":
+            go timeTick(true, 2, doneChan)
+        case ""three"":
+            go timeTick(true, 3, doneChan)
+        default:
+            go timeTick(false, 0, doneChan)
+        }
+    }
+
+}

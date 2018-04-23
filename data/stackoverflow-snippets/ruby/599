@@ -1,0 +1,18 @@
+def self.get_top_victims_for_player(player_id, count=10)
+  sql_string = <<-EOS
+with first_names as 
+( select distinct on (player_id) player_id, name 
+from names 
+order by player_id, id ) 
+select players.steam_id, first_names.name, count(kills.id) 
+from kills 
+join first_names on kills.victim_id = first_names.player_id 
+join players on kills.victim_id = players.id 
+where kills.player_id = #{player_id} 
+group by kills.victim_id, first_names.name, players.steam_id 
+order by count(kills.id) desc 
+limit #{count}
+  EOS
+  res = connection.execute(sql_string)
+  res.map {|h| {""#{h['name']} (#{h['steam_id']})"" => h[""count""]}  }
+end

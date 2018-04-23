@@ -1,0 +1,30 @@
+class IContext
+{
+public:
+
+    static thread_local IContext* g_ctx;
+
+    virtual void setThreadContext() = 0;
+    virtual void print(int) = 0;
+};
+
+// Example
+class Log
+{
+public:
+
+    // This code is static so will be compiled in each module. Thus
+    // gets access to different ""g_ctx"" per thread per module
+    // With TlsAlloc() approach we need another static variable for index, 
+    // while thread_local will get it from _tls_index
+    // (see \Visual Studio\VC\crt\src\vcruntime\tlssup.cpp)
+    //
+    // mov r9d, dword ptr [_tls_index (07FEE05E1D50h)]
+    // mov rax, qword ptr gs:[58h]
+    // mov rsi, qword ptr [rax+r9*8]  // g_ctx address is now in rsi
+
+    static void print(int x)
+    {
+        IContext::g_ctx->print(x);
+    }
+};

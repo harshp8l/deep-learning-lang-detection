@@ -1,0 +1,16 @@
+open FsControl.Core
+
+type FromFloat = FromFloat with
+    static member instance (FromFloat, _:int32 ) = fun (x:float) -> int x
+    static member instance (FromFloat, _:int64 ) = fun (x:float) -> int64 x
+    static member instance (FromFloat, _:bigint ) = fun (x:float) -> bigint x
+let inline fromFloat (x:float):^a = Inline.instance FromFloat x
+
+let inline isPrime (n:^a) =
+    let two = LanguagePrimitives.GenericOne + LanguagePrimitives.GenericOne
+    let sq = n |> float |> sqrt |> fromFloat
+    {two..sq} |> Seq.forall (fun d -> n % d <> LanguagePrimitives.GenericZero)
+
+printfn ""%A"" <| isPrime 71
+printfn ""%A"" <| isPrime 6L
+printfn ""%A"" <| isPrime 23I

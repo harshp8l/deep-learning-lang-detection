@@ -1,0 +1,139 @@
+require 'mechanize'
+require 'json'
+require 'open-uri'
+require 'openssl'
+require 'base64'
+require 'time'
+
+def fa(shared_secret)
+      timestamp = Time.new.to_i
+      math = timestamp / 30
+      math = math.to_i
+      time_buffer =[math].pack('Q>')
+
+      hmac = OpenSSL::HMAC.digest('sha1', Base64.decode64(shared_secret), time_buffer)
+
+      start = hmac[19].ord & 0xf
+      last = start + 4
+      pre = hmac[start..last]
+      fullcode = pre.unpack('I>')[0] & 0x7fffffff
+
+      chars = '23456789BCDFGHJKMNPQRTVWXY'
+      code= ''
+      for looper in 0..4 do
+        copy = fullcode #divmod
+        i = copy % chars.length #divmod
+        fullcode = copy / chars.length #divmod
+        code = code + chars[i]
+      end
+      puts code
+      return code
+
+end
+
+def pass_stamp(username,password,mech)
+      response = mech.post('https://store.steampowered.com/login/getrsakey/', {'username' => username})
+
+      data = JSON::parse(response.body)
+      mod = data[""publickey_mod""].hex
+      exp = data[""publickey_exp""].hex
+      timestamp = data[""timestamp""]
+
+      key   = OpenSSL::PKey::RSA.new
+      key.e = OpenSSL::BN.new(exp)
+      key.n = OpenSSL::BN.new(mod)
+      ep = Base64.encode64(key.public_encrypt(password.force_encoding(""utf-8""))).gsub(""\n"", '')
+      return {'password' => ep, 'timestamp' => timestamp }
+end
+
+user = 'kamauth7'
+password = 'WhyKama22'
+
+session = Mechanize.new { |agent|
+  agent.user_agent_alias = 'Windows Mozilla'
+  agent.follow_meta_refresh = true
+  agent.add_auth('https://steamcommunity.com/tradeoffer/new/send/', user, password)
+  agent.log = Logger.new(""mech.log"")
+}
+
+data = pass_stamp(user,password, session)
+ep = data[""password""]
+timestamp = data[""timestamp""]
+session.add_auth('https://steamcommunity.com/tradeoffer/new/send/', user,  ep)
+
+send = {
+      'password' => ep,
+      'username' => user,
+      'twofactorcode' =>fa('6C6E7of17nbA9JCVWzqFK+xvSRU='), #update
+      'emailauth' => '',
+      'loginfriendlyname' => '',
+      'captchagid' => '-1',
+      'captcha_text' => '',
+      'emailsteamid' => '',
+      'rsatimestamp' => timestamp,
+      'remember_login' => 'false'
+}
+
+login = session.post('https://store.steampowered.com/login/dologin', send )
+responsejson = JSON::parse(login.body)
+if responsejson[""success""] != true
+      puts ""didn't sucded""
+      puts ""probably 2fa code time diffrence,  retry ""
+      exit
+end
+
+responsejson[""transfer_urls""].each { |url|
+      getcookies = session.post(url, responsejson[""transfer_parameters""])
+}
+
+
+## SET COOKIE FOR STEAM COMMUNITY.COM
+steampowered_sessionid = ''
+session.cookies.each { |c|
+      if c.name == ""sessionid""
+            steampowered_sessionid = c.value
+            puts c.domain
+      end
+}
+cookie = Mechanize::Cookie.new :domain => 'steamcommunity.com', :name =>'sessionid', :value =>steampowered_sessionid, :path => '/'
+session.cookie_jar << cookie
+sessionid = steampowered_sessionid
+### END SET COOKIE
+offer_link = 'https://steamcommunity.com/tradeoffer/new/?partner=410155236&token=H-yK-GFt'
+token = offer_link.split('token=', 2)[1]
+theirs = [{""appid"" => 753,""contextid""=> ""6"",""assetid"" => ""6705710171"",""amount"" => 1 }]
+mine =  []
+params = {
+      'sessionid' => sessionid,
+      'serverid' => 1,
+      'partner' => '76561198370420964',
+      'tradeoffermessage' => '',
+      'json_tradeoffer' => {
+            ""newversion"" => true, ## FIXED newversion to avoid 400 BAD REQUEST
+           ""version"" => 4,
+           ""me"" => {
+                ""assets"" => mine, #create this array
+                ""currency"" => [],
+                ""ready"" => false
+           },
+           ""them"" => {
+                 ""assets"" => theirs, #create this array
+                 ""currency"" => [],
+                 ""ready"" => false
+            }
+      }.to_json, # ADDED TO JSON TO AVOID 400 BAD REQUEST
+      'captcha' => '',
+      'trade_offer_create_params' => {'trade_offer_access_token' => token}.to_json ## ADDED TO JSON FIX TO AVOID ERROR 400 BAD REQUEST
+}
+
+begin
+      send_offer = session.post(
+       'https://steamcommunity.com/tradeoffer/new/send',
+        params,
+        {'Referer' =>  'https://steamcommunity.com/tradeoffer/new', 'Origin' => 'https://steamcommunity.com' } ##FIXED THIS
+      )
+      puts send_offer.body
+rescue Mechanize::UnauthorizedError => e
+      puts e
+      puts e.page.content
+end

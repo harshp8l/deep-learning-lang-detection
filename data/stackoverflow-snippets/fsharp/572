@@ -1,0 +1,45 @@
+open System.Runtime.CompilerServices
+
+[<Extension>]
+module Api = 
+    open Suave
+    open Successful
+    open Filters
+    open Operators
+    open Microsoft.Owin
+    open System.Threading.Tasks
+
+    let app = 
+        choose [ GET >=> choose [ path ""/hello"" >=> OK ""Hello GET""
+                                  path ""/goodbye"" >=> OK ""Good bye GET"" ]
+                 POST >=> choose [ path ""/hello"" >=> OK ""Hello POST""
+                                   path ""/goodbye"" >=> OK ""Good bye POST"" ] ]
+
+    let withCtx (ctx : IOwinContext) webpart =
+        async {
+            let request =
+                { HttpRequest.empty with
+                    headers = ctx.Request.Headers |> List.ofSeq |> List.map (fun kvp -> kvp.Key, kvp.Value |> String.concat "","")
+                    host = ctx.Request.Host.Value 
+                    ``method`` = HttpMethod.parse ctx.Request.Method
+                    url = ctx.Request.Uri }
+            let! res = webpart { HttpContext.empty with request = request }
+            res |> Option.iter (fun r ->
+                ctx.Response.StatusCode <- r.response.status.code
+                match r.response.content with
+                | Bytes bs -> ctx.Response.Write bs
+                | _ -> failwith ""Not supported"")
+            return res
+        }
+
+    type SuaveMiddleware(n) =
+        inherit OwinMiddleware(n)
+        override __.Invoke(context : IOwinContext) =
+            let res = withCtx context app |> Async.RunSynchronously
+            match res with
+            | Some _ -> Task.CompletedTask
+            | None -> base.Next.Invoke context
+
+    [<Extension>]
+    let UseSuave(app : Owin.IAppBuilder) =
+        app.Use(typeof<SuaveMiddleware>)

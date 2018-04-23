@@ -1,0 +1,22 @@
+(defn decorate-fn
+  ""Creates a decorator function
+   given the implementation accessor and the called function.""
+  [impl f]
+  (fn [decorator & args]
+    (apply f (impl decorator) args)))
+
+(defn gen-decorators
+  ""Creates a map of decorator functions.""
+  [impl fs]
+  (into {} (for [[k f] fs]
+             [k (decorate-fn impl f)])))
+
+(defn decorate-logger
+  ""Creates a logger decorator with functions
+   passing through to the implementation by default.""
+  [impl overrides]
+  (merge (gen-decorators impl
+                         {:info info
+                          :warn warn
+                          :debug debug})
+         overrides))

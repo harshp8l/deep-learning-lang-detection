@@ -1,0 +1,44 @@
+package com.cybersource.sample;
+
+import java.util.*;
+import com.cybersource.ws.client.*;
+
+public class SimpleAuthSample {
+    public static void main(String[] args) {
+        Properties props = Utility.readProperties(args);
+        HashMap request = new HashMap();
+        // In this sample, we are processing a credit card authorization.
+        request.put(""ccAuthService_run"", ""true"");
+        // Add required fields
+        request.put(""merchantReferenceCode"", ""MRC-14344"");
+        request.put(""billTo_firstName"", ""Jane"");
+        request.put(""billTo_lastName"", ""Smith"");
+        request.put(""billTo_street1"", ""1295 Charleston Road"");
+        request.put(""billTo_city"", ""Mountain View"");
+        request.put(""billTo_state"", ""CA"");
+        request.put(""billTo_postalCode"", ""94043"");
+        request.put(""billTo_country"", ""US"");
+        request.put(""billTo_email"", ""jsmith@example.com"");
+        request.put(""card_accountNumber"", ""4111111111111111"");
+        request.put(""card_expirationMonth"", ""12"");
+        request.put(""card_expirationYear"", ""2010"");
+        request.put(""purchaseTotals_currency"", ""USD"");
+        // This sample order contains two line items.
+        request.put(""item_0_unitPrice"", ""12.34"");
+        request.put(""item_1_unitPrice"", ""56.78"");
+        // Add optional fields here according to your business needs.
+        // For information about processing the reply,
+        // see Using the Decision and Reason Code Fields.
+        try {
+            HashMap reply = Client.runTransaction(request, props);
+        } catch (ClientException e) {
+            if (e.isCritical()) {
+                handleCriticalException(e, request);
+            }
+        } catch (FaultException e) {
+            if (e.isCritical()) {
+                handleCriticalException(e, request);
+            }
+        }
+    }
+}

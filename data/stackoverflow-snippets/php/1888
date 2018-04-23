@@ -1,0 +1,31 @@
+AESStreamEncode($input, $output, $key, $filesize = false)
+{
+    $cipher = new AES(AES::MODE_CBC);
+    $cipher->setKey($key);
+
+    $iv = Random::string($cipher->getBlockLength() >> 3);
+    $cipher->setIV($iv);
+
+    $base64_iv = rtrim(base64_encode($iv), '='); //22 chars
+
+    //Option1 - optional filesize
+    if(false !== $filesize){
+        //add filesize if given in the arguments
+        fwrite($output, $filesize.'|');
+    }
+
+    /*
+        //Option2: using fstat, remove '$filesize = false' from the arguments
+        $stat = fstat($input);
+        fwrite($output, $stat['size'].'|');
+    */
+
+    fwrite($output, $base64_iv); //store the IV this is like a salt
+
+    while(!feof($input)) {
+        $contents = fread($input, 1000000); //number of bytes to encrypt 
+        $encrypted = $cipher->encrypt($contents);
+        //trim the = or ==, and replace with :, write to output stream.
+        fwrite($output, rtrim(base64_encode($encrypted), '=').':'); 
+    }
+}

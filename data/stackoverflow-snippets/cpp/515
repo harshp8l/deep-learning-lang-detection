@@ -1,0 +1,58 @@
+#include <memory>
+//pre-defined structures Y, B
+struct Y
+{
+    Y(){}
+    ~Y(){}
+    void show(){}
+};
+
+struct B
+{
+    B(){}
+    ~B(){}
+    void showing(){}
+};
+
+// Abstract adaptor base class. 
+struct Adaptor
+{
+    virtual void show() = 0;
+};
+
+// A subclass of Adaptor for each type of object to be wrapped. 
+struct Adaptor_Y: Adaptor
+{
+    Adaptor_Y(): y(){}
+    void show() override
+    {
+        y.show();
+    }
+private:
+    Y y;
+};
+
+struct Adaptor_B: Adaptor
+{
+    Adaptor_B(): b(){}
+    void show() override
+    {
+        b.showing();
+    }
+private:
+    B b;
+};
+
+// Factory method constructs the proper object and returns a pointer.
+std::unique_ptr<Adaptor> get_adaptor(int flag)
+{
+    if(flag == 0)
+    {
+        return std::make_unique<Adaptor_B>();
+    }
+    else if(flag == 1)
+    {
+        return std::make_unique<Adaptor_Y>();
+    }
+    else throw std::runtime_error(""Invalid flag value"");
+}

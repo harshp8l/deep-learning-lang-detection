@@ -1,0 +1,46 @@
+package main
+
+import (
+    ""encoding/csv""
+    ""fmt""
+    ""io""
+    ""strings""
+)
+
+func main() {
+    csvReader := csv.NewReader(strings.NewReader(data))
+    csvReader.LazyQuotes = true
+    csvReader.Comma = ','
+    csvReader.Comment = '#'
+    for {
+        row, err := csvReader.Read()
+        if err == io.EOF {
+            break
+        }
+        if err != nil {
+
+            // checking here if the error you getting is what you experiencing 
+            // due to json which is too many fields
+            // checking for len(row) > 1 to avoid array index out of bound
+            if e, ok := err.(*csv.ParseError); ok && e.Err == csv.ErrFieldCount && len(row) > 1 {
+                // we manually stitch it back to the expected format
+                row = []string{row[0], strings.Join(row[1:], """")}
+
+            } else {
+                // some other type of error
+                fmt.Println(err)
+                continue
+            }
+        }
+
+
+        for _, str := range row {
+            fmt.Print(str, ""\t"")
+        }
+        fmt.Print(""\n"")
+    }
+}
+
+const data = `id,request_time
+129,""{\""request\"":{\""protocol\"":\""http\"",\""method\"":\""POST\"",\""is_ajax\"":false,\""query\"":{\""signature\"":\""\"",\""timestamp\"":\""1511107236\"",\""nonce\"":\""\"",\""openid\"":\""\"",\""encrypt_type\"":\""aes\""},\""url\"":\""\"",\""origin\"":\""\"",\""host\"":\""\""},\""response\"":{\""status\"":200}}""
+`

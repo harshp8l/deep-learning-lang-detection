@@ -1,0 +1,53 @@
+package main
+
+import (
+    ""fmt""
+    ""time""
+    ""sync""
+)
+
+// producer produce values tobe sent to consumer
+func producer(ch chan int, d time.Duration, num int, wg *sync.WaitGroup) {
+    defer wg.Done();
+    for i:=0; i<num; i++ {
+        ch <- i;
+        time.Sleep(d);
+    }
+}
+
+// consumer consume all values from producers
+func consumer(ch chan int, out chan int, wg *sync.WaitGroup) {
+    defer wg.Done();
+    for i:= range ch {
+        out <- i
+    }
+}
+
+// synchronizer synchronize all goroutines to avoid deadlocks
+func synchronizer(ch chan int, out chan int, wgp *sync.WaitGroup, wgc *sync.WaitGroup) {
+    wgp.Wait()
+    close(ch)
+    wgc.Wait()
+    close(out)
+}
+
+func main() {
+    wgp  := &sync.WaitGroup{}
+    wgc  := &sync.WaitGroup{}
+    ch  := make(chan int);
+    out := make(chan int);
+
+    wgp.Add(2);
+    go producer(ch, 100*time.Millisecond, 2, wgp);
+    go producer(ch, 200*time.Millisecond, 5, wgp);
+
+    wgc.Add(1);
+    go consumer(ch, out, wgc)
+
+    go synchronizer(ch, out, wgp, wgc)
+
+    // print the outputs
+    for i:= range out {
+        fmt.Println(i);
+    }
+}

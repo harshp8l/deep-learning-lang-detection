@@ -1,0 +1,25 @@
+(defn adjacency-list [coll]
+  (reduce (fn [r {p :parent c :id}]
+            (-> r
+              (update-in [:counts p] #(or % 0))
+              (update-in [:counts c] #(if % (inc %) 1))
+              (update-in [:adjacency p] #(if % (conj % c) [c]))))
+          {}
+          coll))
+
+(defn get-data [k]
+  (first (filter #(= (:id %) k) data)) )
+
+(defn traverse [m al roots]
+  (reduce (fn [r k]
+            (conj r
+                  (assoc (get-data k)
+                         :nodes (if-let [v (get al k)]
+                                  (traverse [] al v)
+                                  []))))
+          m
+          roots))
+
+(clojure.pprint/pprint
+ (let [{:keys [adjacency]} (adjacency-list data)]
+   (traverse [] adjacency (get adjacency 0))))

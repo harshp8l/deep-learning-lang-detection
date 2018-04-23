@@ -1,0 +1,31 @@
+trait MyType {
+  val param: String
+  def label = param   // all instances of all subclasses have this method
+}
+
+abstract class MyTypeHelper(default: String) {
+
+  case class Case(param: String) extends MyType
+
+  def apply(param: String) : Case = Case(param)
+  def apply(): Case = apply(default)
+}
+
+object One extends MyTypeHelper(""default one"")
+object Two extends MyTypeHelper(""default two"")
+
+object Example {
+
+  val works1 = One(param = ""I have been explicitly set"").label
+  val works2 = One().label
+
+  val set = Set(One, Two)
+  for {
+    companion <- set
+  } {
+    val a = companion()                      
+    val b = companion(param = ""not default"") 
+    val c = companion(""nameless param"")   
+    println(a.label + b.label)           
+  }
+}

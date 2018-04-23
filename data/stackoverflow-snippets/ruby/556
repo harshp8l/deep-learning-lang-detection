@@ -1,0 +1,32 @@
+require ""parslet""
+require 'pp'
+
+class SettingParser < Parslet::Parser
+  rule(:term) { match(""[a-zA-Z0-9_]"").repeat(1) >> space? }
+  rule(:value) do
+    (match(""[^\n]"").repeat(1) >> match(""[^\\\n]"") >> str(""\\\n"")).repeat(0) >>
+      match(""[^\n]"").repeat(0)
+  end
+  rule(:space) { match(""\\s"").repeat(1) }
+  rule(:space?)     { space.maybe }
+  rule(:setting) do
+    space? >> term.as(:key) >> space? >> str(""="") >> space? >>
+      value.as(:value)
+  end
+
+  rule(:input) { setting.repeat >> space.maybe }
+  root(:input)
+end
+
+str = %{
+alpha = one
+beta = two\
+three
+gamma = four
+}
+
+begin
+  pp SettingParser.new.parse(str, reporter: Parslet::ErrorReporter::Deepest.new)
+rescue Parslet::ParseFailed => error
+  puts error.parse_failure_cause.ascii_tree
+end

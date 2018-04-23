@@ -1,0 +1,20 @@
+//selecting the columns without A and amt
+val columnsForAggregation = df.columns.tail.toSet - ""amt""
+
+//creating an empty dataframe (format for final output
+val finalDF = Seq((""empty"", ""empty"", ""empty"", 0.0)).toDF(""A"", ""field"", ""value"", ""amt"")
+
+//using foldLeft for the aggregation and merging each aggreted results
+import org.apache.spark.sql.functions._
+val (originaldf, transformeddf) = columnsForAggregation.foldLeft((df, finalDF)){(tempdf, column) => {
+  //aggregation on the dataframe with A and one of the column and finally selecting as required in the outptu
+  val aggregatedf = tempdf._1.groupBy(""A"", column).agg(sum(""amt"").as(""amt""))
+    .select(col(""A""), lit(column).as(""field""), col(column).as(""value""), col(""amt""))
+  //union the aggregated results and transferring dataframes for next loop
+  (df, tempdf._2.union(aggregatedf))
+}
+}
+
+//finally removing the dummy row created
+transformeddf.filter(col(""A"") =!= ""empty"")
+  .show(false)

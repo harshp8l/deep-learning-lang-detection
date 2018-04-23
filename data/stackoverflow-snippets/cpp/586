@@ -1,0 +1,23 @@
+src1 <- 'NumericVector cppAdjustProbabilities(  NumericVector& currentProbs, 
+                                       const int index,
+                                       const double divisor ) {
+
+  //Note index <=0, e.g. -1 means remove first element
+  if(index == 0) {
+    return(currentProbs);
+  } else {
+    NumericVector newProbs = no_init(currentProbs.size()+index);
+    std::transform(currentProbs.begin()-index, currentProbs.end(),
+               newProbs.begin(), [&divisor](double val) { return (val / divisor);} );
+               //                 ^^^^^^^^
+    return(newProbs);
+  }
+}'
+
+Rcpp::cppFunction(src1)
+
+currentProbs <- c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+index <- -5L
+divisor <- 2.0
+cppAdjustProbabilities(currentProbs, index, divisor)
+#> [1] 0.30 0.35 0.40 0.45

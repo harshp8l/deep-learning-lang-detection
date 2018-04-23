@@ -1,0 +1,65 @@
+#!/bin/bash
+
+source explode.sh
+
+mkdir project
+cd project
+
+enter ""src""
+  enter ""main/lang/proj""
+    save ""A.lang"" <<'____EOF'
+      |package proj
+      |
+      |/** A totally useful class
+      |  * that should go to src/main/lang/proj/A.lang
+      |  */
+      |class A {
+      |  def a = ""foo""
+      |}
+____EOF
+
+    save ""B.lang"" <<'____EOF'
+      |package proj
+      |/** Another very useful class
+      |  * that should go to src/main/lang/proj/B.lang
+      |  */
+      |class B {
+      |  def b = ""bar""
+      |}
+____EOF
+  leave
+
+  enter ""test/lang/proj""
+    save ""MyTest.lang"" <<'____EOF'
+      |package proj
+      |
+      |/** A test that should end up in 
+      |  * src/test/lang/proj/MyTest.lang
+      |@Test def testFoo() {
+      |  assert(2 + 2 == 5)
+      |}
+____EOF
+  leave
+leave
+
+save ""build.txt"" <<'EOF'
+  |require ""org.foo"" % ""foo-core"" % ""1.2.3""
+  |require ""org.bar"" % ""bar-gui"" % ""3.2.1""
+EOF
+
+enter ""notes""
+  save ""note_01.txt"" <<'__EOF'
+    |A longer comment that should be converted
+    |into a text file and moved into a 'notes'
+    |subdirectory. This is a very long comment
+    |about the purpose of the project. Blah 
+    |blah blah.
+__EOF
+leave
+
+save ""README.md"" <<'EOF'
+  |#README
+  |
+  |This is a readme file for my awesome project.
+  |It ends with this line. Bye.
+EOF

@@ -1,0 +1,17 @@
+df = df_topic.merge(df_doc, on='document_id', suffixes=('','_'))
+print (df)
+   topic_id name  document_id name_
+0         1  xxx            1   aaa
+1         2  yyy            2   bbb
+2         3  zzz            2   bbb
+
+cols = df.columns.difference(['document_id','title'])
+j = (df.groupby(['document_id','name_'])[cols]
+       .apply(lambda x: x.to_dict('r'))
+       .reset_index(name='topics')
+       .rename(columns=lambda x: x.rstrip('_'))
+       .to_json(orient='records'))
+print (j)
+[{""document_id"":1,""name"":""aaa"",""topics"":[{""name"":""xxx"",""name_"":""aaa"",""topic_id"":1}]},
+ {""document_id"":2,""name"":""bbb"",""topics"":[{""name"":""yyy"",""name_"":""bbb"",""topic_id"":2},
+                                         {""name"":""zzz"",""name_"":""bbb"",""topic_id"":3}]}]

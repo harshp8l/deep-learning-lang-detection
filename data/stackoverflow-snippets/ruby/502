@@ -1,0 +1,31 @@
+require 'rails_admin/config/actions'
+require 'rails_admin/config/actions/base'
+module RailsAdmin
+  module Config
+    module Actions
+      class InAppShow < RailsAdmin::Config::Actions::Base
+        RailsAdmin::Config::Actions.register(self)
+        register_instance_option :member do
+          true
+        end
+        register_instance_option :visible? do
+           authorized? && (bindings[:controller].main_app.url_for(bindings[:object]) rescue false)
+        end
+        register_instance_option :controller do
+          proc do
+            flash[:notice] = ""Your customized action #{@action}""
+            respond_to do |format|
+              format.html { render file: ""#{Rails.root}/app/views/in_app_show""  }
+            end
+          end
+        end
+        register_instance_option :link_icon do
+          'icon-camera-retro'
+        end
+        register_instance_option :pjax? do
+          false
+        end
+      end
+    end
+  end
+end

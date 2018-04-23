@@ -1,0 +1,25 @@
+function Out-Default {
+    begin {
+        $StartTime = Get-Date
+        $OutDefault = { Microsoft.PowerShell.Core\Out-Default @args }.GetSteppablePipeline($MyInvocation.CommandOrigin)
+        $OutDefault.Begin($MyInvocation.ExpectingInput, $ExecutionContext)
+    }
+    process {
+        if($MyInvocation.ExpectingInput) {
+            $OutDefault.Process($_)
+        } else {
+            $OutDefault.Process()
+        }
+    }
+    end {
+        $OutDefault.End()
+        $OutDefault.Dispose()
+        $ExecutionTime = New-TimeSpan -Start $StartTime
+        if($ExecutionTime -gt (New-TimeSpan -Seconds 30)) {
+            Write-Host -ForegroundColor Red -Object $ExecutionTime
+            # popup toast notification
+        } else {
+            Write-Host -ForegroundColor Green -Object $ExecutionTime
+        }
+    }
+}

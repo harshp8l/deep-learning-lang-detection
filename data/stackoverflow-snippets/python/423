@@ -1,0 +1,30 @@
+import sys
+
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+
+class Helper(QObject):
+    def setWidgets(self, emmiter, receiver):
+        emmiter.installEventFilter(self)
+        self.emmiter = emmiter
+        self.receiver = receiver
+
+    def eventFilter(self, obj, event):
+        if obj == self.emmiter:
+            if event.type() == QEvent.Resize: 
+                self.receiver.resize(self.emmiter.size())
+            elif event.type() == QEvent.Move:
+                self.receiver.move(event.pos())
+        return QObject.eventFilter(self, obj, event)
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    helper = Helper()
+    w1 = QWidget()
+    w1.setWindowTitle(""emmiter"")
+    w2 = QWidget()
+    helper.setWidgets(w1, w2)
+    w1.show()
+    w2.show()
+    sys.exit(app.exec_())

@@ -1,0 +1,44 @@
+func RecurseJsonMap(dat map[string]interface{}) {
+    fmt.Println(""object {"")   
+    for key, value := range dat {
+        fmt.Print(""key: "" + key + "" "")        
+    // print array properties
+    arr, ok := value.([]interface{})
+    if ok {
+        fmt.Println(""value: array ["") 
+        for _, arrVal := range arr {
+            // recurse subobjects in the array
+            subobj, ok := arrVal.(map[string]interface{})
+            if ok {
+                RecurseJsonMap(subobj)
+            } else {            
+                // print other values
+                fmt.Printf(""value: %+v\n"", arrVal)        
+            }   
+        }
+        fmt.Println(""]"")    
+    }
+
+    // recurse subobjects
+    subobj, ok := value.(map[string]interface{})
+    if ok {
+        RecurseJsonMap(subobj)
+    } else {            
+            // print other values
+            fmt.Printf(""value: %+v\n"" ,value)        
+        } 
+    }
+    fmt.Println(""}"")   
+}
+
+func main() {
+    // some random json object in a string
+    byt := []byte(`{""someNumerical"":42.42,""stringsInAnArray"":[""a"",""b""]}`)
+
+    // we are parsing it in a generic fashion
+    var dat map[string]interface{}
+    if err := json.Unmarshal(byt, &dat); err != nil {
+        panic(err)
+    }
+    RecurseJsonMap(dat)
+}

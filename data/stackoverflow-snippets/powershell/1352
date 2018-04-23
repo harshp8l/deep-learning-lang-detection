@@ -1,0 +1,49 @@
+class simpleLogger
+{
+    [string]$source
+    [string]$target
+    [string]$action
+    [datetime]$datetime
+    hidden [string]$logFile = $global:simpleLog
+
+    simpleLogger()
+    {
+        $this.datetime = Get-Date
+    }
+
+    simpleLogger( [string]$source, [string]$target, [string]$action )
+    {
+        $this.action = $action
+        $this.source = $source
+        $this.target = $target
+        $this.datetime = Get-Date
+    }
+
+    static [simpleLogger] log( [string]$source, [string]$target, [string]$action )
+    {
+        $newLogger = [simpleLogger]::new( [string]$source, [string]$target, [string]$action )
+        do {
+            $done = $true
+            try {
+                $newLogger | export-csv -Path $global:simpleLog -Append -NoTypeInformation
+            }
+            catch {
+                $done = $false
+                start-sleep -milliseconds $(get-random -min 1000 -max 10000)
+            }
+        } until ( $done )
+        return $newLogger
+    }
+}
+
+if( -not $LogSession ){
+
+    $global:logUser = $env:USERNAME
+    $global:logDir = $env:TEMP + ""\""
+    $startLog = (get-date).tostring(""MMddyyyyHHmmss"")
+    $global:LogSessionGuid = (New-Guid)
+    $global:simpleLog = $script:logDir+$script:logUser+""-""+$LogSessionGuid+"".log""
+    [simpleLogger]::new() | export-csv -Path $script:simpleLog -NoTypeInformation
+    $global:LogSession = [simpleLogger]::log( $script:logUser, $LogSessionGuid, 'Log init' )
+
+}

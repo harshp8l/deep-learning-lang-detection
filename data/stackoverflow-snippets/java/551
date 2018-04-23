@@ -1,0 +1,19 @@
+// This now has to be external to processing code, and possibly shared as well.
+ExecutorService service = Executors.newFixedThreadPool(5);
+
+// and the processing code goes like this:
+List<CompletableFuture<Boolean>> futures = new ArrayList<>();
+for (EmployeeSave save : empList) {
+  futures.add(CompletableFuture.supplyAsync(save::call, service));
+}
+
+// If you do actually need a notification, then you need to store identify the running request somehow. For example, using Id or parameters
+String processId = generateSaveProcessId();
+runningSaveProcesses.store(
+    processId,
+    CompletableFuture.allOf(
+        futures.toArray(new CompletableFuture[0]);
+    )
+);
+// return the process identifier with ""Ack"" response
+return <...Response( processId )...>

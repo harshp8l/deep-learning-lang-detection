@@ -1,0 +1,16 @@
+(defn length-of-period [n]
+  (if (integer? n)
+      [0 0]
+      (let [groups (->> n
+                        rationalize
+                        denominator
+                        primefactors
+                        (group-by #(zero? (mod 10 %))))
+            b1 (apply * (get groups true))
+            b2 (apply * (get groups false))]
+       [(count (take-while
+                  #(pos? (mod % b1))
+                  (take 20 (iterate #(bigint (* 10 %)) 1))))
+        (count (take-while
+                  #(pos? (mod % b2))
+                  (take 20 (iterate #(bigint (- (* 10 %) 1)) 1))))])))

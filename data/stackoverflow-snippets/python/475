@@ -1,0 +1,21 @@
+from scipy import ndimage
+import numpy as np
+import math as m
+import cv2   
+ def patchmaker(img,height,width,center_y,center_x,angle):
+        theta = angle/180*3.14
+        img_shape = np.shape(img)
+        print(img_shape)
+        x = [[i for i in range(0,img_shape[1])] for y in range(img_shape[0])]
+        y = [[j for i in range(img_shape[1])] for j in range(0,img_shape[0])]
+        x = np.asarray(x)
+        y = np.asarray(y)
+        rotatex = x[center_y-m.floor(height/2):center_y+m.floor(height/2),center_x-m.floor(width/2):center_x+m.floor(width/2)];
+        rotatey = y[center_y-m.floor(height/2):center_y+m.floor(height/2),center_x-m.floor(width/2):center_x+m.floor(width/2)];
+        coords   = [rotatex.reshape((1,height*width))-center_x,rotatey.reshape((1,height*width))-center_y];
+        coords = np.asarray(coords)
+        coords = coords.reshape(2,height*width)
+        roatemat = [[m.cos(theta),m.sin(theta)],[-m.sin(theta),m.cos(theta)]]
+        rotatedcoords = np.matmul(roatemat,coords)
+        patch = ndimage.map_coordinates(img,[rotatedcoords[1]+center_y,rotatedcoords[0]+center_x], order=1, mode='nearest').reshape(height,width)
+        return patch

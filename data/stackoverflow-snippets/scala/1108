@@ -1,0 +1,26 @@
+val data = Seq(
+  (""2017-01"",""Banking"",25000000),
+  (""2017-02"",""Banking"",10000000),
+  (""2017-02"",""Telecoms"",12500000),
+  (""2017-03"",""FCMG"",22500000),
+  (""2017-04"",""FCMG 2"",17500000),
+  (""2017-05"",""FCMG 2"",5000000)
+)
+
+val yearMonths = data.map(_._1).distinct.sorted
+// yearMonths: Seq[String] = List(2017-01, 2017-02, 2017-03, 2017-04, 2017-05)
+
+val pivotedMap = data.groupBy(_._2).mapValues( _.map( x =>
+  yearMonths.foldLeft( Seq[Int]() )( (list, ym) =>
+    if (ym == x._1) list :+ x._3 else list :+ 0
+  )
+)).mapValues( _.reduce(
+  (a, e) => (a, e).zipped.map(_ + _)
+))
+
+// pivotedMap: scala.collection.immutable.Map[String,Seq[Int]] = Map(
+//   Telecoms -> List(0, 12500000, 0, 0, 0),
+//   Banking -> List(25000000, 10000000, 0, 0, 0),
+//   FCMG -> List(0, 0, 22500000, 0, 0),
+//   FCMG 2 -> List(0, 0, 0, 17500000, 5000000)
+// )

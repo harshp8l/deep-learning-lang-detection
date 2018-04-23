@@ -1,0 +1,50 @@
+// Save backend user and time for completion order
+add_action('woocommerce_order_status_completed', 'user_has_completed_order');
+function user_has_completed_order( $order_id ) {
+    if ( ! is_admin() ) return;
+
+    $user_id = get_current_user_id();
+
+    if ( ! empty( $user_id ) && $user_id != 0 ) {
+        $now = date('Y-m-d H:i:s');
+        update_post_meta( $order_id, '_completed_by_user', $user_id );
+        update_post_meta( $order_id, '_completed_datetime', $now );
+    }
+}
+
+// Adding 1 new columns to backend order list
+add_filter( 'manage_edit-shop_order_columns', 'custom_shop_order_column',11);
+function custom_shop_order_column($columns)
+{
+    $reordered_columns = array();
+
+    // Woocommerce version 3.3+ compatibility
+    $location_after = version_compare( WC_VERSION, '3.3', '<' ) ? 'order_notes' : 'order_status';
+
+    // Inserting the new column in a specific location
+    foreach( $columns as $key => $column){
+        $reordered_columns[$key] = $column;
+        if( $key == $location_after ){
+            $reordered_columns['completed_by'] = __( 'Completed by','woocommerce');
+        }
+    }
+    return $reordered_columns;
+}
+
+// Adding the data for the additional column (example)
+add_action( 'manage_shop_order_posts_custom_column' , 'custom_orders_list_column_content', 10, 2 );
+function custom_orders_list_column_content( $column, $post_id )
+{
+    if( 'completed_by' == $column )
+    {
+        // Get custom post meta data
+        $user_id = get_post_meta( $post_id, '_completed_by_user', true );
+        $date_time = get_post_meta( $post_id, '_completed_datetime', true );
+        $date = date('Y-m-d', strtotime($date_time));
+        if( ! empty($user_id) ){
+            $user_data = get_userdata( $user_id );
+            $user_url = get_edit_user_link( $user_id );
+            echo '<a href=""'.$user_url.'"" title=""'.$date_time.'"">'.$user_data->user_login.'</a>';
+        }
+    }
+}

@@ -1,0 +1,26 @@
+import cats.Applicative
+
+trait LiftCurried[F[_], I, O] {
+  type Out
+  def apply(f: F[I => O]): F[I] => Out
+}
+
+object LiftCurried extends LowPriorityLiftCurried {
+  implicit def liftCurried1[F[_]: Applicative, I, I2, O2](implicit
+    lc: LiftCurried[F, I2, O2]
+  ): Aux[F, I, I2 => O2, F[I2] => lc.Out] = new LiftCurried[F, I, I2 => O2] {
+    type Out = F[I2] => lc.Out
+    def apply(f: F[I => I2 => O2]): F[I] => F[I2] => lc.Out =
+      (Applicative[F].ap(f) _).andThen(lc(_))
+  }
+}
+
+trait LowPriorityLiftCurried {
+  type Aux[F[_], I, O, Out0] = LiftCurried[F, I, O] { type Out = Out0 }
+
+  implicit def liftCurried0[F[_]: Applicative, I, O]: Aux[F, I, O, F[O]] =
+    new LiftCurried[F, I, O] {
+      type Out = F[O]
+      def apply(f: F[I => O]): F[I] => F[O] = Applicative[F].ap(f) _
+    }
+}

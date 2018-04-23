@@ -1,0 +1,35 @@
+import re
+import os
+
+testFolder = ""./Path""
+
+#Usage: Remove duplicate function block from one or more .txt files available in testFolder
+
+#Iterating through the list of all the files available
+for testFilePath in os.listdir(testFolder):
+    if testFilePath.endswith("".txt""):
+        #Extracting path for each text file found
+        inputFile = open (testFolder + ""/"" + testFilePath, ""r"")
+
+        #Creating a reduced folder in the output path
+        outputPath = testFolder + ""/Reduced""
+        if not os.path.exists(outputPath):
+            os.makedirs(outputPath)
+        outputFile = open (outputPath + ""/"" + testFilePath, ""w"")
+
+        #Reading all the content into a single string
+        fileContent = inputFile.read()
+
+        #Pattern for matching a Function block. Pattern matches multiple lines
+        pattern = re.compile('(^FUNC(.|\n)*?\n})*',re.M)
+
+        # Creating a list of function blocks
+        funcList = pattern.findall(fileContent)
+        #Creating a list of unique function block, thus removing duplicate data
+        uniqueFuncList = set(funcList)
+
+        #Writing each Function block to the output file separeted by a new line
+        for element in uniqueFuncList:
+            outputFile.write(element[0] + ""\n\n"") 
+        inputFile.close()
+        outputFile.close()

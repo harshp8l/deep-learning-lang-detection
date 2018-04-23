@@ -1,0 +1,31 @@
+concurrency := 5
+workCh := make(chan string, concurrency)
+resCh := make(chan string, concurrency)
+workersWg := sync.WaitGroup{}
+// start the required number of workers, use the WaitGroup to see when they're done
+for i := 0; i < concurrency; i++ {
+   workersWg.Add(1)
+   go func() {
+     defer workersWg.Done()
+     for symbol := range workCh {
+          // do some work
+          if cond {
+              resCh <- symbol
+          }
+     }
+   }()
+}
+go func() {
+    // when all the workers are done, close the resultsCh
+    workersWg.Wait()
+    close(resCh)
+}()
+// submit all the work
+for _, s := range symbols {
+    workCh <- s
+}
+close(workCh)
+// collect up the results 
+for r := range resCh {
+    filteredSymbols = append(filteredSymbols, r)
+}

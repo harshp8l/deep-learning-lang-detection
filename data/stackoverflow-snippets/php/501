@@ -1,0 +1,23 @@
+class DiffCommandWrapper extends DiffCommand
+{
+    private $views = [];
+
+    public function __construct(\PDO $db, SchemaProviderInterface $schemaProvider = null)
+    {
+        parent::__construct($schemaProvider);
+
+        $name = $db->query('select database()')->fetchColumn();
+
+        $stm = $db->query(""SHOW FULL TABLES IN {$name} WHERE TABLE_TYPE LIKE 'VIEW';"");
+
+        foreach ($stm->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $this->views[] = $row[""Tables_in_{$name}""];
+        }
+    }
+
+    public function execute(InputInterface $input, OutputInterface $output)
+    {
+        $input->setOption('filter-expression', '/!(' . implode('|', $this->views) . ')/');
+        parent::execute($input, $output);
+    }
+}

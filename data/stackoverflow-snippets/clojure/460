@@ -1,0 +1,18 @@
+(defn start-proc-agent
+  [state]
+  (let [delay (int (* 2000 (rand)))]
+    (println (format ""starting %d"" (:id state)))
+    (Thread/sleep delay)
+    (println (format ""finished %d"" (:id state)))
+    (merge state {:delay delay :state :running} )))
+
+(def procs-agent (atom {}))
+(dotimes [i 3]
+  (let [curr-agent (agent {:id i :state :unstarted})]
+    (swap! procs-agent assoc i curr-agent)
+    (send curr-agent start-proc-agent )))
+(println ""all dispatched..."")
+(pprint @procs-agent)
+
+(Thread/sleep 3000)
+(pprint @procs-agent)

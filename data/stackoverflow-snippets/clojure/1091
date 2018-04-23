@@ -1,0 +1,16 @@
+(defn get-all-post-history-by-eid [pid]
+  (->> (d/q '[:find ?title ?content ?tags ?email ?pid
+              :in $ ?pid
+              :where
+              [?pid post/title ?title]
+              [?pid post/content ?content]
+              [?tid tag/post ?pid]         <new schema stuff
+              [?tid tag/value ?tags]       <means new way to see the world
+              [?tid author/email ?email]] (d/db conn) pid)
+       (map (fn [[title content tags email pid]]
+              {:title title
+               :content content
+               :tags tags
+               :email email
+               :eid pid}))
+       (sort-by :email)))

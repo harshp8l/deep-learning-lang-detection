@@ -1,0 +1,21 @@
+val preReqFuture = for{
+    step <- processSteps
+    prereqTemplates <- processStepPrerequisitesDTO.getProcessStepPrerequisiteProcessTemplateIds(step.id.get)
+    pres <- processTemplateDTO.getProcessTemplates(prereqTemplates)
+    processStepPrerequisites <-processStepPrerequisitesDTO.getProcessStepPrerequisitesByProcessTemplateId(step.id.get)
+    preReqs <- processStepPrerequisitesDTO.getProcessStepsPrerequisiteProcessTemplate(step.id.get)
+} yield (step, pres, processStepPrerequisites, preReqs)
+
+preReqFuture.map{ (step, pres, processStepPrerequisites, preReqs) => 
+    processStepPrerequisites.map(processStepPrerequisite => {
+        preReqs.foreach(preReqRelation => { 
+            processStepPrerequisite.processTemplate_id = preReqRelation.processtemplate
+            processStepPrerequisite
+        })
+    })
+    step.stepPrerequisites = Some(pres)
+    step.prerequisites = Some(processStepPrerequisites)
+    step
+}.recover {
+    case error: Throwable => //Deal with error
+}

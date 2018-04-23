@@ -1,0 +1,133 @@
+if OBJECT_ID('tempdb..#TempHistory') is Not Null
+ drop table #TempHistory
+
+ -- I just made up a few column here, there are LOADS of them in the real query but for Governance of course...
+SELECT 
+distinct
+a.ClaimId,
+a.FirstName,
+a.Surname,
+a.Incident,
+a.Total,
+a.extractDate -- this field is create by ETL process
+into #temphistory
+
+FROM [Data Mart Test].[Staging].[Claim] a JOIN [Data Mart Test].[dbo].[Claim] b
+ON a.ClaimId = b.ClaimId
+WHERE
+ISNULL(a.ClaimId,0) <> ISNULL(b.ClaimId,0) OR 
+ISNULL(a.FirstName,'') <> ISNULL(b.FirstName,'') OR
+ISNULL(a.Surname,'') <> ISNULL(b.Surname,'') OR 
+ISNULL(a.Incident,'') <> ISNULL(b.Incident,'')  OR
+ISNULL(a.Total,0.0) <> ISNULL(b.Total,0.0) OR 
+
+if OBJECT_ID('tempdb..#TempHistoryA') is Not Null
+ drop table #TempHistoryA
+  select 
+  * 
+  , 1 as Version
+
+   into #TempHistoryA
+
+   FROM [Data Mart Test].[dbo].[Claim] where ClaimID in (select distinct claimid  FROM #TempHistory)
+
+
+
+
+ if OBJECT_ID('tempdb..#TempHistoryB') is Not Null
+ drop table #TempHistoryB
+  SELECT  *
+      ,(RANK() OVER(PARTITION BY [ClaimId] ORDER BY [ExtractDate])) + 1 as Version
+
+      into #TempHistoryB
+
+  FROM [Data Mart Test].[Staging].[Claim]where ClaimID in (select distinct claimid  FROM #TempHistory)
+
+
+
+ if OBJECT_ID('tempdb..#TempChanges') is Not Null
+ drop table #TempChanges
+
+DECLARE @x xml
+
+SET @x = (
+   SELECT 
+        t2.ClaimID AS [@key]
+      , t2.Version AS [@version]
+      , ( SELECT t1.* FOR XML PATH('t1'), TYPE ) AS [*]
+      , ( SELECT t2.* FOR XML PATH('t2'), TYPE ) AS [*]
+   FROM #TempHistoryA AS t1
+   INNER JOIN #TempHistoryB AS t2
+   ON t1.ClaimID = t2.ClaimID
+   AND t1.Version = t2.Version - 1
+   FOR XML PATH('row'), ROOT('root')
+   );
+
+WITH Nodes AS (
+   SELECT
+        C.value('../../@key', 'int') AS [Key]
+      , C.value('../../@version', 'int') AS Version_ID
+      , C.value('local-name(..)', 'varchar(255)')AS Version_Alias
+      , C.value('local-name(.)', 'varchar(max)') AS Field
+      , C.value('.', 'varchar(max)') AS Val
+   FROM @x.nodes('/root/row/*/*') AS T(C)
+   )
+
+SELECT 
+[Key] as ClaimID,
+x.ExtractDate, 
+Field
+, Max(CASE Version_Alias WHEN 't1' THEN Val END) AS [Initial Value]
+, Max(CASE Version_Alias WHEN 't2' THEN Val END) AS [New Value]
+
+Into #TempChanges
+
+FROM [Nodes]v
+inner join [#TempHistoryB]x on x.ClaimId = v.[Key]
+                    and x.Version = v.Version_ID
+where Field not in ( 'ExtractDate','Version')
+
+GROUP BY 
+[Key],
+x.ExtractDate,
+Field
+HAVING Max(CASE Version_Alias WHEN 't1' THEN Val END) <> Max(CASE Version_Alias WHEN 't2' THEN Val END)
+
+
+
+
+
+--Find records in [Data Mart Test].dbo.Claim that are not in [Data Mart Test].Staging.Claim
+SELECT 
+*
+FROM [Data Mart Test].dbo.Claim 
+WHERE ClaimId NOT IN (SELECT b.ClaimId FROM [Data Mart Test].Staging.Claim b)
+
+
+
+
+delete from  [Data Mart Test].[dbo].[Claim] where ClaimID in (select distinct claimid  FROM #TempHistory)
+
+delete from [#TempHistoryB] 
+where not exists
+(
+select
+*
+from
+
+(select 
+claimid, 
+max(Version) as LastVersion  
+FROM #TempHistoryB b
+
+group by ClaimId
+)  b
+where b.ClaimId = claimid
+    and b.LastVersion = Version
+)
+
+insert into [Data Mart Test].[dbo].[Claim]
+select
+[ClaimId]
+      --a whole lot of other columns
+      from #TempHistoryB

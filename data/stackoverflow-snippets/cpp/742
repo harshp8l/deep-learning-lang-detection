@@ -1,0 +1,73 @@
+template<template<class...> class ... Templates>
+class template_variant
+{
+    std::any value;
+public:
+  // constructors, operator=, etc
+
+  // Observers
+    constexpr std::size_t index() const noexcept; // Which template this contains
+    const std::type_info& type() const noexcept; // returns the typeid of the contained value
+
+ // Modifiers
+    template <template<typename...> class T, class... Args>
+    T<Args...>& 
+    emplace(Args&&... args)
+    {
+         value.emplace<T<Args...>>(std::forward<Args>(args)...);
+    }
+
+    template <size_t I, class... Args>
+    template_variant_alternative_t<I, variant, Args...>& 
+    emplace(Args&&... args)
+    {
+         value.emplace<template_variant_alternative_t<I, variant, Args...>>(std::forward<Args>(args)...);
+    }
+
+    void swap( template_variant& rhs ) noexcept;
+
+  // Non-member functions
+    friend template <std::size_t I, template<class...> class ... Templates, class... Args>
+    constexpr template_variant_alternative_t<I, template_variant<Templates...>, Args...>& 
+    std::get(template_variant<Templates...>& v)
+    {
+        try 
+        {
+            return std::any_cast<template_variant_alternative_t<I, template_variant<Templates...>, Args...>&>(v.value);
+        }
+        catch (std::bad_any_cast & e)
+        {
+            throw bad_template_variant_access(e);
+        }
+    }
+    // and &&, and const&, and const&&
+
+    template <template<class...> class T, template<class...> class ... Templates, class... Args>
+    constexpr T<Args...>& 
+    std::get(template_variant<Templates...>& v)
+    {
+        try 
+        {
+            return std::any_cast<T<Args...>&>(v.value);
+        }
+        catch (std::bad_any_cast & e)
+        {
+            throw bad_template_variant_access(e);
+        }
+    }
+    // and &&, and const&, and const&&
+
+    // etc.
+};
+
+template <std::size_t I, typename Variant, class... Args>
+struct template_variant_alternative;
+
+template <std::size_t I, template<class...> class ... Templates, class... Args>
+struct template_variant_alternative<I, template_variant<Templates...>, Args...>
+{
+    using type = // apply Args... to Ith template in Templates
+};
+
+template <std::size_t I, typename Variant, class... Args>
+using template_variant_alternative_t = template_variant_alternative<I, Variant, Args...>::type;

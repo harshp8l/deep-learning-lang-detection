@@ -1,0 +1,57 @@
+import sys 
+from PyQt5.QtWidgets import QWidget, QApplication, QGridLayout, QFrame, QSizePolicy
+from PyQt5.QtGui import QFont
+from PyQt5.QtCore import QTimer, QEventLoop
+from time import sleep,time
+from random import randint
+
+class cadrillage(QWidget):  
+    def __init__(self,grille_init,Largeur_grille, pause=0):
+        """"""grille init vaudra 1 ou 0 : 0 pour une grille initialement toute blanche, 1 pour une grille randomisée""""""
+
+        super().__init__()
+        self.Largeur_grille = Largeur_grille
+
+        self.n_etape = 0
+        self.cadri_init(grille_init)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.run)
+        self.counter = 0
+        self.timer.start(pause)
+
+    def cadri_init(self,grille_init):
+        """""" définit la fenetre d'affichage et la grille initiale """"""
+        self.setGeometry(890,150,1000,800)
+        self.setWindowTitle(""Grille à la {}_ème étape"".format(self.n_etape))
+
+        self.show()
+
+        self.grid = QGridLayout()
+        self.grid.setSpacing(0)    # pas d'espace entre les carrés
+        self.setLayout(self.grid)
+
+        grille_couleurs=[0 if grille_init == 0 else randint(0,1) for i in range(self.Largeur_grille) for j in range(self.Largeur_grille)]
+
+        self.positions = [(i,j) for i in range(self.Largeur_grille) for j in range(self.Largeur_grille)]
+
+        self.grille_carre=[[None for i in range(self.Largeur_grille)] for j in range(self.Largeur_grille)]    
+
+        for position,couleur in zip(self.positions,grille_couleurs):
+            carre = QFrame(self)
+            carre.setStyleSheet(""QWidget {{ background-color: {}}}"".format(""#ffffff"" if couleur == 0 else ""#000000""))
+            carre.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+            self.grid.addWidget(carre, *position)
+            i,j = position
+            self.grille_carre[i][j] = carre
+
+    def run(self):
+        self.counter += 1
+        a,b = randint(0,self.Largeur_grille-1),randint(0,self.Largeur_grille-1)
+        self.grille_carre[a][b].setStyleSheet(""QFrame{ background-color: #000000}"")
+        if self.counter > 3:
+            self.timer.stop()
+
+if __name__ =='__main__':
+    app = QApplication(sys.argv)
+    grille = cadrillage(0,10,500)
+    sys.exit(app.exec_())

@@ -1,0 +1,96 @@
+import static org.junit.Assert.assertEquals;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
+
+@RunWith(Parameterized.class)
+public class ChargeModuleUnitTest {
+
+   @Parameter(0)
+   public static int quantity;
+
+   @Parameter(1)
+   public static ArrayList<boolean[]> testData;
+
+   @Parameter(2)
+   public static double expectedValue;
+
+   public ChargeModule cm;
+
+
+   @Parameters(name = ""{index}: quantity = {0}, testData = {1}, expectedValue = {2}"")
+   public static Object[] getFileToTestTotalCharge() {
+      String fileName = ""C:\\Users\\Eduardo Meneses\\workspace\\StackOverflow\\src\\testData.txt"";
+      Scanner inputStream = null;
+      try {
+        inputStream = new Scanner(new File(fileName));
+      } catch (FileNotFoundException e) {
+        System.out.println(e);
+      }
+
+      Object[] allTestData = new Object[2];
+      String details;
+
+      int tt, tf, ff, ft, x = 0;
+
+      boolean[] TT = new boolean[] { true, true };
+      boolean[] TF = new boolean[] { true, false };
+      boolean[] FF = new boolean[] { false, false };
+      boolean[] FT = new boolean[] { false, true };
+
+      while (inputStream.hasNextInt()) {
+        testData = new ArrayList<boolean[]>();
+        quantity = Integer.parseInt(inputStream.nextLine());
+
+        if (inputStream.hasNextLine()) {
+            details = inputStream.nextLine();
+            String[] tokens = details.split("" "");
+
+            tt = Integer.parseInt(tokens[0]);
+            tf = Integer.parseInt(tokens[1]);
+            ff = Integer.parseInt(tokens[2]);
+            ft = Integer.parseInt(tokens[3]);
+
+            for (int i = 0; i < tt; i++)
+                testData.add(TT);
+            for (int j = 0; j < tf; j++)
+                testData.add(TF);
+            for (int k = 0; k < ff; k++)
+                testData.add(FF);
+            for (int l = 0; l < ft; l++)
+                testData.add(FT);
+        }
+
+        if (inputStream.hasNextDouble()){
+            try {
+                expectedValue = NumberFormat.getInstance().parse(inputStream.nextLine()).doubleValue();
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+
+        allTestData[x] = new Object[] { quantity, testData, expectedValue };
+        x++;
+      }
+
+      inputStream.close();
+      return allTestData;
+  }
+
+  @Test
+  public void testing() {
+    cm = new ChargeModule(quantity, testData);
+    cm.chargeCalculation();
+    assertEquals(expectedValue, cm.getTotalCharge(), 0.01);
+  }
+}

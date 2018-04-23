@@ -1,0 +1,15 @@
+(defn split-dates [rows]
+  (loop [[row & rest-rows] rows ; Split on the head
+         last-date nil
+         acc [[]]]
+    (if row
+      (let [current-date (last row)]
+        (recur rest-rows current-date
+          ; If the day is the same as the previous row
+          (if (or (nil? last-date) (= current-date last-date))
+            ; Update the current day list with the new row
+            (update acc (dec (count acc))
+                    #(conj % row))
+            ; Else, create a new list of rows for the new date
+            (conj acc [row]))))
+      acc)))

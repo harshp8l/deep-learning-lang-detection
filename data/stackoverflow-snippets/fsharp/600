@@ -1,0 +1,17 @@
+let chunkBy (f : 'T-> 'Key) xs =
+    // Determine key and wrap in option
+    seq{for x in xs -> Some(f x, x)
+        // Indicates end of sequence
+        yield None }
+    |> Seq.scan (fun (_, acc, previous) current ->
+        match previous, current with
+        | Some(pKey, _), Some(key, value) when pKey = key ->
+            // No intermediate result, but add to accumulator
+            None, value::acc, current
+        | _ ->
+            // New state is 3-tuple of previous key and completed chunk,
+            // accumulator from current element, and new previous element
+            Option.map (fun (k, _) -> k, List.rev acc) previous,
+            Option.map snd current |> Option.toList, current )
+        (None, [], None)
+    |> Seq.choose (fun (result, _, _) -> result)

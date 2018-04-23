@@ -1,0 +1,12 @@
+select req_no, seq, s_date, e_date, s_type, e_type,
+       sort_type - sort_type_temp [sort_type]
+from (
+    select req_no, seq, s_date, e_date, s_type, e_type,
+           sum(sort_type) over (partition by req_no order by s_date rows between unbounded preceding and current row) sort_type,
+           case when s_type <> e_type then -1 else 0 end sort_type_temp
+    from (
+        select req_no, seq, s_date, e_date, s_type, e_type,
+               case when s_type <> e_type then 1 else 0 end sort_type
+        from MY_TABLE
+    ) a
+) a

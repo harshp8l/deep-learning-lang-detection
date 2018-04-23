@@ -1,0 +1,16 @@
+public void worker()  {
+   ExecutorService exec = Executors.newFixedThreadPool(30);
+   ResultSet rs = findResultsetWithQuery(...)
+   int idx = 0;
+   while (rs.hasNext()) {
+      List<Callable<...>> callables = new ArrayList<>();
+      while (++idx % 30 > 0 && rs.hasNext()) {
+          callables.add(new ThreadHelper(rs));
+          }
+      List<Future<...>> result = null;
+      try {
+          result = exec.invokeAll(callables, 180, TimeUnit.SECONDS);
+      catch (Exception e) { ... blah .... }
+      // here you can manage callables' results and exceptions
+   }
+} 

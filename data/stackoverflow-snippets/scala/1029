@@ -1,0 +1,33 @@
+case class Product(productId: Option[String],
+                   name: Option[String],
+                   description: Option[String],
+                   brandName: Option[String],
+                   relationships: mutable.ListBuffer[Relationship]) {
+
+}
+
+case class Relationship(productId: String, someInfo: String)
+
+def fetchProducts(): Stream[IO, Seq[Product]] = {
+  //webservice call
+  ???
+}
+
+//    def fetchRelationships(ids: Seq[Product]): Stream[IO, Seq[Relationship]] = {
+def fetchRelationships(ids: Seq[String]): Stream[IO, Seq[Relationship]] = {
+  //webservice call
+  ???
+}
+
+def process():  = {
+  val prods = fetchProducts() //run this first
+  val prodsAndRels: Stream[IO, (Seq[Product], Seq[Relationship])] = prods.flatMap(ps => fetchRelationships(ps.map(p => p.productId.get)).map(rs => (ps, rs)))
+
+  val prodsWithFilledRels: Stream[IO, immutable.Seq[Product]] = prodsAndRels.map({ case (ps, rs) => {
+    val productsMap = ps.map(p => (p.productId.get, p)).toMap
+    rs.foreach(rel => productsMap(rel.productId).relationships += rel)
+    ps.toList
+  }
+  })
+  prodsWithFilledRels
+}

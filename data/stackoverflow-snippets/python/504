@@ -1,0 +1,37 @@
+import random
+import matplotlib.pyplot as plt
+import numpy as np
+
+def used_bins(x, y, bins):
+    bin_idxs = []
+    for xelem, yelem in zip(x, y):
+        xbin = ((bins[0] - xelem) < 0).sum()
+        ybin = ((bins[1] - yelem) < 0).sum()
+        bin_idxs.append((xbin, ybin))
+
+    return bin_idxs
+
+
+x = [random.randrange(1,100,1) for _ in range (10)]
+y = [random.randrange(1,100,1) for _ in range (10)]
+
+fig, ax = plt.subplots()
+
+ax.set_xlim(0,100)
+ax.set_ylim(0,100)
+
+bins = [np.linspace(*ax.get_xlim(), 100),
+        np.linspace(*ax.get_ylim(), 50)]
+
+zi, xi, yi = np.histogram2d(x, y, bins=bins)
+zi = np.ma.masked_equal(zi, 0)
+
+ax.pcolormesh(xi, yi, zi.T)    
+ax.set_xticks(bins[0], minor=True)
+ax.set_yticks(bins[1], minor=True)
+ax.grid(True, which='minor')
+
+scat = ax.scatter(x, y, s = 1) 
+
+# compute the x, y bin index for each x,y element
+bin_idxs = used_bins(x, y, bins)

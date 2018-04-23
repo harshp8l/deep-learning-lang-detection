@@ -1,0 +1,20 @@
+$sql = mysqli_query($mysqli, ""SELECT DATE_FORMAT(trip_start,'%Y-%m') as
+trip_start1,  fare_amount as income
+FROM trip
+WHERE trip_start IS NOT NULL
+GROUP BY trip_start1
+ORDER by trip_start1"");
+
+$data = [
+    'amounts' => [],
+    'dates' => [],
+];
+while($row = mysqli_fetch_array($sql)){
+    $data['amounts'][]    = $row['income'];
+    $data['dates'][]      =  date('M, Y', strtotime($row['trip_start1']));
+}
+
+// merge subarrays into single one to get output as you want
+$data = array_merge($data['amounts'], $data['dates']);
+
+echo json_encode($data);

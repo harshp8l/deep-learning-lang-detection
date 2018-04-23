@@ -1,0 +1,27 @@
+val supervisor = BackoffSupervisor.props(
+  Backoff.onFailure(
+    ...
+  ).withReplyWhileStopped(ChildIsStopped)
+  ).withSupervisorStrategy(
+    OneForOneStrategy(maxNrOfRetries = 3, loggingEnabled = true) {
+      case msg: MessageException =>
+        println(""caught specific message!"")
+        self ! Error(msg.cmd) // replace cmd with whatever the property name is
+        SupervisorStrategy.Restart
+      case ...
+    })
+)
+
+val sup = context.actorOf(supervisor)
+
+def receive = {
+  case cmd: NewMail =>
+    sup ! cmd
+  case Error(cmd) =>
+    timers.startSingleTimer(cmd.id, Replay(cmd), 10.seconds)
+    // We assume that NewMail has an id field. Also, adjust the time as needed.
+  case Replay(cmd) =>
+    sup ! cmd
+  case ChildIsStopped =>
+    println(""child is stopped"")
+}

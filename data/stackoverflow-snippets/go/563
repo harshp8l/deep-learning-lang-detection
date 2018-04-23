@@ -1,0 +1,40 @@
+package main
+
+import (
+    ""bytes""
+    ""encoding/binary""
+    ""fmt""
+)
+
+func main() {
+    user := ""foouser""
+    password := ""barpassword""
+
+    // Write ""len(user) user len(password) password"".
+    // Lengths are unsigned 32 bit ints in network byte order.
+    var buf bytes.Buffer
+    binary.Write(&buf, binary.BigEndian, (uint32)(len(user)))
+    buf.WriteString(user)
+    binary.Write(&buf, binary.BigEndian, (uint32)(len(password)))
+    buf.WriteString(password)
+
+    var output []byte = buf.Bytes()
+    fmt.Printf(""% x\n"", output)
+
+    // Now read it back (we could use the buffer,
+    // but let's use Reader for clarity)
+    input := bytes.NewReader(output)
+    var uLen, pLen uint32
+
+    binary.Read(input, binary.BigEndian, &uLen)
+    uBytes := make([]byte, uLen)
+    input.Read(uBytes)
+    newUser := string(uBytes)
+
+    binary.Read(input, binary.BigEndian, &pLen)
+    pBytes := make([]byte, pLen)
+    input.Read(pBytes)
+    newPassword := string(pBytes)
+
+    fmt.Printf(""User: %q, Password: %q"", newUser, newPassword)
+}

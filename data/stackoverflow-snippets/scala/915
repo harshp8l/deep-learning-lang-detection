@@ -1,0 +1,22 @@
+override val supervisorStrategy =
+  OneForOneStrategy(maxNrOfRetries = -1, withinTimeRange = Duration.Inf) {
+    case _: Exception => Restart
+  }
+
+var numFetchRetries = 0
+
+def receive = {
+  case MinorIncident(fetcherRef, time) =>
+    log.error(s""${fetcherRef} threw a MinorException at ${time}"")
+    if (numFetchRetries < 3) { // possibly use the time in the retry logic; e.g., a backoff
+      numFetchRetries = numFetchRetries + 1
+      fetcherRef ! FileFetch
+    } else {
+      numFetchRetries = 0
+      context.stop(fetcherRef)
+      ... // recreate the child
+    }
+  case SomeMsgFromChildThatFetchSucceeded =>
+    numFetchRetries = 0
+  case ...
+}

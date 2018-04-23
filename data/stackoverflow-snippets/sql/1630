@@ -1,0 +1,30 @@
+;with hyphenIndexes as
+(
+    select 
+        RID = row_number() over (partition by s.Val order by idx desc),
+        Val, 
+        Idx = Idx + 1
+    from @src s
+    inner join @tally t
+        on t.idx <= len(val)
+    where substring(val, idx, 1) = '-'
+), almostDone as
+(
+    select 
+        Val,
+        StartIndex = max(iif(RID = 2, idx, null)),
+        EndIndex = max(Idx),
+        SlugLength = max(Idx) - max(iif(RID = 2, idx, null)) - 1
+    from hyphenIndexes
+    group by Val
+)
+select
+    OriginalString = val,
+    ReplacedString = stuff
+        (
+            Val, 
+            StartIndex, 
+            SlugLength,
+            replicate('0', SlugLength)
+        ) 
+from almostDone

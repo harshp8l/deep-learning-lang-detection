@@ -1,0 +1,99 @@
+export const loadPlayers = formattedRespObj => ({
+    type: 'FETCH_PLAYERS_SUCCESS',
+    players: formattedRespObj.players,
+    wr: formattedRespObj.wr,
+    qb: formattedRespObj.qb,
+    rb: formattedRespObj.rb,
+    te: formattedRespObj.te
+});
+
+function formatRespObj(playersResp) {
+    let formattedRespObj = {players: [], wr: [], qb: [], rb: [], te: []};
+
+    // Note, this can probably be prettier
+    for (let i = 0; i < playersResp.length; i++) {
+        switch (playersResp[i].position) {
+            case 'WR':
+                formattedRespObj.wr.push(playersResp[i]);
+                break;
+            case 'QB':
+                formattedRespObj.qb.push(playersResp[i]);
+                break;
+            case 'RB':
+                formattedRespObj.rb.push(playersResp[i]);
+                break;
+            case 'TE':
+                formattedRespObj.te.push(playersResp[i]);
+                break;
+            default:
+                console.error(""Unknown player position"");
+                break;
+        }
+    }
+
+    formattedRespObj.players = [...formattedRespObj.wr, ...formattedRespObj.qb, ...formattedRespObj.rb, ...formattedRespObj.te];
+
+    return formattedRespObj;
+}
+
+const initialState = {
+    players: [],
+    loading: false,
+    error: null,
+    wr: [],
+    qb: [],
+    rb: [],
+    te: []
+};
+
+export default function reducer(playersState = initialState, action) {
+    switch (action.type) {
+        case 'LOAD_PLAYERS':
+            return {
+                players: [...playersState.wr, playersState.wr],
+                loading: true,
+                error: null,
+                wr: [...playersState.wr, action.wr],
+                qb: [...playersState.qb, action.qb],
+                rb: [...playersState.rb, action.rb],
+                te: [...playersState.te, action.te],
+            };
+        case 'FETCH_PLAYERS_ERROR':
+            return {
+                loading: false,
+                error: action.error,
+                wr: playersState.wr,
+                qb: playersState.qb,
+                rb: playersState.rb,
+                te: playersState.te
+            };
+        default:
+            return {
+                loading: false,
+                error: null,
+                wr: playersState.wr,
+                qb: playersState.qb,
+                rb: playersState.rb,
+                te: playersState.te
+            }
+    }
+}
+
+export const fetchPlayers = () => {
+    return dispatch => {
+        const proxyurl = ""https://cors-anywhere.herokuapp.com/"";
+        const url = ""http://api.fantasy.nfl.com/v1/players/stats?statType=seasonStats&season=2017&week=1&format=json""; // site that doesn’t send Access-Control-*
+        fetch(proxyurl + url)
+            .then(res => res.json())
+            .catch(error => {
+                console.error('Error:', error);
+                dispatch(fetchPlayersError(error));
+            })
+            .then(response => {
+                let formattedRespObj = formatRespObj(response);
+                dispatch(loadPlayers(formattedRespObj));
+
+                dispatch(fetchPlayersSuccess(response))
+            });
+    }
+};

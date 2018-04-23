@@ -1,0 +1,19 @@
+template <typename> struct function_traits;
+
+template <typename Ret, typename...Args>
+struct function_traits<std::function<Ret(Args...)>
+{
+    using type = Ret(Args...);
+}
+
+template <typename Sig> 
+using function_traits_t = function_traits<Sig>::type;
+
+template <typename F>
+auto run(F&& f) {
+    using Sig = function_traits_t<decltype(std::function{f})>;
+    auto package = std::packaged_task<Sig>{std::forward<F>(f)}; // fails to deduce the template args automatically
+    auto future = package.get_future();
+    enqueue(std::move(package)); // function can deduce
+    return future;
+}

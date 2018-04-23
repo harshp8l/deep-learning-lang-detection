@@ -1,0 +1,61 @@
+from threading import Thread
+from time import sleep
+
+import Tkinter as tk
+import tkMessageBox as mb
+import ttk
+
+
+class SmallGui(tk.Frame):
+    def __init__(self, master):
+        tk.Frame.__init__(self, master)
+        self.master = master
+        self.master.title('test gui')
+
+        self.button_1 = ttk.Button(self.master,
+                                   text='Start 1',
+                                   command=lambda: self.init_thread(1))
+
+        self.button_2 = ttk.Button(self.master,
+                                   text='Start 2',
+                                   command=lambda: self.init_thread(2))
+
+        self.button_1.pack()
+        self.button_2.pack()
+
+        self.work1_status = None
+        self.work2_status = None
+
+    def init_thread(self, work):
+        if work == 1:
+            self.work1_status = Thread(target=self.work_1)
+            self.work1_status.start()
+            self.check_thread(self.work1_status, work)
+        else:
+            self.work2_status = Thread(target=self.work_2)
+            self.work2_status.start()
+            self.check_thread(self.work2_status, work)
+
+    def check_thread(self, pass_thread, thread_name):
+        if pass_thread.isAlive() == False:
+                pass_thread = None
+                mb.showinfo(""test"", ""Work {} complete"".format(thread_name))
+        else:
+            self.after(1000, lambda: self.check_thread(pass_thread, thread_name))
+
+    @staticmethod
+    def work_1():
+        print ('Work 1 started')
+        # Do some Task and return a list
+        sleep(5)
+
+    @staticmethod
+    def work_2():
+        print ('Work 2 Started')
+        # Do some Task and return a list
+        sleep(5)
+
+if __name__ == '__main__':
+    root = tk.Tk()
+    run_gui = SmallGui(root)
+    root.mainloop()

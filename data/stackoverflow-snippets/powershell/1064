@@ -1,0 +1,16 @@
+Set-DefaultAWSRegion ""ap-southeast-2""
+
+# work out the id and load balancer for this instance
+$instanceId = (wget -UseBasicParsing ""http://169.254.169.254/latest/meta-data/instance-id"").Content
+$targetGroupArn = (Get-EC2Tag -Filter @{Name=""resource-id""; Values=$instanceId}, @{Name=""key"";Values=""<name of key>""}).Value # instances have the alb arn tagged in when created by an autoscaling group
+
+$thisInstance = New-Object Amazon.ElasticLoadBalancingV2.Model.TargetDescription
+$thisInstance.Id = $instanceId
+$thisInstance.Port = 80
+
+write-host ""Adding $instanceId to $targetGroupArn""
+
+# register instace with ALB
+Register-ELB2Target -TargetGroupArn $targetGroupArn -Targets @( $thisInstance ) -Force
+
+write-host ""Done""

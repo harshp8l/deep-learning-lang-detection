@@ -1,0 +1,46 @@
+scala> val df = spark.range(10)
+df: org.apache.spark.sql.Dataset[Long] = [id: bigint]
+
+scala> df.show
++---+
+| id|
++---+
+|  0|
+|  1|
+|  2|
+|  3|
+|  4|
+|  5|
+|  6|
+|  7|
+|  8|
+|  9|
++---+
+
+scala> val list = df.agg(collect_list(""id"").as(""id""))
+list: org.apache.spark.sql.DataFrame = [id: array<bigint>]
+
+scala> list.show(false)
++------------------------------+
+|id                            |
++------------------------------+
+|[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]|
++------------------------------+
+
+scala> val convertUDF = udf((array : Seq[Long]) => {
+     | array.toVector }
+     | )
+convertUDF: org.apache.spark.sql.expressions.UserDefinedFunction = UserDefinedFunction(<function1>,ArrayType(LongType,false),Some(List(ArrayType(LongType,false))))
+
+scala> list.select(convertUDF(col(""id"")).as(""vector"")).show
++--------------------+
+|              vector|
++--------------------+
+|[0, 1, 2, 3, 4, 5...|
++--------------------+
+
+
+scala> list.select(convertUDF(col(""id"")).as(""vector"")).printSchema
+root
+ |-- vector: array (nullable = true)
+ |    |-- element: long (containsNull = false)

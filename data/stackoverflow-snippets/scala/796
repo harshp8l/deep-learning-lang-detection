@@ -1,0 +1,25 @@
+function sendDeleteRequest(event) {
+  url = event.target.getAttribute(""data-delete-url"")
+  redirect = event.target.getAttribute(""data-redirect-url"")
+  csrfTokenName = event.target.getAttribute(""data-csrf-name"")
+  csrfTokenValue = event.target.getAttribute(""data-csrf-value"")
+  $.ajax({
+    url: url,
+    method: ""DELETE"",
+    beforeSend: function(request) {
+      //'Csrf-Token' is the expected header name, not $csrfTokenName
+      request.setRequestHeader(/*$csrfTokenName*/'Csrf-Token', csrfTokenValue);
+    },
+    success: function() {
+      window.location = redirect;
+    },
+    error: function() {
+      window.location.reload();
+    }
+  })
+}
+
+var deleteBookBtn = document.getElementById(""deleteBookBtn"");
+if(deleteBookBtn) {
+    deleteBookBtn.addEventListener(""click"", sendDeleteRequest);
+}

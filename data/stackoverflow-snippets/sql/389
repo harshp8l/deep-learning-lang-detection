@@ -1,0 +1,20 @@
+; WITH Differences AS (
+    -- calculate the differences in days
+    SELECT CareID, PlanID, PerformanceStatus, DiagnosisDate, AgreedDate, MDTDate
+        , CASE
+            -- if any of the dates is null, take the difference to the other one or NULL if both are NULL
+            WHEN AgreedDate IS NULL OR MDTDate IS NULL THEN COALESCE(ABS(DATEDIFF(day, DiagnosisDate, AgreedDate)), ABS(DATEDIFF(day, DiagnosisDate, MDTDate)))
+            -- take the smaller difference (WHEN AND ELSE cover this logic)
+            WHEN ABS(DATEDIFF(day, DiagnosisDate, AgreedDate)) <= ABS(DATEDIFF(day, DiagnosisDate, MDTDate)) THEN ABS(DATEDIFF(day, DiagnosisDate, AgreedDate))
+            ELSE ABS(DATEDIFF(day, DiagnosisDate, MDTDate))
+          END AS SmallerDiffInDays
+    FROM #ClosestDate
+), SmallestDifferencesPlanIDPerCareID AS (
+    SELECT CareID, PlanID, PerformanceStatus,
+        -- partition the data by CareID, order it by SmallerDiffInDays ascending and as a tie-breaker use PlanID DESC
+        ROW_NUMBER() OVER (PARTITION BY CareID ORDER BY SmallerDiffInDays, PlanID DESC) AS RwNr
+    FROM Differences
+)
+SELECT CareID, PlanID, PerformanceStatus
+FROM SmallestDifferencesPlanIDPerCareID
+WHERE RwNr = 1;

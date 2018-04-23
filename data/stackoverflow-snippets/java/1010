@@ -1,0 +1,21 @@
+//###########################################################################
+// Medium constraints
+//###########################################################################      
+    rule ""unassigned score""
+        when
+            accumulate( ServiceRequestAssignment(resource == null);
+                                $cnt: count(1))
+        then
+            scoreHolder.addMediumConstraintMatch(kcontext, -toIntExact($cnt)*100);
+    end   
+
+// ############################################################################
+// Soft constraints
+// ############################################################################
+
+rule ""dateDeviance""
+    when
+        $request : ServiceRequestAssignment(fixDate != true, $dateDeviance: dateDeviance);
+    then
+        scoreHolder.addSoftConstraintMatch(kcontext, -toIntExact($dateDeviance));
+end

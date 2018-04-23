@@ -1,0 +1,13 @@
+from keycloak import KeycloakAdmin
+from keycloak.exceptions import raise_error_from_response, KeycloakGetError
+
+class CustomKeycloakAdmin(KeycloakAdmin):
+    def get_user_group(self,user_name):
+        USER_GROUP_URL = ""admin/realms/{realm-name}/users/{user-id}/groups""
+        params_path = {""user-id"":self.get_user_id(user_name),""realm-name"": self.realm_name}
+        data_raw = self.connection.raw_get(USER_GROUP_URL.format(**params_path))
+        return raise_error_from_response(data_raw, KeycloakGetError)
+
+if __name__==""__main__"":
+    keycloak_admin = CustomKeycloakAdmin(server_url=""http://localhost:8080/auth/"",username='admin_user',password='admin_password',realm_name=""my_realm"",verify=True)
+    user_group = keycloak_admin.get_user_group(""user_name"")

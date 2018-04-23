@@ -1,0 +1,37 @@
+template <typename Data>
+class querry_list {
+private:
+    std::mutex mx_lock;
+    std::map<uint32_t, Data> m_Data;
+
+public:
+    querry_list() { }
+
+    void Push_Back(uint32_t ID, const Data& Val) {
+        std::lock_guard<std::mutex> l(mx_lock);
+        // Add data to the container
+        m_Data[ID] = Val;
+    }
+
+    Data* AtID_NoLock(uint32_t ID) {
+        auto iter = m_Data.find(ID);
+        return (iter != m_Data.end()) ? &(iter->second) : nullptr;
+    }
+
+    Data* AtID(uint32_t ID) {
+        std::lock_guard<std::mutex> l(mx_lock);
+        return AtID_NoLock(ID);
+    }
+
+    void Remove(uint32_t ID) {
+        std::lock_guard<std::mutex> l(mx_lock);
+        auto iter = m_Data.find(ID);
+        if (iter != m_Data.end())
+            m_Data.erase(iter);
+    }
+
+    bool Exists(uint32_t ID) {
+        std::lock_guard<std::mutex> l(mx_lock);
+        return (m_Data.find(ID) != m_Data.end());
+    }
+};

@@ -1,0 +1,31 @@
+public static void main(String[] args) throws IOException {
+    BufferedImage image = null;
+    SampleModel sm = null;
+    WritableRaster writeRaster = null;
+    Raster raster = null;
+    int[][] pixel = new int[10][10];
+
+    // containing only white pixels in an image
+    for (int i = 0; i < 10; i++) 
+        for(int j = 0; j < 10; j++) 
+            pixel[i][j] = 255;
+    printPixels(pixel);
+
+    // make black vertical lines by changing intensity value
+    for (int i = 0; i < 10; i++) 
+        for(int j = 0; j < 10; j+=2) 
+            pixel[i][j] = 0;
+    printPixels(pixel);
+
+    image = new BufferedImage(10, 10, BufferedImage.TYPE_BYTE_GRAY);
+    raster = image.getData();
+    sm = raster.getSampleModel();
+    writeRaster = Raster.createWritableRaster(sm, new Point(0, 0));
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+             writeRaster.setSample(i, j, 0, pixel[j][i]); // <--- Note: Reversal of i and j
+        }
+    }
+    image.setData(writeRaster);
+    writeFile(image, ""modified.gif"");
+}

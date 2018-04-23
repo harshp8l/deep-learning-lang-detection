@@ -1,0 +1,182 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <functional>
+#include <utility>
+
+class AbstractDirectionPatientsDispatcher;
+class AbstractGenderPatientDispatcher;
+
+class Patient
+{
+public:
+    virtual void accept(AbstractDirectionPatientsDispatcher &dispatcher) = 0;
+    virtual void accept(AbstractGenderPatientDispatcher &dispatcher) = 0;
+
+    std::string name;
+};
+
+class InPatient;
+class OutPatient;
+
+class AbstractDirectionPatientsDispatcher {
+public:
+    virtual void dispatch(InPatient &patient) = 0;
+    virtual void dispatch(OutPatient &patient) = 0;
+};
+
+class FemalePatient;
+class MalePatient;
+
+class AbstractGenderPatientDispatcher {
+public:
+    virtual void dispatch(FemalePatient &patient) = 0;
+    virtual void dispatch(MalePatient &patient) = 0;
+};
+
+template <typename PatientClass, typename Dispatcher>
+class CRTPDispatchApplier : virtual public Patient
+{
+public:
+    void accept(Dispatcher &dispatcher) override {
+        dispatcher.dispatch(static_cast<PatientClass &>(*this));
+    }
+};
+
+class InPatient : public CRTPDispatchApplier<InPatient, AbstractDirectionPatientsDispatcher>
+{
+};
+
+class OutPatient : public CRTPDispatchApplier<OutPatient, AbstractDirectionPatientsDispatcher>
+{
+};
+
+class FemalePatient : public CRTPDispatchApplier<FemalePatient, AbstractGenderPatientDispatcher>
+{
+};
+
+class MalePatient : public CRTPDispatchApplier<MalePatient, AbstractGenderPatientDispatcher>
+{
+};
+
+
+class InFemale : public FemalePatient, public InPatient
+{
+};
+
+class OutFemale : public FemalePatient, public OutPatient
+{
+};
+
+class InMale : public MalePatient, public InPatient
+{
+};
+
+class OutMale : public MalePatient, public OutPatient
+{
+};
+
+class DummyDirectionDispatecher : public AbstractDirectionPatientsDispatcher
+{
+public:
+    void dispatch(InPatient & ) override {
+    }
+
+    void dispatch(OutPatient & ) override {
+    }
+};
+
+class DummyGenderDispatcher : public AbstractGenderPatientDispatcher
+{
+public:
+    void dispatch(FemalePatient &) override {
+    }
+
+    void dispatch(MalePatient &) override {
+    }
+};
+
+template <typename Direction>
+class DispatchByDirection : public DummyDirectionDispatecher
+{
+public:
+    DispatchByDirection(std::function<void(Direction &)> action) :
+        m_action(std::move(action))
+    {}
+
+    void dispatch(Direction & p) override {
+        m_action(p);
+    }
+
+private:
+    std::function<void(Direction &)> m_action;
+};
+
+template <typename Gender>
+class DispatchByGender : public DummyGenderDispatcher
+{
+public:
+    DispatchByGender(std::function<void(Gender &)> action) :
+        m_action(std::move(action))
+    {}
+
+    void dispatch(Gender & p) override {
+        m_action(p);
+    }
+
+private:
+    std::function<void(Gender &)> m_action;
+};
+
+int main() {
+    InFemale f1;
+    OutFemale f2;
+    InMale m1;
+    OutMale m2;
+    f1.name = ""Eve"";
+    f2.name = ""Alice"";
+    m1.name = ""Bob"";
+    m2.name = ""Charlie"";
+
+    std::vector<Patient *> patients;
+    patients.push_back(&f1);
+    patients.push_back(&f2);
+    patients.push_back(&m1);
+    patients.push_back(&m2);
+
+    DispatchByDirection<InPatient> print_in_patients{[](InPatient &patient){
+        std::cout << ""in: "" << patient.name << std::endl;
+    }};
+
+    for (auto p : patients) {
+        p->accept(print_in_patients);
+    }
+    std::cout << std::endl;
+
+    DispatchByDirection<OutPatient> print_out_patients{[](OutPatient &patient) {
+        std::cout << ""out: "" << patient.name << std::endl;
+    }};
+
+    for (auto p : patients) {
+        p->accept(print_out_patients);
+    }
+    std::cout << std::endl;
+
+    DispatchByGender<FemalePatient> print_female{[](FemalePatient &patient) {
+        std::cout << ""female: "" << patient.name << std::endl;
+    }};
+
+    for (auto p : patients) {
+        p->accept(print_female);
+    }
+    std::cout << std::endl;
+
+    DispatchByGender<MalePatient> print_male{[](MalePatient &patient) {
+        std::cout << ""male: "" << patient.name << std::endl;
+    }};
+
+    for (auto p : patients) {
+        p->accept(print_male);
+    }
+    std::cout << std::endl;
+}

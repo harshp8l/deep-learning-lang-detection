@@ -1,0 +1,26 @@
+SELECT orders.order_item_name, orders.qty, locator.meta_value AS 'locator', stock.meta_value AS 'stock' 
+FROM wp_postmeta locator
+
+JOIN ( 
+    SELECT items.order_item_name AS 'order_item_name', qty.meta_value AS 'qty',  product_id.id AS 'id' 
+    FROM `wp_woocommerce_order_itemmeta` qty
+    JOIN (
+        SELECT order_item_id, meta_id, meta_key, meta_value AS 'id'     
+        FROM `wp_woocommerce_order_itemmeta` 
+        WHERE meta_key = '_product_id' 
+        ) AS product_id
+    ON qty.order_item_id = product_id.order_item_id
+    JOIN `wp_woocommerce_order_items` items
+    ON product_id.order_item_id = items.order_item_id
+    WHERE qty.meta_key = '_qty'
+    ) AS orders
+ON locator.post_id = orders.id
+
+JOIN (
+    SELECT post_id, meta_key, meta_value
+    FROM wp_postmeta
+    WHERE meta_key = '_stock'
+    ) AS stock
+ON locator.post_id = stock.post_id
+
+WHERE locator.meta_key = '_locator';

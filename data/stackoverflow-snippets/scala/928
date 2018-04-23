@@ -1,0 +1,20 @@
+import com.vaadin.ui.{Button, VerticalLayout}
+import com.vaadin.server._
+import java.io.{ByteArrayInputStream}
+
+class VaadinStringStream(str : String, browserFileNameSuggestion : String) extends ConnectorResource {
+
+  override def getMIMEType: String = ""text/plain""
+  override def getFilename: String = browserFileNameSuggestion
+  override def getStream: DownloadStream = new DownloadStream(
+    new ByteArrayInputStream(str.getBytes), getMIMEType, getFilename
+  )
+}
+
+class ReportDownloader extends VerticalLayout{
+  val btn = new Button(""DOWNLOAD"")
+  this addComponent btn
+
+  val stream = new VaadinStringStream(""This is a sample txt file content"", ""report.txt"")
+  new FileDownloader(stream).extend(btn)
+}

@@ -1,0 +1,45 @@
+import $ivy.`io.circe:circe-core_2.12:0.9.3`, io.circe._
+import $ivy.`io.circe:circe-generic_2.12:0.9.3`, io.circe.generic._
+import $ivy.`io.circe:circe-generic-extras_2.12:0.9.3`, io.circe.generic.extras._
+interp.load.plugin.ivy(""org.scalamacros"" % ""paradise_2.12.4"" % ""2.1.1"")
+
+implicit val config: Configuration = Configuration.
+  default.
+  withSnakeCaseMemberNames.
+  withDiscriminator(""data_type"").
+  copy(transformConstructorNames = _.toLowerCase)
+
+{
+@ConfiguredJsonCodec
+sealed trait InputEntity
+object InputEntity {
+  @ConfiguredJsonCodec case class Account(id: Long, `type`: String, createdAt: Long) extends InputEntity
+  @ConfiguredJsonCodec case class User(id: Long, accountId: Long, department: String, createdAt: Long) extends InputEntity
+}
+} 
+
+import $ivy.`io.circe:circe-parser_2.12:0.9.3`, io.circe.parser._
+
+
+val accountJson = """"""
+{
+  ""data_type"": ""account"",
+  ""id"": 1,
+  ""type"": ""Trial"",
+  ""created_at"": 1523982003
+}
+""""""
+val account = decode[InputEntity](accountJson)
+// account: Either[Error, InputEntity] = Right(Account(1L, ""Trial"", 1523982003L)
+
+val userJson = """"""
+{
+  ""data_type"": ""user"",
+  ""id"": 1,
+  ""account_id"": 1,
+  ""department"": ""Finance"",
+  ""created_at"": 1523982122
+}
+""""""
+val user = decode[InputEntity](userJson)
+// user: Either[Error, InputEntity] = Right(User(1L, 1L, ""Finance"", 1523982122L))

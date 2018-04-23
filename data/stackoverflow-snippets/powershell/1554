@@ -1,0 +1,26 @@
+#Environment setup
+New-ADOrganizationalUnit -Name Country -Path ""DC=TIMHAINTZ,DC=COM""
+New-ADOrganizationalUnit -Name Australia -Path ""OU=Country,DC=TIMHAINTZ,DC=COM""
+New-ADOrganizationalUnit -Name Australia1 -Path ""OU=Australia,OU=Country,DC=TIMHAINTZ,DC=COM""
+New-ADOrganizationalUnit -Name Australia2 -Path ""OU=Australia,OU=Country,DC=TIMHAINTZ,DC=COM""
+New-ADOrganizationalUnit -Name China -Path ""OU=Country,DC=TIMHAINTZ,DC=COM""
+New-ADUser John -Type iNetOrgPerson -Path ""OU=Australia1,OU=Australia,OU=Country,DC=timhaintz,DC=com"" 
+New-ADUser Chris -Type iNetOrgPerson -Path ""OU=Australia2,OU=Australia,OU=Country,DC=timhaintz,DC=com""
+New-ADUser May -Type iNetOrgPerson -Path ""OU=Australia1,OU=Australia,OU=Country,DC=timhaintz,DC=com""  
+New-ADUser Ken -Type iNetOrgPerson -Path ""OU=China,OU=Country,DC=timhaintz,DC=com""
+New-ADOrganizationalUnit -Name Groups -Path ""DC=TIMHAINTZ,DC=COM"" 
+New-ADGroup -Name ""Group1"" -SamAccountName Group1 -GroupCategory Security -GroupScope Global -DisplayName ""Group1"" -Path ""OU=Groups,DC=TimHaintz,DC=com""  
+New-ADGroup -Name ""Group2"" -SamAccountName Group2 -GroupCategory Security -GroupScope Global -DisplayName ""Group2"" -Path ""OU=Groups,DC=TimHaintz,DC=com""  
+Add-ADGroupMember Group1 John  
+Add-ADGroupMember Group2 Chris 
+Add-ADGroupMember Group1 May  
+Add-ADGroupMember Group2 May 
+Add-ADGroupMember Group1 Ken
+
+#Iteration through groups
+$group2 = 'CN=Group1,OU=Groups,DC=timhaintz,DC=com','CN=Group2,OU=Groups,DC=timhaintz,DC=com'
+$users = foreach($group in $group2)
+     {
+         Get-ADGroupMember -Identity $group -Recursive | Where-Object {$_.objectClass -ieq ""inetOrgPerson""}
+     }
+$uniqueusers = $Users | Select-Object -Unique

@@ -1,0 +1,42 @@
+//BackFillParallel . . .
+func BackFillParallel(leads []Lead, verbose bool) {
+    gl, bl := make(chan LeadRes), make(chan LeadResErr)
+
+    // one goroutine that blocks until all ProcessLead functions are done
+    go func(gl chan LeadRes, bl chan LeadResErr) {
+        var wg sync.WaitGroup
+        for _, lead := range leads {
+            wg.Add(1)
+            go func(lead Lead, wg *sync.WaitGroup) {
+                ProcessLead(lead, gl, bl, wg)
+            }(lead, &wg)
+        }
+        wg.Wait()
+    }(gl, bl)
+
+    // main routine blocks until all results and errors are collected
+    var wg sync.WaitGroup
+    res, errs := []LeadRes{}, []LeadResErr{}
+    wg.Add(2) // add 2 for resCollector and errCollector
+    go resCollector(&wg, gl, res)
+    go errCollector(&wg, bl, errs)
+    wg.Wait()
+
+    fmt.Println(res, errs) // in these two variables you will have the results.
+}
+
+func resCollector(wg *sync.WaitGroup, ok chan LeadRes, res []LeadRes) {
+    defer wg.Done()
+    for lead := range ok {
+        res = append(res, lead)
+    }
+}
+
+func errCollector(wg *sync.WaitGroup, ok chan LeadResErr, res []LeadResErr) {
+    defer wg.Done()
+    for err := range ok {
+        res = append(res, err)
+    }
+}
+
+// ProcessLead function as in ""First improvement""

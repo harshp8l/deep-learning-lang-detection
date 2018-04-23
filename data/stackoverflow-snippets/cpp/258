@@ -1,0 +1,41 @@
+#include <vector>
+using namespace std;
+// CUDA Acceleration Adapter.
+    __global__ void evaluate (float *a, float *b, int n, int c) {
+        for (int i = 0; i < n; i++) a[i]++;
+        for (int i = 0; i < c; i++) b[i]++;
+    }
+class Accelerator {
+public:
+  float*  A;
+  float*  B;
+  int  N;
+  int  C;
+
+    Accelerator () {}
+
+    Accelerator (int N, int C) {
+        // initialize variables (unified memory).
+        this->N = N;
+
+        // are ""inputs""
+        this->C = C;
+        cudaMallocManaged(&A, N*sizeof(float));
+        cudaMallocManaged(&B, C*sizeof(float));
+    }
+
+    void setData (vector<float>& A, vector<float>& B) {
+        for (int i=0; i < N; i++) (this->A)[i] = A[i];
+        for (int i=0; i < C; i++) (this->B)[i] = B[i];
+    }
+
+    void accelerate (vector<float>& results) {
+        evaluate<<<1,1>>>(A, B, N, C);
+        cudaDeviceSynchronize();
+        for (int i = 0; i<N; i++) results[i] = A[i];
+    }
+
+};
+int  main () {
+    Accelerator testAcc(5,3);
+}

@@ -1,0 +1,17 @@
+ val userSource : Source[CreateUser, _] = ???
+
+ val userSink : Sink[Either[CreateUserError, UserCreated], _] = 
+   Sink[Either[CreateUserError, UserCreated]] foreach {
+     case Left(error) =>
+       System.err.println(""Error with user creation : "" error.email)
+     case Right(userCreated) =>
+       System.out.println(""User Created: "" userCreated.email)
+   }
+
+ //create the full stream
+ userSource
+   .via(createUserFlow)
+   .via(emailFlow)
+   .via(thirdPartyFlow)
+   .to(userSink)
+   .run()

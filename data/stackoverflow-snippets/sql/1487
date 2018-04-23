@@ -1,0 +1,90 @@
+func readTwoDBs() -> (String, String)? {
+
+    var returnValue_1: String = """"
+    var returnValue_2: String = """"
+
+    // create SQL-DB FilePath
+    do {
+        // create documents-URLs for two filenames
+        self.file_1_URL = try createSQLFilePath(fileName: ""file1"", fileExtension: ""db"")
+        self.file_2_URL = try createSQLFilePath(fileName: ""file2"", fileExtension: ""db"")
+    }
+    catch {
+        return nil
+    }
+    let query_1 =
+    """"""
+    SELECT DISTINCT n.locations
+    FROM names n
+    WHERE  n.name = ""\(self.myName)""
+    """"""
+
+    // !! FOR QUERY_2 YOU NEED THE ""MY_DB_TWO"" NAME AND ITS TABLE IN THE FROM STATEMENT !!!!!!!
+    // !! THIS ""MY_DB_TWO"" IS GIVEN BY THE ATTACH-cmd FURTHER DOWN... !!!!!!!! 
+    let query_2 =
+    """"""
+    SELECT DISTINCT n.locations
+    FROM MY_DB_TWO.names n
+    WHERE  n.name = ""\(self.myName)""
+    """"""
+
+    // Open SQLite database
+    var db: OpaquePointer? = nil
+    if sqlite3_open(self.file_1_URL?.absoluteString, &db) == SQLITE_OK {
+
+        var statement: OpaquePointer? = nil
+
+        let attachStr = ""ATTACH DATABASE \'\(self.file_2_URL!)\' AS MY_DB_TWO""
+        if (sqlite3_exec(db, attachStr, nil, &statement, nil) == SQLITE_OK) {
+            print(""Success!"")
+        }
+
+        // Run SELECT query Nr1 from main.db
+        statement = nil
+        if sqlite3_prepare_v2(db, query_1, -1, &statement, nil) == SQLITE_OK {
+
+            // Loop through all results from query
+            while sqlite3_step(statement) == SQLITE_ROW {
+
+                let name = sqlite3_column_text(statement, 0)
+                if name != nil {
+                    let nameString = String(cString:name!)
+                    returnValue_1 = nameString
+                } else {
+                    print(""name not found"", terminator: """")
+                    returnValue_1 = """"
+                }
+            }
+        } else {
+            let errmsg = String(cString: sqlite3_errmsg(db))
+            print(""error running query: \(errmsg)"")
+            returnValue_1 = """"
+        }
+
+        // Run SELECT query Nr2 from MY_DB_TWO
+        statement = nil
+        if sqlite3_prepare_v2(db, query_2, -1, &statement, nil) == SQLITE_OK {
+
+            // Loop through all results from query
+            while sqlite3_step(statement) == SQLITE_ROW {
+
+                let name = sqlite3_column_text(statement, 0)
+                if name != nil {
+                    let nameString = String(cString:name!)
+                    returnValue_2 = nameString
+                } else {
+                    print(""name not found"", terminator: """")
+                    returnValue_2 = """"
+                }
+            }
+        } else {
+            let errmsg = String(cString: sqlite3_errmsg(db))
+            print(""error running query: \(errmsg)"")
+            returnValue_2 = """"
+        }
+    } else {
+        print(""error opening database"")
+    }
+
+    return (returnValue_1, returnValue_2)
+}

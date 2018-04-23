@@ -1,0 +1,22 @@
+func selectChildrenAndJob(db *sql.DB) {
+    p := &Person{}
+    var children string
+    err := db.QueryRow(""SELECT children, job FROM mytable LIMIT 1"").Scan(&children, &p.Job)
+    switch {
+    case err == sql.ErrNoRows:
+        fmt.Println(""No rows."")
+    case err != nil:
+        fmt.Println(""cannot retrieve child + job rows"", err)
+    default:
+        err = json.Unmarshal([]byte(children), &p.Children)
+        if err != nil {
+            fmt.Printf(""Failed to unmarshal children: %s\n"", err)
+            return
+        }
+        childlist := make([]Child, 0)
+        for _, c := range p.Children {
+            childlist = append(childlist, *c)
+        }
+        fmt.Printf(""children %v; job %v\n"", childlist, p.Job)
+    }
+}

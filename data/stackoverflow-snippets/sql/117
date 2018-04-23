@@ -1,0 +1,31 @@
+CREATE FUNCTION [dbo].[getValueBetweenTwoStrings](@inputString 
+NVARCHAR(4000), @stringToSearchFrom NVARCHAR(4000), @stringToSearchTo 
+NVARCHAR(4000))
+RETURNS NVARCHAR(4000)
+AS
+BEGIN      
+DECLARE @retVal NVARCHAR(4000)
+DECLARE @stringToSearchFromSearchPattern NVARCHAR(4000) = '%' + 
+@stringToSearchFrom + '%'
+
+SELECT @retVal = SUBSTRING (
+       @inputString,
+       PATINDEX(@stringToSearchFromSearchPattern, @inputString) + LEN(@stringToSearchFrom),
+       (CASE
+            CHARINDEX(
+                @stringToSearchTo,
+                @inputString,
+                PATINDEX(@stringToSearchFromSearchPattern, @inputString) + LEN(@stringToSearchFrom))
+        WHEN
+            0
+        THEN
+            LEN(@inputString) + 1
+        ELSE
+            CHARINDEX(
+                @stringToSearchTo,
+                @inputString,
+                PATINDEX(@stringToSearchFromSearchPattern, @inputString) + LEN(@stringToSearchFrom))
+        END) - (PATINDEX(@stringToSearchFromSearchPattern, @inputString) + LEN(@stringToSearchFrom))
+   )
+RETURN @retVal
+END

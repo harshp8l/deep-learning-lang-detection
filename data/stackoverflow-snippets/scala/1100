@@ -1,0 +1,36 @@
+class FlowWithCounter extends GraphStageWithMaterializedValue[FlowShape[Int, Int], Future[Int]]{
+    val in:Inlet[Int] = Inlet(""Inlet_of_FlowWithCounter"")
+    val out:Outlet[Int] = Outlet(""Outlet of FlowWithCounter"")
+
+    override def shape: FlowShape[Int, Int] = FlowShape(in, out)
+
+    override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, Future[Int]) = {
+      val materializedValue = Promise[Int]()
+      val logic = new GraphStageLogic(shape) {
+        private var counter: Int = 0
+
+        setHandler(
+          in,
+          new InHandler {
+            override def onPush(): Unit = {
+              val elem = grab(in)
+              counter += 1
+              push(out, elem)
+            }
+
+            override def onUpstreamFinish(): Unit = {
+              materializedValue.success(counter)
+              super.onUpstreamFinish()
+            }
+          }
+        )
+
+        setHandler(out, new OutHandler {
+          override def onPull(): Unit = {
+            pull(in)
+          }
+        })
+      }
+      (logic, materializedValue.future)
+    }
+  }

@@ -1,0 +1,17 @@
+public class WsEndpoint {
+   private CommandFactory factory;
+
+   // if you are required to have a no-arg default constructor and can't use dependency injection:
+   public WsEndpoint() {
+       this(new MyStandardCommandFactory()); // create an instance of the standard command factory.
+   }
+
+   public WsEndpoint(CommandFactory factory) {
+       this.factory = Objects.requireNonNull(factory);
+   }
+
+   @OnMessage
+   public void onMessage(Session session, WsMessage wsMessage) {
+        Command command = factory.createCommand(session, wsMessage);
+        command.execute();
+   }

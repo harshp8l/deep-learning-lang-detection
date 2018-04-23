@@ -1,0 +1,54 @@
+package main
+
+import (
+    ""fmt""
+    ""encoding/json""
+
+    ""gopkg.in/mgo.v2""
+    ""gopkg.in/mgo.v2/bson""
+)
+
+func main() {
+    session, err := mgo.Dial(""127.0.0.1"")
+    if err != nil {
+       panic(err)
+    }
+
+    defer session.Close()
+
+    // Optional. Switch the session to a monotonic behavior.
+    session.SetMode(mgo.Monotonic, true)
+    c := session.DB(""test"").C(""mgo"")
+
+    cond := bson.M{""$and"": []bson.M{bson.M{""details"": bson.M{""$elemMatch"": bson.M{""category"": ""A""}}}, bson.M{""status"": 0}}}
+    query := bson.M{""$set"": bson.M{""details.$.obj.guava"": 15}}
+
+    res := []interface{}{}
+    err = c.Find(cond).All(&res)
+
+    if err != nil {
+        fmt.Println(""Before Update Read Error:"", err)
+        return
+    }
+
+    data, _ := json.MarshalIndent(res, """", "" "")
+    fmt.Printf(""Before Update Read: %s\n"", string(data))
+
+    err = c.Update(cond, query)
+
+    if err != nil {
+        fmt.Println(""Update Error:"", err)
+        return
+    }
+
+    fmt.Println(""Update Succeed!"")
+
+    err = c.Find(cond).All(&res)
+    if err != nil {
+        fmt.Println(""After Update Read Error:"", err)
+        return
+    }
+
+    data, _ = json.MarshalIndent(res, """", "" "")
+    fmt.Printf(""After Update Read: %s\n"", string(data))
+}

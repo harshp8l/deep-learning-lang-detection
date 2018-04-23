@@ -1,0 +1,20 @@
+template<template<class...>class Z>
+struct ztemplate{
+  template<class...Ts>
+  using z=Z<Ts...>;
+};
+template<class zE, class Indexes>
+class Node;
+using zNode=ztemplate<Node>;
+template<class zN, class Indexes, class Count>
+class Edge;
+using zEdge=ztemplate<Edge>;
+
+template<class zE, std::size_t...Is>
+class Node<zE,std::index_sequence<Is...>>{
+  std::tuple< std::list< zE::template z<zNode, std::index_sequence<Is...>, std::integral_constant<std::size_t,Is>>... > edges;
+};
+template<class zN, std::size_t...Is, std::size_t A>
+class Edge<zN,std::index_sequence<Is...>, std::integral_constant<std::size_t,A>>{
+  std::array< zN::template z<zEdge, std::index_sequence<Is...>>*, A> nodes;
+};

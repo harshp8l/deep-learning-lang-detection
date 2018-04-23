@@ -1,0 +1,30 @@
+package main
+import (
+    ""fmt""
+    ""reflect""
+    ""unsafe""
+)
+
+func main() {
+    type Attrs map[string]string
+    type StringMap map[string]string
+    a := Attrs{""key1"": ""val1"", ""key2"": ""val2""}
+    b := Attrs{""key3"": ""val3"", ""key4"": ""val4""}
+
+    attrs := []Attrs{a, b}
+
+    // This is what you're asking for, keep in mind this circumvents the type safety provided by go
+
+    sh := *(*reflect.SliceHeader)(unsafe.Pointer(&attrs))
+    unsafeStrMaps := *(*[]StringMap)(unsafe.Pointer(&sh))
+    fmt.Println(unsafeStrMaps)
+
+    // This would be the preferred way of casting the array
+
+    strMaps := []StringMap{}
+    for _, v := range attrs {
+        strMaps = append(strMaps, StringMap(v))
+    }
+
+    fmt.Println(strMaps)
+}

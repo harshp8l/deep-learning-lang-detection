@@ -1,0 +1,32 @@
+#include <iostream>
+
+template <typename A, typename B>
+struct pack_t {
+  const A& a;
+  const B& b;
+};
+
+template <typename A, typename B>
+std::ostream& operator<<(std::ostream& os, pack_t<A, B> pac) {
+  return os << pac.a << pac.b; 
+}
+
+template <typename A, typename B>
+auto pack(const A& a, const B& b) noexcept {
+  return pack_t<A, B>{a, b}; 
+}
+
+template <typename T>
+void join(std::ostream& os, const T& arg) {
+  os << arg << '\0';
+}
+
+template <typename T, typename... Args>
+void join(std::ostream& os, const T& arg, const Args&... args) {
+  os << arg << ' ';
+  join(os, args...);
+}
+
+int main() {
+  join(std::cout, ""Hello"", ""World"", pack(""pi="", 3.14));
+}

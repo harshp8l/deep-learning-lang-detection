@@ -1,0 +1,22 @@
+//Read the value of a single cell by string coordinates (Open XML SDK)
+let read_value_openxml file_path_and_name column row =
+    let stream = new System.IO.FileStream(file_path_and_name, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite)
+
+    // Open the spreadsheet document for read-only access.
+    let document = SpreadsheetDocument.Open(stream, false)
+
+    // Retrieve a reference to the workbook part.
+    let wbPart = document.WorkbookPart
+
+    // Find the sheet with the supplied name, and then use that sheet object to retrieve a reference to the first worksheet.
+    let firstSheet:Sheet = wbPart.Workbook.Descendants<Sheet>().First()
+    let theSheet:Worksheet = ((WorksheetPart.wbPart.GetPartById(firstSheet.Id)).Worksheet
+
+    // Retrieve a reference to the worksheet part.
+    let wsPart = wbPart.GetPartById(firstSheet.Id)
+
+    // Use its Worksheet property to get a reference to the cell whose address matches the address you supplied.
+    let theCell = wsPart.Worksheet.Descendants<Cell>().Where(fun c -> c.CellReference = column + row).FirstOrDefault()
+
+    // Return a value
+    theCell.InnerText

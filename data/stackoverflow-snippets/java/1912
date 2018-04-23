@@ -1,0 +1,42 @@
+def _impl(ctx):
+    deps = []
+    for dep in ctx.attr.deps:
+        if java_common.provider in dep:
+            deps.append(dep[java_common.provider])
+    output_jar = ctx.new_file(""lib{0}.jar"".format(ctx.label.name))
+    runtime = java_common.JavaRuntimeInfo
+    compilation_provider = java_common.compile(
+        ctx,
+        source_jars = ctx.files.srcs_jars,
+        source_files = ctx.files.srcs,
+        output = output_jar,
+        javac_opts = ctx.attr.javac_opts,
+        deps = deps,
+        strict_deps = ctx.attr.strict_deps,
+        java_toolchain = ctx.attr.toolchain,
+        host_javabase = ctx.attr._host_javabase,
+        resources = ctx.files.resources,
+        neverlink = ctx.attr.neverlink,
+    )
+
+    return struct(
+        files = depset([output_jar]),
+        providers = [compilation_provider],
+    )
+
+library = rule(
+    implementation = _impl,
+    attrs = {
+        ""srcs_jars"": attr.label_list(allow_files=True),
+        ""srcs"": attr.label_list(allow_files=True),
+        ""javac_opts"": attr.string_list(default=[]),
+        ""deps"": attr.label_list(),
+        ""strict_deps"": attr.string(default=""ERROR""),
+        ""toolchain"": attr.label(default=Label(""@bazel_tools//tools/jdk:toolchain"")),
+        ""sourcepath"": attr.label_list(),
+        ""resources"": attr.label_list(),
+        ""neverlink"": attr.bool(default=False),
+        ""_host_javabase"": attr.label(default=Label(""@local_jdk//:jdk"")),
+    },
+    fragments = [""java""],
+)

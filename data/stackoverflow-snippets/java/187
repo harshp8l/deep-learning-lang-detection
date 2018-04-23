@@ -1,0 +1,25 @@
+// You should @Autowire these:
+JsonFactory jsonFactory = new JsonFactory();
+ObjectMapper objectMapper = new ObjectMapper();
+RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
+
+// If detectRequestFactory true (default): HttpComponentsClientHttpRequestFactory will be used and it will consume the entire HTTP response, even if we close the stream early
+// If detectRequestFactory false: SimpleClientHttpRequestFactory will be used and it will close the connection as soon as we ask it to
+
+RestTemplate restTemplate = restTemplateBuilder.detectRequestFactory(false).messageConverters(
+    new StreamingHttpMessageConverter<>(jsonFactory, jsonParser -> {
+
+        // While you use a low-level JsonParser to not load everything in memory at once,
+        // you can still profit from smaller object mapping with the ObjectMapper
+        if (!jsonParser.isClosed() && jsonParser.nextToken() == JsonToken.START_ARRAY) {
+            if (!jsonParser.isClosed() && jsonParser.nextToken() == JsonToken.START_OBJECT) {
+                return objectMapper.readValue(jsonParser, Testing.class);
+            }
+        }
+        return null;
+
+    })
+).build();
+
+final Testing firstTesting = restTemplate.getForObject(""http://example.org/testings.json"", Testing.class);
+log.debug(""First testing object: {}"", firstTesting);

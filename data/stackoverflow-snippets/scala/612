@@ -1,0 +1,36 @@
+import scala.util.parsing.combinator._
+
+case class MyObject(field1:String, field2:Integer, field3:String)
+
+object Test3 extends RegexParsers {
+
+    def main(args:Array[String]) {
+      val testRow = ""abcd,123,ghijk""
+
+      val parseResult = Test3.parse(Test3.to_test, testRow) //+-
+
+      Test3.list_obj.foreach { println } //+-
+    }
+
+    var list_obj:List[MyObject] = List() //+
+
+    def word = ""\\w+"".r ^^ { _.toString }
+    def intz = """"""\d+"""""".r ^^ { _.toString }
+    def comma = "","" ^^ { _.toString } //-
+    def row_type = word | intz //+
+
+    def myObject = repsep(row_type, "","") ^^ {  //+-
+      case list_row_types => {
+       val row_tp = list_row_types.toArray
+       try
+          list_obj = ( MyObject(row_tp(0), row_tp(1).toInt, row_tp(2) ) )::list_obj
+       catch { 
+        case tri:ArrayIndexOutOfBoundsException => println(""Illegal row found."") 
+        }
+      }
+    }
+    override def skipWhitespace() = false  //+
+    def to_test = repsep(myObject, ""\n"") ^^ { //+
+        case _ => ()
+    }
+}

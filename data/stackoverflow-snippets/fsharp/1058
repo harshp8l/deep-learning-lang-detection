@@ -1,0 +1,9 @@
+let iterateTupleMemberTypes (tupleArgTypes: System.Type[]) (columnNames: string[]) =
+    let rec iterateRec (argTypes: System.Type list) (values) (index) =
+        match argTypes with
+        | [] -> List.rev values
+        | head :: tail when head.IsGenericType -> 
+            iterateRec (List.ofArray (head.GetGenericArguments())) values index
+        | head :: tail -> 
+            iterateRec tail ((head, columnNames.[index])::values) (index + 1)
+    iterateRec (List.ofArray tupleArgTypes) List.empty 0

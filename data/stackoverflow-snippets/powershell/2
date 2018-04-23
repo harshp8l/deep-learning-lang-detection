@@ -1,0 +1,91 @@
+#1. You have a list of room requests you want to process in a function.  TimeToClean was added as a controllable thread block.
+$roomsToClean = @( ([psCustomObject]@{Name='Bedroom';TimeToClean=2}),
+                   ([psCustomObject]@{Name='Kitchen';TimeToClean=5}),
+                   ([psCustomObject]@{Name='Bathroom';TimeToClean=3}),
+                   ([psCustomObject]@{Name='Living room';TimeToClean=1}),
+                   ([psCustomObject]@{Name='Dining room';TimeToClean=1}),
+                   ([psCustomObject]@{Name='Foyier';TimeToClean=1})
+                )
+
+
+#2. We will clean three rooms and return a custom PowerShell object with a message.
+Function Clean-Room{
+     param([string]$RoomName,[int]$Seconds)
+
+      Sleep -Seconds $Seconds
+      Write-Output [psCustomObject] @{Message= ""The robot cleaned the $RoomName in $Seconds seconds.""}    
+}
+
+
+#3. Executing this list synchronously will result in an approximate 13 second runtime.
+Write-Host ""===== Synchronous Results ====="" -ForegroundColor Green
+
+$stopwatch =  [system.diagnostics.stopwatch]::StartNew()
+foreach($item in $roomsToClean){
+    $obj = Clean-Room $item.Name $item.TimeToClean
+    Write-Output $obj.Message
+}
+
+$stopwatch.Stop()
+Write-Host ""Execution time for synchronous function was $($stopwatch.Elapsed)."" -ForegroundColor Green
+
+
+#4. Now let's run this function asynchronously for all of these items. Expected runtime will be approximately 5 seconds.
+
+
+#=============== Setting up an ansynchronous powerShell Automation object and attaching it to a runspace.
+#Many [Automation.PowerShell] objects can be attached to a given Runspace pool and the Runspace pool will manage queueing/dequeueing of each PS object as it completes.
+
+#Create a RunSpace pool with 5 runspaces.  The pool will manage the 
+#Many PowerShell autom
+$minRunSpaces = 2
+$maxRunsSpaces = 5
+$runspacePool = [RunspaceFactory]::CreateRunspacePool($minRunSpaces, $maxRunsSpaces)    
+$runspacePool.ApartmentState = 'STA'   #MTA = Multithreaded apartment  #STA = Singl-threaded apartment.
+$runspacePool.Open()  #runspace pool must be opened before it can be used.
+
+#For each room object, create an [Automation.PowerShell] object and attach it to the runspace pool.
+#Asynchronously invoke the function for all objects in the collection.
+$ps_collections = foreach($room in $roomsToClean){
+                    try{
+
+                    $ps = [System.Management.Automation.PowerShell]::Create() 
+                    $ps.RunspacePool = $runspacePool
+
+                    #Add your custom functions to the [Automation.PowerShell] object.
+                    #Add argument with parameter name for readability. You may just use AddArgument as an alternative but know your positional arguments.
+
+                    [void] $ps.AddScript(${function:Clean-Room})
+                    [void] $ps.AddParameter('RoomName',$room.Name)        #Add parameterName,value
+                    [void] $ps.AddParameter('Seconds',$room.TimeToClean)  #Add parameterName,value
+
+                    #extend the ps management object to include AsyncResult and attach the AsyncResult object for receiving results at a later time.
+                    $ps | Add-Member -MemberType NoteProperty -Name 'AsyncResult' -Value $ps.BeginInvoke()  #invoke asynchronously
+                    $ps | Add-Member -MemberType ScriptMethod -Name 'GetAsyncResult' -Value {$this.EndInvoke($this.AsyncResult) } -PassThru
+                    }
+                    catch{
+                        throw $_  #handle custom error here.
+                    }
+                }
+
+
+
+
+#After the function has been asynchronously called for all room objects, Grab results from asynchronous function calls.
+Write-Host ""===== Asynchronous Results ====="" -ForegroundColor Green
+$stopwatch =  [system.diagnostics.stopwatch]::StartNew()
+foreach($ps in $ps_collections){
+    $obj = $ps.GetAsyncResult()
+    [void] $ps.Dispose()  #dispose of object after use.
+    Write-Output $obj.Message
+}
+
+$stopwatch.Stop()
+Write-Host ""Execution time for asynchronous function was 
+$($stopwatch.Elapsed)."" -ForegroundColor Green
+
+#Runspace cleanup.
+If($runspacePool){
+    [void] $runspacePool.Close()
+    [void] $runspacePool.Dispose()
+}

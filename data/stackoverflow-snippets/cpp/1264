@@ -1,0 +1,22 @@
+BOOL init()
+{
+    IDXGIFactory* lDxgiFactory;
+    CHECKHR(CreateDXGIFactory1(__uuidof(IDXGIFactory), (void**)&lDxgiFactory))
+    IDXGIAdapter* lDxgiAdapter;
+    CHECKHR(lDxgiFactory->EnumAdapters(0, &lDxgiAdapter))
+    lDxgiFactory->Release();
+    CHECKHR(D3D11CreateDevice(lDxgiAdapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, 0, gFeatureLevels, gNumFeatureLevels, D3D11_SDK_VERSION, &lDevice, &FeatureLevel, &lImmediateContext))
+    IDXGIDevice* lDxgiDevice;
+    CHECKHR(lDevice->QueryInterface(IID_PPV_ARGS(&lDxgiDevice)))
+    //IDXGIAdapter* lDxgiAdapter;
+    //CHECKHR(lDxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&lDxgiAdapter))
+    lDxgiDevice->Release();
+    IDXGIOutput* lDxgiOutput;
+    CHECKHR(lDxgiAdapter->EnumOutputs(0, &lDxgiOutput))
+    lDxgiAdapter->Release();
+    CHECKHR(lDxgiOutput->GetDesc(&OutputDesc))
+    IDXGIOutput1* lDxgiOutput1;
+    CHECKHR(lDxgiOutput->QueryInterface(IID_PPV_ARGS(&lDxgiOutput1)))
+    lDxgiOutput->Release();
+    CHECKHR(lDxgiOutput1->DuplicateOutput(lDevice, &lDeskDupl))
+    // ...

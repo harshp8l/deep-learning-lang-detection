@@ -1,0 +1,17 @@
+struct over_10 {
+  bool operator()( std::tuple<int, int, double> const& t) const {
+    return
+      (std::get<0>(t)>10 || std::get<0>(t)<-10) // min int doesn't like abs
+   && (std::get<1>(t)>10 || std::get<1>(t)<-10)
+   && fabs(std::get<2>(t))>10.0;
+  }
+};
+template<class Split>
+struct split_order {
+  template<class Lhs, class Rhs>
+  bool operator()( Lhs const& lhs, Rhs const& rhs ) const {
+    auto split = Split{};
+    return std::tie( split(lhs), lhs ) < std::tie( split(rhs), rhs );
+  }
+};
+using split_on_10_order = split_order<over_10>;

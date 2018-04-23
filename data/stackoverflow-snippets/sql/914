@@ -1,0 +1,16 @@
+    select  m.matnr, m.hkl, m.lok_nr from Bestand M 
+    left join
+    (select b.matnr, b.hkl, b.lok_nr from BESTAND B, LAGER_LOKATION L
+     where ((b.matnr = l.matnr and b.hkl = l.hkl and b.lok_nr = l.lok_nr 
+     and b.best_frei = 0 and l.greiflok = 'J' and l.status = 2) or
+           (b.matnr = l.matnr and b.hkl = l.hkl and b.lok_nr = l.lok_nr 
+     and b.best_frei > 0 and l.greiflok = 'N' and l.status = 2))
+    ) Bedingung_1 on m.matnr = Bedingung_1.matnr
+    where
+    m.matnr not in 
+( select s.matnr from SONDER_AUFTRAG S, 
+      LAGER_LOKATION L2
+      where s.matnr = l2.matnr and s.hkl = l2.hkl and s.status = 611 and 
+      s.ziel_lok_nr = l2.lok_nr and l2.greiflok ='N'
+     )
+    group by m.matnr, m.hkl, m.lok_nr;

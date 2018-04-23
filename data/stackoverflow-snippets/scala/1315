@@ -1,0 +1,18 @@
+object TestStreamBatching {
+
+  private val loader = new Loader(DataSourceStub, 1.second)
+
+  private def request(cache: loader.CacheState): Task[Unit] = Task {
+    Thread.sleep(100)
+    val key = cache.keys.max
+    val value = cache(key)
+    println(value)
+  }
+
+  private val requests: Process[Task, loader.Request] =
+    Process.unfold(100)(s => if(s > 0) Some((request, s - 1)) else None)
+
+  def main(args: Array[String]): Unit = {
+    loader.processRequests(requests).run.unsafePerformSync
+  }
+}

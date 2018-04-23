@@ -1,0 +1,42 @@
+// some other chains
+.then((xxxx) => {
+        const hashtagsTitles = require('../../src/hashtags/hashtagParser').hashtags(req.newPost.caption);
+        const Hashtag = require('../../src/database/models/Hashtag');
+
+        let findOrIncrease = title =>
+            new Promise((resolve, reject) => {
+                Hashtag.findOne({
+                        title
+                    })
+                    .then((hashtag) => {
+                        if (!hashtag) {
+                            new Hashtag({
+                                    title,
+                                    usageCount: 0
+                                }).save()
+                                .then(hashtag => resolve(hashtag._id))
+                                .catch(err => reject(err));
+                        } else {
+                            hashtag.usageCount++;
+                            hashtag.save()
+                                .then(hashtag => resolve(hashtag._id))
+                                .catch(err => reject(err));
+                        }
+                    })
+                    .catch(err => reject(err));
+            });
+
+        let promiseArr = hashtagsTitles.map((hashtagTitle) =>
+            findOrIncrease(hashtagTitle)
+        );
+
+        return Promise.all(promiseArr)
+            .then(results => results)
+            .catch(err => {
+                throw err
+            });
+    })
+    .then((hashtags) => {
+        hashtags.forEach((hashtag) => req.newPost.hashtags.push(hashtag));
+    })
+    //there might be some other chains

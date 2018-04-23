@@ -1,0 +1,55 @@
+#include <tuple>
+#include <iostream>
+#include <type_traits>
+
+struct MachineGun
+ {
+   explicit MachineGun (int i)
+    { std::cout << ""- MachineGun: "" << i << std::endl; }
+
+   MachineGun (char) = delete;
+ };
+
+struct Turret
+ {
+   explicit Turret (char c) 
+    { std::cout << ""- Turret: "" << c << std::endl; }
+
+   Turret (int) = delete;
+ };
+
+struct Cannon
+ {
+   explicit Cannon (std::string const & s)
+    { std::cout << ""- Cannon: "" << s << std::endl; }
+ };
+
+template <typename T, typename A0, typename ... As>
+std::enable_if_t<true == std::is_constructible<T, A0>::value, T>
+    selectArg (A0 && a0, As ...)
+ { return T{ std::forward<A0>(a0) }; }
+
+template <typename T, typename A0, typename ... As>
+std::enable_if_t<false == std::is_constructible<T, A0>::value, T>
+    selectArg (A0, As && ... as)
+ { return selectArg<T>(std::forward<As>(as)...); }
+
+template <typename ... Ts>
+struct Enemy
+ {
+   private:
+      std::tuple<Ts...> device_list;
+
+   public:
+      template <typename ... Args>
+      Enemy (Args ... args)
+        : device_list { selectArg<Ts>(args...)... }
+       { }
+ };
+
+int main()
+ {
+   Enemy<MachineGun,Turret,Cannon> e1(1,'2',std::string(""3""));
+   Enemy<MachineGun,Turret,Cannon> e2(""3"",14,'5');
+   Enemy<Turret,MachineGun,Cannon> e3(std::string(""14""), 5, '3');
+ }

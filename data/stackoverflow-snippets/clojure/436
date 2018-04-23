@@ -1,0 +1,24 @@
+(defn listify-element [element]
+  ""Replaces element type with :li.""
+  (vec (concat [:li (last element))]))
+
+(defn listify-headings [headings-list]
+  ""Takes subitems (in :h2 :h3) and creates sub :uls out of the :h3 lists.""
+  (vec
+   (concat
+    [:ul]
+    (map-indexed
+     (fn [ind headings]
+       (if (= 0 (mod ind 2))
+         (map listify-element headings)
+         (vec (concat [:ul] (map listify-element headings)))))
+     (partition-by #(= :h2 (first %)) headings-list)))))
+
+(defn nest-listified-headings [vector-list]
+  ""Nests sub-:uls inside their preceding :lis.""
+  (vec (concat [:ul]
+          (reduce
+           (fn [acc el] (if (= (first el) :ul)
+                          (conj (pop (vec acc)) (conj (last acc) el))
+                          (concat acc el)))
+           vector-list))))

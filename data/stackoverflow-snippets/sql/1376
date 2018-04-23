@@ -1,0 +1,31 @@
+SELECT
+    U.*,
+    P.*,
+    N.*
+FROM
+    Users AS U
+
+    OUTER APPLY (
+        SELECT TOP 1
+            PREV.*
+        FROM
+            Users AS PREV
+        WHERE
+            PREV.Points <= U.Points AND
+            PREV.[User.ID] <> U.[User.ID]
+        ORDER BY
+            PREV.Points DESC) AS P
+
+    OUTER APPLY (
+        SELECT TOP 1
+            NEX.*
+        FROM
+            Users AS NEX
+        WHERE
+            NEX.Points >= U.Points AND
+            NEX.[User.ID] <> U.[User.ID]
+        ORDER BY
+            NEX.Points ASC) AS N
+
+WHERE
+    U.[USER.ID] = 960 -- Your filtered used ID

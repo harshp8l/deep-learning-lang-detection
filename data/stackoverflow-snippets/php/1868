@@ -1,0 +1,31 @@
+$url = 'http://example.com/523223.json?';
+        $json= file_get_contents($url);
+
+        $data = json_decode($json);
+        $rows = $data->{'items'};
+        foreach (array_reverse($rows) as $row) {
+            echo '<p>';
+            $title = $row->name;
+            $description = $row->description;
+            $link = $row->link;
+            $image_link = $row->thumbnail;
+
+            $path = $image_link;
+            $filename = basename($path);
+
+            try {
+                Image::make($path)->save(public_path('storage/posts/' . $filename));
+            } catch (\Intervention\Image\Exception\NotReadableException $e) {
+                Image::make($path)->save(public_path('storage/posts/' . 'https://lh3.googleusercontent.com/yI8LPDBhjvqLR1mQMitJlibZdWqaYAlMVUJK6zpBQkOb_Bk03qn_l2SQyn5yY__KZcY-=w300-rw'));
+            }
+
+            $post = new Post;
+            $post->title = $title;
+            $post->body = '..';
+            $post->excerpt = $description;
+            $post->meta_description = $link;
+            $post->slug = $link;
+            $post->image = 'posts/' . $filename;
+
+            $post->save();
+        }

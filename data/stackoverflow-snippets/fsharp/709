@@ -1,0 +1,22 @@
+[<AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)>]
+type MyAttribute() =
+    inherit ValidationAttribute ()
+
+    override this.IsValid (value: Object, validationContext: ValidationContext) =
+        let t = validationContext.ObjectInstance.GetType()
+        if t.FullName = ""Test.MyClass"" then
+            let p = t.GetMethod(""IsValid"")
+            if p.Invoke(validationContext.ObjectInstance, [| |]) |> unbox<bool> then
+                ValidationResult.Success
+            else
+                ValidationResult(""failed"")
+        else
+            new ValidationResult(""No no no"")
+
+type MyClass(someValue: int) =
+    [<Required>]
+    [<Range(1, 7)>]
+    [<MyAttribute()>]
+    member this.SomeValue = someValue
+
+    member this.IsValid() = someValue <= 7

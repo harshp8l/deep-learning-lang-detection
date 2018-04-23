@@ -1,0 +1,15 @@
+  def autorecoveredRequest(
+    hosts: List[String],
+    hostToRequest: (String) => HttpRequest)(
+    implicit ec: ExecutionContext): Future[HttpResponse] =
+    Random.shuffle(hosts) match {
+      case host :: rest =>
+        Http().singleRequest(hostToRequest(host)).recoverWith {
+          case e =>
+            log.warn(s""Request to host ${host} failed"")
+            autorecoveredRequest(rest, hostToRequest)
+        }
+      case Nil =>
+        log.error(""No more hosts to recover request"")
+        Future.failed(new Exception(""No more hosts to recover request""))
+    }

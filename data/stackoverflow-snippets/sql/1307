@@ -1,0 +1,97 @@
+DECLARE @v_TextToSearch VARCHAR(100) = 'YourSearchValue'
+
+
+IF OBJECT_ID('tempdb..#FoundColumns') IS NOT NULL
+    DROP TABLE #FoundColumns
+
+CREATE TABLE #FoundColumns (
+    SchemaName VARCHAR(200),
+    TableName VARCHAR(200),
+    ColumnName VARCHAR(200))
+
+
+DECLARE @c_SchemaName VARCHAR(200)
+DECLARE @c_TableName VARCHAR(200)
+
+DECLARE TableCursor CURSOR FOR
+    SELECT
+        SchemaName = QUOTENAME(SCHEMA_NAME(T.schema_id)),
+        TableName = QUOTENAME(T.name)
+    FROM
+        sys.tables AS T
+    ORDER BY
+        1,
+        2
+
+OPEN TableCursor
+FETCH NEXT FROM TableCursor INTO @c_SchemaName, @c_TableName
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+
+    DECLARE @c_ColumnName VARCHAR(200)
+
+    DECLARE ColumnCursor CURSOR FOR
+        SELECT
+            ColumnName = QUOTENAME(C.name)
+        FROM
+            sys.tables AS T
+            INNER JOIN sys.columns AS C ON C.object_id = T.object_id
+        WHERE
+            QUOTENAME(SCHEMA_NAME(T.schema_id)) = @c_SchemaName AND
+            QUOTENAME(T.name) = @c_TableName
+        ORDER BY
+            C.name
+
+    OPEN ColumnCursor
+    FETCH NEXT FROM ColumnCursor INTO @c_ColumnName
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+
+        DECLARE @v_DynamicSQLInsert VARCHAR(MAX) = '
+
+            INSERT INTO #FoundColumns (
+                SchemaName,
+                TableName,
+                ColumnName)
+            SELECT
+                SchemaName = ''' + @c_SchemaName + ''',
+                TableName = ''' + @c_TableName + ''',
+                ColumnName = ''' + @c_ColumnName + ''' 
+            WHERE
+                EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        ' + @c_SchemaName + '.' + @c_TableName + ' AS T
+                    WHERE
+                        CONVERT(VARCHAR(8000), T.' + @c_ColumnName + ') = ''' + @v_TextToSearch + ''')'
+
+        EXEC (@v_DynamicSQLInsert)
+
+        FETCH NEXT FROM ColumnCursor INTO @c_ColumnName
+
+    END
+
+    CLOSE ColumnCursor
+    DEALLOCATE ColumnCursor 
+
+    FETCH NEXT FROM TableCursor INTO @c_SchemaName, @c_TableName
+
+END
+
+CLOSE TableCursor
+DEALLOCATE TableCursor
+
+
+SELECT
+    F.SchemaName,
+    F.TableName,
+    F.ColumnName
+FROM
+    #FoundColumns AS F
+ORDER BY
+    F.SchemaName,
+    F.TableName,
+    F.ColumnName

@@ -1,0 +1,25 @@
+  String m_usr_data = ""<usr><ENTRYNUM>123</ENTRYNUM><text>TEST123</text></usr>""
+  MQMessage msg = new MQMessage();
+
+  //Setting MQMD values
+  msg.persistence = CMQC.MQPER_PERSISTANT;
+  msg.format = CMQC.MQFMT_RF_HEADER_2;
+
+  //Setting RFH2 Values
+  msg.writeString(rfhStrucID);      //StrucID 
+  msg.writeInt4(rfhVersion);        //Version 
+  msg.writeInt4(rfhStrucLength );     //StrucLength 
+  msg.writeInt4(CMQC.MQENC_NATIVE);       //Encoding 
+  msg.writeInt4(CMQC.MQCCSI_INHERIT); //CodedCharSetID 
+  msg.writeString(CMQC.MQFMT_STRING);       //Format 
+  msg.writeInt4(0);          //Flags 
+  msg.writeInt4(1208); //NameValueCCSID 
+  msg.writeInt4(m_usr_data.getBytes().length);//NameValueLength <usr> 
+  msg.writeString(m_usr_data);      //NameValueData <usr> 
+  msg.write(rfhDataBytes);       //Actual MESSAGE data 
+
+  msg.writeString(""Data to go as Message Content"");
+
+  MQQueue queue = qmngr.accessQueue(qname, CMQC.MQOO_FAIL_IF_QUIESCING + CMQC.MQOO_OUTPUT);
+  queue.put(msg,pmo);
+  queue.close;

@@ -1,0 +1,55 @@
+function Compare-Hashtable {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [Hashtable]$Left,
+
+        [Parameter(Mandatory = $true)]
+        [Hashtable]$Right,
+        [string[]] $path = @(),
+        [boolean] $trackpath = $True
+    )
+    write-host ""Path received as: $path""
+    function New-Result($Path, $LValue, $Side, $RValue) {
+        New-Object -Type PSObject -Property @{
+            key    = $Path -Join ""/""
+            lvalue = $LValue
+            rvalue = $RValue
+            side   = $Side
+        }
+    }
+
+    $Left.Keys | ForEach-Object {
+        $NewPath = $Path + $_
+        if ($trackpath ) {
+            write-host ""Working on Path: "" $NewPath
+        }
+
+        if ($Left.ContainsKey($_) -and !$Right.ContainsKey($_)) {
+            write-host ""Right key not matched. Report path as: $NewPath""
+            New-Result $NewPath $Left[$_] ""<="" $Null
+        }
+        else {
+            if ($Left[$_] -is [hashtable] -and $Right[$_] -is [hashtable] ) {
+                 Compare-Hashtable $Left[$_] $Right[$_] $NewPath
+            }
+            else {
+                $LValue, $RValue = $Left[$_], $Right[$_]
+                if ($LValue -ne $RValue) {
+                    New-Result $NewPath $LValue ""!="" $RValue
+                }
+             }
+
+        }
+    }
+    $Right.Keys | ForEach-Object {
+        $NewPath = $Path + $_
+        if (!$Left.ContainsKey($_) -and $Right.ContainsKey($_)) {
+            New-Result $NewPath $Null ""=>"" $Right[$_]
+
+        }
+    }
+}
+cls
+
+Compare-Hashtable $Sailings $Flights

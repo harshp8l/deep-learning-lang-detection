@@ -1,0 +1,28 @@
+user> (defn my-fun []
+        (println ""context in fn is: "" *ctx*))
+#'user/my-fun
+
+user> (defmacro my-macro []
+        `(do-stuff 100))
+#'user/my-macro
+
+user> (with-context {:a 10 :b 20}
+        (do-stuff 1)
+        (my-fun)
+        (my-macro)
+        (do-stuff 2))
+;;within context {:a 10, :b 20} : 1
+;;context in fn is:  {:a 10, :b 20}
+;;within context {:a 10, :b 20} : 100
+;;within context {:a 10, :b 20} : 2
+nil
+
+user> (do (do-stuff 1)
+          (my-fun)
+          (my-macro)
+          (do-stuff 2))
+;;no context: 1
+;;context in fn is:  nil
+;;no context: 100
+;;no context: 2
+nil

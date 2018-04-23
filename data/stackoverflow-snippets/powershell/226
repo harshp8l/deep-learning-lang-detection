@@ -1,0 +1,63 @@
+$reports = New-ReportObject -files (Get-ChildItem -Path $reportPath -Filter $reportExtension) 
+foreach($report in (($reports | Where-Object{$_.datasourcename -eq $datasourceName}).filename))
+
+    {
+
+        $fileExt = $reportExtension.trim('*')
+
+        $status = Set-SSRSDataSourceInfoNative -ReportName ($report.trim($fileext)) -reportPath $documentLibrary -DataSourceName $datasourceName -DataSourcePath ""$dataSourceTarget/$datasourceName""  -reportWebService $webservice
+
+        write-output ""The following $report datasource was updated to $datasourcename""
+
+    }  
+
+function set-SSRSDataSourceInfoNative
+{
+    param
+    (
+        [parameter(mandatory)]
+        [string]$Reportname, #with no extension SSRS has no name for the file in native mode
+        [parameter(mandatory)]
+        [string]$reportPath,
+        [parameter(mandatory)]
+        [string]$DataSourceName,
+        [parameter(mandatory)]
+        [string]$DataSourcePath,
+        [parameter(mandatory)]
+        [uri]$reportWebService,
+        [System.Management.Automation.PSCredential]$Credentials 
+    )
+    if ($Credentials)
+    {$reportProxy = new-webserviceproxy -uri $reportWebService -Credential $credentials  -namespace 'SSRSProxy' -class 'ReportService2010'}
+    else
+    {$reportProxy = new-webserviceproxy -uri $reportWebService -UseDefaultCredential  -namespace 'SSRSProxy' -class 'ReportService2010'}
+    $f = $ReportName.ToLower()
+    try
+    {
+        $dataSources = $reportProxy.GetItemDataSources(""$reportpath/$reportname"")
+    }
+    catch
+    {
+        ""Error was $_""
+        $line = $_.InvocationInfo.ScriptLineNumber
+        ""Error was in Line $line""
+        ""ReportName: $reportname""
+        ""ReportPath: $reportpath""
+    }
+    $proxyNameSpace = $dataSources.gettype().Namespace
+    $dc = $reportProxy.GetDataSourceContents($DataSourcePath)
+    if ($dc)
+    { 
+        $d = $dataSources | Where-Object {$_.name -like $DataSourceName }
+        $newDataSource = New-Object (""$proxyNameSpace.DataSource"")
+        $newDataSource.Name = $datasourcename
+        $newDataSource.Item = New-Object (""$proxyNamespace.DataSourceReference"")
+        $newDataSource.Item.Reference = $DatasourcePath 
+        $d.item = $newDataSource.item
+        $reportProxy.SetItemDataSources(""$reportpath/$f"", $d)
+        $set = ($reportproxy.GetItemDataSources(""$reportPath/$f"")).name
+        write-verbose ""$reportname set to data source $set""
+        $returnobj = 'success'
+    }
+    $returnobj
+}

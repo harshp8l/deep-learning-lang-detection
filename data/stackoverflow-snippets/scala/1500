@@ -1,0 +1,24 @@
+  import scala.collection.Map
+
+  object Person {
+    implicit object MapReads extends Reads[Map[String, Option[Double]]] {
+      def reads(jsValue: JsValue): JsResult[Map[String, Option[Double]]] = jsValue match {
+        case JsObject(map) => JsSuccess(
+          map.mapValues {
+            case JsNumber(d) => Some(d.toDouble)
+            case _ => None
+          }
+        )
+        case _ => JsError()
+      }
+    }
+
+    implicit object MapWrites extends Writes[Map[String, Option[Double]]] {
+      def writes(map: Map[String, Option[Double]]): JsValue =
+        JsObject(map.mapValues(optd => JsNumber(optd.getOrElse[Double](0.0))))
+    }
+
+    implicit val personFormat: OFormat[Person] = Json.format[Person]
+  }
+
+  println(Json.toJson(Person(a)))//{""x"":{""a"":0}}

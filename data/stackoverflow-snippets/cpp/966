@@ -1,0 +1,66 @@
+Camera::Camera(glm::vec3 position, glm::vec3 up, GLfloat yaw, GLfloat pitch, GLfloat dist) 
+{
+    m_WorldUp = up;
+    // this->up = up; <- delete this variable; lookAt computes it for us
+
+    m_Pos   = position;  // this is the *player* position
+    m_Yaw   = yaw;
+    m_Pitch = pitch;
+    m_Dist  = dist;      // distance from the player
+
+    UpdateViewMatrix(true);
+}
+
+// private method
+void Camera::UpdateViewMatrix(bool computeDir = false)
+{
+    // compute the new direction
+    if (computeDir)
+    {
+        glm::vec3 radial;
+        radial.x = cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
+        radial.y = sin(glm::radians(m_Pitch));  // there was a sign error here
+        radial.z = sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
+        m_Dir = -radial;
+    }
+
+    glm::vec3 pos = m_Pos - m_Dist * m_Dir; // *camera* position
+
+    // additional view matrix member variable
+    // you were using lookAt in the wrong way
+    m_View = glm::lookAt(m_Pos, pos, m_WorldUp);
+}
+
+// public method - call this everytime the player moves
+void Camera::UpdateTargetPosition(glm::vec3 const & pos)
+{
+    m_Pos = pos;
+    UpdateViewMatrix();   
+}
+
+void Camera::UpdateAngles(GLfloat yaw, GLfloat pitch, GLboolean constrainPitch)
+{
+    if (constrainPitch) {
+        if (pitch > 89.0f) {
+            pitch = 89.0f;
+        } else if (pitch < -89.0f) {
+            pitch = -89.0f;
+        }
+    }
+
+    // if yaw is outside the conventional range (-180.0, 180.0], shift it
+    if (yaw < -180.0f || yaw > 180.0f) {
+        yaw -= floor((yaw + 180.0f) / 360.0f) * 360.0f;
+    }
+
+    m_Yaw   = yaw;
+    m_Pitch = pitch;
+    UpdateViewMatrix(true);
+}
+
+void Camera::ProcessMouseMovement(GLfloat xOffset, GLfloat yOffset, GLboolean constrainPitch)
+{
+    UpdateAngles(m_Yaw + xOffset * sensitivity,
+                 m_Pitch + yOffset * sensitivity,
+                 constrainPitch);
+}

@@ -1,0 +1,74 @@
+//import org.apache.spark.util.BoundedPriorityQueue // Pretend it's not private. copy to your own folder and import it
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.{SparkConf, SparkContext}
+
+
+object BoundedPriorityQueueTest {
+
+  //  https://stackoverflow.com/questions/28166190/spark-column-wise-word-count
+  def top(n: Int, rdd: RDD[(Int, String)]): Map[Int, Iterable[String]] = {
+    // A heap that only keeps the top N values, so it has bounded size.
+    type Heap = BoundedPriorityQueue[(Long, String)]
+    // Get the word counts.
+    val counts: RDD[((Int, String), Long)] =
+    rdd.map(_ -> 1L).reduceByKey(_ + _)
+    // In each partition create a column -> heap map.
+    val perPartition: RDD[collection.mutable.Map[Int, Heap]] =
+    counts.mapPartitions { items =>
+      val heaps =
+        collection.mutable.Map[Int, Heap]() // .withDefault((i: Int) => new Heap(n))
+      for (((k, v), count) <- items) {
+        println(""\n---"")
+        println(""before add "" + ((k, v), count) + "", the map is: "")
+        println(heaps)
+        if (!heaps.contains(k)) {
+          println(""not contains key "" + k)
+          heaps(k) = new Heap(n)
+          println(heaps)
+        }
+        heaps(k) += count -> v
+        println(""after add "" + ((k, v), count) + "", the map is: "")
+        println(heaps)
+
+      }
+      println(heaps)
+      Iterator.single(heaps)
+    }
+    // Merge the per-partition heap maps into one.
+    val merged: collection.mutable.Map[Int, Heap] =
+    perPartition.reduce { (heaps1, heaps2) =>
+      val heaps =
+        collection.mutable.Map[Int, Heap]() //.withDefault((i: Int) => new Heap(n))
+      println(heaps)
+      for ((k, heap) <- heaps1.toSeq ++ heaps2.toSeq) {
+        for (cv <- heap) {
+          heaps(k) += cv
+        }
+      }
+      heaps
+    }
+    // Discard counts, return just the top strings.
+    merged.mapValues(_.map { case (count, value) => value }).toMap
+  }
+
+  def main(args: Array[String]): Unit = {
+    Logger.getRootLogger().setLevel(Level.FATAL) //http://stackoverflow.com/questions/27781187/how-to-stop-messages-displaying-on-spark-console
+    val conf = new SparkConf().setAppName(""word count"").setMaster(""local[1]"")
+    val sc = new SparkContext(conf)
+    sc.setLogLevel(""WARN"") //http://stackoverflow.com/questions/27781187/how-to-stop-messages-displaying-on-spark-console
+
+
+    val words = sc.parallelize(List((1, ""s11""), (1, ""s11""), (1, ""s12""), (1, ""s13""), (2, ""s21""), (2, ""s22""), (2, ""s22""), (2, ""s23"")))
+    println(""# words："" + words.count())
+
+    val result = top(1, words)
+
+    println(""\n--result:"")
+    println(result)
+    sc.stop()
+
+    print(""DONE"")
+  }
+
+}

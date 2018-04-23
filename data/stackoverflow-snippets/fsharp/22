@@ -1,0 +1,50 @@
+module AsyncResult =
+
+    [<StructuralEquality; StructuralComparison>]
+    type Result<'T,'TError> = 
+    | Ok of ResultValue:'T
+    | Error of ErrorValue:'TError
+
+    let bind (binder : 'a -> Async<Result<'b, 'c>>) (asyncFun : Async<Result<'a, 'c>>) : Async<Result<'b, 'c>> =
+        async {
+            let! result = asyncFun
+            match result with
+            | Error e -> return Error e
+            | Ok x -> return! binder x
+        }
+
+    let compose (f : 'a -> Async<Result<'b, 'e>>) (g : 'b -> Async<Result<'c, 'e>>) = fun x -> bind g (f x)
+    let (>>=) a f = bind f a
+    let (>=>) f g = compose f g
+
+open AsyncResult
+open System.Net
+
+type Assert =
+    static member IsTrue (conditional:bool) = System.Diagnostics.Debug.Assert(conditional)
+
+
+type Error = {Code:int; Message:string}
+
+[<EntryPoint>]
+let main args =
+    let create (json: string) : Async<Result<string, Error>> =
+        let url = ""http://api.example.com""
+        let request = WebRequest.CreateHttp(Uri url)
+        request.Method <- ""GET""
+
+        async {
+             try
+                 // http call
+                 return Ok ""result""
+             with :? WebException as e -> 
+                 return Error {Code = 500; Message = ""Internal Server Error""}
+        }
+
+    let chain = create >> AsyncResult.bind (fun (result: string) -> (async {return Ok ""more results""}))
+
+    match chain ""initial data"" |> Async.RunSynchronously with
+    | Ok data -> Assert.IsTrue(true)
+    | Error error -> Assert.IsTrue(false)
+
+    0

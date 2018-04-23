@@ -1,0 +1,115 @@
+#ifndef     HWC_HH
+#include ""./HWC.hh""
+#endif
+
+#include <chrono>
+typedef std::chrono::high_resolution_clock  HRClk_t; // std-chrono-hi-res-clk
+using   namespace std::chrono_literals; // support suffixes like 100ms, 2s, 30us
+
+#include <iostream>  // std::cout, std::endl; std::cerr
+#include <iomanip>   // std::setw
+#include <sstream>   // std::stringstream
+#include <thread>    // std::this_thread::sleep_for
+
+//  curses macros declared here, and enabled through end of THIS compilation unit
+#include <ncurses.h>  
+
+
+// invoked by ctor
+void HelloWorld_t::cursesInit()
+{
+   if(ssDiag) (*ssDiag) << ""\n  cursesInit"";
+
+   // The newterm subroutine initializes curses
+   screen01 = newterm(nullptr, devFileW, devFileR);
+   //                 ^^^^^^^ selects $TERM emvironment var
+   // note - on my lbuntu LXTerminal,   echo $TERM reports ""xterm""
+
+   // switch between screens
+   screen00 = set_term(screen01);
+   // when devFileW and devFileR and stdout and stdin, both screens work the same
+
+   start_color(); // with defaults
+   mvaddstr(6, 32, ""Hello,"");
+}
+
+// invoked by dtor
+void HelloWorld_t::cursesEnd()
+{
+   addstr(""  world!  "");
+   showStr(13, 6+15, 8+16, ""If your C++ has no class ... why bother?"");
+
+   const int Max = 9;          // Max count down
+   for (int i=0; i<Max; ++i)
+   {
+      showStr(6+15, 8+58, (Max-i));    // count down
+      std::this_thread::sleep_for(1s); // 1 second pace
+   }
+
+   // disable curses, return terminal to original state
+   erase();
+   refresh();
+   (void)set_term(screen00); // restore to original
+   endwin();                 // curses shutdown
+   delscreen(screen00);      // delwin(mainWin);
+   if(ssDiag) (*ssDiag) << ""\n  cursesEnd()"";
+}
+
+// invoked by exec()
+int HelloWorld_t::cursesExec()
+{
+   addstr( ""   C++ "" );
+   //  If has_colors() returns FALSE, we cannot use colors.
+   //  COLOR_PAIRS is the maximum number of colour pairs available.
+   //  For this test, We use 13
+   if ( has_colors() && COLOR_PAIRS >= 13 )
+   {
+      // Initialize a bunch of colour pairs, specify with
+      // init_pair (pair id, foreground,    background);
+      init_pair    (1,       COLOR_RED,     COLOR_BLACK);
+      init_pair    (2,       COLOR_GREEN,   COLOR_BLACK);
+      init_pair    (3,       COLOR_YELLOW,  COLOR_BLACK);
+      init_pair    (4,       COLOR_BLUE,    COLOR_BLACK);
+      init_pair    (5,       COLOR_MAGENTA, COLOR_BLACK);
+      init_pair    (6,       COLOR_CYAN,    COLOR_BLACK);
+      init_pair    (7,       COLOR_BLUE,    COLOR_WHITE);
+      init_pair    (8,       COLOR_WHITE,   COLOR_RED);
+      init_pair    (9,       COLOR_BLACK,   COLOR_GREEN);
+      init_pair    (10,      COLOR_BLUE,    COLOR_YELLOW);
+      init_pair    (11,      COLOR_WHITE,   COLOR_BLUE);
+      init_pair    (12,      COLOR_WHITE,   COLOR_MAGENTA);
+      init_pair    (13,      COLOR_WHITE,   COLOR_BLACK);
+
+      // now use the pairs
+      for (short int id = 1; id <= 13; ++id)
+      {
+         {
+            std::stringstream ss; ss << std::setw(2) << id;
+            showStr(13, 6+id, 35, ss.str());  // id number in default color
+         }
+
+         {
+            std::stringstream ss; ss <<  ""   C++ ""; // text in id color
+            showStr(id, 6+id, 38, ss.str());
+         }
+      }
+   }
+   return(0);
+} // int HelloWorld_t::curses_Exec()
+
+
+
+// with color_set
+void HelloWorld_t::showStr(short int pairId, int row, int col, std::string s)
+{
+   if (has_colors())
+      color_set(pairId, nullptr);
+   mvaddstr(row, col, s.c_str());
+   refresh();
+}
+
+void HelloWorld_t::showStr(int row, int col, int j)
+{
+   mvaddstr(row, col, std::to_string(j).c_str());
+   refresh();
+}

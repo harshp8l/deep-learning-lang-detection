@@ -1,0 +1,15 @@
+$filterDest = ""Destination = '0.0.0.0'"" 
+$defaultgw_routes = Get-WMIObject Win32_IP4RouteTable -Filter $filterDest
+$filterIPA  = ""IPEnabled = True""
+$interfaces = Get-WmiObject Win32_NetworkAdapterConfiguration -Filter $filterIPA
+
+'### interfaces ###'
+$interfaces | 
+    Where-Object {$_.InterfaceIndex -in $defaultgw_routes.Interfaceindex } |
+       Select-Object [a-z]* -ExcludeProperty PSComputerName, Scope, Path, Options, 
+           ClassPath, Properties, SystemProperties, Qualifiers, Site, Container
+'### routes ###'
+$defaultgw_routes | 
+    Where-Object {$_.InterfaceIndex -in $interfaces.Interfaceindex } | 
+       Select-Object [a-z]* -ExcludeProperty PSComputerName, Scope, Path, Options, 
+           ClassPath, Properties, SystemProperties, Qualifiers, Site, Container

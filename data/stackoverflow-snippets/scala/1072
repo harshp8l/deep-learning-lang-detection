@@ -1,0 +1,17 @@
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
+
+val objectMapper = new ObjectMapper() with ScalaObjectMapper
+objectMapper.registerModule(DefaultScalaModule)
+val str = ""[{\""firstName\"":\""Pierre\"",\""age\"":\""20\"",\""timestamp\"":\""123\""},{\""firstName\"":\""Jack\"",\""age\"":\""20\"",\""timestamp\"":\""123\""},{\""firstName\"":\""Olive\"",\""age\"":\""20\"",\""timestamp\"":\""123\""},{\""firstName\"":\""Tom\"",\""age\"":\""20\"",\""timestamp\"":\""123\""}]""
+//convert JSON string to Map(String,String) 
+val jsonMap = objectMapper.readValue(str, classOf[Array[Map[String, String]]])
+//Overwrite the key time-stamp in the given Map
+val changedMap = jsonMap.map(_ ++ Map(""timestamp"" -> ""466""))
+//Convert the Map again to string
+val jsonString = objectMapper.writeValueAsString(changedMap)
+
+println(jsonString)
+//output
+//[{""firstName"":""Pierre"",""age"":""20"",""timestamp"":""466""},{""firstName"":""Jack"",""age"":""20"",""timestamp"":""466""},{""firstName"":""Olive"",""age"":""20"",""timestamp"":""466""},{""firstName"":""Tom"",""age"":""20"",""timestamp"":""466""}]

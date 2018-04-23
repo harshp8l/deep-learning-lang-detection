@@ -1,0 +1,31 @@
+// For NORMAL add to cart
+add_filter( 'woocommerce_add_to_cart_validation', 'custom_message_add_to_cart', 20, 3 );
+function custom_message_add_to_cart( $passed, $product_id, $quantity ) {
+    if( WC()->cart->is_empty() ){
+       $message = __(""1st cart item message here"", ""woocommerce"");
+       wc_add_notice( $message, 'notice' );
+    }
+    return $passed;
+}
+
+// For AJAX add to cart (if enabled)
+add_action( 'woocommerce_shortcode_before_product_cat_loop', 'custom_print_message', 11 );
+add_action( 'woocommerce_before_shop_loop', 'custom_print_message', 11 );
+add_action( 'woocommerce_before_single_product', 'custom_print_message', 11 );
+function custom_print_message() {
+    if( WC()->cart->is_empty() ){
+        $message = __(""1st cart item message here"", ""woocommerce"");
+
+        // HERE BELOW, replace clothing' with your product category (can be an ID, a slug or a name)
+        echo '<div class=""woocommerce-info hidden"" style=""display:none;"">' . $message . '</div>';
+    }
+    ?>
+    <script type=""text/javascript"">
+    jQuery( function($){
+        $('body').on('added_to_cart', function(){
+            $('.woocommerce-info.hidden').show('fast');
+        });
+    });
+    </script>
+    <?php
+}

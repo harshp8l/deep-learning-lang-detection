@@ -1,0 +1,29 @@
+(ns artwork.handler
+  (:require [compojure.api.sweet :refer :all]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
+
+;; define a Schema for validation
+(s/defschema Artwork
+  {:id Long
+   :name String})
+
+;; dummy ring-api with swagger-docs
+(def app
+  (api
+    {:swagger
+     {:ui ""/""
+      :spec ""/swagger.json""
+      :data {:info {:title ""Artwork""
+                    :description ""Lovely artwork api""}
+             :tags [{:name ""api"", :description ""some apis""}]}}}
+
+    (context ""/api"" []
+      :tags [""api""]
+
+      ;; endpoint with Schema coercion
+      (POST ""/create"" []
+        :return Artwork
+        :body [body Artwork]
+        :summary ""creates artwork""
+        (ok body)))))

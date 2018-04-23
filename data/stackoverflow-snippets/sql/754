@@ -1,0 +1,25 @@
+SELECT s.source, 
+       vanmoney.userid, 
+       vanmoney.username, 
+       date_format(str_to_date(vanmoney.vandate, '%m/%d/%Y'),'%Y%m'), 
+       vanmoney.firstbuy, 
+       vanmoney.lastbuy, 
+       vanmoney.sourceid, 
+       vanmoney.todaydate, 
+       Sum(inv_temp.cost * inv_temp.quantity) AS TotalCost, 
+       Sum(inv_temp.quantity)                 AS TotalQTY 
+FROM   source AS s 
+       LEFT JOIN inv_temp 
+              ON inv_temp.source_id = s.source_id 
+       LEFT JOIN vanmoney 
+              ON inv_temp.source_id = vanmoney.sourceid 
+WHERE  s.buyer_type_id = 6 
+       AND quantity > 0 
+GROUP  BY  s.source, 
+           vanmoney.userid, 
+           vanmoney.username, 
+           date_format(str_to_date(vanmoney.vandate, '%m/%d/%Y'),'%Y%m'), 
+           vanmoney.firstbuy, 
+           vanmoney.lastbuy, 
+           vanmoney.sourceid, 
+           vanmoney.todaydate

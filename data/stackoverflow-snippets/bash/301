@@ -1,0 +1,33 @@
+#!/bin/bash
+
+fn=""${1:-/dev/stdin}""   ## read from file ""$1"" or stdin
+
+[ -r ""$fn"" ] || {       ## validate file readable
+    printf ""error: unable to read from filename or stdin\n"" >&2
+    exit 1
+}
+
+lastdt=     ## declare last date, hour, min, count
+lasthr=
+lastmn=
+declare -i cnt=0
+
+while IFS+=',' read -r dt tm s; do          ## read each csv
+    hr=""${tm:0:2}""                          ## get hour and minute
+    min=""${tm:3:2}""
+    if [ -n ""$lastdt"" ]; then               ## do we have a lastdt?
+        if [ ""$min"" != ""$lastmn"" ]; then    ## if lastmin not current
+            printf ""%s, %s:%s, %d\n"" ""$lastdt"" ""$lasthr"" ""$lastmn"" $cnt
+            cnt=0   ## reset count
+        fi
+    fi
+
+    lastdt=""$dt""    ## save last values
+    lasthr=""$hr""
+    lastmn=""$min""
+    ((cnt++))       ## increment count
+
+done < ""$fn""
+
+## output final session count
+printf ""%s, %s:%s, %d\n"" ""$lastdt"" ""$lasthr"" ""$lastmn"" $cnt

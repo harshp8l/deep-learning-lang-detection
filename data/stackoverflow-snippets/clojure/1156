@@ -1,0 +1,18 @@
+(defn stress-ref [r]
+  (let [slow-tries (atom 0)]
+    ;One long-running transaction
+    (future
+      (dosync
+        (swap! slow-tries inc)
+        (println ""1st r read:"" @r)  ; do something with the ref
+        (Thread/sleep 200)          ; do some work
+        (println ""2nd r read:"" @r)) ; do something else with the ref
+      (println (format ""transaction complete. r is: %s, history: %d, after: %d tries""
+                       @r (.getHistoryCount r) @slow-tries)))
+    ; 500 very quick transactions
+    (dotimes [i 500]
+      (Thread/sleep 10)
+      (dosync (alter r inc)))
+    :done))
+
+(stress-ref (ref 0 :min-history 20 :max-history 30))

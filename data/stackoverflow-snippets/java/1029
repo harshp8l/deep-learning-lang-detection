@@ -1,0 +1,59 @@
+    class SendEmail
+    {
+     String from = ""username"";  // GMail user name
+     String pass = ""password"";
+     public void sendOTPEmail(String email)
+    {
+        String otp=OTP.generate();
+        String to[] = {email}; // list of recipient email addresses
+
+        String subject = ""One Time Password"";
+        String body = ""<html>\n"" +
+                        ""  <body>\n"" +
+                        ""    <div style='font-size:17px; font-family:cambria'>\n"" +
+                        ""    OTP is generated for changing password of JavaLearn System acount associated with this email.<br><br>\n"" +
+                        ""      Your OTP is:<br>\n"" +
+                        ""     <center>\n"" +
+                        ""      <div style='color:red;font-size:18px; font-family:cambria; border:2px solid black'>\n"" +
+                        ""           \n"" +otp+
+                        ""      </div>\n"" +
+                        ""       </center>\n"" +
+                        ""    </div>\n"" +
+                        ""    </body>\n"" +
+                        ""  </html>"";
+
+        Properties props = System.getProperties();
+        String host = ""smtp.gmail.com"";
+        props.put(""mail.smtp.starttls.enable"", ""true"");
+        props.put(""mail.smtp.host"", host);
+        props.put(""mail.smtp.user"", from);
+        props.put(""mail.smtp.password"", pass);
+        props.put(""mail.smtp.port"", ""587"");
+        props.put(""mail.smtp.auth"", ""true"");
+
+        Session session = Session.getDefaultInstance(props);
+        MimeMessage message = new MimeMessage(session);
+
+        try {
+            message.setFrom(new InternetAddress(from));
+            InternetAddress[] toAddress = new InternetAddress[to.length];
+
+            // To get the array of addresses
+            for( int i = 0; i < to.length; i++ ) {
+                toAddress[i] = new InternetAddress(to[i]);
+            }
+
+            for( int i = 0; i < toAddress.length; i++) {
+                message.addRecipient(Message.RecipientType.TO, toAddress[i]);
+            }
+
+            message.setSubject(subject);
+            message.setContent(body, ""text/html; charset=utf-8"");
+
+            Transport transport = session.getTransport(""smtp"");
+            transport.connect(host, from, pass);
+            transport.sendMessage(message, message.getAllRecipients());
+            transport.close();
+
+            }
+     }

@@ -1,0 +1,18 @@
+type Page = { url:Uri; redirects:bool }
+type PagesVisited = Map<string, Page>
+
+let rec crawl (urisToVisit:Uri list) (visited:PagesVisited) : PagesVisited =
+    match urisToVisit with
+    | uri :: remainingUris ->
+        if Map.containsKey (uri:Uri).AbsoluteUri visited then
+            crawl remainingUris visited
+        else
+            let (redirects, newUris) = visit uri
+            let visited' = Map.add uri.AbsoluteUri {url=uri; redirects = redirects} visited
+            crawl (newUris @ urisToVisit) visited'
+    | [] ->
+        printfn ""Finished the internet""
+        visited
+
+// Kick it off
+crawl [Uri(""https://stackoverflow.com"")] Map.empty

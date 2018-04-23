@@ -1,0 +1,15 @@
+  template <typename T> static Interface *CreateA(T &&t) {
+      return instance() ? instance()->Create(std::forward<T>(t)) : nullptr;
+  }
+  Interface *Create(QLatin1String name) const { return Create(name.data()); }
+  template <typename T> Interface *Create(T &&name) const;
+  static Factory *instance() { return instance_ref(); }
+};
+
+template <class Interface> template <typename T> 
+Interface *Factory<Interface>::Create(T &&name) const {
+  auto it = m_map.find(name);
+  if (it != m_map.end())
+    return it->second();
+  return {};
+}

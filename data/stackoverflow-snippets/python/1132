@@ -1,0 +1,30 @@
+def coin_toss_2d(toss, probability=[.5,.5],repetitions_at_a_time=10**5,flips_per_try=20):
+    # Initialize and preallocate data
+    current_toss = 0
+    flips = np.empty(toss)
+    # loop by chunks
+    while current_toss<toss:
+        # repeat repetitions_at_a_time times experiment ""flip coin flips_per_try times""
+        flip_events = np.random.choice([0,1],size=(repetitions_at_a_time,flips_per_try),p=probability)
+        # store first head ocurrence
+        maxs = flip_events.argmax(axis=1)
+        # Check for all tails sequences, that is, repetitions were we have to keep trying to get a head
+        not_finished = (maxs==0) & (flip_events[:,0]!=1)
+        n = np.sum(not_finished)
+        while n!=0: # while there are sequences without any head
+            flip_events = np.random.choice([0,1],size=(n,flips_per_try),p=probability) # number of experiments reduced to n (the number of all tails sequences)
+            maxs2 = flip_events.argmax(axis=1)
+            maxs[not_finished] += maxs2+flips_per_try # take into account that there have been flips_per_try tries already (every iteration is added)
+            not_finished2 = (maxs2==0) & (flip_events[:,0]!=1) 
+            not_finished[not_finished] = not_finished2
+            n = np.sum(not_finished)
+        # try except in case toss is not multiple of repetitions_at_a_time, in general, no error is raised, that is why a try is useful
+        try:
+            flips[current_toss:current_toss+repetitions_at_a_time] = maxs+1
+        except ValueError:
+            flips[current_toss:] = maxs[:toss-current_toss]+1
+        # Update current_toss and move to the next chunk
+        current_toss += repetitions_at_a_time
+    # Once all values are obtained, average and return them
+    Expected_Value, Variance  = np.mean(flips), np.var(flips)    
+    return Expected_Value, Variance

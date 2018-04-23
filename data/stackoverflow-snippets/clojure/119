@@ -1,0 +1,17 @@
+(ns to-symbols-test
+  (:require [clojure.edn :as edn]
+            [clojure.test :refer [deftest is are testing] :as t]
+            [clojure.data :as data]
+            [clojure.pprint :as pp]))
+
+(defn to-symbol-list [l]
+  (map edn/read-string l))
+
+(defn diff [a b]
+  (with-out-str (pp/pprint (take 2 (data/diff a b)))))
+
+(deftest test-to-symbol-list
+  (testing ""to-symbol-list should convert recursively""
+    (let [expected '(a (not b) c)
+          result   (to-symbol-list [""a"" ""(not b)"" ""c""])]
+      (is (= expected result (diff expected result))))))

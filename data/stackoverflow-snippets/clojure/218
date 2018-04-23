@@ -1,0 +1,15 @@
+(:require [clojure.test :refer :all]
+          [com.rpl.specter :as specter])
+
+(deftest ^:focused transform-test
+   (let [selectors #{:m1 :m3}
+         input {:val1 {:m1 1 :m2 2 :m3 2} :val2 {:m1 4 :m2 8 :m3 7}}
+         output {:val1 {:m1 1/5 :m2 2 :m3 2/5} :val2 {:m1 4/5 :m2 8 :m3 7/5}}]
+
+         (is (= output
+               (specter/transform [specter/MAP-VALS
+                                   specter/ALL
+                                   #(contains?  selectors (first %))
+                                   specter/LAST]
+                                   #(/ % 5)
+                                   input)))))

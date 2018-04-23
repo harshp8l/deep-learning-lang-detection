@@ -1,0 +1,39 @@
+OUTER:
+for channelA != nil || channelB != nil {
+
+    select {
+
+    case typeA, ok := <-channelA:
+        if !ok {
+            channelA = nil
+            continue OUTER
+        }
+        doSomething(typeA)
+
+    case nodeIn, ok := <-channelB:
+        if !ok {
+            channelB = nil
+            continue OUTER
+        }
+
+        // Looped non-blocking nested select here checks that channelA
+        // really is drained before we deal with the data from channelB
+        NESTED:
+        for {
+            select {
+            case typeA, ok := <-channelA:
+                if !ok {
+                    channelA = nil
+                    continue NESTED
+                }
+                doSomething(typeA)
+
+            default:
+                // We are free to process the typeB data now
+                doSomethingElse(typeB)
+                break NESTED
+            }
+        }
+    }
+
+}

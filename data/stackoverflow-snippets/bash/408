@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Purpose: To insert data from a CSV file into the mysql table
+
+db_name=""testdb"" 
+input_file=$1 
+table_name=""test_table""
+
+table_columns=""$(head -n1 ${input_file} | sed s/,/' varchar(256), '/g | sed s/$/' varchar(256)'/g)""
+
+echo ""create table ${db_name}.${table_name} ( ${table_columns}) ;  
+alter table ${db_name}.${table_name} change column state state char(2) ;                                                                                               
+load data local infile '${input_file}' into table ${db_name}.${table_name}
+fields terminated by ','                                                                                                                                            
+optionally enclosed by '\""'                                                                                                                                       
+lines terminated by '\n'                                                                                                                                        
+ignore 1 lines ;"" > /tmp/mysql_query.sql                                                                                                                          
+
+mysql -u'username' -p'password' ${db_name} < /tmp/mysql_query.sql 

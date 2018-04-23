@@ -1,0 +1,29 @@
+CREATE TRIGGER [dbo].[anUpdate] ON [dbo].[MYTABLE]
+AFTER INSERT
+AS
+BEGIN
+
+    SET NOCOUNT ON;
+
+    UPDATE T
+    SET [DESC] = CASE 
+                    WHEN I.[DESC] LIKE '""%""' THEN SUBSTRING(I.[DESC], 2, LEN(I.[DESC])-2)
+                    WHEN I.[DESC] LIKE '""%' THEN RIGHT(I.[DESC], LEN(I.[DESC])-1)
+                    WHEN I.[DESC] LIKE '%""' THEN LEFT(I.[DESC], LEN(I.[DESC])-1)
+                    ELSE I.[DESC]
+                END,
+        Col =  CASE 
+                    WHEN I.Col LIKE '""%""' THEN SUBSTRING(I.Col, 2, LEN(I.Col)-2)
+                    WHEN I.Col LIKE '""%' THEN RIGHT(I.Col, LEN(I.Col)-1)
+                    WHEN I.Col LIKE '%""' THEN LEFT(I.Col, LEN(I.Col)-1)
+                    ELSE I.Col
+                END
+    FROM MYTABLE As T
+    -- Assuming your primary key is a column called Id...
+    INNER JOIN Inserted AS I ON I.Id = T.Id
+    WHERE I.[DESC] LIKE '""%' 
+    OR I.[DESC] LIKE '%""'
+    OR I.Col LIKE '""%' 
+    OR I.Col LIKE '%""';
+END
+GO

@@ -1,0 +1,20 @@
+def product_function(flist):
+    from functools import reduce
+    from inspect import Parameter, signature
+    POSITIONALS = {Parameter.POSITIONAL_ONLY,
+                   Parameter.POSITIONAL_OR_KEYWORD}
+    def f(*args):
+        f_pairs = []
+        for f in flist:
+            sig = signature(f)
+            n = sum(p.kind in POSITIONALS for p in sig.parameters.values())
+            f_pairs.append((f, args[:n]))
+            args = args[n:]
+        return reduce(lambda a, b: a * b[0](*b[1]), f_pairs, 1)
+    return f
+
+f = lambda a, b, c: a + b + c
+g = lambda a, b: 2 * a + b
+p = product_function([f, g])
+print(p(1, 1, 1, 5, 10)) # prints 60
+print((1 + 1 + 1) * (2 * 5 + 10)) # prints 60

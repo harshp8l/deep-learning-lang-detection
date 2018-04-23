@@ -1,0 +1,98 @@
+import java.io.*;
+
+class main {
+    public static void main(final String[] args) throws Exception {
+        ByteCountingLineReader r = new ByteCountingLineReader(new ByteArrayInputStream(toUtf8(""Hello\r\nWorld\n"")));
+
+        String line = null;
+        do {
+            long count = r.byteCount();
+            line = r.readLine();
+            System.out.println(""Line at byte "" + count + "": "" + line);
+        } while (line != null);
+
+        r.close();
+    }
+
+    static class ByteCountingLineReader implements Closeable {
+        InputStream in;
+        long _byteCount;
+        int bufferedByte = -1;
+        boolean ended;
+
+        // in should be a buffered stream!
+        ByteCountingLineReader(InputStream in) {
+            this.in = in;
+        }
+
+        ByteCountingLineReader(File f) throws IOException {
+            in = new BufferedInputStream(new FileInputStream(f), 65536);
+        }
+
+        String readLine() throws IOException {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            if (ended) return null;
+            while (true) {
+                int c = read();
+                if (ended && baos.size() == 0) return null;
+                if (ended || c == '\n') break;
+                if (c == '\r') {
+                    c = read();
+                    if (c != '\n' && !ended)
+                        bufferedByte = c;
+                    break;
+                }
+                baos.write(c);
+            }
+            return fromUtf8(baos.toByteArray());
+        }
+
+        int read() throws IOException {
+            if (bufferedByte >= 0) {
+                int b = bufferedByte;
+                bufferedByte = -1;
+                return b;
+            }
+            int c = in.read();
+            if (c < 0) ended = true; else ++_byteCount;
+            return c;
+        }
+
+        long byteCount() {
+            return bufferedByte >= 0 ? _byteCount - 1 : _byteCount;
+        }
+
+        public void close() throws IOException {
+            if (in != null) try {
+                in.close();
+            } finally {
+                in = null;
+            }
+        }
+
+        boolean ended() {
+            return ended;
+        }
+    }
+
+    static byte[] toUtf8(String s) {
+        try {
+            return s.getBytes(""UTF-8"");
+        } catch (Exception __e) {
+            throw rethrow(__e);
+        }
+    }
+
+    static String fromUtf8(byte[] bytes) {
+        try {
+            return new String(bytes, ""UTF-8"");
+        } catch (Exception __e) {
+            throw rethrow(__e);
+        }
+    }
+
+    static RuntimeException rethrow(Throwable t) {
+
+        throw t instanceof RuntimeException ? (RuntimeException) t : new RuntimeException(t);
+    }
+}

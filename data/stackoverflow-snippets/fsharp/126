@@ -1,0 +1,19 @@
+let input = Set.ofList [ 1 .. 15 ]
+
+let subsets (size:int) (input: Set<'a>) = 
+    let rec inner elems = 
+        match elems with
+        | [] -> [[]]
+        | h::t -> 
+            List.fold (fun acc e -> 
+                if List.length e < size then 
+                    (h::e)::e::acc 
+                else e::acc) [] (inner t)
+    inner (Set.toList input)
+    |> Seq.choose (fun subset ->
+        if List.length subset = size then
+            Some <| Set.ofList subset
+        else None)
+    |> Set.ofSeq
+
+subsets 3 input

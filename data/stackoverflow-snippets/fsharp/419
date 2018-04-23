@@ -1,0 +1,24 @@
+type ls = JsonProvider<""""""
+  [{""sex"":""male"",""height"":180,""weight"":85},
+   {""sex"":""male"",""height"":160,""weight"":60},
+   {""sex"":""male"",""height"":180,""weight"":85}]"""""">
+
+let dt = ls.GetSamples()
+
+let newJson = 
+  dt
+  |> Array.map (fun recd ->
+      // To do the calculation, you can access the fields via inferred types 
+      let bmi = float recd.Height / float recd.Weight
+
+      // But now we need to look at the underlying value, check that it is
+      // a record and extract the properties, which is an array of key-value pairs
+      match recd.JsonValue with
+      | JsonValue.Record props ->
+          // Append the new property to the existing properties & re-create record
+          Array.append [| ""bmi"", JsonValue.Float bmi |] props
+          |> JsonValue.Record
+      | _ -> failwith ""Unexpected format"" )
+
+// Re-create a new JSON array and format it as JSON
+JsonValue.Array(newJson).ToString()

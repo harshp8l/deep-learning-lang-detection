@@ -1,0 +1,20 @@
+private void InvokePowerShell(string str) {
+    str = char.ToUpper(str[0]) + str.Substring(1);
+    // remove using, or move to a field
+    PowerShell ps = PowerShell.Create();
+    ps.AddScript(""Get-AppxPackage | Select Name | Where-Object {$_.Name -like '*"" + str + ""*'}"");
+    //This is where the app pauses slightly and I need a busyindicator                
+    _busyIndicator.IsBusy = true;
+    ps.BeginInvoke<PSObject>(null, new PSInvocationSettings(), ar => {
+        try {                    
+            var psOutput = ps.EndInvoke(ar);
+            // note, you are not on UI thread here
+            this.Dispatcher.Invoke(() => _busyIndicator.IsBusy = false);
+            // the rest of your code here
+        }
+        finally {
+            // if did not move to a field - dispose here
+            ps.Dispose();
+        }
+    }, null);
+}

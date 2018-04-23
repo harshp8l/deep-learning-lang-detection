@@ -1,0 +1,42 @@
+template<class T>
+class Matrix
+{
+    std::vector<T> storage_;
+    unsigned cols_ = 0;
+
+public:
+    Matrix(unsigned rows, unsigned cols)
+        : storage_(rows * cols)
+        , cols_(cols)
+    {}
+
+    // Because of the user-defined constructor above
+    // the default constructor must be provided.
+    // The default implementation is sufficient.
+    Matrix() = default;
+
+    unsigned columns() const { return cols_; }
+    unsigned rows() const { return storage_.size() / cols_; }
+
+    // Using operator() for indexing because [] can only take one argument.
+    T& operator()(unsigned row, unsigned col) { return storage_[row * cols_ + col]; }
+    T const& operator()(unsigned row, unsigned col) const { return storage_[row * cols_ + col]; }
+
+    // Canonical swap member function.
+    void swap(Matrix& b) {
+        using std::swap;
+        swap(storage_, b.storage_);
+        swap(cols_, b.cols_);
+    }
+
+    // Canonical swap function. Friend name injection.
+    friend void swap(Matrix& a, Matrix& b) { a.swap(b); }
+
+    // This is what the compiler does for you, 
+    // not necessary to declare these at all.
+    Matrix(Matrix const&) = default;
+    Matrix(Matrix&&) = default;
+    Matrix& operator=(Matrix const&) = default;
+    Matrix& operator=(Matrix&&) = default;
+    ~Matrix() = default;
+};

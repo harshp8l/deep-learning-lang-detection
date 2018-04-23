@@ -1,0 +1,32 @@
+clear-host
+set-location c:\temp
+
+$File = ""file1.txt""
+$FileZ = ""file2.txt""
+
+# PS2
+$File1 = get-content $File | Out-String
+# PS3
+# $File1 = get-content $File -Raw
+
+$File2 = (Get-ChildItem $fileZ) | Select -ExpandProperty BaseName
+
+if( test-path ""$File2.tmp"" ) { remove-item ""$File2.tmp"" }
+
+$regex01 = '(\\\\Serv02\\LOC6\\Client\\726C30\\\d{1,6}\\\d{1,10})(.pdf)$'
+get-content $fileZ |% { 
+    $line = $_
+    $find = $line -replace '\\','\\'
+    if ( ($line -match $regex01) -AND ( $File1 -match $find ) ) {
+        $line -replace $regex01,'${1}1${2}' -join ""`r`n"" 
+    } else {
+        $line
+    }
+} | out-file ""$File2.tmp"" -append
+
+remove-item ""$File2.txt""
+rename-item ""$File2.tmp"" ""$File2.txt""
+
+#start-sleep -Seconds 2
+#$NewMRC = Get-ChildItem ""$file2.txt"" | Select -ExpandProperty Name
+#Get-ChildItem $NewMRC | rename-item -NewName {$_.Name -replace "".txt"","".MRC2""} 

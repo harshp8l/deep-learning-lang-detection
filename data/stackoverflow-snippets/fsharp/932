@@ -1,0 +1,14 @@
+type SomeType  = T1 of int | T2 of string
+type Condition = Int | String
+
+type Detail = Detail with
+  static member ($) (Detail, someTypeVal : int) = T1 someTypeVal
+  static member ($) (Detail, someTypeVal : string) = failwith ""something went wrong""; T2 someTypeVal
+  static member (%) (Detail, someTypeVal : string) = T2 someTypeVal
+  static member (%) (Detail, someTypeVal : int) = failwith ""something went wrong""; T1 someTypeVal
+
+
+let inline createSomeType' (someTypeVal : ^T, cond) =
+  match cond with
+  | Int    -> Detail $ someTypeVal
+  | String -> Detail % someTypeVal

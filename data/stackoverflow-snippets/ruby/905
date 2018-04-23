@@ -1,0 +1,68 @@
+class Node
+  include Enumerable
+
+  attr_reader :data
+
+  def initialize(payload, n = nil)
+    @node = n if n.is_a? Node
+    @data = payload
+  end
+
+  def [](n)
+    if n == 0
+      self
+    else
+      @node[n - 1]
+    end
+  end
+
+  def []=(n, v)
+    if n == 0
+      @data = v
+    else
+      @node[n - 1] = v 
+    end
+  end
+
+  def each(&block)
+    block.call(self)
+    @node.each(&block) if @node
+  end
+
+  def <=>(o)
+    @data <=> o.data
+  end
+
+  def to_s
+    ""["" + self.map { |e| ""#{e.data}"" }.join("", "") + ""]""
+  end
+end
+
+a = Node.new(""Node 0"")
+b = Node.new(""Node 1"", a)
+c = Node.new(""Node 2"", b)
+d = Node.new(""Node 3"", c)
+
+d[2] = ""Edited""
+
+d.each do |n|
+  puts n.data
+end
+
+# Let's use an enumerable method
+s = d.select { |n| n.data == ""Node 0"" }[0]
+puts ""#{a.inspect} = #{s.inspect}""
+
+puts a, b, c, d
+
+# => Output:
+# 
+# Node 3
+# Node 2
+# Edited
+# Node 0
+# #<Node:0x0000562e121e2440 @data=""Node 0""> = #<Node:0x0000562e121e2440 @data=""Node 0"">
+# [Node 0]
+# [Edited, Node 0]
+# [Node 2, Edited, Node 0]
+# [Node 3, Node 2, Edited, Node 0]

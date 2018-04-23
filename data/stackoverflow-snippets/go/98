@@ -1,0 +1,24 @@
+type MyResponseWriter struct {
+    http.ResponseWriter
+    err error
+}
+
+func (mrw *MyResponseWriter) WriteHeader(statusCode int) {
+    // Inspect headers:
+    headers := mrw.Header()
+    if len(headers[""myheader""]) == 0 {
+        mrw.ResponseWriter.WriteHeader(http.StatusInternalServerError)
+        mrw.err = fmt.Errorf(""myheader was not set"")
+        return
+    }
+
+    // Headers ok, let call ""through"":
+    mrw.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (mrw *MyResponseWriter) Write(p []byte) (int, error) {
+    if mrw.err != nil {
+        return 0, mrw.err
+    }
+    return mrw.ResponseWriter.Write(p)
+}

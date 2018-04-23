@@ -1,0 +1,39 @@
+type Node = {
+    Name: string
+    Parent: Node option
+    }
+
+let parse (collection:Map<_, _>) path =
+    let find (collection:Map<_, _>) parent name =
+        let key = (parent, name)
+
+        if collection.ContainsKey key then
+            collection, collection.Item key
+        else
+            let node = { Name = name; Parent = parent; }
+            collection.Add(key, node), node
+
+    let rec parserec (collection:Map<_, _>) parent path = 
+        match path with 
+        | [] -> collection
+        | head :: tail ->
+            let collection, parent = find collection parent head
+            parserec collection (Some parent) tail
+
+    parserec collection None path
+
+[<EntryPoint>]
+let main argv = 
+    let paths = seq {
+        yield [""C:""; ""Program Files""; ""Common""; ""Oracle""]
+        yield [""C:""; ""Program Files""; ""Common""; ""IBM""]
+        yield [""C:""; ""Program Files""; ""Common""; ""Microsoft""]
+        yield [""C:""; ""Windows""; ""Common""; ""Microsoft""]
+        }
+
+    let result =
+        paths
+        |> Seq.fold parse Map.empty
+        |> Seq.toList
+
+    0

@@ -1,0 +1,25 @@
+function Get-FNVHash {
+
+    param(
+        [string]$InputString
+    )
+
+    # Initial prime and offset chosen for 32-bit output
+    # See https://en.wikipedia.org/wiki/Fowler–Noll–Vo_hash_function
+    [uint32]$FNVPrime = 16777619
+    [uint32]$offset = 2166136261
+
+    # Convert string to byte array, may want to change based on input collation
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($InputString)
+
+    # Copy offset as initial hash value
+    [uint32]$hash = $offset
+
+    foreach($octet in $bytes)
+    {
+        # Apply XOR, multiply by prime and mod with max output size
+        $hash = $hash -bxor $octet
+        $hash = $hash * $FNVPrime % [System.Math]::Pow(2,32)
+    }
+    return $hash
+}

@@ -1,0 +1,21 @@
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions._
+
+val df = Seq(
+  (1, Some(100), 2017), (1, None, 2016), (1, Some(20), 2015), 
+  (1, Some(100), 2014)
+).toDF(""id"", ""value"", ""date"")
+
+df.withColumn(
+  ""last_value"",
+   last(""value"", true).over(Window.partitionBy(""id"").orderBy(""date""))
+).show
+
++---+-----+----+----------+                                                     
+| id|value|date|last_value|
++---+-----+----+----------+
+|  1|  100|2014|       100|
+|  1|   20|2015|        20|
+|  1| null|2016|        20|
+|  1|  100|2017|       100|
++---+-----+----+----------+

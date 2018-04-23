@@ -1,0 +1,20 @@
+type ICalculate =
+    abstract member Calculate : float->float->float
+
+type Adder =
+    interface ICalculate with
+        member this.Calculate x y = x + y
+
+type Subber =
+    interface ICalculate with
+        member this.Calculate x y = x - y
+
+type Responder =
+    member private this.GetCalculator(op) =
+    match op with
+    | '+' = new Adder()
+    | '-' = new Subber()
+    | _ -> ivalidArg ""op"" ""op not defined""
+    member this.Respond op x y =
+        let calc = GetCalculator(op)
+        calc x y

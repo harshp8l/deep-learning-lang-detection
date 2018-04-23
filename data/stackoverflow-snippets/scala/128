@@ -1,0 +1,26 @@
+object JSONCaster {
+
+  def fromJson[T](json: String, s: String)(implicit converter: Converter[T]): T = {
+    converter.convert(net.liftweb.json.parse(json).\\(s).values.toString)
+  }
+
+  trait Converter[T] { self =>
+    def convert(v: String): T
+  }
+
+  object Converter{
+    implicit val longLoader: Converter[Long] = new Converter[Long] {
+      def convert(v: String): Long = v.toLong
+    }
+
+    implicit val stringLoader: Converter[String] = new Converter[String] {
+      def convert(v: String): String = v
+    }
+
+    implicit val intLoader: Converter[Int] = new Converter[Int] {
+      def convert(v: String): Long = v.toInt
+    }
+
+    // Add any other types you want to convert to, even custom types!
+  }
+}

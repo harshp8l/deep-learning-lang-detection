@@ -1,0 +1,34 @@
+#include <cstddef>
+#include <iostream>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
+template <typename T, std::size_t ...I, typename F>
+void tuple_foreach_impl(T &&tuple, std::index_sequence<I...>, F &&func)
+{
+    // In C++17 we would use a fold expression here, but in C++14 we have to resort to this.
+    using dummy_array = int[];
+    dummy_array{(void(func(std::get<I>(tuple))), 0)..., 0};
+}
+
+template <typename T, typename F> void tuple_foreach(T &&tuple, F &&func)
+{
+    constexpr int size = std::tuple_size<std::remove_reference_t<T>>::value;
+    tuple_foreach_impl(std::forward<T>(tuple), std::make_index_sequence<size>{},
+                       std::forward<F>(func));
+}
+
+int main()
+{
+    auto x = std::make_tuple(""Meow"", 1, 2.3);
+
+    tuple_foreach(x, [](auto &&value)
+    {
+        std::cout << value << ' ';
+    });
+    // Prints:
+    // Meow
+    // 1
+    // 2.3
+}

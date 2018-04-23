@@ -1,0 +1,26 @@
+$modulename = Split-Path $PSScriptRoot -Leaf
+
+$default_foo = 'something'
+$default_bar = 'or other'
+...
+
+function Get-RegistrySetting($name) {
+    $path = ""HKCU:\Software\${script:modulename}""
+
+    if (-not (Test-Path -LiteralPath $path)) {
+        New-Item -Path $path -Force | Out-Null
+    }
+
+    try {
+        Get-ItemProperty $path -Name $name -ErrorAction Stop |
+            Select-Object -Expand $name
+    } catch {
+        $val = Get-Variable -Scope script -Name ""default_${name}"" -ValueOnly -ErrorAction Stop
+        Set-ItemProperty $path -Name $name -Value $val
+        $val
+    }
+}
+
+$global:foo = Get-RegistrySetting 'foo'
+$global:bar = Get-RegistrySetting 'bar'
+...

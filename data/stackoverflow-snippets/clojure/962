@@ -1,0 +1,43 @@
+;; for starters, we can pass the counter through each reduce
+(defn build-tree [node xs]
+  (let [[counter tree] (reduce (fn [[counter tree] x]
+                                 (reduce (fn [[counter' t] l]
+                                           (if-not (= (:val l) -1)
+                                             (let [next-branch (nth xs counter)
+                                                   ... ...
+                                                   t' ...]
+                                               [(inc counter') t'])
+                                             [counter' t])
+                                           [counter t]
+                                           (map-indexed
+                                            (fn [idx itm]
+                                              (let [side (if (= 0 idx) :left :right)]
+                                                {:side side :index idx :val itm}))
+                                            x))))
+                               [0 node]
+                               xs)]))
+
+;; the code becomes much clearer with apropriate let bindings
+(defn build-tree
+  [node xs]
+  ;; the optional name arg to an anonymous function makes stack traces much easier to read
+  (let [process-branch (fn process-branch [[counter t] l]
+                         (if-not (= (:val l) -1)
+                           (let [next-branch (nth xs counter)
+                                 ... ...
+                                 t' ...]
+                             [(inc counter) t'])
+                           [counter t]))
+        mark-branch (fn mark-branch [x]
+                      (map-indexed
+                       (fn [idx itm]
+                         (let [side (if (= 0 idx) :left :right)]
+                           {:side side :index idx :val itm}))
+                       x))
+        [counter tree] (reduce (fn [[counter tree] x]
+                                 (reduce process-branch
+                                         [counter t]
+                                         (mark-branch x)))
+                               [0 node]
+                               xs)]
+    tree))

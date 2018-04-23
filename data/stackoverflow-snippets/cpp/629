@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <ctime>
+
+using u_big = unsigned long long int; // Whatever you want, please don't type it 
+                                      // in multiple locations, too hard to update the code
+                                      // Prefer using, from C++11
+
+std::vector<u_big> sieveOfEratosthenes(u_big min, u_big max) {
+    std::vector<u_big> result;
+
+    if (max <= 1 || min < 1) return result;
+
+    if (max == 2) {
+        result.push_back(max);
+        return result;
+    }
+
+    if(min == 1) min = 2; // skip 1 as it is not prime
+
+    std::vector<bool> primes(max + 1, true); // set them all to true while creating vector
+    // here was the real problem
+    // you were actually accessing (max + 1) elements in your array
+    // but were requesting for (max - min + 1) elements 
+
+    for (auto i = min; i < sqrt(max); ++i) {
+        if(primes.at(i)) { 
+        // as suggested in the comments, use at()
+        // you would have witnessed  your code throw exception
+            for (auto j = i; i*j <= max; ++j) {
+                primes.at(i * j) = false;
+            }
+        }
+    }
+
+    for (auto i = min; i <= max; ++i) {
+        if (primes.at(i)) {
+            result.push_back(i);
+        }
+    }
+    return result;
+}
+
+template <typename Iterable>
+void print(Iterable const & result) {
+    for (auto const & i : result ) { // please use const &, if not modifying
+        std::cout << i << "", "";
+    }
+    std::cout << std::endl;
+}
+
+int main() {
+    auto start_s = clock();
+    auto result = sieveOfEratosthenes(1,1000000);
+    //auto result = sieveOfEratosthenes(1,100);
+    auto stop_s = clock();
+    std::cout << ""time: "" << (stop_s-start_s)/double(CLOCKS_PER_SEC)*1000 
+    << "" ms"" << std::endl;
+    print(result);
+    return 0;
+}

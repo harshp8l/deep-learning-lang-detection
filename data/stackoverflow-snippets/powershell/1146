@@ -1,0 +1,32 @@
+function ConvertFrom-LeftAlignedStringData{
+    param (
+        [string[]]$data
+    )
+
+    $headerString = $data[0]
+    $headerElements = $headerString -split ""\s{2,}"" | Where-Object{$_}
+    $headerIndexes = $headerElements | ForEach-Object{$headerString.IndexOf($_)}
+
+    $results = $data | Select-Object -Skip 2  | ForEach-Object{
+        $props = @{}
+        $line = $_
+        For($indexStep = 0; $indexStep -le $headerIndexes.Count - 1; $indexStep++){
+            $value = $null            # Assume a null value 
+            $valueLength = $headerIndexes[$indexStep + 1] - $headerIndexes[$indexStep]
+            $valueStart = $headerIndexes[$indexStep]
+            If(($valueLength -gt 0) -and (($valueStart + $valueLength) -lt $line.Length)){
+                $value = ($line.Substring($valueStart,$valueLength)).Trim()
+            } ElseIf ($valueStart -lt $line.Length){
+                $value = ($line.Substring($valueStart)).Trim()
+            }
+            $props.($headerElements[$indexStep]) = $value    
+        }
+        New-Object -TypeName PsCustomObject -Property $props
+    } 
+
+    return $results
+}
+
+
+$qfarmOutput = qfarm /load
+ConvertFrom-LeftAlignedStringData $qfarmOutput | select ""Server Name"",""Server Load""

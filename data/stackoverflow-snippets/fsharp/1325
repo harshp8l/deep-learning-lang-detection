@@ -1,0 +1,32 @@
+// 2-way merge with deduplication
+let rec (-|-) (xs: LazyList<'T>) (ys: LazyList<'T>) =
+    let x = LazyList.head xs
+    let y = LazyList.head ys
+    let xstl = LazyList.skip 1 xs
+    let ystl = LazyList.skip 1 ys
+    if x < y then lazyList { yield x; yield! xstl -|- ys }
+    elif x > y then lazyList { yield y; yield! xs -|- ystl }
+    else lazyList { yield x; yield! xstl -|- ystl }
+
+let rec hamming : LazyList<uint64> = lazyList {
+    yield 1UL
+    let xs = LazyList.map ((*) 2UL) hamming
+    let ys = LazyList.map ((*) 3UL) hamming
+    let zs = LazyList.map ((*) 5UL) hamming
+    yield! xs -|- ys -|- zs
+}
+
+[<EntryPoint>]
+let main argv =
+    let watch = Stopwatch.StartNew ()
+
+    hamming
+    |> LazyList.take 2000
+    |> LazyList.iter (printf ""%d, "")
+
+    watch.Stop ()
+    printfn """"
+    printfn ""Elapsed time: %.4fms"" watch.Elapsed.TotalMilliseconds
+
+    System.Console.ReadKey () |> ignore
+    0   // Return an integer exit code

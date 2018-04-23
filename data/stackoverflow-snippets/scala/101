@@ -1,0 +1,22 @@
+def parse(blocks: Seq[String],
+          currentBlock: String,
+          remaining: String,
+          depth: Int): Seq[String] =
+  if (remaining.isEmpty) {
+    blocks
+  } else {
+    val curChar = remaining.head
+    curChar match {
+      case '|' if depth == 0 =>
+        parse(blocks :+ currentBlock, """", remaining.tail, depth)
+      case '[' =>
+        parse(blocks, currentBlock + curChar, remaining.tail, depth + 1)
+      case ']' =>
+        if (depth == 1)
+          parse(blocks :+ (currentBlock + curChar), """", remaining.tail, depth - 1)
+        else
+          parse(blocks, currentBlock + curChar, remaining.tail, depth - 1)
+      case _ =>
+        parse(blocks, currentBlock + curChar, remaining.tail, depth)
+    }
+  }

@@ -1,0 +1,28 @@
+(defn find-index-route
+  [x form]
+  (letfn [(get-nodes [form]
+            (tree-seq coll? identity form))
+
+          (get-tree [form]
+            (rest (get-nodes form)))
+
+          (get-level [form]
+            (if (or (not (coll? form)) (not (seq form)))
+              0
+              (count (filter coll? (get-nodes form)))))
+
+          (get-result [x form]
+            (reduce (fn [v form]
+                      (let [[idx lvl _] (last v)
+                            form-lvl  (get-level form)
+                            contains? ((set (get-nodes form)) x)]
+                        (conj v [(if (or (not idx) (< form-lvl lvl)) 0 (+ idx 1))
+                                 form-lvl
+                                 contains?]))) [] (get-tree form)))
+
+          (get-indices [x form]
+            (map (fn [[idx _ _]] idx)
+                 (filter
+                   (fn [[_ _ contains?]] contains?) (get-result x form))))]
+
+    (get-indices x form)))

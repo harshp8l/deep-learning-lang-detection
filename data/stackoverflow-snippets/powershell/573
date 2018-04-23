@@ -1,0 +1,159 @@
+<#
+.SYNOPSIS
+This function will take files and use the excel application to convert them.
+
+.DESCRIPTION
+This function allows you to use the full power of Excel to open and save files. The infile can be any file that Excel can open. The outfile can be xlsx, xsl, xml, or csv. Also, there is an option to delete the destination file before runing the save operation to avoid prompts when overwriting, and to erase the origin file after the process has completed.
+
+.EXAMPLE
+Convert-Excel -infile 'Source.xml' -outfile 'destination.xlsx' -delete $true
+Converts source.xml to xlsx file type.
+Deletes source.xml when done.
+Deletes destination.xlsx before it converts.
+
+.EXAMPLE
+Convert-Excel -infile 'Source.xlsx' -outfile 'destination.csv' 
+Converts xlsx to csv.
+Leaves both files behind when done.
+
+.EXAMPLE
+Convert-Excel -infile 'Source.csv' 
+Converts infile Source.csv (or whatever format) to xlsx of the same name.
+Leaves both behind when done.
+
+.EXAMPLE
+Convert-Excel -infile 'Source.xlsx' -Extension '.csv' 
+Converts xlsx to csv. By passing just the extension it will use the same base file name.
+Leaves both files behind when done.
+
+.EXAMPLE
+Convert-Excel -infile 'C:\Users\notI\PRD-06661-12082017 - Copy.xml' -outfile 'C:\Users\notI\PRD-06661-12082017-Copy.csv'
+Loads full path xml
+Saves full path csv
+
+.EXAMPLE
+dir *.xml | Sort-Object -Property LastWriteTime | Convert-Excel -Extension "".csv""
+Similar to above but uses the pipeline to do multiple conversions.
+If full outfile name is given, it will create just one file over and over again. In this example it would go in chronological order creating csv files.
+
+.EXAMPLE
+Dir *.xml | Convert-Excel -extension "".csv"" -delete $True | Convert-Excel -extension "".xml""
+Thats just weird, but it might solve your problem, and it works.
+
+.PARAMETER infile
+Name of the origin file to use. If the full path is not given it will be opened from the context the script is running in.
+
+.PARAMETER outfile (extension)
+Name of the destination file to create. If the full path is not given it will save in the default destination of Excel.
+
+.PARAMETER delete
+If $true it will delete the target location file if it exists before conversion and the origin file after conversion. Functions like a move with clobber.
+If anything else or blank it will leave origin in place and if destination exists it will prompt for overwriting.
+#>
+function Convert-Excel{
+    param(
+        [parameter(ValueFromPipeLineByPropertyName=$True,ValueFromPipeline=$True)]
+        [Alias('FullName')]
+        [string] $infile,
+        [Alias('Extension')]
+        [string] $outfile,
+        [bool] $delete
+
+    )
+    Begin {
+        $begin_outfile = $outfile
+        Try {$ExcelWB = new-object -comobject excel.application}
+        Catch {Write-Host ""This host does not seem to have Excel installed""}
+    }
+
+    Process{
+    #Check infile 
+        if (-not($infile)) {
+            Write-Output ""You must supply a value for -infile""
+            break
+        }
+        else {
+            Try {$file = Get-Item $infile}
+            Catch {Write-Output ""$infile does not seem to exist, or I can't get to it""; break}
+        }
+
+    #Check outfile
+        #Reset value for pipeline loop            
+        $outfile = $begin_outfile
+
+        #If blank just presume xlsx
+        if (-not($outfile)) {
+            $outfile = $file.FullName -replace '\.[^.]+$',"".xlsx""
+            Write-Verbose ""No outfile supplied, setting outfile to $outfile""
+        }
+
+        #If startswith a dot, use as an extension.
+        If ($outfile.StartsWith(""."")) {
+            $outfile = $file.FullName -replace '\.[^.]+$',$outfile
+            Write-Verbose ""Extension supplied, setting outfile to $outfile""
+        }
+
+        #derive XlFileFormat from extension
+        if($outfile -cmatch '\.[^.]+$') {
+            $extens="""" #Reset for pipeline loop
+            switch ($Matches[0]) 
+            {
+                "".xlsx"" {$extens = 51}
+                "".csv""  {$extens = 6}
+                "".xml""  {$extens = 46}
+                "".xls""  {$extens = -4143}
+                "".xlsm"" {$extens = 52}
+                default {$extens = 51}
+            }
+
+        }
+        else {
+            break #if it can't find an extension in regex
+        }
+
+        if ($file.FullName -eq $outfile) {
+            #Nobody needs us to create a copy of an existing file.
+            write-verbose ""Goal already achieved, moving on""
+        }
+        Else {
+            if(Test-Path ($outfile)){
+                #Avoid prompting to overwrite by removing an existing file of the same name
+                Remove-Item -path ($outfile)
+            }
+
+            Try {
+                Write-Verbose ""Loop Check $infile""
+
+                if ($file.Extension -eq "".xml"") {
+                    #Make assumptions for XML. If you need more control don't automate
+                    $Workbook = $ExcelWB.Workbooks.OpenXML($file.FullName,1)
+                }
+                else {
+                    #Act Normal
+                    $Workbook = $ExcelWB.Workbooks.Open($file.FullName)
+                }
+                $Workbook.SaveAs($outfile,$extens)
+                $Workbook.Close($false)
+            }
+            Catch {
+                Write-Host ""Unable to convert file $file because Excel cannot open or save it without help""
+                break
+            }
+
+            if ($delete) {#If asked to delete
+                if(Test-Path ($outfile)){ #And a file now exists where outfile said it should be
+                    if(Test-Path ($infile)){ #And there is a file at infile
+                        Remove-Item -path ($infile) #Delete it
+                    }
+                }
+            }
+            #Mostly to keep from breaking the pipeline, but not bad as an output of a file creator
+            Return $outfile
+        }
+    }
+    End{
+        #Cleanup
+        $ExcelWB.quit()
+    }
+}
+export-modulemember -function Convert-Excel

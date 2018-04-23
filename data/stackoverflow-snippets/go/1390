@@ -1,0 +1,139 @@
+package main
+
+import (
+    ""fmt""
+    ""time""
+
+    // you can also use original go-mgo/mgo here as well
+    mgo ""github.com/globalsign/mgo""
+    ""github.com/globalsign/mgo/bson""
+)
+
+// TODO: put some records into db first:
+//
+// use testapi
+// db.competitions.insert([
+//   {game_id: 1, game_name: ""foo""},
+//   {game_id: 2, game_name: ""bar""},
+//   {game_id: 3, game_name: ""jazz""}
+// ])
+
+// NOTE: you might want to increase this depending on your machine power
+//       mine is:
+//         MacBook (Retina, 12-inch, Early 2015)
+//         1,2 GHz Intel Core M
+//         8 GB 1600 MHz DDR3
+const ops = 10000
+
+type m bson.M
+
+func main() {
+    sess, err := mgo.DialWithTimeout(""localhost"", time.Second)
+    if err != nil {
+        panic(err)
+    }
+    defer sess.Close()
+
+    // NOTE: without this setting there are many errors
+    //       see the end of the file
+    // setting pool limit prevents most of the timeouts
+    // sess.SetPoolLimit(50)
+
+    // sess.SetSocketTimeout(60 * time.Second)
+    sess.SetMode(mgo.Monotonic, true)
+
+    time.Sleep(time.Second)
+
+    done := make(chan bool, ops)
+
+    for i := 0; i < ops; i++ {
+        go func() {
+            defer func() { done <- true }()
+
+            result, err := fetchSomething(sess)
+            if err != nil {
+                fmt.Printf(""ERR: %s\n"", err)
+            }
+            fmt.Printf(""RESULT: %+v\n"", result)
+        }()
+    }
+
+    for i := 0; i < ops; i++ {
+        <-done
+    }
+}
+
+func fetchSomething(sess *mgo.Session) ([]m, error) {
+    s := sess.Copy()
+    defer s.Close()
+
+    result := []m{}
+
+    group := m{
+        ""$group"": m{
+            ""_id"": m{
+                ""id"":   ""$game_id"",
+                ""name"": ""$game_name"",
+            },
+        },
+    }
+
+    project := m{
+        ""$project"": m{
+            ""_id"":  ""$_id.id"",
+            ""name"": ""$_id.name"",
+        },
+    }
+
+    sort := m{
+        ""$sort"": m{
+            ""_id"": 1,
+        },
+    }
+
+    err := col(s, ""competitions"").Pipe([]m{group, project, sort}).All(&result)
+    if err != nil {
+        return nil, err
+    }
+    return result, nil
+}
+
+// col is a helper for selecting a column
+func col(sess *mgo.Session, name string) *mgo.Collection {
+    return sess.DB(""testapi"").C(name)
+}
+
+/*
+
+
+ERRORS WITHOUT sess.SetPoolLimit(50)
+
+
+$ go run socket_error.go
+RESULT: [map[name:foo _id:1] map[_id:2 name:bar] map[_id:3 name:jazz]]
+ERR: read tcp 127.0.0.1:52918->127.0.0.1:27017: read: connection reset by peer
+ERR: write tcp 127.0.0.1:52084->127.0.0.1:27017: write: broken pipe
+RESULT: []
+RESULT: []
+ERR: write tcp 127.0.0.1:53627->127.0.0.1:27017: write: broken pipe
+ERR: write tcp 127.0.0.1:53627->127.0.0.1:27017: write: broken pipe
+RESULT: []
+ERR: write tcp 127.0.0.1:53627->127.0.0.1:27017: write: broken pipe
+RESULT: []
+ERR: write tcp 127.0.0.1:53627->127.0.0.1:27017: write: broken pipe
+RESULT: []
+ERR: write tcp 127.0.0.1:53627->127.0.0.1:27017: write: broken pipe
+RESULT: []
+ERR: write tcp 127.0.0.1:53627->127.0.0.1:27017: write: broken pipe
+RESULT: []
+RESULT: []
+ERR: read tcp 127.0.0.1:53627->127.0.0.1:27017: read: connection reset by peer
+RESULT: []
+ERR: resetNonce: write tcp 127.0.0.1:53625->127.0.0.1:27017: write: broken pipe
+RESULT: []
+RESULT: [map[name:foo _id:1] map[_id:2 name:bar] map[_id:3 name:jazz]]
+ERR: resetNonce: write tcp 127.0.0.1:54591->127.0.0.1:27017: write: broken pipe
+RESULT: []
+...
+...
+*/

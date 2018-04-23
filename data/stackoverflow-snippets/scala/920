@@ -1,0 +1,34 @@
+import scala.language.implicitConversions
+
+object MapHelpers {
+  implicit def optionStringToString(maybeS: Option[String]): String = maybeS.getOrElse("""")
+  implicit class MapWithIntKey(val m: Map[String, String]) extends Map[String, String] {
+    override def get(key: String): Option[String] = {
+      val intRegex = """"""(\d+)"""""".r
+      val keyWithoutInt = intRegex
+        .findFirstMatchIn(key)
+        .map(int => {
+          val idx = key.indexOf(int.toString)
+          key.slice(0, idx)
+        })
+        .getOrElse(key)
+      m.get(keyWithoutInt)
+    }
+
+    def +[V1 >: String](
+        kv: (String, V1)): scala.collection.immutable.Map[String, V1] = m + kv
+    def -(key: String): scala.collection.immutable.Map[String, String] = m - key
+    def iterator: Iterator[(String, String)] = m.iterator
+  }
+}
+
+object App {
+
+  import MapHelpers._
+
+  def testMapImplicit(): Unit = {
+    val myMap: MapWithIntKey = Map(""foo"" -> ""bar"", ""faz"" -> ""baz"")
+    val result: String = myMap.get(""foo1"")
+    println(""result"", result) // bar
+  }
+}

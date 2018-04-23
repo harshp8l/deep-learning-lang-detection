@@ -1,0 +1,39 @@
+import org.apache.spark.sql.functions.percent_rank
+import org.apache.spark.sql.expressions.Window
+
+ dataDF.show
++--------+------+
+|Employee|Salary|
++--------+------+
+|    Tony| 50000|
+|    Alan| 45000|
+|     Lee| 60000|
+|   David| 35000|
+|   Steve| 65000|
+|    Paul| 48000|
+|   Micky| 62000|
+|  George| 80000|
+|   Nigel| 64000|
+|    John| 42000|
++--------+------+
+
+val window = Window.partitionBy().orderBy(dataDF(""Salary""))
+dataDF.withColumn(""rank"", 
+percent_rank().over(window).alias(""rank"")).withColumn(""Percentage"", 
+when($""rank"" > 0.7, ""High"").when($""rank"" <= 0.7 && $""rank"" > 0.3, 
+""Average"").otherwise(""Low"")).drop(""rank"").show
+
++--------+------+----------+
+|Employee|Salary|Percentage|
++--------+------+----------+
+|   David| 35000|       Low|
+|    John| 42000|       Low|
+|    Alan| 45000|       Low|
+|    Paul| 48000|   Average|
+|    Tony| 50000|   Average|
+|     Lee| 60000|   Average|
+|   Micky| 62000|   Average|
+|   Nigel| 64000|      High|
+|   Steve| 65000|      High|
+|  George| 80000|      High|
++--------+------+----------+

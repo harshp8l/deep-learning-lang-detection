@@ -1,0 +1,91 @@
+#include <cstring>
+
+#include <algorithm>
+#include <chrono>
+#include <functional>
+#include <iostream>
+#include <random>
+#include <string>
+#include <vector>
+
+// override this by compiling with (e.g.)
+//   g++ -DITERATION_COUNT=1000
+#ifndef ITERATION_COUNT
+#define ITERATION_COUNT 200000
+#endif
+
+template<typename T>
+struct time_printer
+{
+    T func;
+
+    friend std::ostream& operator<<(std::ostream& os, const time_printer& p)
+    {
+        using Duration = std::chrono::duration<double, std::chrono::milliseconds::period>;
+        auto begin = std::chrono::steady_clock::now();
+        p.func();
+        auto end = std::chrono::steady_clock::now();
+        Duration time_taken = end - begin;
+        return os << time_taken.count();
+    }
+};
+
+template<typename T>
+time_printer<T> print_time(T fun) { return {fun}; }
+
+
+int main()
+{
+    // Build a vector of strings generated starting from ""Lorem Ipsum""
+    const auto shuffled = []() {
+        static const std::wstring lorem[] = {
+            L""Lorem ipsum dolor sit amet, consectetuer adipiscing elit."",
+            L""Maecenas porttitor congue massa. Fusce posuere, magna sed"",
+            L""pulvinar ultricies, purus lectus malesuada libero,"",
+            L""sit amet commodo magna eros quis urna."",
+            L""Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus."",
+            L""Pellentesque habitant morbi tristique senectus et netus et"",
+            L""malesuada fames ac turpis egestas. Proin pharetra nonummy pede."",
+            L""Mauris et orci. [*** add more chars to prevent SSO ***]""
+        };
+
+        std::vector<std::wstring> v;
+        auto const kTestIterationCount = ITERATION_COUNT;
+        v.reserve(std::size(lorem) * kTestIterationCount);
+        for (int i = 0;  i < kTestIterationCount;  ++i) {
+            auto const suffix = L"" (#"" + std::to_wstring(i) + L"")"";
+            for (auto const& s: lorem) {
+                v.push_back(s + suffix);
+            }
+        }
+
+        std::shuffle(v.begin(), v.end(), std::mt19937{1980});
+        return v;
+    }();
+
+    // name, function
+    using comparator = std::pair<const char *, std::function<bool(const std::wstring&,const std::wstring&)>>;
+    static const comparator comparators[] = {
+        {"" default"", [](const auto& a, const auto& b){return a < b;} },
+        {""std_less"", std::less<std::wstring>{} },
+        {""  wcscmp"", [](const auto& a, const auto& b){return std::wcscmp(a.c_str(), b.c_str()) < 0;} },
+        {"" wmemcmp"", [](const auto& a, const auto& b){return std::wmemcmp(a.data(), b.data(), std::min(a.size(), b.size())) < 0;;} }
+    };
+
+    static const auto passes = 3u;
+    static const auto ncomp = std::size(comparators);
+
+    std::vector<std::vector<std::wstring>> inputs(ncomp * passes, shuffled);
+
+    for (auto i = 0u;  i < inputs.size();  ++i) {
+        auto pass = i % ncomp;
+        auto round = i / ncomp + 1;
+        std::cout << comparators[pass].first << "" round "" << round << "": ""
+                  << print_time([&]{std::sort(inputs[i].begin(), inputs[i].end(), comparators[pass].second);})
+                  << std::endl;
+    }
+
+    // make sure they all sorted correctly
+    return std::count_if(inputs.begin(), inputs.end(),
+                         [](auto const& v){ return !std::is_sorted(v.begin(), v.end());});
+}

@@ -1,0 +1,25 @@
+// mins_compl shall be [255-minR, 255-minG, 255-minB, 0]
+// maxs       shall be [maxR, maxG, maxB, 0]
+__m256i  setAlphaFromRangeCheck(__m256i src, __m256i mins_compl, __m256i maxs)
+{
+    __m256i in_lo = _mm256_adds_epu8(src, mins_compl); // is 255 iff src+mins_coml>=255, i.e. src>=mins
+    __m256i in_hi = _mm256_subs_epu8(src, maxs);       // is 0 iff src - maxs <= 0, i.e., src <= maxs
+
+    __m256i inbounds_components = _mm256_andnot_si256(in_hi, in_lo);
+    // per-component mask, 0xff, iff (mins<=src && src<=maxs).
+    // alpha-channel is always (~src & src) == 0
+
+    // Use a 32-bit element compare to check that all 3 components are in-range
+    __m256i RGB_mask = _mm256_set1_epi32(0x00FFFFFF);
+    __m256i inbounds = _mm256_cmpeq_epi32(inbounds_components, RGB_mask);
+
+    __m256i new_alpha = _mm256_slli_epi32(inbounds, 24);
+    // alternatively _mm256_andnot_si256(RGB_mask, inbounds) ?
+
+    // byte blends (vpblendvb) are at least 2 uops, and Haswell requires port5
+    // instead clear alpha and then OR in the new alpha (0 or 0xFF)
+    __m256i alphacleared = _mm256_and_si256(src, RGB_mask);   // off the critical path
+    __m256i new_alpha_applied = _mm256_or_si256(alphacleared, new_alpha);
+
+    return new_alpha_applied;
+}

@@ -1,0 +1,20 @@
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
+import org.joda.time.LocalDate
+// input data 
+val dataDF  = Seq(
+  (""Jhon"", ""4/6/2018"", 100),
+  (""Jhon"", ""4/6/2018"", 200),
+  (""Jhon"", ""4/13/2018"", 300),
+  (""Jhon"", ""4/20/2018"", 500),
+  (""Lee"", ""5/4/2018"", 100),
+  (""Lee"", ""4/4/2018"", 200),
+  (""Lee"", ""5/4/2018"", 300),
+  (""Lee"", ""4/11/2018"", 700)
+).toDF(""name"", ""date"", ""amount"")
+  .withColumn(""date"", to_date($""date"", ""MM/dd/yyyy""))
+
+val window = Window.partitionBy($""name"")
+
+//find the maximum date of each name
+val df = dataDF.withColumn(""maxDate"", max($""date"").over(window))

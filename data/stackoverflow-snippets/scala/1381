@@ -1,0 +1,19 @@
+trait DbConfig {
+  def getMappings(): Map[String, Int]
+}
+
+class DbProcessor(config: DbConfig) extends ProcessorTo[Int] {
+  // here goes actual configuration of the processor using config
+  private val mappings: Map[String, Int] = config.getMappings()
+
+  override def process(s: String): Int = mappings.getOrElse(s, -1)
+}
+
+trait DbProcessorSupport {
+  self: DbConfig =>
+  implicit val dbProcessor: ProcessorTo[Int] = new DbProcessor(self)
+}
+
+object ApplicationContext extends DbConfig with DbProcessorSupport {
+  override def getMappings(): Map[String, Int] = Map(""1"" -> 123)
+}

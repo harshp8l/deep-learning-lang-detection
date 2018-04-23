@@ -1,0 +1,38 @@
+func main() {
+    jobs := make(chan int)
+    results := make(chan int)
+
+    var wg sync.WaitGroup
+
+    // you could init the WaitGroup's count here with one call but this is error
+    // prone - if you change the loop's size you could forget to change the
+    // WG's count. So call wg.Add in loop
+    //wg.Add(1000)
+    for w := 1; w <= 1000; w++ {
+        wg.Add(1)
+        go func() {
+            worker(w, jobs, results)
+            defer wg.Done()
+        }()
+    }
+
+    go func() {
+        for j := 1; j < 2000; j++ {
+            jobs <- j
+        }
+        close(jobs)
+        fmt.Println(""==========CLOSED=============="")
+    }()
+
+    // in this gorutine we wait until all ""producer"" routines are done
+    // then close the results channel so that the consumer loop stops
+    go func() {
+        wg.Wait()
+        close(results)
+    }()
+
+    for i := range results {
+        fmt.Print(i, "" "")
+    }
+    fmt.Println(""==========DONE=============="")
+}

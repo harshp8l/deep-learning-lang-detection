@@ -1,0 +1,43 @@
+require 'calabash-cucumber/launcher'
+
+# You can find examples of more complicated launch hooks in these
+# two repositories:
+#
+# https://github.com/calabash/ios-smoke-test-app/blob/master/CalSmokeApp/features/support/01_launch.rb
+# https://github.com/calabash/ios-webview-test-app/blob/master/CalWebViewApp/features/support/01_launch.rb
+
+module Calabash::Launcher
+  @@launcher = nil
+
+  def self.launcher
+    @@launcher ||= Calabash::Cucumber::Launcher.new
+  end
+
+  def self.launcher=(launcher)
+    @@launcher = launcher
+  end
+end
+
+
+$testServerRunning = false
+
+
+Before do |scenario|
+  scenario_tags = scenario.source_tag_names
+  if !$testServerRunning || scenario_tags.include?('@restart')
+    if $testServerRunning
+      shutdown_test_server
+    end
+
+    start_test_server_in_background
+
+    $testServerRunning = true
+  end
+end
+
+After do |scenario|
+  Cucumber.wants_to_quit = false
+  if scenario.failed?
+    screenshot_embed
+  end
+end

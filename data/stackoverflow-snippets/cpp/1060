@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+//a struct representing a range
+struct range {
+    double st, ed;
+};
+
+//just a shorthand :p
+using prp = pair<range, int>;
+
+
+/*
+* Comparator that sorts by the start time of range.
+* If start times are equal, then end time is used to sort.
+*/
+inline bool sort_by_start(const prp &a, const prp &b) {
+    if (a.first.st == b.first.st) return a.first.ed  < b.first.ed;
+    return a.first.st < b.first.st;
+}
+
+int main() {
+
+    //your vector
+    const vector<vector<double>> v2d = { { 1, 0.5 }, { 2, 0.5 }, { 2.25, 0.5 }, { 2.6, 0.3 },
+        {3.3, 0.5 }, { 3, 0.5 }, { 3.1, 0.5 }, { 4, 0.6 }
+    };
+
+    //a vector of ranges
+    //each element is pair of (range, position) where position is the
+    //original index of range in v2d
+    vector<prp> rng(v2d.size());
+
+    //a vector of vector of ints that will hold the groups
+    vector<vector<int>> idx;
+
+    int i, j;
+    //building ranges. end time = start time + length
+    //position is stored, so that it can be used later.
+    for (i = 0; i < (int) v2d.size(); ++i) {
+        rng[i] = {{v2d[i][0], v2d[i][1] + v2d[i][0]}, i};
+    }
+
+    //sorting by start time
+    sort(rng.begin(), rng.end(), sort_by_start);
+
+    //starting of first group
+    idx.push_back(vector<int>());
+    idx.back().push_back(rng[0].second);
+    double edv = rng[0].first.ed;
+
+    for (i = 1; i < (int)rng.size(); ++i) {
+
+        //if next start time is greater than the largest
+        //end time encountered so far (maintained using edv)
+        //it means the next group is starting, so push an empty vector
+        if (edv < rng[i].first.st)
+            idx.push_back(vector<int>());
+
+        //edv maintains the largest end time encountered so far.
+        edv = max(edv, rng[i].first.ed);
+        //we want to push the current range into the last active group.
+        //why last? because they are all sorted by start-time.
+        idx.back().push_back(rng[i].second);
+    }
+
+
+    //displaying
+    for (i = 0; i < (int)idx.size(); ++i) {
+        for (j = 0 ; j < (int)idx[i].size(); ++j) {
+            cout << idx[i][j] + 1 << ' ';
+        }
+        cout << '\n';
+    }
+    return 0;
+}

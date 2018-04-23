@@ -1,0 +1,30 @@
+function Invoke-SpotifyAPICall {
+param($URI,
+      $Header = $null,
+      $Body = $null
+      )
+
+if($Header -eq $null) {
+    Invoke-WebRequest -Uri $URI -Body $Body -OutFile "".\SpotifyAPICallResult.txt""    
+} elseif($Body -eq $null) {
+    Invoke-WebRequest -Uri $URI -Headers $Header -OutFile "".\SpotifyAPICallResult.txt""
+}
+
+$JSON = Get-Content "".\SpotifyAPICallResult.txt"" -Encoding UTF8 -Raw | ConvertFrom-JSON
+Remove-Item "".\SpotifyAPICallResult.txt"" -Force
+return $JSON
+
+}
+
+function Get-Artist {
+    param($ArtistID = '2o5jDhtHVPhrJdv3cEQ99Z',
+          $AccessToken = 'MyAccessToken')
+
+
+    $URI = ""https://api.spotify.com/v1/artists/{0}"" -f $ArtistID
+
+    return (Invoke-SpotifyAPICall -URI $URI -Header @{""Authorization""= ('Bearer  ' + $AccessToken)})
+}
+
+
+Get-Artist

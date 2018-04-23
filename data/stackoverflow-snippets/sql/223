@@ -1,0 +1,19 @@
+SQL> with test (film_id, title) as
+  2    (select 1, 'Frozen,Frozen'        from dual union
+  3     select 2, 'Frozen,High,Low,High' from dual
+  4    ),
+  5  inter as
+  6    (select distinct film_id, regexp_substr(title, '[^,]+', 1, column_value) title
+  7     from test,
+  8          table(cast(multiset(select level from dual
+  9                              connect by level <= regexp_count(title, ',') + 1
+ 10                             ) as sys.odcinumberlist))
+ 11    )
+ 12  select film_id, listagg(title, ',') within group (order by title) title
+ 13  from inter
+ 14  group by film_id;
+
+   FILM_ID TITLE
+---------- ------------------------------
+         1 Frozen
+         2 Frozen,High,Low

@@ -1,0 +1,29 @@
+add_action( 'woocommerce_check_cart_items', 'mandatory_coupon_code' );
+function mandatory_coupon_code() {
+    // HERE below -- Your settings
+    $mandatory_coupon   = 'summer'; // <== Coupon code
+    $product_categories = array( 'chef-masterclass' ); // <== Product category (Id, slug or name)
+
+    $applied_coupons = WC()->cart->get_applied_coupons();
+
+    // If coupon is found we exit
+    if( in_array( $mandatory_coupon, $applied_coupons ) ) return;
+
+    $found = false;
+
+    // Loop through cart items to check for the product category
+    foreach ( WC()->cart->get_cart() as $cart_item ){
+        if( has_term( $product_categories, 'product_cat', $cart_item['product_id'] ) ){
+            $found = true; // cart item from the product category is found
+            break; // We can stop the loop
+        }
+    }
+
+    // Coupon not applied and product category found
+    if( $found ){
+        // Display an error notice preventing checkout
+        $coupon_html = '<strong>""' . ucfirst( $mandatory_coupon ) . '""</strong>';
+        $message = sprintf( __( 'Please enter the coupon code %s to checkout.', 'woocommerce' ), $coupon_html );
+        wc_add_notice( $message, 'error' );
+    }
+}

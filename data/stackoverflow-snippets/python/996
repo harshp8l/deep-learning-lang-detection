@@ -1,0 +1,46 @@
+class EntitySuperManagerMixin():
+    """"""Mixin to handle logic for managing entity managers.""""""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # Supports any kind of __init__ call.
+        self._entity_manager_list = []
+
+    def apply_to_entity(self, entity_num, action):
+        relevant_entity_manager = self._entity_manager_list[index // 4]
+        relevant_entity_num = index % 4
+        return relevant_entity_manager.apply_to_entity(
+            relevant_entity_num, action)
+
+
+class SystemManager(EntitySuperManagerMixin):
+
+    def __init__(self):
+        super().__init__()
+        # An alias for _entity_manager_list to improve readability.
+        self.device_manager_list = self._entity_manager_list
+        self.device_manager_list.extend(DeviceManager() for _ in range(4))
+
+
+class DeviceManager(EntitySuperManagerMixin):
+
+    def __init__(self):
+        super().__init__()
+        # An alias for _entity_manager_list to improve readability.
+        self.sub_device_manager_list = self._entity_manager_list
+        self.sub_device_manager_list.extend(SubDeviceManager() for _ in range(4))
+
+
+class SubDeviceManager():
+    """"""Manages entities, not entity managers, thus doesn't inherit the mixin.""""""
+
+    def __init__(self):
+        # Entities need to be classes for this idea to work.
+        self._entity_list = [Entity() for _ in range(4)]
+
+    def apply_to_entity(self, entity_num, action):
+        return action(self._entity_list[entity_num])
+
+
+class Entity():
+    def __init__(self, initial_value=0):
+        self.value = initial_value

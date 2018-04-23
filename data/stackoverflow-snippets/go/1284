@@ -1,0 +1,38 @@
+// ContainsNil returns true if any fields within the supplied structure are nil.
+//
+// If the supplied object is not a struct, the method will panic.
+// Nested structs are inspected recursively.
+// Maps and slices are not inspected deeply. This may change.
+func ContainsNil(obj interface{}) bool {
+    if obj == nil {
+        return true
+    }
+    s := reflect.Indirect(reflect.ValueOf(obj))
+    for i := 0; i < s.NumField(); i++ {
+        f := s.Type().Field(i)
+        field := s.Field(i)
+        if fieldIsExported(f) { // Exported-check must be evaluated first to avoid panic.
+            if field.Kind() == reflect.Ptr { // case when it's a pointer or struct pointer
+                if field.IsNil() {
+                    return true
+                }
+                if ContainsNil(field.Interface()) {
+                    return true
+                }
+            }
+            if field.Kind() == reflect.Struct {
+                if ContainsNil(field.Addr()) {
+                    return true
+                }
+            } else {
+                if field.IsNil() {
+                    return true
+                }
+                if field.Interface() == nil {
+                    return true
+                }
+            }
+        }
+    }
+    return false
+}

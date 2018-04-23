@@ -1,0 +1,45 @@
+<?php 
+$vars = $_POST['VariableArray'];
+asort($vars);
+$str_var = implode(',', $vars);
+$mysqli = new mysqli($host, $user, $pass, $db_name);
+if ($mysqli->connect_errno) {
+    echo ""Error MySQLi: ("" . $mysqli->connect_errno. "") "" . $mysqli->connect_error;
+}else{
+    $sql = ""INSERT INTO `employees` (`VariableArray`) VALUES (?)"";
+    if($stmt = $mysqli->prepare($sql)){
+     $stmt->bind_param(""s"", $str_var);
+        if($stmt->execute()){
+            // call select
+            $stmt->close();
+            $sql = ""SELECT `VariableArray` FROM `employees` WHERE `VariableArray` = ? LIMIT 1"";
+            if($stmt = $this->DAL->mysqli->prepare($sql)){
+              $stmt->bind_param('s', $str_var);
+                    if($stmt->execute()){
+                        $stmt->bind_result($variable_string);
+                        $stmt->store_result();
+                           if ($stmt->fetch()) {
+                                echo ""<b> These Are Your Variables in Alphabetical Order:</b><br>"";
+                                echo ""<b>Variables: "" . htmlspecialchars($variable_string).  ""</b><br>"";
+                                $stmt->close();
+                           }else{
+                                echo 'Failed to find ' . htmlspecialchars($str_var);
+                           }
+                    }else{
+                         // testing only would echo a generic message if it was displayed to users
+                        echo 'Failed to execute select query | ' . $mysqli->error;
+                    }
+            }else{
+                // testing only would echo a generic message if it was displayed to users
+                echo 'SQL Statement select failed | ' . $mysqli->error;
+            }
+        }else{
+            // testing only would echo a generic message if it was displayed to users
+            echo 'Failed to execute insert query | ' . $mysqli->error;
+        }
+    }else{
+         // testing only would echo a generic message if it was displayed to users
+         echo 'SQL Statement insert failed | '.$mysqli->error;
+    }    
+}
+?>

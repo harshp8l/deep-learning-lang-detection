@@ -1,0 +1,39 @@
+public class Main {
+
+    static ScheduledFuture<?> future;
+
+    public class IncrementTask implements Runnable {
+
+        private int value = 0;
+        private final int max;
+        private boolean toasting = true;
+
+        public IncrementTask(int max) {
+            this.max = max;
+        }
+
+        @Override
+        public void run() {
+            if (value < max) {
+                value++;
+                System.out.println(""Toasing...value is "" + value);
+            }
+            else {
+                toasting = false;
+                System.out.println(""Done toasting"");
+                future.cancel(true);
+            }
+        }
+
+        public boolean isToasting() {
+            return toasting;
+        }
+    }
+
+    public static void main(String[] args) {
+
+        Runnable incrementTask = new IncrementTask(10);
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        future = executor.scheduleAtFixedRate(incrementTask, 0, 1, TimeUnit.SECONDS);
+    }
+}

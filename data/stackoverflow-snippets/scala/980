@@ -1,0 +1,24 @@
+sealed trait SourceConfig{val sourceType: String}
+object SourceConfig{
+  implicit val fmt = new Format[SourceConfig] {
+    def reads(json: JsValue): JsResult[SourceConfig] = {
+      def from(sourceType: String, data: JsObject): JsResult[SourceConfig] = sourceType match {
+        case ""RDBMS""     => Json.fromJson[RDBMSConfig](data)(RDBMSConfig.fmt)
+        case ""directory"" => Json.fromJson[DirectoryConfig](data)(DirectoryConfig.fmt)
+        case _           => JsError(s""Unknown source type: '$sourceType'"")
+      }
+
+      for {
+        sourceType <- (json \ ""sourceType"").validate[String]
+        data       <- json.validate[JsObject]
+        result     <- from(sourceType, data)
+      } yield result
+    }
+
+    def writes(source: SourceConfig): JsValue =
+      source match {
+        case b: RDBMSConfig     => Json.toJson(b)(RDBMSConfig.fmt)
+        case b: DirectoryConfig => Json.toJson(b)(DirectoryConfig.fmt)
+      }
+  }
+}

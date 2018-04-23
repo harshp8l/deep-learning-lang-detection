@@ -1,0 +1,25 @@
+  object double extends Poly1 {
+    implicit def evenCase[N <: Nat](implicit 
+      mod: Mod.Aux[N, _2, _0], 
+      toInt: ToInt[N]): Case.Aux[N, Int :: HNil] =
+      at(n => 2 * toInt() :: HNil)
+
+    implicit def oddCase[N <: Nat](implicit 
+      mod: Mod.Aux[N, _2, _1], 
+      toInt: ToInt[N]): Case.Aux[N, String :: HNil] =
+      at(n => (2 * toInt()).toString :: HNil)
+  }
+
+  object myFunc extends Poly2 {
+    implicit def hNilCase[R <: HList]: Case.Aux[HNil, R, R] = at((_, r) => r)
+
+    implicit def hConsCase[H <: Nat, T <: HList, 
+                           dblH <: HList, R <: HList, 
+                           P <: HList, Out <: HList](implicit
+      dbl: double.Case.Aux[H, dblH],
+      prepend: Prepend.Aux[dblH, R, P],
+      myF: myFunc.Case.Aux[T, P, Out]): Case.Aux[H :: T, R, Out] = 
+      at { case (h :: t, r) => myFunc(t, double(h) ::: r) }
+  }
+
+  println(myFunc(_1 :: _2 :: _3 :: HNil, HNil)) //""6"" :: 4 :: ""2"" :: HNil

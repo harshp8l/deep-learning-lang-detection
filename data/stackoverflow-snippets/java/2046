@@ -1,0 +1,31 @@
+$http({
+    method: 'POST', 
+    url: 'DownloadAttachment_URL',
+    data: { 'fileRef': 'filename.pdf' }, //I'm sending filename as a param
+    headers: { 'Authorization': $localStorage.jwt === undefined ? jwt : $localStorage.jwt },
+    responseType: 'arraybuffer',
+}).success(function (data, status, headers, config) {
+    headers = headers();
+    var filename = headers['x-filename'];
+    var contentType = headers['content-type'];
+    var linkElement = document.createElement('a');
+    try {
+        var blob = new Blob([data], { type: contentType });
+        var url = window.URL.createObjectURL(blob);
+
+        linkElement.setAttribute('href', url);
+        linkElement.setAttribute(""download"", filename);
+
+        var clickEvent = new MouseEvent(""click"", {
+            ""view"": window,
+            ""bubbles"": true,
+            ""cancelable"": false
+        });
+        linkElement.dispatchEvent(clickEvent);
+    } catch (ex) {
+        console.log(ex);
+    }
+}).error(function (data, status, headers, config) {
+}).finally(function () {
+
+});

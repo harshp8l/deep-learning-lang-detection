@@ -1,0 +1,40 @@
+class UserRepository extends BaseRepository<User>
+{
+    constructor()
+    {
+        super();
+
+        this.collection = this.db.collection('users');
+        this._initPromise = this.collection.create().then(res => {
+            if (res.code === 200)
+            {
+                // collection successfully created
+            }
+        }).catch(err => {
+            if (err.code === 409)
+            {
+                // collection already exists
+            }
+        });
+    }
+
+    ensureInitialized() {
+        return this._initPromise;
+    }
+}
+
+class BaseRepository<T>
+{
+  protected db: Database = Container.get('db');
+  protected collection: DocumentCollection;
+
+  public ensureInitialized() {
+    return Promise.resolve();
+  }
+
+  public save(model: T): Promise<void>
+  {
+    return this.ensureInitialized()
+      .then(() => this.collection.save(model));
+  }
+}

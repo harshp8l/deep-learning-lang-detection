@@ -1,0 +1,24 @@
+object SupervisedPipe {
+
+  case class SupervisedFailure(ex: Throwable)
+  class SupervisedPipeableFuture[T](future: Future[T])(implicit executionContext: ExecutionContext) {
+    // implicit failure recipient goes to self when used inside an actor
+    def supervisedPipeTo(successRecipient: ActorRef)(implicit failureRecipient: ActorRef): Unit =
+      future.andThen {
+        case Success(result) => successRecipient ! result
+        case Failure(ex) => failureRecipient ! SupervisedFailure(ex)
+      }
+  }
+
+  implicit def supervisedPipeTo[T](future: Future[T])(implicit executionContext: ExecutionContext): SupervisedPipeableFuture[T] =
+    new SupervisedPipeableFuture[T](future)
+
+  /* `orElse` with the actor receive logic */
+  val handleSupervisedFailure: Receive = {
+    // just throw the exception and make the actor logic handle it
+    case SupervisedFailure(ex) => throw ex
+  }
+
+  def supervised(receive: Receive): Receive = 
+    handleSupervisedFailure orElse receive
+}

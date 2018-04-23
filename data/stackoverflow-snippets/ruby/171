@@ -1,0 +1,28 @@
+@usd_plans = {}.tap do |plans| # Plan ID -> Description
+  plans['basic_usd'] =  {name: 'Basic Coaching', visible: coach.basic_coaching? }
+  # etc...
+end
+
+- @usd_plans.each do |plan_id, data|
+  td
+    next unless data[:visible]
+    = form_tag(subscriptions_path) do
+      = hidden_field_tag 'plan', data[:plan_id]
+      = hidden_field_tag 'coach_id', @user.id
+      = hidden_field_tag 'user_id', current_user.id
+      = hidden_field_tag 'description', description
+      - if current_user.coupon_code
+        = hidden_field_tag 'coupon_code', current_user.coupon_code
+
+      script.stripe-button(
+        src='https://checkout.stripe.com/checkout.js'
+        data-key=Rails.configuration.stripe[:publishable_key]
+        data-name=""#{@user.name}""
+        data-description=description
+        data-image=""#{@user.avatar.url}""
+        data-locale='auto'
+        data-panel-label='Subscribe now'
+        data-label='Buy'
+        data-allow-remember-me='false'
+        data-email=current_user.email
+    )

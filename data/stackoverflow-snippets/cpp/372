@@ -1,0 +1,78 @@
+#include <systemc>
+#include <pthread.h>
+#include <unistd.h>
+
+using namespace sc_core;
+
+class ThreadSafeEventIf : public sc_interface {
+    virtual void notify(sc_time delay = SC_ZERO_TIME) = 0;
+    virtual const sc_event &default_event(void) const = 0;
+protected:
+    virtual void update(void) = 0;
+};
+
+class ThreadSafeEvent : public sc_prim_channel, public ThreadSafeEventIf {
+public:
+    ThreadSafeEvent(const char *name = """"): event(name) {}
+
+    void notify(sc_time delay = SC_ZERO_TIME) {
+        this->delay = delay;
+        async_request_update();
+    }
+
+    const sc_event &default_event(void) const {
+        return event;
+    }
+protected:
+    virtual void update(void) {
+        event.notify(delay);
+    }
+    sc_event event;
+    sc_time delay;
+};
+
+SC_MODULE(Foo)
+{
+public:
+    SC_CTOR(Foo)
+    {
+        SC_THREAD(main);
+
+        SC_METHOD(eventTriggered);
+        sensitive << event;
+        dont_initialize();
+    }
+private:
+    void main() {
+        usleep(5 * 1000 * 1000); // Just for the example, event is added to pending events during this sleep
+        wait(SC_ZERO_TIME); // Schedule (event is evaluated here)
+        usleep(1 * 1000 * 1000); // Just for the example
+        std::cout << ""Done"" << std::endl;
+    }
+
+    void eventTriggered() {
+        std::cout << ""Got event"" << std::endl;
+    }
+
+public:
+    ThreadSafeEvent event;
+};
+
+void *externalHostThread(void *arg) {
+    usleep(2 * 1000 * 1000); // Just for the example
+    Foo* foo = (Foo*)(arg);
+    foo->event.notify();
+    std::cout << ""Event notified from an external host thread"" << std::endl;
+}
+
+int sc_main(int argc, char *argv[])
+{
+    Foo foo(""foo"");
+
+    pthread_t thread;
+    pthread_create(&thread, NULL, externalHostThread, &foo);
+
+    sc_start();
+
+    return 0;
+}

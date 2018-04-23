@@ -1,0 +1,23 @@
+(defn inner-input [title]
+  (reagent/with-let
+    [form (reagent/atom @title)
+     watch (reagent/track! (fn [] (reset! form @title)))]
+    [:label
+     ""Inner input""
+     [:input {:on-change (fn [e]
+                           (reset! form (.. e -target -value)))
+              :on-blur (fn [e]
+                         (reset! title (.. e -target -value)))
+              :value @form}]]
+    (finally
+      (reagent/dispose! watch))))
+
+(defn card-input []
+  (reagent/with-let
+    [title (reagent/atom ""hello"")]
+    [:div
+     [:label ""Title""
+      [:input {:on-change (fn [e]
+                            (reset! title (.. e -target -value)))
+               :value @title}]]
+     [inner-input title]]))

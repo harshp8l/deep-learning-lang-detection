@@ -1,0 +1,52 @@
+function upload(fileInputId, fileIndex)
+{
+    var file = document.getElementById(fileInputId).files[fileIndex];
+    var blob;
+    var reader = new FileReader();
+
+    reader.readAsArrayBuffer(file);
+    reader.onloadend  = function(evt)
+    {
+        xhr = new XMLHttpRequest();
+        xhr.open(""POST"", ""upload.php?name="" + base64_encode(file.name), true);
+
+        XMLHttpRequest.prototype.mySendAsBinary = function(text){
+            var ui8a = new Uint8Array(new Int8Array(text));
+
+            if(typeof window.Blob == ""function"")
+            {
+                 blob = new Blob([ui8a]);
+            }else{
+
+                var bb = new (window.MozBlobBuilder || window.WebKitBlobBuilder || window.BlobBuilder)();
+                bb.append(ui8a);
+                blob = bb.getBlob();
+            }
+
+            this.send(blob);
+        }
+
+        var eventSource = xhr.upload || xhr;
+        eventSource.addEventListener(""progress"", function(e) {
+            var position = e.position || e.loaded;
+            var total = e.totalSize || e.total;
+            var percentage = Math.round((position/total)*100);
+            console.log(percentage);
+        });
+
+        xhr.onreadystatechange = function()
+        {
+            if(xhr.readyState == 4)
+            {
+                if(xhr.status == 200)
+                {
+                    console.log(""Done"");
+                }else{
+                    console.log(""Fail"");
+                }
+            }
+        };
+
+        xhr.mySendAsBinary(evt.target.result);
+    };
+}

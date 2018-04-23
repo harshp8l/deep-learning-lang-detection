@@ -1,0 +1,30 @@
+import spark.implicits._
+
+
+val df1 = Seq(
+  (""karti"", ""9685684551"", 24),
+  (""raja"", ""8595456552"", 22)
+).toDF(""Customer_name"", ""Customer_phone"", ""Customer_age"")
+
+
+val df2 = Seq(
+  (""watch"", 1),
+  (""cattoy"", 2)
+).toDF(""Order_name"", ""Order_ID"")
+
+val df11 = spark.sqlContext.createDataFrame(
+  df1.rdd.zipWithIndex.map {
+    case (row, index) => Row.fromSeq(row.toSeq :+ index)
+  },
+  // Create schema for index column
+  StructType(df1.schema.fields :+ StructField(""index"", LongType, false))
+)
+
+
+val df22 = spark.sqlContext.createDataFrame(
+  df2.rdd.zipWithIndex.map {
+    case (row, index) => Row.fromSeq(row.toSeq :+ index)
+  },
+  // Create schema for index column
+  StructType(df2.schema.fields :+ StructField(""index"", LongType, false))
+)

@@ -1,0 +1,31 @@
+CREATE TABLE Tracking (
+    ID INT,
+    -- Your original table columns
+    TrackDate DATETIME DEFAULT GETDATE(),
+    TrackOperation VARCHAR(100))
+
+GO
+
+CREATE TRIGGER TrackingTrigger ON OriginalTable AFTER UPDATE, INSERT, DELETE
+AS
+BEGIN
+
+    INSERT INTO Tracking(
+        ID,
+        TrackOperation
+        -- Other columns
+        )
+    SELECT
+        ID = ISNULL(I.ID, D.ID),
+        TrackOperation = CASE
+            WHEN I.ID IS NOT NULL AND D.ID IS NOT NULL THEN 'Update'
+            WHEN I.ID IS NOT NULL THEN 'Insert'
+            ELSE 'Delete' END
+        -- Other columns
+    FROM
+        inserted AS I
+        FULL JOIN deleted AS D ON I.ID = D.ID -- ID is primary key
+
+END
+
+GO

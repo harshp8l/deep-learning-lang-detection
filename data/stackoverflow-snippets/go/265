@@ -1,0 +1,26 @@
+func buildRequest(endpoint string, body interface{}, extraHeaders map[string]string) (*http.Request, error) {
+  jsnBytes, err := json.Marshal(body)
+  if err != nil {
+    return nil, err
+  }
+
+  req, err := http.NewRequest(""POST"", endpoint, bytes.NewReader(jsnBytes))
+  if err != nil {
+    return nil, err
+  }
+
+  req.Header.Add(""Content-Type"", ""application/json"")
+
+  for name, value := range extraHeaders {
+    req.Header.Add(name, value)
+  }
+
+  dump, err := httputil.DumpRequest(req, true)
+  if err != nil {
+    return nil, err
+  }
+
+  log.Println(""Request: "", string(dump))
+
+  return req, nil
+}

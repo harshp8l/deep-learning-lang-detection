@@ -1,0 +1,21 @@
+(defn- parse-str [input]
+  ;; Instead of using atoms to hold the state, use parameters in loop
+  (loop [output []
+         bracket 0
+         ;; The [ch & tail] syntax is called destructuring,
+         ;; it means let ch be the first element of (seq input),
+         ;; and tail the rest of the elements
+         [ch & tail] (seq input)] 
+    ;; If there's no elements left, ch will be nil, which is logical false
+    (if ch
+      (let [bracket* (case ch
+                       \( (inc bracket)
+                       \) (dec bracket)
+                       bracket)
+            output* (if (or (> bracket* 0) (= ch \)))
+                      (conj output ch)
+                      output)]
+        ;; Recurse with the updated values
+        (recur output* bracket* tail))
+      ;; If there's no characters left, apply str to the output
+      (apply str output))))

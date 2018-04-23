@@ -1,0 +1,25 @@
+import org.apache.spark.sql.functions._
+import spark.implicits._
+
+// list of columns to compare
+val comparableColumns = A.columns.tail // without id
+
+// create Column that would result in the name of the first differing column:
+val changedFieldCol: Column = comparableColumns.foldLeft(lit("""")) {
+  case (result, col) => when(
+    result === """", when($""A.$col"" =!= $""B.$col"", lit(col)).otherwise(lit(""""))
+  ).otherwise(result)
+}
+
+// join by id1, add changedFieldCol, and then select only B's columns:
+val result = A.as(""A"").join(B.as(""B""), ""id1"")
+  .withColumn(""changed_field"", changedFieldCol)
+  .select(""id1"", comparableColumns.map(c => s""B.$c"") :+ ""changed_field"": _*)
+
+result.show(false)
+// +---+---+-----+-----+-------------+
+// |id1|id2|name |state|changed_field|
+// +---+---+-----+-----+-------------+
+// |1  |a  |bob  |fl   |state        |
+// |2  |b  |susan|ma   |name         |
+// +---+---+-----+-----+-------------+

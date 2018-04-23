@@ -1,0 +1,45 @@
+#Starts an Excel process, you can see Excel.exe as background process
+$processExcel = New-Object -com Excel.Application
+#If you set it to $False you wont see whats going on on Excel App
+$processExcel.visible = $True 
+
+$filePath=""C:\somePath\file.xls""
+#Open $filePath file
+$Workbook=$processExcel.Workbooks.Open($filePath)
+
+#Select sheet 1
+$sheet = $Workbook.Worksheets.Item(1) 
+#Select sheet with name ""Name of some sheet""
+$sheetTwo = $Workbook.Worksheets.Item(""Name of some sheet"")
+
+#This will store C1 text on the variable
+$cellString = $sheet.cells.item(3,1).text
+#This will set A4 with variable value
+$sheet.cells.item(1,4) = $cellString
+
+#Iterate through all the sheet
+$lastUsedRow = $sheet.UsedRange.Rows.count
+$LastUsedColumn = $sheet.UsedRange.Columns.count
+for ($i = 1;$i -le $lastUsedRow; $i++){
+    for ($j = 1;$j -le $LastUsedColumn; $j++){
+        $otherString = $sheet.cells.item($i,$j).text
+    }
+}
+
+#Create new Workbook and add sheet to it
+$newWorkBook = $processExcel.Workbooks.Add()
+$newWorkBook.worksheets.add()
+$newSheet = $newWorkBook.worksheets.item(1)
+$newSheet.name=""SomeName""
+
+#Close the workbook, if you set $False it wont save any changes, same as close without save
+$Workbook.close($True)
+#$Workbook.SaveAs(""C:\newPath\newFile.xls"",56) #You can save as the sheet, 56 is format code, check it o internet
+$newWorkBook.close($False)
+
+#Closes Excel app
+$processExcel.Quit()
+
+#This code is to remove the Excel process from the OS, this does not always work.
+[System.Runtime.Interopservices.Marshal]::ReleaseComObject($processExcel)
+Remove-Variable processExcel

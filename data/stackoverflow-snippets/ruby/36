@@ -1,0 +1,25 @@
+# app/services/default_checklist_service.rb
+class DefaultChecklistService
+  attr_accessor :user, :defaults
+
+  def initialize(user, defaults = nil)
+    @user = user
+    @defaults = defaults || self.class.load_defaults
+  end
+
+  def self.call(user, defaults = nil)
+     new(user, defaults).call
+  end
+
+  def call
+    self.defaults.map do |attributes|
+      user.checklists.create(attributes)
+    end
+  end
+
+  private
+  def self.load_defaults
+    YAML.load_file(Rails.root.join('config', 'default_checklist.yml'))
+        .try(:[], 'checklists')
+  end
+end

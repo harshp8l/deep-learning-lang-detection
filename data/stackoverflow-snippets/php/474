@@ -1,0 +1,29 @@
+<?php
+
+$db = new PDO(""sqlsrv:Server=DK-MatthewClay\SQLExpress2012;Database=FFP_WebServices"", ""LocalAdmin"", """");
+
+$row=$db->prepare(""FFP_WebServices.dbo.WEBSERV_DAILY_PERIOD_FIGURES_SELECT"");
+
+$row->execute();//execute the query
+
+//create the array
+$json_data['cols'] = array(
+  array('label' => 'Dates', 'type' => 'string'),
+  array('label' => 'OrdersTD', 'type' => 'number'),
+  array('label' => 'OrdersAD', 'type' => 'number')
+);
+
+$rows = array();
+foreach($row as $rec)//foreach loop
+{
+  $temp = array();
+  $temp[] = array('v' => (string) $rec['Dates']);
+  $temp[] = array('v' => (float) $rec['OrdersTD']);
+  $temp[] = array('v' => (float) $rec['OrdersAD']);
+  $rows[] = array('c' => $temp);
+}
+$json_data['rows'] = $rows;
+
+//built in PHP function to encode the data in to JSON format
+echo json_encode($json_data, JSON_NUMERIC_CHECK);
+?>

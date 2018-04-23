@@ -1,0 +1,48 @@
+#include ""stdafx.h""
+#include <iostream>
+using namespace std;
+#import ""C:/Users/*****/Documents/Trio Motion Solutions/TrioMCTools/Debug/Win32/TrioPC.ocx"" named_guids no_namespace
+
+int main(int, char**)
+{
+    CoInitialize(0);
+    {
+        bool inOK = false;
+        int length = 3;
+
+        _DTrioPC* pitd = 0;
+        HRESULT hr = CoCreateInstance(CLSID_TrioPC, 0, CLSCTX_ALL, DIID__DTrioPC, reinterpret_cast<void**>(&pitd));
+        if (SUCCEEDED(hr)) cout << ""ok"" << endl; else cout << ""nok"" << endl;
+
+        pitd->SetHost(""192.168.0.250"");
+        bool openOK = pitd->Open(2, 0);
+        if (openOK) cout << ""ok"" << endl; else cout << ""nok"" << endl;
+
+
+        SAFEARRAY *data = SafeArrayCreateVectorEx(VT_R8, 0, length, NULL);
+
+        if (data)
+        {
+            double *safe_data;
+            hr = SafeArrayAccessData(data, (void **)&safe_data);
+            if (SUCCEEDED(hr))
+            {
+                int i;
+                for (i = 0; i < length; i++)
+                    safe_data[i] = i+532;
+                SafeArrayUnaccessData(data);
+
+                VARIANT arg;
+                VariantInit(&arg);
+                arg.vt = VT_ARRAY | VT_R8;
+                arg.parray = data;
+
+                inOK = pitd->SetTable(1000, 3, &arg);
+            }
+        }
+        pitd->Release();
+    }
+    CoUninitialize();
+
+    return 0;
+}

@@ -1,0 +1,15 @@
+(defn selkeys-or-not
+  ""Like select-keys, but returns nil rather than {} if no keys match.""
+  [keys map]
+  (not-empty (select-keys map keys)))
+
+(defn seq-seqs-maps-to-seq-vecs
+  ""Given a sequence of keys, and a sequence of sequences of maps,
+  returns a sequence of vectors, where each vector contains key-val
+  pairs from the maps for matching keys.""
+  [keys seq-seqs-maps]
+  (let [maps (flatten seq-seqs-maps)]
+    (map vec
+         (apply concat
+                (filter identity
+                        (map (partial selkeys-or-not keys) maps))))))

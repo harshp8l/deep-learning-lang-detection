@@ -1,0 +1,29 @@
+(let [isbn>   (chan)
+      report> (chan)
+      out>    (chan)]
+
+  ;; pipeline-async will take isbn from isbn> channel, invoke
+  ;; amazon-search-async and pipe the result to report> channel.
+
+  (pipeline-async 10  ;; up to 10 I/O bound requests
+                  report>
+                  amazon-search-asyn
+                  isbn>)
+
+  ;; pipeline will take report from report> channel and feed it
+  ;; to the transducer (map get-title-and-rank-etc) for processing,
+  ;; the processed report will be pushed to the out> channel.
+
+  (pipeline (.. Runtime getRuntime availableProcessors)
+            out>
+            (map get-title-and-rank-etc)
+            report>)
+
+  ;; read isbn from file and push it to isbn> channel
+  (->> ""isbn_list.txt""
+       io/reader
+       line-seq
+       (onto-chan isbn>))
+
+  ;; take all report from out> channel and sort it by rank & title
+  (sort-by (juxt :rank :title) (<!! (async/into [] out>))))

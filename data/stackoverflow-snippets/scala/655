@@ -1,0 +1,44 @@
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession.Builder
+import org.apache.spark.sql._
+
+import scala.util.Try
+
+object Test extends App {
+
+  // create spark session and sql context
+  val builder: Builder = SparkSession.builder.appName(""testAvroSpark"")
+  val sparkSession: SparkSession = builder.master(""local[1]"").getOrCreate()
+  val sc: SparkContext = sparkSession.sparkContext
+  val sqlContext: SQLContext = sparkSession.sqlContext
+
+  case class CsvRow(date: String, time: String, location: String, timezone: String)
+
+  // path of your csv file
+  val path: String =
+    ""sample.csv""
+
+  // read csv file and skip firs two lines
+
+  val csvString: Seq[String] =
+    sc.textFile(path).toLocalIterator.drop(2).toSeq
+
+  // try to read only valid rows
+  val csvRdd: RDD[(String, String, String, String)] =
+    sc.parallelize(csvString).flatMap(r =>
+      Try {
+        val row: Array[String] = r.split("" "")
+        CsvRow(row(0), row(1), row(2), row(3))
+      }.toOption)
+      .map(csvRow => (csvRow.date, csvRow.time, csvRow.location, csvRow.timezone))
+
+  import sqlContext.implicits._
+
+  // make data frame
+  val df: DataFrame =
+    csvRdd.toDF(""date"", ""time"", ""location"", ""timezone"")
+
+  // display dataf frame
+  df.show()
+}

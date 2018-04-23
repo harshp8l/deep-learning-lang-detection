@@ -1,0 +1,50 @@
+package main
+
+import (
+    ""bufio""
+    ""fmt""
+    ""strings""
+    ""time""
+)
+
+func passwordExpires(netuser string) time.Time {
+    const title = ""Password expires""
+    scanner := bufio.NewScanner(strings.NewReader(netuser))
+    for scanner.Scan() {
+        line := scanner.Text()
+        if !strings.HasPrefix(line, title) {
+            continue
+        }
+        value := strings.TrimSpace(line[len(title):])
+        format := ""2-1-2006 15:04:05""
+        loc := time.Now().Location()
+        expires, err := time.ParseInLocation(format, value, loc)
+        if err == nil {
+            return expires
+        }
+    }
+    return time.Time{}
+}
+
+// Europe/Amsterdam
+var netuser = `User name                    jdoe
+Full Name                    John Doe
+Comment
+User's comment
+Country code                 (null)
+Account active               Yes
+Account expires              Never
+
+Password last set            1-5-2017 6:57:20
+Password expires             10-6-2017 6:57:20
+Password changeable          1-5-2017 6:57:20
+Password required            Yes
+User may change password     Yes`
+
+func main() {
+    expires := passwordExpires(netuser)
+    fmt.Println(expires)
+    if expires.IsZero() {
+        fmt.Println(""no password expiration"")
+    }
+}

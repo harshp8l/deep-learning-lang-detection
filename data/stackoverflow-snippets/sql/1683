@@ -1,0 +1,22 @@
+SELECT TOP (100) PERCENT ItemSpecs_2.itemno, 
+                     sum(workorderdetails.qtycomplete * 
+                     ItemSpecFullStruc_2.totalqtyperroot) AS QtyComp 
+FROM   dbo.workorderdetails AS WorkOrderDetails 
+   INNER JOIN dbo.itemspecfullstruc AS ItemSpecFullStruc_2 
+           ON ItemSpecFullStruc_2.rootitemspecid = 
+              workorderdetails.itemspecid 
+   INNER JOIN dbo.itemspecs AS ItemSpecs_2 
+           ON ItemSpecs_2.itemspecid = ItemSpecFullStruc_2.childitemspecid 
+   INNER JOIN dbo.workorder AS WorkOrder_1 
+           ON WorkOrder_1.workorderid = workorderdetails.workorderid 
+   LEFT OUTER JOIN dbo.tobescheduled_completed 
+                ON WorkOrder_1.workorderid = 
+                   dbo.tobescheduled_completed.workorderid 
+WHERE ( workorderdetails.completed = 1 ) 
+  AND ( workorderdetails.compdate > Getdate() - 42 ) 
+GROUP  BY ItemSpecs_2.itemno, 
+      workorderdetails.qtyordered, 
+      ItemSpecFullStruc_2.totalqtyperroot, 
+      workorderdetails.[lineno], 
+      workorderdetails.qtycomplete, 
+      workorderdetails.compdate

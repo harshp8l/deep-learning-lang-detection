@@ -1,0 +1,41 @@
+procedure TForm1.ExportaClassApp(prID : Integer; prNumBoleto, prLinhaDigitavel : String);
+const
+  cUrl         = 'http://api-link/request.php?';
+  cToken       = 'xyzwsa';
+  cTipo        = 'boleto';
+var
+  oHTTP             : TIdHTTP;
+  sParametros       : String;
+  Url_Completa      : String;
+  sRetornoClassApp  : String;
+begin
+  sParametros  := Format('token=%s&id=%d&tipo=%s&mat=%s&nome_aluno=%s&nome_responsavel=%s&titulo=%s&numero=%s&venc=%s&valor=%f&linha=%s',
+    [cToken,
+     prId,
+     cTipo,
+     '123456',
+     TIdURI.ParamsEncode('Some Student Name'),
+     TIdURI.ParamsEncode('Another Name'),
+     TIdURI.ParamsEncode('Just a test'),
+     TIdURI.ParamsEncode(prNumBoleto),
+     '2018-04-02',
+     843 * 100,
+     TIdURI.ParamsEncode(prLinhaDigitavel)]
+  );
+
+  Url_Completa := cUrl + sParametros;
+
+  oHTTP := TIdHTTP.Create(nil);
+  try
+    oHTTP.Request.ContentType := edtContentType.Text;
+    oHTTP.Request.ContentEncoding := edtContentEncoding.Text;
+    sRetornoClassApp := oHTTP.Get(Url_Completa);
+  finally
+    oHTTP.Free;
+  end;
+
+  btnLimparClick(Self);
+
+  mmoEnvio.Text   := Url_Completa;
+  mmoRetorno.Text := sRetornoClassApp;
+end;

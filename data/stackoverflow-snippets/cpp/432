@@ -1,0 +1,31 @@
+#include <iostream>
+
+struct no_space_tag {};
+
+template <typename T>
+void join (std::ostream & os, T const & arg)
+ { os << arg << '\000'; }
+
+template <typename T, typename ... Args>
+void join (std::ostream & os, T const & arg, Args ... args)
+ {
+   os << arg << "" "";
+   join(os, args...);
+ }
+
+template <typename T, typename ... Args>
+void join (std::ostream & os, T const & arg, no_space_tag const &,
+           Args ... args)
+ {
+   os << arg;
+   join(os, args...);
+ }
+
+int main()
+ {
+   char foo {'a'};
+   long val { 42L };
+
+   join(std::cout, 1, foo, ""THING"", ""M_PI"");
+   join(std::cout, ""KEY="", no_space_tag{}, val);
+ }

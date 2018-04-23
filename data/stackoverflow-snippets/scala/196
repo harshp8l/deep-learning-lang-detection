@@ -1,0 +1,25 @@
+sealed trait Level
+sealed trait Hour extends Level
+sealed trait Day extends Level
+
+abstract class Log[L <: Level]
+
+case object HourlyLog extends Log[Hour]
+case object DailyLog extends Log[Day]
+
+object Log {
+  case class Logs[L <: Level](val logs: Seq[Log[L]])
+  implicit val hourlyLogs = Logs[Hour](Seq(
+    HourlyLog, HourlyLog, HourlyLog, HourlyLog
+  ))
+  implicit val dailyLogs = Logs[Day](Seq(
+    DailyLog
+  ))
+
+  def byLevel[L <: Level](implicit logs: Logs[L]): Seq[Log[L]] =
+    logs.logs
+}
+
+import Log._
+println(byLevel[Hour])
+println(byLevel[Day])

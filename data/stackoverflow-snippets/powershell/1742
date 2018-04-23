@@ -1,0 +1,9 @@
+foreach($file in Get-ChildItem C:\users\xx\Desktop\mappcent3 |Where {-not $_.PsIsContainer})
+{
+    $FirstKeyword = 'FirstKeyword'
+    $FirstLine = Select-String -Path $file.FullName -Pattern $FirstKeyword -Context 0,1 |Select -Expand Context -First 1 |Select -Expand PostContext
+    $SecondKeyword = 'SecondKeyword'
+    $SecondLine = Select-String -Path $file.FullName -Pattern $SecondKeyword -Context 0,1 |Select -Expand Context -First 1 |Select -Expand PostContext
+
+    New-Object psobject -Property @{$FirstKeyword=$FirstLine;$SecondKeyword=$SecondLine} |Export-Csv (Join-Path $file.DirectoryName ($file.BaseName + '_keywords.txt'))
+}

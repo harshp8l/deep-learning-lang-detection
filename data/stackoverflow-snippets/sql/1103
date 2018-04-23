@@ -1,0 +1,36 @@
+SQL> -- Duplicate jobs within the department
+SQL> select deptno, listagg(job, ', ') within group (order by job) jobs
+  2  from emp
+  3  group by deptno;
+
+    DEPTNO JOBS
+---------- ------------------------------------------------------------
+        10 CLERK, MANAGER, PRESIDENT
+        20 ANALYST, ANALYST, CLERK, CLERK, MANAGER
+        30 CLERK, MANAGER, SALESMAN, SALESMAN, SALESMAN, SALESMAN
+
+SQL>
+SQL> -- This won't work - DISTINCT can't be used in LISTAGG
+SQL> select deptno, listagg(distinct job, ', ') within group (order by job) jobs
+  2  from emp
+  3  group by deptno;
+select deptno, listagg(distinct job, ', ') within group (order by job) jobs
+               *
+ERROR at line 1:
+ORA-30482: DISTINCT option not allowed for this function
+
+
+SQL>
+SQL> -- So - select distinct jobs first, then apply LISTAGG to it
+SQL> select x.deptno, listagg(x.job, ', ') within group (order by x.job) jobs
+  2  from (select distinct deptno, job
+  3        from emp) x
+  4  group by x.deptno;
+
+    DEPTNO JOBS
+---------- ------------------------------------------------------------
+        10 CLERK, MANAGER, PRESIDENT
+        20 ANALYST, CLERK, MANAGER
+        30 CLERK, MANAGER, SALESMAN
+
+SQL>

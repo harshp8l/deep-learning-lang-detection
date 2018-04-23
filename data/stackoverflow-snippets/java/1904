@@ -1,0 +1,77 @@
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
+
+import javax.crypto.Cipher;
+
+public class Tester {
+
+    private static final int KEY_SIZE = 2048;
+    private static final int OAEP_MGF1_SHA256_OVERHEAD = 66;
+
+    public static KeyPair buildKeyPair() throws NoSuchAlgorithmException {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(""RSA"");
+        keyPairGenerator.initialize(KEY_SIZE);
+        return keyPairGenerator.generateKeyPair();
+    }
+
+    public static void main(String args[]) throws Exception {
+
+        KeyPair keyPair = Tester.buildKeyPair();
+        RSAPublicKey pubKey = (RSAPublicKey) keyPair.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+
+        // assumes the bitLength is a multiple of 8 (check first!)
+        int keySizeBytes = pubKey.getModulus().bitLength() / Byte.SIZE;
+
+        byte[] image = new byte[1000];
+        Arrays.fill(image, (byte) 'm'); 
+
+        // --- encryption
+
+        final Cipher enc;
+        try {
+            enc = Cipher.getInstance(""RSA/ECB/OAEPWithSHA-256AndMGF1Padding"");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(""OAEP with MGF-1 using SHA-256 not available in this runtime"", e);
+        }
+        enc.init(Cipher.ENCRYPT_MODE, pubKey);
+
+        int fragmentsize = keySizeBytes - OAEP_MGF1_SHA256_OVERHEAD;
+
+        ByteArrayOutputStream ctStream = new ByteArrayOutputStream();
+        int off = 0;
+        while (off < image.length) {
+            int toCrypt = Math.min(fragmentsize, image.length - off);
+            byte[] partialCT = enc.doFinal(image, off, toCrypt);
+            ctStream.write(partialCT);
+            off += toCrypt;
+        }
+
+        byte[] ct = ctStream.toByteArray();
+
+        // --- decryption
+
+        Cipher dec = Cipher.getInstance(""RSA/ECB/OAEPWithSHA-256AndMGF1Padding"");
+        dec.init(Cipher.DECRYPT_MODE, privateKey);
+
+        ByteArrayOutputStream ptStream = new ByteArrayOutputStream();
+        off = 0;
+        while (off < ct.length) {
+            int toCrypt = Math.min(keySizeBytes, ct.length - off);
+            byte[] partialPT = dec.doFinal(ct, off, toCrypt);
+            ptStream.write(partialPT);
+            off += toCrypt;
+        }
+
+        byte[] pt = ptStream.toByteArray();
+
+        // mmmm...
+        System.out.println(new String(pt, StandardCharsets.US_ASCII));
+    }
+}

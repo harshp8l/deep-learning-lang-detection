@@ -1,0 +1,22 @@
+// On order completed status
+add_action('woocommerce_order_status_completed', 'send_a_custom_email', 20, 1 );
+function send_a_custom_email( $order_id ) {
+    $order = wc_get_order( $order_id ); // The WC_Order object
+
+    foreach ( $order->get_items() as $item_id => $item ) {
+        $product = $item->get_product(); // The WC_Product object
+
+        // Get the parent product ID for product variations for product categories
+        $the_id = $product->is_type('variation') ? $product->get_parent_id() : $product->get_id();
+
+        if (  has_term( array( 630 ), 'product_cat', $the_id ) ) {
+            $to_email = $order->get_billing_email(); // To customer
+            $subject = ""Your subject goes here"";
+            $message = ""Your message goes here"";
+            $headers = 'From: Shop Name <shop@email.com>' . ""\r\n""; // From admin email
+
+            wp_mail( $to_email, $subject, $message, $headers ); // Send email
+            break; // Stop the loop
+        }
+    }
+}

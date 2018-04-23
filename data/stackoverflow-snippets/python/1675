@@ -1,0 +1,27 @@
+In [23]: # Setup input
+    ...: np.random.seed(0)
+    ...: arr1 = (np.random.rand(184,184)>0.5)*255
+    ...: arr2 = (np.random.rand(184,184)>0.5)*255
+
+In [24]: # Run original code
+    ...: arr3 = np.full((184, 184), 0.0, dtype=float)
+    ...: for i in range(arr1.shape[0]):
+    ...:     for j in range(arr1.shape[1]):
+    ...:         if arr2[i,j] == 0 or arr1[i,j] == 0:
+    ...:             arr3[i,j]=0
+    ...:         elif arr2[i,j] == 255 and arr1[i,j] == 255:
+    ...:             arr3[i, j] = 255
+
+In [25]: # Run proposed code#1
+    ...: out = np.full((184, 184), 0.0, dtype=float)
+    ...: mask1 = (arr1==0) | (arr2==0)
+    ...: mask2 = (arr1==255) & (arr2==255)
+    ...: 
+    ...: out[mask1] = 0
+    ...: out[mask2] = 255
+
+In [26]: np.allclose(arr3, out) #verify code#1
+Out[26]: True
+
+In [27]: np.allclose(arr3, 255.0*mask2) #verify code#2
+Out[27]: True

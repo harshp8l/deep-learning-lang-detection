@@ -1,0 +1,28 @@
+import spark.implicits._
+import functions._
+
+// we'll use this window to attach the ""previous"" gender to each record
+val globalWindow = Window.orderBy(""SN"")
+
+// we'll use this window to compute ""cumulative sum"" of 
+// an indicator column that would be 1 only if gender changed
+val upToThisRowWindow = globalWindow.rowsBetween(Long.MinValue, 0)
+
+val result = df
+  .withColumn(""prevGender"", lag(""gender"", 1) over globalWindow) // add previous record's gender
+  .withColumn(""shouldIncrease"", when($""prevGender"" =!= $""gender"", 1) otherwise 0) // translate to 1 or 0
+  .withColumn(""section"", (sum(""shouldIncrease"") over upToThisRowWindow) + lit(1)) // cumulative sum
+  .drop(""prevGender"", ""shouldIncrease"") // drop helper columns
+
+result.show()
+// +---+---+------+------+-------+
+// | SN|age|gender|  name|section|
+// +---+---+------+------+-------+
+// |  1| 45|     M|   Bob|      1|
+// |  2| 28|     M|Albert|      1|
+// |  3| 33|     F| Laura|      2|
+// |  4| 43|     F|Gloria|      2|
+// |  5| 18|     T|Simone|      3|
+// |  6| 45|     M|  Alax|      4|
+// |  7| 28|     M|Robert|      4|
+// +---+---+------+------+-------+

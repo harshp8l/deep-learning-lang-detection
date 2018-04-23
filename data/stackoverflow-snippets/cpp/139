@@ -1,0 +1,113 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <cstdint>
+
+int main() {
+    std::ifstream cp(""clue.bmp"");
+    if (!cp.is_open()) {
+        //Error
+        std::cout << ""Failed to open the clue file\n"";
+        return 1;
+    }
+
+    uint8_t header[54];
+
+    if (!cp.read(reinterpret_cast<char*>(header), sizeof(header))) {
+        std::cout << ""Failed to read\n"";
+        return EXIT_FAILURE;
+    }
+
+    if ((header[0] != 0x42) || (header[1] != 0x4D)) {
+        std::cout << ""clue file is not a BMP file\n"";
+        return EXIT_FAILURE;
+    }
+
+    uint32_t size = *(reinterpret_cast<uint32_t*>(&header[14]));
+    if (size != 40) {
+        std::cout << ""clue file is not a supported BMP format\n"";
+        return EXIT_FAILURE;
+    }
+
+    uint32_t pixelsOffset = *(reinterpret_cast<uint32_t*>(&header[10]));
+    if (size != 54) {
+        std::cout << ""clue file is not a supported BMP format\n"";
+        return EXIT_FAILURE;
+    }
+
+    uint16_t planes = *(reinterpret_cast<uint16_t*>(&header[26]));
+    if (planes != 1) {
+        std::cout << ""clue file is not a supported BMP format\n"";
+        return EXIT_FAILURE;
+    }
+
+    uint16_t bitCount = *(reinterpret_cast<uint16_t*>(&header[28]));
+    if (bitCount != 24) {
+        std::cout << ""clue file is not a supported BMP format\n"";
+        return EXIT_FAILURE;
+    }
+
+    uint32_t compression = *(reinterpret_cast<uint16_t*>(&header[30]));
+    if (compression != 0) {
+        std::cout << ""clue file is not a supported BMP format\n"";
+        return EXIT_FAILURE;
+    }
+
+    int32_t width = *(reinterpret_cast<int32_t*>(&header[18]));
+    int32_t height = *(reinterpret_cast<int32_t*>(&header[22]));
+
+    if (width <= 0 || height == 0) {
+        std::cout << ""clue file has no pixels\n"";
+        return EXIT_FAILURE;
+    }
+
+    int32_t actualHeight = height;
+    if (actualHeight < 0) actualHeight *= -1;
+
+    uint64_t pixelCount = width * actualHeight;
+    std::cout << ""Number of pixels: "" << pixelCount << ""\n"";
+
+    uint32_t bytesPerLine = (((width * 24) + 31) & ~31) / 8;
+
+    std::vector<uint8_t> pixels(bytesPerLine * actualHeight);
+
+    if (!cp.read(reinterpret_cast<char*>(&pixels[0]), pixels.size())) { 
+        std::cout << ""Failed to read\n"";
+        return EXIT_FAILURE;
+    }
+
+    cp.close();
+
+    int32_t row;
+    uint8_t *pixel;
+
+    for (int32_t i = 0; i < actualHeight; ++i) {
+        row = (height > 0) ? (actualHeight - i - 1) : i;
+        pixel = &pixels[row * bytesPerLine];
+        for (int32_t j = 0; j < width; ++j) {
+            *pixel++ = 0; // clear blue
+            *pixel++ = 0; // clear green
+            ++pixel; // skip red
+        }
+    }
+
+    std::ofstream fp(""output.bmp"", std::ios_base::trunc);
+    if (!fp.is_open()) {
+        //Error
+        std::cerr << ""Failed to open the output file\n"";
+        return 1;
+    }
+
+    if (!fp.write(reinterpret_cast<char*>(header), sizeof(header))) {
+        std::cerr << ""Failed write for output\n"";
+        return EXIT_FAILURE;
+    }
+
+    if (!fp.write(reinterpret_cast<char*>(&pixels[0]), pixels.size())) {
+        std::cerr << ""Failed to write pixels\n"";
+        return EXIT_FAILURE;
+    }
+
+    return 0;
+}

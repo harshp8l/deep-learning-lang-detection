@@ -1,0 +1,12 @@
+/// Applies the supplied choosing function to successive elements, returning the first result where the function returns `Some (x)` and a sequence of all the other elements.
+let tryPickWithRemaining chooser sequ =
+    let folder v acc =
+        match acc, chooser v with
+        |(Some x, lst), _ -> // We have already picked an element - return the already picked element and append v to the list of remaining values
+            Some x, v::lst
+        |(None, lst), Some y -> // We haven't picked a value and the chooser function returns `Some (x)` - Pick the value and keep the list of remaining values as it is
+            Some v, lst
+        |(None, lst), None -> // We haven't picked a value and the chooser function returns `None` - return `None` append v to the list of remaining values
+            None, v::lst
+    let pick, lst = Seq.foldBack (folder) sequ (None, []) 
+    pick, Seq.ofList lst

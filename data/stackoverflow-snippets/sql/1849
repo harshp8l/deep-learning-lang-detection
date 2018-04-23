@@ -1,0 +1,16 @@
+select      o.OrderId,
+            o.OrderValue,
+            cd.[firstName],
+            cd.[lastName],
+            coalesce([address1] + ', ','') + 
+              coalesce([city] + ', ','') + 
+              coalesce([zip],'') as Address
+from        orders o
+left join   (   select      *
+                from        CustomerData
+                pivot       (
+                                max(Value)
+                                for Alias in ([firstName],[lastName],[address1],[city],[zip])
+                            ) p
+
+            ) cd on o.OrderId = cd.OrderId

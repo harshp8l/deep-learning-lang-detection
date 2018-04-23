@@ -1,0 +1,45 @@
+--setting up data 
+DECLARE @t TABLE
+(
+section int,
+number int, 
+id int
+)
+
+insert into @t
+values(1,1,1),
+(1,2,1),
+(1,3,2),
+(1,4,1),
+(2,5,1),
+(2,6,2),
+(2,7,1),
+(2,8,1)
+
+--Query
+;WITH cte
+AS (
+    SELECT SECTION,
+       number,
+       DR = number - DENSE_RANK() OVER(ORDER BY number)
+    FROM @t
+    WHERE id <> 2
+    GROUP BY SECTION,
+          number
+)
+SELECT SECTION,
+    STUFF(
+          (
+             SELECT ', '+CASE
+                          WHEN MIN(number) <> MAX(number)
+                          THEN CAST(MIN(number) AS VARCHAR(MAX))+'-'+CAST(MAX(number) AS VARCHAR(MAX))
+                          ELSE CAST(MAX(number) AS VARCHAR(MAX))
+                       END
+             FROM cte
+             WHERE SECTION = Results.SECTION
+             GROUP BY SECTION,
+                       DR FOR XML PATH(''), TYPE
+          ).value('(./text())[1]', 'VARCHAR(MAX)'), 1, 2, ''
+       ) AS Items
+FROM cte Results
+GROUP BY SECTION;

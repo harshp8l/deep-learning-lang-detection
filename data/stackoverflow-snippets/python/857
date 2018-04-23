@@ -1,0 +1,19 @@
+    uids = [] # an array of the requisite parameters used in requests
+    with open('flight_config.json', 'w') as f:
+    futures = []
+    for i in range(chunk_index, len(uids)):
+        print('For uid[{}], fetching started:'.format(i))
+        chunk_index += 1
+        auth_token = get_header()
+        with ThreadPoolExecutor(max_workers=7) as executor:
+            future_to_url = {executor.submit(fetch_response_from_api, uid=uid, auth_token=auth_token): uid for uid in
+                             uids[i]}
+            for future in concurrent.futures.as_completed(future_to_url):
+                result = future_to_url[future]
+                try:
+                    data = future.result()
+                    print(data)
+                except Exception as exc:
+                    print('%r generated an exception: %s' % (result, exc))
+                else:
+                    print('%r page is %d bytes' % (result, len(data)))

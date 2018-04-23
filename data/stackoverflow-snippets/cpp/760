@@ -1,0 +1,95 @@
+#include <iostream>
+#include <unordered_set>
+#include <memory>
+
+struct Foo
+{
+    int set_value;
+    int other_value;
+    Foo(int _s, int _o)
+        :
+          set_value(_s),
+          other_value(_o)
+    {}
+
+    friend std::ostream& operator << (std::ostream& _s, const Foo& _f)
+    {
+        return _s << _f.set_value << "", ""  << _f.other_value;
+    }
+};
+
+using FooPtr = std::shared_ptr<Foo>;
+
+struct SetEqual {
+    bool operator()(const FooPtr& lhs, const FooPtr& rhs) const noexcept
+    {
+        return lhs->set_value == rhs->set_value;
+    }
+};
+struct SetHasher {
+    size_t operator()(const FooPtr& foo) const noexcept
+    {
+        std::hash<int> hasher;
+        return hasher(foo->set_value);
+    }
+};
+
+std::unordered_set<FooPtr, SetHasher, SetEqual> my_set;
+
+void replace_if_lower(FooPtr& foo)
+{
+    auto insertion_result = my_set.insert(foo);
+    bool was_inserted = insertion_result.second;
+    auto insertion_it = insertion_result.first;
+
+    if (!was_inserted)
+    {
+        // Replace iff the other value is lower
+        if (foo->other_value < (*insertion_it)->other_value)
+        {
+            // This is what I would like to do:
+            // *insertion_it = foo;
+
+            // Swap the pointer contents:
+            const_cast<FooPtr&>(*insertion_it).swap(foo);
+        }
+    }
+}
+
+int main()
+{
+    my_set.emplace(std::make_shared<Foo>(1,1));
+    my_set.emplace(std::make_shared<Foo>(2,1));
+    my_set.emplace(std::make_shared<Foo>(3,1));
+
+    std::cout << ""Foo set:\n"";
+    for (const auto& f : my_set)
+    {
+        std::cout << f << "": "" << *f << ""\n"";
+    }
+    std::cout << ""\n"";
+
+    FooPtr f30(std::make_shared<Foo>(3,0));
+
+    replace_if_lower(f30);
+
+    std::cout << ""Foo set:\n"";
+    for (const auto& f : my_set)
+    {
+        std::cout << f << "": "" << *f << ""\n"";
+    }
+    std::cout << ""\n"";
+
+    FooPtr f32(std::make_shared<Foo>(3,2));
+
+    replace_if_lower(f32);
+
+    std::cout << ""Foo set:\n"";
+    for (const auto& f : my_set)
+    {
+        std::cout << f << "": "" << *f << ""\n"";
+    }
+    std::cout << ""\n"";
+
+    return 0;
+}

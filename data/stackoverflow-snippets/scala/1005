@@ -1,0 +1,39 @@
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+
+object Game {
+  final case class StartGame(playerCount: Int)
+  def apply() = Props(new Game)
+}
+
+final class Game extends Actor with ActorLogging {
+  import Game._
+  var players = Set.empty[ActorRef]
+
+  override def receive: Receive = {
+    case StartGame(playerCount) =>
+      for (i <- 1 to playerCount) {
+        players = players + context.actorOf(Player.apply(playerCount), i.toString)
+      }
+
+    case (ball: Player.Ball, playerId: Int) =>
+      context.child(playerId.toString) match {
+        case Some(actorRef) => actorRef ! ball
+        case None           => log.warning(""Player not found!"")
+      }
+  }
+}
+
+object Player {
+  case class Ball(count: Int = 0)
+  def apply(playerCount: Int) = Props(new Player(playerCount))
+}
+
+final class Player(playerCount: Int) extends Actor with ActorLogging {
+  import Player._
+
+  override def receive: Receive = {
+    case Ball(count) =>
+      log.info(s""Player with id: ${self.path.name} has the ball --- Ball count: $count"")
+      context.parent ! (Ball(count + 1), 1 + (Math.random() * playerCount).toInt)
+  }
+}

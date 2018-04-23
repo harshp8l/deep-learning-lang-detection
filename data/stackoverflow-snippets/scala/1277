@@ -1,0 +1,26 @@
+  def += (kv: (A, B)): this.type = {
+    val e = findOrAddEntry(kv._1, kv._2)
+    if (e ne null) e.value = kv._2
+    this
+  }
+
+  protected def findOrAddEntry[B](key: A, value: B): Entry = {
+    val h = index(elemHashCode(key))
+    val e = findEntry0(key, h)
+    if (e ne null) e else { addEntry0(createNewEntry(key, value), h); null }
+  }
+
+  private[this] def findEntry0(key: A, h: Int): Entry = {
+    var e = table(h).asInstanceOf[Entry]
+    while (e != null && !elemEquals(e.key, key)) e = e.next
+    e
+  }
+
+  private[this] def addEntry0(e: Entry, h: Int) {
+    e.next = table(h).asInstanceOf[Entry]
+    table(h) = e
+    tableSize = tableSize + 1
+    nnSizeMapAdd(h)
+    if (tableSize > threshold)
+      resize(2 * table.length)
+  }

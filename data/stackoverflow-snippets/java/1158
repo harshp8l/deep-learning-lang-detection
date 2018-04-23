@@ -1,0 +1,44 @@
+String CHANNEL_NAME=""some_name""
+String CHANNEL_ID=""some_id""
+
+private void sendNotifications() {
+    final Random random = new Random();
+    try {
+        for (QuoteData data : quoteData) {
+            Intent notificationIntent = new Intent(context, MainActivity.class);
+            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0,
+                notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            Quote quote = data.getQuotes().get(random.nextInt(data.getQuotes().size()));
+            String quoteMessage;
+            if (quote.getSayer().isEmpty()) {
+                quoteMessage = quote.getMessage();
+            } else {
+                quoteMessage = quote.getMessage() + ""-"" + quote.getSayer();
+            }
+
+            NotificationManager notificationManager = (NotificationManager) context
+                .getSystemService(Context.NOTIFICATION_SERVICE);
+
+            // Using AppCompat library
+            NotificationCompat.Builder n = new NotificationCompat.Builder(context,CHANNEL_ID)
+                    .setContentTitle(data.getTitle())
+                    .setContentText(quoteMessage)
+                    .setSmallIcon(R.drawable.ic_arrow_back_black_24dp)
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(true).build();
+
+            // To support Android O devices
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                notificationManager.createNotificationChannel(new NotificationChannelGroup(CHANNEL_ID, 
+                            CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT))
+            }
+
+            notificationManager.notify(AlarmReceiver.getId(), n);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}

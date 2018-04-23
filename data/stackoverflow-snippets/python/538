@@ -1,0 +1,30 @@
+import codecs
+from collections import defaultdict
+
+speaker_words = defaultdict(str)
+
+with codecs.open('script.txt', 'r', 'utf8') as f:
+  speaker = ''
+  for line in f.read().split('\n'):
+    # skip empty lines
+    if not line.split():
+      continue
+
+    # speakers have their names in all uppercase
+    first_word = line.split()[0]
+    if (len(first_word) > 1) and all([char.isupper() for char in first_word]):
+      # remove the (CONT'D) from a speaker string
+      speaker = line.split('(')[0].strip()
+
+    # check if this is a dialogue line
+    elif len(line) - len(line.lstrip()) == 6:
+      speaker_words[speaker] += line.strip() + ' '
+
+# get a Python-version-agnostic input
+try:
+  prompt = raw_input
+except:
+  prompt = input
+
+speaker = prompt('Enter name: ').strip().upper()
+print(speaker_words[speaker])

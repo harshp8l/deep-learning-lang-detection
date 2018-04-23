@@ -1,0 +1,88 @@
+package main
+
+import (
+    ""bufio""
+    ""bytes""
+    ""fmt""
+    ""io""
+    ""os""
+    ""strconv""
+    ""strings""
+)
+
+var comma, period = []byte{','}, []byte{'.'}
+
+func readNext(r io.Reader) func() (float64, error) {
+    s := bufio.NewScanner(r)
+    var fields []string
+    return func() (float64, error) {
+        if len(fields) == 0 {
+            err := io.EOF
+            for s.Scan() {
+                line := bytes.Replace(s.Bytes(), comma, period, -1)
+                fields = strings.Fields(string(line))
+                if len(fields) > 0 {
+                    err = nil
+                    break
+                }
+            }
+            if err := s.Err(); err != nil {
+                return 0, err
+            }
+            if err == io.EOF {
+                return 0, err
+            }
+        }
+        n, err := strconv.ParseFloat(fields[0], 64)
+        fields = fields[1:]
+        if err != nil {
+            return 0, err
+        }
+        return n, nil
+    }
+}
+
+func main() {
+    in1Name := `in1.data`
+    in2Name := `in2.data`
+    outName := `out.data`
+    in1, err := os.Open(in1Name)
+    if err != nil {
+        fmt.Fprint(os.Stderr, err)
+        return
+    }
+    defer in1.Close()
+    in2, err := os.Open(in2Name)
+    if err != nil {
+        fmt.Fprint(os.Stderr, err)
+        return
+    }
+    defer in2.Close()
+    out, err := os.Create(outName)
+    if err != nil {
+        fmt.Fprint(os.Stderr, err)
+        return
+    }
+    defer out.Close()
+    outw := bufio.NewWriter(out)
+    defer outw.Flush()
+
+    next1 := readNext(in1)
+    next2 := readNext(in2)
+    for {
+        n1, err1 := next1()
+        n2, err2 := next2()
+        if err1 == io.EOF && err2 == io.EOF {
+            break
+        }
+        if err1 != nil || err2 != nil {
+            fmt.Fprint(os.Stderr, err1, err2)
+            return
+        }
+        _, err := fmt.Fprintf(outw, ""%g;%g\n"", n1, n2)
+        if err != nil {
+            fmt.Fprint(os.Stderr, err)
+            return
+        }
+    }
+}

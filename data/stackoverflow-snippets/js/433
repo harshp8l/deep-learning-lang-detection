@@ -1,0 +1,46 @@
+public getAllSMS(): object {
+  return new Promise(//return a promise
+    (resolve,reject)=>{
+      if (SMS) {
+        SMS.listSMS(this.filters, function (data) {
+          resolve(data);//added this, resolve promise
+
+        }, function (err) {
+          console.log('error list sms: ' + err);
+          reject(err);//added this reject promise
+        });
+      }else{
+        resolve([]);//added this, resolving to empty array?
+      }
+    }
+  ).then(
+    data=>{
+      let contacts = {};
+      data.forEach(
+        item=>{
+          if ((item.address).length > 7 && (item.address).match(""[0-9]+"")) {
+            let date = SMSManager.convertUnixDate(item.date); // on converti le format de date de listSMS
+            if (contacts.hasOwnProperty(item.address)) {
+              Object.defineProperty(contacts[item.address], item._id, {
+                value: {
+                  ""body"": item.body,
+                  ""date"": date
+                }
+              });
+            } else {
+              Object.defineProperty(contacts, item.address, {
+                value: {
+                  ""000"": {
+                    ""body"": item.body,
+                    ""date"": date
+                  }
+                }
+              });
+            }
+          };        
+        }
+      );
+      return contacts;
+    }
+  );
+}

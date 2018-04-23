@@ -1,0 +1,311 @@
+<?php
+require 'includes/handlers.php';
+require 'includes/connection.php';
+
+// Signalize if a new account could be created, or not.
+$accountCreated = FALSE;
+
+/*
+ * ====================================
+ * Operations upon form submission.
+ * ====================================
+ */
+if (isset($_POST['submit'])) {
+    /*
+     * ====================================
+     * Read the posted values.
+     * ====================================
+     */
+    $firstName = isset($_POST['firstName']) ? $_POST['firstName'] : '';
+    $lastName = isset($_POST['lastName']) ? $_POST['lastName'] : '';
+    $email = isset($_POST['email']) ? $_POST['email'] : '';
+    $username = isset($_POST['username']) ? $_POST['username'] : '';
+    $password = isset($_POST['password']) ? $_POST['password'] : '';
+
+    /*
+     * ====================================
+     * Validate all posted values together.
+     * ====================================
+     */
+    if (empty($firstName) && empty($lastName) && empty($email) && empty($username) && empty($password)) {
+        $errors[] = 'All values are mandatory. Please provide them.';
+    }
+
+    /*
+     * ====================================
+     * Validate each value separately.
+     * ====================================
+     */
+    if (!isset($errors)) {
+        // Validate the first name.
+        if (empty($firstName)) {
+            $errors[] = 'Please provide a first name.';
+        } elseif (!preg_match('/^[a-zA-Z]*$/', $firstName)) {
+            $errors[] = 'The first name contains invalid characters.';
+        } /* Other validations here using elseif statements */
+
+        // Validate the last name.
+        if (empty($lastName)) {
+            $errors[] = 'Please provide a last name.';
+        } elseif (!preg_match('/^[a-zA-Z]*$/', $lastName)) {
+            $errors[] = 'The last name contains invalid characters.';
+        } /* Other validations here using elseif statements */
+
+        // Validate the email.
+        if (empty($email)) {
+            $errors[] = 'Please provide an email address.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'The email address is not in a valid format.';
+        } /* Other validations here using elseif statements */
+
+        // Validate the username.
+        if (empty($username)) {
+            $errors[] = 'Please provide a username.';
+        } /* Other validations here using elseif statements */
+
+        // Validate the password.
+        if (empty($password)) {
+            $errors[] = 'Please provide a password.';
+        } /* Other validations here using elseif statements */
+    }
+
+    /*
+     * ====================================
+     * Check if user exists. Save if not.
+     * ====================================
+     */
+    if (!isset($errors)) {
+        /*
+         * ====================================
+         * Check if user already exists.
+         * ====================================
+         */
+
+        /*
+         * The SQL statement to be prepared. Notice the so-called markers,
+         * e.g. the ""?"" signs. They will be replaced later with the
+         * corresponding values when using mysqli_stmt::bind_param.
+         *
+         * @link http://php.net/manual/en/mysqli.prepare.php
+         */
+        $sql = 'SELECT COUNT(*)
+                FROM users
+                WHERE username = ?';
+
+        /*
+         * Prepare the SQL statement for execution - ONLY ONCE.
+         *
+         * @link http://php.net/manual/en/mysqli.prepare.php
+         */
+        $statement = $connection->prepare($sql);
+
+        /*
+         * Bind variables for the parameter markers (?) in the
+         * SQL statement that was passed to prepare(). The first
+         * argument of bind_param() is a string that contains one
+         * or more characters which specify the types for the
+         * corresponding bind variables.
+         *
+         * @link http://php.net/manual/en/mysqli-stmt.bind-param.php
+         */
+        $statement->bind_param('s', $username);
+
+        /*
+         * Execute the prepared SQL statement.
+         * When executed any parameter markers which exist will
+         * automatically be replaced with the appropriate data.
+         *
+         * @link http://php.net/manual/en/mysqli-stmt.execute.php
+         */
+        $statement->execute();
+
+        /*
+         * Transfer the result set resulted from executing the prepared statement.
+         * E.g. store, e.g. buffer the result set into the (same) prepared statement.
+         *
+         * @link http://php.net/manual/en/mysqli-stmt.store-result.php
+         * @link https://stackoverflow.com/questions/8321096/call-to-undefined-method-mysqli-stmtget-result
+         */
+        $statement->store_result();
+
+        /*
+         * Bind the result set columns to corresponding variables.
+         * E.g. these variables will hold the column values after fetching.
+         *
+         * @link http://php.net/manual/en/mysqli-stmt.bind-result.php
+         */
+        $statement->bind_result($numberOfFoundUsers);
+
+        /*
+         * Fetch the results from the result set (of the prepared statement) into the bound variables.
+         *
+         * @link http://php.net/manual/en/mysqli-stmt.fetch.php
+         */
+        $statement->fetch();
+
+        /*
+         * Free the stored result memory associated with the statement,
+         * which was allocated by mysqli_stmt::store_result.
+         *
+         * @link http://php.net/manual/en/mysqli-result.free.php
+         */
+        $statement->free_result();
+
+        /*
+         * Close the prepared statement. It also deallocates the statement handle.
+         * If the statement has pending or unread results, it cancels them
+         * so that the next query can be executed.
+         *
+         * @link http://php.net/manual/en/mysqli-stmt.close.php
+         */
+        $statement->close();
+
+        if ($numberOfFoundUsers > 0) {
+            $errors[] = 'The given username already exists. Please choose another one.';
+        } else {
+            /*
+             * ====================================
+             * Save a new user account.
+             * ====================================
+             */
+            // Create a password hash.
+            $passwordHash = password_hash($password, PASSWORD_BCRYPT);
+
+            $sql = 'INSERT INTO users (
+                        first_name,
+                        last_name,
+                        email,
+                        username,
+                        password
+                    ) VALUES (
+                        ?, ?, ?, ?, ?
+                    )';
+
+            $statement = $connection->prepare($sql);
+            $statement->bind_param('sssss', $firstName, $lastName, $email, $username, $passwordHash);
+            $statement->execute();
+
+            // Signalize that a new account was successfully created.
+            $accountCreated = TRUE;
+
+            // Reset all values so that they are not shown in the form anymore.
+            $firstName = $lastName = $email = $username = $password = NULL;
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv=""X-UA-Compatible"" content=""IE=edge,chrome=1"" />
+        <meta name=""viewport"" content=""width=device-width, initial-scale=1, user-scalable=yes"" />
+        <meta charset=""UTF-8"" />
+        <!-- The above 3 meta tags must come first in the head -->
+
+        <title>Demo - Sign Up </title>
+
+        <!--<link href=""assets/images/favicon.ico"" rel=""icon"" type=""image/png"" />-->
+
+        <!-- CSS assets -->
+        <link href=""https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800"" rel=""stylesheet"">
+        <link href=""https://fonts.googleapis.com/css?family=Roboto+Condensed:300,400,700"" rel=""stylesheet"">
+        <link href=""assets/css/app.css"" type=""text/css"" rel=""stylesheet"">
+        <link href=""assets/css/signup.css"" type=""text/css"" rel=""stylesheet"">
+
+        <!-- JS assets -->
+        <script src=""https://code.jquery.com/jquery-3.2.1.min.js"" type=""text/javascript""></script>
+    </head>
+    <body>
+
+        <div class=""page-container"">
+
+            <nav class=""navbar"">
+                <ul class=""navbar-nav"">
+                    <li>
+                        <a href=""#"">Home</a>
+                    </li>
+                    <li>
+                        <a href=""#"">About Us</a>
+                    </li>
+                    <li>
+                        <a href=""#"">Login</a>
+                    </li>
+                    <li>
+                        <a href=""signup.php"" class=""active"">Sign Up</a>
+                    </li>
+                </ul>
+            </nav>
+
+            <header class=""page-header"">
+                <h2 class=""page-title"">
+                    Sign Up
+                </h2>
+                <div class=""page-subtitle"">
+                    Hello. We are happy to see you here. Please fill in the form to register.
+                </div>
+            </header>
+
+            <section class=""page-content"">
+
+                <section class=""form-container-outer"">
+                    <section class=""form-container-inner"">
+                        <?php
+                        if (isset($errors)) {
+                            ?>
+                            <div class=""messages danger"">
+                                <?php echo implode('<br/>', $errors); ?>
+                            </div>
+                            <?php
+                        } elseif ($accountCreated) {
+                            ?>
+                            <div class=""messages success"">
+                                You have successfully created your account.
+                                <br/>Would you like to <a href=""#"">login</a> now?
+                            </div>
+                            <?php
+                        }
+                        ?>
+
+                        <form id=""signup-form"" action="""" method=""post"">
+
+                            <div class=""form-group"">
+                                <label for=""firstName"">First Name <span class=""mandatory"">*</span></label>
+                                <input type=""text"" id=""firstName"" name=""firstName"" value=""<?php echo isset($firstName) ? $firstName : ''; ?>"" placeholder=""First Name"" required>
+                            </div>
+
+                            <div class=""form-group"">
+                                <label for=""lastName"">Last Name <span class=""mandatory"">*</span></label>
+                                <input type=""text"" id=""lastName"" name=""lastName"" value=""<?php echo isset($lastName) ? $lastName : ''; ?>"" placeholder=""Last Name"" required>
+                            </div>
+
+                            <div class=""form-group"">
+                                <label for=""email"">Email <span class=""mandatory"">*</span></label>
+                                <input type=""email"" id=""email"" name=""email"" value=""<?php echo isset($email) ? $email : ''; ?>"" placeholder=""Email"" required>
+                            </div>
+
+                            <div class=""form-group"">
+                                <label for=""username"">Username <span class=""mandatory"">*</span></label>
+                                <input type=""text"" id=""username"" name=""username"" value=""<?php echo isset($username) ? $username : ''; ?>"" placeholder=""Username"" required>
+                            </div>
+
+                            <div class=""form-group"">
+                                <label for=""password"">Password <span class=""mandatory"">*</span></label>
+                                <input type=""password"" id=""password"" name=""password"" value=""<?php echo isset($password) ? $password : ''; ?>"" placeholder=""Password"" required>
+                            </div>
+
+                            <button type=""submit"" id=""signupButton"" name=""submit"" value=""signup"">
+                                Create account
+                            </button>
+                        </form>
+                    </section>
+                </section>
+
+            </section>
+
+            <footer class=""footer"">
+                &copy; <?php echo date('Y'); ?> <a href=""#"" title=""Demo"">Demo</a>. All rights reserved.
+            </footer>
+
+        </div>
+    </body>
+</html>

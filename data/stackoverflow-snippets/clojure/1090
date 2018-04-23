@@ -1,0 +1,17 @@
+(defn apply-with-arglist-fn [f arglist & args]
+  (let [nargs (butlast args)
+        kwargs (last args)]
+    (apply f (concat nargs (map #(get kwargs (keyword %))
+                                (drop (count nargs) arglist))))))
+
+;; Let's define a macro to make calling this a bit easier.
+(defmacro apply-with-arglist [f & args]
+  ""Applies fn f to the arguments in a map by matching them with f's
+  arglist. Works like apply, except that the last parameter should be
+  a map of keyword arguments. For example:
+
+     (defn f [a b c] ...)
+     (apply-with-arglist f 1 {:b 2 :c 3})
+
+  This is equivalent to calling (f 1 2 3).""
+  `(apply-with-arglist-fn ~f (first (:arglists (meta (var ~f)))) ~@args))

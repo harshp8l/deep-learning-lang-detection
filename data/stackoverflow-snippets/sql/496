@@ -1,0 +1,33 @@
+DELIMITER $$
+
+USE `temp` $$
+
+DROP PROCEDURE IF EXISTS `GenerateUniqueValue`$$
+
+CREATE PROCEDURE `GenerateUniqueValue`(IN tableName VARCHAR(255),IN columnName VARCHAR(255)) 
+BEGIN
+    DECLARE uniqueValue VARCHAR(8) DEFAULT """";
+    DECLARE newUniqueValue VARCHAR(8) DEFAULT """";
+    WHILE LENGTH(uniqueValue) = 0 DO
+        SELECT CONCAT(SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789', RAND()*34+1, 1),
+                SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789', RAND()*34+1, 1),
+                SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789', RAND()*34+1, 1),
+                SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789', RAND()*34+1, 1),
+                SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789', RAND()*34+1, 1),
+                SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789', RAND()*34+1, 1),
+                SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789', RAND()*34+1, 1),
+                SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789', RAND()*34+1, 1)
+                ) INTO @newUniqueValue;
+        SET @rcount = -1;
+        SET @query=CONCAT('SELECT COUNT(*) INTO @rcount FROM  ',tableName,' WHERE ',columnName,'  like ''',newUniqueValue,'''');
+        PREPARE stmt FROM  @query;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    IF @rcount = 0 THEN
+            SET uniqueValue = @newUniqueValue ;
+        END IF ;
+    END WHILE ;
+    SELECT uniqueValue;
+    END$$
+
+DELIMITER ;

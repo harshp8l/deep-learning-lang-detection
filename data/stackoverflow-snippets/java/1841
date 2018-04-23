@@ -1,0 +1,54 @@
+import java.util.*;
+
+class Interval {
+
+    int lower, upper;
+
+    Interval (int l, int u) {
+      lower = l;
+      upper = u;
+    }
+
+    boolean isMergeable (Interval other) {
+        return (upper >= other.lower && lower <= other.upper);
+    }
+    /**
+        if a contains b fully, result is a
+        if b contains a fully, result is b
+        if a and b don't overlap result is (a, b)
+        if a and b overlap, result is Interval min(a.lower, b.lower), max(a.upper, b.upper)
+        i(10,12).merge (13, 17) fails
+    */
+    List <Interval> merge (Interval other) {
+      List <Interval> li = new ArrayList <> ();
+        if (lower < other.lower && upper > other.upper)
+          li.add (this);
+        else if (lower > other.lower && upper < other.upper)
+          li.add (other);
+        else if (upper < other.lower || lower > other.upper)
+          {li.add (this); li.add (other);}
+        else
+          li.add (new Interval (Math.min (lower, other.lower), Math.max (upper, other.upper)));
+        return li;
+    }   
+
+    // the usual, boring stuff from here    
+    @Override
+    public String toString ()
+    {
+          return ""["" + lower + "":"" + upper + ""]"";
+    }
+
+    // to make List<Interval>.contains(interval) work
+    @Override public boolean equals (Object o) {
+      if (! (o instanceof Interval))
+        return false;
+      Interval other = (Interval)o;
+      return lower == other.lower && upper == other.upper;
+    }
+
+    @Override
+    public int hashCode () {
+      return 1023*upper + lower;
+    }
+}

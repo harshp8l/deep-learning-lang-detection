@@ -1,0 +1,133 @@
+var mQuickSidebar = (function(mUtil, mApp, $) {
+
+    console.log('Function: ', Date.now());
+
+    var topbarAside;
+    var topbarAsideTabs;
+    var topbarAsideClose;
+    var topbarAsideToggle;
+    var topbarAsideContent;
+
+    var initMessages = function() {
+        var messenger = $('#m_quick_sidebar_tabs_messenger');  
+
+        if (messenger.length === 0) {
+            return;
+        }
+
+        var messengerMessages = messenger.find('.m-messenger__messages');
+
+        var init = function() {
+            var height = topbarAside.outerHeight(true) - 
+                topbarAsideTabs.outerHeight(true) - 
+                messenger.find('.m-messenger__form').outerHeight(true) - 120;
+
+            // init messages scrollable content
+            messengerMessages.css('height', height);
+            mApp.initScroller(messengerMessages, {});
+        };
+
+        init();        
+
+        // reinit on window resize
+        mUtil.addResizeHandler(init);
+    };
+
+    var initSettings = function() { 
+        var settings = $('#m_quick_sidebar_tabs_settings');
+
+        if (settings.length === 0) {
+            return;
+        }
+
+        // init dropdown tabbable content
+        var init = function() {
+            var height = mUtil.getViewPort().height - topbarAsideTabs.outerHeight(true) - 60;
+
+            // init settings scrollable content
+            settings.css('height', height);
+            mApp.initScroller(settings, {});
+        };
+
+        init();
+
+        // reinit on window resize
+        mUtil.addResizeHandler(init);
+    };
+
+    var initLogs = function() {
+        // init dropdown tabbable content
+        var logs = $('#m_quick_sidebar_tabs_logs');
+
+        if (logs.length === 0) {
+            return;
+        }
+
+        var init = function() {
+            var height = mUtil.getViewPort().height - topbarAsideTabs.outerHeight(true) - 60;
+
+            // init settings scrollable content
+            logs.css('height', height);
+            mApp.initScroller(logs, {});
+        };
+
+        init();
+
+        // reinit on window resize
+        mUtil.addResizeHandler(init);
+    };
+
+    var initOffcanvasTabs = function() {
+        initMessages();
+        initSettings();
+        initLogs();
+    };
+
+    var initOffcanvas = function() {
+        topbarAside.mOffcanvas({
+            class: 'm-quick-sidebar',
+            overlay: true,  
+            close: topbarAsideClose,
+            toggle: topbarAsideToggle
+        });   
+
+        // run once on first time dropdown shown
+        topbarAside.mOffcanvas().one('afterShow', function() {
+            mApp.block(topbarAside);
+
+            setTimeout(function() {
+                mApp.unblock(topbarAside);
+
+                topbarAsideContent.removeClass('m--hide');
+
+                initOffcanvasTabs();
+            }, 1000);                         
+        });
+    };
+
+    return {     
+        init: function() { 
+
+            console.log('Inside Init(): ', Date.now());
+
+            console.log($('#m_quick_sidebar')); // topbarAside is undefined here!
+
+            topbarAside = $('#m_quick_sidebar');
+            topbarAsideTabs = $('#m_quick_sidebar_tabs');    
+            topbarAsideClose = $('#m_quick_sidebar_close');
+            topbarAsideToggle = $('#m_quick_sidebar_toggle');
+            topbarAsideContent = topbarAside.find('.m-quick-sidebar__content');
+
+            if (topbarAside.length === 0) {
+                return;
+            }
+
+            initOffcanvas(); 
+        }
+    }; 
+})(mUtil, mApp, $);
+
+$(document).ready(function() {
+    console.log('document.ready: ', Date.now());
+    mQuickSidebar.init();
+});

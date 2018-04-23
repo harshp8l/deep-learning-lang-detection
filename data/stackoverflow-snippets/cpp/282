@@ -1,0 +1,75 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+struct node{
+  char data;
+  node* left;
+  node* right;
+};
+
+node* newNode(char key){
+  node* nNode = new node;
+  nNode -> data = key;
+  nNode -> left = nullptr;
+  nNode -> right = nullptr;
+  return nNode;
+};
+
+int getUserInfo(string &userInput){
+  cout << ""A string that contains a dot(.) will be invalid!"" << endl;
+  cout << ""Enter a string ->"";
+  cin >> userInput;
+  return userInput.length(); // getting the length of string
+}
+
+void stringToChar(char *charArray, int& lengthString, string& userInput){
+ for(int i = 0; i < lengthString; i++){
+    charArray[i]=userInput[i];
+ }
+}
+
+void addFistNullBFS(node* root, char ch)
+{
+    vector<node*> nodeV;
+    nodeV.push_back(root);
+    while(nodeV.size())
+    {
+        node* val = nodeV[0];
+        nodeV.erase(nodeV.begin());
+        if(!val->left) {val->left = newNode(ch); break;}
+        nodeV.push_back(val->left);
+        if(!val->right) {val->right = newNode(ch); break;}
+        nodeV.push_back(val->right);
+    }
+}
+
+node* insertCharsInTree(char *charArray, int &lengthString){
+  node* root = newNode(charArray[0]); // root is always first char in array
+  for(int i=1; i<lengthString; i++)
+  {
+      addFistNullBFS(root, charArray[i]);
+  }
+  return root;
+}
+
+void printTreeInOrder(node* root)
+{
+    if(!root) return;
+    printTreeInOrder(root->left);
+    cout<<root->data << "" | "";
+    printTreeInOrder(root->right);
+}
+
+int main(){
+
+  string userInput;
+  int lengthString = getUserInfo(userInput);
+  char *charArray = new char [lengthString];
+  stringToChar(charArray, lengthString,userInput);
+  node *root = insertCharsInTree(charArray,lengthString);
+  cout<<""\nOutput is\n"";
+  printTreeInOrder(root);
+  return 0;
+}

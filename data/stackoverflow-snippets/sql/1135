@@ -1,0 +1,35 @@
+    CREATE TABLE #temp(rowid int identity(1,1), quantity int)
+
+    INSERT INTO #temp
+    SELECT 2
+    UNION ALL SELECT 4
+    UNION ALL SELECT 4
+    UNION ALL SELECT 6
+    UNION ALL SELECT 8
+
+    declare @batchValue int = 0 ,@maxquantity int = 10
+    declare @holding table (quantity int, batchvalue int)
+    declare @quantity int 
+    declare @running int=0
+    declare @iterator int = 1 
+
+    while @iterator<=(select max(rowid) from #temp)
+    begin 
+    select @quantity=quantity from #temp where rowid=@iterator
+    set @running=@quantity+@running
+
+    -- Newly added condition
+    if (@running > @maxquantity)    BEGIN
+
+        SET @batchValue = @batchValue + 1 -- increment the batch value
+        insert @holding select @quantity, @batchValue
+        SET @running = @quantity -- reset the running value
+
+        END
+    ELSE
+        insert @holding select @quantity, @batchValue
+
+    set @iterator=@iterator+1
+    end
+    SELECT * FROM @holding
+    DROP TABLE #temp

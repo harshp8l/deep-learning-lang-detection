@@ -1,0 +1,20 @@
+let numberOfAvailableCores () : int =
+    let p = System.Diagnostics.Process.GetCurrentProcess().ProcessorAffinity
+
+    let rec countOnes acc = function
+        | 0un -> acc
+        | n -> 
+            let i = int (n &&& 1un)
+            countOnes (acc + i) (n >>> 1)
+
+    countOnes 0 (unativeint p)
+
+let executeInParallel (a : unit->unit) : unit =
+    let cores = numberOfAvailableCores ()
+
+    let actions = 
+        [|
+            for x in 1..(cores * 2) -> Action a
+        |]
+
+    Parallel.Invoke actions

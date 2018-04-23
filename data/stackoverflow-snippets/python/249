@@ -1,0 +1,32 @@
+class MainWindow(QMainWindow):
+    def __init__(self):
+        QMainWindow.__init__(self)
+        self.setMinimumSize(QSize(400, 400))    
+        texts= ['button1','button2','button3']
+        pybutton = {}
+        for x, (text, t) in enumerate(zip(texts, range(300,0,-100))):
+            btn = QPushButton(text, self) 
+            btn.setObjectName('btn{}'.format(x+1))
+            btn.resize(100,100)
+            btn.move(t,100)
+            btn.setStyleSheet('QPushButton::menu-indicator { image: none; }')
+
+            menu = QMenu()
+            btn.setMenu(menu)
+            args = (""button"", btn)
+            menu.setProperty(*args)
+            for act in (""item1"", ""item2"", ""item3""):
+                action = menu.addAction('item1',self.status)
+                action.setProperty(*args)
+            menu2 = menu.addMenu('menu2')
+            action = menu2.addAction('item4', self.status)
+            action.setProperty(*args)
+            pybutton[str(x+1)] = btn
+
+        self.statusBar()
+
+    def status(self):
+        action = self.sender()
+        btn = action.property(""button"")
+        print('PyQt5 button click')
+        self.statusBar().showMessage('{} was pressed with button: {}'.format(action.text(), btn.text()))

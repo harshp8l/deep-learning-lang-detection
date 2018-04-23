@@ -1,0 +1,32 @@
+module Arb = 
+    open System.Reflection 
+
+    // this is just a helper type to do reflection on. 
+    type internal GenerateInvoker = 
+        static member Invoke<'typ> () = 
+            Arb.generate<'typ>
+            |> Gen.map box
+
+    // Invokes a generic method using a runtime type as a generic argument.
+    let generateType (typ: Type) =
+        typeof<GenerateInvoker>
+            .GetMethod(""Invoke"", BindingFlags.Static ||| BindingFlags.NonPublic)
+            .MakeGenericMethod([|typ|])
+            .Invoke(null, [||]) :?> Gen<obj>
+
+let modelGenerator = 
+    gen {
+        let incident = new Model()
+        let props =  
+            typeof<Model>.GetProperties()
+            |> Array.filter (fun p -> p.CanWrite)
+
+        // gen builder implements For, so you can do something like this. 
+        for prop in props do 
+            let! newVal = Arb.generateType prop.PropertyType
+            prop.SetValue(incident, newVal)
+
+        return incident
+    }
+
+Gen.sample 1 3 modelGenerator

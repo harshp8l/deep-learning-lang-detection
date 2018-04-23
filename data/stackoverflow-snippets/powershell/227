@@ -1,0 +1,13 @@
+$Servers = ""Testserver01""
+$regPath = 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management'
+ForEach ($Server in $Servers) {
+    If (Test-Connection -ComputerName $Server) {
+        Invoke-Command -ComputerName $Server {
+            Get-ItemProperty -Path 'HKLM\SOFTWARE\McAfee\DLP\Agent' -Name 'AgentVersion'
+            If (-not (Test-Path -Path $using:regPath)) {
+                New-Item -Path $Using:regPath -ItemType Directory
+            }
+            New-ItemProperty -Path $using:regPath -Name 'FeatureSettingsOverrideMask' -Value 3 -PropertyType REG_DWORD
+        }
+    }
+}

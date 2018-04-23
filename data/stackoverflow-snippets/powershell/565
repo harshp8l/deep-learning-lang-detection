@@ -1,0 +1,28 @@
+$vault = Get-AzureRmRecoveryServicesVault -Name ""VaultName""
+
+Set-AzureRmRecoveryServicesVaultContext -Vault $vault
+
+#VIEW THE BACKUP ITEMS
+$container = Get-AzureRmRecoveryServicesBackupContainer -ContainerType AzureSQL -FriendlyName $vault.Name
+
+$item = Get-AzureRmRecoveryServicesBackupItem -Container $container -WorkloadType AzureSQLDatabase
+
+$availableBackups = Get-AzureRmRecoveryServicesBackupRecoveryPoint -Item $item
+
+$availableBackups      
+#REMOVE THE BACKUP ITEMS AND VAULT
+$containers = Get-AzureRmRecoveryServicesBackupContainer -ContainerType AzureSQL -FriendlyName $vault.Name
+
+ForEach ($container in $containers)
+{
+    $items = Get-AzureRmRecoveryServicesBackupItem -container $container -WorkloadType AzureSQLDatabase
+
+    ForEach ($item in $items)
+    {
+        Disable-AzureRmRecoveryServicesBackupProtection -item $item -RemoveRecoveryPoints -ea SilentlyContinue
+    }
+
+    Unregister-AzureRmRecoveryServicesBackupContainer -Container $container
+}
+
+Remove-AzureRmRecoveryServicesVault -Vault $vault

@@ -1,0 +1,57 @@
+package main
+
+import (
+    ""context""
+    ""log""
+    ""os""
+    ""sync""
+    ""time""
+)
+
+type worker struct {
+    wg   *sync.WaitGroup
+    in   chan job
+    quit context.Context
+}
+
+type job struct {
+    message int
+}
+
+func main() {
+    numberOfJobs := 50
+
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
+
+    w := worker{
+        wg:   &sync.WaitGroup{},
+        in:   make(chan job),
+        quit: ctx,
+    }
+
+    for i := 0; i < numberOfJobs; i++ {
+        go func(i int) {
+            w.in <- job{message: i}
+        }(i)
+    }
+
+    counter := 0
+    for {
+        select {
+        case j := <-w.in:
+            counter++
+            log.Printf(""Received job %+v\n"", j)
+            // DO SOMETHING WITH THE RECEIVED JOB
+            // WORKING ON IT
+            x := j.message * j.message
+            log.Printf(""job processed, result %d"", x)
+        case <-w.quit.Done():
+            log.Printf(""Recieved quit, timeout reached.  Number of jobs queued: %d, Number of jobs complete: %d\n"", numberOfJobs, counter)
+            os.Exit(0)
+        default:
+            // TODO
+        }
+    }
+
+}

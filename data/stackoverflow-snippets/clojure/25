@@ -1,0 +1,20 @@
+(defn make-triangular [coll]
+  (let [n-coll   (count coll)
+        n-rows   (->> (range) (reductions +) (take-while #(<= % n-coll)) count)
+
+        ; n-rows x n-rows matrix of zeros, needs to be a vector to support assoc:
+        zeros    (mapv (comp vec repeat) (repeat n-rows n-rows) (repeat n-rows 0))]
+    (->> coll
+         (reduce
+           (fn [[result [row col]] v]
+             [; assoc v to upper and lower triangles:
+              (-> result
+                  (assoc-in [row col] v)
+                  (assoc-in [col row] v))
+
+              ; calculate where the next value should go:
+              (if (= col (dec row))
+                [(inc row) 0]            ; Approaching the diagonal, drop down by one row and reset to the first col
+                [row       (inc col)])]) ; Not at diagonal yet, stay at the same row and move to the next col
+           [zeros [1 0]]) ; Starting from a zero matrix, row 1 and col 0
+         first))) ; Extract the result

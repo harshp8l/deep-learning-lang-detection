@@ -1,0 +1,15 @@
+DECLARE @Table SYSNAME = 'Your table name; without schema; no square brackets'; 
+
+-- REVERSE and STUFF used to remove trailing UNION in string
+SELECT REVERSE(STUFF(REVERSE((SELECT 'SELECT ' 
+        + CAST(column_id AS VarChar(4)) + ' AS [column_id],' -- extra column
+        + '''' + name 
+        + ''' AS [Column], COUNT(DISTINCT(' 
+        + QUOTENAME(name) + ')) AS [Count] FROM ' 
+        + QUOTENAME(@Table) + ' UNION ' 
+    -- get column name from sys.columns  
+    FROM   sys.columns 
+    WHERE  system_type_id NOT IN (34,240) AND object_id = Object_id(@Table) 
+    ORDER BY column_id -- keeps columns in table order
+    -- concatenate result strings with FOR XML PATH
+    FOR XML PATH (''))), 1, 7, ';'));

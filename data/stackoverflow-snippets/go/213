@@ -1,0 +1,32 @@
+func BindStruct(domain interface{}) (params []interface{}) {
+
+    val := reflect.ValueOf(domain) // could be any underlying type
+
+    // if its a pointer, resolve its value
+    if val.Kind() == reflect.Ptr {
+        val = reflect.Indirect(val)
+    }
+
+    // should double check we now have a struct (could still be anything)
+    if val.Kind() != reflect.Struct {
+         log.Fatal(""unexpected type"")
+    }
+
+    // now we grab our values as before (note: I assume table name should come from the struct type)
+    structType := val.Type()  
+    tableName := structType.Name()
+    params = append(params, tableName)
+
+    for i:=0; i < structType.NumField(); i++ {
+        field := structType.Field(i)
+        tag := field.Tag
+
+        fieldName := field.Name
+        fieldType := tag.Get(""sql_type"")
+        fieldTags := tag.Get(""sql_tag"")
+
+        paramstring := fieldName + "" "" + fieldType + "" "" + fieldTags
+        params = append(params, paramstring)
+    }
+    return params
+}

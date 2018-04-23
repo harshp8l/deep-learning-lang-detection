@@ -1,0 +1,28 @@
+$tod =  (Get-Date).ToString('yyyyMMdd')
+
+$local = $PSScriptRoot + ""\_Output\"" + $tod + ""\InstalledSoftwares""
+
+if(!(Test-Path -Path $local )){
+    New-Item -ItemType Directory -Path $local
+}
+
+$ItemList = Import-Csv $($PSScriptRoot + ""\_HostList.CFG"") -Header Srv -Delimiter "";"" | Select-Object -Skip 1
+
+workflow AllInstalledSoft {
+    param (
+        [parameter(Mandatory=$true)][array]$ItemList,
+        [parameter(Mandatory=$true)][string]$LocalExport,
+        [parameter(Mandatory=$true)][string]$Tod
+    )
+    ForEach -Parallel ($Serv in $ItemList) {
+        if(Test-Connection -ComputerName $Serv -Count 1 -Quiet){
+            $file = ""$($Serv)_InstalledSoft-$Tod.csv""
+            $ExportFile = ""$LocalExport\$file""
+            try {
+                Get-WmiObject -Class Win32_Product -PSComputerName $Serv -ErrorAction Stop | Select-Object PSComputerName,Name,InstallDate,InstallLocation,Vendor,Version,Caption,LocalPackage,IdentifyingNumber | Export-CSV -Path $ExportFile -NoTypeInformation
+            }
+            catch {}
+        }
+    }
+}
+AllInstalledSoft -LocalExport $local -ItemList $ItemList.Srv -Tod $tod

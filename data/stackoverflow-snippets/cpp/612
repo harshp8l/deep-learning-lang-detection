@@ -1,0 +1,85 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+
+using namespace std;
+
+
+class Vehicle
+{
+protected:
+    string name;
+    int total_dist{0};   // distance will be set to 0 on any new vehicle
+public:
+    Vehicle() {}
+    ~Vehicle() {}
+    virtual string get_name() = 0;
+    int get_total_dist() const { return total_dist; }
+    void set_grid_location(int d) {total_dist = d;}
+};
+
+class Car :public Vehicle 
+{
+public:
+    Car() 
+    {
+        name = ""Car"";  //name will be automatically set
+    }
+
+    string get_name() { return name; }
+};
+
+class Bus :public Vehicle
+{
+public:
+    Bus()
+    {
+        name = ""Bus"";
+    }
+
+    string get_name() { return name; }
+};
+
+int location_generator() // testing only - use your own method
+{
+    int arr[] = {4,2,1,5,6,2,3 };
+    static int count = 0;
+
+    return arr[count++ % 6];
+}
+
+int main()
+{
+    vector<Vehicle*> vehicle_lanes;       
+
+    //create some vehicles
+    vehicle_lanes.push_back(new Car);
+    vehicle_lanes.push_back(new Bus);
+
+    //filling the location of vehicles before sorting
+    for (auto& it = vehicle_lanes.begin(); it != vehicle_lanes.end(); it++)  
+    {
+        (*it)->set_grid_location(location_generator());
+    }
+
+    //sorting
+    auto CompareVehicleLocation = [](const Vehicle* lhs, const Vehicle* rhs)->bool { return lhs->get_total_dist() < rhs->get_total_dist(); };
+
+    sort(vehicle_lanes.begin(), vehicle_lanes.end(), CompareVehicleLocation);
+
+
+    //printing sorted vector
+    for (auto& it = vehicle_lanes.begin(); it != vehicle_lanes.end(); it++)
+    {
+        cout << (*it)->get_name().c_str() << ""'s total distance travelled is: "" <<
+            (*it)->get_total_dist() << "" units."" << endl;
+    }
+
+    //delete the pointers to avoid memory leak at the end
+    for (auto& it = vehicle_lanes.begin(); it != vehicle_lanes.end(); it++)
+    {
+       delete (*it);
+    }
+    return 0;
+}

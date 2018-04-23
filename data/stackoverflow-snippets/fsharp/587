@@ -1,0 +1,25 @@
+[<Literal>]
+let connectionString = ""Data Source=10.0.40.11;Initial Catalog=nextel_ericsson_umts_brasil;Persist Security Info=True;User ID=sa;Password=****"";
+
+type bd = SqlDataProvider<
+            ConnectionString = connectionString,
+            DatabaseVendor = Common.DatabaseProviderTypes.MSSQLSERVER >
+
+type Database() =
+
+    static member contextDbo() =
+        bd.GetDataContext().Dbo
+
+    static member acAgregations() =
+        Database.contextDbo().AcAgregations |> Frame.ofRecords
+
+    static member acBusyHourDefinition() =
+        Database.contextDbo().AcBusyHourDefinition
+        |> Frame.ofRecords
+        //|> Frame.getCols[""time_agregation_type"", ""destination_table"", ""reference_table"", ""alternative_reference_table_scan"", ""formula""]
+
+    static member acBusyHourDefinitionFilterByTimeAgregationTipe(value:int) = 
+        Database.acBusyHourDefinition()
+        |> Frame.indexRowsInt ""tome_agregation_type""
+        |> Frame.getRows
+        |> Frame.filterRowValues( fun row -> row.GetAs<string list>)

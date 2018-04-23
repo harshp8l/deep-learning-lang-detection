@@ -1,0 +1,16 @@
+// Somewhere as a top level definition or in a base library
+type Lens<'T,'U> = {Get: 'T -> 'U; Set: 'U -> 'T -> 'T } with
+  member l.Update f a = l.Set (f (l.Get a)) a
+
+
+type UV<'a> = {U : 'a; V : 'a } with
+// add these static members to your records
+  static member New u v : UV<'a> = {U = u; V = v}
+  static member u = {Get = (fun (x: UV<'a>) -> x.U); Set = fun t x -> {x with U = t}}
+  static member v = {Get = (fun (x: UV<'a>) -> x.V); Set = fun t x -> {x with V = t}}
+
+
+let uvRecord  = UV.New 10 20
+let u         = UV.u.Get uvRecord
+let uvRecord1 = UV.u.Set (u+1) uvRecord
+let uvRecord2 = UV.u.Update ((+)1) uvRecord

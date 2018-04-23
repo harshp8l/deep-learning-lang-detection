@@ -1,0 +1,46 @@
+ALTER PROCEDURE [dbo].[UspSdtSync]
+AS
+SET NOCOUNT ON; --suppress row count messages if not needed
+SET XACT_ABORT ON; --ensure transaction is rolled back immediately after timeout
+
+DECLARE                    @return_value INT
+                          ,@RetCode INT
+                          ,@RunID INT
+                          ,@IntraDayID INT;
+
+SET                        @RunID = NULL;  
+SET                        @IntraDayID = NULL;
+
+BEGIN TRAN;
+
+EXEC                       @return_value = [DST].[SD].[STG].[API_GenerateTempView]
+                           @SchemaName = N'TEST_A',
+                           @ViewName = N'vw_TEST_KB_CGSE',
+                           @ColumnList = N'statusE, statusF, statusG, statusH, LastModifiedDate, LastModifiedBy, LastReviewedBy, statusI, statusJ, Email, Mobile, HomePhone, WorkPhone, statusK, statusL, Dob',
+                           @OrderByList = NULL,
+                           @ResultSet = 1,                           
+                           @RunID = @RunID,
+                           @IntraDayID = @IntraDayID,
+                           @RetCode = @RetCode OUTPUT;
+
+MERGE INTO AeoiSdtTemp AS t
+USING (SELECT statusE, statusF, statusG, statusH, LastModifiedDate, LastModifiedBy, LastReviewedBy, statusI, statusJ, Email, Mobile, HomePhone, WorkPhone, statusK, statusL, Dob 
+FROM [DST].[SD].[TEST_KB_KTA].[vw_SDT_TEST_KB_CGSE_Temp]) AS s ON ( t.statusE = s.statusE) AND (t.statusF = s.statusF) AND (t.statusG = s.statusG) AND (t.statusH = s.statusH)
+
+/*** Insert records directly into local KTA table ***/
+WHEN NOT MATCHED THEN
+INSERT (statusE, statusF, statusG, statusH, LastModifiedDate, StatusCode, LastModifiedBy, LastReviewedBy, CreatedDate, statusI, statusJ, Email, Mobile, HomePhone, WorkPhone, statusK, statusL, Dob)
+VALUES(s.statusE, s.statusF, s.statusG, s.statusH, s.LastModifiedDate, '11', s.LastModifiedBy, s.LastReviewedBy, GETDATE(), s.statusI, s.statusJ, s.Email, s.Mobile, s.HomePhone, s.WorkPhone, s.statusK, s.statusL, s.Dob)
+
+/*** Update records that exist ***/
+WHEN MATCHED THEN
+UPDATE SET LastModifiedDate = s.LastModifiedDate, LastModifiedBy = s.LastModifiedBy, LastReviewedBy = s.LastReviewedBy, statusI = s.statusI, statusJ = s.statusJ, Email = s.Email, Mobile = s.Mobile, HomePhone = s.HomePhone, WorkPhone = s.WorkPhone, statusK = s.statusK, statusL = s.statusL, Dob = s.Dob;
+
+COMMIT;
+
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0 ROLLBACK; --rollback transaction of needed
+    THROW; --re-raise error to client
+END CATCH;
+GO

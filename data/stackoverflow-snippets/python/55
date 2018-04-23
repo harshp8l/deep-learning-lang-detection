@@ -1,0 +1,27 @@
+def buildgraph(input, n):
+    # n-1-gram to tokens that follow it
+    graph = {
+        tuple(input[i:(i + n - 1)]): set()
+        for i in range(len(input) - n + 1)
+    }
+    for i in range(len(input) - n + 1):
+        graph[tuple(input[i:(i + n - 1)])].add(input[i + n - 1])
+    return graph
+
+
+def continuations(graph, n, k, pathsofar):
+    if len(pathsofar) == k:
+        yield pathsofar
+    elif len(pathsofar) < k:
+        for token in graph[pathsofar[-(n - 1):]]:
+            yield from continuations(graph, n, k, pathsofar + (token, ))
+
+
+def allsentences(input, n, k):
+    graph = buildgraph(input, n)
+    for ngram in graph:
+        yield from continuations(graph, n, k, ngram)
+
+
+for sent in allsentences('abcaba', 2, 6):
+    print(''.join(sent))

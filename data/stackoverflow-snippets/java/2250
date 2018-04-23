@@ -1,0 +1,27 @@
+@Bean
+public WebClient client() {
+    return WebClient.builder()
+        .baseUrl(""https://api.github.com"")
+        .defaultHeader(""User-Agent"", ""Spring-boot WebClient"")
+        .filter(ExchangeFilterFunctions.basicAuthentication(""YOUR_GITHUB_USERNAME"", ""YOUR_GITHUB_TOKEN""))
+        .filter(printlnFilter).build();
+}
+ExchangeFilterFunction printlnFilter= new ExchangeFilterFunction() {
+    @Override
+    public Mono<ClientResponse> filter(ClientRequest request, ExchangeFunction next) {
+        System.out.println(""\n\n"" + request.method().toString().toUpperCase() + "":\n\nURL:""
+                + request.url().toString() + "":\n\nHeaders:"" + request.headers().toString() + ""\n\nAttributes:""
+                + request.attributes() + ""\n\n"");
+
+        return next.exchange(request);
+    }
+};
+//In some method:
+String returnedJSON = client.post().uri(builder->builder.path(""/user/repos"").build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .syncBody(new LinkedMultiValueMap<String, String>(){{
+                    put(""name"", ""tett"");
+                }})
+                .retrieve()
+                .bodyToMono(String.class)
+                .block(Duration.ofSeconds(3))

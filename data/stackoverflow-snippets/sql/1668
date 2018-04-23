@@ -1,0 +1,16 @@
+SELECT id, name, 
+       (t1.total_items + t2.total_items) total_items,
+       (t1.total_revenue + t2.total_revenue) total_revenue
+FROM (SELECT id, name, 
+             sum(no_of_items) total_items, 
+             sum(revenue) total_revenue
+      FROM   items_revenue
+      WHERE  is_manager = 1
+      GROUP BY id, name) t1
+JOIN (SELECT manager_id,
+             sum(no_of_items) total_items, 
+             sum(revenue) total_revenue
+      FROM   items_revenue
+      WHERE  is_manager = 0
+      GROUP BY manager_id) t2
+ON    t1.id = t2.manager_id;

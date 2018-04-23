@@ -1,0 +1,59 @@
+class RandomCompoundCounterfeiter[W <: Word](val children: Seq[Counterfeiter[W]]) extends Counterfeiter[W] {
+  override def counterfeit(word: W): Unit = {
+    Random.shuffle(children).takeWhile(c => {
+      c.counterfeit(word)
+      !word.isCounterfeited
+    })
+  }
+}
+
+trait SimpleCounterfeiter[-W <: Word] extends Counterfeiter[W] {
+  override def counterfeit(word: W): Unit = {
+    if (isApplicable(word))
+      word.currentWriting = counterfeitImpl(word.correctWriting, word)
+  }
+
+  def isApplicable(word: W): Boolean
+
+  def counterfeitImpl(correctWriting: String, word: W): String
+}
+
+object GenericCounterfeiters {
+  val splitDoubleLetters = new SimpleCounterfeiter[Word] {
+    override def isApplicable(word: Word) = true
+
+    override def counterfeitImpl(correctWriting: String, word: Word) = ???
+  }
+}
+
+object Noun {
+
+  val singularCounterfeiter = new SimpleCounterfeiter[Noun] {
+    override def isApplicable(word: Noun) = word.number != Singular
+
+    override def counterfeitImpl(correctWriting: String, word: Noun) = ???
+  }
+
+  val pluralCounterfeiter = new SimpleCounterfeiter[Noun] {
+    override def isApplicable(word: Noun) = word.number != Plural
+
+    override def counterfeitImpl(correctWriting: String, word: Noun) = ???
+  }
+
+
+  def genderCounterfeiter(newGender: Gender) = new SimpleCounterfeiter[Noun] {
+    override def isApplicable(word: Noun) = word.gender != newGender
+
+    override def counterfeitImpl(correctWriting: String, word: Noun) = ???
+  }
+
+  val all = List(
+    GenericCounterfeiters.splitDoubleLetters,
+    singularCounterfeiter,
+    pluralCounterfeiter,
+    genderCounterfeiter(Neutral),
+    genderCounterfeiter(Masculine),
+    genderCounterfeiter(Feminine))
+
+  val nounCounterfeiter = new RandomCompoundCounterfeiter[Noun](all)
+}

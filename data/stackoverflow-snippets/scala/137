@@ -1,0 +1,40 @@
+/** Does the main work (i.e. training ML model). */
+class WorkerThread(task: String, parent: ActorRef) extends Runnable {
+  override def run(): Unit = try {
+    while (true) {
+      println(s""Doing $task..."")
+      Thread sleep 500
+    }
+  } catch {
+    /* Since this thread may be interrupted at any time, we need to
+       gracefully handle being interrupted. Since we have a handle to the
+       actor that's managing us, we can send it a message telling it to
+       finish up. */
+    case _: InterruptedException => parent ! Worker.Message.FinishUp
+  }
+}
+
+/** Manages starting and stopping the model training thread. */
+class Worker extends Actor {
+  private var thread: Thread = null
+
+  override def receive: Receive = {
+    case Worker.Message.DoTask(task) =>
+      if (thread == null) {
+        thread = new Thread(new WorkerThread(task, self))
+        thread.start()
+      }
+    case Worker.Message.StopTask =>
+      if (thread != null) thread.interrupt()
+    case Worker.Message.FinishUp => println(""Stopped task..."")
+  }
+}
+
+object Worker {
+  sealed trait Message
+  object Message {
+    case class DoTask(task: String) extends Message
+    case object StopTask extends Message
+    case object FinishUp extends Message
+  }
+}

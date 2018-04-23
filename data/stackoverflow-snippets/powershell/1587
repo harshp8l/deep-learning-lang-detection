@@ -1,0 +1,35 @@
+function Kill-PopUp(){
+    kill (Get-Event -SourceIdentifier ChildPID).Messagedata
+    Get-Job | Stop-Job
+    Get-Job | Remove-Job
+}
+
+function Execute-PopUp(){
+    $popupTitle = ""Done""
+    $popupScriptBlock = {
+       param([string]$title)
+       Register-EngineEvent -SourceIdentifier ChildPID -Forward
+       New-Event -SourceIdentifier ChildPID -MessageData $pid > $null
+       $wshell = New-Object -ComObject Wscript.Shell
+
+       $wshell.Popup(""Operation Completed"",0,$title,0x1)
+    }
+
+    $job = Start-Job -ScriptBlock $popupScriptBlock -ArgumentList $popupTitle
+
+    # Waiting till the popup will be up.
+    # Can cause bugs if you have other window with the same title, so beaware for the title to be unique
+    Do{
+        $windowsTitle = Get-Process | where {$_.mainWindowTitle -eq $popupTitle }
+    }while($windowsTitle -eq $null)
+}
+
+Execute-PopUp
+
+#[YOUR SCRIPT STARTS HERE]
+Write-Host ""Your code""
+Start-Sleep 3
+#[YOUR SCRIPT ENDs HERE]
+
+
+Kill-PopUp

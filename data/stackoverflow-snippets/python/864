@@ -1,0 +1,20 @@
+/*
+   Comment no. 3.14159
+   This comment documents the history of code.
+   We need to open the slavept inside the child process, after ""setsid"", so that it becomes the controlling
+   TTY for the process. We do not, otherwise, need the file descriptor open. The original approach was to
+   close the fd immediately after, as it is no longer needed.
+   It turns out that (at least) the Linux kernel considers a master ptty fd that has no open slave fds
+   to be unused, and causes ""select"" to return with ""error on fd"". The subsequent read would fail, causing us
+   to go into an infinite loop. This is a bug in the kernel, as the fact that a master ptty fd has no slaves
+   is not a permenant problem. As long as processes exist that have the slave end as their controlling TTYs,
+   new slave fds can be created by opening /dev/tty, which is exactly what ssh is, in fact, doing.
+   Our attempt at solving this problem, then, was to have the child process not close its end of the slave
+   ptty fd. We do, essentially, leak this fd, but this was a small price to pay. This worked great up until
+   openssh version 5.6.
+   Openssh version 5.6 looks at all of its open file descriptors, and closes any that it does not know what
+   they are for. While entirely within its prerogative, this breaks our fix, causing sshpass to either
+   hang, or do the infinite loop again.
+   Our solution is to keep the slave end open in both parent AND child, at least until the handshake is
+   complete, at which point we no longer need to monitor the TTY anyways.
+ */

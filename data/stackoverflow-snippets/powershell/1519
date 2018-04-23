@@ -1,0 +1,11 @@
+(Get-Content 'YourFile.log') -Replace '(.*?)\s*:\s*(.*)','$1=$2' -Split '\r\n\r\n' | ForEach-Object { 
+    $Text = ($_ -split '\n') -Replace '\\','\\'
+    $Text[2] = 'DESCRIPTION='+ $Text[2]
+    $Result = $Text | Out-String | ConvertFrom-StringData
+    $Properties = [ordered]@{}
+
+    $Headers = 'SERVICE_NAME','DISPLAY_NAME','DESCRIPTION','TYPE','START_TYPE','ERROR_CONTROL','BINARY_PATH_NAME','LOAD_ORDER_GROUP','TAG','DEPENDENCIES','SERVICE_START_NAME','FAIL_RESET_PERIOD','FAILURE_ACTIONS'
+    $Headers | ForEach-Object { $Properties.Add($_,$Result.$_) }
+    [PSCustomObject]$Properties
+
+} | Export-CSV 'out.csv' -NoTypeInformation

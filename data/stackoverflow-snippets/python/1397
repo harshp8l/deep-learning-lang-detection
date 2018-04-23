@@ -1,0 +1,27 @@
+import xml.etree.ElementTree as ET
+
+# 1. Parse your xml file
+tree = ET.parse('your.xml')
+
+# 2. Get the root
+root = tree.getroot()
+
+# 3. Set the tag and attribute you are looking for
+ns = 'urn:tva:metadata:2004'
+matchTag = 'NicamWarningCS'
+
+# 4. retrieve all Genres
+genres = root.find('{%s}ProgramDescription' % ns) \
+    .find('{%s}ProgramInformationTable' % ns) \
+    .find('{%s}ProgramInformation' % ns) \
+    .find('{%s}BasicDescription' % ns) \
+    .findall('{%s}Genre' % ns)
+
+# 5. filter them in order to get just the Names of the ones that match your matchTag : 'NicamWarningCS'
+filteredGenreNames = [genre.find('{%s}Name' % ns) for genre in genres if matchTag in genre.get('href')]
+
+# 6. extract the text of the tags
+data = [t.text for t in filteredGenreNames]
+
+print(data)
+# ['Grof taalgebruik', 'Geweld']

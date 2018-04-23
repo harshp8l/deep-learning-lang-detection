@@ -1,0 +1,22 @@
+public class Proxied<T> implements InvocationHandler {
+  private final T wrapped;
+
+  public Proxied(T wrapped) {
+    this.wrapped = Objects.requireNonNull(wrapped);
+  }
+
+  public T getWrapped() {
+    return wrapped;
+  }
+
+  public <I> Class<I> proxy(Class<I> interfaceClass) {
+    @SuppressWarnings(""unchecked"")
+    Class<I> proxyClass = (Class<I>)  Proxy.getProxyClass(getClass().getClassLoader(), interfaceClass);
+    return proxyClass;
+  }
+
+@Override
+public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    return method.invoke(wrapped, args);
+  }
+}

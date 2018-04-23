@@ -1,0 +1,22 @@
+SQL> select cu, decode(ru, 'None', 'no ru unit', ru) ru
+  2  from (select distinct cu, ru,
+  3          count(distinct ru) over (partition by cu) cdr
+  4        from cu_ru
+  5       )
+  6  group by cu, ru, cdr
+  7  having sum(decode(ru, 'None', 1, 0)) = 0
+  8      or cdr = 1
+  9  order by 1, 2;
+
+CU                             RU
+------------------------------ ------------------------------
+cu-1                           ru-1a
+cu-1                           ru-1b
+cu-2                           no ru unit
+cu-3                           ru-3a
+cu-3                           ru-3b
+cu-3                           ru-3c
+
+6 rows selected.
+
+SQL>

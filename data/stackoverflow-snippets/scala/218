@@ -1,0 +1,32 @@
+import org.apache.spark.ml.classification.{ProbabilisticClassifier, ProbabilisticClassificationModel}
+import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
+import org.apache.spark.ml.param.ParamMap
+import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
+
+object CrossValidationExample {
+
+  def loadOrCreateModel[
+    F, 
+    M <: ProbabilisticClassificationModel[Vector[F], M],
+    P <: ProbabilisticClassifier[Vector[F], P, M]
+  ](
+    probClassif: ProbabilisticClassifier[Vector[F], P, M],
+    paramGrid: Array[ParamMap]
+  ): CrossValidator = {
+
+    // Binary evaluator.
+    val binEvaluator = 
+      new BinaryClassificationEvaluator()
+      .setLabelCol(""y"")
+
+    // Cross validator.
+    val cvModel = 
+      new CrossValidator()
+      .setEstimator(probClassif)
+      .setEvaluator(binEvaluator)
+      .setEstimatorParamMaps(paramGrid)
+      .setNumFolds(3)
+
+    cvModel
+  }
+}

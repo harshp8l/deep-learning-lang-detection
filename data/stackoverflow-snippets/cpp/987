@@ -1,0 +1,33 @@
+#include <iostream>
+
+typedef void(*Callback)(void);
+
+class HasMethod{
+public:
+    void MyMethod(){ std::cout << ""Method run on object""; } // do ....
+};
+
+typedef void (HasMethod::*MethodCallback)(void);
+
+class HasFunctionPointer{
+public:
+    Callback CallbackPointer = 0; // default
+    HasMethod* classToCall = nullptr;
+    MethodCallback CallbackPointer2 = 0; // default
+};
+
+
+int main()
+{
+    HasMethod objmethod;
+    HasFunctionPointer objfpointer;
+
+    objfpointer.CallbackPointer2 = &HasMethod::MyMethod;
+    objfpointer.classToCall = &objmethod;
+    HasMethod* classObject = objfpointer.classToCall;
+    MethodCallback intermed = objfpointer.CallbackPointer2;
+
+    (classObject->*intermed)();
+
+    return 0;
+}

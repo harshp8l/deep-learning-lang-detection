@@ -1,0 +1,15 @@
+(defn windowed-min-queue [w a]
+  (let [
+        deque-init (fn deque-init [] (reduce (fn [dq i]
+                                               (dq-push-back i (prune-back a i dq)))
+                                             empty-deque (range w)))
+
+        process-min (fn process-min [dq] (reductions (fn [q i]
+                                                       (->> q
+                                                            (prune-back a i)
+                                                            (prune-front i w)
+                                                            (dq-push-back i)))
+                                                     dq (range w (count a))))
+        init (deque-init)
+        result (process-min init)] ;(process-min init)]
+    (map #(nth a (dq-front %)) result)))

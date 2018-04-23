@@ -1,0 +1,77 @@
+// here we define global variable
+var ajaxdestination="""";
+
+function getdata(what,where,pleasewait,javacall) { // get data from source (what)
+try {
+xmlhttp = window.XMLHttpRequest?new XMLHttpRequest():
+
+new ActiveXObject(""Microsoft.XMLHTTP"");
+}
+catch (e) { /* do nothing */ }
+
+//if (where == !null) document.getElementById(where).innerHTML = pleasewait;
+if (!(where == null)) document.getElementById(where).innerHTML = pleasewait;
+//document.getElementById(where).innerHTML = pleasewait;
+
+// we are defining the destination DIV id, must be stored in global variable (ajaxdestination)
+ajaxdestination=where;
+javatocall=javacall;
+xmlhttp.onreadystatechange = triggered; // when request finished, call the function to put result to destination DIV
+
+xmlhttp.open(""GET"", what);
+xmlhttp.send(null);
+return false;
+}
+
+
+function triggered() { // put data returned by requested URL to selected DIV
+if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
+//document.getElementById(ajaxdestination ).innerHTML = """";
+var DetectString;
+DetectString=trim(xmlhttp.responseText,""\n\r "")
+
+///////////// Redirect if needed:
+if(String(DetectString).substring(0,10) == ""[redirect]""){
+window.location=String(DetectString).substring(10,String(DetectString).length);
+}else if(String(DetectString).substring(0,15) == ""[opennewwindow]""){
+//window.open(String(DetectString).substring(15,String(DetectString).length), ""newwindow"",""scrollbars=0,resizable=yes,titlebar=0,fullscreen=1"");
+var p_strUrlLink = String(DetectString).substring(15,String(DetectString).length);
+var p_objWindow;
+p_objWindow = window.open(p_strUrlLink);
+
+//poptastic(String(DetectString).substring(15,String(DetectString).length));
+/*, 'toolbar=0, location=0, directories=0, status=0, scrollbars=0, resizable=0, copyhistory=0, menuBar=0,width=100,height=100'*/
+}else if(String(DetectString).substring(0,12) == ""[javascript]""){
+JavaCommand = String(DetectString).substring(12,String(DetectString).length);
+eval(JavaCommand);
+}
+///////////// Send content if not:
+else
+{
+
+document.getElementById(ajaxdestination).innerHTML = xmlhttp.responseText;
+if (javatocall != """") eval(javatocall);
+
+
+/* ////// Run Javascript from specific tag in response
+var s=xmlhttp.responseText;
+var EXECUTESCRIPT1="""";
+var EXECUTESCRIPT2="""";
+
+if (s.search(EXECUTESCRIPT1) >= 0){
+p1 = s.search(EXECUTESCRIPT1);
+p2 = s.search(EXECUTESCRIPT2);
+jscode = s.substr(p1 + EXECUTESCRIPT1.length, p2 - p1 - EXECUTESCRIPT2.length + 1);
+eval(jscode); //execute the javavscript code
+alert(""done:"" +jscode);
+}*/
+}
+}
+}
+
+
+var newwindow;
+function poptastic(url)
+{
+newwindow=window.open(url,'name','height=400,width=200');
+if (window.focus) {newwindow.focus()}

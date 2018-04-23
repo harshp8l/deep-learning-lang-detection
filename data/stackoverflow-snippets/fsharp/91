@@ -1,0 +1,17 @@
+type Validated 'raw 'converted = { raw: 'raw; errors: string list; validValue: 'converted option }
+
+let validated init convert checks =
+    let getValidationError converted validate =
+        match validate converted with
+        | Ok () -> None
+        | Error err -> Some err
+
+    let converted = convert init
+    let errors = match converted with
+        | Ok x -> checks |> List.choose (getValidationError x)
+        | Error x -> [x]
+    let validValue = match converted, errors with
+        | Ok x, [] -> Some x
+        | _ -> None
+
+    { raw = init; errors = errors; validValue = validValue }

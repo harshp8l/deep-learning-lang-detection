@@ -1,0 +1,29 @@
+// Your domain
+trait QueryUnit
+case class SimpleQuery(query: String, metadata: AnyRef) extends QueryUnit
+case class ComplexQuery(map: Map[String, Seq[SimpleQuery]]) extends QueryUnit
+// End of your domain
+
+// Something which has type parameter, so we can add QueryUnit, ...
+trait WrongArg[T]
+
+// Create ambiguous implicits for QueryUnit
+implicit def v0: WrongArg[QueryUnit] = ???
+implicit def v2: WrongArg[QueryUnit] = ???
+
+// And valid values for the concrete subclasses
+implicit val simpleQWrongArg: WrongArg[SimpleQuery] = new WrongArg[SimpleQuery] {}
+implicit val complexQWrongArg: WrongArg[ComplexQuery] = new WrongArg[ComplexQuery] {}
+
+case class API[QU <: QueryUnit](
+                query: Map[String, Seq[QU]]
+     // Require an evidence that we are getting the correct type
+                               )(implicit w: WrongArg[QU]) {
+}
+
+API/*[SimpleQuery]*/(Map("""" -> Seq(SimpleQuery("""", """"))))
+
+API/*[ComplexQuery]*/(Map("""" -> Seq(ComplexQuery(Map.empty))))
+
+// Fails to compile because of ambiguous implicits
+//API(Map(""s"" -> Seq(SimpleQuery("""", """")), ""c"" -> Seq(ComplexQuery(Map.empty))))

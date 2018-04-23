@@ -1,0 +1,36 @@
+// (worker.js, the worker file)
+var readFiles = function (files,whendone) {
+    var count = files.length;
+    var datasetsList = [];
+    var readFile = function (file) {
+        var reader = new FileReaderSync();
+        var result=reader.readAsBinaryString(file);
+        var parsedData = d3.csvParse(result);
+            parsedData.forEach(function (row) {
+                parsedData.columns.forEach(function (column) {
+                    if (!row[column]) {
+                        delete row[column];
+                    }
+                    var coercedNum = +row[column];
+                    if (!isNaN(coercedNum)) {
+                        row[column] = coercedNum;
+                    }
+                });
+            });
+            datasetsList.push({ data: parsedData, name: file.name });
+            if (!--count) {
+                whendone(datasetsList);
+            }
+
+    };
+
+    for (var i = 0; i < count; i++) {
+        readFile(files[i]);
+    }
+}
+self.addEventListener('message', function (e) {
+    var files = e.data;
+    readFiles(files, function (datasetsList) { // done
+        postMessage(datasetsList);
+    });
+}, false);

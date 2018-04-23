@@ -1,0 +1,16 @@
+def getGraph[T](sequence: Seq[T], tickConsumers: Map[T, ActorRef]) =
+  RunnableGraph.fromGraph(
+    GraphDSL.create(Sink.ignore) { implicit builder => out =>
+      val producer = new SomeTickProducer
+      val ticker = builder.add(producer)
+      val broadcast = builder.add(Broadcast[T](sequence.length))
+      ticker ~> broadcast
+      sequence.foreach { item =>
+        broadcast ~>
+        builder.add(new SomeTickProcesser(item)) ~>
+        Sink.actorRef(tickConsumers(item), NotUsed)
+      }
+      producer.watchTermination()(Keep.none) ~> out
+      ClosedShape
+    }
+  )

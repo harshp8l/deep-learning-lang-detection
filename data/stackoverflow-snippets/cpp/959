@@ -1,0 +1,62 @@
+#include <iostream>
+#include <thread>
+#include <condition_variable>
+#include <mutex>
+#include <list>
+#include <string>
+#include <chrono>
+
+using namespace std;
+
+typedef unique_lock<mutex> mutex_lock;
+
+class channel {
+public:
+    list<string> buffer;
+    mutex buffer_mutex; // controls access to buffer
+    condition_variable cv;
+    bool data_avail = false;
+
+    void write(string data) {
+        mutex_lock lock(buffer_mutex);
+        buffer.push_back(data);
+        data_avail = true;
+        cv.notify_all();
+    }
+
+    string read() {
+        string item ;
+        mutex_lock lock(buffer_mutex);
+        cv.wait(lock,[&](){ return data_avail;});
+        string item = buffer.front();
+        buffer.pop_front();
+        data_avail = false;
+        return item;
+    }
+};
+
+channel channel1;
+
+void function1() {
+    for (int i = 0; i < 10; i++) {
+        channel1.write(to_string(i));
+        this_thread::sleep_for(chrono::milliseconds(100));
+    }
+}
+
+void function2() {
+    string val;
+    for (int i = 0; i < 10; i++) {
+        val = channel1.read();
+        cout << val << ""\n"";
+
+    }
+}
+
+int main() {
+    thread t1(function1);
+    thread t2(function2);
+    t1.join();
+    t2.join();
+    return 0;
+}

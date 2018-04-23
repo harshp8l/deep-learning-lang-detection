@@ -1,0 +1,18 @@
+interface ISideEffect { int read(); void write(Object something); }
+class SideEffectThing implements ISideEffect { ... }
+
+// in test sources:
+public class SomeOtherComponentSpec {
+   private ISideEffect obj;
+   @Before
+   public void setup() { obj = mock(ISideEffect.class); }
+   @Test
+   public void does_something_useful() {
+      when(obj.read()).thenReturn(-1);
+      OtherComponent comp = new OtherComponent(obj);
+
+      int actual = comp.doSomethingUseful();
+
+      assertEquals(0, actual);
+      verify(obj).read();
+   }

@@ -1,0 +1,23 @@
+py::object mwparser = py::module::import(""mwparserfromhell"");
+py::object code = mwparser.attr(""parse"")(py::str(text));
+py::object filtered = code.attr(""filter_templates"")();
+
+for(auto temp : filtered) {
+    auto type = template_figure_type(py::str(temp.attr(""name"")));
+    if(type != """"){
+        try {
+
+            py::object f = temp.attr(""has"")(""link"");
+            py::print(py::str(f)); //displays ""True"" and ""False"" when it should
+              if(py::str(f).is(py::str(Py_True))){
+                temp.attr(""remove"")(""link"");
+                bContent_changed = true;
+                list.append(temp);
+            }
+            else {
+                py::print(""NO"");
+            }
+        } catch (std::domain_error) {
+            throw std::domain_error("""");
+        }
+}

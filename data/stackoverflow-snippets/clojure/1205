@@ -1,0 +1,31 @@
+user> (def container [{:no 1 :volume 10} {:no 2 :volume 20}])
+#'user/container
+user> (def cans [{:no 1 :volume 2} {:no 2 :volume 8} {:no 1 :volume 5} {:no 2 :volume 8}])
+#'user/cans
+user> 
+(def containerized
+  (let [containers (map #(assoc % :capacity (:volume %) :cans []) container)
+        insert (fn [container can]
+                 (-> container
+                     (update-in [:capacity] - (:volume can))
+                     (update-in [:cans] conj can)))
+        accumulator (fn [[filled filling] can]
+                      (let [[non-fits [picked & unpicked]]
+                            (split-with #(< (:capacity %)
+                                            (:volume can))
+                                        (sort-by :capacity filling))
+                           picked (insert picked can)
+                           still-filling (concat non-fits unpicked)]
+                        (if (<= (:capacity picked) 0)
+                          [(conj filled picked) still-filling]
+                          [filled (conj still-filling picked)])))
+        filled (reduce accumulator
+                       [[] containers]
+                       cans)]
+    (map #(dissoc % :capacity) (apply concat filled))))
+
+#'user/containerized
+user> (clojure.pprint/pprint containerized)
+({:cans [{:volume 2, :no 1} {:volume 8, :no 2}], :volume 10, :no 1}
+ {:cans [{:volume 5, :no 1} {:volume 8, :no 2}], :volume 20, :no 2})
+nil

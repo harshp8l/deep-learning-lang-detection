@@ -1,0 +1,19 @@
+def andFlows[I, O, O2] (maxConcurrentSreams : Int)
+                       (flow1: Flow[I, O, NotUsed], flow2: Flow[I, O2, NotUsed])
+                       (implicit mat : Materializer, ec : ExecutionContext) : Flow[I, (O, O2), _] = 
+  Flow[I].mapAsync(maxConcurrentStreams){ i =>
+
+    val o  : Future[O]  = Source
+                           .single(i)
+                           .via(flow1)
+                           .to(Sink.head[O])
+                           .run()
+
+    val o2 : Future[O2] = Source
+                           .single(i)
+                           .via(flow2)
+                           .to(Sink.head[O2])
+                           .run()
+
+    o zip o2
+  }//end Flow[I].mapAsync

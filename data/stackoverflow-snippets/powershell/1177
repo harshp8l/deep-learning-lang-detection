@@ -1,0 +1,18 @@
+$Computers = Get-Content -Path C:\computers.txt
+
+foreach ($Computer in $Computers) {
+Copy-Item -Path C:\install.exe -Destination \\$Computer\c$\Windows\Temp\install.exe
+}
+
+$Script =
+@""
+# Write down your installation script here
+& C:\install.exe /silent
+Set-ItemProperty -Path HKLM:\SOFTWARE\Install -Name Setting -Value 1 -Type DWord
+""@
+
+$ScriptBlock = [Scriptblock]::Create($Script)
+
+
+$PSSession = New-PSSession -ComputerName $Computers -SessionOption (New-PSSessionOption -NoMachineProfile)
+Invoke-Command -Session $PSSession -ScriptBlock $ScriptBlock

@@ -1,0 +1,158 @@
+import { Directive, ElementRef, NgZone, Input, ContentChildren, QueryList } from '@angular/core';
+
+import { TabPanel } from 'primeng/primeng';
+
+import { interval } from 'rxjs/observable/interval';
+import { of } from 'rxjs/observable/of';
+import { fromEvent } from 'rxjs/observable/fromEvent';
+import { Subject } from 'rxjs/Subject';
+import { takeUntil } from 'rxjs/operators/takeUntil';
+import { mergeMap } from 'rxjs/operators/mergeMap';
+import { take } from 'rxjs/operators/take';
+import { delay } from 'rxjs/operators/delay';
+
+import 'rxjs/add/observable/fromEvent';
+import 'rxjs/add/observable/of';
+
+@Directive({
+  selector: '[tabScroller]',
+})
+export class TabScrollerDirective {
+
+  @Input() arrowWidth = 30;
+  @Input() shiftWidth = 25;
+
+  @ContentChildren(TabPanel) tabPanels: QueryList<TabPanel>;
+
+  private _container: HTMLElement;
+  private _nav: HTMLElement;
+
+  private _shift = 0;
+  private _scrollable: boolean;
+
+  private _leftArrow: HTMLElement;
+  private _rightArrow: HTMLElement;
+
+  private readonly _destroyed$ = new Subject<void>();
+
+  constructor(
+    private elRef: ElementRef,
+    private zone: NgZone) { }
+
+  get rightBorder() {
+    return -(this._nav.scrollWidth - this._nav.offsetWidth);
+  }
+
+  ngAfterContentInit() {
+    this.tabPanels.changes
+      .pipe(takeUntil(this._destroyed$))
+      .subscribe(() => {
+          this.zone.onStable.asObservable()
+            .pipe(take(1))
+            .subscribe(() => this._refreshScroller());
+        })
+  }
+
+  ngAfterViewInit() {
+    this.zone.runOutsideAngular(() => this.init());
+  }
+
+  init() {
+    this._nav = this.elRef.nativeElement.querySelector('[role=tablist]');
+    this._container = wrap(this._nav, 'nav-wrapper');
+
+    this._initEvents();
+
+    this._leftArrow = this._createArrow('left');
+    this._rightArrow = this._createArrow('right');
+
+    this._refreshScroller();
+  }
+
+  scroll(shift: number) {
+    this._shift += shift;
+
+    const rightBorder = this.rightBorder;
+    if (this._shift < rightBorder) {
+      this._shift = rightBorder;
+    }
+    if (this._shift >= 0) {
+      this._shift = 0;
+    }
+
+    this._leftArrow.classList.toggle('nav-arrow--disabled', this._shift >= 0);
+    this._rightArrow.classList.toggle('nav-arrow--disabled', this._shift <= rightBorder);
+
+    this._nav.style.transform = `translateX(${this._shift}px)`;
+  }
+
+  ngOnDestroy() {
+    this._destroyed$.next();
+    this._destroyed$.complete();
+  }
+
+  private _initEvents() {
+    fromEvent(this._container, 'mousewheel')
+      .pipe(takeUntil(this._destroyed$))
+      .subscribe((e: any) => this._onMouseWheel(e));
+    // Firefox
+    fromEvent(this._container, 'DOMMouseScroll')
+      .pipe(takeUntil(this._destroyed$))
+      .subscribe((e: any) => this._onMouseWheel(e));
+    fromEvent(window, 'resize')
+      .pipe(takeUntil(this._destroyed$))
+      .subscribe(() => {
+        this._refreshScroller();
+      });
+  }
+
+  private _onMouseWheel(e: any) {
+    const delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+    this.scroll(delta * 25);
+  }
+
+  private _createArrow(direction: string) {
+    const arrow = el(`nav-arrow nav-arrow--${direction}`);
+    this._container.insertBefore(arrow, this._nav);
+    arrow.style.width = this.arrowWidth + 'px';
+    fromEvent(arrow, 'click')
+      .pipe(takeUntil(this._destroyed$))
+      .subscribe(() => {
+        this.scroll(direction === 'left' ? this.shiftWidth : -this.shiftWidth);
+      });
+
+    const upStream$ = fromEvent(arrow, 'mouseup');
+    // handle long press
+    fromEvent(arrow, 'mousedown')
+      .pipe(
+        takeUntil(this._destroyed$),
+        mergeMap((event) => interval(100).pipe(delay(100), takeUntil(upStream$)))
+      )
+      .subscribe(() => {
+        this.scroll(direction === 'left' ? this.shiftWidth : -this.shiftWidth);
+      });
+
+    return arrow;
+  }
+
+  private _refreshScroller() {
+    const compareWith = (this._scrollable ? -this.arrowWidth * 2 : 0);
+    this._container.classList.toggle('nav-wrapper--scrollable', this.rightBorder < compareWith);
+    this._scrollable = this.rightBorder < compareWith;
+    this.scroll(0);
+  }
+}
+
+
+function wrap(elem, wrapperClass: string) {
+  const wrapper = el('nav-wrapper');
+  elem.parentNode.insertBefore(wrapper, elem);
+  wrapper.appendChild(elem);
+  return wrapper;
+}
+
+function el(className: string): HTMLElement {
+  const div = document.createElement('div');
+  div.className = className;
+  return div;
+}

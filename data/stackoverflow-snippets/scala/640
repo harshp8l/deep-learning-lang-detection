@@ -1,0 +1,50 @@
+import org.apache.flink.types.Row
+import org.apache.flink.streaming.api.TimeCharacteristic
+import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
+import org.apache.flink.table.api.TableEnvironment
+import org.apache.flink.table.sources.CsvTableSource
+import org.apache.flink.api.common.typeinfo.Types
+
+object CepTest2 {
+
+  def main(args: Array[String]) {
+
+    println(""Start ..."")
+
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
+
+    //val tableEnv = StreamTableEnvironment.getTableEnvironment(env)
+    val tableEnv = TableEnvironment.getTableEnvironment(env)
+
+    val csvtable = CsvTableSource
+      .builder
+      .path(""/home/esa/Log_EX1_gen_track_5.csv"")
+      .ignoreFirstLine
+      .fieldDelimiter("","")
+      .field(""time"", Types.INT)
+      .field(""id"", Types.STRING)
+      .field(""sources"", Types.STRING)
+      .field(""targets"", Types.STRING)
+      .field(""attr"", Types.STRING)
+      .field(""data"", Types.STRING)
+      .build
+
+    tableEnv.registerTableSource(""test"", csvtable)
+
+    val tableTest = tableEnv.scan(""test"").where(""id='5'"").select(""id,sources,targets"")
+
+    val stream = tableEnv.toAppendStream[Row](tableTest)
+
+    stream.print
+    env.execute()
+  }
+}
+
+
+Error:(56, 46) could not find implicit value for evidence parameter of type org.apache.flink.api.common.typeinfo.TypeInformation[org.apache.flink.types.Row]
+    val stream = tableEnv.toAppendStream[Row](tableTest)
+
+Error:(56, 46) not enough arguments for method toAppendStream: (implicit evidence$3: org.apache.flink.api.common.typeinfo.TypeInformation[org.apache.flink.types.Row])org.apache.flink.streaming.api.scala.DataStream[org.apache.flink.types.Row].
+Unspecified value parameter evidence$3.
+    val stream = tableEnv.toAppendStream[Row](tableTest)

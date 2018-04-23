@@ -1,0 +1,30 @@
+template <typename F>
+class Finally {
+public:
+    Finally(F f) : f{f} {}
+    Finally(const Finally&) = delete;
+    Finally& operator=(const Finally&) = delete;
+
+    ~Finally() noexcept {
+        try {
+            f();
+        } catch (...) {
+            std::cerr << ""Exception during stack unwinding"" << std::endl;
+        }
+    }
+private:
+    F f;
+};
+
+template <typename F>
+decltype(auto) debugOpengl(const char* name, F&& f)
+{
+    Finally finally{[name](){
+        GLenum err;
+        while((err = glGetError()) != GL_NO_ERROR) {
+        {
+            std::cerr << ""OpenGL Error: "" << name << "" "" << err << std::endl;
+        }
+    }};
+    return f();
+}

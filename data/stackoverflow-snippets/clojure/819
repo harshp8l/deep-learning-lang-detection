@@ -1,0 +1,9 @@
+(defn wrap-history 
+  ""Middleware that stores last 20 visited urls in session""
+  [handler]                                                                   
+  (fn [req]                                                                                                                                                               
+    (let [resp (handler req)                                                                                                                                              
+          session (or (:session resp) (:session req))                                                                                                                     
+          updated-session (assoc session :history                                                                                                                         
+                                 (vec (take-last 20 (concat (:history session) [(request/request-url req)]))))]                                                           
+      (assoc resp :session updated-session))))                                                               

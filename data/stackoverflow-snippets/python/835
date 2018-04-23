@@ -1,0 +1,26 @@
+class StationQuerySet(models.QuerySet):
+
+    def nearest_neighbour(self):
+        '''
+        Creates a RawQuerySet of each station with the id and distance of the nearest neighbouring station
+        '''
+        # Have to execute the query in order to get the list of ids to inject
+        ids = tuple(self.values('id').values_list('id', flat=True))
+
+        return self.raw('''
+               SELECT
+                 A0.id   as id,
+                 SUB.closest_id,
+                 SUB.closest_distance
+               FROM ""bikeshare_station"" A0
+                 CROSS JOIN LATERAL (
+                            SELECT
+                              B0.id   as closest_id,
+                              st_distance_sphere(A0.location, B0.location) as closest_distance
+                            FROM ""bikeshare_station"" B0
+                            WHERE A0.id != B0.id
+                            ORDER BY A0.location <-> B0.location
+                            limit 1
+                            ) SUB
+               WHERE A0.id IN %s;
+           ''', [ids])

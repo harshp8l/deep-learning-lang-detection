@@ -1,0 +1,38 @@
+#include <unordered_map>
+#include <boost/optional.hpp>
+#include <iostream>
+#include <string>
+
+template<class K, class V, class H, class E, class A, class Lookup>
+auto 
+maybe_at(std::unordered_map<K,V,H,E,A> const& m, Lookup&& key)
+-> boost::optional<V const&>
+{
+    boost::optional<V const&> result;
+    auto i = m.find(key);
+    if (i != m.end())
+        result = i->second;
+    return result;
+}
+
+void emit(boost::optional<const int&> oi)
+{
+    if (oi)
+    {
+        std::cout << *oi << std::endl;
+    }
+    else
+    {
+        std::cout << ""{null}"" << std::endl;
+    }
+}
+
+int main()
+{
+    std::unordered_map<std::string, int> m;
+
+    m[""house""] = 0;
+
+    emit(maybe_at(m, ""house""));
+    emit(maybe_at(m, ""donkey""));
+}

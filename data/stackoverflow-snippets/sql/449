@@ -1,0 +1,17 @@
+select p.id, p.name, p.short_description, c.short_name, i.url
+from products_product p
+left join
+(
+  select distinct on (pcat.product_id) pcat.product_id, cat.short_name
+  from products_product_categories pcat
+  join categories_category cat on cat.id = pcat.category_id
+  order by pcat.product_id, cat.id
+) c on c.product_id = p.id
+left join
+(
+  select distinct on (product_id) product_id, url
+  from products_productimage
+  order by product_id, order
+) i on i.product_id = p.id
+where p.is_active
+order by p.id;

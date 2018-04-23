@@ -1,0 +1,30 @@
+//Read visited paths from session or create a new list. 
+//?? works only in PHP7+. Use isset()?: instead of ?? for previous versions
+$visitedPaths = $_SESSION['visitedPaths'] ?? [];
+
+//Your list, just slightly changed syntax. Same thing
+$randomList = [
+    ""/review/review-a1.php"",
+    ""/review/review-a2.php"",
+    ""/review/review-a3.php"",
+    ""/review/review-a4.php""
+];
+
+//Remove all paths that were already visited from the randomList
+$randomList = array_diff($randomList, $visitedPaths);
+
+//You need to check now if there are paths left
+if (!empty($randomList)) {
+    //The user did not load all files, so we can show him the next one
+    //Use array_rand() rather than $array[rand(0, count($array) -1)]
+    $randomPath = array_rand($randomList);
+    readfile($_SERVER['DOCUMENT_ROOT'] . $randomPath);
+
+    //Now we need to save, that the user loaded this file
+    $visitedPaths[] = $randomPath;
+
+    //And we need to save the new list in the session
+    $_SESSION['visitedPaths'] = $visitedPaths;
+} else {
+    //TODO: Add some logic in case all paths have been visited
+}

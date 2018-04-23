@@ -1,0 +1,40 @@
+$Form = New-Object System.Windows.Forms.Form
+$Form.Text = ""Form1""
+$Form.Size = New-Object System.Drawing.Size(600, 300)
+
+$TreeView = New-Object System.Windows.Forms.TreeView
+$TreeView.Location = New-Object System.Drawing.Point(12, 12)
+$TreeView.Size = New-Object System.Drawing.Size(500, 200)
+$Form.Controls.Add($TreeView)
+
+$rootNode = New-Object System.Windows.Forms.TreeNode
+$rootNode.text = ""Root""
+$rootNode.name = ""RootName""
+[void]$TreeView.Nodes.Add($rootNode)
+
+for ($i=0; $i -lt 6; $i++) {
+    $subNode = New-Object System.Windows.Forms.TreeNode
+    $subNode.text = ""Node{0}"" -f $i
+    $subNode.name = ""NodeName{0}"" -f $i
+    [void]$rootNode.Nodes.Add($subNode)
+}
+
+$ctxMenu = New-Object System.Windows.Forms.ContextMenu
+$ctxCreateSiteMenuItem = New-Object System.Windows.Forms.MenuItem
+$ctxCreateSiteMenuItem.Text = ""Create a site""        
+$ctxCreateSiteMenuItem.add_Click({ param($sender, $eargs)
+    Write-Host ""SelectedNode: $global:selectedNode""
+})
+$ctxMenu.MenuItems.AddRange(@($ctxCreateSiteMenuItem))
+
+$TreeView.ContextMenu = $ctxMenu
+
+$TreeView.add_NodeMouseClick({ param($sender, $eargs)
+    $global:selectedNode = $eargs.Node
+})
+
+$rootNode.Expand()
+
+# Show Form // this always needs to be at the bottom of the script!
+$Form.Add_Shown({$Form.Activate()})
+[void] $Form.ShowDialog()

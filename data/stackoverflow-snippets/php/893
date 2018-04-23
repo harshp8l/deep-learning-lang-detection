@@ -1,0 +1,46 @@
+<video width=""256"" height=""192""  id=""myVideo"" controls autoplay>
+    <source src="""" id=""mp4Source"" type=""video/mp4"">
+    Your browser does not support the video tag.
+</video>
+
+<script type=""text/javascript"">
+    var i = 0;
+    var videoCount = 0;
+    var player = document.getElementById('myVideo');
+    var mp4Vid = document.getElementById('mp4Source');
+    var arr_video = new Array();
+
+    $.ajax({
+        url:'video_selection.php',
+        type:'POST',
+        dataType:'json',
+        data: {'user_id1':user_id1,'video_id':video_id},
+        success: function (data) {
+            if (data != 'undefined') {
+                arr_video = data;
+                videoCount = arr_video.length;              
+                videoPlay(0);
+                player.addEventListener('ended', myHandler, false);
+            }
+        }
+    });
+
+     // Set video source and start autoplay     
+    function videoPlay(num) {
+        $(mp4Vid).attr('src', ""/uploads/"" + arr_video[num]);
+        player.load();
+        player.play();
+   }
+
+   // Continuously play videos one after another
+   function myHandler() {
+    i++;
+    if(i == (videoCount - 1)){
+        i = 0;
+        videoPlay(i);
+    }
+    else{
+        videoPlay(i);
+    }
+   }
+</script>

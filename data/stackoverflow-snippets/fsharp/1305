@@ -1,0 +1,26 @@
+type Age =
+| PossiblyAlive of int
+| NotAlive
+
+type AgeBuilder() =
+    let reasonableAge (x:int) = x >= 0 && x <= 120
+
+    member __.Return x = 
+        if reasonableAge x then PossiblyAlive x else NotAlive
+
+    member __.Bind(x:Age, f) =
+        match x with
+        | PossiblyAlive x when reasonableAge x -> f x
+        | _ -> NotAlive
+
+    member this.Bind(x:int, f) =
+        this.Bind(this.Return(x), f)
+
+let age = new AgeBuilder()
+
+let willBeThere (a:int) (y:int) =
+    age { 
+        let! current = a
+        let! future = (current + y)
+        return future
+    }

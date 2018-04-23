@@ -1,0 +1,37 @@
+import java.net.URL
+
+trait MessagingClient {
+  type BrokerLocation
+  def connect(broker: BrokerLocation)
+  def sendMessage(targetNodeAddress: Long, msg: Any)
+}
+
+class KafkaMessaging extends MessagingClient {
+  type BrokerLocation = URL
+  override def connect(broker: URL): Unit = ???
+  override def sendMessage(targetNodeAddress: Long, msg: Any): Unit = ???
+}
+
+abstract class ClusterNode { self =>
+  type BrokerLocation // type is declared
+
+  // (*) Coherence is enforced
+  val messagingClient: MessagingClient { type BrokerLocation = self.BrokerLocation }
+
+  def startNode(brokerLocation: BrokerLocation): Unit = {
+    messagingClient.connect(brokerLocation)
+  }
+}
+
+object Test {
+  def main(args: Array[String]): Unit = {
+    val msgCl = new KafkaMessaging
+    // (**)
+    val clusterNode = new ClusterNode {
+      type BrokerLocation = URL
+      val messagingClient = msgCl
+    }
+    val brokerLocation = new URL(""http://1.2.3.4:666"")
+    clusterNode.startNode(brokerLocation)
+  }
+}

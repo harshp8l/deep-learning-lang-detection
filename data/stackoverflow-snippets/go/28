@@ -1,0 +1,24 @@
+type Post struct {
+    Title string            `yaml:""title"" json:""title""`
+    Body  string            `yaml:""body"" json:""body""`
+    Tags  map[string]string `yaml:""tags"" json:""-""` // handled by Post.MarshalJSON
+}
+
+func (p Post) MarshalJSON() ([]byte, error) {
+    // Turn p into a map
+    type Post_ Post // prevent recursion
+    b, _ := json.Marshal(Post_(p))
+
+    var m map[string]json.RawMessage
+    _ = json.Unmarshal(b, &m)
+
+    // Add tags to the map, possibly overriding struct fields
+    for k, v := range p.Tags {
+        // if overriding struct fields is not acceptable:
+        // if _, ok := m[k]; ok { continue }
+        b, _ = json.Marshal(v)
+        m[k] = b
+    }
+
+    return json.Marshal(m)
+}

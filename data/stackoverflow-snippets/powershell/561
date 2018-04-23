@@ -1,0 +1,37 @@
+$ErrorActionPreference = ""Stop""
+Set-StrictMode -Version Latest
+
+$sourceDir = ""c:\temp\source""
+$targetDir = ""c:\temp\target""
+
+$skipFiles = @(
+    ""skip.me"",
+    ""and.me""
+)
+
+Get-ChildItem -Path $sourceDir -Recurse | ForEach-Object {
+    # ignore folders
+    if ($_.PSIsContainer)
+    {
+        return
+    }
+
+    # skip this file?
+    if ($skipFiles -contains $_.Name)
+    {
+        Write-Verbose ""Skipping '$_.FullName'""
+        return
+    }
+
+    # create target folder when needed
+    $path = $_.DirectoryName -replace ""^$([RegEx]::Escape($sourceDir))"",$targetDir
+    if (!(Test-Path $path))
+    {
+        Write-Verbose ""Creating target path '$path'...""
+        New-Item -Path $path -ItemType Directory
+    }
+
+    # copy the file
+    Write-Verbose ""Copying '$_.FullName' to '$path'...""
+    Copy-Item $_.FullName $path | Out-Null
+}

@@ -1,0 +1,63 @@
+import React from ""react"";
+import { FormGroup, ControlLabel, FormControl } from ""react-bootstrap"";
+
+const genderList = [
+  { id: 1, name: ""male"" },
+  { id: 2, name: ""female"" },
+  { id: 3, name: ""other"" }
+];
+
+// mimicing API request
+const getGender = () =>
+  new Promise(resolve =>
+    setTimeout(() => {
+      resolve(genderList);
+    }, 1000)
+  );
+
+class FormExample extends React.Component {
+  state = {
+    gender: """",
+    genderCat: []
+  };
+
+  componentDidMount() {
+    getGender().then(data =>
+        this.setState({ genderCat: data, gender: data[ 0 ].name }));
+  }
+
+  handleChange = e => {
+    this.setState({ [e.target.name]: e.target.value });
+  };
+
+  createOptions = () =>
+    this.state.genderCat.length
+      ? this.state.genderCat.map(data => (
+          <option key={data.id} value={data.name}>
+            {data.name}
+          </option>
+        ))
+      : """";
+
+  render() {
+    return (
+      <form>
+        <p>
+          Selected gender: <strong>{this.state.gender}</strong>
+        </p>
+        <FormGroup controlId=""formControlsSelect"">
+          <ControlLabel>Select</ControlLabel>
+          <FormControl
+            name=""gender""
+            componentClass=""select""
+            onChange={this.handleChange}
+          >
+            {this.createOptions()}
+          </FormControl>
+        </FormGroup>
+      </form>
+    );
+  }
+}
+
+export default FormExample;

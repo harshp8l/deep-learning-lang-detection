@@ -1,0 +1,34 @@
+package main
+
+import (
+    ""sync""
+    ""time""
+
+    ""github.com/davecgh/go-spew/spew""
+)
+
+func callbackWithTimeout(cbFunc func() ([]byte, error), timeout time.Duration) {
+    time.Sleep(timeout)
+    d, e := cbFunc()
+    spew.Dump(d)
+    spew.Dump(e)
+}
+
+func main() {
+    var wg sync.WaitGroup
+
+    wg.Add(1)
+
+    go func() {
+        defer wg.Done() // move it here
+        cbFunc := func() ([]byte, error) {
+            //I feel like I should be able to defer here instead
+            return nil, nil
+        }
+        callbackWithTimeout(cbFunc, time.Duration(4*time.Second))
+    }()
+
+    println(""some line"")
+
+    wg.Wait()
+}

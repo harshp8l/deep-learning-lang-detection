@@ -1,0 +1,35 @@
+#!/bin/bash
+
+declare -a datetimes
+declare -A filesize
+declare -A dir
+declare -A testtype
+declare -A speed
+
+# extract parameters with regex from the input file
+while read -r line; do
+    if [[ ""$line"" =~ ^([0-9]+-[0-9]+-[0-9]+-[0-9]+-[0-9]+-[0-9]+)$ ]]; then
+        datetime=""${BASH_REMATCH[1]}""
+        datetimes+=($datetime)
+    elif [[ ""$line"" =~ ^File\ Size\ +([[:alnum:]]+)$ ]]; then
+        filesize[$datetime]=""${BASH_REMATCH[1]}""
+    elif [[ ""$line"" =~ ^dir\ +([^[:blank:]]+)$ ]]; then
+        dir[$datetime]=""${BASH_REMATCH[1]}""
+    elif [[ ""$line"" =~ ^(.*TEST.*)\ +==\>\ +([0-9]+.+)$ ]]; then
+        test=""${BASH_REMATCH[1]}""
+        testtype[$datetime]+=""${test},""
+        speed[$datetime,$test]=""${BASH_REMATCH[2]}""
+    fi
+done < textfile
+
+# report the results in csv format
+printf ""%s,%s,%s,%s,%s\n"" ""Date-time"" ""Filename (being tested)"" ""Filesize"" ""Test type"" ""Speed""
+for d in ${datetimes[@]}; do
+    test=""${testtype[$d]}""
+    ifs_b=""$IFS""
+    IFS=,
+    for t in $test; do
+        printf ""%s,%s,%s,%s,%s\n"" ""$d"" ""${dir[$d]}"" ""${filesize[$d]}"" ""$t"" ""${speed[$d,$t]}""
+    done
+    IFS=""$ifs_b""
+done

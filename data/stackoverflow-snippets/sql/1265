@@ -1,0 +1,64 @@
+SELECT 
+    CCN,
+    [Date],
+    A_Start,
+    A_Stop,
+    B_Start,
+    B_Stop,
+    Facility,
+    Module,
+    TimeGroup,
+    TimeGroupValues
+FROM
+    (
+    SELECT DISTINCT
+        mpd.ccn AS CCN,
+        mpd.date AS [Date],
+        [functionAStartTime] AS A_Start,
+        [functionAStopTime] AS A_Stop,
+        [functionBStartTime] AS B_Start,
+        [functionBStopTime] AS B_Stop,
+        mpd.fac AS Facility,
+        bmpi.mod AS Module,
+        CASE 
+            WHEN [functionAStartTime] <= '05:59' AND [functionAStopTime] >= '00:00' 
+            THEN 'A' 
+            WHEN [functionBStartTime] <= '05:59' AND [functionBStopTime] >= '00:00' 
+            THEN 'A' 
+            END AS TimeGroupA,
+        CASE 
+            WHEN [functionAStartTime] <= '11:59' AND [functionAStopTime] >= '06:00' 
+            THEN 'B' 
+            WHEN [functionBStartTime] <= '11:59' AND [functionBStopTime] >= '06:00' 
+            THEN 'B' 
+            END AS TimeGroupB,
+        CASE 
+            WHEN [functionAStartTime] <= '17:59' AND [functionAStopTime] >= '12:00' 
+            THEN 'C' 
+            WHEN [functionBStartTime] <= '17:59' AND [functionBStopTime] >= '12:00' 
+            THEN 'C' 
+            END AS TimeGroupC,
+        CASE 
+            WHEN [functionAStartTime] <= '23:59' AND [functionAStopTime] >= '18:00' 
+            THEN 'D'
+            WHEN [functionBStartTime] <= '23:59' AND [functionBStopTime] >= '18:00' 
+            THEN 'D' 
+            END AS TimeGroupD
+    FROM
+        bmpi
+    JOIN
+        mpd
+    ON
+        mpd.pid = bmpi.pid
+    AND 
+        mpd.cec = bmpi.cec
+    ) AS u
+    UNPIVOT
+        (TimeGroup FOR TimeGroupValues IN
+            (
+                TimeGroupA, 
+                TimeGroupB, 
+                TimeGroupC, 
+                TimeGroupD
+            )
+        ) AS p

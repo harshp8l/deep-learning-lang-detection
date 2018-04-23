@@ -1,0 +1,122 @@
+public ActionResult SowReport(int? pagenumber)
+    {
+        var modeldata = new SOW_POPivotModel();
+        int currentPageIndex = pagenumber - 1 ?? 0;
+        // Pivot Result Set
+        **Code Where I have Fetched Stored Procedure Data Into A DataTable**
+        var lstSow = objPagedList.LoadSOW_POReport(pageIndex: currentPageIndex, pageSize: 10);
+
+        var dynamicData = new DataTable();
+
+        if (lstSow.Count > 0)
+        {
+            var firstRowOnly = lstSow.FirstOrDefault();
+            // Add Columns
+            if (firstRowOnly != null)
+                foreach (var addcol in firstRowOnly.Keys)
+                {
+                    dynamicData.Columns.Add(addcol.ToString());
+                }
+
+            // Add Rows
+            foreach (var data in lstSow)
+            {
+                DataRow dr = dynamicData.NewRow();
+                dr.ItemArray = data.Select(x => (x.Value != DBNull.Value || x.Value != null) ? x.Value : 0).ToArray();  //(row.Value == DBNull.Value || row.Value == null) ? """" : row.Value.ToString();
+                dynamicData.Rows.Add(dr);
+            }
+        }
+        var lst = new List<SOW_POPivotModel>();
+
+        if (dynamicData.Rows.Count > 0)
+        {
+            var dynamicMonths = new List<string>();
+            var firstRowOnly = lstSow.FirstOrDefault();
+            if (firstRowOnly != null)
+                foreach (var addcol in firstRowOnly.Keys)
+                {
+                    if (addcol.Trim().ToLower().ToString() != ""client""
+                        && addcol.Trim().ToLower().ToString() != ""salesrepresentative""
+                        && addcol.Trim().ToLower().ToString() != ""sow""
+                        && addcol.Trim().ToLower().ToString() != ""us""
+                        && addcol.Trim().ToLower().ToString() != ""sowvalue""
+                        && addcol.Trim().ToLower().ToString() != ""sowhours""
+                        && addcol.Trim().ToLower().ToString() != ""task""
+                        && addcol.Trim().ToLower().ToString() != ""ponumber""
+                        && addcol.Trim().ToLower().ToString() != ""status""
+                        && addcol.Trim().ToLower().ToString() != ""startdate""
+                        && addcol.Trim().ToLower().ToString() != ""enddate""
+                        && addcol.Trim().ToLower().ToString() != ""rate""
+                        && addcol.Trim().ToLower().ToString() != ""totalamountleft""
+                        && addcol.Trim().ToLower().ToString() != ""totalhoursleft""
+                        && addcol.Trim().ToLower().ToString() != ""sowid"")
+                    {
+                        if (dynamicMonths.All(x => x.Trim().ToLower() != addcol.Trim().Substring(1)))
+                            dynamicMonths.Add(addcol.Trim().Substring(1));
+                    }
+
+                    dynamicMonths = dynamicMonths.Distinct().ToList();
+                }
+
+            foreach (var row in dynamicData.AsEnumerable())
+            {
+                var cell = new SOW_POPivotModel();
+                cell.MonthColumnsWithAmountAndHours = dynamicMonths.Select(a => new DynamicColumnModel()
+                {
+                    Month = a
+                }).ToList();
+
+                cell.SOWHours = row.IsNull(""SOWHours"") ? 0 : Convert.ToDouble(row[""SOWHours""]);
+                cell.SOWValue = row.IsNull(""SOWValue"") ? 0 : Convert.ToDouble(row[""SOWValue""].ToString());
+                cell.StartDate = row.IsNull(""StartDate"") ? """" : Convert.ToDateTime(row[""StartDate""]).ToString(""yyyy-MM-dd"");
+                cell.Status = row.IsNull(""Status"") ? """" : row[""Status""].ToString();
+                cell.Task = row.IsNull(""Task"") ? """" : row[""Task""].ToString();
+                cell.TotalAmountLeft = row.IsNull(""TotalAmountLeft"") ? 0 : Convert.ToDouble(row[""TotalAmountLeft""].ToString());
+                cell.TotalHoursLeft = row.IsNull(""TotalHoursLeft"") ? 0 : Convert.ToDouble(row[""TotalHoursLeft""].ToString());
+                cell.US = row.IsNull(""US"") ? """" : row[""US""].ToString();
+                cell.SOWId = row.IsNull(""SOWId"") ? 0 : Convert.ToInt32(row[""SOWId""].ToString());
+
+                if (lst.All(x => x.SOWId != cell.SOWId))
+                {
+                    foreach (var monthvalue in cell.MonthColumnsWithAmountAndHours)
+                    {
+                        if (!row.IsNull(""A"" + monthvalue.Month))
+                        {
+                            monthvalue.Amount = Convert.ToDouble(row[""A"" + monthvalue.Month].ToString());
+                        }
+
+                        if (!row.IsNull(""H"" + monthvalue.Month))
+                        {
+                            monthvalue.Hours = Convert.ToDouble(row[""H"" + monthvalue.Month].ToString());
+                        }
+                    }
+
+                    lst.Add(cell);
+                }
+                else
+                {
+                    var prevAdded = lst.FirstOrDefault(x => x.SOWId == cell.SOWId);
+                    if (prevAdded != null)
+                    {
+                        foreach (var monthvalue in prevAdded.MonthColumnsWithAmountAndHours)
+                        {
+                            if (!row.IsNull(""A"" + monthvalue.Month))
+                            {
+                                monthvalue.Amount += Convert.ToDouble(row[""A"" + monthvalue.Month].ToString());
+                            }
+
+                            if (!row.IsNull(""H"" + monthvalue.Month))
+                            {
+                                monthvalue.Hours += Convert.ToDouble(row[""H"" + monthvalue.Month].ToString());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        var model = new SOW_POReportModel();
+        model.List = lst;
+        model.LoadPagedList(lstSow);
+        return View(model);
+    }

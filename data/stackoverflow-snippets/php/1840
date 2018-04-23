@@ -1,0 +1,43 @@
+function my_search()
+{
+    $args = array(
+        'search'                => strtolower($_GET['term']),
+        'taxonomy'              => array('suggestion_string'),
+        'orderby'               => 'name',
+        'order'                 => 'ASC',
+        'hide_empty'            => false,
+        'number'                => 10,
+    );
+    $search_query = new WP_Term_Query($args);
+    $results = array( );
+    if ( $search_query->get_terms() ) {
+        foreach($search_query->get_terms() as $term) { 
+            $results[] = array(
+                'label' => $term->name,
+            );
+        }
+    }
+    else {
+
+    }
+
+    $filtered = [];
+    $existing = [];
+    if(strlen($_GET['term'])<2) {
+         foreach($results as $term) {
+              $first_word = explode("" "",$term[""label""])[0];
+              if(!in_array($first_word,$existing) {
+                    array_push($existing,$first_word);
+                    $filtered[] = $term;
+              }
+         }
+    } else {
+         $filtered = $results;
+    }
+
+    $data = json_encode($results);
+    echo html_entity_decode( $data );
+    exit();
+}
+add_action( 'wp_ajax_my_search', 'my_search' );
+add_action( 'wp_ajax_nopriv_my_search', 'my_search' );

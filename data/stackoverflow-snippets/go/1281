@@ -1,0 +1,23 @@
+type isbn string
+
+func (s *isbn) UnmarshalJSON(buf []byte) error {
+    // Read numeric characters only from raw JSON input. This will handle strings, numbers or null etc and strip any
+    // optional separators.
+    out := make([]byte, 0, len(buf))
+    for _, b := range buf {
+        if b >= '0' && b <= '9' {
+            out = append(out, b)
+        }
+    }
+
+    // Validate ISBN (assuming not using old 10 digit ISBN)
+    l := len(out)
+    if l != 13 {
+        return errors.New(""Invalid ISBN length"")
+    }
+    // Calculate check digit and ensure valid.
+
+    // Create formatted output. This assumes 13 characters for simplicity
+    *s = isbn(fmt.Sprintf(""%s-%s-%s-%s-%s"", out[:3], out[3:4], out[4:9], out[9:12], out[12:]))
+    return nil
+}

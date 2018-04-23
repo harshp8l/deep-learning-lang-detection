@@ -1,0 +1,21 @@
+array = Array.new(10) { rand(0.5..2.0) }
+
+Benchmark.bm do |bm|
+  bm.report { 1_000_000.times { array.reduce(:+).to_f / array.size } }
+  bm.report { 1_000_000.times { array.sum / array.size.to_f } }
+  bm.report { 1_000_000.times { array.sum.fdiv(array.size) } }
+  bm.report { 1_000_000.times { array.inject(0.0) { |sum, el| sum + el }.to_f / array.size } }
+  bm.report { 1_000_000.times { array.instance_eval { reduce(:+) / size.to_f } } }
+  bm.report { 1_000_000.times { array.reduce(:+).try(:to_f).try(:/, array.size) } }
+  bm.report { 1_000_000.times { array.reduce([ 0.0, 0 ]) { |(s, c), e| [ s + e, c + 1 ] }.reduce(:/) } }
+end
+
+
+    user     system      total        real
+0.760000   0.000000   0.760000   (0.760353)
+0.870000   0.000000   0.870000   (0.876087)
+0.900000   0.000000   0.900000   (0.901102)
+0.920000   0.000000   0.920000   (0.920888)
+0.950000   0.000000   0.950000   (0.952842)
+1.690000   0.000000   1.690000   (1.694117)
+1.840000   0.010000   1.850000   (1.845623)

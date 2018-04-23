@@ -1,0 +1,34 @@
+#include <array>
+#include <iostream>
+#include <type_traits>
+
+template <typename, typename>
+struct ptrArray;
+
+template <typename T, std::size_t ... Is>
+struct ptrArray<T, std::index_sequence<Is...>>
+ {
+   std::array<T*, sizeof...(Is)> ap;
+
+   auto & operator= (T (&arr)[sizeof...(Is)])
+    {
+      ((*ap[Is] = arr[Is]), ...);
+
+      return *this;
+    }
+ };
+
+template <typename T0, typename ... Ts>
+ptrArray<T0, std::make_index_sequence<sizeof...(Ts)+1U>>
+   makePtrArray (T0 & t0, Ts & ... ts)
+ { return { { { &t0, &ts... } } }; }
+
+int main ()
+ {
+   int x1, y1, z1;
+   int a[3] {10,20,30};
+
+   makePtrArray(x1, y1, z1) = a;
+
+   std::cout << x1 << ' ' << y1 << ' ' << z1 << std::endl;
+ }

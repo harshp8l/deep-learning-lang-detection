@@ -1,0 +1,33 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+)
+
+var bytes = []byte(`{""key1"": ""val1"", ""key2"": ""val2"", ""key3"": [{""k1"": ""v1""}, {""k2"": ""v2""}]}`)
+
+type myType struct {
+    Key1 string        `json:""key1""`
+    Key2 string        `json:""key2""`
+    Key3 []interface{} `json:""key3""`
+}
+
+func (mt myType) Split() []myType {
+    res := make([]myType, len(mt.Key3))
+
+    for i, k3 := range mt.Key3 {
+        res[i] = myType{Key1: mt.Key1, Key2: mt.Key2, Key3: []interface{}{k3}}
+    }
+
+    return res
+}
+
+func main() {
+    t := &myType{}
+    err := json.Unmarshal(bytes, t)
+    if err != nil {
+        panic(err)
+    }
+    fmt.Printf(""%+v\n"", t.Split())
+}

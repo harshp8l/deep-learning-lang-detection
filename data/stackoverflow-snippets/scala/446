@@ -1,0 +1,26 @@
+import scala.collection._
+import scala.collection.generic.GenericTraversableTemplate
+import scala.language.implicitConversions
+import scala.language.higherKinds
+
+trait Combinable[T] {
+    def combine(other: T): T
+}
+
+implicit def genericCombinable
+  [A, CC[X] <: 
+    GenericTraversableTemplate[X, CC] with 
+    GenTraversable[X] with 
+    TraversableOnce[X]
+  ]
+  (c: CC[A])
+: Combinable[CC[A]] = {
+  new Combinable[CC[A]] {
+    override def combine(other: CC[A]): CC[A] = {
+      val bldr = c.genericBuilder[A]
+      bldr ++= c
+      bldr ++= other
+      bldr.result
+    }
+  }
+}

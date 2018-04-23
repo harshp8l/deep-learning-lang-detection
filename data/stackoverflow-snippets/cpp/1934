@@ -1,0 +1,37 @@
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/register/box.hpp>
+#include <boost/geometry/geometries/register/point.hpp>
+#include <vector>
+#include <random>
+#include <iostream>
+
+namespace bg = boost::geometry;
+namespace bgi = boost::geometry::index;
+
+using key_type = std::pair<double, double>;
+using box_type = std::pair<key_type, key_type>;
+using range_type = std::vector<key_type>;
+
+BOOST_GEOMETRY_REGISTER_POINT_2D(key_type, double, bg::cs::cartesian, first, second)
+BOOST_GEOMETRY_REGISTER_BOX(box_type, key_type, first, second)
+
+int main() {
+    std::mt19937 engine { std::random_device{}() };
+    std::uniform_real_distribution<double> dist(0,1.0);
+
+    range_type data;
+
+    for (int i = 0; i != 1e6; ++i)
+        data.emplace_back(dist(engine), dist(engine));
+
+    using rtree_type = bgi::rtree<key_type, bgi::linear<16> >;
+
+    rtree_type rt(data);
+
+    box_type const roi {{0.33, 0.33}, {0.66,0.66}};
+
+    range_type res;
+    rt.query(bgi::within(roi), std::back_inserter(res));
+
+    std::cout << res.size() << "" results\n"";
+}

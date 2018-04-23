@@ -1,0 +1,23 @@
+; find (f min) by reduce
+(defn min-by-reduce [f coll]
+  (when (seq coll)
+    (reduce (fn [min other]
+                (if (> (f min) (f other))
+                    other
+                    min))
+                  coll)))
+
+; find (f min) by sort-by
+(defn min-by-sort [f coll]
+  (first (sort-by f coll)))
+
+;a  helper function to build a sequence of {:resource x, :priority y} maps
+(defn my-rand-map [length]
+  (map #(hash-map :resource %1 :priority %2) 
+      (take length (repeatedly #(rand-int 200)))
+      (take length (repeatedly #(rand-int 10)))))
+
+; test with 100 items in the seq
+(let [rand-map (my-rand-map 100)]
+ (time (min-by-reduce :resource rand-map))
+ (time (min-by-sort :resource rand-map)))

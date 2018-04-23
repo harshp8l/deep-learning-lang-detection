@@ -1,0 +1,18 @@
+template<class T, class A, class Equivalent>
+auto deduplicated(std::vector<T, A> const& vec, Equivalent&& equivalent) -> std::vector<T, A>
+{
+    auto seen = std::unordered_set<T, std::hash<T>, Equivalent>(vec.size(), std::hash<T>(), std::forward<Equivalent>(equivalent));
+
+    auto result = std::vector<T, A>();
+    result.resize(vec.size());
+
+    auto current = std::begin(vec);
+    while (current != std::end(vec))
+    {
+        if (seen.insert(*current).second)
+        {
+            result.push_back(*current);
+        }
+    }
+    return result;
+}

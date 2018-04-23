@@ -1,0 +1,74 @@
+import javafx.scene.control.ScrollBar;
+import javafx.scene.layout.GridPane;
+
+public class Sliders extends GridPane {
+
+    private static final int MINIMUM = 0;
+    private static final int MAXIMUM = 100;
+
+    private ScrollBar scrollBar1;
+    private ScrollBar scrollBar2;
+    private ScrollBar scrollBar3;
+    private boolean canUpdate = true;
+
+    public Sliders() {
+        scrollBar1 = getTrainingScrollBar(MAXIMUM, (oldValue, newValue) -> handleSliderChange(oldValue, newValue, scrollBar2, scrollBar3));
+        scrollBar2 = getTrainingScrollBar(MINIMUM, (oldValue, newValue) -> handleSliderChange(oldValue, newValue, scrollBar1, scrollBar3));
+        scrollBar3 = getTrainingScrollBar(MINIMUM, (oldValue, newValue) -> handleSliderChange(oldValue, newValue, scrollBar1, scrollBar2));
+        this.add(scrollBar1, 0, 0);
+        this.add(scrollBar2, 0, 1);
+        this.add(scrollBar3, 0, 2);
+    }
+
+    private ScrollBar getTrainingScrollBar(int defaultValue, ScrollBarHandler handler) {
+        ScrollBar scrollBar = new ScrollBar();
+        scrollBar.setMin(MINIMUM);
+        scrollBar.setMax(MAXIMUM);
+        scrollBar.setPrefSize(300, 40);
+        scrollBar.setValue(defaultValue);
+        scrollBar.valueProperty().addListener((observable, oldValue, newValue) -> handler.handle(oldValue, newValue));
+        return scrollBar;
+    }
+
+    private void handleSliderChange(Number oldValue, Number newValue, ScrollBar sb1, ScrollBar sb2) {
+        if (canUpdate) {
+            canUpdate = false;
+            double value = newValue.doubleValue() - oldValue.doubleValue();
+            if (isEqualToZero(value)) {
+                canUpdate = true;
+                return;
+            }
+            value = value / 2;
+            if (setValueAndCheckIfSliderReachZero(sb1, sb2, value)) {
+                return;
+            }
+            if (setValueAndCheckIfSliderReachZero(sb2, sb1, value)) {
+                return;
+            }
+
+            sb1.setValue(sb1.getValue() - value);
+            sb2.setValue(sb2.getValue() - value);
+            canUpdate = true;
+        }
+    }
+
+    private boolean setValueAndCheckIfSliderReachZero(ScrollBar scrollbar1, ScrollBar scrollbar2, double value) {
+        double nextValue = scrollbar1.getValue() - value;
+        if (nextValue <= 0d) {
+            scrollbar1.setValue(0d);
+            scrollbar2.setValue(scrollbar2.getValue() - value + nextValue);
+            canUpdate = true;
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isEqualToZero(Double number) {
+        return Math.abs(number) < 0.00000001;
+    }
+
+    @FunctionalInterface
+    private interface ScrollBarHandler {
+        void handle(Number oldValue, Number newValue);
+    }
+}

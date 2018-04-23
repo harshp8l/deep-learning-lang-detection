@@ -1,0 +1,63 @@
+/**
+    {
+        ""created_on"": ""26 may 2017"",
+        ""todos"": [
+            ""go get github.com/go-sql-driver/mysql""     
+        ],
+        ""aim"": ""Reading fname column into []string(slice of strings)""
+    }
+*/
+
+
+/* 
+mysql> select * from users;
++----+-----------+----------+----------+-------------------------------+--------------+
+| id | fname     | lname    | uname    | email                         | contact      |
++----+-----------+----------+----------+-------------------------------+--------------+
+|  1 | Rishikesh | Agrawani | hygull   | rishikesh0014051992@gmail.com | 917353787704 |
+|  2 | Sandeep   | E        | sandeep  | sandeepeswar8@gmail.com       | 919739040038 |
+|  3 | Darshan   | Sidar    | darshan  | sidardarshan@gmail.com        | 917996917565 |
+|  4 | Surendra  | Prajapat | surendra | surendrakgadwal@gmail.com     | 918385894407 |
+|  5 | Mukesh    | Jakhar   | mukesh   | mjakhar.kjahhar@gmail.com     | 919772254140 |
++----+-----------+----------+----------+-------------------------------+--------------+
+5 rows in set (0.00 sec)
+
+mysql> 
+*/
+
+package main
+import ""fmt""
+import ""log""
+import (
+    _""github.com/go-sql-driver/mysql""   
+    ""database/sql""
+)
+
+func main() {
+    // db, err := sql.Open(""mysql"", ""<username>:<password>@tcp(127.0.0.1:<port>)/<dbname>?charset=utf8"" )
+    db, err := sql.Open(""mysql"", ""hygull:admin@67@tcp(127.0.0.1:3306)/practice_db?charset=utf8"")
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    rows, err := db.Query(""select fname from users"")
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    firstnames:=[]string{}
+    for rows.Next() {
+        var fname string
+        rows.Scan(&fname)
+        firstnames = append(firstnames, fname)
+    }
+
+    fmt.Println(firstnames)
+    db.Close()
+}
+
+/* 
+[Rishikesh Sandeep Darshan Surendra Mukesh]
+*/

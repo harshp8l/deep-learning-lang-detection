@@ -1,0 +1,17 @@
+function Execute-MySQLQuery {
+    param(
+        [MySql.Data.MySqlClient.MySqlConnection]$connection,
+        [string]$query
+    )
+    $cmd = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $conn)
+    $dataAdapter = New-Object MySql.Data.MySqlClient.MySqlDataAdapter($cmd)
+    $dataSet = New-Object System.Data.DataSet
+    $dataAdapter.Fill($dataSet, ""data"") | Out-Null
+    $cmd.Dispose()
+    $dataSet.Tables[""data""]
+}
+
+$conn = Connect-MySQL $user $pass $MySQLHost $database $certfile $certpass
+
+$result = Execute-MySQLQuery -connection $conn -query ""SELECT * FROM reports;""
+$result | Format-Table

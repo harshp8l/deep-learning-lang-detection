@@ -1,0 +1,46 @@
+package main
+
+import (
+    ""fmt""
+    ""log""
+    ""strconv""
+    ""strings""
+)
+
+func normalizeGerman(old string) string {
+    s := strings.Replace(old, "","", ""."", -1)
+    return strings.Replace(s, ""."", """", 1)
+}
+func normalizeAmerican(old string) string {
+    return strings.Replace(old, "","", """", -1)
+}
+
+var locale map[string]func(string) string
+
+func init() {
+    locale = make(map[string]func(string) string)
+    locale[""DE-DE""] = normalizeGerman
+    locale[""US""] = normalizeAmerican
+}
+
+func main() {
+    var f, f2 float64
+    var err error
+    // german
+    if val, ok := locale[""DE-DE""]; ok {
+        f, err = strconv.ParseFloat(val(""1.234,87""), 64)
+        if err != nil {
+            log.Fatal(""german fail"", err)
+        }
+    }
+    //american
+    if val, ok := locale[""US""]; ok {
+        f2, err = strconv.ParseFloat(val(""1,234.87""), 64)
+        if err != nil {
+            log.Fatal(""american fail"", err)
+        }
+    }
+
+    fmt.Println(f, f2)
+
+}

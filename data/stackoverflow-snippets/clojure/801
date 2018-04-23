@@ -1,0 +1,9 @@
+(defn avg-weekly-sentiment
+  ""I would have never guessed to use (merge ...) were it not for the elastich test code""
+  [kwd]
+  (let [conn (es-native/connect local-es-nhost local-cluster)
+         res (es-ndoc/search conn indices mapping
+               :query (es-q/query-string :query kwd)
+               :aggregations {:weekly (merge {:aggs {:avg_sentiment (es-agg/avg ""sentiment"")}}
+                                        (es-agg/date-histogram ""timestamp"" ""week""))})]
+    (pp/pprint (get-in res [:aggregations]))))

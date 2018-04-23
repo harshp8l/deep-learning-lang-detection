@@ -1,0 +1,35 @@
+createFileWithIntent(mFileName);
+
+private void createFileWithIntent(String I) {
+     final String audio = I;
+    final Task<DriveFolder> rootFolderTask = getDriveResourceClient().getRootFolder();
+    final Task<DriveContents> createContentsTask = getDriveResourceClient().createContents();
+    Tasks.whenAll(rootFolderTask, createContentsTask)
+            .continueWithTask(new Continuation<Void, Task<DriveFile>>() {
+                @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+                public Task<DriveFile> then(@NonNull Task<Void> task) throws Exception {
+                    DriveFolder PASTA = rootFolderTask.getResult();
+                    DriveContents DADOS = createContentsTask.getResult();
+
+                    File file = new File(audio);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buf = new byte[1024];
+                    FileInputStream fis = new FileInputStream(file);
+                    for (int readNum; (readNum = fis.read(buf)) != -1;) {
+                        baos.write(buf, 0, readNum);
+                    }
+                    OutputStream outputStream = DADOS.getOutputStream();
+                    outputStream.write(baos.toByteArray());
+
+                    MetadataChangeSet TIPO = new MetadataChangeSet.Builder()
+                            .setMimeType(""audio/mp3"")
+                            .setTitle(""audio.mp3"")
+                            .setStarred(true)
+                            .build();
+
+
+                    return getDriveResourceClient().createFile(PASTA, TIPO, DADOS);
+                }
+            });
+
+}

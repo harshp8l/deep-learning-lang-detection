@@ -1,0 +1,163 @@
+Function Send-Email { 
+<#
+.Synopsis
+    Sends Email using Microsoft Outlook
+.DESCRIPTION
+    This cmdlet sends Email using the Outlook component of a locally-installed
+    Microsoft Office. It is not expected to work with the ""Click-to-run"" versions.
+    This version requires that Outlook be running before using the cmdlet.
+.PARAMETER To
+    Must be a quoted string or string array, may not be omitted.
+    Specifies the address to send the message to. If an array, it will
+    be converted to a semicolon-delimited string. May contain contact 
+    groups.
+.PARAMETER Subject
+    Must be a quoted string, may not be omitted.
+    Specifies the subject of the message to be sent.
+.PARAMETER Body
+    Must be a string or a string array, may not be omitted.
+    Contains the text of the message to be sent. If supplied as a string in double 
+    quotes, any PowerShell variables will be expanded unless the leading $ is 
+    escaped. If supplied in a script via a variable containing a here-doc, will 
+    reproduce the here-doc. If supplied as an array, either by variable or by the 
+    Get-Content cmdlet, the array elements will be joined with `r`n as ""separators"". 
+    A body supplied via Get-Content will not have expanded variables; arrays created 
+    in scripts using double quotes or via here-docs willl have expanded variables.
+.PARAMETER CC
+    Must be a quoted string or string array, may be omitted.
+    Specifies an address to send a copy of the message to. If an array, it will be
+    converted to a semicolon-delimited string. All recipients can see that a copy 
+    of the message was sent to the addresses here.
+.PARAMETER BCC
+    Must be a quoted string or string array, may be omitted.
+    Specifies an address to send a copy of the message to. If an array, it will be 
+    converted to a semicolon-delimited string. The recipients named here are not 
+    displayed as a recipient of the message, even though they do receive the message.
+.PARAMETER Attachments
+    Must be a quoted string or string array, may be omitted.
+    Specifies one or more files to be included with the message as attachments.
+.INPUTS
+   This version of the cmdlet does not accept input from the pipeline
+.OUTPUTS
+   No output to the pipeline is generated. The cmdlet does return an error code.
+.EXAMPLE
+    Send-Email -To ""boss@example.com"" -Subject ""Personnel Issue - John M. Ployee"" -Body ""I need a raise.""
+
+        Sends an email with the indicated subject and body to the stated address.
+.EXAMPLE
+    $messagebody = @""
+    Roses are red
+    Violets are blue
+    I need a raise
+    And so do you
+    ""@
+
+    $others = ""boss-of-boss@example.com"",""hr@example.com""
+
+    Send-Email -To ""boss@example.com"" -Subject ""Personnel Issue - John M. Ployee"" -cc $others -Body $messagebody
+
+        Sends an email with the indicated subject to the stated address. The body 
+        will be composed of the lines in the variable $messagebody as shown; the 
+        line breaks are preserved. A copy of the message is sent to the two addresses
+        listed in $others.
+.EXAMPLE
+    Send-Email -To ""boss@example.com"" -Subject ""Personnel Issue - John M. Ployee"" -Body (Get-Content -Path ""C:\Request-for-raise.txt"")
+
+        Sends an email with the indicated subject and body to the stated address.
+        The body is drawn from the indicated file, and line breaks are preserved.
+.EXAMPLE
+    Send-Email -To ""boss@example.com"" -Subject ""Personnel Issue - John M. Ployee"" -Body ""Please see attached for rationale for raise"" -Attachments (Get-Content -Path ""C:\Request-for-raise.txt"")
+
+        Sends an email with the indicated subject and body to the stated address.
+        The indicated file is included as an attachment.
+.NOTES
+    Planned Future Enhancements:
+        1. Allow the cmdlet to accept input (message body text) from the pipe.
+        2. Allow the cmdlet to accept the body from a file (parameter -BodyFromFile)
+        3. Allow the cmdlet to start up Outlook if it is not already running.
+           This includes shutting it down afterward.
+        4. Allow the body to be formatted as HTML or RTF, and properly handle this.
+           Initially, switches (e.g., -BodyAsHTML or -BodyAsRTF); better would be to
+           use file name (e.g., -BodyFromFile ""C:\Test.html"" would still set the message
+           format to HTML even in the absence of -BodyAsHTML); best would be to inspect
+           content of file.
+
+        Based on a script from http://www.computerperformance.co.uk/powershell/powershell_function_send_email.htm
+#>
+
+    [cmdletbinding()]
+    Param (
+        [Parameter(Mandatory=$True)]
+        [String[]]$To,
+
+        [String[]]$CC,
+
+        [String[]]$BCC,
+
+        [Parameter(Mandatory=$True)]
+        [String]$Subject,
+
+        [Parameter(Mandatory=$True)]
+        [String[]]$Body,
+
+        [String[]]$Attachments
+    )
+
+    Begin {
+        # Future Enhancement: Start Outlook if it's not already running
+    } # End of initialization
+
+    Process {
+        # Create an instance Microsoft Outlook
+        $Outlook = New-Object -ComObject Outlook.Application
+        # Create a new mail message
+        $Mail = $Outlook.CreateItem(0)
+        # Set up the email
+        $Mail.To = $To -join "";""
+        if ($CC -ne $null) {
+            $Mail.CC = $CC -join "";""
+        }
+        if ($bcc -ne $null) {
+            $Mail.BCC = $BCC -join "";""
+        }
+        $Mail.Subject = ""$Subject""
+        $Mail.Body = $Body -join ""`r`n""
+        if ($attachments -ne $null) {
+            foreach ($Attachment in $Attachments) {
+                $silencer = $Mail.Attachments.Add($Attachment)
+            }
+        }
+        # I need to investigate scripting Outlook more.
+        # The next three comments may be all that's needed
+        #   to handle HTML and/or attachments.
+
+        # $Mail.HTMLBody = ""When is swimming?""
+        # $File = ""D:\CP\timetable.pdf""
+        # $Mail.Attachments.Add($File)
+
+        # Place message in outbox.
+        $Mail.Send()
+    } # End of Process section
+
+    End {
+        # Clean up after ourselves. This prevents Outlook from reporting
+        #   an error on exit.
+        [System.Runtime.Interopservices.Marshal]::ReleaseComObject($Outlook)
+        $Outlook = $null
+
+        # If Outlook settings are to Send/Receive only on command rather
+        #   than as-needed, force the send at this time.
+        # NOTE TO SELF: CHECK THIS!
+        # $Outlook.GetNameSpace(""MAPI"").SendAndReceive(1) 
+
+        # If we launched Outlook at the beginning, close it here.
+        # $Outlook.Quit()
+    } # End of End section!
+} # End of function
+<#
+
+Note 2: Look in Outlook's outbox for a newly-created message.  
+
+Note 3: If you really want to send the email then append this command:
+$Outlook.GetNameSpace(""MAPI"").SendAndReceive(1) 
+#>

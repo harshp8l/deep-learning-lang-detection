@@ -1,0 +1,133 @@
+ULONG CreatePipeAnonymousPair(PHANDLE phServerPipe, PHANDLE phClientPipe)
+{
+    static LONG s;
+    if (!s)
+    {
+        ULONG seed = GetTickCount();
+        InterlockedCompareExchange(&s, RtlRandomEx(&seed), 0);
+    }
+
+    WCHAR name[64];
+
+    swprintf(name, L""\\\\.\\Pipe\\Win32Pipes.%08x.%08x"", GetCurrentProcessId(), InterlockedIncrement(&s));
+
+    HANDLE hServerPipe = CreateNamedPipeW(name, 
+        PIPE_ACCESS_DUPLEX|FILE_READ_DATA|FILE_WRITE_DATA, 
+        PIPE_TYPE_BYTE|PIPE_READMODE_BYTE, 1, 0, 0, 0, 0);
+
+    if (hServerPipe != INVALID_HANDLE_VALUE)
+    {
+        static SECURITY_ATTRIBUTES sa = { sizeof(sa), 0, TRUE };
+
+        HANDLE hClientPipe = CreateFileW(name, FILE_GENERIC_READ|FILE_GENERIC_WRITE, 0, &sa, OPEN_EXISTING, 0, 0);
+
+        if (hClientPipe != INVALID_HANDLE_VALUE)
+        {
+            *phServerPipe = hServerPipe, *phClientPipe = hClientPipe;
+
+            return NOERROR;
+        }
+
+        CloseHandle(hServerPipe);
+    }
+
+    return GetLastError();
+}
+
+void PrintOem(PSTR buf, ULONG cb)
+{
+    if (int cchWideChar = MultiByteToWideChar(CP_OEMCP, 0, buf, cb, 0, 0))
+    {
+        PWSTR wz = (PWSTR)alloca(cchWideChar * sizeof(WCHAR));
+
+        if (MultiByteToWideChar(CP_OEMCP, 0, buf, cb, wz, cchWideChar))
+        {
+            if (ULONG cbMultiByte = WideCharToMultiByte(CP_ACP, 0, wz, cchWideChar, 0, 0, 0, 0))
+            {
+                PSTR sz = (PSTR)alloca(cbMultiByte);
+
+                if (WideCharToMultiByte(CP_ACP, 0, wz, cchWideChar, sz, cbMultiByte, 0, 0))
+                {
+                    DbgPrint(""%.*s"", cbMultiByte, sz);
+                }
+            }
+        }
+    }
+}
+
+ULONG ExecCmd(PWSTR cmdline, PCWSTR CurrentDirectory)
+{
+    WCHAR ApplicationName[MAX_PATH];
+    if (!GetEnvironmentVariableW(L""ComSpec"", ApplicationName, RTL_NUMBER_OF(ApplicationName)))
+    {
+        return GetLastError();
+    }
+
+    STARTUPINFOEXW si = { { sizeof(si) } };
+    PROCESS_INFORMATION pi;
+
+    HANDLE hPipe;
+    ULONG err = CreatePipeAnonymousPair(&hPipe, &si.StartupInfo.hStdError);
+
+    if (!err)
+    {
+        si.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+        si.StartupInfo.hStdInput = si.StartupInfo.hStdOutput = si.StartupInfo.hStdError;
+
+        ULONG dwCreationFlags = CREATE_NO_WINDOW;
+        //++ optional
+        BOOL fInit = FALSE;
+        SIZE_T Size;
+        if (!InitializeProcThreadAttributeList(0, 1, 0, &Size) &&
+            GetLastError() == ERROR_INSUFFICIENT_BUFFER &&
+            InitializeProcThreadAttributeList(si.lpAttributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)alloca(Size), 1, 0, &Size))
+        {
+            fInit = TRUE;
+            if (UpdateProcThreadAttribute(si.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, 
+                &si.StartupInfo.hStdError, sizeof(HANDLE), 0, 0))
+            {
+                dwCreationFlags |= EXTENDED_STARTUPINFO_PRESENT;
+            }
+        }
+        //-- optional
+
+        if (CreateProcessW(ApplicationName, cmdline, 0, 0, TRUE, dwCreationFlags, 0, 
+            CurrentDirectory, &si.StartupInfo, &pi))
+        {
+            CloseHandle(pi.hThread);
+            CloseHandle(pi.hProcess);
+        }
+        else
+        {
+            err = GetLastError();
+        }
+
+        if (fInit)
+        {
+            DeleteProcThreadAttributeList(si.lpAttributeList);
+        }
+
+        CloseHandle(si.StartupInfo.hStdError);
+
+        if (!err)
+        {
+            CHAR buf[0x1000], *sz;
+            ULONG dwBytes, cb;
+
+            while (ReadFile(hPipe, buf, sizeof(buf), &dwBytes, 0) && dwBytes)
+            {
+                sz = buf;
+
+                do 
+                {
+                    PrintOem(sz, cb = min(dwBytes, 256));
+
+                } while (sz += cb, dwBytes -= cb);
+            }
+        }
+
+        CloseHandle(hPipe);
+    }
+
+    return err;
+}

@@ -1,0 +1,87 @@
+#include ""stdafx.h""
+#include <windows.h>
+#include <stdio.h>
+#include <string>
+
+namespace
+{
+    HINSTANCE sInstance = GetModuleHandle(nullptr);
+    HHOOK sTabHook;
+    HWINEVENTHOOK sFocusHook;
+    bool sAltTabHappend = false;
+}
+
+LRESULT CALLBACK tabEventProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    auto kbdLlHookStruct = (KBDLLHOOKSTRUCT*)lParam;
+
+    switch (nCode)
+    {
+        case HC_ACTION:
+        {
+            if (kbdLlHookStruct->vkCode == VK_TAB && kbdLlHookStruct->flags & LLKHF_ALTDOWN)
+            {
+                printf(""Alt-Tab\n"");
+                sAltTabHappend = true;
+            }
+        }
+    }
+
+
+    return CallNextHookEx(sTabHook, nCode, wParam, lParam);
+}
+
+void CALLBACK focusEventProc(HWINEVENTHOOK hook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+{
+    if (!sAltTabHappend)
+    {
+        return;
+    }
+
+    char windowTitleOut[256];
+    GetWindowTextA(hwnd, windowTitleOut, sizeof(windowTitleOut));
+    std::string windowTitle(windowTitleOut);
+
+    if (windowTitle.empty() || 0 == windowTitle.compare(""Task Switching""))
+    {
+        return;
+    }
+
+    printf(""You just canged to %s by Alt-tabbing... yeah...\n"", windowTitleOut);
+    sAltTabHappend = false;
+}
+
+DWORD WINAPI threadProc()
+{
+    sTabHook = SetWindowsHookEx(WH_KEYBOARD_LL, tabEventProc, sInstance, 0);
+    sFocusHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, nullptr, focusEventProc, 0, 0, WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+
+    MSG message;
+    while (GetMessage(&message, nullptr, 0, 0)) {
+        TranslateMessage(&message);
+        DispatchMessage(&message);
+    }
+
+    UnhookWindowsHookEx(sTabHook);
+    UnhookWinEvent(sFocusHook);
+
+    return 0;
+}
+
+int main()
+{
+    HANDLE threadHandle;
+    DWORD thread;
+
+    threadHandle = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)threadProc, 0, 0, &thread);
+    if (threadHandle)
+    {
+        return WaitForSingleObject(threadHandle, INFINITE);
+    }
+    else
+    {
+        return 1;
+    }
+
+    return 0;
+}

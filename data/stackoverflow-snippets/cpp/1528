@@ -1,0 +1,75 @@
+#include <Windows.h>
+#include <iostream>
+#include <mutex>
+
+std::mutex _mtx; // global mutex
+
+bool online = true; // or condition_variable
+
+void gotoxy(int x, int y)
+{
+    COORD c = { x, y };
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
+}
+
+void linesmov(int mseconds, int y) {
+    int i = 0;
+    while (online) {
+        i = i + 1;
+        // Or system(""cls""); If you may...
+
+        _mtx.lock(); // <- sync here
+        gotoxy(i, y);
+        std::cout << ""____||____||____""; gotoxy(i - 1, y);
+        std::cout << "" "";
+        _mtx.unlock();  
+
+        Sleep(mseconds);
+        if (i > 75)
+        {
+            i = 0;
+            for (int o = 0; o < 60; o++)
+            {
+                _mtx.lock(); // <- sync here
+                gotoxy(0, y);
+                std::cout << ""                  "";
+                _mtx.unlock();
+            }
+        }
+    }
+}
+
+DWORD WINAPI mythread1(LPVOID lpParameter)
+{
+    std::cout << ""Thread 1"" << GetCurrentThreadId() << std::endl;
+    linesmov(5, 10);
+    return 0;
+}
+DWORD WINAPI mythread2(LPVOID lpParameter)
+{
+    std::cout << ""Thread 2"" << GetCurrentThreadId() << std::endl;
+    linesmov(30, 15);
+    return 0;
+}
+
+int main(int argc, char* argv[])
+{
+    DWORD mythreadid1;
+    DWORD mythreadid2;
+    HANDLE myhandle1 = CreateThread(0, 0, mythread1, 0, 0, &mythreadid1);
+    HANDLE myhandle2 = CreateThread(0, 0, mythread2, 0, 0, &mythreadid2);
+
+    std::cout << ""Base thread: "" << GetCurrentThreadId() << std::endl;
+
+    getchar();
+
+    online = false;
+
+    WaitForSingleObject(myhandle1, INFINITE);
+    WaitForSingleObject(myhandle2, INFINITE);
+
+    CloseHandle(myhandle1);
+    CloseHandle(myhandle2);
+
+    return 0;
+}

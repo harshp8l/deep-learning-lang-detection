@@ -1,0 +1,37 @@
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
+import org.json4s._
+import org.json4s.JsonAST._
+import org.json4s.JsonDSL._
+import org.json4s.native.JsonMethods._
+import org.scalatest.FlatSpec
+
+case class FinishedRun
+(
+  id: String,
+  createdAt: ZonedDateTime,
+  finishedAt: ZonedDateTime
+)
+
+object FinishedRunSerializer {
+  val dateTimeFmt = DateTimeFormatter.ofPattern(""yyyy-MM-dd'T'HH:mm:ss.SSSZ"")
+}
+
+class FinishedRunSerializer extends CustomSerializer[FinishedRun](
+  format => ( {
+    case jObj: JObject =>
+      implicit val fmt = format
+      val id = (jObj \ ""id"").extract[String]
+      val created = ZonedDateTime.parse((jObj \ ""createdAt"").extract[String],
+        FinishedRunSerializer.dateTimeFmt)
+      val finished = ZonedDateTime.parse((jObj \ ""finishedAt"").extract[String],
+        FinishedRunSerializer.dateTimeFmt)
+      FinishedRun(id, created, finished)
+  }, {
+    case finishedRun: FinishedRun =>
+      (""id"" -> finishedRun.id) ~
+        (""createdAt"" -> finishedRun.createdAt.format(FinishedRunSerializer.dateTimeFmt)) ~
+        (""finishedAt"" -> finishedRun.finishedAt.format(FinishedRunSerializer.dateTimeFmt))
+  }
+  ))

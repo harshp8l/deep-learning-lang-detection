@@ -1,0 +1,18 @@
+final BeanFactory factory = ...
+FXMLLoader loader = new FXMLLoader(url);
+loader.setControllerFactory(cl -> {
+    try {
+        // use spring to create bean
+        return factory.getBean(cl);
+    } catch (NoSuchBeanDefinitionException ex) {
+        // try create non-bean
+        try {
+            return cl.newInstance();
+        } catch(InstantiationException | IllegalAccessException innerEx) {
+            throw new RuntimeException(innerEx);
+        }
+    } catch (Exception ex) {
+        throw new RuntimeException(ex);
+    }
+});
+Parent p = loader.load();

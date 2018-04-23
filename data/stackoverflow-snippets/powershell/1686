@@ -1,0 +1,32 @@
+$pathToFileList = ""C:\Bagel.txt""
+$rootScriptDirectory = ""\\path\to\scripts""
+$removeComments = $true
+
+Get-Content $pathToFileList | ForEach-Object{
+    # Build the full file paths
+    $scriptFilePath = [io.path]::Combine($rootScriptDirectory,$_)
+
+    # If this file actually exists then it should be processed
+    If(Test-Path $scriptFilePath -PathType Leaf){
+        # Get the file contents
+        $fileContents = Get-Content $scriptFilePath -Encoding UTF8 | Out-String
+
+        # Clean the file contents as required
+        if($removeComments){
+            $queries = $fileContents -replace '(?s)/\*.*?\*/', "" "" -split '\r?\ngo\r?\n' -notmatch '^\s*$'
+        } else {
+            $queries = $fileContents -split '\r?\ngo\r?\n'
+        }
+
+        # Execute each query of the file 
+        $queries | ForEach-Object{
+            $SqlCmd.CommandText = $_.Trim()
+            $reader = $SqlCmd.ExecuteNonQuery()
+        }
+
+        # Hilarity ensues
+
+    } else {
+        Write-Warning ""Could not locate the file '$scriptFilePath'""
+    }
+}

@@ -1,0 +1,17 @@
+(defn retry [& {:keys [fun waits ex-handler]
+                :or   {ex-handler #(log/error (.getMessage %))}}]
+  (fn [ctx]
+    (loop [[time & rem] waits]
+      (let [{:keys [res ex]} (try
+                               {:res (fun ctx)}
+                               (catch Exception e
+                                 (when ex-handler
+                                   (ex-handler e))
+                                 {:ex e}))]
+        (if-not ex
+          res
+          (do
+            (Thread/sleep time)
+            (if (seq rem)
+              (recur rem)
+              (throw ex))))))))

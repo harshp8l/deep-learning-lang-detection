@@ -1,0 +1,32 @@
+open FSharp.Control
+open System.Threading
+
+let async1 () = async {
+        do! Async.Sleep (System.Random().Next(1000, 2000))
+        return 1 }
+let async2 () = async {
+        do! Async.Sleep (System.Random().Next(1000, 2000))
+        return 2 }
+
+let getFirst asyncs =
+    let queue = BlockingQueueAgent(1)
+    let doWork operation = async { 
+            let! result = operation()
+            do! queue.AsyncAdd(result) }
+    let start work =
+        let cts = new CancellationTokenSource()
+        Async.Start(work, cts.Token)
+        cts
+    let cancellationTokens =
+        asyncs
+        |> Seq.map doWork
+        |> Seq.map start
+    let result = queue.Get()
+    cancellationTokens
+    |> Seq.iter (fun cts -> cts.Cancel(); cts.Dispose())
+    result
+
+for i in 1..10 do
+    printfn ""%A"" <| getFirst [async1;async2]
+
+Console.ReadLine () |> ignore

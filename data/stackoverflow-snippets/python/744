@@ -1,0 +1,37 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def colorFromBivariateData(Z1,Z2,cmap1 = plt.cm.YlOrRd, cmap2 = plt.cm.PuBuGn):
+    # Rescale values to fit into colormap range (0->255)
+    Z1_plot = np.array(255*(Z1-Z1.min())/(Z1.max()-Z1.min()), dtype=np.int)
+    Z2_plot = np.array(255*(Z2-Z2.min())/(Z2.max()-Z2.min()), dtype=np.int)
+
+    Z1_color = cmap1(Z1_plot)
+    Z2_color = cmap2(Z2_plot)
+
+    # Color for each point
+    Z_color = np.sum([Z1_color, Z2_color], axis=0)/2.0
+
+    return Z_color
+
+z1 = np.random.random((50,100))
+z2 = np.random.random((50,100))
+Z_color = colorFromBivariateData(z1,z2)
+
+xx, yy = np.mgrid[0:100,0:100]
+C_map = colorFromBivariateData(xx,yy)
+
+fig = plt.figure(figsize=(10,5))
+
+ax1 = fig.add_subplot(1,2,1)
+ax1.imshow(Z_color)
+ax1.set_title('Data')
+
+ax2 = fig.add_subplot(1,2,2)
+ax2.imshow(C_map)
+ax2.set_title('Bivariate Color Map')
+ax2.set_xlabel('Variable 1')
+ax2.set_ylabel('Variable 2')
+
+fig.tight_layout()
+fig.show()

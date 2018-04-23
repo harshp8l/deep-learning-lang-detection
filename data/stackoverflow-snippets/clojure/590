@@ -1,0 +1,12 @@
+(require '[clojure.edn :as edn])
+
+(def s ""{:a 1 :b 2} {:c 3 :d 4} [1 2 3]"")
+
+;; Normally one would want to use with-open to close the reader,
+;; but here we don't really care and we don't want to accidentally
+;; close it before consuming the result:
+(let [rdr (java.io.PushbackReader. (java.io.StringReader. s))
+      sentinel (Object.)]      ; ← or just use ::eof as sentinel
+  (take-while #(not= sentinel %)
+              (repeatedly #(edn/read {:eof sentinel} rdr))))
+;= ({:a 1, :b 2} {:c 3, :d 4} [1 2 3])

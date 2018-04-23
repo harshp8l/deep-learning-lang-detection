@@ -1,0 +1,49 @@
+val df = Seq(
+  (1, ""abc"", 1421140627, ""x""),
+  (2, ""abc"", 1421140628, null),
+  (3, ""abc"", 1421140629, ""y""),
+  (4, ""abc"", 1421140630, ""z""),
+  (5, ""xyz"", 1421140633, ""k""),
+  (6, ""xyz"", 1421140634, null),
+  (7, ""xyz"", 1421140635, null),
+  (8, ""xyz"", 1421140636, ""y""),
+  (9, ""xyz"", 1421140637, ""n""),
+  (10, ""noi"", 1421140112, ""f""),
+  (12, ""noi"", 1421140113, null),
+  (13, ""noi"", 1421140114, ""g""),
+  (14, ""noi"", 1421140115, null),
+  (15, ""noi"", 1421140116, ""h""),
+  (16, ""noi"", 1421140117, null),
+  (17, ""noi"", 1421140118, null)
+).toDF(""primary_key"", ""ip_address"", ""unixtimestamp"", ""user_id"")
+
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
+
+val windowSpec = Window.partitionBy(""ip_address"").orderBy(""unixtimestamp"").
+  rowsBetween(0, Window.unboundedFollowing)
+
+df.withColumn(""user_id"", first(""user_id"", ignoreNulls=true).over(windowSpec)).
+  orderBy(""primary_key"").
+  show
+
+// +-----------+----------+-------------+-------+
+// |primary_key|ip_address|unixtimestamp|user_id|
+// +-----------+----------+-------------+-------+
+// |          1|       abc|   1421140627|      x|
+// |          2|       abc|   1421140628|      y|
+// |          3|       abc|   1421140629|      y|
+// |          4|       abc|   1421140630|      z|
+// |          5|       xyz|   1421140633|      k|
+// |          6|       xyz|   1421140634|      y|
+// |          7|       xyz|   1421140635|      y|
+// |          8|       xyz|   1421140636|      y|
+// |          9|       xyz|   1421140637|      n|
+// |         10|       noi|   1421140112|      f|
+// |         12|       noi|   1421140113|      g|
+// |         13|       noi|   1421140114|      g|
+// |         14|       noi|   1421140115|      h|
+// |         15|       noi|   1421140116|      h|
+// |         16|       noi|   1421140117|   null|
+// |         17|       noi|   1421140118|   null|
+// +-----------+----------+-------------+-------+

@@ -1,0 +1,102 @@
+#!/usr/bin/env python
+#coding: utf-8
+import pythoncom
+import pyHook
+import time
+import os
+import re 
+press_stack = []
+release_stack = []
+class Keyrecorder(object):
+    def __init__(self):
+        self.path_result_dir = os.path.join(os.getcwd(), ""Result"")
+        if not os.path.exists(self.path_result_dir):
+            os.mkdir(self.path_result_dir)
+
+    def Time2Date(self, sec):
+        time_struct = time.localtime(sec)
+        time_string = time.strftime('%Y-%m-%d', time_struct)
+        return time_string
+
+    def onKeyboardEvent(self, event):
+        time_string = self.Time2Date(time.time())
+        fp = os.path.join(self.path_result_dir, time_string + "".txt"")
+
+        if not os.path.exists(fp):
+            fobj = open(fp, ""w"")
+        else:
+            fobj = open(fp, ""a+"")
+        press_time = -1
+        release_time = -1
+        event_type = event.MessageName # press or release
+        event_key = event.Key # related key
+
+        if event_type == ""key down"":
+            press_time = int(time.time()*10**6)
+            press_stack.append((event_key, press_time))
+        elif event_type == ""key up"":
+            release_time = int(time.time()*10**6)
+            release_stack.append((event_key, release_time))
+
+        len1 = len(press_stack)
+        len2 = len(release_stack)
+        if len1 > 0 and len1 == len2:
+            is_reverse = press_stack[0][0] != release_stack[0][0]
+            # press key in turn，but release key in reverse order
+            if len1 == 2 and is_reverse:
+                while len(release_stack) > 0:
+                    p = press_stack.pop(0)
+                    r = release_stack.pop()
+                    duration = r[1] - p[1]
+                    record = ""%s\t%d\t%d\t%d\n"" % (p[0], p[1], r[1], duration)
+                    fobj.write(record)
+                    fobj.flush()
+
+            # press and release key in turn 
+            elif len1 >= 1 and not is_reverse:
+                while len(release_stack) > 0:
+                    p = press_stack.pop(0)
+                    r = release_stack.pop(0)
+                    duration = r[1] - p[1]
+                    record = ""%s\t%d\t%d\t%d\n"" % (p[0], p[1], r[1], duration)
+                    fobj.write(record)
+                    fobj.flush()
+
+            # function key firstly be pressed，then other keys be pressed. 
+            # other key be released firstly then release function key. 
+            elif len1 > 2 and is_reverse:
+                p = press_stack.pop(0)
+                r = release_stack.pop()
+                duration = r[1] - p[1]
+                record = ""%s\t%d\t%d\t%d\n"" % (p[0], p[1], r[1], duration)
+                fobj.write(record)
+                fobj.flush()
+
+                while len(release_stack) > 0:
+                    p = press_stack.pop(0)
+                    r = release_stack.pop(0)
+                    duration = r[1] - p[1]
+                    record = ""%s\t%d\t%d\t%d\n"" % (p[0], p[1], r[1], duration)
+                    fobj.write(record)
+                    fobj.flush()
+        if fobj and not fobj.closed:
+            fobj.flush()
+            fobj.close()
+
+        return True
+
+    def record(self):
+        pythoncom.CoInitialize()
+        hm = pyHook.HookManager()
+        hm.KeyAll = self.onKeyboardEvent
+        hm.HookKeyboard()
+        pythoncom.PumpMessages()
+        pythoncom.CoUninitialize()
+
+def main():
+    kr = Keyrecorder()
+    kr.record()
+
+
+if __name__ == '__main__':
+    main()

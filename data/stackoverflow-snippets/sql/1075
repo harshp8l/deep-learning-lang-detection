@@ -1,0 +1,35 @@
+SQL> create table table_a (acct_id number, birthdate date, modified_by varchar2(20));
+
+Table created.
+
+SQL> create table table_b (some_id number, effective_dt date, username varchar2(20));
+
+Table created.
+
+SQL> insert all
+  2    into table_a values (12, date '1996-03-04', 'user1234')
+  3    into table_a values (13, date '1979-05-10', 'user9999')
+  4    into table_b values (12, date '2015-01-01', 'user9876')
+  5    into table_b values (12, date '2017-04-01', 'user1111')
+  6  select * From dual;
+
+4 rows created.
+
+SQL> create or replace view wc as
+  2  select 'table_a' source, acct_id id, birthdate bad_date, modified_by from table_a union all
+  3  select 'table_b' source, some_id, effective_dt, username from table_b;
+
+View created.
+
+SQL>
+SQL> select *
+  2  from wc
+  3  where (source = 'table_a' and bad_date > date '1990-01-01')
+  4     or (source = 'table_b' and bad_date > date '2017-01-01');
+
+SOURCE          ID BAD_DATE   MODIFIED_BY
+------- ---------- ---------- --------------------
+table_a         12 04.03.1996 user1234
+table_b         12 01.04.2017 user1111
+
+SQL>

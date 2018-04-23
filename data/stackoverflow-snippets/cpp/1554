@@ -1,0 +1,82 @@
+bool socks::start() {
+    if (listen(master_socket, backlog) < 0) {
+        std::cerr << ""Failed to start listening."" << std::endl;
+        return false;
+    }
+
+    std::cout << ""Listening for connections on port "" << listening_port << std::endl;
+
+    fd_set readfds;
+    char buf[256];
+
+    while (true) {
+
+        //clear the socket set
+        FD_ZERO(&readfds);
+
+        //add master socket to set
+        FD_SET(master_socket, &readfds);
+        int max_sd = master_socket;
+
+        // Add child sockets to set
+        for (size_t i = 0; i < clients.size(); ++i) {
+            //socket descriptor
+            int sd = clients[i];    
+            FD_SET(sd, &readfds);
+
+            //highest file descriptor number, need it for the select function
+            if (sd > max_sd)
+                max_sd = sd;
+        }
+
+        // Wait indefinitely for an activity on one of the sockets
+        int activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
+        if (activity < 0) {
+            if (errno == EINTR) continue;
+            std::cerr << ""select() failed"" << std::endl;
+            return false;
+        }
+
+        // Handle incoming connections
+        if (FD_ISSET(master_socket, &readfds)) {
+            sockaddr_in address;
+            socklen_t addrlen = sizeof(address);
+            int new_socket = accept(master_socket, (sockaddr *) &address, &addrlen);
+            if (new_socket < 0) {
+                std::cerr << ""Failed to accept incoming connection."" << std::endl;
+                return false;
+            }
+
+            // Information about the new connection
+            std::cout << ""New connection : ""
+                      << ""[SOCKET_FD : "" << new_socket
+                      << "" , IP : "" << inet_ntoa(address.sin_addr)
+                      << "" , PORT : "" << ntohs(address.sin_port)
+                      << ""]"" << std::endl;
+
+            // Add connection to vector
+            clients.push_back(new_socket);    
+        }
+
+        // Handle client disconnections / incoming data?
+        size_t j = 0;
+        while (j < clients.size()) {
+            int sd = clients[j];
+            if (FD_ISSET(sd, &readfds)) {
+                ssize_t rc = recv(sd, buf, sizeof(buf), 0);
+                if (rc <= 0) {
+                    std::cout << ""Client "" << (rc < 0) ? ""read error"" : ""disconnected"" << ""! [SOCKET_FD: "" << sd << ""]"" << std::endl;
+                    close(sd);
+                    clients.erase(clients.begin() + j);
+                    continue;
+                }
+                std::cout << ""Client "" << sd << "" sent: "";
+                std::cout.write(buf, rc);
+                std::cout << std::endl;
+            }
+            ++j;
+        }
+    }
+
+    return true;
+}

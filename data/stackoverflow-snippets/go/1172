@@ -1,0 +1,31 @@
+package main
+
+import (
+    ""encoding/xml""
+    ""fmt""
+    ""regexp""
+)
+
+type Path struct {
+    XMLName  xml.Name `xml:""path""`
+    Farmer   string   `xml:""farmer,attr""`
+    FarmerId string   `xml:""id,attr""`
+}
+
+func main() {
+    path := &Path{
+        FarmerId: ""ME7"",
+    }
+    data, err := xml.Marshal(path)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+
+    strData := string(data)
+
+    // fix with regex
+    reg := regexp.MustCompile(`(farmer)(="""")`)
+    strData = reg.ReplaceAllString(strData, ""$1"")
+    fmt.Println(strData) // <path farmer id=""ME7""></path>
+}

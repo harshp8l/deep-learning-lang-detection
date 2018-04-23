@@ -1,0 +1,74 @@
+val dfX = Seq(
+  (""a"", ""ma"", ""a1"", ""a2"", ""a3""),
+  (""b"", ""mb"", null, null, null),
+  (""null"", ""mc"", ""c1"", null, ""c3"")
+).toDF(""xx"", ""mm"", ""xx1"", ""xx2"", ""xx3"")
+
+val dfY = Seq(
+  (""nd"", ""d"", ""d1"", null),
+  (""ne"", ""e"", ""e1"", ""e2""),
+  (""nf"", ""f"", null, null)
+).toDF(""nn"", ""yy"", ""yy1"", ""yy2"")
+
+val dfZ = Seq(
+  (""g"", null, ""g1"", ""g2"", ""qg""),
+  (""h"", ""ph"", null, null, null),
+  (""i"", ""pi"", null, null, ""qi"")
+).toDF(""zz"", ""pp"", ""zz1"", ""zz2"", ""qq"")
+
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.IntegerType
+
+val dfList = List(dfX, dfY, dfZ)
+val dfColMap = Map(dfX -> ""xx"", dfY -> ""yy"", dfZ -> ""zz"")
+
+def createCount(row: Row, keyCol: String, checkCols: Seq[String]): Int = {
+  if (row.isNullAt(row.fieldIndex(keyCol))) 0 else {
+    val nonNulls = checkCols.map(row.fieldIndex(_)).foldLeft( 0 )(
+      (acc, i) => if (row.isNullAt(i)) acc else acc + 1
+    )
+    if (nonNulls == 0) 1 else 0
+  }
+}
+
+val dfCountList = dfList.map{ df =>
+  val keyCol = dfColMap(df)
+  val colPattern = s""$keyCol\\d+"".r
+  val checkCols = df.columns.map( c => c match {
+    case colPattern() => Some(c)
+    case _ => None
+  } ).flatten
+
+  val rddWithCount = df.rdd.map{ case r: Row =>
+    Row.fromSeq(r.toSeq ++ Seq(createCount(r, keyCol, checkCols)))
+  }
+  spark.createDataFrame(rddWithCount, df.schema.add(""count"", IntegerType))
+}
+
+dfCountList(0).show
+// +----+---+----+----+----+-----+
+// |  xx| mm| xx1| xx2| xx3|count|
+// +----+---+----+----+----+-----+
+// |   a| ma|  a1|  a2|  a3|    0|
+// |   b| mb|null|null|null|    1|
+// |null| mc|  c1|null|  c3|    0|
+// +----+---+----+----+----+-----+
+
+dfCountList(1).show
+// +---+---+----+----+-----+
+// | nn| yy| yy1| yy2|count|
+// +---+---+----+----+-----+
+// | nd|  d|  d1|null|    0|
+// | ne|  e|  e1|  e2|    0|
+// | nf|  f|null|null|    1|
+// +---+---+----+----+-----+
+
+dfCountList(2).show
+// +---+----+----+----+----+-----+
+// | zz|  pp| zz1| zz2|  qq|count|
+// +---+----+----+----+----+-----+
+// |  g|null|  g1|  g2|  qg|    0|
+// |  h|  ph|null|null|null|    1|
+// |  i|  pi|null|null|  qi|    1|
+// +---+----+----+----+----+-----+

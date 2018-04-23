@@ -1,0 +1,29 @@
+func main() {
+    var (
+       nextDial time.Time
+       mu sync.Mutex
+    )
+    state.redisPool = &redis.Pool{
+        MaxIdle:     200,
+        MaxActive:   9000,
+        IdleTimeout: time.Minute,
+        Dial: func() (redis.Conn, error) {
+            mu.Lock()   // Dial can be called concurrently
+            defer mu.Unlock()
+            if time.Now().Before(nextDial) {
+               return nil, errors.New(""waiting for dial"")
+            }
+            c, err := redis.Dial(""tcp"", *redisAddress,
+                redis.DialConnectTimeout(1*time.Second),
+                redis.DialReadTimeout(100*time.Millisecond),
+                redis.DialWriteTimeout(100*time.Millisecond),
+            )
+            if err == nil {
+               nextDial = time.Time{}
+            } else {
+               nextDial = time.Now().Add(time.Second) // don't attempt dial for one second
+            }
+            return c, err
+        },
+    }
+}

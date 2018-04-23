@@ -1,0 +1,41 @@
+$querystr = ""SELECT $wpdb->posts.ID
+        FROM
+           $wpdb->posts,
+           $wpdb->postmeta AS app_date,        
+           $wpdb->postmeta AS provider,
+           $wpdb->postmeta AS time1,
+           $wpdb->postmeta AS time2,
+           $wpdb->postmeta AS client
+
+        WHERE
+           $wpdb->posts.ID = app_date.post_id          
+        AND
+           $wpdb->posts.ID = provider.post_id
+        AND
+           $wpdb->posts.ID = time1.post_id
+        AND
+           $wpdb->posts.ID = time2.post_id
+        AND
+           $wpdb->posts.ID = client.post_id
+
+        AND $wpdb->posts.post_type = 'ga_appointments'
+        AND $wpdb->posts.post_status IN ('completed', 'publish', 'payment', 'pending')                 
+
+        AND app_date.meta_key   = 'ga_appointment_date'
+        AND app_date.meta_value = 2018-03-27
+
+        AND provider.meta_key   = 'ga_appointment_provider'
+        AND provider.meta_value = 55
+
+        AND time1.meta_key = 'ga_appointment_time_end'
+        AND time1.meta_value > 13:05
+
+        AND time2.meta_key = 'ga_appointment_time'
+        AND (time2.meta_value < 14:05
+
+        OR  client.meta_key = 'ga_appointment_client')
+        AND (client.meta_value REGEXP '\""email\"";s:[1-9]+:\""jdoe@mail.com\""'
+
+        OR  client.meta_key = 'ga_appointment_new_client')
+        AND client.meta_value REGEXP '\""phone\"";s:[1-9]+:\""999-656-5656\""'
+    "";

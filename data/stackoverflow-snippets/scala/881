@@ -1,0 +1,25 @@
+package spark.sparkSQL
+
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.hive.HiveContext
+
+object sparksql2 {
+  def main(args: Array[String]): Unit = {
+    val conf = new SparkConf().setAppName(""sparksql"").setMaster(""local"")
+    val sc = new SparkContext(conf)
+    sc.setLogLevel(""ERROR"")
+
+    val hiveCtx = new HiveContext(sc)
+    import hiveCtx.implicits._        //  ImportType(hiveCtx.implicits)
+
+    val input = hiveCtx.jsonFile(""./inputFile"")
+    // Register the input schema RDD
+    input.registerTempTable(""tweets"")
+    hiveCtx.cacheTable(""tweets"")
+    // Select tweets based on the retweetCount
+    val topTweets = hiveCtx.sql(""SELECT text, retweetCount FROM tweets ORDER BY retweetCount LIMIT 10"")
+    topTweets.collect().map(println(_))
+    val topTweetText = topTweets.map(row => row.getString(0))
+  }
+}

@@ -1,0 +1,30 @@
+// Add a custom column to the order ""line items"" html table
+add_action( 'woocommerce_admin_order_item_headers', 'custom_admin_order_items_headers', 20, 1 );
+function custom_admin_order_items_headers( $order ){
+
+    echo '<th class=""line_custom-title sortable"" data-sort=""your-sort-option"">';
+    echo __('Short description', 'woocommerce') . '</th>';
+}
+
+// Custom column content in the order ""line items"" html table
+add_action( 'woocommerce_admin_order_item_values', 'custom_admin_order_item_values', 20, 3 );
+function custom_admin_order_item_values( $_product, $item, $item_id ) {
+    // Only for ""line_item"" items type
+    if( ! $item->is_type('line_item') ) return;
+
+    // For product variation, we get the parent variable product (in case of)
+    if( $_product->is_type('variation') ){
+        $parent_product = $_product->get_parent();
+        // The product variation description (as short description doesn't exist)
+        $excerpt        = $_product->get_description(); 
+        // If product variation description doesn't exist we display the short description of the parent variable product
+        $excerpt        = empty($excerpt) ? $parent_product->get_short_description() : $excerpt;
+    }
+    // For other product types
+    else {
+        $excerpt        = $_product->get_short_description();
+    }
+
+    // Output
+    echo '<td class=""line_custom-description"">' . $excerpt . '</td>';
+}

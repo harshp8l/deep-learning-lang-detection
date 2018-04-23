@@ -1,0 +1,21 @@
+function runParallel {
+    process_ids=( )
+    finish(){
+        for i in ""${process_ids[@]}""; do
+            kill -9 $i > /dev/null 2> /dev/null || :
+        done
+    }
+    append() { process_ids+=( ""$1"" ); }       # POSIX-standard function declaration syntax
+    processes=( ""$@"" )
+    for i in ""${processes[@]}""; do
+        { eval $i; } & append $!
+    done
+    trap finish EXIT
+    wait
+}
+
+runParallel \
+    ""sleep 1 && echo 'one'"" \
+    ""sleep 5 && echo 'two'"" \
+    ""sleep 1 && echo 'three'"" \
+    ""sleep 5 && echo 'four'""

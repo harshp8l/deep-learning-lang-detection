@@ -1,0 +1,21 @@
+# Get all IPv4 destination prefixes.
+# Note the use of @(...) around the command, which ensures that its output
+# is treated as an *array* (which it most likely is anyway, in this case).
+$ip4routeDests = @(Get-NetRoute | 
+                    Where-Object AddressFamily -eq IPv4 |
+                      Select-Object -ExpandProperty DestinationPrefix)
+
+# Get the first 2 octets of all IPv4 addresses followed by a `*` to form
+# a wildcard expression used with `switch` below.
+# IPv4 addresses are identified by the presence of a `.` in them (`-match '\.')
+# Regex '^(.+?\..+?\.).*' matches the entire input while extracting only 
+# the first 2 octets; e.g., '172.16.'
+$ip4addrWildcards =
+  [System.Net.Dns]::GetHostEntry($env:COMPUTERNAME).AddressList.IPAddressToString `
+    -match '\.' -replace '^(.+?\..+?\.).*', '$1*'                                                            #`
+
+# `switch` allows us to implicitly loop over all wildcard patterns and match
+# the destination prefixes against each with `-like`.
+# This directly outputs all matches, but note that they'll be in the order
+# implied by $ip4addrWildcards, i.e., the order in which the wildcards are specified.
+switch ($ip4addrWildcards) { default { $ip4routeDests -like $_ } }

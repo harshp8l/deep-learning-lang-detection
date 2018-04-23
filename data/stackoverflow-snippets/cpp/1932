@@ -1,0 +1,72 @@
+#include <cstdlib>
+#include <iostream>
+
+using std::cout;
+using std::endl;
+
+class A
+{
+  int x;
+public:
+  explicit A(int i) : x{i}
+  { }
+
+  explicit A(unsigned i) : x{static_cast<int>(i)}
+  { }
+
+  operator int() const
+  {
+    return this->x;
+  }
+
+  operator unsigned() const
+  {
+    return static_cast<unsigned>(this->x);
+  }
+};
+
+A operator&(A const& lhs, A const& rhs)
+{
+  return A(lhs.operator int() & rhs.operator int());
+}
+
+A operator&(A const& lhs, int rhs)
+{
+  return A(lhs.operator int() & rhs);
+}
+
+A operator&(int lhs, A const& rhs)
+{
+  return A(lhs & rhs.operator int());
+}
+
+A operator&(A const& lhs, unsigned rhs)
+{
+  return A(lhs.operator unsigned() & rhs);
+}
+
+A operator&(unsigned lhs, A const& rhs)
+{
+  return A(lhs & rhs.operator unsigned());
+}
+
+int main()
+{
+  auto b = 2;
+  auto b2 = 0;
+  auto b3 = 0;
+  auto u = 2;
+  auto u4 = 0u;
+  auto u5 = 0u;
+  auto a = A{3};
+
+  b2 = a & b;
+  b3 = b & a;
+  u4 = a & u;
+  u5 = u & a;
+
+  cout << b2 << endl;
+  cout << b3 << endl;
+  cout << u4 << endl;
+  cout << u5 << endl;
+}

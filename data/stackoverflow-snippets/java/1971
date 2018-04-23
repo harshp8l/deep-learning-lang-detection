@@ -1,0 +1,60 @@
+@Override
+public void start(Stage primaryStage) {
+    TableView<StringProperty> table = new TableView<>();
+
+    // fill table
+    for (int i = 0; i < 20; i++) {
+        table.getItems().add(new SimpleStringProperty());
+    }
+
+    TableColumn<StringProperty, String> column = new TableColumn<>();
+    column.setCellValueFactory(TableColumn.CellDataFeatures::getValue); // returns the row item itself
+    column.setCellFactory(col -> new TableCell<StringProperty, String>() {
+
+        private final Button button;
+
+        {
+            button = new Button(""Set Value..."");
+            button.setOnAction(evt -> {
+                TextInputDialog dialog = new TextInputDialog();
+                Optional<String> opt = dialog.showAndWait();
+                String result = opt.orElse(null);
+                if (result != null) {
+                    ObservableValue<String> ov = getTableColumn().getCellObservableValue(getIndex());
+                    if (ov instanceof WritableValue) {
+                        ((WritableValue) ov).setValue(result);
+                    }
+                }
+            });
+        }
+
+        @Override
+        protected void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty) {
+                // empty cell
+                setText("""");
+                setGraphic(null);
+            } else {
+                if (item == null) {
+                    // editable cell
+                    setText("""");
+                    setGraphic(button);
+                } else {
+                    // uneditable cell
+                    setText(item);
+                    setGraphic(null);
+                }
+            }
+        }
+
+    });
+
+    table.getColumns().add(column);
+
+    Scene scene = new Scene(table);
+
+    primaryStage.setScene(scene);
+    primaryStage.show();
+}

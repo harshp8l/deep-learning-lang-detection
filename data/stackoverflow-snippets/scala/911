@@ -1,0 +1,70 @@
+import org.apache.spark._
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
+
+object Main {
+
+    def main( args: Array[ String ] ): Unit = {
+
+        val spark =
+            SparkSession
+            .builder()
+            .appName( ""SO"" )
+            .master( ""local[*]"" )
+            .config( ""spark.driver.host"", ""localhost"" )
+            .getOrCreate()
+
+        import spark.implicits._
+
+        val table1Data = Seq(
+            ( ""AA1111"", ""02-Jan-2017 12:00:00 AM"", ""08-Jan-2017 11:59:59 PM"", ""LL7R"" ),
+            ( ""AA1112"", ""09-Jan-2017 12:00:00 AM"", ""14-Feb-2017 11:59:59 PM"", ""AT3B"" ),
+            ( ""AA1113"", ""15-Feb-2017 12:00:00 AM"", ""31-Dec-3030 11:59:59 PM"", ""UJ5G"" )
+        )
+
+        val table1 =
+            table1Data
+            .toDF( ""id"", ""From Date"", ""To Date"", ""User"" )
+
+        val table2Data = Seq(
+            ( ""AA1111"", ""02-Jan-2017 12:00:00 AM"", ""08-Jan-2017 11:59:59 PM"", Seq( ""AA12345"" ) ),
+            ( ""AA1112"", ""10-Jan-2017 12:00:00 AM"", ""14-Feb-2017 11:59:59 PM"", Seq( ""AA12345"" ) ),
+            ( ""AA1113"", ""16-Feb-2017 12:00:00 AM"", ""30-Dec-3030 11:59:59 PM"", Seq( ""AA12345"" ) ),
+            ( ""AA1114"", ""24-Jan-2017 12:00:00 AM"", ""31-Dec-3030 11:59:59 PM"", Seq( ""AA12345"", ""AA234567"", ""AB56789"" ) )
+        )
+
+        val table2 =
+            table2Data
+            .toDF( ""id"", ""From Date"", ""To Date"", ""Associated id"" )
+
+        val dfFullOuter =
+            table1
+            .join( table2, Seq( ""id"", ""From Date"", ""To Date"" ), ""outer"" )
+
+        val dfFullOuterManual = 
+            table1
+            .join( table2, Seq( ""id"" ), ""outer"" )
+            .drop( table1( ""From Date"" ) )
+            .drop( table1( ""To Date"" ) )
+
+        val dfLeftOuter =
+            table1
+            .join( table2, Seq( ""id"", ""From Date"", ""To Date"" ), ""left_outer"" )
+
+        val dfLeftOuterFinal =
+            dfLeftOuter
+            .join( table2.select( ""id"", ""Associated id"" ) , Seq( ""id"" ) )
+            .drop( dfLeftOuter( ""Associated id"" ) )
+
+        val dfRightOuter =
+            table1
+            .join( table2, Seq( ""id"", ""From Date"", ""To Date"" ), ""right_outer"" )
+
+        val dfRightOuterFinal =
+            dfRightOuter
+            .join( table1.select( ""id"", ""User"" ) , Seq( ""id"" ) )
+            .drop( dfRightOuter( ""User"" ) )
+
+        spark.stop()
+    }
+}

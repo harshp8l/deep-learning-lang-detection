@@ -1,0 +1,28 @@
+    public static Workspace createAndMapWorkspace(final TFSTeamProjectCollection tpc) {
+    final String workspaceName = ""SampleVCWorkspace"" + System.currentTimeMillis(); //$NON-NLS-1$
+    Workspace workspace = null;
+
+    // Get the workspace
+    workspace = tpc.getVersionControlClient().tryGetWorkspace(ConsoleSettings.MAPPING_LOCAL_PATH);
+
+    // Create and map the workspace if it does not exist
+    if (workspace == null) {
+        workspace = tpc.getVersionControlClient().createWorkspace(
+            null,
+            workspaceName,
+            ""Sample workspace comment"", //$NON-NLS-1$
+            WorkspaceLocation.SERVER,
+            null,
+            WorkspacePermissionProfile.getPrivateProfile());
+
+        // Map the workspace
+        final WorkingFolder workingFolder = new WorkingFolder(
+            ConsoleSettings.MAPPING_SERVER_PATH,
+            LocalPath.canonicalize(ConsoleSettings.MAPPING_LOCAL_PATH));
+        workspace.createWorkingFolder(workingFolder);
+    }
+
+    System.out.println(""Workspace '"" + workspaceName + ""' now exists and is mapped""); //$NON-NLS-1$ //$NON-NLS-2$
+
+    return workspace;
+}

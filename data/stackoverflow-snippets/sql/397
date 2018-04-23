@@ -1,0 +1,19 @@
+DECLARE @test AS TABLE(ID INT ,GroupNo VARCHAR(10),LastName VARCHAR(100))
+
+INSERT INTO @test
+(
+ID,
+GroupNo,
+LastName
+)
+VALUES(1,'003000','MURAD'),(2,'003000','MURAD'),(3,'003000','MURAD'),(1,'004020','MAZZA'),(1,'004020','BOOTH')
+,(1,'010930','ZHANG'),(1,'010930','YAN'),(1,'010930','ZHANG')
+
+SELECT t2.GroupNo,t2.LastName,COUNT(*)AS cnt FROM(
+SELECT res.GroupNo , COUNT(*) AS cnt1 FROM(
+SELECT t.GroupNo,t.LastName,COUNT(*) AS cnt FROM @test AS t
+GROUP BY t.GroupNo , t.LastName) res
+GROUP BY res.GroupNo
+HAVING COUNT(*) > 1) res2
+INNER JOIN @test AS t2 ON t2.GroupNo = res2.GroupNo
+GROUP BY t2.GroupNo,t2.LastName

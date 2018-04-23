@@ -1,0 +1,22 @@
+class TypedKeyedDeserializationSchema[K, V](implicit val kDeserEv: Deser[K],
+                                            val kTypeInfoEn: TypeInformation[K],
+                                            val vDeserEv: Deser[V],
+                                            val vTypeInfoEn: TypeInformation[V]) extends KeyedDeserializationSchema[KafkaMsg[K, V]] {
+
+  def deserialize(key: Array[Byte],
+                  value: Array[Byte],
+                  topic: String,
+                  partition: Int,
+                  offset: Long
+                 ): KafkaMsg[K, V] =
+    KafkaMsg(kDeserEv.deser(key),
+      vDeserEv.deser(value),
+      topic,
+      partition,
+      offset
+    )
+
+  def isEndOfStream(e: KafkaMsg[K, V]): Boolean = false
+
+  def getProducedType(): TypeInformation[KafkaMsg[K, V]] = createTypeInformation
+}

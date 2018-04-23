@@ -1,0 +1,27 @@
+module ScalarKalman =
+
+   type Parameters = { A : float; H : float; Q : float; R : float }
+   type State = { K: float; X: float; P: float }
+
+   let initState (s: State) = s
+
+   let getX s = s.X
+
+   let update parms state newVal =
+      let xp = parms.A * state.X
+      let Pp = parms.A * state.P * parms.A + parms.Q
+      let newK = Pp * parms.H / (parms.H * Pp * parms.H + parms.R)
+      { K = newK
+        X = xp + newK * (newVal - parms.H * xp)
+        P = Pp - newK * parms.H * Pp }
+
+
+let n = 100
+let obsv = [for i in 0 .. n -> Normal.Sample(10., 5.)]
+let kal = ScalarKalman.update { A = 1.; H = 1.; Q = 0.; R = 5. }
+let initialState = ScalarKalman.initState { X = 6.; P = 4.; K = 0. }
+
+let smv = 
+  obsv 
+  |> List.scan kal initialState 
+  |> List.map ScalarKalman.getX

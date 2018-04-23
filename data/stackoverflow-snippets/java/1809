@@ -1,0 +1,38 @@
+private static final String fileName = ""MyAppsTextFile.txt"";
+
+private void deleteExistingFile()
+{
+    println(""DeleteFileActivity > deleteExistingFile"");
+
+    Query query = new Query.Builder()
+            .addFilter(Filters.eq(SearchableField.TITLE, fileName))
+            .build();
+
+    Task<MetadataBuffer> queryTask = getDriveResourceClient().query(query);
+
+    queryTask.addOnSuccessListener( this,
+            new OnSuccessListener<MetadataBuffer>()
+            {
+                @Override
+                public void onSuccess(MetadataBuffer metadataBuffer)
+                {
+                    System.out.println(""Success. File/s found!"");
+
+                    for(Metadata m : metadataBuffer)
+                    {
+                        DriveResource driveResource = m.getDriveId().asDriveResource();
+
+                        System.out.println(""Deleting file "" + fileName + "" with DriveID m.getDriveId()"");
+                        getDriveResourceClient().delete(driveResource);
+                    }
+                }
+            })
+            .addOnFailureListener(this, new OnFailureListener()
+            {
+                @Override
+                public void onFailure(@NonNull Exception e)
+                {
+                    System.out.println(""ERROR: File not found!"");
+                }
+            });
+}

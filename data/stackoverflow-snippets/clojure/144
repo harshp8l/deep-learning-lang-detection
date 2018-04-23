@@ -1,0 +1,68 @@
+(require '[clojure.math.combinatorics :as combo])
+
+(defrecord ItemSetElement [x])
+
+(defn make-item-set-element [x]
+  (->ItemSetElement x))
+
+(defn unwrap-item-set-element [elem]
+  (:x elem))
+
+(defn wrap-element-and-save-owner [owner s]
+  (with-meta (make-item-set-element s) {::owner owner}))
+
+(defn prepare-data [data]
+  (mapcat
+   (fn [[key ss]]
+     (map (partial wrap-element-and-save-owner key) ss))
+   data))
+
+(defn reconstruct-item-sets [subset]
+  (->> subset
+       (group-by #(::owner (meta %)))
+       (map (fn [[key elements]]
+              [key (map unwrap-item-set-element elements)]))
+       (into {})))
+
+ (defn my-subsets [data]
+   (->> data
+        prepare-data
+        combo/subsets
+        (map reconstruct-item-sets)))
+
+(def data {:item-set-1 [""a"" ""b""]
+           :item-set-2 [""c"" ""d"" ""e""]})
+
+> (my-subsets data)
+({}
+ {:item-set-1 (""a"")}
+ {:item-set-1 (""b"")}
+ {:item-set-2 (""c"")}
+ {:item-set-2 (""d"")}
+ {:item-set-2 (""e"")}
+ {:item-set-1 (""a"" ""b"")}
+ {:item-set-1 (""a""), :item-set-2 (""c"")}
+ {:item-set-1 (""a""), :item-set-2 (""d"")}
+ {:item-set-1 (""a""), :item-set-2 (""e"")}
+ {:item-set-1 (""b""), :item-set-2 (""c"")}
+ {:item-set-1 (""b""), :item-set-2 (""d"")}
+ {:item-set-1 (""b""), :item-set-2 (""e"")}
+ {:item-set-2 (""c"" ""d"")}
+ {:item-set-2 (""c"" ""e"")}
+ {:item-set-2 (""d"" ""e"")}
+ {:item-set-1 (""a"" ""b""), :item-set-2 (""c"")}
+ {:item-set-1 (""a"" ""b""), :item-set-2 (""d"")}
+ {:item-set-1 (""a"" ""b""), :item-set-2 (""e"")}
+ {:item-set-1 (""a""), :item-set-2 (""c"" ""d"")}
+ {:item-set-1 (""a""), :item-set-2 (""c"" ""e"")}
+ {:item-set-1 (""a""), :item-set-2 (""d"" ""e"")}
+ {:item-set-1 (""b""), :item-set-2 (""c"" ""d"")}
+ {:item-set-1 (""b""), :item-set-2 (""c"" ""e"")}
+ {:item-set-1 (""b""), :item-set-2 (""d"" ""e"")}
+ {:item-set-2 (""c"" ""d"" ""e"")}
+ {:item-set-1 (""a"" ""b""), :item-set-2 (""c"" ""d"")}
+ {:item-set-1 (""a"" ""b""), :item-set-2 (""c"" ""e"")}
+ {:item-set-1 (""a"" ""b""), :item-set-2 (""d"" ""e"")}
+ {:item-set-1 (""a""), :item-set-2 (""c"" ""d"" ""e"")}
+ {:item-set-1 (""b""), :item-set-2 (""c"" ""d"" ""e"")}
+ {:item-set-1 (""a"" ""b""), :item-set-2 (""c"" ""d"" ""e"")})

@@ -1,0 +1,31 @@
+Add-Type -AssemblyName Microsoft.VisualBasic
+
+$datatable = New-Object System.Data.DataTable
+$src = ""D:\Downloads\test.txt""
+
+$reader = New-Object -TypeName Microsoft.VisualBasic.FileIO.TextFieldParser -ArgumentList $src
+$reader.Delimiters = @("","")
+#Default values, but wanted to show the options
+$reader.HasFieldsEnclosedInQuotes = $true
+$reader.TrimWhiteSpace = $true
+
+#Get header as array
+$columns = $reader.ReadFields()
+
+foreach ($column in $columns) {
+    $datatable.columns.add($column)
+}
+
+while($fields = $reader.ReadFields()) {
+
+    $row = $datatable.NewRow()
+
+    #Insert value in property using field(column) index
+    for ($i = 0; $i -lt $columns.Count; $i++) {
+        $row.($columns[$i]) = $fields[$i]
+    }
+
+    $datatable.Rows.Add($row)
+}
+
+$reader.Close()

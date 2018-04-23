@@ -1,0 +1,25 @@
+val DF = Seq(
+  (""123"", ""|1|2"",""3|3|4"" ),
+  (""124"", ""|3|2"",""|3|4"" )
+).toDF(""id"", ""complete1"", ""complete2"")
+  .select(
+    $""id"",
+    split(regexp_replace($""complete1"",""^\\|"",""""), ""\\|"").as(""complete1""),
+    split(regexp_replace($""complete2"",""^\\|"",""""), ""\\|"").as(""complete2"")
+  )
+
+
+// now select minimum
+DF.
+ .select(
+  $""id"",
+  sort_array($""complete1"")(0).as(""complete1""),
+  sort_array($""complete2"")(0).as(""complete2"")
+).show()
+
++---+---------+---------+
+| id|complete1|complete2|
++---+---------+---------+
+|123|        1|        3|
+|124|        2|        3|
++---+---------+---------+

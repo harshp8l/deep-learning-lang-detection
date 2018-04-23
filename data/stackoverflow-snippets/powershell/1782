@@ -1,0 +1,53 @@
+[CmdletBinding()]
+param(
+    [parameter(Mandatory=$true)]
+    [string]$MailAddress
+)
+
+# Create a reference to Exchange 2010 to match our current environment.
+$objExchange = Connect-ExchangeService -MailAddress $MailAddress -DefaultCredentials
+
+<#
+    Define Extended properties  
+    PR_FOLDER_TYPE: Contains a constant that indicates the folder type.
+        https://msdn.microsoft.com/en-us/library/office/cc815373.asp
+    PR_MESSAGE_SIZE_EXTENDED: Contains the sum, in bytes, of the sizes of all properties on a message object. int64 version of PR_MESSAGE_SIZE
+        https://msdn.microsoft.com/en-us/library/office/cc839933.aspx
+    PR_DELETED_MESSAGE_SIZE_EXTENDED: Could not find official reference.
+    PR_FOLDER_PATH: Could not find official reference.
+#>
+$PR_FOLDER_TYPE = [Data.ExtendedPropertyDefinition]::new(13825,[Data.MapiPropertyType]::Integer)
+$PR_MESSAGE_SIZE_EXTENDED = New-Object Data.ExtendedPropertyDefinition(3592,[Data.MapiPropertyType]::Long);  
+$PR_DELETED_MESSAGE_SIZE_EXTENDED = New-Object Data.ExtendedPropertyDefinition(26267,[Data.MapiPropertyType]::Long);  
+$PR_FOLDER_PATH = New-Object Data.ExtendedPropertyDefinition(26293, [Data.MapiPropertyType]::String);  
+
+$folderIDCount = [Data.FolderId]::new([Data.WellKnownFolderName]::MsgFolderRoot,$MailAddress)  
+
+# Define the FolderView used for Export. Should not be any larger then 1000 folders due to throttling  
+$folderView = [Data.FolderView]::new(1000)
+
+# Deep Traversal will ensure all folders in the search path are returned  
+$folderView.Traversal = [Data.FolderTraversal]::Deep;  
+$ewsPropertySet = [Data.PropertySet]::new([Data.BasePropertySet]::FirstClassProperties)
+
+# Add Properties to the  Property Set  
+$ewsPropertySet.Add($PR_MESSAGE_SIZE_EXTENDED);  
+$ewsPropertySet.Add($PR_FOLDER_PATH);  
+$folderView.PropertySet = $ewsPropertySet;
+
+# Exclude any Search Folders in the filter
+$searchFilter = [Data.SearchFilter+IsEqualTo]::new($PR_FOLDER_TYPE,""1"")  
+
+#The Do loop will handle any paging that is required if there are more the 1000 folders in a mailbox  
+do {  
+    $filterResult = $objExchange.FindFolders($folderIDCount, $searchFilter, $folderView)       
+    foreach($singleFolder in $filterResult.Folders){              
+        #Try to get the FolderPath Value and then covert it to a usable String
+        $folderPathValue = $null     
+        $singleFolder.TryGetProperty($PR_FOLDER_PATH, [ref]$folderPathValue) | Out-Null
+
+        # Output folder object to pipeline
+        $singleFolder | Select-Object Id,DisplayName,@{Name=""FolderPath"";Expression={$folderPathValue}},FolderClass,ParentFolderId
+    } 
+    $folderView.Offset += $filterResult.Folders.Count
+}while($filterResult.MoreAvailable)

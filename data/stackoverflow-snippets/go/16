@@ -1,0 +1,39 @@
+package main
+
+import (
+        ""github.com/fsnotify/fsnotify""
+        ""io/ioutil""
+        ""log""
+)
+
+const filename = ""myfile.txt""
+
+func ReadFile(filename string) string {
+        data, err := ioutil.ReadFile(filename)
+        if err != nil {
+                log.Println(err)
+        }
+        return string(data)
+}
+
+func main() {
+        watcher, err := fsnotify.NewWatcher()
+        if err != nil {
+                log.Fatal(err)
+        }
+        defer watcher.Close()
+        err = watcher.Add(""./"")
+        if err != nil {
+                log.Fatal(err)
+        }
+        for {
+                select {
+                case event := <-watcher.Events:
+                        if event.Op == fsnotify.Create && event.Name == filename {
+                                log.Println(ReadFile(filename))
+                        }
+                case err := <-watcher.Errors:
+                        log.Println(""error:"", err)
+                }
+        }
+}

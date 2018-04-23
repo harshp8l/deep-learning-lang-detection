@@ -1,0 +1,43 @@
+import sys
+
+import time
+import threading
+
+from PyQt5.QtWidgets import (QPushButton, QApplication, QMainWindow, QDialog, QVBoxLayout, QLabel)
+from PyQt5.QtCore import QObject, pyqtSignal
+
+class Helper(QObject):
+    finished = pyqtSignal()
+
+def some_task(helper):
+    time.sleep(2)
+    helper.finished.emit()
+
+class MyWarnings(QDialog):
+    def __init__(self):
+        super(MyWarnings, self).__init__()
+        widget = QLabel('wait')
+        layout = QVBoxLayout()
+        layout.addWidget(widget)
+        self.setLayout(layout)
+
+class Window(QMainWindow):
+    def __init__(self):
+        QMainWindow.__init__(self)
+        self.widget = QPushButton('push me')
+        self.widget.pressed.connect(self.push_me)
+        self.setCentralWidget(self.widget)
+
+    def push_me(self):
+        self.a = MyWarnings()
+        self.a.show()
+        self.helper = Helper()
+        self.helper.finished.connect(lambda: self.widget.setText('done!'))
+        self.helper.finished.connect(self.a.close)
+        threading.Thread(target=some_task, args=(self.helper, )).start()
+
+
+app = QApplication(sys.argv)
+window = Window()
+window.show()
+sys.exit(app.exec_())

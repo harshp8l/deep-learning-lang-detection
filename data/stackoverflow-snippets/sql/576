@@ -1,0 +1,42 @@
+;WITH ComplexQueryCalculations AS
+(
+    SELECT
+        ID = T.ID,
+        SomeColumn = T.SomeColumn,
+        ExpressionResult = CASE
+            WHEN T.PlanetsAlign = 1 AND X.OtherColumn > 100
+                THEN (N.OtherColumn * 100) / NULLIF(N.AnotherColumn, 0)
+            ELSE
+                N.OtherColumn END
+    FROM
+        Table1 AS T
+        INNER JOIN Table2 AS N ON T.SomeColumn = N.SomeColumn
+        LEFT JOIN Table3 AS X ON
+            T.SomeColumn = CONVERT(INT, X.SomeColumn) AND
+            N.SomeColumn = X.OtherColumn
+    WHERE
+        T.ID <= 15000 AND
+        CHARINDEX('_', T.SomeColumn) > 1 AND
+        (
+            T.SomeColumn <> 'Property' OR
+            (T.SomeColumn = 'Property' AND X.SomeColumn BETWEEN 1 AND 100)
+        )
+),
+FilteredExpressionResult AS
+(
+    SELECT
+        C.ID,
+        C.SomeColumn,
+        C.ExpressionResult
+    FROM
+        ComplexQueryCalculations AS C -- Reference previous CTE
+    WHERE
+        C.ExpressionResult >= 50 -- Filter the alias!
+)
+SELECT
+    F.*
+FROM
+    FilteredExpressionResult AS F
+    INNER JOIN YetAnotherTable AS Y ON F.ID = Y.ID
+WHERE
+    Y.SomeColumn IS NOT NULL

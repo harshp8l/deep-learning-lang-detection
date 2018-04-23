@@ -1,0 +1,89 @@
+// This is the type that will be used to build our handlers.
+type Handler struct {
+    handlerType       string    // Can be ""CREATE"" or ""GET""
+    handlerActionName string    // Can be ""flow"" or ""process""
+    elastible         Elastible // Can be *Flow or *Process
+}
+
+// Your ESID Type.
+type ESIDType string
+
+// Solution proposed by https://stackoverflow.com/users/7426/adrian.
+type Elastible interface {
+    SetESID(id ESIDType)
+}
+
+// Make the Flow and Process pointers implement the Elastible interface.
+func (flow *Flow) SetESID(id ESIDType) {
+    flow.ESID = id
+}
+
+func (process *Process) SetESID(id ESIDType) {
+    process.ESID = id
+}
+
+// Create a Higher Order Function which will return the actual handler.
+func CreateHandler(handler Handler) func(*AppContext, http.ResponseWriter, http.Request) (int, error) {
+
+    return func(a *AppContext, w http.ResponseWriter, r http.Request) (int, error) {
+
+        // Define a sendResponse function so that we may not need to copy paste it later.
+        // It captures w using closure and takes an interface argument that we use to call .Encode() with.
+
+        sendResponse := func(response interface{}) (int, error) {
+            b := new(bytes.Buffer)
+            json.NewEncoder(b).Encode(response)
+            w.Header().Set(""Content-Type"", ""application/json"")
+            w.Write(b.Bytes())
+            return 200, nil
+        }
+
+        // Define these variables beforehand since we'll be using them
+        // in both the if and else block. Not necessary really.
+        var code int
+        var err error
+
+        // Check the handlerType. Is it create or get?
+        if handler.handlerType == ""CREATE"" {
+            var highest int
+
+            // Creates the thing using handler.handlerActionName which may be ""flow"" or ""process""
+            highest, code, err = a.Create(handler.handlerActionName, r)
+            if code != 200 || err != nil {
+                return code, err
+            }
+
+            // Send the response using the above defined function and return.
+            return sendResponse(struct {
+                Highest int `json:""id""`
+            }{highest})
+
+        } else {
+
+            // This is GET handlerType.
+            var hit HitType
+
+            // Get the hit using again the handler.handlerActionName which may be ""flow"" or ""process""
+            hit, code, err = a.GetByID(handler.handlerActionName, mux.Vars(r)[""id""], r)
+            if code != 200 || err != nil {
+                return code, err
+            }
+
+            // Do the un-marshalling.
+            err = json.Unmarshal(*hit.Source, ob)
+            if err != nil {
+                return 500, err
+            }
+
+            // We have set the handler.elastible to be an interface type
+            // which will have the SetESID function that will set the ESID in the
+            // underlying type that will be passed on runtime.
+            // So the ESID will be set for both the Flow and the Process types.
+            // This interface idea was given inside an earlier answer by
+            // https://stackoverflow.com/users/7426/adrian
+
+            handler.elastible.SetESID(hit.id)
+            return sendResponse(handler.elastible)
+        }
+    }
+}

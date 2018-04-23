@@ -1,0 +1,48 @@
+open System
+open Akka.Actor
+open Akka.Configuration
+open Akka.FSharp
+
+let system = System.create ""MySystem"" (Configuration.defaultConfig())
+
+let myActor (mailbox: Actor<_>) = 
+    actor {
+        let rand = System.Random()
+        let! message = mailbox.Receive()
+        let sender = mailbox.Sender()
+        match message with
+        | ""first"" -> printfn ""first group""    
+        | _ -> printfn ""second group""
+        Thread.SpinWait (rand.Next(100,1000))
+        sender <! ""Done""
+    }
+
+let myMonitor (mailbox: Actor<_>) =
+    let mutable i = 99
+    let actorArray = Array.create 200 (spawn system ""myActor"" myActor)
+    {0..199} |> Seq.iter (fun a ->
+        actorArray.[a] <- spawn system (string a) myActor
+        ()
+    )
+    // First group
+    {0..100} |> Seq.iter(fun a ->
+        actorArray.[a] <! ""first""
+        ()
+    )
+    let rec loop() =
+        actor {
+            let! message = mailbox.Receive()
+            match message with
+            | _ -> 
+                i <- (i - 1)
+                if (i = 0) then
+                    // Second group
+                    {101..199} |> Seq.iter(fun a ->
+                        actorArray.[a] <! ""second""
+                        ()
+                    )
+            return! loop()
+        } 
+    loop()
+
+let mon = spawn system ""myMon"" myMonitor

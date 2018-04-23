@@ -1,0 +1,24 @@
+CREATE Table #LahmanTeams
+(   yearID  INT,
+    franchID varchar(255),
+    [name] varchar(255)
+)
+
+INSERT INTO #LahmanTeams VALUES (1966, 'ATL', 'Atlanta Braves')
+INSERT INTO #LahmanTeams VALUES (1883, 'ATL', 'Boston Beaneaters')
+INSERT INTO #LahmanTeams VALUES (1883, 'PHI', 'Philadelphia Quakers')
+INSERT INTO #LahmanTeams VALUES (1936, 'ATL', 'Boston Bees')
+INSERT INTO #LahmanTeams VALUES (1993, 'PHI', 'Philadelphia Phillies');
+
+WITH teams AS
+(
+SELECT 
+   yearID, franchID, name,                 Row_number() 
+                  OVER ( 
+                    partition BY franchid 
+                    ORDER BY yearid asc) AS rn 
+
+FROM #LahmanTeams
+GROUP BY franchID, name, yearID
+)
+SELECT * from teams where rn = 1

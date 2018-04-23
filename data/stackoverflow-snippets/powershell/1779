@@ -1,0 +1,24 @@
+$s = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService([Microsoft.Exchange.WebServices.Data.ExchangeVersion]::Exchange2007_SP1)
+$s.Credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials
+
+# discover the url from your email address
+$s.AutodiscoverUrl($email)
+
+$inbox = [Microsoft.Exchange.WebServices.Data.Folder]::Bind($s,[Microsoft.Exchange.WebServices.Data.WellKnownFolderName]::Inbox) 
+
+#create a property set (to let us access the body & other details not available from the FindItems call)
+$psPropertySet = new-object Microsoft.Exchange.WebServices.Data.PropertySet([Microsoft.Exchange.WebServices.Data.BasePropertySet]::FirstClassProperties)
+$psPropertySet.RequestedBodyType = [Microsoft.Exchange.WebServices.Data.BodyType]::Text;
+
+$items = $inbox.FindItems($inbox.TotalCount)
+
+foreach ($item in $items.Items)
+{
+  $item.load($psPropertySet)
+   if ($item.Subject.Contains('Subject Test')){
+           $convertedFolder = [Data.FolderId]::new($folderMoveTo.Id)
+           $item.Move($convertedFolder)
+          break 
+  }
+
+}

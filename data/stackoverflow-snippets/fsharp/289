@@ -1,0 +1,11 @@
+let comparer (atMost) = 
+    { new System.Collections.Generic.IEqualityComparer<string[]> with
+            member __.Equals(a, b) = 
+                Seq.zip a b
+                    |> Seq.sumBy (fun (a',b') -> System.StringComparer.InvariantCulture.Compare(a', b') |> abs |> min 1)
+                    |> ((>=) atMost)
+            member __.GetHashCode(a) = 1
+    }
+
+System.Linq.Enumerable.GroupBy(data, id, comparer 1)
+    |> Seq.choose (fun g -> match Seq.length g with | 1 -> Some g.Key | _ -> None)

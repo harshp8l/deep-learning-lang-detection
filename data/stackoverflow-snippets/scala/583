@@ -1,0 +1,30 @@
+  def randomIntervalSequence(): List[Gap] = {
+    def recHelper(acc: List[Gap], open: Option[Int], currIdx: Int): List[Gap] = {
+      if (math.random > 0.999) acc.reverse
+      else {
+        if (math.random > 0.90) {
+          if (open.isEmpty) {
+            recHelper(acc, Some(currIdx), currIdx + 1)
+          } else {
+            recHelper((open.get, currIdx) :: acc, None, currIdx + 1)
+          }
+        } else {
+          recHelper(acc, open, currIdx + 1)
+        }
+      }
+    }
+    recHelper(Nil, None, 0)
+  }
+
+  def intervalsToInts(is: List[Gap]): List[Int] = is.flatMap{ case (a, b) => a to b }
+
+  var numNonTrivialTests = 0
+  while(numNonTrivialTests < 1000) {
+    val as = randomIntervalSequence()
+    val bs = randomIntervalSequence()
+    if (!as.isEmpty && !bs.isEmpty) {
+      numNonTrivialTests += 1
+      val merged = mergeIntervals(as, bs)
+      assert((intervalsToInts(as).toSet ++ intervalsToInts(bs)) == intervalsToInts(merged).toSet)
+    }
+  }

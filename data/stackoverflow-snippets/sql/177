@@ -1,0 +1,13 @@
+select s.State_Name, 
+       s.City_Name,
+       avg(t.Average_Temp) as average 
+       rank() over (partition by s.State_Name order by avg(t.Average_Temp) desc) as City_Rank, 
+       dense_rank() over (order by avg(state_average))
+from aqs_sites s INNER JOIN
+     (select t.*, avg(Average_Temp) over (partition by state_code) as state_average
+      from Temperature t
+     ) t
+     ON s.State_Code = t.State_Code AND 
+        s.County_Code = t.County_Code AND 
+        s.Site_Number = t.Site_Num
+group by s.City_Name, s.State_Name;

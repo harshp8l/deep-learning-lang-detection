@@ -1,0 +1,19 @@
+(require '[clojure.string :as s])
+(import '[java.security KeyFactory]
+        '[java.security.spec X509EncodedKeySpec]
+        '[java.util Base64])
+
+(def public-key ""-----BEGIN PUBLIC KEY-----
+MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBhsFCcWY2GaiN1BjPEd1v+ESKO6/0
+D0sUR4y1amHnOr3FZx6TdqdoSBqxownQrnAKGCwagGxUb7BWwPFgHqKQJHgBq+J7
+F+6m5SKAEL1wS5pqya91N7oudF3yFW8oZRE4RQRdSLl3fV2aVXKwGDXciwhUhw8k
+x5OS4iZpMAY+LI4WVGU=
+-----END PUBLIC KEY-----"")
+
+(as-> public-key key
+      (s/replace key ""-----BEGIN PUBLIC KEY-----"" """")
+      (s/replace key ""-----END PUBLIC KEY-----"" """")
+      (s/replace key #""\s"" """")
+      (.decode (Base64/getDecoder) key)
+      (X509EncodedKeySpec. key)
+      (.generatePublic (KeyFactory/getInstance ""ECDSA"" ""BC"") key))

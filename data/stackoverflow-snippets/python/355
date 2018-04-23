@@ -1,0 +1,18 @@
+import scrapy
+from scrapy.exceptions import DropItem
+from twisted.internet.defer import inlineCallbacks
+
+
+class StockPipeline(object):
+    @inlineCallbacks
+    def open_spider(self, spider):
+        req = scrapy.Request(stock_url)
+        response = yield spider.crawler.engine.download(req, spider)
+        # extract the stock info from the response
+        self.stock_info = response.text
+
+    def process_item(self, item, spider):
+        # check if the item should be dropped
+        if item['id'] not in self.stock_info:
+            raise DropItem
+        return item

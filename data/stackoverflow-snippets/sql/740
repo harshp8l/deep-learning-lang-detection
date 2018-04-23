@@ -1,0 +1,35 @@
+SELECT * 
+FROM
+(
+    SELECT DISTINCT tblInventory.[Phone Number] AS [Wireless No], 
+    tblEmployeeList.[Employee Number] AS [Employee No], tblEmployeeList.[Payroll 
+    First Name] AS [First Name], tblEmployeeList.[Payroll Last Name] AS [Last 
+    Name], tblVendors.[Vendor Name] AS [Wireless Carrier], ""Company"" AS [Acct 
+    Liability]
+    FROM tblVendors INNER JOIN (tblEmployeeList INNER JOIN tblInventory ON    
+    tblEmployeeList.[Employee Number] = tblInventory.[Employee Number]) AND 
+    (tblEmployeeList.[Employee Number] = tblInventory.[Employee Number])) ON 
+    tblVendors.ID = tblInventory.Carrier
+    WHERE (((tblInventory.[Phone Number]) Is Not Null) AND ((tblVendors.[Vendor 
+    Name])<>""Roadpost"" And (tblVendors.[Vendor Name])<>""LIVETV Airfone Inc."") 
+    AND ((tblInventory.[Asset Description]) Like ""*"" & ""phone"" & ""*"") AND 
+    ((tblInventory.Disposition)=2) AND ((tblInventory.Spare)=False) AND 
+    ((tblEmployeeList.[End Date]) Not Like ""*""))
+    ORDER BY ([tblEmployeeList].[Employee Number] AS [Employee No])
+    UNION SELECT tblMCPCollated.[Phone Number] as [Wireless No], 
+    tblEmployeeList.[Employee Number] as [Employee No], tblEmployeeList.[Payroll 
+    First Name] as [First Name], tblEmployeeList.[Payroll Last Name] as [Last 
+    Name], tblVendors.[Vendor Name] as [Wireless Carrier], ""Employee"" as [Acct 
+    Liability]
+    FROM tblVendors INNER JOIN (tblEmployeeList INNER JOIN tblMCPCollated ON 
+    tblEmployeeList.[Employee Number] = tblMCPCollated.[Employee Number]) ON 
+    tblVendors.ID = tblMCPCollated.Vendor
+    WHERE (((tblMCPCollated.[Phone Number]) Is Not Null) AND 
+    ((tblMCPCollated.Status)=""Active"") AND ((tblMCPCollated.[MCP Program])<>1) 
+    AND ((tblMCPCollated.[Compensation Amt])>0) AND ((tblEmployeeList.[End 
+    Date]) Not Like ""*"")) OR (((tblMCPCollated.[Phone Number]) Is Not Null) AND 
+    ((tblMCPCollated.Status)=""Pending"") AND ((tblMCPCollated.[MCP Program])<>1) 
+    AND ((tblMCPCollated.[Compensation Amt])>0) AND ((tblEmployeeList.[End 
+    Date]) Not Like ""*""))
+) t1
+ORDER BY t1.[Employee No];

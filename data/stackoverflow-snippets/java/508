@@ -1,0 +1,17 @@
+Map<String, String> nameMap = new HashMap<>();
+nameMap.put(""F1"", path + ""F1"");
+nameMap.put(""F2"", path + ""F2"");
+extractFilesFromZip(filePath, nameMap);
+
+public static void extractFilesFromZip(String filePath, Map<String, String> nameMap) throws IOException {
+    try (ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(new FileInputStream(filePath)))) {
+        for (ZipEntry ze; (ze = zipIn.getNextEntry()) != null; ) {
+            String file = nameMap.get(ze.getName());
+            if (file != null) {
+                Path path = Paths.get(file);
+                Files.deleteIfExists(path);
+                Files.copy(zipIn, path);
+            }
+        }
+    }
+}

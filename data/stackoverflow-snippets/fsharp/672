@@ -1,0 +1,35 @@
+#I @""..\packages\Microsoft.AspNet.Identity.EntityFramework.2.2.1\lib\net45""
+#I @""..\packages\Microsoft.AspNet.Identity.Core.2.2.1\lib\net45\""
+#r ""Microsoft.AspNet.Identity.Core.dll""
+#r ""Microsoft.AspNet.Identity.EntityFramework.dll""
+#r ""System.ComponentModel.DataAnnotations.dll""
+
+open Microsoft.AspNet.Identity
+open Microsoft.AspNet.Identity.EntityFramework
+open System.Collections.Generic
+open System.ComponentModel.DataAnnotations
+open System.ComponentModel.DataAnnotations.Schema
+
+type ApplicationUserLogin() = inherit IdentityUserLogin<int>()
+
+type ApplicationUserRole() = inherit IdentityUserRole<int>()
+
+type ApplicationUserClaim() = inherit IdentityUserClaim<int>()
+
+type ApplicationUser() = 
+    inherit IdentityUser<int, ApplicationUserLogin, ApplicationUserRole, ApplicationUserClaim>()
+    let mutable id = 0
+    member this.GenerateUserIdentityAsync (manager : UserManager<ApplicationUser, int>) =
+        manager.CreateIdentityAsync(this, DefaultAuthenticationTypes.ApplicationCookie)
+    [<DatabaseGenerated(DatabaseGeneratedOption.Identity)>] override this.Id with get() = id and set(v) = id <- v
+    member val ExternalIdentities : ICollection<ExternalIdentity> = upcast [||] with get, set
+
+
+and [<CLIMutable>] ExternalIdentity =
+    {
+        [<DatabaseGenerated(DatabaseGeneratedOption.Identity)>] Id : int
+        [<Required; MaxLength(128)>] ExternalUserId : string
+        [<Required; MaxLength(128)>] Provider : string
+        UserId : int
+        [<ForeignKey(""UserId"")>] User : ApplicationUser
+    }

@@ -1,0 +1,15 @@
+Private Sub GetStarted()
+    Const MESSAGE As String = ""hello bob""
+    Dim vbnet As Sodium.KeyPair = Sodium.PublicKeyBox.GenerateKeyPair()
+    Dim php As Sodium.KeyPair = Sodium.PublicKeyBox.GenerateKeyPair()
+    Dim nonce As Byte() = Sodium.PublicKeyBox.GenerateNonce()
+    'vbnet encrypts A message for php
+    Dim encrypted As Byte() = Sodium.PublicKeyBox.Create(MESSAGE, nonce, vbnet.PrivateKey, php.PublicKey)
+    'php decrypt the message
+    Dim decrypted As Byte() = Sodium.PublicKeyBox.Open(encrypted, nonce, php.PrivateKey, vbnet.PublicKey)
+    'make the bytes readable
+    Dim msg As String = System.Convert.ToBase64String(decrypted)
+    decrypted = Convert.FromBase64String(msg)
+    msg = System.Text.Encoding.UTF8.GetString(decrypted)
+    MsgBox(msg)
+End Sub

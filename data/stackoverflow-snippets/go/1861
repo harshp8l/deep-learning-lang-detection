@@ -1,0 +1,31 @@
+// Copies gp's stack to a new stack of a different size.
+// Caller must have changed gp status to Gcopystack.
+//
+// If sync is true, this is a self-triggered stack growth and, in
+// particular, no other G may be writing to gp's stack (e.g., via a
+// channel operation). If sync is false, copystack protects against
+// concurrent channel operations.
+func copystack(gp *g, newsize uintptr, sync bool) {
+    // . . .
+    // allocate new stack
+    new := stackalloc(uint32(newsize))
+    if stackPoisonCopy != 0 {
+        fillstack(new, 0xfd)
+    }
+    // . . .
+    // Compute adjustment.
+    var adjinfo adjustinfo
+    adjinfo.old = old
+    adjinfo.delta = new.hi - old.hi
+    // . . .
+    // Adjust remaining structures that have pointers into stacks.
+    // We have to do most of these before we traceback the new
+    // stack because gentraceback uses them.
+    adjustctxt(gp, &adjinfo)
+    adjustdefers(gp, &adjinfo)
+    adjustpanics(gp, &adjinfo)
+    if adjinfo.sghi != 0 {
+        adjinfo.sghi += adjinfo.delta
+    }
+    // . . .
+}

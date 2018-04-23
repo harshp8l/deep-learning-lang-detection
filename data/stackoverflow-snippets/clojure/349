@@ -1,0 +1,28 @@
+(ns myproject.data.big-decimal
+  (:require  [monger.conversion :refer :all]
+             [clojure.string :as str]))
+
+(def prefix ""bigdec:"")
+(def prefix-count (count prefix))
+
+(defn big-dec-serialize [value]
+  (str prefix value))
+
+(defn big-dec-deserialize [s]
+  (if (and (> (count s) prefix-count)
+           (= (subs s 0 prefix-count) prefix))
+      (try 
+        (bigdec (subs s prefix-count (count s)))
+        (catch Exception e 
+          s))
+      s))
+
+(extend-protocol ConvertToDBObject
+  java.math.BigDecimal 
+  (to-db-object [^java.math.BigDecimal nr]
+    (big-dec-serialize nr)))
+
+(extend-protocol ConvertFromDBObject
+  String
+  (from-db-object [^String input keywordize]
+    (big-dec-deserialize input)))

@@ -1,0 +1,33 @@
+import org.apache.spark.sql.{Row, DataFrame}
+
+def sampleByIdDF(DF: DataFrame, id: Int, datesToUse: Int, totalDates: Int): DataFrame = {
+  val fraction = datesToUse.toDouble / totalDates
+  DF.where($""id"" === id ).sample(false, fraction)
+}
+
+val emptyDF = Seq.empty[(Int, String)].toDF(""ID"", ""date"")
+
+val planList = planDF.rdd.collect.map{ case Row(x: Int, y: Int, z: Int) => (x, y, z) }
+// planList: Array[(Int, Int, Int)] = Array((1,3,7), (2,2,4), (3,1,6))
+
+planList.foldLeft( emptyDF ){
+  case (accDF: DataFrame, (id: Int, num: Int, total: Int)) =>
+    accDF union sampleByIdDF(idDF, id, num, total)
+}
+// res1: org.apache.spark.sql.DataFrame = [ID: int, date: string]
+
+// res1.show
+// +---+----------+
+// | ID|      date|
+// +---+----------+
+// |  1|2017-10-03|
+// |  1|2017-11-01|
+// |  1|2017-10-02|
+// |  1|2017-12-24|
+// |  1|2017-10-20|
+// |  2|2017-11-17|
+// |  2|2017-11-12|
+// |  2|2017-12-02|
+// |  3|2017-11-21|
+// |  3|2017-12-13|
+// +---+----------+

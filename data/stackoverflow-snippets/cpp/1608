@@ -1,0 +1,26 @@
+constexpr int ColorCount = 6;
+constexpr int PositionCount = 4;
+
+using Positions = std::array<int, PositionCount>;
+
+template <int N>
+struct PositionsFiller
+{
+    template <typename T, typename ...Tn>
+    static constexpr Positions fill(T packed, Tn ...rest)
+    {
+        return PositionsFiller<N - 1>::fill(packed / ColorCount, packed % ColorCount, rest...);
+    }
+};
+
+template <>
+struct PositionsFiller<1>
+{
+    template <typename T, typename ...Tn>
+    static constexpr Positions fill(T last, Tn ...rest)
+    {
+        return Positions{last, rest...};
+    }
+};
+
+constexpr Positions pos666(PositionsFiller<PositionCount>::fill(666));

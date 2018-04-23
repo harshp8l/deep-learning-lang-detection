@@ -1,0 +1,24 @@
+void IntervalMapEstimator::extract_relevant_points_multithread(std::vector<Point3D>&  relevant_points ,std::vector<Point3D>& pointcloud, doubleIE cell_min_angle_sensor_rot, doubleIE cell_max_angle_sensor_rot)
+{
+    relevant_points.reserve (pointcloud.size ());
+
+#pragma omp parallel for shared (relevant_points, pointcloud, cell_min_angle_sensor_rot, cell_max_angle_sensor_rot) num_threads(5)
+        for(int i = 0; i < pointcloud.size(); i++) {
+            //int numThread = omp_get_thread_num();
+            //std::cout << ""numThread = "" << numThread << std::endl;
+
+            // Check whether the cell is between the 2nd and 3rd quadrant (--> e.g. -170 to 170°)
+            if ( cell_min_angle_sensor_rot < 0 && cell_max_angle_sensor_rot >= 0 && abs(cell_min_angle_sensor_rot) > M_PI/2 && abs(cell_max_angle_sensor_rot) > M_PI/2) {
+                // Point must be smaller than the minimum angle and bigger than the max angle (e.g. min-angle: -1.5 max-angle: 1.5 point angle bigger than 1.5 or smaller than -1.5)
+                if ( pointcloud[i].pol_sensor_rot.phi <= cell_min_angle_sensor_rot || pointcloud[i].pol_sensor_rot.phi  >= cell_max_angle_sensor_rot ) {                   
+#pragma omp critical(push_in_relevant_points)
+                    relevant_points.push_back(pointcloud[i]);
+                }
+            } else {
+                 if (pointcloud[i].pol_sensor_rot.phi  >= cell_min_angle_sensor_rot && pointcloud[i].pol_sensor_rot.phi  <= cell_max_angle_sensor_rot ) {
+#pragma omp critical(push_in_relevant_points)
+                     relevant_points.push_back(pointcloud[i]);
+                 }
+            }
+        }
+}

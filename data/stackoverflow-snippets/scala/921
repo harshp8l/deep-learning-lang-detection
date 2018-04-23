@@ -1,0 +1,29 @@
+import monix.reactive.Observable
+import scala.concurrent.duration._
+
+import monix.eval.Task
+
+// Your domain logic - I'll use these stubs
+trait Event
+trait Acknowledgement // whatever your DB functions return, if you need it
+def toKey(e: Event): String = ???
+def processOne(event: Event): Task[Acknowledgement] = Task.deferFuture {
+  event match {
+    case _ => ??? // insert/update/delete
+  }
+}
+
+// Monix Task.traverse is strictly sequential, which is what you need
+def processMany(evs: Seq[Event]): Task[Seq[Acknowledgement]] =
+  Task.traverse(evs)(processOne)
+
+def processEventStreamInParallel(source: Observable[Event]): Observable[Acknowledgement] =
+  source
+    // Process a bunch of events, but don't wait too long for whole 100. Fine-tune for your data source
+    .bufferTimedAndCounted(2.seconds, 100)
+    .concatMap { batch =>
+      Observable
+        .fromIterable(batch.groupBy(toKey).values) // Standard collection methods FTW
+        .mapAsync(3)(processMany) // processing up to 3 different keys in parallel - tho 3 is not necessary, probably depends on your DB throughput
+        .flatMap(Observable.fromIterable) // flattening it back
+    }

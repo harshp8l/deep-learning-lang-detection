@@ -1,0 +1,59 @@
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <limits>
+
+int main()
+{
+    std::istringstream iss(R""(
+
+$legendre_roots = array();
+
+$legendre_roots[2] = (
+    0.123213213213213,
+    -8.123213213213213);
+
+$legendre_roots[3] = (
+    0.123213213213213,
+    8.123213213213213,
+    3.1232133213);
+
+$legendre_roots[4] = (
+    0,
+    3.1232144444,
+    8.123213213213213,
+    3.1232133213);
+)"");
+
+    size_t n;
+    std::cout << ""Enter N from 2 to 4: "";
+    std::cin >> n;
+    std::cout << std::endl;
+
+    char dollar_sign;
+    std::string array_name, search_name = ""legendre_roots["" + std::to_string(n) + ""]"", delims(""-.0123456789"");
+    std::vector<std::string> array_elements(n);
+
+    while (iss >> dollar_sign)
+    {
+        if (dollar_sign == '$' && iss >> array_name && array_name == search_name)
+        {
+            iss.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            for (size_t i = 0; i < n; ++i)
+            {
+                std::string line;
+                std::getline(iss, line, '\n');
+                size_t start = line.find_first_of(delims), end = line.find_first_not_of(delims, start);
+                array_elements[i] = line.substr(start, end - start);
+            }
+            break;
+        }
+        iss.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+
+    for (auto const &element : array_elements)
+        std::cout << element << std::endl;
+
+    return 0;
+}

@@ -1,0 +1,77 @@
+declare @example as table (
+    ExampleID     int identity(1,1) not null primary key clustered
+,   OverAllStatus nvarchar(255) not null
+,   SN            int not null
+,   PassFail      nvarchar(255) not null
+,   TestType      bit not null
+,   TestCriteria  nvarchar(255) not null
+,   Entry_        int not null
+);
+
+insert into @example (OverAllStatus, SN, PassFail, TestType, TestCriteria, Entry_)
+select 'PASS', 170119904, 'Pass', 0, 'Backlight test', 1 union all
+select 'PASS', 170119904, 'Pass', 0, 'Factor test', 1 union all
+select 'PASS', 170119904, 'Pass', 0, 'Voltage test', 1 union all
+select 'PASS', 170119904, 'Pass', 0, 'Detactor test', 1 union all
+
+select 'PASS', 170119904, 'Pass', 0, 'Backlight test', 2 union all
+select 'PASS', 170119904, 'Pass', 1, 'Linux set test', 2 union all
+select 'PASS', 170119904, 'Pass', 0, 'Factor test', 2 union all
+select 'PASS', 170119904, 'Pass', 0, 'Voltage test', 2 union all
+select 'PASS', 170119904, 'Fail', 0, 'Digital test', 2 union all
+select 'PASS', 170119904, 'Pass', 0, 'Detactor test', 2 union all
+
+select 'PASS', 180117000, 'Pass', 0, 'Backlight test', 1 union all
+select 'PASS', 180117000, 'Pass', 1, 'Linux set test', 1 union all
+select 'PASS', 180117000, 'Pass', 0, 'Factor test', 1 union all
+select 'PASS', 180117000, 'Pass', 0, 'Digital test', 2 union all
+select 'PASS', 180117000, 'Pass', 0, 'Detactor test', 1;
+
+
+  --| Control Group, only those that pass but does not have 107 records (OverAllStatus)
+  ;with cte as (
+     select SN
+          , Entry_
+          , count(*) cnt
+       from @example
+      where OverAllStatus = 'Pass'
+   group by SN, Entry_
+   --| Control count - this is your 107 or the numbers of tests the SN has passed
+     having count(*) < 7
+            )
+   --| We are setting the count of records to the Test Type or the grouping
+    , cte2 as (
+    select b.SN
+         , a.Entry_
+         , iif(TestType = 1, 'Linux', 'Other') Test
+      from cte a
+      join @example b
+        on a.SN = b.SN
+       and a.Entry_ = b.Entry_
+            )
+    --| Roll up the counts
+    , cte3 as ( 
+    select distinct a.SN
+         , a.Entry_
+         , count(*) over(partition by a.SN, a.Test, a.Entry_) cnt
+         , a.Test
+      from cte2 a
+            )
+
+  --| Pivot the result set
+    select SN
+         , Entry_
+         , [Other]
+         , [Linux]
+      from (
+                select SN
+                     , Entry_
+                     , cnt
+                     , test
+                  from cte3
+                  ) as x
+            pivot 
+                (
+                 max(cnt)
+                 for Test in ([Other], [Linux])
+                ) as p;

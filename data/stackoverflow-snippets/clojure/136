@@ -1,0 +1,34 @@
+(ns tst.demo.core
+  (:require
+    [clojure.test.check :as tc]
+    [clojure.test.check.generators :as tcgen]
+    [clojure.test.check.properties :as tcprop]
+    [tupelo.core :as t]
+    [tupelo.test :as tt]
+    [schema.core :as s]))
+
+(def IntBoolTuple [ (s/one s/Int ""x1"") (s/one s/Bool ""x2"") ])
+
+(s/defn is-sum-tuple? :- s/Bool
+  [tuple :- IntBoolTuple]
+  (let [[int-val bool-val] tuple]
+    bool-val))
+
+(s/defn tst-fn :- s/Bool
+  ""Dummy test function""
+  [tuples :- [IntBoolTuple]]
+  (let [all-ints      (mapv first tuples)
+        flags         (mapv second tuples)
+        tuples-to-add (vec (filter is-sum-tuple? tuples))
+        ints-to-add   (mapv first tuples-to-add)
+        int-sum       (apply + ints-to-add)]
+    (< -20 int-sum))) ; dummy test: pass if not too negative
+
+(tt/dospec 999
+  (tcprop/for-all [tuples (tcgen/such-that
+                            (fn st-fn [tuples] (pos? (count tuples))) ; ensure at least 1 tuple is present
+                            (tcgen/vector ; 0 or more tuples, ex: [ [5 false] [2 true] ...]
+                              (tcgen/tuple tcgen/int tcgen/boolean) ; a tuple like [5 false]
+                              ))]
+    (t/spyx tuples)   ; display
+    (tst-fn tuples)))

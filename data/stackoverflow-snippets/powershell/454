@@ -1,0 +1,19 @@
+$moduleCustomUIMessage ='path to UI module'
+$outputFile_3 = 'output path'
+$Path = 'target path of directory to scan'
+
+Import-Module $moduleCustomUIMessage
+
+$results = Get-ChildItem -Path $Path -Recurse | where {!$_.PSIsContainer} | 
+    ForEach-Object{
+        $One,$Two,$Three = $_.BaseName -split '_' 
+        [PSCustomObject]@{
+            SiteCode = $One
+            FacNum = $Two
+            FileType = $Three
+            BaseName = $_.BaseName
+            Hyperlink = $_.FullName
+        }
+    } | Select-Object SiteCode, FacNum, FileType, BaseName, Hyperlink | Export-Csv -NoTypeInformation $outputFile_3 
+
+    CustomUIMessage $outputFile_3

@@ -1,0 +1,21 @@
+(def int-attr { :type ""int"" :validations [{ :min 0 } { :max 100 }] })
+(def string-attr { :type ""string"" :validations [{ :presence true }] })
+
+(defmulti attribute-type :type)
+(defmethod attribute-type ""string"" [_]
+  (s/keys :req-un [::type :string/validations]))
+(defmethod attribute-type ""int"" [_]
+  (s/keys :req-un [::type :int/validations]))
+
+(s/def :int/validations (s/coll-of :int/validation))
+(s/def :string/validations (s/coll-of :string/presence))
+
+(s/def :int/validation (s/keys :opt-un [:int/min :int/max]))
+(s/def :int/min number?)
+(s/def :int/max number?)
+(s/def :string/presence (s/keys :req-un [::presence]))
+
+(s/def ::attribute (s/multi-spec attribute-type ::type))
+
+(s/explain ::attribute int-attr)    ;; => Success!
+(s/explain ::attribute string-attr) ;; => Success!

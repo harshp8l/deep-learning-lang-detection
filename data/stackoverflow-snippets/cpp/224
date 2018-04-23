@@ -1,0 +1,43 @@
+#include <QAbstractListModel>
+
+class Model : public QAbstractListModel
+{
+    Q_OBJECT
+    QStringList list;
+
+public:
+    Model()
+    {
+        //adds 100 items
+        for(int i=0; i<100; i++)
+            list << QString(""ITEM #"") + QString::number(i+1);
+    }
+
+    int rowCount(const QModelIndex &parent) const
+    {
+        return list.size();
+    }
+    QVariant data(const QModelIndex &index, int role) const
+    {
+        if(index.isValid() && (role == Qt::DisplayRole))
+        {
+            int row = index.row();
+            if(row < list.size())
+            {
+                return list[row];
+            }
+        }
+        return QVariant();
+    }
+
+public slots:
+    void scrolledToEnd()
+    {
+        //adds 10 more items
+        int count = list.size();
+        for(int i=count; i<(count + 10); i++)
+            list << QString(""ITEM #"") + QString::number(i+1);
+
+        emit layoutChanged();
+    }
+};

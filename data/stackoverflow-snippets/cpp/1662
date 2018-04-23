@@ -1,0 +1,79 @@
+#include <SFML/Graphics.hpp>
+#include <vector>
+#include <math.h>
+
+class Flower : public sf::Drawable, public sf::Transformable {
+private:
+    std::vector<sf::CircleShape> mParts;
+
+public:
+    Flower(sf::Color color, unsigned int petals = 8, float centerRadius = 10, float petalRadius = 10) :
+        mParts(petals + 1) // Resize the vector for all our plant parts
+    {
+        // Setup the flower's center
+        mParts[0].setRadius(centerRadius);
+        mParts[0].setFillColor(sf::Color::Yellow);
+        mParts[0].setOrigin(centerRadius, centerRadius);
+        mParts[0].setOutlineColor(sf::Color::Black);
+        mParts[0].setOutlineThickness(1);
+
+        // No petals? Avoid a division by 0
+        if (!petals)
+            return;
+
+        // Determine the angle between the individual petals
+        float delta = 2 * 3.1415 / petals;
+
+        // Iterate over all petals and set them up
+        for (unsigned int i = 1; i <= petals; ++i) {
+
+            // Using a reference here for readability
+            sf::CircleShape &petal(mParts[i]);
+
+            petal.setRadius(petalRadius);
+            petal.setFillColor(color);
+            petal.setOrigin(petalRadius + (petalRadius + centerRadius) * std::sin(i * delta), petalRadius + (petalRadius + centerRadius) * std::cos(i * delta));
+            petal.setOutlineColor(sf::Color::Black);
+            petal.setOutlineThickness(1);
+        }
+    }
+
+    void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+
+        // Apply our own transform (from sf::Transformable)
+        states.transform *= getTransform();
+
+        // Draw the parts
+        for (const sf::CircleShape &part : mParts)
+            target.draw(part, states);
+    }
+};
+
+int main(int argc, char **argv) {
+    sf::RenderWindow window(sf::VideoMode(256, 256), ""Flowers"");
+
+    Flower flower1(sf::Color::Red, 5, 20, 20);
+    flower1.setPosition(sf::Vector2f(75, 75));
+    Flower flower2(sf::Color::Blue, 8, 10, 10);
+    flower2.setPosition(sf::Vector2f(200, 100));
+
+    while (window.isOpen()) {
+        sf::Event event;
+        // Your typical event loop
+        while (window.pollEvent(event)) {
+            switch (event.type) {
+                case sf::Event::Closed:
+                    window.close();
+                    break;
+            }
+        }
+
+        // Draw and display our flowers
+        window.clear();
+        window.draw(flower1);
+        window.draw(flower2);
+        window.display();
+    }
+
+    return 0;
+}

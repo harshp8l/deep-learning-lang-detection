@@ -1,0 +1,73 @@
+// filedialog-mod-49371087
+#include <QtWidgets>
+#include <initializer_list>
+
+struct GridPos {
+   int row = -1, col = -1, rowSpan = {}, colSpan = {};
+   GridPos(QGridLayout * layout, QWidget * widget) {
+      int index = layout->indexOf(widget);
+      if (index >= 0)
+         layout->getItemPosition(index, &row, &col, &rowSpan, &colSpan);
+   }
+   GridPos(int r, int c, int rs, int cs) : row(r), col(c), rowSpan(rs), colSpan(cs) {}
+   bool operator==(const GridPos & o) const {
+      return o.row == row && o.col == col && o.rowSpan == rowSpan && o.colSpan == colSpan;
+   }
+};
+
+namespace SO {
+enum ModDialogOption { SpaceButtons = 1 };
+Q_DECLARE_FLAGS(ModDialogOptions, ModDialogOption)
+}
+Q_DECLARE_OPERATORS_FOR_FLAGS(SO::ModDialogOptions)
+
+struct ModDialogResult {
+   QGridLayout *layout;
+   int row;
+   int colSpan;
+};
+
+ModDialogResult modDialog(QFileDialog * dialog, SO::ModDialogOptions options = {}) {
+   auto *layout = qobject_cast<QGridLayout*>(dialog->layout());
+   auto *fileNameLabel = dialog->findChild<QLabel*>(""fileNameLabel"");
+   auto *fileNameEdit = dialog->findChild<QLineEdit*>(""fileNameEdit"");
+   auto *buttonBox = dialog->findChild<QDialogButtonBox*>(""buttonBox"");
+   auto *fileTypeLabel = dialog->findChild<QLabel*>(""fileTypeLabel"");
+   auto *fileTypeCombo = dialog->findChild<QComboBox*>(""fileTypeCombo"");
+   auto const buttons = buttonBox->findChildren<QPushButton*>();
+   // ensure that the dialog has expected layout
+   Q_ASSERT((GridPos{layout, fileNameLabel} == GridPos{2, 0, 1, 1}));
+   Q_ASSERT((GridPos{layout, fileNameEdit} == GridPos{2, 1, 1, 1}));
+   Q_ASSERT((GridPos{layout, buttonBox} == GridPos{2, 2, 2, 1}));
+   Q_ASSERT((GridPos{layout, fileTypeLabel} == GridPos{3, 0, 1, 1}));
+   Q_ASSERT((GridPos{layout, fileTypeCombo} == GridPos{3, 1, 1, 1}));
+   Q_ASSERT(buttons.size() == 2);
+
+   // remove widgets and layouts
+   for (auto *w : std::initializer_list<QWidget*>{buttonBox, fileTypeLabel, fileTypeCombo})
+      layout->removeWidget(w);
+
+   // add widgets in new locations
+   if (options & SO::SpaceButtons) {
+      for (auto *b : buttons) b->setParent(dialog);
+      buttonBox->hide();
+      layout->addWidget(buttons.at(0), 2, 2, 1, 1);
+      layout->addWidget(buttons.at(1), 4, 2, 1, 1);
+   } else {
+      layout->addWidget(buttonBox, 2, 2, 3, 1);
+   }
+   layout->addWidget(fileTypeLabel, 4, 0, 1, 1);
+   layout->addWidget(fileTypeCombo, 4, 1, 1, 1);
+
+   return {layout, 3, 3};
+}
+
+int main(int argc, char **argv) {
+   QApplication app{argc, argv};
+   QFileDialog dialog;
+   dialog.setOption(QFileDialog::DontUseNativeDialog);
+   auto mod = modDialog(&dialog, SO::SpaceButtons);
+   mod.layout->addItem(new QSpacerItem(0, 50), mod.row, 0);
+   dialog.show();
+   return app.exec();
+}

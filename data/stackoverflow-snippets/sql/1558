@@ -1,0 +1,45 @@
+    public List<SearchArticleNr> SearchArticle(string articlenr)
+    {
+        List<SearchArticleNr> SarticleList = new List<SearchArticleNr>();
+        iAnywhere.Data.SQLAnywhere.SAConnection myConnection = null;
+        iAnywhere.Data.SQLAnywhere.SACommand myCommand = null;
+        iAnywhere.Data.SQLAnywhere.SADataReader myDataReader = null;
+        try
+        {
+            myConnection = new iAnywhere.Data.SQLAnywhere.SAConnection(conStrMonitor);
+            myConnection.Open();
+            myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = ""Select art_artnr, art_ben from monitor.ARTIKEL where art_artnr = ?"";
+            myCommand.Parameters.Add(""@art"", articlenr);
+            myDataReader = myCommand.ExecuteReader();
+
+            int i = 0;
+            while (myDataReader.Read())
+            {
+                i++;
+                SearchArticleNr article = new SearchArticleNr();
+                article.Article = myDataReader[""art_artnr""].ToString();
+                article.Ben = myDataReader[""art_ben""].ToString();
+                SarticleList.Add(article);
+            }
+            if (i == 0)
+            {
+                SearchArticleNr article = new SearchArticleNr();
+                article.Article = ""NO OBJECTS FOUND"";
+                article.Ben = ""NO OBJECTS FOUND"";
+                SarticleList.Add(article);
+            }
+        }
+        catch (Exception exp)
+        {
+            myConnection = null;
+            throw exp;
+        }
+        finally
+        {
+            myConnection.Close();
+            myDataReader.Close();
+            myCommand = null;
+        }
+        return SarticleList.ToList();
+    }

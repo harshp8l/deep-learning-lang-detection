@@ -1,0 +1,30 @@
+$seed = 'f1avad34567a'
+
+# Bit of a mess, to handle get-date returning local time
+# but Unix timestamps needing to be in UTC timezone
+$now = [string][math]::Floor([double](Get-Date -Date (Get-Date).ToUniversalTime() -UFormat %s) * 1000)
+
+# Your substring line
+$n = $now.Substring([math]::Max(0, $now.Length–6))
+
+# Your shift-right, but $n was a string, so convert to [int]
+# and PadLeft is the equivalent of zfill
+$r = ""$([int]$n -shr 1)"".PadLeft(6, '0')
+
+# string concatenation works in PS, for small uses it's fine.
+$key = ''
+
+# The loops and indexing almost translate. I've made them fixed
+# ranges because it seems the lengths of the strings are fixed.
+# The casting is awkward, but the result of looking up a character
+# from a string is type [char] and they cast to int as the 
+# ascii/unicode codepoint value, not the numeric value of the content.
+0..5 | ForEach-Object {
+    $key += $seed[[int][string]$n[$_]]
+}
+
+0..5 | ForEach-Object {
+    $key += $seed[[int][string]$r[$_]+2]
+}
+
+'Timestamp:{0}    Key:{1}' -f $now, $key

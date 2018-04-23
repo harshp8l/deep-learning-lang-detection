@@ -1,0 +1,30 @@
+<?php
+
+function convert_multi_array($glue, $arr) {
+    foreach ($arr as $key => $value) {
+        if (@is_array($value))
+        {
+            $arr[$key] = convert_multi_array ($glue, $arr[$key]);
+        }
+    }
+    return implode($glue, $arr);
+}
+
+$json_data = <<<END_OF_JSON
+{
+    ""action"": ""PushEvent"",
+    ""commits_count"": 5,
+    ""repository"": {""name"":""example-repo""}
+}
+END_OF_JSON;
+
+$array_data = json_decode($json_data, true);
+
+$string_data = convert_multi_array(',', $array_data);
+
+
+echo ""<pre>"";
+print_r($json_data);
+print_r($array_data);
+echo($string_data);
+die();

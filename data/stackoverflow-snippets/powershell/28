@@ -1,0 +1,29 @@
+# used .txt file for example 
+$lines = Get-Content $path;
+$result = @{};
+$serverItem = '';
+$identityItem = '';
+$currentKey = '';
+foreach ($line in $lines) {
+    $key, $value = [Regex]::Split($line.Trim(), '\s*:\s*', 2);
+    switch -Regex ($key) {
+        '^server item' { 
+            $serverItem = $value;
+            $result.$serverItem = @{};
+            continue;
+        }
+        '^identity' { 
+            $identityItem = $value;
+            $result.$serverItem.$identityItem = @{};
+            continue;
+        }
+        '^[A-Za-z]+' {
+            if ($value -ne $null) {
+                $currentKey = $key;
+                $result.$serverItem.$identityItem.$key = $value;
+            } else {
+                $result.$serverItem.$identityItem.$currentKey += "", $key"";
+            }
+        }
+    }
+}

@@ -1,0 +1,30 @@
+package main
+
+import (
+    ""fmt""
+
+    // This assumes that the app/ folder lives directly in $GOPATH if that's
+    // not the case the import won't work.
+    ""app/product""
+    ""app/user""
+
+    ""github.com/gin-gonic/gin""
+    ""github.com/jinzhu/gorm""
+    _ ""github.com/jinzhu/gorm/dialects/postgres""
+)
+
+func main() {
+    db, err := gorm.Open(""postgres"", fmt.Sprintf(""host=localhost sslmode=disable user=postgres password=""))
+    if err != nil {
+        fmt.Println(err)
+    }
+    defer db.Close()
+
+    r := gin.Default()
+
+    // manually initialize imported packages
+    user.Init(db, r)
+    product.Init(db, r)
+
+    r.Run("":8080"")
+}

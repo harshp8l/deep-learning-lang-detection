@@ -1,0 +1,66 @@
+package main
+
+import (
+  ""encoding/json""
+  ""fmt""
+  ""log""
+)
+
+type Foo struct {
+  FooField string `json:""foofield""`
+}
+
+type Bar struct {
+  BarField string `json:""barfield""`
+}
+
+type Error struct {
+  Code int
+}
+
+func (e *Error) Error() string {
+  return fmt.Sprintf(""error code %d"", e.Code)
+}
+
+func unmarshalResponse(data []byte, v interface{}) error {
+  resp := struct {
+    Err  int         `json:""err""`
+    Data interface{} `json:""data""`
+  }{Data: v}
+
+  if err := json.Unmarshal(data, &resp); err != nil {
+    return err
+  }
+
+  if resp.Err != 0 {
+    return &Error{Code: resp.Err}
+  }
+
+  return nil
+}
+
+func main() {
+  fooRespJSON := []byte(`{""data"":{""foofield"":""foo value""}}`)
+  barRespJSON := []byte(`{""data"":{""barfield"":""bar value""}}`)
+  errRespJSON := []byte(`{""err"": 123}`)
+
+  // Foo
+  var foo Foo
+  if err := unmarshalResponse(fooRespJSON, &foo); err != nil {
+    log.Fatal(err)
+  }
+  fmt.Println(""foo:"", foo)
+
+  // Bar
+  var bar Bar
+  if err := unmarshalResponse(barRespJSON, &bar); err != nil {
+    log.Fatal(err)
+  }
+  fmt.Println(""bar:"", bar)
+
+  // Error response
+  var v interface{}
+  if err := unmarshalResponse(errRespJSON, &v); err != nil {
+    log.Fatal(err)
+  }
+}

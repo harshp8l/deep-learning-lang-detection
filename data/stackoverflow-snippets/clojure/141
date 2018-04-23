@@ -1,0 +1,24 @@
+(clojure.walk/postwalk
+  (fn [v]
+    (cond
+      ;; deepest case, pull up sum value
+      (and (map? v) (:key v) (:sum v))
+      {:key [(:key v)], :value (get-in v [:sum :value])}
+      ;; pull up unnecessary buckets map wrapper
+      (and (map? v) (:buckets v))
+      (flatten (:buckets v))
+      ;; select outer bucket + inner buckets
+      (and (map? v) (:key v) (:bucket-aggregation v))
+      (let [outer-key (:key v)
+            buckets (:bucket-aggregation v)]
+        (map #(update % :key (fn [k] (into [outer-key] k))) buckets))
+      ;; pass-through
+      :else v))
+  (:bucket-aggregation result))
+=>
+({:key [""outer_bucket"" ""inner_bucket_1"" 1510657200000], :value 25}
+ {:key [""outer_bucket"" ""inner_bucket_1"" 1510660800000], :value 50}
+ {:key [""outer_bucket"" ""inner_bucket_2"" 1510657200000], :value 30}
+ {:key [""outer_bucket"" ""inner_bucket_2"" 1510660800000], :value 35}
+ {:key [""outer_bucket"" ""inner_bucket_3"" 1510657200000], :value 40}
+ {:key [""outer_bucket"" ""inner_bucket_3"" 1510660800000], :value 45})

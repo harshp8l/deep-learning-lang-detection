@@ -1,0 +1,31 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import random
+
+x = [random.randrange(1,161,1) for _ in range (10)]
+y = [random.randrange(1,121,1) for _ in range (10)]
+
+fig, ax = plt.subplots()
+
+ax.set_xlim(0,160)
+ax.set_ylim(0,120)
+
+bins = [
+    np.linspace(*ax.get_xlim(), 120),
+    np.linspace(*ax.get_ylim(), 50)
+]
+
+# Note that I switched back to x, y and used zi.T later which I find
+# more readable
+zi, xi, yi = np.histogram2d(x, y, bins=bins)
+zi = np.ma.masked_equal(zi, 0)
+
+# Either use the next four lines for axis grid
+ax.pcolormesh(xi, yi, zi.T)    
+ax.set_xticks(bins[0], minor=True)
+ax.set_yticks(bins[1], minor=True)
+ax.grid(True, which='minor')
+
+# or use the next line to stick with edges drawn by pcolormesh
+# ax.pcolormesh(xi, yi, zi.T, edgecolor='black')
+scat = ax.scatter(x, y, s=2)

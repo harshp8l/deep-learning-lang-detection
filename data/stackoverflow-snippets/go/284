@@ -1,0 +1,37 @@
+package main
+
+import (
+    ""fmt""
+    ""database/sql""
+    _ ""github.com/lib/pq""
+    ""log""
+    ""os/exec""
+    ""strings""
+    ""os""
+    ""bytes""
+)
+
+func main() {
+    connstr := ""user=postgres dbname=postgres sslmode=disable""
+    db, err := sql.Open(""postgres"", connstr)
+    if err != nil { log.Fatal(err) }
+
+    rows, err := db.Query(""SELECT schemaname, relname, seq_scan FROM pg_stat_all_tables ORDER BY 1 LIMIT 10"")
+    if err != nil { log.Fatal(err) }
+    defer rows.Close()
+
+    var buf = new(bytes.Buffer)
+    for rows.Next() {
+        var s, r string
+        var ss int
+        if err := rows.Scan(&s, &r, &ss); err != nil { log.Fatal(err) }
+        buf.WriteString(fmt.Sprintf(""%s %s %d\n"", s, r, ss))
+    }
+
+    cmd := exec.Command(""less"")
+    cmd.Stdin = buf
+    cmd.Stdout = os.Stdout
+
+    err = cmd.Run()
+    if err != nil { log.Fatal(err) }
+}

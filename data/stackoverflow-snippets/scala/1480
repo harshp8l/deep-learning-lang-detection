@@ -1,0 +1,14 @@
+// your sorting logic:
+val sortingFunction: ((Int, Int), (Int, Int)) => Boolean = ???
+
+val N = 10
+
+val sortedRDD = rdd.aggregateByKey(List[(Int, Int)]())(
+  // first function: seqOp, how to add another item of the group to the result
+  {
+    case (topSoFar, candidate) if topSoFar.size < N => candidate :: topSoFar
+    case (topTen, candidate) => (candidate :: topTen).sortWith(sortingFunction).take(N)
+  },
+  // second function: combOp, how to add combine two partial results created by seqOp
+  { case (list1, list2) => (list1 ++ list2).sortWith(sortingFunction).take(N) }
+)

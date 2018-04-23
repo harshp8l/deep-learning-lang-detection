@@ -1,0 +1,18 @@
+sealed trait SomeResult
+case class SomeFailureType(fmsg: ???, lockInfo: ???) extends SomeResult
+case class SomeSuccessType(suc: ???) extends SomeResult
+val p = Promise[SomeResult]
+
+locker.obtainLock(lockKeyA, suc => {
+    p.complete(SomeSuccessType(suc))
+}, (fmsg, lockInfo) => {
+    p.complete(SomeFailureType(fmsg, lockInfo))
+})
+
+p.future.map {
+    case SomeSuccessType(suc) =>
+        // assert success returning Future[Assertion]
+        // e.g. suc.key shouldEqual ""AAA""
+    case SomeFailureType(fmsg, lockInfo) =>
+        // assert failure returning Future[Assertion]
+}

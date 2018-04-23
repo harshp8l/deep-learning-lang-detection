@@ -1,0 +1,12 @@
+let intoMap (data: seq<MyData>) = 
+    Seq.fold (fun (datamap, dups) (data: MyData) -> 
+        match datamap |> Map.tryFind data.Id with
+        | Some submap when submap |> Map.containsKey data.Analysis -> 
+            datamap, data :: dups
+        | Some submap ->
+            let ext = Map.add data.Analysis data submap
+            (Map.add data.Id ext datamap), dups
+        | None ->
+            let submap = Map.ofArray [| (data.Analysis, data) |]
+            (Map.add data.Id submap datamap), dups
+        ) (Map.empty, List.empty) data

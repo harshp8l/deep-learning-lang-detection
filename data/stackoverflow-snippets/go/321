@@ -1,0 +1,30 @@
+type rwmutex interface {
+    Lock()
+    RLock()
+    RUnlock()
+    Unlock()
+}
+
+type fPool struct {
+    cache     map[string]string
+    cacheLock rwmutex
+}
+
+func (pool *fPool) fetch(url string) string {
+    pool.cacheLock.RLock()
+    if rp, pres := pool.cache[url]; pres {
+        pool.cacheLock.RUnlock()
+        return rp
+    }
+    pool.cacheLock.RUnlock()
+    pool.cacheLock.Lock()
+    if rp, pres := pool.cache[url]; pres {
+        pool.cacheLock.Unlock()
+        // Skip adding url if someone snuck it in between RUnlock an Lock
+        return rp
+    }
+    rp := url + ""~data""
+    pool.cache[url] = rp
+    pool.cacheLock.Unlock()
+    return rp
+}

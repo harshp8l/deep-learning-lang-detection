@@ -1,0 +1,53 @@
+import socket
+import sys
+import datetime
+from time import sleep
+from client_sensordata import GetTemp 
+
+timeSleep = 10
+
+def ClientSocket():
+    # Create a TCP/IP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Connect the socket to the port where the server is listening
+    server_address = ('192.168.2.3', 5560)
+    print >>sys.stderr, 'Connecting to: %s port: %s' % server_address
+    sock.connect(server_address)
+
+    try:
+        # Send data
+        name, humidity, temperature = GetTemp()
+        Sensorname = str(name)
+        temp = str(temperature)
+        hum = str(humidity)
+        print(Sensorname + "":"" + temp + "":"" + hum)
+        message = (Sensorname + "":"" + temp + "":"" + hum)
+        print(""Transmitting data..."")
+        print >>sys.stderr, 'Sending data...'
+        sock.send(str.encode(message))
+
+        # Look for the response
+        amount_received = 0
+        amount_expected = len(message)
+
+        while amount_received < amount_expected:
+            data = sock.recv(1024)
+            amount_received += len(data)
+            print >>sys.stderr, 'Send data'
+
+    finally:
+        print >>sys.stderr, 'Closing connection'
+        print >>sys.stderr, '------------------'
+        sock.close()
+
+
+while True:
+    print(""Start external server measurement at "" + datetime.datetime.now().strftime(""%H:%M:%S""))
+    ClientSocket()
+    sleep(timeSleep)
+    for t2 in range(5):
+        print(""Start internal display measurement at "" + datetime.datetime.now().strftime(""%H:%M:%S""))
+        GetTemp()
+        print(""------------------"")
+        sleep(timeSleep)

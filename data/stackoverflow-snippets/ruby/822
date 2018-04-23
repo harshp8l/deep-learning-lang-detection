@@ -1,0 +1,78 @@
+class QueryBuilder
+  def initialize(data)
+    @data = prepare_data(data)
+  end
+
+  def find_records
+    queries = @data.group_by {|e| e[:model]}
+    queries.map do |k, v|
+      q = v.map do |f|
+        {
+          field: ""#{f[:table_name]}.#{f[:field]} #{read_operator(f[:operator])} ?"",
+          value: value_based_on_operator(f[:val], f[:operator])
+        }
+      end
+
+      db_query = q.map {|e| e[:field]}.join("" AND "")
+      values = q.map {|e| e[:value]}
+
+      {""#{k}"": k.constantize.joins(join_hash(v)).where(db_query, *values)}
+    end
+  end
+
+  private
+
+  def join_hash(array_of_relations)
+    hash = {}
+    array_of_relations.each do |f|
+      hash.merge!(array_to_hash(f[:joins]))
+    end
+    hash.map do |k, v|
+      if v.nil?
+        k
+      else
+        {""#{k}"": v}
+      end
+    end
+  end
+
+  def read_operator(operator)
+    case operator
+    when 'equals'
+      '='
+    when 'starts with'
+      'LIKE'
+    end
+  end
+
+  def value_based_on_operator(value, operator)
+    case operator
+    when 'equals'
+      value
+    when 'starts with'
+      ""%#{value}""
+    end
+  end
+
+  def prepare_data(data)
+    data.each do |record|
+      record.tap do |f|
+        f[:model] = f[:relation].split('.')[0]
+        f[:joins] = f[:relation].split('.').drop(1)
+        f[:table_name] = f[:className].constantize.table_name
+      end
+    end
+  end
+
+  def array_to_hash(array)
+    if array.length < 1
+      {}
+    elsif array.length == 1
+      {""#{array[0]}"": nil}
+    elsif array.length == 2
+      {""#{array[0]}"": array[1]}
+    else
+      {""#{array[0]}"": array_to_hash(array.drop(1))}
+    end
+  end
+end

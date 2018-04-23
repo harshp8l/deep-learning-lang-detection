@@ -1,0 +1,47 @@
+ private static final int PAGE_SIZE = 3;
+ private long totalUsersCount;                  // total number of rows there in DB
+        @Autowired
+        UserRepository userRepo;
+
+        private PageRequest gotoPage(int page)
+        {
+            PageRequest request = new PageRequest(page,PAGE_SIZE,Sort.Direction.DESC,""id"");
+            return request;
+        }
+
+      Set allUsers=new LinkedHashSet();
+
+            for(User u:userRepo.findAll(gotoPage(gotoPageNo)))          // fetches rows from DB as per Page No
+            {
+                allUsers.add(u);
+            }
+
+
+            totalUsersCount=userRepo.count();           //total no of users
+
+  @RequestMapping(value=""/"", method=RequestMethod.GET)
+        public String index(Model model, HttpSession session, 
+  @RequestParam(value=""pageNo"", required=false, defaultValue = ""0"") String pageNo) {
+        int lastPageNo;
+        int gotoPageNo=Integer.parseInt(pageNo);
+        Set allUsers=new LinkedHashSet();
+
+            //session.setAttribute(""currentPageNo"", 0);
+
+            for(User u:userRepo.findAll(gotoPage(gotoPageNo)))          // fetches rows from DB as per Page No
+            {
+                allUsers.add(u);
+            }
+
+
+            totalUsersCount=userRepo.count();           //total no of users
+            if(totalUsersCount%PAGE_SIZE!=0)
+            lastPageNo=(int)(totalUsersCount/PAGE_SIZE)+1;                  // get last page No (zero based)
+            else
+            lastPageNo=(int)(totalUsersCount/PAGE_SIZE);
+
+
+            model.addAttribute(""lastPageNo"",lastPageNo);                    
+            model.addAttribute(""users"",allUsers);
+            return ""index"";
+        }

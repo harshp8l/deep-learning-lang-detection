@@ -1,0 +1,52 @@
+import h5py
+import numpy as np
+
+# function to return a list of paths to each dataset
+def getdatasets(key,archive):
+
+  if key[-1] != '/': key += '/'
+
+  out = []
+
+  for name in archive[key]:
+
+    path = key + name
+
+    if isinstance(archive[path], h5py.Dataset):
+      out += [path]
+    else:
+       out += getdatasets(path,archive)
+
+  return out
+
+
+# open HDF5-files
+data     = h5py.File('old.hdf5','r')
+new_data = h5py.File('new.hdf5','w')
+
+# read as much datasets as possible from the old HDF5-file
+datasets = getdatasets('/',data)
+
+# get the group-names from the lists of datasets
+groups = list(set([i[::-1].split('/',1)[1][::-1] for i in datasets]))
+groups = [i for i in groups if len(i)>0]
+
+# sort groups based on depth
+idx    = np.argsort(np.array([len(i.split('/')) for i in groups]))
+groups = [groups[i] for i in idx]
+
+# create all groups that contain dataset that will be copied
+for group in groups:
+  new_data.create_group(group)
+
+# copy datasets
+for path in datasets:
+
+  # - get group name
+  group = path[::-1].split('/',1)[1][::-1]
+
+  # - minimum group name
+  if len(group) == 0: group = '/'
+
+  # - copy data
+  data.copy(path, new_data[group])

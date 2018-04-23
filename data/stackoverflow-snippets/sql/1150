@@ -1,0 +1,35 @@
+WITH
+input(         user_id,email            ,home_phone,incoming_number,date_time) AS (
+          SELECT     1,'dan@dan.com'    , 8893432  , 5453455       ,TIMESTAMP '2018-03-27 13:48:10'
+UNION ALL SELECT     1,'dan@dan.com'    , 8893432  ,65765489       ,TIMESTAMP '2018-03-27 13:47:10'
+UNION ALL SELECT     1,'dan@dan.com'    , 8893432  ,65765489       ,TIMESTAMP '2018-03-27 13:48:05'
+UNION ALL SELECT     2,'sam@sam.com'    ,16568675  ,65658403       ,TIMESTAMP '2018-03-27 13:46:05'
+UNION ALL SELECT     2,'sam@sam.com'    ,16568675  ,57575748       ,TIMESTAMP '2018-03-27 13:32:05'
+UNION ALL SELECT     2,'sam@sam.com'    ,16568675  ,76547946       ,TIMESTAMP '2018-03-27 13:43:05'
+UNION ALL SELECT     3,'allen@allen.com',12345678  ,85768576       ,TIMESTAMP '2018-03-27 13:46:05'
+UNION ALL SELECT     3,'allen@allen.com',12345678  ,65658403       ,TIMESTAMP '2018-03-27 13:42:05'
+UNION ALL SELECT     3,'allen@allen.com',12345678  ,76547946       ,TIMESTAMP '2018-03-27 13:43:05'
+UNION ALL SELECT     3,'allen@allen.com',12345678  ,76547946       ,TIMESTAMP '2018-03-27 13:20:05'
+UNION ALL SELECT     4,'match@match.com',62345677  ,85768576       ,TIMESTAMP '2018-03-27 13:11:05'
+UNION ALL SELECT     4,'match@match.com',62345677  ,65658403       ,TIMESTAMP '2018-03-27 13:13:05'
+UNION ALL SELECT     4,'match@match.com',62345677  ,76547946       ,TIMESTAMP '2018-03-27 13:18:05'
+UNION ALL SELECT     4,'match@match.com',62345677  ,76547946       ,TIMESTAMP '2018-03-27 13:20:05'
+)
+SELECT
+  user_id
+, email
+, home_phone
+, MAX(date_time) - MIN(date_time) duration
+, MAX(date_time) end_ts
+, MIN(date_time) start_ts
+, COUNT(DISTINCT incoming_number) incoming_number_count
+FROM input
+GROUP BY
+  user_id
+, email
+, home_phone
+HAVING MAX(date_time) - MIN(date_time) < INTERVAL '10 minutes'
+   AND COUNT(DISTINCT incoming_number) >=3
+;
+user_id|email          |home_phone|duration         |end_ts             |start_ts           |incoming_number_count
+      4|match@match.com|62,345,677|0 00:09:00.000000|2018-03-27 13:20:05|2018-03-27 13:11:05|    

@@ -1,0 +1,26 @@
+val query: Query[(Rep[String], Rep[Option[Int]], Rep[Option[Int]]), (String, Option[Int], Option[Int]), Seq] =
+  grades.groupBy( _.student ).map{ case (student, group) => 
+    val groupList = group.map(_.grade)
+
+    val gradeExcel = groupList.map( grade =>
+      Case.If(grade === ""Excellent"").Then(1).Else(0) ).sum
+    val gradeFail = groupList.map( grade =>
+      Case.If(grade === ""Fail"").Then(1).Else(0) ).sum
+
+    (student, gradeExcel, gradeFail)
+  }.
+  filter( g => g._2 >= 2 && g._3 === 0 )
+
+// ...
+
+println(""Generated SQL:\n"" + query.result.statements)
+// Generated SQL:
+// List(
+//   select ""STUDENT"", sum((case when (""GRADE"" = 'Excellent') then 1 else 0 end)), 
+//   sum((case when (""GRADE"" = 'Fail') then 1 else 0 end)) from ""GRADES"" group by ""STUDENT"" 
+//   having (sum((case when (""GRADE"" = 'Excellent') then 1 else 0 end)) >= 2) and 
+//   (sum((case when (""GRADE"" = 'Fail') then 1 else 0 end)) = 0)
+// )
+
+db.run(query.result.map(println))
+// Vector((Hermione,Some(2),Some(0)))

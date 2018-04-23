@@ -1,0 +1,56 @@
+    // check we're looking at the right post type first, if not, get out
+    $post_type = get_post_type($post_id);
+    if ( ""cpt_tutors"" != $post_type ) return;
+
+    // latitude  acf-field_584548ec47d4e
+    // longitude acf-field_584548fa47d4f
+
+    $fields_to_watch = array(
+        'latitude', // latitude
+        'longitude'  // longitude
+    );
+
+    if( $postcode = get_field('postcode', $post_ID) ) : 
+
+        $url = ""http://maps.google.com/maps/api/geocode/json?address="".urlencode($postcode).""&sensor=false&region=GB"";
+
+        $json = json_decode(file_get_contents($url));
+
+        $lat = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
+        $lng = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
+
+        update_field('latitude', $lat, $post_ID);
+        update_field('longitude', $lng, $post_ID);
+
+    else:
+
+        foreach( $fields_to_watch as $field ):
+            update_field($field, '', $post_ID);
+        endforeach;
+
+        return;
+
+    endif;
+}
+echo get_field('latitude').' '. get_field('longitude');
+
+//or
+
+
+$field = array(
+    'type' => 'text',
+    'name' => 'latitude',
+    'key' => 'field_latitude',
+);
+$field = apply_filters('acf/load_field', $field, $field['key'] );
+$field_value = apply_filters('acf/load_value', false, $post_id, $field);
+echo $field_value;
+
+$field = array(
+    'type' => 'text',
+    'name' => 'longitude',
+    'key' => 'field_longitude',
+);
+$field = apply_filters('acf/load_field', $field, $field['key'] );
+$field_value = apply_filters('acf/load_value', false, $post_id, $field);
+echo $field_value;

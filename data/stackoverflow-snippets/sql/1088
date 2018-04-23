@@ -1,0 +1,20 @@
+SELECT s3.ownerID, s3.customerID, s3.revenue, s3.OwnerRevenue
+  , CAST(s3.customerRevPct AS decimal(5,2)) AS customerRevPct
+  , CASE WHEN s3.PctRT < 80 OR s3.custCount = 1 THEN 1 ELSE 2 END AS customCol
+  /* Do the running pcts add up to 80+? 1 customer = 100% == 1. What if all are pcts are equal? */
+FROM (
+  SELECT s2.*
+    , 100-SUM(nvl(s2.customerRevPct,0)) OVER (PARTITION BY s2.ownerID ORDER BY s2.customerRevPct, s2.customerID RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS pctRT
+    , COUNT(*) OVER (PARTITION BY s2.ownerID ORDER BY (s2.ownerID) ) AS custCount /* Is there only 1 customer? */
+  FROM (
+    SELECT s1.*
+      , ( ( ( s1.revenue * 1.0 ) / s1.ownerRevenue ) * 100 ) AS customerRevPct 
+    FROM (
+      SELECT t1.ownerID, t1.customerID, t1.revenue
+        ,  SUM(t1.revenue) OVER ( PARTITION BY t1.ownerID ) AS ownerRevenue
+      FROM t1
+    ) s1
+  ) s2
+) s3
+WHERE ownerID = 42 /* REMOVE THIS LINE - TESTING ONLY */
+ORDER BY s3.ownerID, s3.customerRevPct DESC

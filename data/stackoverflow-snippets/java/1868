@@ -1,0 +1,47 @@
+public static Result process(Input inp)
+{
+    Result result = new Result();
+    // we have offset the sequence so that [0] is bogus
+    // this avoid adding +1 everywhere, as arrays are 0-based,
+    // but the input is 1 based; this difference is a silly trick
+    // and not really a good example. Another way to have handled
+    // this situation would be to subtract one on the initial load,
+    // but that makes some debugging more difficult
+    Integer[] seq = inp.getSequence(); 
+
+    // where r2 is located at the beginning depends upon the location
+    // in the array; in essence, the beginning # is the entry in the
+    // array
+    int r2Loc = seq[inp.getR2Start()];
+
+    // same thing for d2
+    int d2Loc = seq[inp.getD2Start()];
+
+    // the total number of iterations
+    // NOTE: a better terminating condition should be developed
+    int cntr = 0; 
+
+    while (! result.isMet() && cntr < 200000) {
+        debugLoc(""Step %d: r2: %d, d2: %d\n"",
+                cntr + 1, r2Loc, d2Loc);
+
+        // see if we are at the same spot
+        if (r2Loc == d2Loc) {
+            result.setMet(true).setStep(cntr + 1).setLoc(r2Loc);
+            break;
+        }
+
+
+        // get the location where going; it is the offset
+        // given in the sequence from the current loc
+        r2Loc = seq[r2Loc];
+        d2Loc = seq[d2Loc];
+
+        debugLoc(""r2 moving to %d; d2 moving to %d\n"",
+                r2Loc, d2Loc);
+
+        ++cntr;
+    } //while
+
+    return result;
+}

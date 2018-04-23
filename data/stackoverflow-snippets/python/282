@@ -1,0 +1,26 @@
+import numba
+import numpy as np
+
+
+def kmeans_assignment(centroids, points):
+    num_centroids, dim = centroids.shape
+    num_points, _ = points.shape
+
+    # Tile and reshape both arrays into `[num_points, num_centroids, dim]`.                                                                      
+    centroids = np.tile(centroids, [num_points, 1]).reshape([num_points, num_centroids, dim])
+    points = np.tile(points, [1, num_centroids]).reshape([num_points, num_centroids, dim])
+
+    # Compute all distances (for all points and all centroids) at once and                                                                       
+    # select the min centroid for each point.                                                                                                    
+    distances = np.sum(np.square(centroids - points), axis=2)
+    return np.argmin(distances, axis=1)
+
+
+@numba.jit
+def kmeans_assignment2(centroids, points):
+    P, C = points.shape[0], centroids.shape[0]
+    distances = np.zeros((P, C), dtype=np.float32)
+    for p in range(P):
+        for c in range(C):
+            distances[p, c] = np.sum(np.square(centroids[c] - points[p]))
+    return np.argmin(distances, axis=1)

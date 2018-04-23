@@ -1,0 +1,28 @@
+            powershell """"""
+                cd ""${env.WORKSPACE}""
+                If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] ""Administrator""))
+                { 
+                    echo ""* Respawning PowerShell child process with elevated privileges""
+                    \$pinfo = New-Object System.Diagnostics.ProcessStartInfo
+                    \$pinfo.FileName = ""powershell""
+                    \$pinfo.Arguments = ""& '"" + \$myinvocation.mycommand.definition + ""'""
+                    \$pinfo.Verb = ""RunAs""
+                    \$pinfo.RedirectStandardError = \$false
+                    \$pinfo.RedirectStandardOutput = \$false
+                    \$pinfo.UseShellExecute = \$true
+                    \$p = New-Object System.Diagnostics.Process
+                    \$p.StartInfo = \$pinfo
+                    \$p.Start() | Out-Null
+                    \$p.WaitForExit()
+                    echo ""* Child process finished""
+                    type ""C:/jenkins/transcript-${env.JOB_NAME}-${env.BUILD_NUMBER}.txt""
+                    Remove-Item ""C:/jenkins/transcript-${env.JOB_NAME}-${env.BUILD_NUMBER}.txt""
+                    Exit \$p.ExitCode
+                } Else {
+                    echo ""Child process starting with admin privileges""
+                    Start-Transcript -Path ""C:/jenkins/transcript-${env.JOB_NAME}-${env.BUILD_NUMBER}.txt""
+                }
+
+                # put rest of your script here, it will get executed
+                # with elevated privileges.
+            """"""

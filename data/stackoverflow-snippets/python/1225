@@ -1,0 +1,57 @@
+class Helper(QObject):
+    messageSignal = pyqtSignal(int)
+
+class TicTacToe(QGraphicsObject):
+    def __init__(self, helper):
+        super(TicTacToe, self).__init__()
+        self.helper = helper
+
+    def paint(self, painter, option, widget):
+        painter.setPen(Qt.black)
+        painter.drawLine(0,100,300,100)
+
+    def boundingRect(self):
+        return QRectF(0,0,300,300)
+
+    def mousePressEvent(self, event):
+        pos = event.pos()
+        self.helper.emit(10)
+        # self.select(int(pos.x()/100), int(pos.y()/100))
+        self.update()
+        super(TicTacToe, self).mousePressEvent(event)
+
+
+class MyGraphicsView(QGraphicsView):
+    def __init__(self):
+        super(MyGraphicsView, self).__init__()
+        scene = QGraphicsScene(self)
+        self.helper = Helper(self)
+        self.tic_tac_toe = TicTacToe(self.helper)
+        scene.addItem(self.tic_tac_toe)
+        scene.addPixmap(QPixmap(""exit.png""))
+        self.setScene(scene)
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key == Qt.Key_R:
+            self.tic_tac_toe.reset()
+        super(MyGraphicsView, self).keyPressEvent(event)
+
+class Example(QMainWindow):    
+    def __init__(self):
+        super(Example, self).__init__()
+
+        self.y = MyGraphicsView()
+        self.setCentralWidget(self.y)
+        self.helper.messageSignal.connect(self.messageSlot)
+        self.initUI()
+
+    def messageSlot(self, val):
+        self.statusBar().showMessage(val)
+
+
+    def initUI(self):               
+        self.toolbar = self.addToolBar('Tools')
+        self.setGeometry(30, 30, 30, 20)
+        self.setWindowTitle('Menubar')    
+        self.show()  

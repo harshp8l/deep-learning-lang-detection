@@ -1,0 +1,13 @@
+type ErrorResponse = { message: string; ... }
+
+let private registrationHandler = 
+    fun(context: HttpContext) -> 
+        async {
+            let! data = context.BindJson<RegistrationRequest>()
+            match register data with
+            | Success profile ->
+                return! json profile context
+            | Failure ->
+                let response = { message = ""registration failed""; ... }
+                return! (setStatusCode 500 >=> json response) context
+        }

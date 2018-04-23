@@ -1,0 +1,35 @@
+<?php
+if(isset($_POST[""submit""])){
+
+    /* Attempt MySQL server connection. Assuming you are running MySQL
+        server with default setting (user 'root' with no password) */
+    $link = mysqli_connect(""localhost"", ""dbuser"", ""dbpass"", ""dbname"");
+
+    // Check connection
+    if($link === false){
+        die(""ERROR: Could not connect. "" . mysqli_connect_error());
+    }
+
+    // Prepare an insert statement
+    $sql = ""INSERT INTO test (field1, field2, field3) VALUES (?, ?, ?)"";
+    $stmt = mysqli_prepare($link, $sql);
+
+    // Bind variables to the prepared statement as parameters
+    mysqli_stmt_bind_param($stmt, ""sss"", $field1, $field2, $field3);
+
+    foreach($_POST['field1'] as $key => $value) {
+
+        // Set parameters
+        $field1 = $_POST['field1'][$key];
+        $field2 = $_POST['field2'][$key];
+        $field3 = $_POST['field3'][$key];
+
+        // Attempt to execute the prepared statement
+        if(mysqli_stmt_execute($stmt)){
+            echo ""Records inserted successfully."";
+        } else{
+            echo ""ERROR: Could not execute query: $sql. "" . mysqli_error($link);
+        }
+    }        
+}
+?>

@@ -1,0 +1,155 @@
+#Clear Screen
+CLS
+
+function Get-RemoteRegistryProgram
+{
+  <#
+    .Synopsis
+      Uses remote registry to read installed programs
+    .DESCRIPTION
+      Use dot net and the registry key class to query installed programs from a 
+      remote machine
+    .EXAMPLE
+      Get-RemoteRegistryProgram -ComputerName Server1
+  #>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=0)][string]$ComputerName = $env:COMPUTERNAME,
+        [Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=1)][string]$SoftwareName
+    )
+    begin
+    {
+        $hives = @(
+            [Microsoft.Win32.RegistryHive]::LocalMachine,
+            [Microsoft.Win32.RegistryHive]::CurrentUser
+        )
+
+        $nodes = @(
+            ""Software\Microsoft\Windows\CurrentVersion\Uninstall"",
+            ""Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall""
+        )
+    }
+    process
+    {
+        $ComputerName
+        $skip = $false
+
+        forEach ($computer in $ComputerName)
+        {
+            forEach($hive in $hives)
+            {
+                try
+                {
+                    $registry = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($hive,$computer)
+                }
+                catch
+                {
+                    $skip = $true                
+                }
+
+                if($skip -eq $false)
+                {
+                    forEach($node in $nodes)
+                    {
+                        try 
+                        {
+                            $keys = $registry.OpenSubKey($node).GetSubKeyNames()
+
+                            forEach($key in $keys)
+                            {
+                                $displayname = $registry.OpenSubKey($node).OpenSubKey($key).GetValue('DisplayName')
+
+                                #Modified by James
+                                if(($displayname) -like ""*$SoftwareName*"")
+                                {
+                                    $displayname + ""`t"" + $computer >> c:\scripts\sysaidServers.txt
+                                }
+
+                                <# Modified by James
+                                if($displayname)
+                                {
+                                    $installedProgram = @{
+                                       # ComputerName = $computer
+                                        DisplayName = $displayname
+                                       # Version = $registry.OpenSubKey($node).OpenSubKey($key).GetValue('DisplayVersion')
+                                    }
+                                    New-Object -TypeName PSObject -Property $installedProgram
+                                }
+                                #>
+                            }
+                        }
+                        catch
+                        {
+
+                        <#
+                            $orginalError = $PsItem
+                            Switch($orginalError.FullyQualifiedErrorId)
+                            {
+                                'InvokeMethodOnNull' 
+                                {
+                                    #key maynot exists
+                                }
+                                default 
+                                {
+                                    throw $orginalError 
+                                }
+                            }
+                        #>
+                        } 
+                    }
+                }
+            }
+        }
+    }
+    end
+    {
+
+    }
+}
+
+#Output the servers to a txt file
+function Get-Servers
+{
+    param ([Parameter( Mandatory=$true)][string]$SaveFile)
+
+    #Variables
+    [array]$MyDomains=""DomainA.com"",""DomainB.com"",""DomainC.com"",""DomainD.com""
+    [array]$MySearchBase=""dc=DomainA,dc=com"",""dc=DomainB,dc=com"",""dc=DomainC,dc=com"",""dc=DomainD,dc=com""
+
+
+    for($i=0; $i -lt $MyDomains.Count; $i++)
+    {
+        #I only want servers running Windows Server OS
+        $MyServers = Get-ADComputer -Filter 'OperatingSystem -like ""Windows*Server*""' -Properties Name -SearchBase $($MySearchBase[$i]) -Server $($MyDomains[$i]) | Format-Table Name -HideTableHeaders | out-string
+        #Remove all whitespace and export to txt file
+        $MyServers.Trim() -replace (' ', '') >> $SaveFile
+    }
+}
+
+function CheckServerSoftware
+{
+    param ([Parameter( Mandatory=$true)][string]$SaveFile)
+
+    Get-Content $SaveFile | ForEach-Object {
+        if($_ -match $regex)
+        {
+            $computer = $_.ToString()
+            Get-RemoteRegistryProgram -ComputerName $computer.Trim() $SoftwareName
+            Write-Output """"
+        }
+    }
+}
+
+#Path to where our exported server list is
+$SaveFile = ""c:\scripts\servers.txt""
+$SoftwareName = ""SysAid""
+
+#If the file already exists, remove it
+Remove-Item $SaveFile
+
+#Create the text file with servers
+Get-Servers $SaveFile
+
+#Import our server list and check software on each server
+CheckServerSoftware $SaveFile

@@ -1,0 +1,23 @@
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
+
+(defn inner ^long [^ints src ^long x]
+  (let [len (alength src)]
+    (loop [i 0 acc 0]
+      (if (< i len)
+        (recur (inc i) (+ acc (* (rem x 2) (rem i 3) (aget src i))))
+        acc))))
+
+(defn transform [^ints src]
+  (let [res ^ints (int-array 1000)]
+    (loop [x 0]
+      (if (= 1000 x) 
+        res
+          (do
+            (aset res x (inner src x))
+            (recur (inc x)))))))
+
+(defn bench []
+  (let [arr (int-array (range 1000))]
+    (doseq [_ (range 20)]
+      (println (time (transform arr))))))

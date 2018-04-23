@@ -1,0 +1,19 @@
+(defn vector-spec
+  ""Create a spec that it is a vector and other conditions and unforms to a vector.
+
+  Ex (vector-spec (s/spec ::binding-form))
+     (vector-spec (s/* integer?))""
+  [form]
+  (let [s (s/spec (s/and vector? form))]
+    (reify
+      s/Specize
+      (specize* [_] s)
+      (specize* [_ _] s)
+
+      s/Spec
+      (conform* [_ x] (s/conform* s x))
+      (unform* [_ x] (vec (s/unform* s x))) ;; <-- important
+      (explain* [_ path via in x] (s/explain s path via in x))
+      (gen*  [_ overrides path rmap] (s/gen* s overrides path rmap))
+      (with-gen* [_ gfn] (s/with-gen s gfn))
+      (describe* [_] (s/describe* s)))))

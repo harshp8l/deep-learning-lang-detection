@@ -1,0 +1,37 @@
+func doWork(ctx context.Context, element Element, wg &sync.WaitGroup) {
+    defer wg.Done()
+
+    done := make(chan struct{})
+    go func() {
+       // do some work on element
+       done <- struct{}{} // signal work is done
+    }
+
+    select {
+       case <- done: 
+       { 
+          // work completed in time
+       }
+       case <- ctx.Done:
+       {
+         // timeout reached
+       }
+    }
+}
+
+contexts := make([]*context.Context, len(elements))
+
+for _, element:= range elements{
+    wg.Add(1)
+    ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+    defer cancel()
+    contexts = append(contexts, ctx)
+    go doWork(ctx, element, &wg)
+}
+wg.Wait()
+
+for i, ctx := range contexts {
+  if ctx.Err() {
+     fmt.Println(""Go routine "", i, ""canceled due to"", ctx.Err())
+  }
+}

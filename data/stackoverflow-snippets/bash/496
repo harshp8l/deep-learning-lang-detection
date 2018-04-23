@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#              ^^^^- Requires an extension not available in /bin/sh
+
+# printf %q is also available on ksh, but there you would write:
+#   echo_str=$(printf 'DenyUsers %q' ""$1"")
+#   cmd=$(printf '%q ' printf '%s\n' ""$echo_str"")
+# as the ksh version doesn't have -v, but optimizes away the subshell instead.
+
+printf -v echo_str 'DenyUsers %q' ""$1""
+printf -v cmd '%q ' printf '%s\n' ""$echo_str""
+pssh -h hosts -i ""$cmd >> /etc/ssh/sshd_config && service sshd config""

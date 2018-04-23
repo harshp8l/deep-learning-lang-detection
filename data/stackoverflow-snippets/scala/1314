@@ -1,0 +1,30 @@
+class Loader[Key, Value](dataSource: DataSource[Key, Value], refreshEvery: Duration) {
+
+  type CacheState = Map[Key, Value]
+  type Request = CacheState => Task[Unit]
+  type ReaderEnv = Env[CacheState, Request]
+
+  implicit val scheduler: ScheduledExecutorService = DefaultScheduler
+
+  private val timer: Process[Task, Unit] =
+    Process.emit(()) ++ awakeEvery(refreshEvery).map(_ => ())
+
+  private val cacheStates: Process[Task, CacheState] =
+    timer.evalMap(_ => Task(dataSource.loadMap))
+
+  private val handle: Wye[CacheState, Request, Task[Unit]] = {
+    def handleImpl(current: CacheState): Wye[CacheState, Request, Task[Unit]] = {
+      import wye._
+      import Process._
+      receiveBoth {
+        case ReceiveL(i) => handleImpl(i)
+        case ReceiveR(i) => emit(i(current)) ++ handleImpl(current)
+        case HaltOne(rsn) => Halt(rsn)
+      }
+    }
+    wye.receiveL[CacheState, Request, Task[Unit]](handleImpl)
+  }
+
+  def processRequests(requests: Process[Task, Request]): Process[Task, Unit] =
+    cacheStates.wye(requests)(handle).eval
+}

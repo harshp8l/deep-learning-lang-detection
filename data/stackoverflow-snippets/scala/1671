@@ -1,0 +1,43 @@
+import java.util.concurrent.TimeUnit
+import org.openjdk.jmh.annotations._
+
+/**
+  * Created by Yuval.Itzchakov on 19/10/2017.
+  */
+@State(Scope.Thread)
+@Warmup(iterations = 3, time = 1)
+@Measurement(iterations = 3)
+@BenchmarkMode(Array(Mode.AverageTime, Mode.Throughput))
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@Fork(3)
+class MicroBenchClasses {
+  class A(val name: String)
+  class B(a: A){
+    def name: String = a.name
+  }
+
+  class B1(a: A){
+    val name: String = a.name
+  }
+
+  var b: B = _
+  var b1: B1 = _
+  @Setup
+  def setup() = {
+    val firstA = new A(""yuval"")
+    val secondA = new A(""yuval"")
+
+    b = new B(firstA)
+    b1 = new B1(secondA)
+  }
+
+  @Benchmark
+  def testBAccess(): String = {
+    b.name
+  }
+
+  @Benchmark
+  def testB1Access(): String = {
+    b1.name
+  }
+}

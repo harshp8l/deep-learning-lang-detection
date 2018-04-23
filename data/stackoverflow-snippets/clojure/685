@@ -1,0 +1,14 @@
+user> (require '[clojure.string :as s])
+nil
+
+user> (def input ""[img=\""image1\""]something[/img] [img=\""image2\""]something[/img]"")
+#'user/input
+
+user> (def paths {:image1 ""real/path1"" :image2 ""real/path2""})
+#'user/paths
+
+user> (s/replace input #""\[img=\""(.+?)\""\](.*?)\[/img\]""
+                 (fn [[_ img-id content]]
+                   (str ""<img src=\"""" (paths (keyword img-id)) ""\"">""
+                        content ""</img>"")))
+""<img src=\""real/path1\"">something</img> <img src=\""real/path2\"">something</img>""

@@ -1,0 +1,372 @@
+#include ""stdafx.h""
+#include <windows.h>
+#include <Commdlg.h>
+#include <Shlobj.h>
+#include <wchar.h>
+#include <algorithm>
+#include <string>
+#include <vector>
+
+#define DLL extern ""C"" _declspec(dllexport)
+using namespace std;
+
+typedef basic_string<WCHAR> tstring;
+tstring widen(string str)
+{
+    const size_t wchar_count = str.size() + 1;
+    vector<WCHAR> buf(wchar_count);
+    return tstring{ buf.data(), (size_t)MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, buf.data(), wchar_count) };
+}
+
+string shorten(tstring str)
+{
+    int nbytes = WideCharToMultiByte(CP_UTF8, 0, str.c_str(), (int)str.length(), NULL, 0, NULL, NULL);
+    vector<char> buf((size_t)nbytes);
+    return string{ buf.data(), (size_t)WideCharToMultiByte(CP_UTF8, 0, str.c_str(), (int)str.length(), buf.data(), nbytes, NULL, NULL) };
+}
+
+DLL char *get_open_filename(char *filter, char *fname)
+{
+    OPENFILENAMEW ofn;
+
+    HWND SitehWnd;
+    SitehWnd = GetAncestor(GetActiveWindow(), GA_ROOTOWNER);
+
+    string str_filter = string(filter).append(""||"");
+    string str_fname = fname;
+
+    tstring tstr_filter = widen(str_filter);
+    replace(tstr_filter.begin(), tstr_filter.end(), '|', '\0');
+    tstring tstr_fname = widen(str_fname);
+
+    WCHAR wstr_fname[MAX_PATH];
+    wcsncpy_s(wstr_fname, tstr_fname.c_str(), MAX_PATH);
+
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = SitehWnd;
+    ofn.lpstrFile = wstr_fname;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFilter = tstr_filter.c_str();
+    ofn.nFilterIndex = 0;
+    ofn.lpstrTitle = NULL;
+    ofn.lpstrInitialDir = NULL;
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+
+    if (GetOpenFileNameW(&ofn) != 0)
+    {
+        static string result;
+        result = shorten(wstr_fname);
+        return (char *)result.c_str();
+    }
+
+    return (char *)"""";
+}
+
+DLL char *get_save_filename(char *filter, char *fname)
+{
+    OPENFILENAMEW ofn;
+
+    HWND SitehWnd;
+    SitehWnd = GetAncestor(GetActiveWindow(), GA_ROOTOWNER);
+
+    string str_filter = string(filter).append(""||"");
+    string str_fname = fname;
+
+    tstring tstr_filter = widen(str_filter);
+    replace(tstr_filter.begin(), tstr_filter.end(), '|', '\0');
+    tstring tstr_fname = widen(str_fname);
+
+    WCHAR wstr_fname[MAX_PATH];
+    wcsncpy_s(wstr_fname, tstr_fname.c_str(), MAX_PATH);
+
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = SitehWnd;
+    ofn.lpstrFile = wstr_fname;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFilter = tstr_filter.c_str();
+    ofn.nFilterIndex = 0;
+    ofn.lpstrTitle = NULL;
+    ofn.lpstrInitialDir = NULL;
+    ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
+
+    if (GetSaveFileNameW(&ofn) != 0)
+    {
+        static string result;
+        result = shorten(wstr_fname);
+        return (char *)result.c_str();
+    }
+
+    return (char *)"""";
+}
+
+DLL char *get_open_filename_ext(char *filter, char *fname, char *dir, char *title)
+{
+    OPENFILENAMEW ofn;
+
+    HWND SitehWnd;
+    SitehWnd = GetAncestor(GetActiveWindow(), GA_ROOTOWNER);
+
+    string str_filter = string(filter).append(""||"");
+    string str_fname = fname;
+    string str_dir = dir;
+    string str_title = title;
+
+    tstring tstr_filter = widen(str_filter);
+    replace(tstr_filter.begin(), tstr_filter.end(), '|', '\0');
+    tstring tstr_fname = widen(str_fname);
+    tstring tstr_dir = widen(str_dir);
+    tstring tstr_title = widen(str_title);
+
+    WCHAR wstr_fname[MAX_PATH];
+    wcsncpy_s(wstr_fname, tstr_fname.c_str(), MAX_PATH);
+
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = SitehWnd;
+    ofn.lpstrFile = wstr_fname;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFilter = tstr_filter.c_str();
+    ofn.nFilterIndex = 0;
+    ofn.lpstrTitle = tstr_title.c_str();
+    ofn.lpstrInitialDir = tstr_dir.c_str();
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+
+    if (GetOpenFileNameW(&ofn) != 0)
+    {
+        static string result;
+        result = shorten(wstr_fname);
+        return (char *)result.c_str();
+    }
+
+    return (char *)"""";
+}
+
+DLL char *get_save_filename_ext(char *filter, char *fname, char *dir, char *title)
+{
+    OPENFILENAMEW ofn;
+
+    HWND SitehWnd;
+    SitehWnd = GetAncestor(GetActiveWindow(), GA_ROOTOWNER);
+
+    string str_filter = string(filter).append(""||"");
+    string str_fname = fname;
+    string str_dir = dir;
+    string str_title = title;
+
+    tstring tstr_filter = widen(str_filter);
+    replace(tstr_filter.begin(), tstr_filter.end(), '|', '\0');
+    tstring tstr_fname = widen(str_fname);
+    tstring tstr_dir = widen(str_dir);
+    tstring tstr_title = widen(str_title);
+
+    WCHAR wstr_fname[MAX_PATH];
+    wcsncpy_s(wstr_fname, tstr_fname.c_str(), MAX_PATH);
+
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = SitehWnd;
+    ofn.lpstrFile = wstr_fname;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFilter = tstr_filter.c_str();
+    ofn.nFilterIndex = 0;
+    ofn.lpstrTitle = tstr_title.c_str();
+    ofn.lpstrInitialDir = tstr_dir.c_str();
+    ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
+
+    if (GetSaveFileNameW(&ofn) != 0)
+    {
+        static string result;
+        result = shorten(wstr_fname);
+        return (char *)result.c_str();
+    }
+
+    return (char *)"""";
+}
+
+void ClientResize(HWND hWnd, int nWidth, int nHeight)
+{
+    RECT rcClient, rcWind;
+    POINT ptDiff;
+    GetClientRect(hWnd, &rcClient);
+    GetWindowRect(hWnd, &rcWind);
+    ptDiff.x = (rcWind.right - rcWind.left) - rcClient.right;
+    ptDiff.y = (rcWind.bottom - rcWind.top) - rcClient.bottom;
+    MoveWindow(hWnd, rcWind.left, rcWind.top, nWidth + ptDiff.x, nHeight + ptDiff.y, TRUE);
+}
+
+WCHAR wstr_dname[MAX_PATH];
+
+UINT APIENTRY OFNHookProcOldStyle(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    if (uMsg == WM_INITDIALOG)
+    {
+        ClientResize(hWnd, 424, 255);
+
+        RECT rect;
+        GetWindowRect(hWnd, &rect);
+        MoveWindow(hWnd, 
+            (GetSystemMetrics(SM_CXSCREEN) / 2) - ((rect.right - rect.left) / 2), 
+            (GetSystemMetrics(SM_CYSCREEN) / 2) - ((rect.bottom - rect.top) / 2), 
+            rect.right - rect.left, rect.bottom - rect.top, TRUE);
+
+        HWND bttn1 = GetDlgItem(hWnd, IDOK);
+        HWND bttn2 = GetDlgItem(hWnd, IDCANCEL);
+        HWND list1 = GetDlgItem(hWnd, 1120);
+        HWND list2 = GetDlgItem(hWnd, 1121);
+        HWND label1 = GetDlgItem(hWnd, 1090);
+        HWND label2 = GetDlgItem(hWnd, 65535);
+        HWND label3 = GetDlgItem(hWnd, 1089);
+        HWND label4 = GetDlgItem(hWnd, 1091);
+        HWND label5 = GetDlgItem(hWnd, 1088);
+        HWND cmbbx1 = GetDlgItem(hWnd, 1136);
+        HWND cmbbx2 = GetDlgItem(hWnd, 1137);
+        HWND txtbx1 = GetDlgItem(hWnd, 1152);
+
+        SetWindowText(label1, ""&Files: (*.*)"");
+        SetWindowText(label2, ""&Directories:"");
+        SetWindowText(label3, ""Directory &Name:"");
+        SetWindowText(label4, ""D&rives:"");
+        DestroyWindow(cmbbx1);
+        DestroyWindow(txtbx1);
+
+        MoveWindow(bttn1, 256, 224, 77, 27, TRUE);
+        MoveWindow(bttn2, 340, 224, 77, 27, TRUE);
+        MoveWindow(label1, 232, 56, 72, 16, TRUE);
+        MoveWindow(label2, 8, 56, 72, 16, TRUE);
+        MoveWindow(label3, 8, 8, 93, 16, TRUE);
+        MoveWindow(label4, 232, 176, 50, 16, TRUE);
+        MoveWindow(label5, 8, 24, 409 * 100, 16, TRUE);
+        MoveWindow(list1, 232, 72, 185, 93, TRUE);
+        MoveWindow(list2, 8, 72, 213, 123, TRUE);
+        MoveWindow(cmbbx2, 232, 192, 185, 19, TRUE);
+
+        DlgDirListW(hWnd, wstr_dname, 1120, 1088, DDL_ARCHIVE | DDL_READWRITE | DDL_READONLY);
+        PostMessageW(hWnd, WM_SETFOCUS, 0, 0);
+    }
+
+    if (uMsg == WM_COMMAND && HIWORD(wParam) == BN_CLICKED && LOWORD(wParam) == IDOK)
+    {
+        HWND label1 = GetDlgItem(hWnd, 1090);
+        HWND label2 = GetDlgItem(hWnd, 65535);
+        HWND label3 = GetDlgItem(hWnd, 1089);
+        HWND label4 = GetDlgItem(hWnd, 1091);
+        HWND label5 = GetDlgItem(hWnd, 1088);
+
+        GetDlgItemTextW(hWnd, 1088, wstr_dname, MAX_PATH);
+        PostMessageW(hWnd, WM_COMMAND, IDABORT, 0);
+        return TRUE;
+    }
+
+    if (uMsg == WM_COMMAND && HIWORD(wParam) == BN_CLICKED && LOWORD(wParam) == IDCANCEL)
+    {
+        tstring tstr_dname = widen("""");
+        wcsncpy_s(wstr_dname, tstr_dname.c_str(), MAX_PATH);
+        PostMessageW(hWnd, WM_COMMAND, IDABORT, 0);
+        return TRUE;
+    }
+
+    if (uMsg == WM_CLOSE)
+    {
+        tstring tstr_dname = widen("""");
+        wcsncpy_s(wstr_dname, tstr_dname.c_str(), MAX_PATH);
+        PostMessageW(hWnd, WM_COMMAND, IDABORT, 0);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+DLL char *get_directory(char *dname)
+{
+    OPENFILENAMEW ofn;
+
+    HWND SitehWnd;
+    SitehWnd = GetAncestor(GetActiveWindow(), GA_ROOTOWNER);
+
+    string str_dname = dname;
+
+    tstring tstr_filter = widen(""*.*|*.*|"");
+    replace(tstr_filter.begin(), tstr_filter.end(), '|', '\0');
+    tstring tstr_dname = widen(str_dname);
+    tstring tstr_title = widen(""Select Directory"");
+    tstring tstr_empty = widen("""");
+
+    if (tstr_dname == tstr_empty)
+        GetCurrentDirectoryW(MAX_PATH, wstr_dname);
+    else
+        wcsncpy_s(wstr_dname, tstr_dname.c_str(), MAX_PATH);
+
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = SitehWnd;
+    ofn.lpstrFile = NULL;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFilter = tstr_filter.c_str();
+    ofn.nFilterIndex = 0;
+    ofn.lpstrTitle = tstr_title.c_str();
+    ofn.lpstrInitialDir = wstr_dname;
+    ofn.Flags = OFN_NONETWORKBUTTON | OFN_ENABLEHOOK | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_LONGNAMES;
+    ofn.lpfnHook = OFNHookProcOldStyle;
+
+    GetOpenFileNameW(&ofn);
+
+    DWORD attrib = GetFileAttributesW(wstr_dname);
+
+    if (attrib != INVALID_FILE_ATTRIBUTES && (attrib & FILE_ATTRIBUTE_DIRECTORY))
+    {
+        static string result;
+        result = shorten(wstr_dname);
+        return (char *)result.c_str();
+    }
+
+    return (char *)"""";
+}
+
+DLL char *get_directory_alt(char *capt, char *root)
+{
+    BROWSEINFOW bi;
+
+    HWND SitehWnd;
+    SitehWnd = GetAncestor(GetActiveWindow(), GA_ROOTOWNER);
+
+    string str_capt = capt;
+    string str_root = root;
+
+    tstring tstr_capt = widen(str_capt);
+    tstring tstr_root = widen(str_root);
+    tstring tstr_empty = widen("""");
+    tstring tstr_zero = widen(""0"");
+
+    LPITEMIDLIST pstr_root;
+
+    if (tstr_root == tstr_empty)
+        SHParseDisplayName(tstr_zero.c_str(), 0, &pstr_root, 0, 0);
+    else
+        SHParseDisplayName(tstr_root.c_str(), 0, &pstr_root, 0, 0);
+
+    WCHAR wstr_dir[MAX_PATH];
+
+    ZeroMemory(&bi, sizeof(bi));
+    bi.hwndOwner = SitehWnd;
+    bi.pidlRoot = pstr_root;
+    bi.pszDisplayName = wstr_dir;
+    bi.lpszTitle = tstr_capt.c_str();
+    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE | BIF_NONEWFOLDERBUTTON;
+
+    LPITEMIDLIST lpItem = SHBrowseForFolderW(&bi);
+    if (lpItem != NULL)
+    {
+        if (SHGetPathFromIDListW(lpItem, wstr_dir) == 0)
+            return (char *)"""";
+        else
+        {
+            static string result;
+            result = shorten(wstr_dir);
+            return (char *)result.c_str();
+        }
+    }
+
+    return (char *)"""";
+}

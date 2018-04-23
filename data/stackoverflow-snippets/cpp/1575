@@ -1,0 +1,27 @@
+// myclass.h - interface
+#include <QObject>
+#include <boost/intrusive/list.hpp>
+class MyClass : public QObject, private boost::intrusive::list_base_hook<> {
+  using list_t = boost::intrusive::list<MyClass>;
+  static QReadWriteLock m_siblingsMutex;
+  static list_t m_siblings;
+  friend list_t;
+public:
+  MyClass(QObject *parent = {}) : QObject{parent} {
+    QWriteLocker lock(&m_siblingsMutex);
+    m_siblings.push_back(*this);
+  }
+  ~MyClass() override {
+    QWriteLocker lock(&m_siblingsMutex);
+    m_siblings.erase(m_siblings.iterator_to(*this));
+  }
+  void dumpSiblings() {
+    QReadLocker lock(&m_siblingsMutex);
+    for (auto const &obj : m_siblings)
+       qDebug() << ""MyClass at "" << &obj;
+};
+
+// myclass.cpp - implementation
+#include ""myclass.h""
+QReadWriteLock MyClass::m_siblingsMutex;
+boost::intrusive::list<MyClass> MyClass::m_siblings;

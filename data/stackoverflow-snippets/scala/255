@@ -1,0 +1,26 @@
+val df = spark.createDataFrame(
+     sc.parallelize(Seq(Row(1, 2, 3, 4), Row(1, 3, 4, null), Row(2, null, 4, null), Row(2, 2, 2, null))),
+     StructType(Seq(""A"",""B"",""C"",""D"").map(StructField(_, IntegerType, true )))
+)
+
+df.show()
++---+----+---+----+
+|  A|   B|  C|   D|
++---+----+---+----+
+|  1|   2|  3|   4|
+|  1|   3|  4|null|
+|  2|null|  4|null|
+|  2|   2|  2|null|
++---+----+---+----+
+
+df
+    .groupBy(""A"")
+    .agg(collect_list('B) as ""B"", collect_list('C) as ""C"",collect_list('D) as ""D"")
+    .show
+
++---+------+------+---+
+|  A|     B|     C|  D|
++---+------+------+---+
+|  1|[2, 3]|[3, 4]|[4]|
+|  2|   [2]|[4, 2]| []|
++---+------+------+---+

@@ -1,0 +1,23 @@
+    let calc_MBD3 (s : string) =
+        let inline getnum (c : char) = int c - 48
+        let parse (s : string) =
+            let rec ploop r i =
+                if i >= s.Length then r else
+                    let c = s.[i]
+                    let n = if c >= '0' && c <= '9'
+                            then 10 * r + getnum c else r
+                    ploop n (i + 1)
+            ploop 0 0
+        let inline runop f a b =
+            match f with
+            | '+' -> a + b
+            | '-' -> a - b
+            | '*' -> a * b
+            | '/' -> a / b
+            | _ -> failwith ""illegal op""
+        let rec loop (ops : string []) r i j =
+            if i >= ops.Length then r else
+                let n = parse ops.[i]
+                loop ops (runop ops.[j].[0] r n) (i + 2) (j + 2)
+        let ops = s.Split ' '
+        loop ops (parse ops.[0]) 2 1

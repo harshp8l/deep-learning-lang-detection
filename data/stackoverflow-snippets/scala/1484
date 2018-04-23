@@ -1,0 +1,70 @@
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import play.api.libs.ws._
+import play.api.libs.ws.ahc._
+import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.Future
+import play.api.libs.json._
+import play.api.libs.ws.JsonBodyReadables._
+import scala.util.Failure
+import java.io.IOException
+import com.fasterxml.jackson.core.JsonParseException
+
+case class ErrorMessage(message: String)
+
+object ErrorMessage {
+  implicit val errorMessageFormat = Json.format[ErrorMessage]
+}
+
+case class ErrorResponse(error: List[ErrorMessage])
+
+object ErrorResponse {
+  implicit val errorResponseFormat = Json.format[ErrorResponse]
+}
+
+case class MyResponseClass(a: String, b: String)
+
+object MyResponseClass {
+  implicit val myResponseClassFormat = Json.format[MyResponseClass]
+}
+
+object PlayWsErrorHandling extends App {
+    implicit val system = ActorSystem()
+    implicit val materializer = ActorMaterializer()
+
+    val wsClient = StandaloneAhcWSClient()
+
+    httpRequest(wsClient) map {
+      case Left(errorResponse) =>
+        println(s""handle application level error: $errorResponse"")
+        // ...
+
+      case Right(goodResponse) =>
+        println(s""handle application level good response $goodResponse"")
+        // ...
+
+    } recover { // handle failed futures (futures with exceptions inside)
+      case parsingError: JsonParseException =>
+        println(s""Attempt recovery from parsingError"")
+        // ...
+
+      case networkingError: IOException =>
+        println(s""Attempt recovery from networkingError"")
+        // ...
+    }
+
+  def httpRequest(wsClient: StandaloneWSClient): Future[Either[ErrorResponse, MyResponseClass]] =
+    wsClient.url(""http://www.example.com"").get() map { response ⇒
+
+      if (response.status >= 400) // application level error
+        Left(response.body[JsValue].as[ErrorResponse])
+      else // application level good response
+        Right(response.body[JsValue].as[MyResponseClass])
+
+    } andThen { // exceptions thrown inside Future
+      case Failure(exception) => exception match {
+        case parsingError: JsonParseException => println(s""Log parsing error: $parsingError"")
+        case networkingError: IOException => println(s""Log networking errors: $networkingError"")
+      }
+    }
+}

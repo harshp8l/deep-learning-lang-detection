@@ -1,0 +1,41 @@
+#! /usr/bin/awk -f
+
+BEGIN {
+    FS = "":""
+    # Noticed that sequences repeat
+    # -- implement caching of patterns
+    split("""", cache)
+}
+
+# Lead Line has 5 fields
+NF == 5 {
+    line0 = $0
+    seq = $NF
+    getline
+    if (seq != """") {
+        if (seq in cache) {
+            pat = cache[seq]
+        } else {
+            n = length(seq)
+            if (n == 1) {
+                pat = seq
+            } else {
+                # ABC -> /.BC|A.C|AB./
+                pat = ""."" substr(seq, 2, n - 1)
+                for (i = 2; i < n; ++i)
+                    pat = pat ""|"" substr(seq, 1, i - 1) ""."" substr(seq, i + 1, n - i)
+                pat = pat ""|"" substr(seq, 1, n - 1) "".""
+            }
+            cache[seq] = pat
+        }
+        if ($0 ~ pat) {
+            print line0
+            print
+            getline; print
+            getline; print
+            next
+        }
+    }
+    getline
+    getline
+}

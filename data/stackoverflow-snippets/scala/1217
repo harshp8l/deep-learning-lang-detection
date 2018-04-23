@@ -1,0 +1,32 @@
+class LastElement[A] extends GraphStage[FlowShape[A,A]] {
+    private val in = Inlet[A](""last-in"")
+    private val out = Outlet[A](""last-out"")
+
+    override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
+      var pushPending: Option[A] = None
+
+      override def preStart(): Unit = pull(in)
+
+      def pushIfAvailable() = if (isAvailable(out)) {
+        pushPending.foreach(p => {
+          push(out, p)
+          pushPending = None
+        })
+      }
+
+      setHandler(out, new OutHandler {
+        override def onPull(): Unit = pushIfAvailable
+      })
+
+      setHandler(in,new InHandler {
+        override def onPush(): Unit = {
+          pushPending = Some(grab(in))
+          pushIfAvailable
+          pull(in)
+        }
+      })
+
+    }
+
+    override def shape: FlowShape[A, A] = FlowShape(in,out)
+  }

@@ -1,0 +1,17 @@
+/// Original class
+type Foo() =
+    member val X = 0 with get, set
+    member val Y = 0 with get, set
+    interface System.ICloneable with
+        member this.Clone() = box (new Foo(X = this.X, Y = this.Y))
+
+let foo1 = new Foo(X = 1, Y = 2)
+let foo2 = foo1.Clone(X = 3) // error FS0039: The field, constructor or member 'Clone' is not defined
+let foo3 = (foo1 :> System.ICloneable).Clone(X = 3) // error FS0495: The member or object constructor 'Clone' has no argument or settable return property 'X'. The required signature is System.ICloneable.Clone() : obj.
+
+/// Extension that makes the above trick work
+type Foo with
+    member this.Clone() = (this :> System.ICloneable).Clone() :?> Foo
+
+let foo1 = new Foo(X = 1, Y = 2)
+let foo2 = foo1.Clone(X = 3) // works!

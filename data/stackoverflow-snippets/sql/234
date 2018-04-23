@@ -1,0 +1,27 @@
+SELECT
+    c1, c2, c3, c4, c5, c6, c7
+FROM
+(
+    SELECT 
+        DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS c1,
+        DATE_FORMAT(CURDATE()-1, '%Y-%m-%d') AS c2,
+        DATE_FORMAT(CURDATE()-2, '%Y-%m-%d') AS c3,
+        DATE_FORMAT(CURDATE()-3, '%Y-%m-%d') AS c4,
+        DATE_FORMAT(CURDATE()-4, '%Y-%m-%d') AS c5,
+        DATE_FORMAT(CURDATE()-5, '%Y-%m-%d') AS c6,
+        DATE_FORMAT(CURDATE()-6, '%Y-%m-%d') AS c7,
+        0 AS position
+    FROM dual
+    UNION ALL
+    SELECT
+        (SELECT CAST(SUM(last_access_date > CURDATE() AND last_access_date < CURDATE()+1) AS CHAR(50))),
+        (SELECT CAST(SUM(last_access_date > CURDATE()-1 and last_access_date < CURDATE()) AS CHAR(50))),
+        (SELECT CAST(SUM(last_access_date > CURDATE()-2 and last_access_date < CURDATE()-1) AS CHAR(50))),
+        (SELECT CAST(SUM(last_access_date > CURDATE()-3 and last_access_date < CURDATE()-2) AS CHAR(50))),
+        (SELECT CAST(SUM(last_access_date > CURDATE()-4 and last_access_date < CURDATE()-3) AS CHAR(50))),
+        (SELECT CAST(SUM(last_access_date > CURDATE()-5 and last_access_date < CURDATE()-4) AS CHAR(50))),
+        (SELECT CAST(SUM(last_access_date > CURDATE()-6 and last_access_date < CURDATE()-5) AS CHAR(50))),
+        1
+    FROM MYTABLE
+) t
+ORDER BY position;

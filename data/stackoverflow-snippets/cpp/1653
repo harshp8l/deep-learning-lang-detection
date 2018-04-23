@@ -1,0 +1,47 @@
+int main(void)
+{
+  40054d:   push   rbp
+  40054e:   mov    rbp,rsp
+  400551:   sub    rsp,0x20
+    short A[] = {1, 2, 3, 4, 5, 6};
+  400555:   mov    WORD PTR [rbp-0x16],0x1
+  40055b:   mov    WORD PTR [rbp-0x14],0x2
+  400561:   mov    WORD PTR [rbp-0x12],0x3
+  400567:   mov    WORD PTR [rbp-0x10],0x4
+  40056d:   mov    WORD PTR [rbp-0xe],0x5
+  400573:   mov    WORD PTR [rbp-0xc],0x6
+
+#define EXP ((short*)((char*)A + 7))
+
+    short *p = EXP;
+  400579:   lea    rax,[rbp-0x16]             ; [rbp-0x16] is A
+  40057d:   add    rax,0x7
+  400581:   mov    QWORD PTR [rbp-0x8],rax    ; [rbp-0x08] is p
+    short q = *EXP;
+  400585:   movzx  eax,WORD PTR [rbp-0xf]     ; [rbp-0xf] is A plus 7 bytes
+  400589:   mov    WORD PTR [rbp-0xa],ax      ; [rbp-0xa] is q
+
+    pshort(*p);
+  40058d:   mov    rax,QWORD PTR [rbp-0x8]    ; [rbp-0x08] is p
+  400591:   movzx  eax,WORD PTR [rax]         ; *p
+  400594:   cwde   
+  400595:   mov    edi,eax
+  400597:   call   400527 <pshort>
+    pshort(q);
+  40059c:   movsx  eax,WORD PTR [rbp-0xa]      ; [rbp-0xa] is q
+  4005a0:   mov    edi,eax
+  4005a2:   call   400527 <pshort>
+    pshort(*EXP);
+  4005a7:   movzx  eax,WORD PTR [rbp-0x10]    ; [rbp-0x10] is A plus 6 bytes ********
+  4005ab:   cwde   
+  4005ac:   mov    edi,eax
+  4005ae:   call   400527 <pshort>
+    printf(""\n"");
+  4005b3:   mov    edi,0xa
+  4005b8:   call   400430 <putchar@plt>
+
+    return 0;
+  4005bd:   mov    eax,0x0
+}
+  4005c2:   leave  
+  4005c3:   ret

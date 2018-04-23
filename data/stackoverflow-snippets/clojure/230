@@ -1,0 +1,26 @@
+(require '[hickory.core :as html])
+
+(defn classifier [tag klass]
+  (comp #{[:element tag klass]} (juxt :type :tag (comp :class :attrs))))
+
+(def group? (classifier :div ""“group”""))
+(def subgroup? (classifier :div ""“subgroup”""))
+(def path? (classifier :a nil))
+(defn identifier? [tag] (classifier tag nil))
+
+(defn only [x]
+  ;; https://stackoverflow.com/a/14792289/5044950
+  {:pre [(seq x)
+         (nil? (next x))]}
+  (first x))
+
+(defn identifier [tag element]
+  (->> element :content (filter (identifier? tag)) only :content only))
+
+(defn process [data]
+  (for [group (filter group? (map html/as-hickory (html/parse-fragment data)))
+        :let [title (identifier :h2 group)]
+        subgroup (filter subgroup? (:content group))
+        :let [subheading (identifier :h3 subgroup)]
+        path (filter path? (:content subgroup))]
+    [title subheading (:href (:attrs path))]))

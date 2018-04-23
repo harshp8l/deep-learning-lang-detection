@@ -1,0 +1,30 @@
+public String generateXLSXReport(Collection collection, String storageDir, String fileName) throws Exception {
+    JRBeanCollectionDataSource beanColDataSource = null;
+    String filePath = """";
+    JRXlsxExporter exporter = null;
+    SimpleXlsxReportConfiguration configuration = null;
+    try {
+        beanColDataSource = new JRBeanCollectionDataSource(collection);
+        jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, beanColDataSource);
+        filePath = storageDir+File.separator+fileName+"".pdf"";
+        //Create Exporter (Input / Output)
+        exporter = new JRXlsxExporter();
+        exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+        exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(new File(filePath)));
+        //Set configuration as you like it!!
+        configuration = new SimpleXlsxReportConfiguration();
+        configuration.setOnePagePerSheet(false);
+        configuration.setDetectCellType(true);
+        configuration.setWhitePageBackground(true);
+        configuration.setIgnorePageMargins(true);
+        configuration.setMaxRowsPerSheet(65000);
+        configuration.setForcePageBreaks(false);
+        configuration.setWrapText(true);
+        exporter.setConfiguration(configuration);
+        exporter.exportReport();
+    }catch(Exception e){
+        //e.printStackTrace();
+        throw e;
+    }
+    return filePath;
+}

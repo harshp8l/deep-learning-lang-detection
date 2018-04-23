@@ -1,0 +1,83 @@
+package main
+
+import ""net/http""
+import (
+    ""context""
+    ""fmt""
+    ""io/ioutil""
+    ""sync""
+    ""time""
+
+    ""github.com/tidwall/gjson""
+)
+
+var client = &http.Client{Timeout: 10 * time.Second}
+
+type Ticker struct {
+}
+
+func main() {
+    ticker, coins, err := FetchTickerData()
+
+    fmt.Print(""Everything is null! "", ticker, coins, err)
+    if err != nil {
+        fmt.Print(err)
+        return
+    }
+    fmt.Print(""Bitcoin price in usd: "", ticker.Array()[0].Get(""price_usd""))
+}
+
+func FetchTickerData() (*gjson.Result, *gjson.Result, error) {
+    var wg sync.WaitGroup
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+
+    var result1, result2 *gjson.Result
+    var err1, err2 error
+
+    wg.Add(2)
+    go func() {
+        defer wg.Done()
+        result1, err1 = fetchJson(ctx, ""https://api.coinmarketcap.com/v1/ticker/"")
+        if err1 != nil {
+            cancel() // Abort the context, so the other function can abort early
+        }
+    }()
+
+    go func() {
+        defer wg.Done()
+        result2, err2 = fetchJson(ctx, ""https://whattomine.com/coins.json"")
+        if err2 != nil {
+            cancel() // Abort the context, so the other function can abort early
+        }
+    }()
+
+    wg.Wait()
+
+    if err1 == context.Canceled || err1 == nil {
+        return result1, result2, err2
+    }
+    return result1, result2, err1
+}
+
+func fetchJson(ctx context.Context, url string) (*gjson.Result, error) {
+    req, err := http.NewRequest(http.MethodGet, url, nil)
+    if err != nil {
+        return nil, err
+    }
+
+    req = req.WithContext(ctx)
+    resp, err := client.Do(req)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return nil, err
+    }
+    fmt.Print(""I don't know why this body isn't printed "", string(body))
+    json := gjson.ParseBytes(body)
+    return &json, nil
+}

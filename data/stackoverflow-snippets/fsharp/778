@@ -1,0 +1,24 @@
+let api a =
+    printf (""VALUE = %A"") a
+
+type Handler<'a> = abstract Handle<'b> : f:('a->'b) -> 'b
+
+let router (ops:Handler<_>) =
+    [|
+       api (ops.Handle (fun (list, _) -> list()))
+       api (ops.Handle (fun (_, get) -> get 1))
+    |]
+let withContext ops =
+    let context = ""CONTEXT""
+    { new Handler<_> with member __.Handle f = f (ops context) }
+
+let operations context =
+    printf (""CONTEXT = %s"") context
+
+    let list () = [|1;2;3|]
+    let get id = ""Test""
+    (list, get)
+
+let setup() =
+    let ops = withContext operations
+    router ops

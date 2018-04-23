@@ -1,0 +1,34 @@
+[System.String]$script:ResourceGroupNameVariable = 'resourcegroupnameone'
+[System.String]$script:StorageAccountNameVariable = 'storacctnameone'
+[System.String]$script:ContainerNameVariable = 'containernameone'
+
+Write-Host ""Start Container Create""
+
+#Get/Set the AzureRmStorageAccountKey
+#                        the below -Name parameter may be -AccountName according to documentation
+[System.Object[]]$currentAzureRmStorageAccountKeys = Get-AzureRmStorageAccountKey -ResourceGroupName $script:ResourceGroupNameVariable -Name $script:StorageAccountNameVariable;
+#Write-Host ""about to currentAzureRmStorageAccountKeys.GetType""
+#Write-Output $currentAzureRmStorageAccountKeys.GetType().FullName 
+
+
+### Create the AzureStorageContext (you always do this, regardless if the container itself exists or not)
+[Microsoft.WindowsAzure.Commands.Storage.AzureStorageContext]$currentAzureStorageContext = New-AzureStorageContext -StorageAccountName $script:StorageAccountNameVariable -StorageAccountKey $currentAzureRmStorageAccountKeys[0].Value;
+#Write-Host ""about to currentAzureStorageContext.GetType""
+#Write-Output $currentAzureStorageContext.GetType().FullName 
+
+# Get/Set the AzureStorageContainer
+[Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel.AzureStorageContainer]$currentAzureStorageContainerCheck=Get-AzureStorageContainer -Context $currentAzureStorageContext -Name $script:ContainerNameVariable;
+
+if(!$currentAzureStorageContainerCheck)
+{
+    ### The container does not already exist.  Create a Blob Container in the Storage Account
+    New-AzureStorageContainer -Context $currentAzureStorageContext -Name $script:ContainerNameVariable;
+}
+else{
+    #Write-Host ""about to currentAzureStorageContainerCheck.GetType""
+    #Write-Output $currentAzureStorageContainerCheck.GetType().FullName 
+    #Write-Host ""about to currentAzureStorageContainerCheck""
+    #$currentAzureStorageContainerCheck
+}
+
+Write-Host ""End Container Create""

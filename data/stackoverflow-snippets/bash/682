@@ -1,0 +1,32 @@
+FILEONE=$1
+FILETWO=$2
+MINSILENCE=0.1
+THRESH=""-50dB""
+S1=$(ffmpeg -i $FILEONE -af silencedetect=noise=$THRESH:d=$MINSILENCE -f null -  2>&1 | grep silence_duration -m 1 | awk '{print $NF}')
+S2=$(ffmpeg -i $FILETWO -af silencedetect=noise=$THRESH:d=$MINSILENCE -f null -  2>&1 | grep silence_duration -m 1 | awk '{print $NF}')
+if [ -z ""$S1"" ]; then echo ""no starting silence found in $FILEONE"" && exit 1;fi
+if [ -z ""$S2"" ]; then echo ""no starting silence found in $FILETWO"" && exit 1;fi
+DIFF=$(echo ""$S1-$S2""|bc)
+ISNEG=$(echo $DIFF'>0'| bc -l)
+DIFF=${DIFF#-}
+BASE=""${FILETWO%.*}""
+if [ $ISNEG -eq 1 ]
+then
+  echo ""$1>$2 ... padding $2""
+  SAMPRATE=$(sox --i -r $FILETWO)
+  sox -n -r $SAMPRATE -c 2 silence.wav trim 0.0 $DIFF
+  sox silence.wav $FILETWO $BASE.shift.wav
+  rm silence.wav
+else
+  echo ""$1<$2 ... trimming $2""
+  sox $FILETWO $BASE.trim.wav trim $DIFF
+fi
+
+length1=$(sox $FILEONE -n stat 2>&1 | sed -n 's#^Length (seconds):[^0-9]*\([0-9.]*\)$#\1#p')
+length2=$(sox $BASE.trim.wav -n stat 2>&1 | sed -n 's#^Length (seconds):[^0-9]*\([0-9.]*\)$#\1#p')
+
+if (( $(echo ""$length2 > $length1"" | bc -l) )); then
+    diff=$(echo ""$length2 - $length1"" | bc -l)
+    echo ""difference = $diff""
+    sox $BASE.trim.wav finished.wav trim 0 -$diff
+fi

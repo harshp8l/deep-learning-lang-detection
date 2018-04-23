@@ -1,0 +1,24 @@
+// sample data:
+val df = Seq(
+  (Map(
+    ""key1"" -> Array(Element(""1"", ""bt1"", 0.1, MyStruct(1, 2)), Element(""11"", ""bt11"", 0.2, MyStruct(1, 3))),
+    ""key2"" -> Array(Element(""2"", ""bt2"", 0.2, MyStruct(12, 22)))
+  ), ""key2"")
+).toDF(""mapkey"", ""uid"")
+
+df.printSchema() // prints the right schema, as expected in post
+
+// define UDF:
+val filterMap = udf((m: Map[String, Seq[Element]], uid: String) => {
+  m.filterKeys(_ == uid)
+})
+
+// use UDF:
+df.withColumn(""result"", filterMap($""mapkey"", $""uid"")).show(false)
+
+// prints:
+// +-----------------------------------------------------------------+
+// |result                                                           |
+// +-----------------------------------------------------------------+
+// |Map(key1 -> WrappedArray([1,bt1,0.1,[1,2]], [11,bt11,0.2,[1,3]]))|
+// +-----------------------------------------------------------------+

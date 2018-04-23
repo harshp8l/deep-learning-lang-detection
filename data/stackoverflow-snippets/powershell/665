@@ -1,0 +1,25 @@
+Add-Type -AssemblyName System.Speech -ErrorAction SilentlyContinue
+
+# One synthesizer on per shell should be enough 
+$__synth = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
+
+# Read lines of text into memory, shuffle their order
+$__lines = Get-Content C:\Tools\linesoftext.txt |Sort-Object {Get-Random}
+
+# Add a script property to the $__lines variable that always returns the next sentence
+$ScriptProperty = @{
+  Name = 'NextSentence'
+  MemberType = 'ScriptProperty' 
+  Value = {
+    return $this[++$global:__idx % @($this).Count]
+  }
+}
+Add-Member @ScriptProperty -InputObject $__lines 
+
+# Speak the next sentence
+function Get-Suggestion {
+  $global:__synth.Speak($global:__lines.NextSentence)
+}
+
+# Define alias `suggestion -> Get-Suggestion`
+Set-Alias suggestion Get-Suggestion

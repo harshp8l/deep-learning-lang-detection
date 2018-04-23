@@ -1,0 +1,51 @@
+// random test cases...
+open Fuchu
+open System
+let rand = new Random()
+
+type ClubMember = {Age:int;Handi:int}
+
+let values =  [
+        {Age = 10;Handi=2}
+        {Age=25;Handi=9}
+        {Age=75;Handi=2}
+        {Age=20;Handi=25}
+        {Age=1;Handi=1}
+        {Age=90;Handi=8}
+        {Age=79;Handi=12}
+        {Age=99;Handi=18}
+        {Age=75;Handi=8}
+        {Age=76;Handi=9}
+    ]
+
+
+let SelectMember (mem:ClubMember) = 
+    match mem with 
+    | x when (mem.Age >= 55) && (mem.Handi > 7) -> ""Senior""
+    | _ -> ""Open""
+
+
+let PutAttributesInList (mem:ClubMember) = 
+    match mem with 
+    | _ -> [mem.Age; mem.Handi]
+
+let Randomtests expected actual =  Assert.Equal(""expected == actual?"", OpenOrSenior expected, actual)
+type _testcases = {_expected : int list list ; _actual : string list}
+let mutable testCasesList = []
+
+let GeneraterandomTests = 
+    for i in 1..10 do 
+        let mutable expected:int list list = []
+        let mutable actual: string list = []
+        for _i in 1..5 do 
+            let mutable rndNumb = rand.Next(0,9)
+            actual <- SelectMember values.[rndNumb] :: actual
+            expected <- PutAttributesInList values.[rndNumb] :: expected
+        testCasesList <- {_expected = expected; _actual = actual} :: testCasesList
+
+[<Tests>]
+let __suite = 
+    testList ""Random Tests!"" [testCase ""Should return test results.."" <| (fun _ -> 
+            for i in testCasesList do 
+                Randomtests i._expected i._actual)
+                ]

@@ -1,0 +1,28 @@
+declare  @TestInput nvarchar(255)
+, @TestInput2 nvarchar(255)
+
+set @TestInput = 'ACER,ASUS,HP'
+set @TestInput2 = 'HP,GIGABYTE'
+
+
+
+;WITH FirstStringSplit(S1) AS
+(
+ SELECT CAST('<x>' + REPLACE(@TestInput,',','</x><x>') + '</x>' AS XML)
+)
+,SecondStringSplit(S2) AS
+(
+SELECT CAST('<x>' + REPLACE(@TestInput2,',','</x><x>') + '</x>' AS XML)
+ )
+
+ SELECT STUFF(
+ (
+SELECT ',' + part1.value('.','nvarchar(max)')
+FROM FirstStringSplit
+CROSS APPLY S1.nodes('/x') AS A(part1)
+WHERE part1.value('.','nvarchar(max)') IN(SELECT B.part2.value('.','nvarchar(max)')
+                                              FROM SecondStringSplit 
+                                              CROSS APPLY S2.nodes('/x') AS B(part2)
+                                              ) 
+FOR XML PATH('')
+),1,1,'') as [Same Value]

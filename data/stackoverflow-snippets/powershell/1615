@@ -1,0 +1,109 @@
+Param(
+   [string]$baseurl = ""http://server:8080/tfs/DefaultCollection"",
+   [string]$projectName = ""ProjectName"",
+   [string]$keepForever = ""true"",
+   [string]$user = ""username"",
+   [string]$token = ""token""
+)
+
+# Base64-encodes the Personal Access Token (PAT) appropriately
+$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes((""{0}:{1}"" -f $user,$token)))
+
+function CreateJsonBody
+{
+
+    $value = @""
+[
+  {
+    ""op"": ""add"",
+    ""path"": ""/fields/System.Title"",
+    ""value"": ""0925Bug""
+  },
+  {
+    ""op"": ""add"",
+    ""path"": ""/fields/System.AreaPath"",
+    ""value"": ""LCScrum""
+  },
+
+  {
+    ""op"": ""add"",
+    ""path"": ""/fields/System.IterationPath"",
+    ""value"": ""LCScrum\\Sprint 1""
+  },
+
+  {
+    ""op"": ""add"",
+    ""path"": ""/fields/System.Tags"",
+    ""value"": ""Tag0921;Tag0926;Tag0927;Tag0928""
+  },
+
+  {
+    ""op"": ""add"",
+    ""path"": ""/fields/Microsoft.VSTS.Common.Activity"",
+    ""value"": ""Development""
+  },
+
+  {
+    ""op"": ""add"",
+    ""path"": ""/fields/Microsoft.VSTS.Scheduling.Effort"",
+    ""value"": ""8""
+  },
+  {
+    ""op"": ""add"",
+    ""path"": ""/fields/Microsoft.VSTS.Common.ValueArea"",
+    ""value"": ""Business""
+  },
+  {
+    ""op"": ""add"",
+    ""path"": ""/fields/Microsoft.VSTS.Common.Severity"",
+    ""value"": ""3 - Medium""
+  },
+  {
+        ""op"": ""add"",
+        ""path"": ""/relations/-"",
+        ""value"":
+        {
+            ""rel"": ""System.LinkTypes.Dependency-Forward"",
+            ""url"": ""http://server:8080/tfs/DefaultCollection/_apis/wit/workItems/324"",
+            ""attributes"":
+            {
+               ""usage"": ""workItemLink"",
+               ""editable"": false,
+               ""enabled"": true,
+               ""acyclic"": true,
+               ""directional"": true,
+               ""singleTarget"": true,
+               ""topology"": ""dependency""
+            }
+        }
+    },
+    {
+        ""op"": ""add"",
+        ""path"": ""/relations/-"",
+        ""value"":
+        {
+            ""rel"": ""System.LinkTypes.Hierarchy-Reverse"",
+            ""url"": ""http://server:8080/tfs/DefaultCollection/_apis/wit/workItems/58"",
+            ""attributes"":
+            {
+              ""usage"": ""workItemLink"",
+              ""editable"": false,
+              ""enabled"": true,
+              ""acyclic"": true,
+              ""directional"": true,
+              ""singleTarget"": false,
+              ""topology"": ""tree""
+            }
+        }
+    }
+]
+""@
+
+ return $value
+}
+
+$json = CreateJsonBody
+
+$uri = ""$baseurl/$($projectName)/_apis/wit/workitems/""+""$""+""bug?api-version=2.2""
+Write-Host $uri
+$result = Invoke-RestMethod -Uri $uri -Method Patch -Body $json -ContentType ""application/json-patch+json"" -Headers @{Authorization=(""Basic {0}"" -f $base64AuthInfo)}

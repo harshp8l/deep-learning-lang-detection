@@ -1,0 +1,42 @@
+try {
+    String endpoint = ""http://192.168.1.13:8080/digitaldisplay/s/m/data"";
+    URL obj = new URL(endpoint);
+    HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+    con.setRequestMethod(""POST"");    // but maybe you want GET here...
+    con.setConnectTimeout(10000);
+    con.setDoInput(true);
+    con.setDoOutput(true);
+
+    JSONObject inputJSON = new JSONObject();
+    inputJSON.put(""Client_id"", 1);
+    inputJSON.put(""Staff_id"", 2);
+
+    con.setRequestProperty(""Content-Type"", ""application/json; charset=UTF-8"");
+
+    OutputStream os = con.getOutputStream();
+    BufferedWriter writer = new BufferedWriter(
+        new OutputStreamWriter(os, ""UTF-8""));
+    writer.write(inputJSON.toString());
+    writer.flush();
+    writer.close();
+    os.close();
+    int responseCode = con.getResponseCode();
+
+    BufferedReader in = new BufferedReader(
+        new InputStreamReader(con.getInputStream()));
+    String inputLine;
+    StringBuffer response = new StringBuffer();
+
+    while ((inputLine = in.readLine()) != null) {
+        response.append(inputLine);
+    }
+    in.close();
+
+    System.out.println(response);
+} catch (SocketTimeoutException se) {
+    // handle timeout exception
+    responseCode = -1;
+} catch (Exception e) {
+    // handle general exception
+    responseCode = 0;
+}

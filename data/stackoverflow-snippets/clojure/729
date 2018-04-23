@@ -1,0 +1,11 @@
+(defmacro cp ""handle exceptions""
+  [handlers & body]
+  `(eval (loop [h# ~handlers
+                acc# (conj '~body  'slingshot.slingshot/try+)]
+           (let [pred# (if (class? (first (first h#)))
+                      (symbol (.getName (first (first h#))))
+                      (first (first h#)))]
+             (if (not (nil? h#))
+               (recur (next h#)
+                      (concat acc# (list (list 'catch pred# 'e# (reverse (conj (next (first h#)) 'e#))))  ))
+               acc#)))))

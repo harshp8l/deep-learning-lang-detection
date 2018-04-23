@@ -1,0 +1,30 @@
+(def queue (ref clojure.lang.PersistentQueue/EMPTY))
+
+(defn enqueue!
+  ""It doesn't check uniqueness.""
+  [item]
+  (dosync (alter queue conj item)))
+
+(defn has-item?
+  ""Be careful, it is O(n) operation.""
+  [item]
+  (some #(= item %) @queue))
+
+(defn dequeue!
+  ""Pop element off the queue and returns it""
+  []
+  (dosync
+   (let [v (peek @queue)]
+     (alter queue pop)
+     v)))
+
+(defn remove!
+  ""Because you want to remove all repetition of an item you should
+   convert current a queue to a sequence, remove items and convert
+   it back to a queue. It creates intermediate collection and it is
+   WRONG way to use queue. But it is still achievable.""
+  [item]
+  (dosync
+   (alter queue #(apply conj
+                        clojure.lang.PersistentQueue/EMPTY
+                        (remove #{item} %)))))

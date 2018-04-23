@@ -1,0 +1,22 @@
+// make a temp file to store the function's stdout
+int newStdOut = mkstemp( ""/tmp/stdout.XXXXXXX"" );
+
+// save the original stdout
+int tmpStdOut = dup( STDOUT_FILENO );
+
+// clear stdout
+fflush( stdout );
+
+// now point the stdout file descriptor to the file
+dup2( newStdOut, STDOUT_FILENO );
+
+// call the function we want to collect the stdout from
+some_function();
+
+// make sure stdout is empty
+fflush( stdout );
+
+// restore original stdout
+dup2( tmpStdOut, STDOUT_FILENO );
+
+// the tmp file now contains whatever some_function() wrote to stdout

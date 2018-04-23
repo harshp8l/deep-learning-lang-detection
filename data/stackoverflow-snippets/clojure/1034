@@ -1,0 +1,37 @@
+(ns myapp.components
+  (:require [com.stuartsierra.component :as component]
+            ;; lots of app requires would go here
+            ;; I'm generalizing app-specific code to
+            ;; this namespace
+            [myapp.stuff :as app]))
+
+(defrecord Db [host port]
+   component/Lifecycle
+   (start [c]
+      (let [conn (app/db-connect host port)]
+        (app/db-migrate conn)
+        (assoc c :connection conn)))
+   (stop [c]
+      (when-let [conn (:connection c)]
+        (app/db-disconnect conn))
+      (dissoc c :connection)))
+
+(defrecord AppHandler [db cookie-config]
+   component/Lifecycle
+   (start [c]
+      (assoc c :handler (app/create-handler cookie-config db)))
+   (stop [c] c))
+
+;; you should probably use the jetty-component instead
+;; https://github.com/weavejester/ring-jetty-component
+(defrecord Server [app host port]
+   component/Lifecycle
+   (start [c]
+      (assoc c :server (app/create-and-start-jetty-server
+                        {:app (:handler app)
+                         :host host 
+                         :port port})))
+   (stop [c]
+      (when-let [server (:server c)]
+         (app/stop-jetty-server server)
+      (dissoc c :server)))

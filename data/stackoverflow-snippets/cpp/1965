@@ -1,0 +1,26 @@
+#include <vector>
+#include <iostream>
+
+template <template <typename...> class C = std::vector,
+          typename F, typename T, typename ... Ts>
+auto call (F f, const T & t, const Ts & ... ts)
+ {
+   C<decltype(f(t))> v;
+
+   (v.emplace_back(t), ..., v.emplace_back(ts));
+
+   return v;
+}
+
+int foo (char ch)
+ { return ch; }
+
+int main()
+ {
+   auto cv = call(foo, '0', '1', '2', '3');
+
+   for ( auto const & i : cv )
+      std::cout << i << ' ';
+
+   std::cout << std::endl;
+ }

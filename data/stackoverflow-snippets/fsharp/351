@@ -1,0 +1,45 @@
+[<Literal>]
+let sample = """"""{
+    ""Team"": {
+        ""id"": ""8"",
+        ""players"": {
+            ""17878"": {
+                ""info"": {
+                    ""idteam"": 8,
+                    ""idplayer"": 17878,
+                    ""note"": 6
+                }
+            },
+            ""18507"": {
+                ""info"": {
+                    ""idteam"": 8,
+                    ""idplayer"": 18507,
+                    ""note"": 5
+                }
+            }
+        }
+    }
+}""""""
+
+type Player = {IdTeam:int; IdPlayer:int; Note:int}
+
+type Simple = JsonProvider<sample>
+let docAsync = Simple.GetSample()
+
+let json = docAsync.Team.Players.JsonValue
+
+let parseInfo (json:JsonValue) = 
+
+    let id_team = (json.GetProperty ""idteam"").AsInteger()
+    let id_player = (json.GetProperty ""idplayer"").AsInteger()
+    let note = (json.GetProperty ""note"").AsInteger()
+
+    {IdTeam = id_team; IdPlayer = id_player; Note = note}
+
+let players = 
+    json.Properties()
+    |> Array.map(fun (_,x) -> x.GetProperty ""info"")
+    |> Array.map (parseInfo)
+
+players
+|> Array.iter (printfn ""%A"")

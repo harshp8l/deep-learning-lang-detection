@@ -1,0 +1,30 @@
+trait Vehicle
+case class Car(a: Int) extends Vehicle
+case class Truck(b: Int) with Vehicle
+case class MotorCycle(c: Int) with Vehicle
+
+object Transformation {
+  trait Transformer[V <: Vehicle] {
+    def transform(v: V): V
+  }
+
+  implicit val carTransformer = new Transformer[Car] {
+    override def transform(c: Car): Car = Car(c.a + 1)
+  }
+
+  implicit val truckTransformer = new Transformer[Truck] {
+    override def transform(t: Truck): Truck = Truck(t.b + 10)
+  }
+
+  implicit val motorCycleTransformer = new Transformer[MotorCycle] {
+    override def transform(m: MotorCycle): MotorCycle = MotorCycle(m.c + 100)
+  }
+
+  def someTransformation[V <: Vehicle : Transformer](v: V): V = {
+    implicitly[Transformer[V]].transform(v)
+  }
+}
+
+Transformation.someTransformation(Car(1)) // results in Car(2)
+Transformation.someTransformation(Truck(1)) // results in Truck(11)
+Transformation.someTransformation(MotorCycle(1)) // results in MotorCycle(101)

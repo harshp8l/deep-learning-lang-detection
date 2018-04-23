@@ -1,0 +1,13 @@
+today=$(date ""+%Y-%m-%d"")
+todaysecs=$(date ""+%s"")             ## get today in seconds since epoch
+while read -r f1 f2 f3 f4 f5 ; do
+    f2date=""${f2:0:4}-${f2:4:2}-${f2:6:2}""      ## get date part of f2
+    f2time=""${f2:8:2}:${f2:10:2}:${f2:12:2}""    ## get time part of f2
+    logsecs=$(date -d ""$f2date $f2time"" +%s)    ## get f2 seconds since epoch
+    ## require both $f3 = ""f"" and todaysecs - logsecs) < 86400
+    if [ ""${f3}"" = ""F"" ] && (((todaysecs - logsecs) < 86400)); then
+        gzip -c ""${f5}"" > /backup/batch_backups/""$(basename ""${f5}"")""_$today.gz
+    else
+        echo ""No Error!""
+    fi
+done < batch.log

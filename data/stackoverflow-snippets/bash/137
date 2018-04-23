@@ -1,0 +1,18 @@
+#!/bin/sh                                                    
+
+function1() { printf '\t\toutputfunction1\n'; }                
+function2() { echo bar; }                                      
+indent (){                                                     
+        indent=$(printf '%s' ""$(for ((i=$1; $i>0; i--)); do printf '\t'; done)"")                                               
+        shift                                                  
+        $@ | sed ""s/^/$indent/""                                
+}                                                              
+
+get_indent() {                                                 
+        # Call a function and return the indentation of the last line.
+        $@ | awk '1; END{ exit( match($0, ""[^\t]"") -1 )}'    
+}                                                              
+
+
+get_indent function1                                           
+indent $? function2

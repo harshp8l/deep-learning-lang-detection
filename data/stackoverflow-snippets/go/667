@@ -1,0 +1,62 @@
+package main
+
+import (
+    ""fmt""
+    ""runtime""
+    ""sync""
+    ""time""
+)
+
+type Point struct {
+    X int
+    Y int
+}
+
+var lock sync.Mutex
+
+func main() {
+    // runtime.GOMAXPROCS(4)
+    fmt.Println(""Max # of parallel processes = "", MaxParallelism())
+
+    var p *Point = nil
+    test := true
+    go func() {
+        for test {
+            // lock.Lock()
+            if tmp := p; tmp == nil {
+                p = &Point{}
+            }
+            // lock.Unlock()
+            // time.Sleep(1 * time.Nanosecond)
+
+        }
+    }()
+    go func() {
+        for test {
+            // lock.Lock()
+            if tmp := p; tmp != nil {
+                p = nil
+            }
+            // lock.Unlock()
+            // time.Sleep(1 * time.Nanosecond)
+        }
+    }()
+
+    n := 0
+    for test {
+        n++
+        fmt.Printf(""testing%v....\r\n"", n)
+        time.Sleep(1000 * time.Millisecond)
+    }
+
+    fmt.Printf(""test fail"")
+}
+
+func MaxParallelism() int {
+    maxProcs := runtime.GOMAXPROCS(0)
+    numCPU := runtime.NumCPU()
+    if maxProcs < numCPU {
+        return maxProcs
+    }
+    return numCPU
+}

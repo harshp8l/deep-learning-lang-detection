@@ -1,0 +1,27 @@
+#include <type_traits>
+#include <iostream>
+
+template<class T1, class T2>
+class Foo {
+    template<class InnerT, class ... Args>
+    void do_bar(InnerT param, std::true_type, Args... args) { std::cout << ""same"" << std::endl; }
+
+    template<class InnerT, class ... Args>
+    void do_bar(InnerT param, std::false_type, Args... args) { std::cout << ""not same"" << std::endl; }
+
+public:
+    template<class InnerT, class ... Args>
+    void bar(InnerT&& param, Args&&... args) 
+    {
+        do_bar(std::forward<InnerT>(param), std::is_same<T1, T2>{}, std::forward<Args>(args)...);
+    }
+
+};
+
+int main() {
+    Foo<int, int> f1;
+    Foo<int, double> f2;
+
+    f1.bar(1, 2, 3);
+    f2.bar(""Hello"");
+}

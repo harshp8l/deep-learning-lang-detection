@@ -1,0 +1,43 @@
+#include <QCoreApplication>
+#include <QSerialPort>
+
+#include <iostream>
+
+int main(int argc, char *argv[])
+{
+    QCoreApplication a(argc, argv);
+
+    QSerialPort master(""/dev/ptmx"");
+    if(!master.open(QSerialPort::ReadWrite))
+        std::cout<<""The master port was not opened"";
+
+    int master_fd = master.handle();
+
+    // get device name of slave pseudoterminal
+    constexpr size_t PTSNAME_BUFFER_LENGTH = 128;
+    char ptsname_buffer[PTSNAME_BUFFER_LENGTH];
+    if (ptsname_r(master_fd, ptsname_buffer, PTSNAME_BUFFER_LENGTH) != 0)
+        return -1;
+
+    // grant access to the slave
+    if (grantpt(master_fd) != 0)
+        return -1;
+
+    // unlock the slave
+    if (unlockpt(master_fd) != 0)
+        return -1;
+
+    // open slave
+    std::cout << ""Slave pseudoterminal: "" << ptsname_buffer << std::endl;
+    QSerialPort slave(ptsname_buffer);
+    if(!slave.open(QSerialPort::ReadWrite))
+        std::cout<<""The slave port was not opened"";
+
+    QObject::connect(&slave, &QSerialPort::readyRead, [&](){
+        std::cout << ""Received: "" << slave.readAll().toStdString() << std::endl;
+        a.quit();
+    });
+    // test communication
+    master.write(""Hello World"");
+    return a.exec();
+}

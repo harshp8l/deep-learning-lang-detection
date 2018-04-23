@@ -1,0 +1,29 @@
+var wg sync.WaitGroup
+
+func walkDir(dir string) {
+    defer wg.Done()
+
+    visit := func(path string, f os.FileInfo, err error) error {
+        if f.IsDir() && path != dir {
+            wg.Add(1)
+            go walkDir(path)
+            return filepath.SkipDir
+        }
+        if f.Mode().IsRegular() {
+            fmt.Printf(""Visited: %s File name: %s Size: %d bytes\n"",
+                path, f.Name(), f.Size())
+        }
+        return nil
+    }
+
+    filepath.Walk(dir, visit)
+}
+
+func main() {
+    flag.Parse()
+    root := ""folder/to/walk"" //flag.Arg(0)
+
+    wg.Add(1)
+    walkDir(root)
+    wg.Wait()
+}

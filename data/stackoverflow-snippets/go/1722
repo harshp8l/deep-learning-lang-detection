@@ -1,0 +1,44 @@
+package main
+
+import (
+    ""fmt""
+    ""log""
+    ""net/http""
+
+    ""github.com/gorilla/schema""
+)
+
+type Payload struct {
+    Slot_temp string
+    Data      string
+    Time      string
+    Device    string
+    Signal    string
+}
+
+func MyHandler(w http.ResponseWriter, r *http.Request) {
+    err := r.ParseForm()
+
+    if err != nil {
+        fmt.Println(""Error parsing form"")
+    }
+
+    p := new(Payload)
+    decoder := schema.NewDecoder()
+
+    fmt.Println(r.PostForm)
+
+    err = decoder.Decode(p, r.Form)
+
+    if err != nil {
+        fmt.Println(""Error decoding"")
+    }
+    fmt.Println(p.Slot_temp)
+
+}
+
+func main() {
+    mux := http.NewServeMux()
+    mux.HandleFunc(""/"", MyHandler)
+    log.Fatal(http.ListenAndServe("":8082"", mux))
+}

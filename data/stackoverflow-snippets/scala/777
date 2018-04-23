@@ -1,0 +1,26 @@
+  private def flattenSchema(schema: StructType, prefix: String = null): Array[Column] = {
+    schema.fields.flatMap(field => {
+      val columnName = if (prefix == null) field.name else prefix + ""."" + field.name
+
+      field.dataType match {
+        case arrayType: ArrayType => {
+
+          Array[Column](explode_outer(col(columnName)).as(columnName.replace(""."", ""_"")))
+        }
+        case mapType: MapType => {
+          None
+        }
+        case structType: StructType => {
+
+          flattenSchema(structType, columnName)
+        }
+        case _ => {
+          val columnNameWithUnderscores = columnName.replace(""."", ""_"")
+
+          val metadata = new MetadataBuilder().putString(""encoding"", ""ZSTD"").build()
+
+          Array(col(columnName).as(columnNameWithUnderscores, metadata))
+        }
+      }
+    }).filter(field => field != None)
+  }

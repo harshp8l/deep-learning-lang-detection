@@ -1,0 +1,30 @@
+require './vendor/autoload.php';
+error_reporting(E_ALL);
+ini_set(""display_errors"", 1);
+
+$params = array(
+    'credentials' => array(
+        'key' => 'YOUR_KEY_HERE',
+        'secret' => 'YOUR_SECRET_HERE',
+    ),
+    'region' => 'us-east-1', // < your aws from SNS Topic region
+    'version' => 'latest'
+);
+$sns = new \Aws\Sns\SnsClient($params);
+
+$args = array(
+    ""MessageAttributes"" => [
+                'AWS.SNS.SMS.SenderID' => [
+                    'DataType' => 'String',
+                    'StringValue' => 'YOUR_SENDER_ID'
+                ],
+                'AWS.SNS.SMS.SMSType' => [
+                    'DataType' => 'String',
+                    'StringValue' => 'Transactional'
+                ]
+            ],
+    ""Message"" => ""Hello World! Visit www.tiagogouvea.com.br!"",
+    ""PhoneNumber"" => ""FULL_PHONE_NUMBER""
+);
+
+$result = $sns->publish($args);

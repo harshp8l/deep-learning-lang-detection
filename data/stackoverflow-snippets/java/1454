@@ -1,0 +1,53 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OperationsPerInvocation;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@BenchmarkMode(Mode.AverageTime)
+@OperationsPerInvocation(MyBenchmark.N)
+public class MyBenchmark {
+
+    public static final int N = 50;
+
+    public static final int SIZE = 100000;
+
+    static List<Integer> sourceList = new ArrayList<>();
+    static {
+        System.out.println(""Generating the list"");
+        for (int i = 0; i < SIZE; i++) {
+            sourceList.add(i);
+        }
+        System.out.println(""Shuffling the list."");
+        Collections.shuffle(sourceList);
+    }
+
+    @Benchmark
+    public List<Integer> sortingList() {
+        List<Integer> sortedList = new ArrayList<>(sourceList);
+        Collections.sort(sortedList);
+        return sortedList;
+    }
+
+    @Benchmark
+    public List<Integer> sortedStream() {
+        List<Integer> sortedList = sourceList.stream().sorted().collect(Collectors.toList());
+        return sortedList;
+    }
+
+    @Benchmark
+    public List<Integer> treeSet() {
+        Set<Integer> sortedSet = new TreeSet<>(sourceList);
+        List<Integer> sortedList = new ArrayList<>(sortedSet);
+        return sortedList;
+    }
+}

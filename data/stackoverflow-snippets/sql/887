@@ -1,0 +1,66 @@
+create table #temp (instrid int, startdate datetime, enddate datetime, ratingname varchar(max), ratingvalue varchar(max))
+insert #temp values
+(1234,    '2014-09-05 00:00:00.000', '2016-06-26 23:59:59.000', 'FitchIntLT',  'AA+'),
+(1234,    '2014-09-05 00:00:00.000', '2017-09-21 23:59:59.000', 'MoodyIntLT',  'Aa1'),
+(1234,    '2014-09-05 00:00:00.000', NULL                    ,'SPIntLT',     'NR'),
+(1234,    '2016-06-27 00:00:00.000', NULL                    ,'FitchIntLT',  'AA'),
+(1234,    '2017-09-22 00:00:00.000', NULL                    ,'MoodyIntLT',  'Aa2')
+
+declare @holding table (rowid int identity, instrid int, startdate datetime, enddate datetime, ratingname varchar(max), ratingvalue varchar(max)--, position int
+)
+insert @holding
+ select * from #temp order by startdate, ratingname
+
+declare @temp table (tempid int identity, instrid int, startdate datetime, enddate datetime,  ratingname varchar(max), ratingvalue varchar(max))
+insert @temp 
+ select distinct a.instrid, a.startdate, null enddate, b.ratingname, null ratingvalue  from @holding a cross join @holding b
+ order by b.ratingname, a.startdate 
+
+declare @iterator int=1, @inneriterator int=1, @instrid int, @ratingname varchar(max), @startdate datetime, @enddate datetime, @ratingvalue varchar(max)
+while @iterator<=(Select max(rowid) from @holding)
+begin
+select @instrid=instrid, @ratingname=ratingname, @startdate=startdate, @enddate=isnull(enddate, @enddate), 
+@ratingvalue=ratingvalue
+from @holding where rowid=@iterator
+
+while @inneriterator<=(Select max(tempid) from @temp)
+begin
+
+
+update @temp set ratingvalue=@ratingvalue where  tempid=@inneriterator and 
+ratingname=@ratingname and startdate>=@startdate and instrid=@instrid
+
+
+set @inneriterator=@inneriterator+1
+end 
+set @inneriterator=1
+set @iterator=@iterator+1
+end 
+
+
+select instrid, startdate, null enddate,  max(FitchIntLT)FitchIntLT, 
+ max(MoodyIntLT)MoodyIntLT, max(SPIntLT)SPIntLT into #temp2 
+ from @temp pivot ( max(ratingvalue) for ratingname in ([FitchIntLT],[MoodyIntLT],[SPIntLT]))a
+ group by instrid, startdate 
+
+
+ select  instrid,  startdate, lead(enddate,1,null) over(order by  instrid,  startdate) enddate, FitchIntLT, MoodyIntLT, SPIntLT from (
+ select  instrid,  startdate, max(enddate)enddate, FitchIntLT, MoodyIntLT, SPIntLT
+ from 
+ (select a.instrid, a.startdate, FitchIntLT, MoodyIntLT, SPIntLT,
+ case
+ when 
+ (isnull(lag(FitchIntLT,1,null) over(order by a.instrid, a.startdate),'')<>FitchIntLT 
+ or 
+     isnull(lag(MoodyIntLT,1,null) over(order by a.instrid, a.startdate),'')<>MoodyIntLT
+     or
+     isnull(lag(SPIntLT,1,null) over(order by a.instrid, a.startdate),'')<>SPIntLT ) and 
+ lag(a.instrid, 1,null) over (order by a.instrid, a.startdate)=a.instrid
+     then dateadd(s,-1, a.startdate) end enddate
+      from #temp2 a
+      join @holding b on a.instrid=b.instrid and a.startdate=b.startdate)b
+      group by instrid,  startdate, FitchIntLT, MoodyIntLT, SPIntLT )c
+      order by instrid,  startdate
+
+  drop table #temp 
+  drop table #temp2 

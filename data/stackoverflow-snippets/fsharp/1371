@@ -1,0 +1,20 @@
+module NumericLiteralG =
+    let inline FromZero () = LanguagePrimitives.GenericZero
+    let inline FromOne () = LanguagePrimitives.GenericOne
+
+module Euler =
+    let inline isNumPalindrome number =
+        let ten = 1G + 1G + 1G + 1G + 1G + 1G + 1G + 1G + 1G + 1G
+        let hundred = ten * ten
+        let rec findHighDiv div =
+            let div' = div * ten
+            if number / div' = 0G then div else findHighDiv div'
+        let rec impl n div =
+            div = 0G || n / div = n % ten && impl (n % div / ten) (div / hundred)
+        findHighDiv 1G |> impl number
+
+    let problem004 () =
+        { 100 .. 999 }
+        |> Seq.collect (fun n -> Seq.init (1000 - n) ((+) n >> (*) n))
+        |> Seq.filter isNumPalindrome
+        |> Seq.max

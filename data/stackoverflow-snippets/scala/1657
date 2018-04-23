@@ -1,0 +1,26 @@
+import org.apache.spark.sql.functions._
+import org.apache.spark.mllib.linalg.DenseVector
+
+val ds = Seq(
+  (""val1"", 0.0, 1.0, 1.0),
+  (""val2"", 2.0, 1.0, 5.0)
+).toDF(""name"", ""a"", ""b"", ""c"").
+as[(String, Double, Double, Double)]
+
+val colList = ds.columns
+val keyCol = colList(0)
+val valCols = colList.drop(1)
+
+def arrToVec = udf(
+  (s: Seq[Double]) => new DenseVector(s.toArray)
+)
+
+ds.select(
+  col(keyCol), arrToVec( array(valCols.map(x => col(x)): _*) ).as(""values"")
+).show
+// +----+-------------+
+// |name|       values|
+// +----+-------------+
+// |val1|[0.0,1.0,1.0]|
+// |val2|[2.0,1.0,5.0]|
+// +----+-------------+

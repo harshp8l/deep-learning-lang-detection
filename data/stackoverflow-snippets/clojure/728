@@ -1,0 +1,22 @@
+(defn matching-handler [handlers exception]
+  (->> handlers
+       (filter (fn [[exception-type handler]]
+                 (instance? exception-type exception)))
+       (first)
+       (second)))
+
+(defn handle-exception [handlers exception]
+  (let [handler (or (matching-handler handlers exception)
+                    #(throw %))]
+    (handler exception)))
+
+(defmacro cp' [handlers & body]
+  `(try
+     ~@body
+     (catch Throwable e#
+       (handle-exception ~handlers e#))))
+
+(let [handlers [[RuntimeException println] [Exception str]]]
+  (cp' handlers
+       (throw (Exception.))))
+;; => ""java.lang.Exception""

@@ -1,0 +1,21 @@
+function AddToGroup ($groupName, $userName)
+ {
+ Add-ADGroupMember $groupName $userName
+}
+function CreateUserHomeDir ($dir, $ou, $userName) {
+
+New-Item -Path ""$dir\$ou\$userName"" -ItemType Directory
+}
+
+function SetDirPermissions ($ou,$userName,$dir) {
+    $colRights = [System.Security.AccessControl.FileSystemRights]""Read, Write,Traverse""
+    $InheritanceFlag = [System.Security.AccessControl.InheritanceFlags]::None 
+    $PropagationFlag = [System.Security.AccessControl.PropagationFlags]::InheritOnly 
+    $objType =[System.Security.AccessControl.AccessControlType]::Allow 
+    $objUser = New-Object System.Security.Principal.NTAccount(""$userName"") 
+    $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType) 
+    $objACL = Get-ACL ""$dir\$ou\$userName"" 
+    $objACL.AddAccessRule($objACE) 
+    Set-ACL ""$dir\$ou\$userName"" $objACL
+
+}

@@ -1,0 +1,54 @@
+func CloseTransaction(tx *sql.Tx, commit *bool) {
+  if *commit {
+    log.Println(""Commit sql transaction"")
+    if err := tx.Commit(); err != nil {
+      log.Panic(err)
+    }
+  } else {
+    log.Println(""Rollback sql transcation"")
+    if err := tx.Rollback(); err != nil {
+      log.Panic(err)
+    }
+  }
+}
+
+func MultipleSqlQuriesWithTx(db *sql.DB, .. /* some parameter(s) */)  (.. .. /* some named return parameter(s) */, err error) {
+  tx, err := db.Begin()
+  if err != nil {
+    return
+  }
+  commitTx := false
+  defer CloseTransaction(tx, &commitTx)
+
+  // First sql query
+  stmt, err := tx.Prepare(..) // some raw sql
+  if err != nil {
+    return
+  }
+  defer stmt.Close()
+
+  res, err := stmt.Exec(..) // some var args
+  if err != nil {
+    return
+  }
+
+  // Second sql query
+  stmt, err := tx.Prepare(..) // some raw sql
+  if err != nil {
+    return
+  }
+  defer stmt.Close()
+
+  res, err := stmt.Exec(..) // some var args
+  if err != nil {
+    return
+  }
+
+  /*
+    more tx sql statements and queries here
+  */
+
+  // success, commit and return result
+  commitTx = true
+  return
+}

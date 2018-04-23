@@ -1,0 +1,12 @@
+$allSubscriptions = WC_Subscriptions_Manager::get_users_subscriptions($user_id);
+$item_quantity = 0;
+foreach ($allSubscriptions as $subscription){
+    if (($subscription['status'] == 'active' || $subscription['status'] == 'pending-cancel') == false) continue;
+    $order = wc_get_order($subscription['order_id']);
+    // Iterating through each line-item in the order
+    foreach ($order->get_items() as $item_id => $item_data) {
+        if ($item_data->get_product()->get_id() != $product_id) continue;
+        $item_quantity += $item_data->get_quantity();
+    }
+}
+echo 'Quantity: ' . $item_quantity . '<br>';

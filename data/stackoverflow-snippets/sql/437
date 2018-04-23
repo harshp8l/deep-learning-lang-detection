@@ -1,0 +1,15 @@
+select userid,  max(cast(checkin as date)) checkdate, 
+max(CONVERT(VARCHAR(8),checkin,108)) checkin, max(CONVERT(VARCHAR(8),checkout,108)) checkout,
+max(CONVERT(VARCHAR(8),checkin,108))+'-'+max(CONVERT(VARCHAR(8),checkout,108))workhour
+from
+(select userid, cast(checktime as date) checkdate, checktime,
+case when row_number() over(order by cast(checktime as date), checktime) % 2 = 1 
+then 'Checkin' 
+else 'Checkout' end [Action],
+case when row_number() over(order by cast(checktime as date), checktime) % 2 = 1 
+then row_number() over(order by cast(checktime as date), checktime)
+else row_number() over(order by cast(checktime as date), checktime)-1
+end Visit
+from #checkinout)a
+pivot (min(checktime) for [action] in ([Checkin], [Checkout])) a 
+group by userid, visit 

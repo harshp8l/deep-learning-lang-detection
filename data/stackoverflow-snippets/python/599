@@ -1,0 +1,36 @@
+%{
+void match(int);
+%}
+%option noyywrap
+
+%%
+
+""abc""       match(0);
+""ABC""       match(1);
+[0-9]+      match(2);
+/* Continue adding regex and exact string patterns... */
+
+[ \t\n]     /* Do nothing with whitespace. */
+.   /* Do nothing with unknown characters. */
+
+%%
+
+// Total number of patterns.
+#define N_PATTERNS 3
+
+int n_matches = 0;
+int counts[10000];
+
+void match(int n) {
+  if (counts[n]++ == 0 && ++n_matches == N_PATTERNS) {
+    printf(""All matched!\n"");
+    exit(0);
+  }
+}
+
+int main(void) {
+  yyin = stdin;
+  yylex();
+  printf(""Only matched %d patterns.\n"", n_matches);
+  return 1;
+}

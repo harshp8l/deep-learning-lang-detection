@@ -1,0 +1,14 @@
+auto stringo = enc(R""(  
+    kernel void prg_PassThru_src(const global unsigned short * restrict A, int srcstepA, int srcoffsetA,
+    global float * restrict Beta, int srcstepBeta, int srcoffsetBeta,
+    int rows, int cols) {
+        int x = get_global_id(0);
+        int y0 = get_global_id(1);
+        if (x < cols) {
+            int srcA_index = mad24(y0, srcstepA / 2, x + srcoffsetA / 2);
+            int srcBeta_index = mad24(y0, srcstepBeta / 4, x + srcoffsetBeta / 4);
+            Beta[srcBeta_index] = A[srcA_index];
+        }
+    }
+//somewhere later
+cv::ocl::ProgramSource programSource(stringo.decrypt());

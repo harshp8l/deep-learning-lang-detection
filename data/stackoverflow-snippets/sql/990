@@ -1,0 +1,16 @@
+SELECT pc5.*
+FROM (SELECT posts.id, username, cover, audio, title, postDate, commentsDisabled,
+             MAX(postClicks.clickDate) as clickDate,
+             COUNT(*) as ClickCount,
+             SUM(postClicks.clickDate > DATE_SUB(CURDATE(), INTERVAL 1 DAY)) as clicks24hours
+      FROM postClicks INNER JOIN
+           posts
+           ON posts.id = postClicks.postid INNER JOIN
+           users
+           ON users.id = posts.user
+      WHERE posts.private = 0
+      GROUP BY postClicks.postid
+      ORDER BY ClickCount
+      LIMIT 5
+     ) pc5
+ORDER BY clicks24hours DESC;

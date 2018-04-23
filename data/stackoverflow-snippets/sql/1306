@@ -1,0 +1,14 @@
+declare @D table (id int identity primary key, dt varchar(20));
+insert into @D (dt) values (null), ('messy'), ('31-Dec-2017'), ('31/12/2017'), ('1/12/2017');
+select d.dt 
+     , TRY_CONVERT(DATETIME, d.dt, 103) as dt103 
+     , isnull(TRY_CONVERT(varchar(20), TRY_CONVERT(DATETIME, d.dt, 103), 103), d.dt) dt103var
+from @D d;
+
+dt                   dt103                   dt103var
+-------------------- ----------------------- --------------------
+NULL                 NULL                    NULL
+messy                NULL                    messy
+31-Dec-2017          2017-12-31 00:00:00.000 31/12/2017
+31/12/2017           2017-12-31 00:00:00.000 31/12/2017
+1/12/2017            2017-12-01 00:00:00.000 01/12/2017

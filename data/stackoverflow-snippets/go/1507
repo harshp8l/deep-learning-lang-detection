@@ -1,0 +1,46 @@
+package main
+
+import (
+    ""fmt""
+    ""time""
+)
+
+type Date struct {
+    year int
+    month time.Month
+    day int
+}
+
+func date2unix(d Date, loc *time.Location) int64 {
+    return time.Date(d.year, d.month, d.day, 0, 0, 0, 0, loc).Unix()
+}
+
+func primitive(d Date, loc *time.Location) int64 {
+    // 3 January 2000 was a Monday
+    base := Date{2000, time.January, 3}
+    seconds := date2unix(d, loc) - date2unix(base, loc)
+    weeks := seconds / (7*24*60*60)
+    seconds_into_week := seconds % (7*24*60*60)
+    workdays := seconds_into_week / (24*60*60)
+    if workdays > 5 {
+        workdays = 5
+    }
+
+    return 5*weeks + workdays
+}
+
+func DayCountExcludingWeekends(from, to Date, loc *time.Location) int {
+    return int(primitive(to, loc) - primitive(from, loc))
+}
+
+func main() {
+    loc, err := time.LoadLocation(""Europe/Stockholm"")
+    if err != nil {
+        panic(err)
+    }
+
+    f := Date{2017, 6, 28}
+    t := Date{2017, 7,  6}
+
+    fmt.Println(DayCountExcludingWeekends(f, t, loc))
+}

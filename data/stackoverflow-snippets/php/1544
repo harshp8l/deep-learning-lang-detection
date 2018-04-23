@@ -1,0 +1,23 @@
+add_action('woocommerce_after_shop_loop_item','add_attribute');
+function add_attribute() {
+    global $product;
+
+    $product_attributes = array( 'pa_weight', 'pa_quantity', 'pa_length', 'pa_color' );
+    $attr_output = array();
+
+    // Loop through the array of product attributes
+    foreach( $product_attributes as $taxonomy ){
+        if( taxonomy_exists($taxonomy) ){
+            $label_name = get_taxonomy( $taxonomy )->labels->singular_name;
+            $value = $product->get_attribute('pa_weight');
+
+            if( ! empty($value) ){
+                // Storing attributes for output
+                $attr_output[] = '<span class=""'.$taxonomy.'"">'.$label_name.': '.$value.'</span>';
+            }
+        }
+    }
+
+    // Output attribute name / value pairs separate by a ""<br>""
+    echo '<div class=""product-attributes"">'.implode( '<br>', $attr_output ).'</div>';
+}

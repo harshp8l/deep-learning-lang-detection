@@ -1,0 +1,79 @@
+#include <chrono>
+#include <vector>
+
+#ifndef MOVER_H
+#define MOVER_H
+
+
+struct Point {
+    int x, y;
+    Point(int x_, int y_)
+        : x(x_), y(y_) {
+
+    }
+
+    Point() : Point(0, 0) {
+
+    }
+};
+
+
+class Mover {
+public:
+    struct PointData {
+        float total;
+        float distance;
+        Point p1;
+        Point p2;
+
+        PointData()
+            : total(0.f),
+            distance(0.f) {
+
+        }
+
+        PointData(float total, float distance, Point p1, Point p2)
+            : total(total),
+            distance(distance),
+            p1(p1),
+            p2(p2) {
+
+        }
+    };
+    using TimePoint = std::chrono::microseconds;
+private:
+    std::vector<Point> m_points;
+    std::vector<PointData> m_distances;
+    TimePoint m_duration;
+    TimePoint m_elapsed;
+    float m_length;
+public:
+    Mover(std::initializer_list<Point> points, TimePoint duration = std::chrono::microseconds(2000000));
+
+    template<typename iter_t>
+    Mover(iter_t begin, iter_t end, TimePoint duration = std::chrono::microseconds(2000000))
+        : m_points(begin, end),
+        m_duration(duration),
+        m_elapsed(std::chrono::milliseconds(0)) {
+        updateLength();
+    }
+
+    Mover(const Mover&) = default;
+
+    Mover& operator=(const Mover&) = default;
+
+    Point update(TimePoint delta);
+
+    bool isComplete() const;
+
+    void setDuration(TimePoint duration);
+
+    TimePoint getDuration() const;
+
+    TimePoint getElapsed() const;
+private:
+    void updateLength();
+};
+
+
+#endif // MOVER_H

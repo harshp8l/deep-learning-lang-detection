@@ -1,0 +1,55 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+    ""log""
+    ""net/http""
+)
+
+type site struct {
+    Lob string   `json:""lob""`
+    URL []string `json:""url""`
+}
+
+var sites = map[string]site{
+    ""A"": site{
+        Lob: ""A"",
+        URL: []string{
+            ""example.com"",
+            ""test.com"",
+        },
+    },
+    ""B"": site{
+        Lob: ""B"",
+        URL: []string{
+            ""example2.com"",
+            ""test2.com"",
+        },
+    },
+}
+
+const endpoint = ""/getdata/""
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    lob := r.URL.Path[len(endpoint):]
+    s, ok := sites[lob]
+    if !ok {
+        w.WriteHeader(http.StatusNotFound)
+        return
+    }
+
+    resp, err := json.Marshal(s)
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set(""Content-Type"", ""application/json; charset=UTF-8"")
+    w.Write(resp)
+}
+
+func main() {
+    http.HandleFunc(endpoint, handler)
+    log.Fatal(http.ListenAndServe("":8080"", nil))
+}

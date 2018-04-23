@@ -1,0 +1,22 @@
+func readFromFile(_ fileurl: String) {
+    var myData:String = """";
+    do {
+        let url = NSURL(string: fileurl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)
+        myData = try String(contentsOf: url! as URL)
+        let data = myData.data(using: String.Encoding.utf8, allowLossyConversion: false)!
+        do {
+            let json = try JSONSerialization.jsonObject(with: data, options: []) as! [String: AnyObject]
+            let serializedData = try! JSONSerialization.data(withJSONObject: json, options: .prettyPrinted)
+            let encodedData = serializedData.base64EncodedString(options:.endLineWithLineFeed)
+            let js2:String = ""LoadJson('\(encodedData)')""
+            self.wkWebView?.evaluateJavaScript(js2, completionHandler: { (AnyObject, NSError) -> Void in
+                NSLog(""%s"", #function)
+                self.showMessage(""Loaded"")
+            })
+        } catch let error as NSError {
+            print(""Failed to load: \(error.localizedDescription)"")
+        }
+    } catch{
+        showMessage(""Loading error."");
+    }
+}

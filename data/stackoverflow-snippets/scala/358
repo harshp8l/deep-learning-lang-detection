@@ -1,0 +1,11 @@
+val subjectID2SchoolRanks = 
+    userScores.groupBy(_.subject)
+              .mapValues(_.sortWith(_.score >= _.score)
+                          .zipWithIndex
+                          .foldLeft((List[(UserScore,Int)](),-1.0,-1)){
+                            case ((acc,pScore,pRank),(us,rank)) =>
+                              if (pScore == us.score)
+                                ((us,pRank)::acc, pScore, pRank)
+                              else
+                                ((us,rank+1)::acc, us.score, rank+1)
+                          }._1.reverse)

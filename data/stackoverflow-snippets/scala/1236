@@ -1,0 +1,20 @@
+trait Figure {
+  def x:Int
+  def y:Int
+}
+case class Circle(x:Int, y: Int, radius: Double) extends Figure
+
+case class Rectangle(x:Int, y: Int, width: Int, height: Int) extends Figure
+
+trait Movable[T] {
+  def move( x: Int, y: Int, movable: T ) : T
+}
+implicit final object CircleIsMovable  extends Movable[Circle] {
+  def move( x: Int, y: Int, c: Circle ) = Circle( c.x + x, c.y + y, c.radius )
+}
+implicit final object RectangleIsMovable  extends Movable[Rectangle] {
+  def move( x: Int, y: Int, r: Rectangle ) = Rectangle( r.x + x, r.y + y, r.width, r.height )
+}
+object Motor {
+  def move[T : Movable](x: Int, y: Int, movable: T) : T = implicitly[Movable[T]].move( x, y, movable )
+}

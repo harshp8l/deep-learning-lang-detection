@@ -1,0 +1,49 @@
+$tests = [
+    function ($numbers) {
+        $final   = 0;
+        foreach ($numbers as $number) {
+            $final = $final + ($number * 0.95);
+        }
+        return $final;
+    },
+    function ($numbers) {
+        $final   = 0;
+        foreach ($numbers as $number) {
+            $final = $final + $number;
+        }
+        return ($final = ($final * 0.95));
+    },
+    function ($numbers) {
+        return array_sum($numbers) * 0.95;
+    }
+];
+
+$numbers = [1, 1, 1];
+
+$loop = range(1, 1000000);
+$reps = range(1,10);
+
+$testRes = [];
+
+foreach($tests as $idx => $test) {
+
+    foreach($reps as $rep) {
+        $s = microtime(true);
+
+        foreach($loop as $l) {
+            $test($numbers);
+        }
+
+        $e = microtime(true);
+        if( !isset($testRes[$idx]) ) {
+            $testRes[$idx] = [];
+        }
+        $testRes[$idx][] = $e - $s;
+    }
+
+}
+
+foreach($testRes as $idx => $res) {
+    $avg = array_sum($res) / count($res);
+    print_r(""Test {$idx} took an average "" . (string) $avg . ' seconds.<br />');
+}

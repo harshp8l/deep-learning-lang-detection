@@ -1,0 +1,48 @@
+public class TaggedUnionBuilder<L,R>{
+    private final Class<L> leftClass;
+    private final Class<R> rightClass;
+
+    public TaggedUnionBuilder( Class< L > leftClass, Class< R > rightClass ) {
+        this.leftClass  = leftClass;
+        this.rightClass = rightClass;
+    }
+
+    public TaggedUnion<L,R> left( L aLeft ){
+        return new TaggedUnion<>( this, true, aLeft  );
+    }
+
+    public TaggedUnion<L,R> right( R aRight ){
+        return new TaggedUnion<>( this, false, aRight  );
+    }
+
+
+    public static class TaggedUnion<L,R>{
+        private final boolean isLeftClass;
+        private final Object value;
+        private final TaggedUnionBuilder<L,R> parent;
+
+
+        private TaggedUnion( TaggedUnionBuilder<L,R> aParent, boolean isLeftClass, Object aValue ) {
+            this.parent = aParent;
+            this.isLeftClass = isLeftClass;
+            this.value = aValue;
+        }
+
+        public L left(){
+            return parent.leftClass.cast( value );
+        }
+
+        public R right(){
+            return parent.rightClass.cast( value );
+        }
+
+        public boolean isLeft(){
+            return isLeftClass;
+        }
+
+        public boolean isRight(){
+            return !isLeftClass;
+        }
+    }
+
+}

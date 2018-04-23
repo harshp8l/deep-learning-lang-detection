@@ -1,0 +1,15 @@
+val dbAction = (for {
+  val personId = persons returning persons.map(_.id)) += Person(occupation)
+  props <- DBIO.seq(properties.values.map {
+    x =>
+    {
+      val name = x.key
+      val value = x.value
+
+     val insertTranslatedProperties = translatedProperties += TranslatedProperty(languageId, propertyId, name)
+     val insertPersonProperties = personProperties += PersonProperty(personId, propertyId, value)
+
+     insertTranslatedProperties andThen insertPersonProperties 
+    }
+  }: _*)
+} yield ()).transactionally

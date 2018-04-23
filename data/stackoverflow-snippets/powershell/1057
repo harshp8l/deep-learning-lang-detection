@@ -1,0 +1,21 @@
+$i = 0
+foreach ($rechtenhouder in $rechten) {
+    $objResults = New-Object PSObject -Property @{
+        DirectoryPath    = $objPath;
+        Identity         = $rechtenhouder.name;
+        Systemrights     = $accessRight.FileSystemRights;
+        systemrightstype = $accessRight.accesscontroltype;
+        isinherited      = $accessRight.isinherited;
+        inheritanceflags = $accessRight.inheritanceflags;
+        rulesprotected   = $objACL.areaccessrulesprotected;
+        Adtype           = ""User"";
+    }
+    $arrResults += $objResults
+    if ($i % 10 -eq 0) {
+        Start-Job -ScriptBlock {
+            param($T, $Path)
+            $T | Export-Csv -Path $Path
+        } -ArgumentList @($arrTest, ""Path/to/script"")
+    }
+    $i++
+}

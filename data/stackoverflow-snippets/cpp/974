@@ -1,0 +1,62 @@
+class Worker: public QObject {
+  Q_OBJECT;
+public:
+  Worker (QString path, int id);
+  ~Worker();
+public slots:
+  void readVideo(QString path = """");
+  void get_from_main(QString path);
+signals:
+  // frame and index of label which frame will be displayed
+  void frameFinished(cv::Mat frame, int index);
+  void finished(int index);
+private:
+  QString          filepath;
+  int              index;
+  QTimer           timer;
+  cv::VideoCapture cap;
+};
+
+Worker::Worker (QString path, int id)
+  : filepath(path)
+  , index(id)
+  , timer(this)
+  , cap(filepath.toStdString())
+{
+
+  /*
+   * Connect QTimer::timeout to the readVideo slot that will read a
+   * single frame on each signal at 30ms intervals.
+   */
+  connect(&timer, &QTimer::timeout, this, &Worker::readVideo);
+  timer.start(30);
+}
+
+Worker::~Worker ()
+{
+}
+
+void Worker::get_from_main (QString path)
+{
+  qDebug() << ""updating"";
+  filepath = path;
+  cap = cv::VideoCapture(filepath);
+  if (!cap.isOpened()) {
+    qDebug() << ""Can't open video file "" << filepath;
+    emit finished(index);
+  }
+}
+
+void Worker::readVideo ()
+{
+  cv::Mat frame;
+  cap >> frame;
+  if (frame.empty())
+  {
+    frame = cv::Mat(cv::Size(720, 576), CV_8UC3, cv::Scalar(192, 0, 0));
+    emit frameFinished(frame, index);
+    break;
+  }
+
+  emit frameFinished(frame.clone(), index);
+}

@@ -1,0 +1,26 @@
+(defn parse-str [input]
+  (letfn [(parse [input bracket result]
+            (if (seq input)
+              (let [[ch & rest] input]
+                (case ch
+                  \( (recur rest (inc bracket) (conj result ch))
+                  \) (recur rest (dec bracket) (conj result ch))
+                  (recur rest bracket (if (> bracket 0)
+                                        (conj result ch)
+                                        result))))
+              result))]
+    (clojure.string/join (parse input 0 []))))
+
+
+(defn parse-str [input]
+  (clojure.string/join
+   (second (reduce (fn [acc ch]
+                     (let [[bracket result] acc]
+                       (case ch
+                         \( [(inc bracket) (conj result ch)]
+                         \) [(dec bracket) (conj result ch)]
+                         [bracket (if (> bracket 0)
+                                    (conj result ch)
+                                    result)])))
+                   [0 []]
+                   input))))

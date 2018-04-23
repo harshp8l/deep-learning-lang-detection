@@ -1,0 +1,21 @@
+type Sigmoid() = class end with
+    static member Sigmoid (_:Sigmoid, z:float  ) = 1.0  / (1.0  + exp(-z))
+    static member Sigmoid (_:Sigmoid, z:float32) = 1.0f / (1.0f + exp(-z))
+
+let inline _sigmoid (s:'Sigmoid) (x:'T) :'T =
+    ((^T or ^Sigmoid) : (static member Sigmoid : 'Sigmoid * 'T -> 'T) (s, x))
+
+let inline sigmoid x = _sigmoid (Sigmoid()) x 
+
+type Sigmoid  with
+    static member inline Sigmoid (_:Sigmoid, z:Matrix<'T>) = z.Map (fun x -> sigmoid x)
+    static member inline Sigmoid (_:Sigmoid, z:Vector<'T>) = z.Map (fun x -> sigmoid x)
+
+// Usage
+let x = sigmoid 4.3
+let y = sigmoid (matrix [[ 1.0; 2.0 ];[ 3.0; 4.0 ]])
+let z = sigmoid (vector [ 1.0; 2.0 ])
+
+let x' = sigmoid 4.3f
+let y' = sigmoid (matrix [[1.0f; 2.0f];[ 3.0f; 4.0f]])
+let z' = sigmoid (vector [ 1.0f; 2.0f])

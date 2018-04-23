@@ -1,0 +1,19 @@
+(def ^:dynamic *app-context* nil)
+
+(defn wrap-context [handler]
+ (fn [request]
+  (when-let [context (:context request)]
+    (logging/debug (str ""Request with context "" context)))
+  (when-let [pathdebug (:path-debug request)]
+    (logging/debug (str ""Request with path-debug "" pathdebug)))
+  (when-let [servlet-context (:servlet-context request)]
+    (logging/debug (str ""Request with servlet-context "" servlet-context)))
+  (when-let [servlet-context-path (:servlet-context-path request)]
+    (logging/debug (str ""Request with servlet-context-path "" servlet-context-path)))
+  (binding [*app-context* (str (:context request) ""/"")]
+     (logging/debug (str ""Using appcontext "" *app-context*))
+     (-> request
+         handler))))
+
+(defn url-in-context [url]
+    (str *app-context* url))

@@ -1,0 +1,52 @@
+#!/bin/bash
+# Bash shell script to calculate student average
+# Usage: ./grade1.sh
+
+ltrgrades=(  A  B  C  D  F )
+numgrades=( 90 80 70 60 50 )
+prefixes=(  An  A  A  A An )
+comments=(  ""superior""
+            ""above average""
+            ""average""
+            ""below average""
+            ""failing"" )
+
+results() {
+    echo
+    echo ""Grade results . . .""
+    echo ""Student name  : $firstname $lastname""
+    echo ""Total points  : $sum""
+    echo ""Course average: $average""
+    echo
+    echo ""Course grade  : ${ltrgrades[$1]}""
+    echo
+    echo ""${prefixes[$1]} '${ltrgrades[$1]}' represents ${comments[$1]} course work.""
+}
+
+## use a heredoc for multi-line text
+cat << EOF
+""==================""
+""Grade Calculator  ""
+""==================""
+EOF
+
+read -p ""Enter first name  : "" firstname
+read -p ""Enter last name   : "" lastname
+echo
+read -p ""Enter test score 1: "" test1
+read -p ""Enter test score 2: "" test2
+read -p ""Enter test score 3: "" test3
+read -p ""Enter test score 4: "" test4
+read -p ""Enter lab score   : "" lab
+
+sum=$((test1 + test2 + test3 + test4 + lab))
+average=$(echo ""scale=2; $sum / 5"" | bc)
+
+case ""${average%.*}"" in
+    1??     )   results 0;;
+    9[0-9]  )   results 0;;
+    8[0-9]  )   results 1;;
+    7[0-9]  )   results 2;;
+    6[0-9]  )   results 3;;
+    *       )   results 4;;
+esac

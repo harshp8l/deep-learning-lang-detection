@@ -1,0 +1,38 @@
+class Hardware_Controller(object):
+    def LED_property(color_name):
+        """""" Create and return a property for the given color_name. """"""
+        address_name = color_name + '_LED_address'
+        storage_name = '_' + color_name + '_LED_status'
+
+        @property
+        def prop(self):
+            return getattr(self, storage_name)
+
+        @prop.setter
+        def prop(self, value):
+            address = getattr(self, address_name)
+            self.TalkToHardware(address, value)
+            setattr(self, storage_name, value)
+
+        return prop
+
+    red_LED = LED_property('red')
+    blue_LED = LED_property('blue')
+    green_LED = LED_property('green')
+
+    def __init__(self):
+        self.red_LED_address = 0
+        self.blue_LED_address = 1
+        self.green_LED_address = 2
+
+    def TalkToHardware(self, address, value):
+        print('Sending %i to address %i' % (value, address))
+
+    del LED_property  # Function isn't needed outside class definition.
+
+
+if __name__ == ""__main__"":
+    a = Hardware_Controller()
+    a.red_LED = 1     # -> Sending 1 to address 0
+    a.green_LED = 0   # -> Sending 0 to address 2
+    print(a.red_LED)  # -> 1

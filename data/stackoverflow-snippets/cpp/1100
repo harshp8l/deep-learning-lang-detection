@@ -1,0 +1,63 @@
+#include <exception>
+#include <stdexcept>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+
+void bar(std::string& s, int i)
+try
+{
+    s.at(i) = 'A';
+}
+catch(...)
+{
+    std::ostringstream ss;
+    ss << ""error in bar("" << std::quoted(s) << "", "" << i << "")"";
+    std::throw_with_nested(std::runtime_error(ss.str()));
+}
+
+void foo(std::string& s)
+try
+{
+    bar(s, 6);
+}
+catch(...)
+{
+    std::ostringstream ss;
+    ss << ""error in foo("" << std::quoted(s) << "")"";
+    std::throw_with_nested(std::runtime_error(ss.str()));
+}
+
+void stuff()
+try
+{
+    std::string s;
+    foo(s);
+}
+catch(...)
+{
+    std::throw_with_nested(std::runtime_error(""error in stuff()""));
+}
+
+void print_exception(std::ostream& os, const std::exception& e, int level =  0)
+{
+    os << std::string(level, ' ') << ""exception: "" << e.what() << '\n';
+    try {
+        std::rethrow_if_nested(e);
+    } catch(const std::exception& e) {
+        print_exception(os, e, level+1);
+    } catch(...) {}
+}
+
+int main()
+{
+    try{
+        stuff();
+    }
+    catch(std::exception& e)
+    {
+        print_exception(std::cerr, e);
+        return 127;
+    }
+    return 0;
+}

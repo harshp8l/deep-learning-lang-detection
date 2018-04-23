@@ -1,0 +1,33 @@
+public unsafe Bitmap ApplyDecreaseColourDepth(int offset, Bitmap bitmapImage)
+{
+  BitmapData data = bitmapImage.LockBits(
+    new Rectangle(0, 0, bitmapImage.Width, bitmapImage.Height),
+    ImageLockMode.ReadWrite,
+    PixelFormat.Format24bppRgb);
+  const int bytesPerPixel = 3;
+
+  Byte* scan0 = (Byte*)data.Scan0.ToPointer();
+  Int32 stride = data.Stride;
+
+  for (int y = 0; y < bitmapImage.Height; y++)
+  {
+    Byte* row = scan0 + (y * stride);
+    for (int x = 0; x < bitmapImage.Width; x++)
+    {
+      Int32 bIndex = x * bytesPerPixel;
+      Int32 gIndex = bIndex + 1;
+      Int32 rIndex = bIndex + 2;
+
+      Byte pixelR = row[rIndex];
+      Byte pixelG = row[gIndex];
+      Byte pixelB = row[bIndex];
+
+      row[rIndex] = (Byte)Math.Max(0, (pixelR + offset / 2) / offset * offset - 1);
+      row[gIndex] = (Byte)Math.Max(0, (pixelG + offset / 2) / offset * offset - 1);
+      row[bIndex] = (Byte)Math.Max(0, (pixelB + offset / 2) / offset * offset - 1);
+    }
+  }
+
+  bitmapImage.UnlockBits(data);
+  return bitmapImage;
+}

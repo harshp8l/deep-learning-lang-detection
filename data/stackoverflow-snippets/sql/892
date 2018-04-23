@@ -1,0 +1,37 @@
+SELECT
+    storageType,
+    storagePath,
+    MaxMB = MAX(usedMB),
+    MinMB = MIN(usedMB),
+    AvgMB = AVG(usedMB)
+FROM
+(
+    select 'ServerDrive' as storageType, 
+    cast(assetname as varchar)+ '\ ' +cast(caption as varchar) as storagePath,
+    ((rqDiskdrivesHist.[size]-rqDiskdrivesHist.[freespace])/1024/1024) as usedMB,
+    (rqDiskdrivesHist.[size]/1024/1024) as sizeMB 
+    from 
+        lansweeperdb.dbo.tblAssets 
+        inner join rqDiskdrivesHist on lansweeperdb.dbo.tblAssets.AssetID=rqDiskdrivesHist.AssetID 
+    where 
+        drivetype=3
+        and lansweeperdb.dbo.tblAssets.AssetName in
+        (
+            select distinct entitypath 
+            from rqcentities
+            inner join rqcustomer on rqcentities.customerID=rqcustomer.customerID 
+            where customername like '%ak 26%' and entityType='computer'
+            and not (
+                        (AssetName like 'WFP3675' and caption like 'D:')
+                        or
+                        (AssetName like 'WFP3675' and caption like 'E:')
+                        or
+                        (AssetName like 'WFP3675' and caption like 'F:')
+                        or
+                        (AssetName like '%00500%')
+                    )  
+        )
+) AS X
+GROUP BY
+    storagePath,
+    storageType

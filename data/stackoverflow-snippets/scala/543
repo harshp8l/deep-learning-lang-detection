@@ -1,0 +1,28 @@
+val json = Json.parse(""""""{
+ |   ""root"": {
+ |     ""qr"": {
+ |       ""content"": ""V1""
+ |     },
+ |     ""datag"": {
+ |       ""content"": {
+ | 
+ |         ""business"": {
+ |           ""content"": [
+ |             {
+ |               ""content"": ""car""
+ |             },
+ |             {
+ |               ""content"": ""bike""
+ |             }
+ |           ]
+ |         }
+ | 
+ |       }
+ |     }
+ |   }
+ | }"""""")
+
+val contents = (json \ ""root"" \ ""datag"" \ ""content"" \ ""business"" \ ""content"" ).as[List[Map[String, String]]].flatMap(_.values)
+//this can throw an error if the data under 'content' is not a List
+val contentsNew = (json \ ""root"" \ ""datag"" \ ""content"" \ ""business"" \ ""content"" ).asOpt[List[Map[String, String]]].map(_.flatMap(_.values)).fold(List.empty[String])(identity)
+//this one is safe option 

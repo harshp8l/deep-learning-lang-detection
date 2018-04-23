@@ -1,0 +1,27 @@
+func test(ch chan<- int, data []byte) {
+    defer func() {
+        recover()
+    }()
+    defer close(ch)
+
+    // do your logic as normal ...
+    // send back your res as normal `ch <- res`
+}
+
+// Then in the caller goroutine
+
+ch := make(chan int)
+data := []byte{1, 2, 3}
+go test(ch, data)
+
+for res := range ch {
+    // When you want to terminate the test goroutine:
+    //     deliberately close the channel
+    //
+    // `go -race` will report potential race condition, but it is fine
+    //
+    // then test goroutine will be panic due to try sending on the closed channel,
+    //     then recover, then quit, perfect :) 
+    close(ch)
+    break
+}

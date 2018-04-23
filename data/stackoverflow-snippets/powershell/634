@@ -1,0 +1,11 @@
+var path = ""GC://{YourGlobalCatalogFQDN}"";
+var root = new DirectoryEntry(path, username, password);
+var filter = ""(objectClass=person)(isDeleted=TRUE)(msExchMailboxGuid=*)(cn=*)"";          //tombstone mailboxes don't have 'objectCategory' property
+var props = ""objectClass sAMAccountName objectGUID msExchMailboxGuid cn whenChanged isDeleted"".Split(' ');   //tombstone mailboxes don't have 'mail' property
+var ds = new DirectorySearcher(root, filter, props, SearchScope.Subtree);
+ds.Tombstone = true;
+using (var mailboxes = ds.FindAll())
+{
+    foreach (SearchResult mailbox in mailboxes)
+    { ... }
+}

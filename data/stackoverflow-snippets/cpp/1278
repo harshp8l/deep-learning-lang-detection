@@ -1,0 +1,37 @@
+#include <map>
+#include <memory>
+
+struct A
+ { A (int, float) {} };
+
+struct B: public A
+ { B (int i, float f) : A{i, f} {} };
+
+using Key = int;
+
+template <typename T>
+class addToClass
+ {
+   private:
+      std::map<Key, std::shared_ptr<T>> collection;
+
+   public:
+      template <typename ... Args>
+      void addTo (Key const & key, Args && ... args)
+       { collection.emplace(key,
+            std::make_shared<T>(std::forward<Args>(args)...)); }
+
+      template <typename U>
+      void addTo (Key const & key, U * p)
+       { collection.emplace(std::piecewise_construct,
+                            std::forward_as_tuple(key),
+                            std::forward_as_tuple(p)); }
+ };
+
+int main ()
+ {
+   addToClass<A> instance;
+
+   instance.addTo(1, 12,2.2);
+   instance.addTo(2, new B(12,3.5));
+ }

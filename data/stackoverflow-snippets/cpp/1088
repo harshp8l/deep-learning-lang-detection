@@ -1,0 +1,31 @@
+#include <string>
+#include <iostream>
+#include <boost/variant.hpp>
+
+std::wstring stringToWString(const std::string& v){
+    // Only works for single-byte strings. Do it better!
+    std::wstring result(v.begin(), v.end());
+    return result;
+}
+
+struct visitor: boost::static_visitor<void>{
+    template<typename T>
+    void operator()(const T& v) const { std::wcout << v; }
+    void operator()(const std::string& v) const { std::wcout << stringToWString(v); }
+};
+
+int main (int argc, char** argv)
+{
+  boost::variant<int, std::wstring, std::string> v;
+  v = 3;
+  boost::apply_visitor(visitor(), v);
+  std::wcout << std::endl;
+  std::wstring T(L""wide char literal"");
+  v = T;
+  boost::apply_visitor(visitor(), v);
+  std::wcout << std::endl;
+  v = std::string(""Narrow string"");
+  boost::apply_visitor(visitor(), v);
+  std::wcout << std::endl;
+  return 0;
+}

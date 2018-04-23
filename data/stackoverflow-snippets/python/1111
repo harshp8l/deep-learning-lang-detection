@@ -1,0 +1,44 @@
+from bokeh.io import output_notebook, show
+from bokeh.plotting import figure
+from bokeh.palettes import Dark2_5 as palette
+from bokeh.layouts import widgetbox, row, column
+from bokeh.models.widgets import CheckboxButtonGroup
+import itertools
+import numpy as np
+
+output_notebook()
+
+# create a new plot (with a title) using figure
+p = figure(plot_width=800, plot_height=400, title=""My Line Plot"")
+
+start = 10.0
+x = range(20)
+colors = itertools.cycle(palette) 
+nseries = 50
+
+series = []
+
+# add a line renderer
+for n in range(nseries):
+    y = np.cumsum(np.random.randn(1,20))
+    series.append(p.line(x, y, line_width=1, legend=str(n), color=next(colors)))
+
+p.legend.location = ""top_left""
+p.legend.click_policy=""hide""
+
+js = """"
+for n in range(nseries):
+    js_ = """"""
+        if (checkbox.active.indexOf({n}) >-1) {{
+            l{n}.visible = true
+        }} else {{
+            l{n}.visible = false
+        }} """"""
+    js += js_.format(n=n)
+
+callback = CustomJS(code=js, args={})
+checkbox_button_group = CheckboxButtonGroup(labels=[str(n) for n in range(nseries)], active=[0,1,2,3], callback=callback)
+callback.args = dict([('l{}'.format(n), series[n]) for n in range(nseries)])
+callback.args['checkbox'] = checkbox_button_group
+
+show(column([p, checkbox_button_group])) # show the results

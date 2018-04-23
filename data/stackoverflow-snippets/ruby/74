@@ -1,0 +1,59 @@
+class ProcessWebpackConfigurations
+  INSERT_WEBPACK_INTERACTIVE_CONFIGURATIONS = ''
+  INSERT_WEBPACK_CONFIGURATION_MERGES = ''
+  GLOBAL_WEBPACK_CONFIG_JS = File.read('webpack/global.webpack.config.js')
+
+  attr_reader :insert_webpack_interactive_configurations,
+              :insert_webpack_configuration_merges,
+              :global_webpack_config_js
+
+  def initialize
+    self.global_webpack_config_js = GLOBAL_WEBPACK_CONFIG_JS
+    self.insert_webpack_interactive_configurations = INSERT_WEBPACK_INTERACTIVE_CONFIGURATIONS
+    self.insert_webpack_configuration_merges = INSERT_WEBPACK_CONFIGURATION_MERGES
+  end
+
+  def run
+    Dir.glob('webpack/configurations/*.js') do |file|
+      process_configuration(file)
+      process_configuration_merge(file)
+    end
+
+    process_substitution(insert_webpack_interactive_configurations, '{{insert-webpack-interactive-configurations}}')
+    process_substitution(trim_excess(insert_webpack_configuration_merges), '{{insert-webpack-configuration-merges}}')
+
+    File.open('webpack.config.js', 'w') { |file| file.write(global_webpack_config_js) }
+  end
+
+  private
+
+  attr_writer :insert_webpack_interactive_configurations,
+              :insert_webpack_configuration_merges,
+              :global_webpack_config_js
+
+  def format_constant_name(str)
+    str = str.split('-').map{|e| e.capitalize}.join
+    str[0].downcase + str[1..-1]
+  end
+
+  def process_configuration(file)
+    self.insert_webpack_interactive_configurations = self.insert_webpack_interactive_configurations +
+                                                    ""\n"" +
+                                                    File.read(file)
+  end
+
+  def process_configuration_merge(file)
+    self.insert_webpack_configuration_merges = self.insert_webpack_configuration_merges +
+                                              'merge.smart(globalConfig, ' +
+                                              format_constant_name(File.basename(file, '.*')) + ""),""
+  end
+
+  def process_substitution(str_to_use, str_to_replace)
+    self.global_webpack_config_js[str_to_replace] = str_to_use
+  end
+
+  def trim_excess(str)
+    str.slice!(str.length-1,str.length)
+    str
+  end
+end

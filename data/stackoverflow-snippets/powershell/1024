@@ -1,0 +1,24 @@
+function Get-IP-Hostname {
+[CmdletBinding()]
+param(
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [String[]]
+    $IPAddress
+)
+
+    foreach ($element in $IPAddress) {
+        $ip = $element -as [Net.IPAddress]
+        if ($ip) {
+            $ip |
+                Add-Member -NotePropertyName HostName -NotePropertyValue ([Net.Dns]::GetHostByAddress($ip.IPAddressToString).HostName) -PassThru
+        } else {
+            # handle invalid IP (or don't)
+        }
+    }
+}
+
+$results = Get-IP-Hostname 8.8.4.4 8.8.8.8
+
+$results | fl * # all properties
+
+$results | ft IPAddressToString,HostName # demonstrating what you want

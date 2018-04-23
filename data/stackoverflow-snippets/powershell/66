@@ -1,0 +1,23 @@
+$url = ""ftp://ftp.example.com/remote/path/file.txt""
+
+$request = [Net.WebRequest]::Create($url)
+$request.Credentials = New-Object System.Net.NetworkCredential(""username"", ""password"");
+$request.Method = [System.Net.WebRequestMethods+FTP]::GetFileSize
+
+try
+{
+    $request.GetResponse() | Out-Null
+    Write-Host ""Exists""
+}
+catch
+{
+    $response = $_.Exception.InnerException.Response;
+    if ($response.StatusCode -eq [System.Net.FtpStatusCode]::ActionNotTakenFileUnavailable)
+    {
+        Write-Host ""Does not exist""
+    }
+    else
+    {
+        Write-Host (""Error: "" + $_.Exception.Message)
+    }
+}

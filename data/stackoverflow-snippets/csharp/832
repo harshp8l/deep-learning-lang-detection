@@ -1,0 +1,29 @@
+var rpt = MytableEntity1
+        .Where(c => c.FieldID.Equals(MY_ID)             //Id Field
+            && years.Contains(c.PeriodYear)             //PeriodYear/Year
+            && quarters.Contains(c.Period)              //Period/Quarters
+            && c.MyType.Equals(myType)                  //Special Type
+            && areas.Contains(c.Area)                   //Area                   
+            && ownerships.Contains(c.Ownership))        //Ownership
+        .Where(c => fieldCodes.Contains(c.FieldCode))   //Field Code
+        .Where(c => c.Suppress.Equals(""0""))             //Suppression is false
+        .GroupJoin(MytableEntity2, c => new { c.FieldID, c.MyType, c.Area }, g => new { g.FieldID, g.MyType, g.Area }, (c, gj) => new { c, g = gj.Select(g => g.AreaName.TrimEnd()).FirstOrDefault() })
+        .GroupJoin(MytableEntity3, cg => cg.c.Ownership, o => o.Ownership, (cg, oj) => new { cg.c, cg.g, o = oj.Select(o => o.OwnerTitle.TrimEnd()).FirstOrDefault() })
+        .GroupJoin(MytableEntity4, cgo => cgo.c.FieldCode, i => i.FieldCode, (cgo, ij) => new { cgo.c, cgo.g, cgo.o, i = ij.FirstOrDefault() })
+        .Select(cgoi => new MyReportItem {
+            Field1 = cgoi.c.FieldA,
+            Field2 = cgoi.c.FieldB,
+            Field3 = cgoi.c.FieldC.TrimEnd(),
+            Field4 = cgoi.g,
+            Field5 = cgoi.o,
+            Field6 = cgoi.i.FieldTitle,
+            Field7 = cgoi.i.FieldLevel,
+            Field8 = cgoi.c.FieldD,
+            Field9 = cgoi.c.FieldE,
+            Field10 = cgoi.c.FieldF,
+            Field11 = cgoi.c.FieldG,
+            Field12 = cgoi.c.FieldH,
+            Field13 = cgoi.c.FieldI,
+            Field14 = cgoi.c.FieldJ,
+            Field15 = cgoi.c.FieldK
+        }).Distinct().ToList();

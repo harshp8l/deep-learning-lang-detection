@@ -1,0 +1,61 @@
+package main
+
+import (
+    ""fmt""
+    ""github.com/gizak/termui""
+    ""strconv""
+    ""time""
+)
+
+func getData(ch chan string, stop chan struct{}) {
+    i := 0
+    for {
+        select {
+        case <-stop:
+            break
+        case ch <- strconv.Itoa(i):
+        }
+        i++
+        time.Sleep(time.Second)
+        if i == 20 {
+            break
+        }
+    }
+}
+
+func Display(ch chan string, stop chan struct{}) {
+
+    for {
+        var elem string
+        select {
+        case <-stop:
+            break
+        case elem = <-ch:
+        }
+        par := termui.NewPar(elem)
+        par.Height = 5
+        par.Width = 37
+        par.Y = 4
+        par.BorderLabel = ""term ui example with chan""
+        par.BorderFg = termui.ColorYellow
+        termui.Render(par)
+    }
+}
+
+func main() {
+    ch := make(chan string)
+    stop := make(chan struct{})
+    err := termui.Init()
+    if err != nil {
+        panic(err)
+    }
+    defer termui.Close()
+    termui.Handle(""/sys/kbd/q"", func(termui.Event) {
+        fmt.Println(""q captured"")
+        close(stop)
+        termui.StopLoop()
+    })
+    go getData(ch, stop)
+    go Display(ch, stop)
+    termui.Loop()
+}

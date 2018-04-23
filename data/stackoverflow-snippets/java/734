@@ -1,0 +1,18 @@
+default void checkTableHasData(Duration atMost, String tableName) throws Exception {
+    checkExistsQuery(""SELECT COUNT(*) FROM "" + tableName),
+}
+
+default void checkTableRowExistSearchOnColumn(Duration atMost, String tableName, String columnName,
+                                              String columnValue) throws Exception {
+    checkExistsQuery(""SELECT COUNT(*) FROM "" + tableName + "" where "" + columnName +
+                               "" = "" + columnValue),
+}
+
+private static void checkExistsQuery(Duration atMost, String query) {
+    try (MysqlQuery mysqlQuery = new MysqlQuery(customersMysqlUrl(host), dbName, user, password)) {
+
+        await().atMost(atMost).pollDelay(Duration.ONE_SECOND).ignoreExceptions().until(
+        () -> mysqlQuery.count(query),
+        is(Matchers.greaterThan(0)));
+    }
+}

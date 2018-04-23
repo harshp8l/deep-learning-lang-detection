@@ -1,0 +1,72 @@
+open System.Collections.Generic
+
+let total = 10000000
+let outer = 10
+let inner = total / outer
+
+let stopWatch = 
+  let sw = System.Diagnostics.Stopwatch ()
+  sw.Start ()
+  sw
+
+let timeIt (name : string) (a : unit -> 'T) : unit = // ' 
+  let t = stopWatch.ElapsedMilliseconds
+  let v = a ()
+  for i = 1 to (outer - 1) do
+    a () |> ignore
+  let d = stopWatch.ElapsedMilliseconds - t
+  printfn ""%s, elapsed %d ms, result %A"" name d v
+
+let case1 () = 
+  // Slow because it fallbacks into slow but safe code pattern
+  let mutable x = 0
+  for i in seq{1..inner} do
+    x <- x+1
+  x
+
+let case2 () = 
+  // Fast because the optimization in TypeChecker.fs matches
+  let mutable x = 0
+  for i in 1..inner do
+    x <- x+1
+  x
+
+let case3 () = 
+  // Slow because the optimization in TypeChecker.fs requires int32
+  let mutable x = 0
+  for i in 1L..int64 inner do
+    x <- x+1
+  x
+
+let case4 () = 
+  // Slow because the optimization in TypeChecker.fs doesn't recognize b..inc..e patterns
+  let mutable x = 0
+  for i in 1..2..inner do
+    x <- x+1
+  x
+
+let case5 () = 
+  // Fast because Optimizer.fs recognizes this pattern
+  let mutable x = 0
+  for i in 1..1..inner do
+    x <- x+1
+  x
+
+let case6 () = 
+  // Fast because Optimizer.fs recognizes this pattern
+  let mutable x = 0
+  for i in inner..(-1)..1 do
+    x <- x+1
+  x
+
+
+[<EntryPoint>]
+let main argv =
+  timeIt ""case1"" case1
+  timeIt ""case2"" case2
+  timeIt ""case3"" case3
+  timeIt ""case4"" case4
+  timeIt ""case5"" case5
+  timeIt ""case6"" case6
+
+  0

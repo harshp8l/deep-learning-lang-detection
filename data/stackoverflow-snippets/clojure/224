@@ -1,0 +1,36 @@
+(ns my-ns.utils
+  (:require [clojure.spec.alpha :as s]))
+
+(defn- unresolvable-spec
+  [spec]
+  (try
+    (do (s/describe spec) nil)
+    (catch Exception e
+      (if-let [[_ ns* name*] (re-matches #""Unable to resolve spec: :([^/]+)/(.+)$"" (.getMessage e))]
+        (keyword ns* name*)
+        (throw e)))))
+
+(defn unresolvable?
+  ""Test if a spec is unresolvable, and if so return a sequence
+   of the unresolvable specs it refers to.""
+  [spec]
+  (cond
+    (symbol? spec)
+      nil
+
+    (keyword? spec)
+      (if-let [unresolvable (unresolvable-spec spec)]
+        [unresolvable]
+        (not-empty (distinct (unresolvable? (s/describe spec)))))
+
+    (seq? spec)
+      (case (first spec)
+        or (->> spec (take-nth 2) rest (mapcat unresolvable?))
+        and (->> spec rest (mapcat unresolvable?))
+
+        ;; undecidable
+        nil)
+
+    :default (unresolvable-spec spec)))
+
+(def resolvable? (complement unresolvable?))

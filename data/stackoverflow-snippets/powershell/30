@@ -1,0 +1,45 @@
+#Run on Win 7 machine with PS 4.0 against A.D. running on a Win 2008 R2 domain controller
+
+cls
+
+$attributeList = New-Object System.Collections.ArrayList
+$attributeListItem = [ordered]@{} 
+
+Import-Module ActiveDirectory
+
+#Get an AD User and request objectClass
+$aDObj = Get-ADUser ""MyAccountName"" -Properties objectClass
+
+#get all class names 
+$nextClass = $aDObj.ObjectClass
+
+$allClasses = Do
+{
+    $currentClass = $nextClass
+    $nextClass = Get-ADObject -SearchBase ""$((Get-ADRootDSE).SchemaNamingContext)"" -Filter {lDAPDisplayName -eq $nextClass} -properties subClassOf | Select-Object -ExpandProperty subClassOf
+    $currentClass
+}
+While($currentClass -ne $nextClass)
+
+#Get all attributes
+$mandatoryAndOptionalAttributes = 'MayContain','MustContain','systemMayContain','systemMustContain'
+
+ForEach ($class in $allClasses)
+{
+
+    $classInfo = Get-ADObject -SearchBase ""$((Get-ADRootDSE).SchemaNamingContext)"" -Filter {lDAPDisplayName -eq $class} -properties $mandatoryAndOptionalAttributes 
+
+    ForEach ($mandatoryAndOptionalAttribute in $mandatoryAndOptionalAttributes)
+    {
+
+        foreach ($classAttribute in $classInfo.$mandatoryAndOptionalAttribute)
+        {
+            $attributeListItem.""Mandatory/Optional Attribute"" = $mandatoryAndOptionalAttribute
+            $attributeListItem.""Class"" = $classInfo.Name
+            $attributeListItem.""Class Attribute"" = $classAttribute
+            $attributeList.add((New-Object PSObject -Property $attributeListItem)) | out-null
+        }
+    }
+}
+
+$attributeList | out-gridview -title (""All Class Attributes: "" + $attributeList.count)

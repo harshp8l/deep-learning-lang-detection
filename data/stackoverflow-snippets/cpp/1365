@@ -1,0 +1,13 @@
+// https://stackoverflow.com/a/21653558/1329652
+template <typename F>
+static void postToThread(F && fun, QThread * thread = qApp->thread());
+
+void setupDialog(MainWindow *parent, const QString &text) {
+  postToThread([=]{ // the functor captures parent and text by value
+    auto dialog = new ConnectToSource(parent);
+    dialog->setText(text);
+    connect(dialog, &ConnectToSource::textChanged, parent, &MainWindow::useText);
+    dialog->show();
+    dialog->setAttribute(Qt::WA_DeleteOnClose); // don't leak the dialog
+  });
+}

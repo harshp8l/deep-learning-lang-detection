@@ -1,0 +1,30 @@
+class Parent
+{
+public:
+    using dataPtr = std::unique_ptr<void, void(*)(void*)>;
+    virtual dataPtr getData(size_t & size) = 0;
+};
+
+class A : public Parent
+{
+public:
+    dataPtr getData(size_t & size) override
+    {
+        size = sizeof(structA);
+        dataPtr a(new structA, [](void *data){ delete static_cast<structA*>(data); });
+        //fill er up
+        return std::move(a);
+    }
+};
+
+class B : public Parent
+{
+public:
+    dataPtr getData(size_t & size) override
+    {
+        size = sizeof(structB);
+        dataPtr b(new structB, [](void *data){ delete static_cast<structB*>(data); });
+        //fill er up
+        return std::move(b);
+    }
+};

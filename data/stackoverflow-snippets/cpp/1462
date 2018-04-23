@@ -1,0 +1,107 @@
+#include <iostream>
+#include <cstdio>
+#include <string.h>
+#include <algorithm>
+#include <set>
+
+// terms[] stores the value of all the terms. leftMosts[i] and rightMosts[i] store the leftmost and rightmost occurrences of the ith element in terms[]. 
+//solvedValues[] stands for dynamic programming and stores the pre calculated terms of the function solve()
+int numberOfTerms;
+int terms[5005];
+int leftMosts[5005];
+int rightMosts[5005];
+int solvedValues[5005];
+
+int comf(int left,int right)
+{ 
+    std::set<int> track;
+    int ret = 0;
+    for(int i = left; i <= right; i++)
+    {
+        if (!track.count(terms[i]))
+        {
+            ret = (ret^terms[i]);
+            track.insert(terms[i]);
+        }
+    }
+    return ret;
+}
+
+// below, solve stands for 'solve', it is terms recursive memoized function
+// returns max sequence from i to (numberOfTerms-1). to find max, call solve(0, -1) so i=0,lefmost=-1. leftmost keeps track of the position of last index of last chosen set.
+int solve(int i, int leftmost)
+{
+    if (i >= numberOfTerms)
+    {
+        return 0;
+    }
+
+    if (solvedValues[i] != -1)
+    {
+        return solvedValues[i];
+    }
+
+    if (leftMosts[i] <= leftmost)
+    {
+        return solve(i+1, leftmost);// we cant go choose leftMosts[i] to rightMosts[i] so we move on
+    }
+
+    // decide if it is better to choose current leftMosts[i] to rightMosts[i] or better to simply move on and skip this.
+    int a = comf(leftMosts[i], rightMosts[i]) + solve(rightMosts[i]+1, rightMosts[i]);
+    int b = solve(i+1, leftmost);
+    return solvedValues[i] = std::max(a, b);
+}
+
+void init()
+{
+    scanf(""%d"", &numberOfTerms);
+    for(int i = 0; i < numberOfTerms; i++)
+    {
+        scanf(""%d"", &terms[i]);
+    }
+    // init all as -1
+    memset(solvedValues, -1, sizeof(solvedValues));
+    memset(leftMosts, -1, sizeof(leftMosts));
+    memset(rightMosts, -1, sizeof(rightMosts));
+}
+
+int main()
+{
+    init();
+
+    // calc leftMosts[i] and rightMosts[i] for all 'i in terms
+    for (int i = 0; i < numberOfTerms; i++)
+    {
+        for (int leftIndex = 0; leftIndex < i; leftIndex++)
+        {
+            if (terms[leftIndex] == terms[i])
+            {
+                leftMosts[i] = leftIndex;
+                break;
+            }
+        }
+
+        for (int rightIndex = numberOfTerms-1; rightIndex > i; rightIndex--)
+        {
+            if (terms[rightIndex] == terms[i])
+            {
+                rightMosts[i] = rightIndex;
+                break;
+            }
+        }
+
+        if (leftMosts[i] == -1)
+        {
+            leftMosts[i] = i;// if there is no leftmost occ, then leftmost is current
+        }
+
+        if (rightMosts[i] == -1)
+        {
+            rightMosts[i] = i;// same as above for rightmost
+        }
+    }
+
+    printf(""%d numberOfTerms"", solve(0, -1));
+
+    return 0;
+}

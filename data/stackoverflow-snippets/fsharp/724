@@ -1,0 +1,132 @@
+open System
+open System.IO
+open System.Diagnostics
+
+open Unsafe
+
+let clock =
+  let sw = Stopwatch ()
+  sw.Start ()
+  sw
+
+let collectionCount () = 
+  GC.CollectionCount 0 + GC.CollectionCount 1 + GC.CollectionCount 2
+
+let createTimer (n : string) (a : unit -> 'T) (r : 'T -> 'TResult) : string*(int -> 'TResult*int64*int) =
+  n, fun outer ->
+    printfn ""Timing '%s'..."" n
+
+    let v = a () |> r
+
+    GC.Collect ()
+    GC.WaitForFullGCComplete () |> ignore
+
+    let pcc   = collectionCount ()
+    let t     = clock.ElapsedMilliseconds
+
+    for i in 1..outer do
+      a () |> ignore
+
+    let e     = clock.ElapsedMilliseconds - t
+    let dcc   = collectionCount () - pcc
+
+    printfn ""  took %d ms, collected %d times, result is %A"" e dcc v
+
+    v, e, dcc
+
+[<EntryPoint>]
+let main argv =
+  let random  = Random 19740531
+  let total   = 300000000
+
+  use output = new StreamWriter "".\output.tsv""
+  ""Name\tSum\tCollectionCounts\tMilliseconds"" |> output.WriteLine
+
+  let cols    = 5
+  let rows    = 10  
+  let inner   = cols*rows
+  let outer   = total / inner
+  let ar      = Array2D.init rows cols (fun _ _ -> random.NextDouble ())
+  let mtx5x10 = 
+    let mutable m = Matrix5x10 ()
+    ar |> Array2D.iteri (fun row col v -> (m.[col, row] <- v))
+    m
+
+  printfn ""New test run, matrix dimensions are %dx%d"" cols rows
+
+  let perf_zero () = 
+    let xl = ar.GetLength(0)
+    let yl = ar.GetLength(1)
+    let res = Array2D.zeroCreate xl yl
+    res
+
+  let perf_copy () = 
+    Array2D.copy ar
+
+  let perf_id () = 
+    ar |> Array2D.map id
+
+  let perf_op () = 
+    ar |> Array2D.mapi(fun rowi coli value -> (value + 1.6) * double(rowi + 6) * double(coli + 7))
+
+  let perf_tpm () =
+    let xl = ar.GetLength(0)
+    let yl = ar.GetLength(1)
+    let res = Array2D.zeroCreate xl yl
+    for x in 0 .. xl - 1 do
+      for y in 0 .. yl - 1 do
+        res.[x, y] <- (ar.[x, y] + 1.6) * double ((x + 6) * (y + 7))
+    res
+
+  let perf_fzero () =
+    let m = Matrix5x10()
+    m
+
+  let perf_fcopy () =
+    let m = mtx5x10
+    m
+
+  let perf_fs () =
+    let mutable m = Matrix5x10 ()
+
+    for row = 0 to Matrix5x10.Rows - 1 do
+      for col = 0 to Matrix5x10.Columns - 1 do
+        m.[col, row] <- (mtx5x10.[col, row] + 1.6) * double ((row + 6) * (col + 7))
+
+    m
+
+  let perf_fsui = Func<int, int, double, double> (fun col row v -> (v + 1.6) * double ((row + 6) * (col + 7)))
+
+  let perf_fsu () =
+    let mutable m = mtx5x10
+    m.Update perf_fsui
+    m
+
+  let sumArray vs =
+    let sum   = ref 0.
+    vs |> Array2D.iter (fun v -> sum := !sum + v)
+    !sum
+
+  let sumMatrix (mtx : Matrix5x10) =
+    let sum   = ref 0.
+    mtx.Update (fun _ _ v -> sum := !sum + v; v)
+    !sum
+
+  let testCases =
+    [|
+      createTimer ""Creating Zero Matrix""              perf_zero   sumArray
+      createTimer ""Copying Matrix""                    perf_copy   sumArray
+      createTimer ""Mapping Matrix with id""            perf_id     sumArray
+      createTimer ""Original Algorithm""                perf_op     sumArray
+      createTimer ""Tomas P Algorithm with Zero Init""  perf_tpm    sumArray
+      createTimer ""Creating Zero Fixed Size Matrix""   perf_fzero  sumMatrix
+      createTimer ""Copying Fixed Size Matrix""         perf_fcopy  sumMatrix
+      createTimer ""Fixed Size Algorithm""              perf_fs     sumMatrix
+      createTimer ""Fixed Size Updater""                perf_fsu    sumMatrix
+    |]
+
+  for name, a in testCases do
+    let sum, t, dcc = a outer
+    sprintf ""%s\t%f\t%d\t%d"" name sum dcc t |> output.WriteLine
+
+  0

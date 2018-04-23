@@ -1,0 +1,24 @@
+FROM golang:latest AS builder
+
+RUN go version
+
+COPY . ""/go/src/github.com/user/project""
+WORKDIR ""/go/src/github.com/user/project""
+
+RUN set -x && \
+  apt-get update && \
+  go get github.com/golang/dep/cmd/dep && \
+  which dep && \
+  date
+
+#RUN go get -v -t  .   # <- alternative way if you really don't want to use vendoring
+RUN set -x && \
+  dep ensure -v  && \
+  echo ""vendor:"" && \
+  dep status
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -o /run-file
+
+CMD [""/run-file""]
+
+EXPOSE 8000

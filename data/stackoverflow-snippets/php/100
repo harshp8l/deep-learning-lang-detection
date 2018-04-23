@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Pagination\LengthAwarePaginator as Paginator;
+// use Illuminate\Pagination\Paginator;
+use Illuminate\Http\Request;
+use App\Product;
+class MyController extends Controller
+{
+    public function index(Request $request){
+        $items = Product::all();
+
+        $filter_products = []; // Manual filter or your array for pagination
+
+        foreach($items as $item){
+            if($item['id']>40 && $item['id']<50){
+                array_push($filter_products, $item);
+            }
+        }
+
+        $count = count($filter_products); // total product for pagination
+        $page = $request->page; // current page for pagination
+
+        // manually slice array of product to display on page
+        $perPage = 5;
+        $offset = ($page-1) * $perPage;
+        $products = array_slice($filter_products, $offset, $perPage);
+
+        // your pagination 
+        $products = new Paginator($products, $count, $perPage, $page, ['path'  => $request->url(),'query' => $request->query(),]);
+        // use {{ $products->appends($_GET)->links() }} to dispaly your pagination
+        return view('index',['products' => $products]);
+    }
+}

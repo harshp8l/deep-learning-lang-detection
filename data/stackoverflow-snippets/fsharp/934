@@ -1,0 +1,30 @@
+type MatchType<'a> =
+| AllFields of 'a
+| FNameEmail of 'a
+| Email of 'a
+| NoMatch
+
+let findCustomerId fname lname email =
+    let allCustomers = Data.Customers ()
+    let (==) a b =          // Needs tweaking to pass the Turkey Test
+         System.String.Equals(a, b, System.StringComparison.CurrentCultureIgnoreCase)
+    let notAllFields = function AllFields _ -> false | _ -> true
+    let state = ref NoMatch
+
+    use en = allCustomers.GetEnumerator()
+    while notAllFields !state && en.MoveNext() do
+        let cus = en.Current
+        let fn = fname == cus.firstname
+        let ln = lname == cus.lastname
+        let em = email == cus.email
+        match !state with
+        | _                 when fn && ln && em -> state := AllFields cus
+        | Email _ | NoMatch when fn && em       -> state := FNameEmail cus
+        | NoMatch           when em             -> state := Email cus
+        | _                                     -> ()
+
+    match !state with
+    | AllFields cus
+    | FNameEmail cus
+    | Email cus -> cus.id
+    | NoMatch -> createGuest().id

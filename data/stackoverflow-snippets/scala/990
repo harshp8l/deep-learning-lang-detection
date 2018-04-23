@@ -1,0 +1,48 @@
+class KafkaPublisher extends Actor {
+
+  implicit val system = context.system
+  val log = Logging(system, this.getClass.getName)
+
+  override final def receive = {
+    case ProducerStreamActivated(_, stream) =>
+      log.info(s""Activated stream for Kafka Producer with ActorName >> ${self.path.name} << ActorPath >> ${self.path} <<"")
+      context.become(active(stream))
+
+    case other =>
+      log.warning(""KafkaPublisher got some unknown message while producing: "" + other)
+  }
+
+  def active(stream: SourceQueueWithComplete[KafkaMessage]): Receive = {
+    case msg: DefaultMessage =>
+      log.info(s""Got Message >> $msg << Pushing it to stream $stream"")
+      stream.offer(msg)
+
+    case msg: DefaultMessageBundle =>
+      log.info(s""Got Message >> $msg << Pushing it to stream $stream"")
+      stream.offer(msg)
+
+    case other =>
+      log.warning(""KafkaPublisher got the unknown message while producing: "" + other)
+  }
+}
+object KafkaPublisher {
+
+  def props = Props(new KafkaPublisher)
+}
+
+trait Event
+object Event {
+  case class ProducerStreamActivated(kafkaTopic: String, stream: SourceQueueWithComplete[KafkaMessage]) extends Event
+}
+
+trait KafkaMessage
+object KafkaMessage {
+
+  case class DefaultMessage(message: String, timestamp: DateTime) extends KafkaMessage {
+    def this() = this(""DEFAULT-EMPTY-MESSAGE"", DateTime.now(DateTimeZone.UTC))
+  }
+
+  case class DefaultMessageBundle(messages: Seq[DefaultMessage], timeStamp: DateTime) extends KafkaMessage {
+    def this() = this(Seq.empty, DateTime.now(DateTimeZone.UTC))
+  }
+}

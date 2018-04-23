@@ -1,0 +1,13 @@
+user> (defn meat-balance [rec]
+        (some :meat-balance (-> rec first second)))
+
+user> (let [parts (partition-by #(-> % meat-balance neg?) data)]
+        (keep #(let [p-start (-> % first ffirst)
+                     p-end (-> % last ffirst)
+                     balance (-> % first meat-balance)]
+                 (when (neg? balance)
+                   {:period-start p-start
+                    :period-end p-end
+                    :end-period-balance balance}))
+              parts))
+;;=> ({:period-start :2007-08-06, :period-end :2007-08-07, :end-period-balance -30})

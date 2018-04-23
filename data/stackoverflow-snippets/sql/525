@@ -1,0 +1,21 @@
+SELECT ThanaId, 
+   RoadId, 
+   SUM(TotalChain) AS TotalChain, 
+   MIN(FromChain) AS FromChain, 
+   MAX(ToChain) AS ToChain, 
+   SurfaceType
+FROM 
+(
+   SELECT ThanaId, RoadId, (ToChain-FromChain) as TotalChain, 
+          FromChain, ToChain, SurfaceType,
+          ROW_NUMBER() OVER (PARTITION BY ThanaId, RoadId 
+                             ORDER BY FromChain) -
+          ROW_NUMBER() OVER (PARTITION BY ThanaId, RoadId, SurfaceType 
+                             ORDER BY FromChain) AS grp
+   FROM Segment
+   WHERE ThanaId = (SELECT MIN(ThanaId) AS ThanaId FROM RdLineDiagTemp)
+         AND 
+         RoadId = (SELECT MIN(RoadId) AS RoadId FROM RdLineDiagTemp)
+) AS t
+GROUP BY ThanaId, RoadId, SurfaceType, grp
+ORDER BY FromChain

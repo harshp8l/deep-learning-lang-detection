@@ -1,0 +1,37 @@
+try {
+        connection.setRequestMethod(httpRequestMethod);
+    } catch (java.net.ProtocolException ex) {
+        Object o = message.getContextualProperty(HTTPURL_CONNECTION_METHOD_REFLECTION);
+        boolean b = DEFAULT_USE_REFLECTION;
+        if (o != null) {
+            b = MessageUtils.isTrue(o);
+        }
+        if (b) {
+            try {
+                java.lang.reflect.Field f = ReflectionUtil.getDeclaredField(HttpURLConnection.class, ""method"");
+                if (connection instanceof HttpsURLConnection) {
+                    try {
+                        java.lang.reflect.Field f2 = ReflectionUtil.getDeclaredField(connection.getClass(),
+                                                                                     ""delegate"");
+                        Object c = ReflectionUtil.setAccessible(f2).get(connection);
+                        if (c instanceof HttpURLConnection) {
+                            ReflectionUtil.setAccessible(f).set(c, httpRequestMethod);
+                        }
+
+                        f2 = ReflectionUtil.getDeclaredField(c.getClass(), ""httpsURLConnection"");
+                        HttpsURLConnection c2 = (HttpsURLConnection)ReflectionUtil.setAccessible(f2)
+                                .get(c);
+
+                        ReflectionUtil.setAccessible(f).set(c2, httpRequestMethod);
+                    } catch (Throwable t) {
+                        //ignore
+                        logStackTrace(t);
+                    }
+                }
+                ReflectionUtil.setAccessible(f).set(connection, httpRequestMethod);
+                message.put(HTTPURL_CONNECTION_METHOD_REFLECTION, true);
+            } catch (Throwable t) {
+                logStackTrace(t);
+                throw ex;
+            }
+        }

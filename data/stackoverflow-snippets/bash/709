@@ -1,0 +1,15 @@
+awk 'NR==1{ 
+         fn=substr(FILENAME,0,length(FILENAME)-5); 
+         print fn"" | taskId | startTime | endTime | elapsed | rowsAffected | Info | failure | anyFailure"" 
+     }
+     /Running taskId/{ gsub(/^.+=\[|\]$/, """"); taskId=$0 }
+     /startTime:/{ sub(/,.*/,"""",$2); startTime=$2 }
+     /INFO:/{ sub(/^INFO:DBExecute: /,""""); info=$0 }
+     / affected/{ gsub(/\[|\]/,"""",$3); affected=$3 }
+     /endTime/{ sub(/,.*/,"""",$2); endTime=$2 }
+     /elapsed/{ sub(/,.*/,"""",$2); elapsed=$2 }
+     /^failure/{ fail=$2 }
+     /anyFailure/{ 
+         printf ""%s | %s | %s | %s | %s | %d | %s | %s | %s\n"", 
+                 fn, taskId, startTime, endTime, elapsed, affected, info, fail, $2 
+     }' file1.text

@@ -1,0 +1,95 @@
+(def data-9
+  [{:num 0}
+   {:num 0}
+   {:num 0}
+   {:num 5}
+   {:num 5}
+   {:num 5}
+   {:num 10}
+   {:num 10}
+   {:num 10}] )
+
+(def data-11
+  (into (vec data-9)
+    [{:num 0}
+     {:num 10}] ))
+
+(defn interleave-by
+  [data group-size]
+  (let [data-num       (count data)
+        part-size      (quot data-num group-size)
+        leftover-num   (- data-num (* part-size group-size))
+        data-sorted    (sort-by :num data)
+        data-leftover  (take leftover-num data-sorted)
+        data-use       (drop leftover-num data-sorted)
+        data-parts     (partition-all part-size data-use)
+        data-reordered (apply mapcat vector data-parts)
+        data-final     (reduce into (vec data-leftover) data-reordered)
+        ]
+    data-final ))
+
+(newline)
+(println (interleave-by data-9 3))
+
+data-num => 
+9
+part-size => 
+3
+leftover-num => 
+0
+data-sorted => 
+({:num 0}
+ {:num 0}
+ {:num 0}
+ {:num 5}
+ {:num 5}
+ {:num 5}
+ {:num 10}
+ {:num 10}
+ {:num 10})
+data-leftover => 
+()
+data-use => 
+({:num 0}
+ {:num 0}
+ {:num 0}
+ {:num 5}
+ {:num 5}
+ {:num 5}
+ {:num 10}
+ {:num 10}
+ {:num 10})
+data-parts => 
+(({:num 0} {:num 0} {:num 0})
+ ({:num 5} {:num 5} {:num 5})
+ ({:num 10} {:num 10} {:num 10}))
+data-reordered => 
+({:num 0}
+ {:num 5}
+ {:num 10}
+ {:num 0}
+ {:num 5}
+ {:num 10}
+ {:num 0}
+ {:num 5}
+ {:num 10})
+data-final => 
+[[:num 0]
+ [:num 5]
+ [:num 10]
+ [:num 0]
+ [:num 5]
+ [:num 10]
+ [:num 0]
+ [:num 5]
+ [:num 10]]
+(interleave-by data-9 3) => 
+[[:num 0]
+ [:num 5]
+ [:num 10]
+ [:num 0]
+ [:num 5]
+ [:num 10]
+ [:num 0]
+ [:num 5]
+ [:num 10]]

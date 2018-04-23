@@ -1,0 +1,11 @@
+$clients = \App\AcceptedConnection::with('requester.link', 'requester.company')
+    ->where('accepter_id', Auth::user()->id)
+    ->where(function($query) use ($request) {
+        $query->whereHas('requester.link', function ($query) use ($request) {
+            $query->orWhere('name', $request->search);
+        })->orWhereHas('requester.company', function ($query) use ($request) {
+            $query->orWhere('email', $request->search);
+            $query->orWhere('firstname', $request->search);
+            $query->orWhere('lastname', $request->search);
+        });
+    })->get()

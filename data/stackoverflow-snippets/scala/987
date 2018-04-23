@@ -1,0 +1,19 @@
+  def build(config: StreamConfig): Flow[Item, OtherItem, UniqueKillSwitch] = {
+    Flow[Item]
+      .map(item => doConversion(item))
+      .filter(_.isDefined)
+      .map(_.get)
+      .viaMat(KillSwitches.single)(Keep.right)
+  }
+
+
+  val stream = 
+    Source.fromIterator(() => List(Item(Some(1))).toIterator)
+    .viaMat(build(StreamConfig(1)))(Keep.right)
+    .toMat(Sink.ignore)(Keep.both).run
+
+  // This stops the stream
+  stream._1.shutdown()
+
+  // When it finishes
+  stream._2 onComplete(_ => println(""Done""))

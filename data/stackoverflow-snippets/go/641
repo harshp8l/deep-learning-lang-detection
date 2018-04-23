@@ -1,0 +1,39 @@
+func main() {
+    filename := flag.String(""filename"", """", ""The file to parse"")
+    flag.Parse()
+
+    if *filename == """" {
+        log.Fatal(""Provide a file to parse"")
+    }
+
+    fmt.Println(""Getting file"")
+
+    names := make(chan string)
+    readerr := make(chan error)
+
+    go GetLine(*filename, names, readerr)
+
+    for name := range names {
+        fmt.Println(name)
+    }
+    if err := <-readerr; err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println(""Processing Complete"")
+}
+
+func GetLine(filename string, names chan string, readerr chan error) {
+    file, err := os.Open(filename)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer file.Close()
+
+    scanner := bufio.NewScanner(file)
+    for scanner.Scan() {
+        names <- scanner.Text()
+    }
+    close(names) // close causes range on channel to break out of loop
+    readerr <- scanner.Err()
+}

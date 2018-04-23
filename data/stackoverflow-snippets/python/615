@@ -1,0 +1,19 @@
+import tensorflow as tf
+num = tf.zeros( shape = ( 5, 3 ), dtype = tf.float32 )
+# Looping variable
+i = tf.zeros( shape=(), dtype=tf.int32)
+# Conditional
+c = lambda i, num: tf.less(i, 2)
+def body(i, num):
+    # Update values
+    updates = tf.ones([1, 3], dtype=tf.float32)
+    num_shape = num.get_shape()
+    num = tf.concat( [ num[ : i ], updates, num[ i + 1 : ] ], axis = 0 )
+    num.set_shape( num_shape )
+    return tf.add(i, tf.ones( shape=(), dtype = tf.int32 ) ), num
+i, num = tf.while_loop( c, body, [ i, num ] )
+# Session
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    num_out = sess.run( [ num ] )
+    print(num_out)

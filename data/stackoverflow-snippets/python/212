@@ -1,0 +1,23 @@
+# time is array([ 2,  2,  4,  7, 10, 11, 12, 17, 21, 25, 29, 30, 31, 40])
+
+# Using broadcasting you can get a 2d array of the difference of all items
+# from other items within your array
+In [115]: arr = time[:, None] - time
+# Then find indices where the difference is less and equal to -10
+In [116]: x, y = np.where(arr <= -10)
+# find the first occurrences of where for each item the difference is less and equal to -10 
+In [117]: first_acc = np.concatenate(([0], np.where(np.diff(x) != 0)[0]  + 1, [x.size]))
+
+# use a recursive generator function to retrieve all the expected indices.
+In [118]: def get_ind_rec(ind=0):
+     ...:     try:
+     ...:         ind = y[first_acc[ind]]
+     ...:         yield ind
+     ...:         yield from get_ind_rec(ind)
+     ...:     except: # IndexError
+     ...:         pass
+     ...:     
+     ...:     
+
+In [119]: list(get_ind_rec())
+Out[119]: [6, 9, 13]

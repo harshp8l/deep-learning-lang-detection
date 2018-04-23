@@ -1,0 +1,95 @@
+#include <isostream>
+#include <vector>
+#include <map>
+#include <random>
+
+template<class IntType = int>
+class discrete_selector {
+private:
+    std::mt19937 generator;
+    std::discrete_distribution<IntType> distribution;
+
+public:
+    template<class InputIt>
+    discrete_selector( InputIt wf, InputIt wl ) :
+        generator( std::seed_seq{} ),
+        distribution( wf, wl ) 
+    {}
+
+    // Constructor that takes an initializer list; you can not initialize
+    // std::seed_seq by constructor in initializer list then pass it to a 
+    // random generator or engine. seed_seq is non copy non moveable and     
+    // besides that; the engines will not be able to convert the parameter 
+    // type even if you tried. We have to create an instance of seed_seq in 
+    // the constructor's body and we can then pass to it the initializer 
+    // list from the constructor's parameter list. After we construct the
+    // seed_seq then we can use our engine's or generator's `seed` function
+    // and pass to it whatever type of seed we are using. In this case seed_seq
+    template<class InputIt, class Type>
+    discrete_selector( InputIt wf, InputIt wl, std::initializer_list<Type> list ) :
+        distribution( wf, wl ) 
+    {
+        std::seed_seq seq( list );
+        generator.seed( seq );
+    }
+
+    std::mt19937 getGenerator() {
+        return generator;
+    }
+
+    IntType getDistributionMin() {
+        return distribution.min();
+    }
+
+    IntType getDistributionMax() {
+        return distribution.max();
+    }
+
+    // Copy?
+    std::discrete_distribution<IntType> getDistribution()  {
+        return distribution;
+    }
+
+    // Ref?
+    void getDistribution( std::discrete_distribution<IntType>&& dd )  {
+        dd = distribution;
+    }
+
+    std::vector<double> getDistriubtionProbabilities() {
+        return distribution.probabilities();
+    }
+
+    int generate() {
+        return distribution( generator );
+    }
+
+    int generate( int& val ) {
+        val = distribution( generator );
+    }
+};
+
+// main program demo example    
+int main() {
+    std::initializer_list<unsigned> list{ 1,2,3,4,5 };
+    discrete_selector<> ds( 100, 10000, list );
+    int val = ds.generate();
+
+    std::vector<double> probs{ ds.getDistriubtionProbabilities() };
+    for( auto p : probs ) {
+        std::cout << p << "" "";
+    }
+    std::cout << std::endl << std::endl;
+
+    //std::discrete_distribution<> dd = ds.getDistribution();
+    //std::mt19937 gen = ds.getGenerator();
+    std::map<unsigned int, unsigned int> m;
+    for( int n = 0; n < 10000; ++n ) {
+        ++m[ds.generate()]; // use class built in function
+    }
+
+    for( auto p : m ) {
+        std::cout << p.first << "" generated "" << p.second << "" times\n"";
+    }
+
+    return 0; 
+}

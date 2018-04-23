@@ -1,0 +1,27 @@
+import requests, csv
+import itertools
+from bs4 import BeautifulSoup
+
+LINK = 'http://active.boeing.com/doingbiz/d14426/geoprocess.cfm?ProcessCode=000&pageID=m20487&Country=AllLocations&State='
+
+def get_item(url):
+    res = requests.get(url).text
+    soup = BeautifulSoup(res,""lxml"")
+    name = [item.find_next_sibling().text for item in soup.select(""strong"")]
+    spaces = len(name)*"" ""
+    table = soup.select('table[cellspacing=""1""]')[0]
+    for idx, items in enumerate(table.select(""tr"")[1:]):
+        data = [item.get_text(strip=True) for item in items.select(""td"")]
+        if idx == 0:
+            list_of_tuples = [name,data]
+
+        else:
+            list_of_tuples = [spaces,data]
+
+        item_name = list(itertools.chain(*list_of_tuples))
+        with open(""itemresults.csv"",""a"",newline="""") as infile:
+            writer = csv.writer(infile)
+            writer.writerow(item_name)  
+
+if __name__ == '__main__':
+    get_item(LINK)

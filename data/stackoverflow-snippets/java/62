@@ -1,0 +1,62 @@
+describe('Importer/Game', function() {
+    let Importer, Game;
+    beforeEach(function() {
+        Importer = require(`${moduleDir}/import`).Importer;
+        Game = require(`${moduleDir}/import`).Game;
+    });
+    describe('moveRegex', function() {
+        describe('non-castling', function() {
+            //  ([NBRQK])?  ([a-h])?   ([1-8])?   (x)?     ([a-h][1-8]) (=[NBRQK])? (+|#)?/
+            //  unitType?   startFile? startRank? capture? end          promotion?  checkState?
+            for(let unitType of ['', 'N', 'B', 'R', 'Q', 'K']) {
+                for(let startFile of ['', 'b']) {
+                    for(let startRank of ['', '3']) {
+                        for(let capture of ['', 'x']) {
+                            for(let promotion of ['', '=Q']) {
+                                for(let checkState of ['', '+', '#']) {
+                                    //TODO: castling
+                                    const dest = 'e4';
+                                    const san = unitType + startFile + startRank + capture + dest + promotion + checkState;
+                                    testPositive(san);
+                                    //TODO: negative substitutions here.
+                                    testNagative('Y'      + startFile + startRank + capture + dest + promotion + checkState);
+                                    testNagative(unitType + 'i'       + startRank + capture + dest + promotion + checkState);
+                                    testNagative(unitType + startFile + '9'       + capture + dest + promotion + checkState);
+                                    testNagative(unitType + startFile + startRank + 'X'     + dest + promotion + checkState);
+                                    testNagative(unitType + startFile + startRank + capture + 'i9' + promotion + checkState);
+                                    // testNagative(unitType + startFile + startRank + capture + ''   + promotion + checkState);
+                                    testNagative(unitType + startFile + startRank + capture + dest + '='       + checkState);
+                                    testNagative(unitType + startFile + startRank + capture + dest + 'Q'       + checkState);
+                                    testNagative(unitType + startFile + startRank + capture + dest + promotion + '++');
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        describe('castling', function() {
+            testPositive('O-O');
+            testPositive('O-O-O');
+            testNagative('OOO');
+            testNagative('OO');
+            testNagative('O-O-');
+            testNagative('O-O-O-O');
+            testNagative('O');
+        });
+        function testPositive(san) {
+            it(`should handle this san: ${san}`, function(done) {
+                const matches = san.match(Importer.moveRegex);
+                assert(matches);
+                done();
+            });
+        }
+        function testNagative(san) {
+            it(`should not match this: ${san}`, function(done) {
+                const matches = san.match(Importer.moveRegex);
+                assert(!matches);
+                done();
+            });
+        }
+    });
+});

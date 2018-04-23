@@ -1,0 +1,25 @@
+Remove-Variable data*, aux* -ErrorAction SilentlyContinue ### clear for debugging purposes
+$datacsv = @'
+arch,osversion,kb,link
+32,6.1,KB1,http://kb1
+32,6.1,KB5,http://kb5
+32,6.1,KB7,http://kb7
+32,6.2,KB2,http://kb2
+64,6.1,KB3,http://kb3
+64,6.2,KB4,http://kb4
+'@
+$datac = ConvertFrom-Csv $datacsv
+$datag = @{}
+$datac | ForEach-Object {
+    $auxLeaf   = @{ $_.kb = $_.link }
+    $auxParent = @{ $_.osversion = $auxLeaf }
+    if ( $datag.ContainsKey( $_.arch) ) {
+        if ( $datag[$_.arch].ContainsKey($_.osversion) ) {
+            $auxLeaf  += $datag[$_.arch][$_.osversion]
+            $auxParent = @{ $_.osversion = $auxLeaf }
+        } else {
+            $auxParent += $datag[ $_.arch]
+        }
+    }
+    $datag.Set_Item( $_.arch, $auxParent )
+}

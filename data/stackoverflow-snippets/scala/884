@@ -1,0 +1,19 @@
+import cats.{Monad, ~>}
+import cats.free.Free
+import cats.syntax.functor._
+
+import scala.language.higherKinds
+
+trait Algebra[_]
+
+case class Operation(str: String) extends Algebra[String]
+
+def eval[M[_]: Monad](param: String)(implicit op: Algebra ~> M): M[String] = {
+  val program: Free[Algebra, String] = Free.liftF (Operation (param) )
+  Free.foldMap(op).apply(program)
+}
+
+def process[M[_]: Monad](param: String)(implicit op: Algebra ~> M): M[String] = {
+  val result = eval(param)
+  result.map(_.toUpperCase)
+}

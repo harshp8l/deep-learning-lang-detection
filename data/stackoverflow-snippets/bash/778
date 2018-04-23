@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+getMatchingFiles() {
+
+   local -n output=$1
+   local dir=$2
+   shift 2
+   local types=(""$@"")
+   local ext file
+   local -a find_ext
+
+   [[ ${#types[@]} -eq 0 ]] && return 1
+
+   for ext in ""${types[@]}""; do
+      find_ext+=(-o -name ""*.${ext}"")
+   done
+
+   unset 'find_ext[0]'
+   output=()
+
+   while IFS=  read -r -d $'\0' file; do
+      output+=(""$file"") 
+   done < <(find ""$dir"" -type f \( ""${find_ext[@]}"" \) -print0)
+}
+
+dir=/some/path
+
+getMatchingFiles result ""$dir"" mp3 txt
+printf '%s\n' ""${result[@]}""
+
+getMatchingFiles other_result /some/other/path txt
+printf '%s\n' ""${other_result[@]}""

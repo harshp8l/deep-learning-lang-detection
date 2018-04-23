@@ -1,0 +1,32 @@
+birth_stat_file1=`stat file1.txt --format=""%W""`
+birth_stat_file2=`stat file2.txt --format=""%W""`
+FROM_EMAIL=xyz@gmail.com
+To_EMAIL=xyz@gmail.com
+
+while true
+do
+
+    last_change_stat_file1=`stat file1.txt --format=""%Z""`  
+    user_name_file1=`stat file1.txt --format=""%U""`
+
+    last_change_stat_file2=`stat file2.txt --format=""%Z""`  
+    user_name_file2=`stat file2.txt --format=""%U""`
+
+    if (( $last_change_stat_file1 > $birth_stat_file1 )); then
+        echo ""mail from here !!!!!!!!!!""
+        echo ""$user_name_file1 file has changed at $last_change_stat_file1..."" | mailx -r $FROM_EMAIL -s ""File1.txt has changed"" $To_EMAIL
+    fi
+
+    if (( $last_change_stat_file2 > $birth_stat_file2 )); then
+        echo ""mail from here !!!!!!!!!!""
+        echo ""$user_name_file2 file has changed at $last_change_stat_file2..."" | mailx -r $FROM_EMAIL -s ""File2.txt has changed"" $To_EMAIL
+    fi
+
+    birth_stat_file1=$last_change_stat_file1
+    birth_stat_file2=$last_change_stat_file2
+
+    sleep 30  #change time in seconds to fix hits
+
+    echo ""hit [CTRL+C] to stop this loop!""
+
+done

@@ -1,0 +1,37 @@
+struct VarApiImpl;
+
+template< Type EType > 
+struct VarApi; // undefined
+
+// Ideally, VarApiCommon shouldn't need to be a template
+template< Type EType >
+struct VarApiCommon {
+  // you can put here members and functions which common to all implementations, just for convenience.
+  void common() { /* ... */ }
+private:
+  // You can do this if you need access to specialization-specific members.
+  // Ideally, if a function is common, it should only need common members, though.
+  VarApi<EType> & Derived() { return static_cast<VarApi<EType>&>(*this); }
+  VarApi<EType> const& Derived() const { return static_cast<VarApi<EType> const&>(*this); }
+};
+
+template<> 
+struct VarApi<T1> : VarApiCommon<T1> {
+  friend VarApiImpl;
+  friend VarApiCommon<T1>;
+  void funcA1();
+  void funcA1_2();
+};
+
+template<> 
+struct VarApi<T2> : VarApiCommon<T2> {
+  friend VarApiImpl;
+  friend VarApiCommon<T2>;
+  void funcA2();
+  void funcA1_2();
+};
+
+template<> 
+struct VarApi<T3> : VarApiCommon<T3> {
+  friend VarApiCommon<T3>;
+};

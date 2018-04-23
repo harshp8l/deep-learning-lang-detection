@@ -1,0 +1,21 @@
+var _runtime = struct{
+    Caller    func(skip int) (pc uintptr, file string, line int, ok bool)
+    FuncForPC func(pc uintptr) *runtime.Func
+}{runtime.Caller, runtime.FuncForPC}
+
+func functionName(n int) string {
+    pc, _, _, ok := _runtime.Caller(n + 1)
+    if !ok {
+        return ""unknown function""
+    }
+    me := _runtime.FuncForPC(pc)
+    if me == nil {
+        return ""unknown function""
+    }
+
+    split := strings.Split(me.Name(), ""."")
+    if len(split) == 0 {
+        return ""unknown function""
+    }
+    return split[len(split)-1]
+}

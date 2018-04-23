@@ -1,0 +1,36 @@
+package main
+
+import (
+    ""log""
+    ""net/http""
+    ""time""
+    ""fmt""
+)
+
+func main() {
+
+    h := http.NewServeMux()
+
+    h.HandleFunc(""/fast/"", func(w http.ResponseWriter, r *http.Request) {
+
+        fmt.Println(r.URL.Path[1:])
+        time.Sleep(100 * time.Millisecond)
+        http.ServeFile(w, r, r.URL.Path[1:])
+
+    })
+
+    h.HandleFunc(""/slow/"", func(w http.ResponseWriter, r *http.Request) {
+
+        fmt.Println(r.URL.Path[1:])
+        time.Sleep(6000 * time.Millisecond)
+        http.ServeFile(w, r, r.URL.Path[1:])
+
+    })
+
+    h.HandleFunc(""/"", func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(404)
+    })
+
+    err := http.ListenAndServe("":8080"", h)
+    log.Fatal(err)
+}

@@ -1,0 +1,16 @@
+static Expression<Func<T, bool>> Where<T, TVal>(Expression<Func<T, TVal>> selector,
+    IEnumerable<TVal> values)
+{
+    Expression result = null;
+    foreach (var val in values)
+    {
+        var match = Expression.Equal(
+            selector.Body,
+            Expression.Constant(val, typeof(TVal)));
+
+        result = result == null ? match : Expression.OrElse(result, match);
+    }
+    if (result == null) return x => true; // always match if no inputs
+
+    return Expression.Lambda<Func<T, bool>>(result, selector.Parameters);
+}

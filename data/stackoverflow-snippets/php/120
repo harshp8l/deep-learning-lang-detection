@@ -1,0 +1,26 @@
+// Add custom status to order list
+add_action( 'init', 'register_custom_post_status', 10 );
+function register_custom_post_status() {
+    register_post_status( 'wc-arrival-shipment', array(
+        'label'                     => _x( 'Shipped but not paid', 'Order status', 'woocommerce' ),
+        'public'                    => false,
+        'exclude_from_search'       => false,
+        'show_in_admin_status_list' => true,
+        'show_in_admin_all_list'    => true,
+        'label_count'               => _n_noop( 'Shipped but not paid<span class=""count"">(%s)</span>', 'Shipped but not paid <span class=""count"">(%s)</span>' )
+    ) );
+}
+
+// Add custom status to order edit page drop down (and displaying orders with this custom status in the list)
+add_filter( 'wc_order_statuses', 'custom_wc_order_statuses' );
+function custom_wc_order_statuses( $order_statuses ) {
+    $order_statuses['wc-arrival-shipment'] = _x( 'Shipped but not paid', 'Order status', 'woocommerce' );
+    return $order_statuses;
+}
+
+// Adding custom status  to admin order list bulk actions dropdown
+add_filter( 'bulk_actions-edit-shop_order', 'custom_dropdown_bulk_actions_shop_order', 20, 1 );
+function custom_dropdown_bulk_actions_shop_order( $actions ) {
+    $actions['mark_arrival-shipment'] = __( 'Mark Shipped but not paid', 'woocommerce' );
+    return $actions;
+}

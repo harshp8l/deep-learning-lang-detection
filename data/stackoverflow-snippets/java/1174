@@ -1,0 +1,44 @@
+@EnableWebSecurity
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth
+            .inMemoryAuthentication()
+                .withUser(new User(""root"", ""root"", Arrays.asList(new SimpleGrantedAuthority(""USER""))))
+                .passwordEncoder(fakePasswordEncoder());
+    }
+
+
+    @Bean
+    public PasswordEncoder fakePasswordEncoder() {
+        return new PasswordEncoder() {
+            @Override
+            public String encode(CharSequence charSequence) {
+                return null; // matches(...) will always return true anyways
+            }
+
+            @Override
+            public boolean matches(CharSequence charSequence, String s) {
+                return true;
+            }
+        };
+    }
+
+
+    @Override
+    protected void configure(final HttpSecurity http) throws Exception {
+        http.csrf().disable()
+            .authorizeRequests()
+            .antMatchers(""/hello"").permitAll()
+            .antMatchers(""/test2"").permitAll()
+            .antMatchers(""/register"").permitAll()
+            .antMatchers(""/useraccount"").permitAll()
+            .anyRequest().authenticated()
+            .and()
+            .formLogin().permitAll()
+            .and()
+            .logout().logoutRequestMatcher(new AntPathRequestMatcher(""/logout"")).permitAll();
+    }
+
+}

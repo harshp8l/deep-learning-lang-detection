@@ -1,0 +1,40 @@
+package main
+
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration.Duration
+
+object Main {
+
+  case class LazyFuture[A](f: Unit => Future[A]) {
+    def apply(): Future[A] = f()
+  }
+
+  object LazyFuture {
+    def apply[A](f: => A)(implicit ec: ExecutionContext): LazyFuture[A] = LazyFuture(_ => Future(f))
+    def apply[A](f: => Future[A]): LazyFuture[A] = LazyFuture(_ => f)
+  }
+
+  def executeBatch[A](list: List[LazyFuture[A]])(concurFactor: Int)
+    (implicit ec: ExecutionContext): Future[List[A]] =
+    list.grouped(concurFactor).foldLeft(Future.successful(List.empty[A])) { (r, c) =>
+      val batch = Future.sequence(c.map(_ ()))
+      r.flatMap(rs => r.map(values=> rs ++ values))
+    }
+
+  def main(args: Array[String]): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+
+    val futures: Seq[LazyFuture[Int]] = List(1, 2, 3, 4, 5).map { value =>
+      LazyFuture {
+        println(s""value: $value started"")
+        Thread.sleep(value * 200)
+        println(s""value: $value stopped"")
+        value
+      }
+    }
+    val f = executeBatch(futures.toList)(2)
+    Await.result(f, Duration.Inf)
+  }
+
+}

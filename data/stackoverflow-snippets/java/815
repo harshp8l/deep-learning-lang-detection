@@ -1,0 +1,24 @@
+@Qualifier
+annotation class BackendUrl
+
+
+class ActivityModule(activity: BaseActivity): Module() {
+
+    init {
+        bind(Activity::class.java).toInstance(activity)
+    }
+
+}
+
+class NetworkModule: Module() {
+
+    init {
+        bind(String::class.java).withName(BackendUrl::class.java).toInstance(Constants.URL)
+        bind(Gson::class.java).toInstance(GsonBuilder().setDateFormat(""yyyy-MM-dd'T'HH:mm:ss"").create())
+        bind(CacheHolder::class.java).toProvider(CacheProvider::class.java).singletonInScope()
+        bind(OkHttpClient::class.java).toProvider(OkHttpProvider::class.java).instancesInScope()
+        bind(BackendApi::class.java).toProvider(BackendApiProvider::class.java).instancesInScope()
+        bind(RedirectInterceptor::class.java).to(RedirectInterceptor::class.java)
+    }
+
+}

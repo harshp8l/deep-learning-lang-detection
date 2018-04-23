@@ -1,0 +1,14 @@
+(fact ""print info but not debug""
+      (core/init :info) => nil
+      (provided
+       (timbre/default-output-fn anything ; opts is first argument
+                                 (as-checker (fn [data]
+                                               (= (-> data :config :level) ; get log level
+                                                  :info))))     ; validate that it is info
+       => anything :times 1)
+      (provided
+       (timbre/default-output-fn anything
+                                 (as-checker (fn [data]
+                                               (= (-> data :config :level)
+                                                  :debug))))
+       => anything :times 0))

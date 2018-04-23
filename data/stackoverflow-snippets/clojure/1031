@@ -1,0 +1,31 @@
+(def command-line-spec
+  [[""-m"" ""--mode 0|1"" ""description of option that takes 1 or 0""
+    :parse-fn #(case (s/lower-case %)
+                 (""1"" ""true"" ""create"") :one
+                 (""0"" ""false"" ""destroy"") :zero
+                 :invalid)
+    :default :one
+    :validate [#{:one :zero} ""Unsupported mode""]]
+   [""-c"" ""--config type1|type2|...""
+    :desc ""config specifies what to do""
+    :default :dostuff
+    :parse-fn #(if (keyword? %)
+                 %
+                 (-> % s/lower-case keyword))
+    :validate-fn #(contains? configurations %)]
+    [""-n"" ""--name service Name""
+     :default (getenv ""NAME"")]
+   [nil ""--min number""
+    :default 7 :parse-fn #(Integer/parseInt %)]
+   [nil ""--max number""
+    :default 7 :parse-fn #(Integer/parseInt %)]
+   [nil ""--public true|false"" ""true or false""
+    :default false
+    :parse-fn #(Boolean/parseBoolean %)]
+   [""-h"" ""--help""]])
+
+(defn -main [& args]
+  (let [{:keys [options arguments errors summary]}
+         (parse-opts args
+                     command-line-spec)
+ ... ) 

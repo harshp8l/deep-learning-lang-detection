@@ -1,0 +1,32 @@
+class ClientThread(Thread):  
+    def __init__(self,conn, ip,port): 
+        Thread.__init__(self) 
+        self.ip = ip 
+        self.port = port
+        self.conn = conn
+        print(""New server socket thread started for "" + ip + "":"" + str(port))
+
+    def run(self): 
+        while True :
+            try: 
+                message = self.conn.recv(2048)
+                if not message:
+                    print(""closed"")
+                    try:
+                        self.conn.close()
+                    except:
+                        pass
+                    return
+                try:
+                    dataInfo = message.decode('ascii')
+                    print(""recv:::::""+str(dataInfo)+""::"")
+                except UnicodeDecodeError:
+                    print(""non-ascii data"")
+                    continue                         
+            except socket.error:
+                print(""Unexpected error:"", sys.exc_info()[0])
+                try:
+                    self.conn.close()
+                except:
+                    pass
+                return

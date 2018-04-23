@@ -1,0 +1,15 @@
+    -1..-10 | ForEach {
+    $When =  (Get-Date).AddDays($_)
+    $After =  Get-Date $When  -Hour 0  -Minute 0  -Second 0
+    $Before = Get-Date $When  -Hour 23 -Minute 59 -Second 59
+    $DayEvents =(Get-Eventlog -Entrytype Information -Logname System -After $After -Before $Before).TimeGenerated
+    if($dayevents -ne $null) {
+        $Span = New-Timespan -Start ($DayEvents | Select -Last 1) -End ($DayEvents | Select -First 1)
+        ""Your computer worked hard on {0} - for {1}:{2}:{3} hours"" -F $When.ToString('yyyy-MM-dd'),$Span.Hours,$Span.Minutes,$Span.Seconds
+    }
+    else
+    {
+        $msg = ""Holiday for your computer on {0}. It is not powered on"" -F $When.ToString('yyyy-MM-dd') 
+        Write-host $msg -foregroundcolor green
+    }
+}

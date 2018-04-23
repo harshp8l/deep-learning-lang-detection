@@ -1,0 +1,35 @@
+SQL> create table a (c number, d number, la date);
+
+Table created.
+
+SQL> create table b (c number, lb date);
+
+Table created.
+
+SQL> insert into a
+  2    (select 12345, 30, to_date('01.04.2018 20:10', 'dd.mm.yyyy hh24:mi') from dual);
+
+1 row created.
+
+SQL> insert into b
+  2    (select 12345, to_date('01.04.2018 18:00', 'dd.mm.yyyy hh24:mi') from dual);
+
+1 row created.
+
+SQL>
+SQL> merge into a
+  2    using (select b.c, b.lb from b) x
+  3    on (a.c = x.c and
+  4        (a.la - x.lb) * 24 >= 2
+  5       )
+  6  when matched then
+  7    update set a.d = 0;
+
+1 row merged.
+
+SQL>
+SQL> select * From a;
+
+         C          D LA
+---------- ---------- ----------
+     12345          0 01.04.2018

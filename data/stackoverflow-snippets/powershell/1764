@@ -1,0 +1,23 @@
+## Q:\Test\2017\08\25\SO_45872202.ps1
+
+$Source = ""Q:\Test\2017\""
+$Target = ""C:\Test\2017\""
+
+$List = Import-Csv list.txt -Header Size,LastWriteTime,Name
+
+$Hash = @{}
+ForEach ($Row in $List){
+    $Key = (""{0},{1},.{2}"" -F $Row.Size,$Row.LastWriteTime,$Row.Name.Split('.')[-1].ToLower())
+    IF (!($Hash[$Key])) {$Hash.Add($Key,$Row.Name)}
+}
+$Hash | Format-Table -Auto
+
+Get-Childitem -Path $Source -Recurse -File | ForEach-Object {
+    $Key = (""{0},{1},{2}"" -F $_.Length,($_.LastWriteTime).ToString('yyy-MM-dd HH:mm:ss'),$_.Extension.ToLower())
+    #$Key
+    If ($Hash[$Key]){
+        $Destination = $_.FullName -Replace ""^$([RegEx]::Escape($Source))"",""$Target""
+        If (!(Test-Path (Split-Path $Destination))){MD (Split-Path $Destination)|Out-Null}
+        $_ | Copy-Item -Destination $Destination #-WhatIf
+    }
+}

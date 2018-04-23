@@ -1,0 +1,13 @@
+Select A.Ucode
+      ,A.[desc]
+      ,C.*
+ From  tbl_code A
+ Cross Apply ( values (cast((Select A.* for XML RAW) as xml))) B(XMLData)
+ Cross Apply (
+                Select Code  = a.value('local-name(.)','varchar(100)')
+                      ,Value = a.value('.','varchar(max)') 
+                 From  B.XMLData.nodes('/row')  as C1(n)
+                 Cross Apply C1.n.nodes('./@*') as C2(a)
+                 Where a.value('local-name(.)','varchar(100)') not in ('Ucode','desc')
+                 -- {or you can use} Where a.value('local-name(.)','varchar(100)') like 'code%'
+             ) C

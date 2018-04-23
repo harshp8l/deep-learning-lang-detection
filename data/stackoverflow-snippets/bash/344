@@ -1,0 +1,25 @@
+f_fail() {
+    (
+        sleep 1
+        flock -n 200 || exit 1
+        pid=$(bash -c 'ps -p ""$(ps -p $$ -oppid=)"" -oppid=')
+        echo ""$pid started""
+        echo text >& 200
+        echo ""$pid done""
+    ) 200>>file.txt
+}
+
+f_block() {
+    (
+        sleep 1
+        flock 200 || exit 1
+        pid=$(bash -c 'ps -p ""$(ps -p $$ -oppid=)"" -oppid=')
+        echo ""$pid started""
+        echo text >& 200
+        echo ""$pid done""
+    ) 200>>file.txt
+}
+
+
+f_fail  & f_fail  & f_fail  & f_fail  & wait
+f_block & f_block & f_block & f_block & wait

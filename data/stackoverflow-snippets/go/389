@@ -1,0 +1,59 @@
+type Creation interface {
+    GetCreated() time.Time
+}
+
+type A struct {
+    Name      string
+    CreatedAt time.Time
+}
+
+func (a *A) GetCreated() time.Time {
+    return a.CreatedAt
+}
+
+func (a *A) String() string {
+    return a.Name
+}
+
+type B struct {
+    Title     string
+    CreatedAt time.Time
+}
+
+func (b *B) GetCreated() time.Time {
+    return b.CreatedAt
+}
+
+func (b *B) String() string {
+    return b.Title
+}
+
+type AorB []Creation
+
+func (x AorB) Len() int {
+    return len(x)
+}
+
+func (x AorB) Less(i, j int) bool {
+    // to change the sort order, use After instead of Before
+    return x[i].GetCreated().Before(x[j].GetCreated())
+}
+
+func (x AorB) Swap(i, j int) {
+    x[i], x[j] = x[j], x[i]
+}
+
+func main() {
+    a := &A{""A"", time.Now()}
+    time.Sleep(1 * time.Second)
+    b := &B{""B"", time.Now()}
+    aOrB := AorB{b, a}
+
+    fmt.Println(aOrB)
+    // [B A]
+
+    sort.Stable(aOrB)
+
+    fmt.Println(aOrB)
+    // [A B]
+}

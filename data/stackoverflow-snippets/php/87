@@ -1,0 +1,35 @@
+//first upload your attachments to a temp-directory (tmp/)
+for ($i = 0; $i < count ($_FILES['namephoto']['tmp_name']); $i++)
+    move_uploaded_file ($_FILES['namephoto']['tmp_name'][$i], 'tmp/'.$_FILES['namephoto']['name'][$i]);
+
+//initialize phpmailer
+$mail = new PHPMailer ();
+
+//set smtp credentials
+$mail->Host       = 'smtp1.example.com';     // Specify main and backup SMTP servers
+$mail->SMTPAuth   = true;                    // Enable SMTP authentication
+$mail->Username   = 'user@example.com';      // SMTP username
+$mail->Password   = 'secret';                // SMTP password
+$mail->SMTPSecure = 'tls';                   // Enable TLS encryption, `ssl` also accepted
+$mail->Port       = 587;
+
+//set from-address
+$mail->setFrom ($_POST['namecontact']);
+
+//add recipients
+foreach ($contacts as $contact)
+    $mail->addAddress ($contact);
+
+//add attachments
+for ($i = 0; $i < count ($_FILES['namephoto']['name']); $i++)
+    $mail->addAttachment ('tmp/'.$_FILES['namephoto']['name'][$i]);
+
+//set subject and body
+$mail->Subject = $from_email.' SupirkimasPlius.lt';
+$mail->Body    = 'Automobilio pasiūlymas: Marke/modelis: '.$_POST[""namecarinfo""].' Kontaktai/miestas: '.$_POST[""namecontact""].'Komentaras:'.$_POST[""namecoment""];
+
+//send your mail
+$sentMail = $mail->send ();
+
+//check if successfully sent
+if ($sentMail) {...} else {...}

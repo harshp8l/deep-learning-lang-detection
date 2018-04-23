@@ -1,0 +1,13 @@
+  (:require [tupelo.datomic   :as td]
+            [tupelo.schema    :as ts])
+
+  ; Create some new attributes. Required args are the attribute name (an optionally namespaced
+  ; keyword) and the attribute type (full listing at http://docs.datomic.com/schema.html). We wrap
+  ; the new attribute definitions in a transaction and immediately commit them into the DB.
+  (td/transact *conn* ;   required              required              zero-or-more
+                      ;  <attr name>         <attr value type>       <optional specs ...>
+    (td/new-attribute   :person/name         :db.type/string         :db.unique/value)      ; each name      is unique
+    (td/new-attribute   :person/secret-id    :db.type/long           :db.unique/value)      ; each secret-id is unique
+    (td/new-attribute   :weapon/type         :db.type/ref            :db.cardinality/many)  ; one may have many weapons
+    (td/new-attribute   :location            :db.type/string)     ; all default values
+    (td/new-attribute   :favorite-weapon     :db.type/keyword ))  ; all default values

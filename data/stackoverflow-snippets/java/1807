@@ -1,0 +1,49 @@
+public class RetailDataAnalysis {
+
+    public static class RetailDataAnalysisMapper extends Mapper<LongWritable, Text, Text, Text> {
+
+        public void map(LongWritable key, Text Value, Context context) throws IOException, InterruptedException {
+            String analyser[] = Value.toString().split("","");
+            Text productCategory = new Text(analyser[3]);
+            Text salesPrice = new Text(analyser[4]);
+            context.write(productCategory, salesPrice);
+        }
+    }
+
+    public static class RetailDataAnalysisReducer extends Reducer<Text, Text, Text, Text> {
+
+        protected void reduce(Text key, Iterable<Text> values, Context context)
+                throws IOException, InterruptedException {
+            String csv = """";
+            for (Text value : values) {
+                if (csv.length() > 0) {
+                    csv += "","";
+                }
+                csv += value.toString();
+            }
+            context.write(key, new Text(csv));
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        Configuration conf = new Configuration();
+        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
+        if (otherArgs.length < 2) {
+            System.out.println(""Usage Retail Data "");
+            System.exit(2);
+        }
+        Job job = new Job(conf, ""Retail Data Analysis"");
+        job.setJarByClass(RetailDataAnalysis.class);
+        job.setMapperClass(RetailDataAnalysisMapper.class);
+        job.setCombinerClass(RetailDataAnalysisReducer.class);
+        job.setReducerClass(RetailDataAnalysisReducer.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(Text.class);
+
+        for (int i = 0; i < otherArgs.length - 1; ++i) {
+            FileInputFormat.addInputPath(job, new Path(otherArgs[i]));
+        }
+        FileOutputFormat.setOutputPath(job, new Path(otherArgs[otherArgs.length - 1]));
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+}

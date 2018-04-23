@@ -1,0 +1,16 @@
+user> (defmacro defresponse [schema constructor-name constructor-params data]
+        `(do
+           (s/defschema ~schema ~(into {} (map (fn [[k [t _]]] [k t])
+                                               data)))
+           (defn ~constructor-name ~constructor-params
+             ~(into {} (map (fn [[k [_ init]]] [k init])
+                            data)))))
+#'user/defresponse
+user> (defresponse Card card-response [card contact]
+        {:cardNumber [s/Str (.getAccountNumber card)]
+         :cvv [s/Str ""000""]
+         :creditCardMonthValidity [s/Str (.getExpiryMonth card)]
+         :creditCardYearValidity [s/Str (.getExpiryYear card)]
+         :cpf [s/Str (.getNationalID contact)]
+         :name [s/Str (.getFirstName contact)]
+         :phoneNumber [s/Str (.getPhoneNumber contact)]})

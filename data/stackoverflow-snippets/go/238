@@ -1,0 +1,38 @@
+func main() {
+
+    period := time.Second
+    respChan := make(chan string)
+    cancelChan := make(chan struct{})
+    dataCollection := []string
+
+    // periodicaly fetch data and send it to respChan
+    go func(period time.Duration, respChan chan string, cancelChan chan struct{}) {
+        ticker := time.Ticker(period)
+        for {
+            select {
+            case <-ticker.C:
+                go fetchData(respChan)
+            case <-cancelChan:
+                // close respChan to stop reading goroutine
+                close(respChan)
+                return
+            }
+        }
+    }(period, cancelChan)
+
+    // read from respChan and write to dataCollection
+    go func(respChan chan string) {
+        for data := range respChan {
+            dataCollection = append(dataCollection, data)
+        }
+    }(respChan)
+
+    // close cancelChan to gracefuly stop the app
+    // close(cancelChan)
+}
+
+
+func fetchData(respChan chan string) {
+    data := ""fetched data""
+    respChan <- data
+}

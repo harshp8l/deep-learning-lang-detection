@@ -1,0 +1,14 @@
+def bin_data(chl, depth, bin_start=0, bin_length= 0.5):
+    # Get number of intervals and hence the bin-length-spaced depth array
+    n = int(np.ceil(depth[-1]/bin_length))
+    depthl = np.linspace(start=bin_start,stop=bin_length*n, num=n+1)
+
+    # Indices along depth array where the intervaled array would have bin shifts
+    idx = np.searchsorted(depth, depthl)
+
+    # Number of elements in each bin (bin-lengths)
+    lens = np.diff(idx)
+
+    # Get summations for each bins & divide by bin lengths for binned avg o/p
+    # For bins with lengths==0, set them as some invalid specifier, say NaN
+    return np.where(lens==0, np.nan, np.add.reduceat(chl, idx[:-1])/lens)

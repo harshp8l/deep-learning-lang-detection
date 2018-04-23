@@ -1,0 +1,23 @@
+val inputRdd: RDD[(Int, java.util.Date)] = ??? // however it's created
+
+// convert java.util.Date to java.sql.Date:
+val fixedRdd = inputRdd.map {
+  case (id, date) => (id, new java.sql.Date(date.getTime))
+}
+
+// now you can convert to DataFrame given your schema:
+val schema = StructType(
+  StructField(""id"", IntegerType) :: 
+  StructField(""date"", DateType) :: 
+  Nil
+)
+
+val df = spark.createDataFrame(
+  fixedRdd.map(record => Row.fromSeq(record.productIterator.toSeq)),
+  schema
+)
+
+// or, even easier - let Spark figure out the schema:
+val df2 = fixedRdd.toDF(""id"", ""date"")
+
+// both will evaluate to the same schema, in this case

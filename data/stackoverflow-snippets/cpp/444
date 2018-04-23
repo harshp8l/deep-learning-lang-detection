@@ -1,0 +1,31 @@
+#include <memory>
+
+collection::collection()
+    : start(nullptr)
+{
+}
+
+collection::collectionItem::collectionItem(const card &a, collectionItem *n)
+    : theCard(a), next(n)
+{
+}
+
+collection::~collection()
+{
+    collectionItem *item = start;
+    while (item)
+        item = std::unique_ptr<collectionItem>(item)->next;
+}
+
+void collection::add(const card &a)
+{
+    start = new collectionItem(a, start);
+}
+
+card collection::deal()
+{
+    if (!start) throw std::runtime_error(""deck is empty!"");
+    std::unique_ptr<collectionItem> temp(start);
+    start = temp->next;
+    return temp->theCard;
+}

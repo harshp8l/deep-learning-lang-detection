@@ -1,0 +1,25 @@
+Get-Content D:\Downloads\SO\sample.log |
+  Select-String -Pattern ""INext-DROP-DEFLT\s.*SRC=(.*?)\s.*DPT=(.*?)\s"" -AllMatches | 
+    ForEach-Object {$_.Matches} |
+      ForEach-Object {$_.Groups[1].Value + ':' + $_.Groups[2].Value} | # PSCustomObject place
+        Sort-Object |
+          Get-Unique |
+            ForEach-Object -Begin {
+              $LastSource = [string]::Empty; 
+              $sources = 0;
+              $ports = 0;
+            } -process { 
+              $ip, $port = $_.split("":""); 
+              if ($ip -ne $LastSource) { 
+                  Write-Host ""`n$ip $port"" -NoNewline; # print Source IP and Destination Port
+                  $LastSource = $ip;
+                  $sources += 1;
+                  $Ports += 1;
+              } else { 
+                  Write-Host "" $port"" -NoNewline; # Print DestPort to current line (multi port per IP)
+                  $Ports += 1;
+              } 
+            } -end { 
+                Write-Host ""`nTotal Sources = $sources"";
+                Write-Host ""Unique Ports Scanned = $Ports"";
+            }

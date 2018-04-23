@@ -1,0 +1,59 @@
+DECLARE
+  nCurrent_balance    CUSTOMER_RUNNING_BALANCE.CURRENT_BALANCE%TYPE;
+  nTotal_credit_line  CUSTOMER_CREDIT_LINE.TOTAL_CREDIT_LINE%TYPE;
+  nAvailable_credit   CUSTOMER_CREDIT_LINE.AVAILABLE_CREDIT%TYPE;
+  strLocation_name    CUSTOMER_ADDRESS.LOCATION_NAME%TYPE;
+  strStreet_address_1 CUSTOMER_ADDRESS.STREET_ADDRESS_1%TYPE;
+  strCity             CUSTOMER_ADDRESS.CITY%TYPE;
+  strState            CUSTOMER_ADDRESS.CITY%TYPE;
+  strZip              CUSTOMER_ADDRESS.CITY%TYPE;
+BEGIN
+  FOR aRow IN (SELECT CUSTOMER_ID FROM CUSTOMER)
+  LOOP
+    BEGIN
+      SELECT CURRENT_BALANCE
+        INTO nCurrent_balance
+        FROM CUSTOMER_RUNNING_BALANCE rb
+        WHERE rb.CUSTOMER_ID = aRow.CUSTOMER_ID;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        nCurrent_balance := NULL;
+    END;
+
+    BEGIN
+      SELECT TOTAL_CREDIT_LINE, AVAILABLE_CREDIT
+        INTO nTotal_credit_Line, nAvailable_credit
+        FROM CUSTOMER_CREDIT_LINE cl
+        WHERE cl.CUSTOMER_ID = aRow.CUSTOMER_ID;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        nTotal_credit_line := NULL;
+        nAvailable_credit := NULL;
+    END;
+
+    BEGIN
+      SELECT LOCATION_NAME,
+             STREET_ADDRESS_1,
+             CITY,
+             STATE,
+             ZIP
+        INTO strLocation_name,
+             strStreet_address_1,
+             strCity,
+             strState,
+             strZip
+        FROM CUSTOMER_ADDRESS ca
+        WHERE ca.CUSTOMER_ID = aRow.CUSTOMER_ID AND
+              ca.ADDRESS_TYPE = 'HEADQUARTERS';
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        strLocation_name := NULL;
+        strStreet_address_1 := NULL;
+        strCity := NULL;
+        strState := NULL;
+        strZip := NULL;
+    END;
+
+    // Do something useful with the data here
+  END LOOP;
+END;

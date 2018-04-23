@@ -1,0 +1,13 @@
+val transformedRDD = processedMessages
+  // notice that we will have Rdd[(String, Message)] or PairRdd after this flatMap
+  .flatMap(message => message.isProcessed match {
+    case true => Some((message.id, message))
+    case false => None
+  })
+  // after this reduction we will have latest message for each id
+  .reduceByKey((m1: Message, m2: Message) => m1.version >= m2.version match {
+    case true => m1
+    case false => m2
+  })
+  // now we just want to keep message
+  .map({ case (id, message) => message })

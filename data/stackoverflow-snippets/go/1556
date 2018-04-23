@@ -1,0 +1,46 @@
+package main
+
+import (
+    ""fmt""
+    ""math/rand""
+    ""reflect""
+    ""sync""
+    ""time""
+)
+
+func multpleSelect(chans []chan bool) (int, bool, bool) {
+    cases := make([]reflect.SelectCase, len(chans))
+    for i, ch := range chans {
+        cases[i] = reflect.SelectCase{
+            Dir: reflect.SelectRecv,
+            Chan: reflect.ValueOf(ch),
+        }
+    }
+
+    i, v, ok := reflect.Select(cases)
+    return i, v.Interface().(bool), ok
+}
+
+func main() {
+    rand.Seed(time.Now().UnixNano())
+
+    chans := make([]chan bool, 100)
+    for i := 0; i < 100; i++ {
+        chans[i] = make(chan bool)
+    }
+
+
+    var wg sync.WaitGroup
+    go func() {
+        wg.Add(1)
+
+        if ch, v, ok := multpleSelect(chans); ok {
+            fmt.Printf(""I am chan-%v, value is %v\n"", ch, v)
+        }
+        wg.Done()
+    }()
+
+    chans[rand.Int() % len(chans)] <- true
+
+    wg.Wait()
+}

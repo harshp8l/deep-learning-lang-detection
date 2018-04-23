@@ -1,0 +1,82 @@
+public class HomeActivity extends AppCompatActivity {
+
+    ArrayList<Coin> coinlist = new ArrayList<>();
+    ListView mListView;
+    private TextView mTextViewResult;
+    private ShowcaseAdapter adapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_home);
+
+        Refresh();
+        mListView = (ListView) findViewById(R.id.CoinList);
+
+        // Initialize the adapter and set it here
+        adapter = new ShowcaseAdapter(this, R.layout.row_item, coinlist);
+        mListView.setAdapter(adapter);
+
+        Button refresh_button = findViewById(R.id.refresh_button);
+        refresh_button.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                Refresh();
+            }
+        });
+    }
+
+    private void Refresh(){
+        mTextViewResult = findViewById(R.id.text_view_test);
+        OkHttpClient client = new OkHttpClient();
+
+        String url = ""https://api.coinmarketcap.com/v1/ticker/"";
+        Request request = new Request.Builder().url(url).build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    final String myResponce = response.body().string();
+
+                    StringBuilder display = new StringBuilder("""");
+
+                    try {
+                        JSONArray coins = new JSONArray(myResponce);
+                        for(int i = 0; i < coins.length(); i++){
+                            ///Log.d(""DEBUG"", ""TEST"");
+                            try {
+                                JSONObject coin = coins.getJSONObject(i);
+                                String name = coin.getString(""name"");
+                                String price = coin.getString(""price_usd"");
+                                String change = coin.getString(""percent_change_24h"");
+
+                                coinlist.add(new Coin(name, price, change));
+                                // Call the update function here. 
+                                Update();
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                    final String finalDisplay = display.toString();
+                }
+            }
+        });
+
+        Update();
+    }
+
+    public void Update() {
+        adapter.notifyDataSetChanged();
+    }
+}

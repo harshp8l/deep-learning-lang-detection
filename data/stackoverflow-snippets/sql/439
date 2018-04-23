@@ -1,0 +1,11 @@
+select ServiceID, 
+    case when SeqDateDiff>0 then cast(DATEADD(day, SeqDateDiff, Reported) As Date) else Reported end Started, 
+    case when SeqDateDiff=DateDiff 
+        then Completed 
+        else DATEADD(second, -1, cast(cast(DATEADD(day, SeqDateDiff+1, Reported) As Date) as DateTime)) 
+    end Completed,
+DateDiff, SeqDateDiff
+from (select ServiceID, Completed, Reported, DATEDIFF(day, Reported, Completed) DateDiff from YourTable) target
+left join (
+SELECT DISTINCT SeqDateDiff = number FROM master..[spt_values] WHERE number BETWEEN 0 AND 1000
+) seq on target.DateDiff+1>seq.SeqDateDiff

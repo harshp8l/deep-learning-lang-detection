@@ -1,0 +1,35 @@
+sealed trait PowerPlantConfig {
+  def id: Int
+}
+case class RampUpTypeConfig(id: Int) extends PowerPlantConfig
+
+implicit val powerPlantCfgFormat: Format[PowerPlantConfig] = new Format[PowerPlantConfig] {
+  def reads(json: JsValue): JsResult[PowerPlantConfig] = {
+    JsSuccess(RampUpTypeConfig(
+      id = (json \ ""powerPlantId"").as[Int]
+    ))
+  }
+  def writes(o: PowerPlantConfig): JsValue = {
+    Json.obj(
+      ""powerPlantId"" -> o.id)
+  }
+}
+val powerPlantCfgFormatFixed: Format[PowerPlantConfig] = new Format[PowerPlantConfig] {
+  def reads(json: JsValue): JsResult[PowerPlantConfig] = {
+    for {
+      id <- (json \ ""powerPlantId"").validate[Int]
+    } yield {
+      RampUpTypeConfig(
+        id = id
+      )
+    }
+
+  }
+  def writes(o: PowerPlantConfig): JsValue = {
+    Json.obj(
+      ""id"" -> o.id)
+  }
+}
+
+
+Json.parse(""""""{""powerPlantId"":""123""}"""""").validate[PowerPlantConfig](powerPlantCfgFormatFixed)

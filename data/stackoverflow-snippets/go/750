@@ -1,0 +1,58 @@
+package main
+
+import (
+    ""bytes""
+    ""context""
+    ""fmt""
+    ""log""
+    ""strings""
+)
+
+const (
+    maxTemp = 90
+    errMsg  = ""Temperature too high!""
+)
+
+func watchTemperature(ctx context.Context, inStream <-chan int, finished chan<- bool) {
+    go func() {
+        defer func() {
+            finished <- true
+        }()
+        for {
+            select {
+            case <-ctx.Done():
+                return
+            case temp := <-inStream:
+                if temp > maxTemp {
+                    log.Print(errMsg)
+                }
+            }
+        }
+    }()
+}
+
+func main() {
+    // quit signals to stop the work
+    ctx, quit := context.WithCancel(context.Background())
+    var buf bytes.Buffer
+    // Make sure, this is called before launching the goroutine!
+    log.SetOutput(&buf)
+    inStream := make(chan int)
+    finished := make(chan bool)
+    // pass the callback channel to the goroutine
+    watchTemperature(ctx, inStream, finished)
+
+    // asynchronously to prevent a deadlock
+    go func() {
+        inStream <- maxTemp + 1
+        quit()
+    }()
+    // Block until the goroutine returns.
+    <-finished
+
+    if !strings.Contains(buf.String(), errMsg) {
+        panic(""Expected log message not found"")
+    }
+
+    fmt.Println(""Pass!"")
+}

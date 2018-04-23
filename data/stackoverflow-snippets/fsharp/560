@@ -1,0 +1,17 @@
+let readStreamToFile (client:TcpClient) outputPath =
+    let formatter = new BinaryFormatter()
+
+    try
+        let message = (formatter.Deserialize (client.GetStream ())) :?> Message
+        match message.Type with
+        | FileSync ->
+            match message.Content with
+            | Some content ->
+                File.WriteAllBytes(outputPath, content)
+            | None ->
+                failwith ""There was no content in the FileSync message!!!""
+        | _ ->
+            ()
+    with
+    | :? InvalidCastException as ex ->
+        failwith ""Message format unknown!!!""

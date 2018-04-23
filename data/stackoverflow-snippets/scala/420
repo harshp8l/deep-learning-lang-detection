@@ -1,0 +1,29 @@
+  /**
+    * Compares if two [[DataFrame]]s are equal, checks that the schemas are the same.
+    * When comparing inexact fields uses tol.
+    *
+    * @param tol max acceptable tolerance, should be less than 1.
+    */
+  def assertDataFrameApproximateEquals(
+    expected: DataFrame, result: DataFrame, tol: Double) {
+
+    assert(expected.schema, result.schema)
+
+    try {
+      expected.rdd.cache
+      result.rdd.cache
+      assert(""Length not Equal"", expected.rdd.count, result.rdd.count)
+
+      val expectedIndexValue = zipWithIndex(expected.rdd)
+      val resultIndexValue = zipWithIndex(result.rdd)
+
+      val unequalRDD = expectedIndexValue.join(resultIndexValue).
+        filter{case (idx, (r1, r2)) =>
+          !DataFrameSuiteBase.approxEquals(r1, r2, tol)}
+
+      assertEmpty(unequalRDD.take(maxUnequalRowsToShow))
+    } finally {
+      expected.rdd.unpersist()
+      result.rdd.unpersist()
+    }
+  }

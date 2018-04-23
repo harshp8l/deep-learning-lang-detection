@@ -1,0 +1,15 @@
+SELECT UNIQUE_ID,
+       sum(CASE WHEN TRAN_TYPE NOT IN ('D') THEN 0
+                WHEN TRANSACTION > 0 THEN TRAN_AMNT
+                WHEN (TRAN_DATE > (min(CASE WHEN TRAN_TYPE = 'N' THEN TRAN_DATE ELSE null END) + 30))
+-----------------------------------^ aggregation function within an aggregation function
+                THEN 0
+                ELSE TRAN_AMNT
+            END) as GROSS_LOSS
+FROM TABLE_NAME
+WHERE TRAN_DATE BETWEEN '2003-01-01' AND '2018-02-28' AND  -- fixed the date formats
+      TRAN_TYPE NOT IN ('X') AND
+-----------------------------^ And what?
+GROUP BY UNIQUE_ID,
+------------------^ extra comma
+HAVING sum(TRAN_AMNT) >= 5000000;

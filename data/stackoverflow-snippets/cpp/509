@@ -1,0 +1,53 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <typeinfo>
+
+struct A {
+    virtual ~A() {
+
+    }
+
+    virtual const std::type_info& getTypeInfo() const {
+        return typeid(A);
+    }
+};
+
+struct B : public A {
+    virtual const std::type_info& getTypeInfo() const override {
+        return typeid(B);
+    }
+};
+
+struct C : public A {
+    virtual const std::type_info& getTypeInfo() const override {
+        return typeid(C);
+    }
+};
+
+
+
+int main()
+{
+    std::vector<A*> data;
+    data.push_back(new A);
+    data.push_back(new B);
+    data.push_back(new C);
+
+    for (auto& val : data) {
+        if (val->getTypeInfo() == typeid(A)) {
+            std::cout << ""A"";
+        }
+        else if (val->getTypeInfo() == typeid(B)) {
+            std::cout << ""B"";
+        }
+        else if (val->getTypeInfo() == typeid(C)) {
+            std::cout << ""C"";
+        }
+        std::cout << std::endl;
+    }
+
+    for (auto& val : data) {
+        delete val;
+    }
+}

@@ -1,0 +1,21 @@
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.udf
+
+val sparkConf = new SparkConf().setAppName(""pivottest"").setMaster(""local"")
+val spark = SparkSession.builder().config(sparkConf).getOrCreate()
+
+import org.apache.spark.sql.functions._
+import spark.implicits._
+
+var dfB = spark.createDataset(Seq(
+  (""a"", 4, ""1-12-2015""),
+  (""b"", 2, ""1-12-2015"")
+)).toDF(""id"", ""credit"", ""date"")
+
+
+val mapCredit = udf((credit: Int) => for (i <- 0 to credit) yield i)
+
+dfB
+  .withColumn(""credit"", explode(mapCredit(col(""credit""))))
+  .show()

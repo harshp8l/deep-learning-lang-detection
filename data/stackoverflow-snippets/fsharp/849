@@ -1,0 +1,23 @@
+let getValue<'a> (o: obj) (m: MemberInfo): 'a option =
+  match m with
+  | :? FieldInfo as f when f.FieldType = typeof<'a> -> 
+    Some( f.GetValue o :?> 'a )
+  | :? PropertyInfo as p when p.PropertyType = typeof<'a> && p.GetIndexParameters().Length = 0 -> 
+    Some( p.GetValue( o, [||] ) :?> 'a )
+  | _ -> None
+
+let getFunc<'a, 'b> (o: obj) (m: MemberInfo): ('a -> 'b) option =
+  match m with
+  // F# compiler may compile some functions as properties of type FSharpFunc<_>, so need to cover that
+  | :? FieldInfo -> getValue<'a -> 'b> o m
+  | :? PropertyInfo -> getValue<'a -> 'b> o m
+
+  // If it's a real method of the right type, create a closure to call it
+  | :? MethodInfo as mt 
+    when mt.ReturnType = typeof<'b> && 
+         mt.GetParameters().Length = 1 &&
+         mt.GetParameters().[0].ParameterType = typeof<'a> -> 
+    Some <| fun (a: 'a) -> mt.Invoke( o, [| a :> obj |] ) :?> 'b
+
+  // Otherwise, can't produce result
+  | _ -> None

@@ -1,0 +1,13 @@
+$serviceList = Get-Content $myServices
+
+#some code
+
+$results = Get-Content $myServers
+Invoke-command -ComputerName $results -ScriptBlock {
+Param($MyServices)
+    Get-Service -Name $MyServices | Select-Object -Property ServiceName, Status, StartType
+} -ArgumentList $MyServices,$Null | Select-Object -Property ServiceName, Status, StartType,PSComputerName |
+Export-Csv -NoTypeInformation -Path $Log
+
+#For getting starttype in Version 2.0
+Get-wmiObject -class Win32_Service -Filter ""Name='BITS'"" | Select-Object -Property Name, State, startMode

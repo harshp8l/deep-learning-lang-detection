@@ -1,0 +1,71 @@
+#include <iostream> 
+#include <string>
+#include <boost/fusion/include/adapt_struct.hpp>
+#include <boost/fusion/include/at.hpp>
+#include <boost/fusion/include/for_each.hpp>
+#include <boost/fusion/include/mpl.hpp>
+
+#include <boost/mpl/range_c.hpp>
+
+#include <cstddef>
+
+namespace not_fusion
+{
+    template <typename StructName, int N>
+    struct offset_of;
+}
+
+//Actually creates each respective 'offset_of' trait 
+//you could change 'BOOST_STATIC_CONSTANT(std::size_t,...)'
+//with a 'static constexpr std::size_t ...' or whatever you like
+#define CREATE_OFFSET_TRAIT(R,STRUCT_NAME,INDEX,MEMBER) \
+template <> struct offset_of<STRUCT_NAME, INDEX>{ BOOST_STATIC_CONSTANT(std::size_t, value = offsetof(STRUCT_NAME,MEMBER)); };
+
+//Iterates the struct members in order to create the corresponding 'offset_of' traits
+#define NOT_FUSION_SAVE_OFFSETS(STRUCT_NAME,MEMBERS) \
+namespace not_fusion { \
+BOOST_PP_SEQ_FOR_EACH_I(CREATE_OFFSET_TRAIT,STRUCT_NAME,MEMBERS) \
+}
+
+//Simply ""invokes"" 'BOOST_FUSION_ADAPT_STRUCT' and 'NOT_FUSION_SAVE_OFFSETS'
+#define ADAPT_STRUCT_AND_SAVE_OFFSETS(TYPE,...) \
+BOOST_FUSION_ADAPT_STRUCT(TYPE,__VA_ARGS__) \
+NOT_FUSION_SAVE_OFFSETS(TYPE,BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+struct test1 {
+    int a;  
+    char c;  
+    double b;  
+};
+
+struct test2 {
+    char c;
+    short s;
+    int i;
+};
+
+ADAPT_STRUCT_AND_SAVE_OFFSETS(test1,a,c,b);
+ADAPT_STRUCT_AND_SAVE_OFFSETS(test2,c,s,i);
+
+
+template <typename Struct>
+void print_offsets(const std::string& name,const Struct&)
+{
+    //This could be changed to use 'std::integer_sequence' instead of mpl
+    std::cout << ""Offsets for "" << name << "":"" << std::endl;
+    typedef boost::mpl::range_c<unsigned, 0, boost::fusion::result_of::size<Struct>::value > Indices; 
+    boost::fusion::for_each(Indices(),
+        [](auto index)
+        { 
+            std::cout << boost::fusion::extension::struct_member_name<Struct,index>::call() << "" -> "" << not_fusion::offset_of<Struct,index>::value << std::endl;
+        }
+    );
+}
+
+int main() {
+    test1 t1{1, 2, 3.0}; 
+    test2 t2{1,2,3};
+
+    print_offsets(""test1"",t1);
+    print_offsets(""test2"",t2);
+}

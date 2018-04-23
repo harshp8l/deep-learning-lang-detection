@@ -1,0 +1,35 @@
+pthread_t td;
+pcapNext = true; 
+unsigned long fileLen; 
+std::string pcapfile = ""packet.pcap""; 
+std::cout << ""FileName :"" << pcapfile << std::endl; 
+pcap_t* pcap; 
+char errbuf[PCAP_ERRBUF_SIZE]; 
+struct pcap_pkthdr header; 
+pcap = pcap_open_offline(pcapfile.c_str(), errbuf); 
+if (pcap == NULL)
+{
+    fprintf(stderr, ""error reading pcap file: %s\n"", errbuf);
+    exit(1);
+} 
+int pktCount = 0; 
+const unsigned char* packet; 
+while ((packet = pcap_next(pcap, &header)) != NULL && pcapNext)
+{ 
+    usleep(50000); 
+    const unsigned char* packet1 = packet; 
+    pktCount++; 
+    packet = NULL;
+} 
+fileLen = ftell(pcap);
+
+buffer = (char*)malloc(fileLen + 1); 
+if (!buffer)
+{ 
+    fprintf(stderr, ""Memory error!"");
+    fclose(pcap);
+    return;
+}
+fread(buffer, fileLen, 1, pcap);
+std::cout << ""Pcap_File_Close...."" << std::endl;
+fclose(pcap);

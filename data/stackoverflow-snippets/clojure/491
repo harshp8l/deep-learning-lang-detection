@@ -1,0 +1,23 @@
+(loop [accum []
+       page (far/scan 
+              client-opts 
+              ""users.robert.kuhar.wtf_far"" 
+              {:limit 4 
+               :span-reqs {:max 1}})]
+  (if (empty? page)
+    accum
+    (let [last-on-page (last page)
+          last-part-key (:part_key last-on-page)
+          last-sort-key (:sort_key last-on-page)]
+      (recur
+        (into accum page)
+        (far/scan
+          client-opts
+          ""users.robert.kuhar.wtf_far""
+          {:limit 4
+           :span-reqs {:max 1}
+           :last-prim-kvs {:part_key last-part-key :sort_key last-sort-key}})))))
+=>
+[{:part_key ""456"", :sort_key ""fha.abs"", :note ""\""456\"",\""fha.abs\"" created 2016-12-08T21:32:20.789Z.""}
+ ...
+ {:part_key ""123"", :sort_key ""soil.ssurgo"", :note ""\""123\"",\""soil.ssurgo\"" created 2016-12-08T21:24:30.139Z.""}]

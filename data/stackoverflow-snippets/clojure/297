@@ -1,0 +1,18 @@
+(defn menu->map
+  ""Loops over the xml tree and builds the structure""
+  [tour-id menu]
+
+  (vec    ;;forcing the evaluation of the loop
+
+   (for [entry menu]
+     (let [children (childs-of-child entry)]
+       (if (not-empty children)
+         (let [{:keys [id] :as category-map} (category->map entry)]
+           (swap! db assoc-in [tour-id (query-key :categorie :id) id] category-map)
+           {:loc      [:categories/by-id id]
+            :children (menu->map tour-id children)})
+
+         (let [{:keys [id] :as panorama-map} (panorama->map entry tour-id)]
+           (swap! db assoc-in [tour-id (query-key :pano :id) id] panorama-map)
+
+           {:loc [:panos/by-id id]}))))))

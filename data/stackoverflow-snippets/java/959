@@ -1,0 +1,44 @@
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.beans.BeansException;
+
+@UIScope
+@Component
+public class GridLayout extends CustomComponent implements ApplicationContextAware {
+
+ private static ApplicationContext context;
+ private LibraryService libraryService;
+
+         @Override
+ public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        context = applicationContext;
+        libraryService = context.getBean(LibraryService.class);   
+       }
+
+
+            Grid<Book> bookGrid = new Grid<>(Book.class);
+            VerticalLayout verticalLayout = new VerticalLayout();
+
+
+            public GridLayout(){
+                createMainLayout();
+                createGrid();
+            }
+
+            private void createMainLayout() {
+                setCompositionRoot(verticalLayout);
+            }
+
+            private void createGrid() {
+                bookGrid = new Grid<>(Book.class);
+                verticalLayout.addComponent(bookGrid);
+                List<Book> books = libraryService.getAllBooks();
+                bookGrid.setItems(books);
+                bookGrid.removeAllColumns();
+                bookGrid.addColumn(Book::getTitle).setCaption(""TITLE"");
+                bookGrid.addColumn(Book::getAuthor).setCaption(""AUTHOR"");
+                bookGrid.addColumn(Book::getYear).setCaption(""YEAR"");
+
+                verticalLayout.addComponent(bookGrid);
+            }
+        }

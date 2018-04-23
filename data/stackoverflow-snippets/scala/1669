@@ -1,0 +1,15 @@
+def matrixToDataFrame(sc:SparkContext, matrix:Matrix, m_nodeColName:String):DataFrame={
+val rdd = sc.parallelize(matrix.colIter.toSeq).map(x => {
+      Row.fromSeq(x.toArray.toSeq)
+    })
+    val sc = new SQLContext(nodeContext.getSparkCtx())
+    var schema = new StructType()
+
+    val ids = ArrayBuffer[String]()
+    for (i <- 0 until matrix.rowIter.size) {
+      schema = schema.add(StructField(m_nodeColName +""_""+ i.toString(), DoubleType, true))
+      ids.append(m_nodeColName +""_""+ i.toString())
+    }
+
+    sc.sparkSession.createDataFrame(rdd, schema)
+}

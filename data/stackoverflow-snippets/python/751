@@ -1,0 +1,21 @@
+def getattr(instance, attr):
+    cls = instance if isinstance(instance, type) else type(instance)
+
+    # Recover instance attribute
+    if hasattr(instance, '__dict__') and attr in instance.__dict__:
+        attr_value = instance.__dict__[attr]
+
+    # Recover the attribute from the class
+    else:
+        attr_value = _resolve_cls_attr(cls, attr)
+
+    # We recovered a simple class attribute
+    if not hasattr(attr_value, '__get__'):
+        return attr_value
+
+    # We recovered an instance method from a class or a staticmethod descriptor
+    if instance is cls or isinstance(attr_value, staticmethod):
+        return attr_value.__get__(None, cls)
+
+    # We recovered an instance method or a custom descriptor
+    return attr_value.__get__(instance, cls)

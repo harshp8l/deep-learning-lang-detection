@@ -1,0 +1,19 @@
+SELECT [service_point_ID]
+           sum(,isnull([1],0) - isnull([2],0)) as net_usage_value
+           ,[units]
+            ,sum(isnull([1],0))[1]
+            ,sum(isnull([2],0))[2]
+            ,[channel_ID]
+            ,[date]
+            ,[time]
+            ,[is_estimate]
+            ,[UTC_offset]
+            ,[import_history_id]                     
+       FROM #temp1
+       AS SourceTable PIVOT(sum(usage_value) FOR channel IN([1],[2])) AS PivotTable
+group by [service_point_ID], [units],[channel_ID]
+            ,[date]
+            ,[time]
+            ,[is_estimate]
+            ,[UTC_offset]
+            ,[import_history_id] 

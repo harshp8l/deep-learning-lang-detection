@@ -1,0 +1,23 @@
+void foo(uint16_t *input, uint16_t *output)
+{
+    uint16x8_t q0, q1, q2, q3;
+    uint16x4x2_t data1, data2, result1, result2;
+
+    data1 = vld2_u16(input);
+    data1.val[0] = vrev64_u16(data1.val[0]);
+    data1.val[1] = vrev64_u16(data1.val[1]);
+
+    data2 = data1;
+
+    result1 = vtrn_u16(data1.val[0],data2.val[0]);
+    result2 = vtrn_u16(data1.val[1],data2.val[1]);
+
+    vst1_u16(&output[0], result1.val[1]);
+    vst1_u16(&output[4], result1.val[1]);
+    vst1_u16(&output[8], result2.val[1]);
+    vst1_u16(&output[12], result2.val[1]);
+    vst1_u16(&output[16], result1.val[0]);
+    vst1_u16(&output[20], result1.val[0]);
+    vst1_u16(&output[24], result2.val[0]);
+    vst1_u16(&output[28], result2.val[0]);
+}

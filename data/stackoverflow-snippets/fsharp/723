@@ -1,0 +1,92 @@
+namespace Game
+
+type Location = int * int
+type TargetLocation = Location
+type CurrentLocation = Location
+type Symbol = char
+type ActorType = CurrentLocation * Symbol
+type HitPoints = int
+type Health = int
+type Money = int
+type Creature = ActorType * HitPoints
+
+// Player = Creature * Health * Money
+//        = (ActorType * HitPoints) * Health * Money
+//        = ((CurrentLocation * Symbol) * HitPoints) * Health * Money
+//        = ((Location * Symbol) * HitPoints) * Health * Money
+//        = (((int * int) * char) * int) * int * int
+type Player = Creature * Health * Money 
+
+type Actor =
+    | Medication of ActorType
+    | Coin of ActorType
+    | Arrow of Creature * TargetLocation    // Had to give arrow hit point damage
+    | Zombie of Creature * TargetLocation
+
+module main =
+
+    [<EntryPoint>]
+    let main argv = 
+
+        let player = ((((0,0),'p'),15),0,0)  
+
+        let actors : Actor List = 
+            [
+                 Medication((0,0),'♥'); 
+                 Zombie((((3,2),'Z'),3),(0,0)); 
+                 Zombie((((5,1),'Z'),3),(0,0)); 
+                 Arrow((((4,3),'/'),3),(2,1));
+                 Coin((4,2),'$'); 
+            ]
+
+        let updatePlayer player (actors : Actor list) : Player =
+            let interact (((((x,y),symbol),hitPoints),health,money) : Player) otherActor = 
+                match (x,y),otherActor with
+                | (playerX,playerY),Zombie((((opponentX,opponentY),symbol),zombieHitPoints),targetLocation) when playerX = opponentX && playerY = opponentY -> 
+                    printfn ""Player is hit by creature for %i hit points."" zombieHitPoints
+                    ((((x,y),symbol),hitPoints - zombieHitPoints),health,money)
+                | (playerX,playerY),Arrow((((opponentX,opponentY),symbol),arrowHitPoints),targetLocation)  when playerX = opponentX && playerY = opponentY ->  
+                    printfn ""Player is hit by arrow for %i hit points."" arrowHitPoints
+                    ((((x,y),symbol),hitPoints - arrowHitPoints),health,money)
+                | (playerX,playerY),Coin((opponentX,opponentY),symbol)  when playerX = opponentX && playerY = opponentY ->  
+                    printfn ""Player got 1$."" 
+                    ((((x,y),symbol),hitPoints),health,money + 1)
+                | (playerX,playerY),Medication((opponentX,opponentY),symbol)  when playerX = opponentX && playerY = opponentY ->  
+                    printfn ""Player is healed by 1.""
+                    ((((x,y),symbol),hitPoints),health+1,money)
+                | _ ->  
+                    // When we use guards in matching, i.e. when clause, F# requires a _ match 
+                    ((((x,y),symbol),hitPoints),health,money) 
+            let rec updatePlayerInner player actors =
+                match actors with
+                | actor::t ->
+                    let player = interact player actor
+                    updatePlayerInner player t
+                | [] -> player
+            updatePlayerInner player actors
+
+        let rec play player actors =
+            let player = updatePlayer player actors
+            play player actors
+
+        // Since this is example code the following line will cause a stack overflow.
+        // I put it in as an example function to demonstrate how the code can be used.
+        // play player actors
+
+        // Test
+
+        let testActors : Actor List = 
+            [
+                Zombie((((0,0),'Z'),3),(0,0))
+                Arrow((((0,0),'/'),3),(2,1))
+                Coin((0,0),'$')
+                Medication((0,0),'♥')
+            ]
+
+        let updatedPlayer = updatePlayer player testActors
+
+        printf ""Press any key to exit: ""
+        System.Console.ReadKey() |> ignore
+        printfn """"
+
+        0 // return an integer exit code

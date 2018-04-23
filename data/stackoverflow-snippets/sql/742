@@ -1,0 +1,25 @@
+Select A.*
+      ,Nodes = concat('/',dense_rank() over (Order By N1),'/'
+              ,left(nullif(dense_rank() over (Partition By N1                      Order By N2)-1,0),5)+'/'
+              ,left(nullif(dense_rank() over (Partition By N1,N2                   Order By N3)-1,0),5)+'/'
+              ,left(nullif(dense_rank() over (Partition By N1,N2,N3                Order By N4)-1,0),5)+'/'
+              ,left(nullif(dense_rank() over (Partition By N1,N2,N3,N4             Order By N5)-1,0),5)+'/'
+              ,left(nullif(dense_rank() over (Partition By N1,N2,N3,N4,N5          Order By N6)-1,0),5)+'/'
+              ,left(nullif(dense_rank() over (Partition By N1,N2,N3,N4,N5,N6       Order By N7)-1,0),5)+'/'
+              ,left(nullif(dense_rank() over (Partition By N1,N2,N3,N4,N5,N6,N7    Order By N8)-1,0),5)+'/'
+              ,left(nullif(dense_rank() over (Partition By N1,N2,N3,N4,N5,N6,N7,N8 Order By N9)-1,0),5)+'/'
+              )
+ From  YourTable A
+ Cross Apply (
+                Select N1 = ltrim(rtrim(xDim.value('/x[1]','varchar(max)')))
+                      ,N2 = ltrim(rtrim(xDim.value('/x[2]','varchar(max)')))
+                      ,N3 = ltrim(rtrim(xDim.value('/x[3]','varchar(max)')))
+                      ,N4 = ltrim(rtrim(xDim.value('/x[4]','varchar(max)')))
+                      ,N5 = ltrim(rtrim(xDim.value('/x[5]','varchar(max)')))
+                      ,N6 = ltrim(rtrim(xDim.value('/x[6]','varchar(max)')))
+                      ,N7 = ltrim(rtrim(xDim.value('/x[7]','varchar(max)')))
+                      ,N8 = ltrim(rtrim(xDim.value('/x[8]','varchar(max)')))
+                      ,N9 = ltrim(rtrim(xDim.value('/x[9]','varchar(max)')))
+                From  (Select Cast('<x>' + replace((Select replace(stuff([canonicalName],1,1,''),'\','§§Split§§') as [*] For XML Path('')),'§§Split§§','</x><x>')+'</x>' as xml) as xDim) as A 
+             ) B
+ Order By 1

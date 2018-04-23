@@ -1,0 +1,25 @@
+import pandas as pd
+import numpy as np
+
+# make up some timestamps in ascending order
+stamps = ['08-01-01 10:00', '08-01-01 10:01', '08-01-01 10:02', 
+          '08-01-02 03:10', '08-01-02 03:11', '08-02-15 13:34', 
+          '08-03-06 09:06', '08-03-06 09:07', '08-03-06 09:08', ]
+
+# get original timestamps into a pandas dataframe
+ts = pd.DataFrame(stamps, columns=['orig_timestamp'])
+# assuming that the timestamps are in year-month-day hour:minute format
+ts['Timestamp'] = pd.to_datetime(ts['orig_timestamp'], format='%y-%m-%d %H:%M')
+# get the timedelta between consecutive rows, set to 0 for first row
+ts['Timedelta'] = ts['Timestamp'].diff().fillna(value=0)
+# get the timedelta in minutes
+ts['minute_delta'] = ts['Timedelta'].astype('timedelta64[m]')
+# set to True whenever a new Session begins, i.e. timedelta is not one minute
+ts['newSession'] = np.where(ts['minute_delta'] == 1, False, True)
+# cumulative sum of session starts
+ts['SessionID'] = ts['newSession'].cumsum()
+# group timestamps by SessionID and count their duration
+grouped_timestamps = ts[['orig_timestamp', 'SessionID']].\
+                         groupby(['SessionID']).agg(['first', 'last', 'count'])
+print(ts[['orig_timestamp', 'minute_delta', 'newSession', 'SessionID']])
+print(grouped_timestamps)

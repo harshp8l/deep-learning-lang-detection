@@ -1,0 +1,24 @@
+(defn collect-nested-non-numbers
+  ;; If called with one argument, call itself with empty accumulator
+  ;; and that argument.
+  ([form] (collect-nested-non-numbers [] form))
+  ([acc x]
+   (if (coll? x)
+     ;; If x is a collection, use reduce to call itself on every element.
+     (reduce collect-nested-non-numbers acc x)
+
+     ;; Put x into the accumulator if it's a non-number
+     (if (number? x)
+       acc
+       (conj acc x)))))
+
+;; A function that ends in a question mark is (by convention) one that
+;; returns a boolean.
+(defn only-numbers? [form]
+  (empty? (collect-nested-non-numbers form)))
+
+;; Our function that does stuff becomes very simple.
+;; Which is a good thing, cause it's difficult to test.
+(defn warn-on-non-numbers [form]
+  (when-not (only-numbers? form)
+    (println ""This list contains a non-numeric value"")))

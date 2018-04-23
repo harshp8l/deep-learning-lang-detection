@@ -1,0 +1,53 @@
+import org.apache.spark.sql.functions._
+import java.math.BigDecimal
+
+val df = Seq(
+  (100, 1, new BigDecimal(10)),
+  (100, 2, new BigDecimal(20)),
+  (100, 3, new BigDecimal(30)),
+  (100, 4, new BigDecimal(10)),
+  (100, 5, new BigDecimal(20)),
+  (100, 6, new BigDecimal(60)),
+  (200, 1, new BigDecimal(10)),
+  (200, 2, new BigDecimal(20)),
+  (200, 3, new BigDecimal(30)),
+  (300, 4, new BigDecimal(10)),
+  (300, 5, new BigDecimal(20)),
+  (300, 6, new BigDecimal(60))
+).toDF(""ID"", ""MonthPrior"", ""Amount"")
+
+// UDF to combine 2 array-type columns to map
+def arrayToMap = udf(
+  (a: Seq[Int], b: Seq[BigDecimal]) => (a zip b).toMap
+)
+
+// Create array columns which get zipped into a map
+val df2 = df.groupBy(""ID"").agg(
+  collect_list(col(""MonthPrior"")).as(""MonthList""),
+  collect_list(col(""Amount"")).as(""AmountList"")
+).select(
+  col(""ID""), arrayToMap(col(""MonthList""), col(""AmountList"")).as(""MthAmtMap"")
+)
+
+// UDF to sum map values for keys from 1 thru n (0 for all)
+def sumMapValues = udf(
+  (m: Map[Int, BigDecimal], n: Int) =>
+    if (n > 0)
+      m.collect{ case (k, v) => if (k <= n) v else new BigDecimal(0) }.reduce(_ add _)
+    else
+      m.collect{ case (k, v) => v }.reduce(_ add _)
+)
+
+val df3 = df2.withColumn( ""Amount1Mth"", sumMapValues(col(""MthAmtMap""), lit(1)) ).
+  withColumn( ""Amount1to3Mth"", sumMapValues(col(""MthAmtMap""), lit(3)) ).
+  withColumn( ""Amount_AllMonths"", sumMapValues(col(""MthAmtMap""), lit(0)) ).
+  select( col(""ID""), col(""Amount1Mth""), col(""Amount1to3Mth""), col(""Amount_AllMonths"") )
+
+df3.show(truncate=false)
++---+--------------------+--------------------+--------------------+
+| ID|          Amount1Mth|       Amount1to3Mth|    Amount_AllMonths|
++---+--------------------+--------------------+--------------------+
+|300|               0E-18|               0E-18|90.00000000000000...|
+|100|10.00000000000000...|60.00000000000000...|150.0000000000000...|
+|200|10.00000000000000...|60.00000000000000...|60.00000000000000...|
++---+--------------------+--------------------+--------------------+

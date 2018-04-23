@@ -1,0 +1,27 @@
+type nfe = XmlProvider<Schema=""nfe_v4.00.xsd"", ResolutionFolder=""c:/temp/nfe"">
+
+let enderDest1 = nfe.EnderDest(""test1"", """", None, """", """", """", """", None, None, None, None)
+let enderDest2 = nfe.EnderDest(""test2"", """", None, """", """", """", """", None, None, None, None)
+let dest = 
+    nfe.Dest(cnpj=None, 
+             cpf=Some ""81679580515"",
+             idEstrangeiro=None, 
+             xNome=Some ""TONY"", 
+             enderDest=Some enderDest1,
+             indIeDest="""",
+             ie=None,
+             isuf=None, 
+             im=None, 
+             email=Some ""tonyvca@hotmail.com"")
+
+
+let replace (dest: nfe.Dest) (enderDest: nfe.EnderDest) =
+    match dest.EnderDest with
+    | Some x -> x.XElement.ReplaceWith(enderDest.XElement)
+    | None -> dest.XElement.Add(enderDest.XElement)
+
+let xml1 = dest.XElement.ToString()
+
+replace dest enderDest2
+
+let xml2 = dest.XElement.ToString()

@@ -1,0 +1,20 @@
+$root = '\\fqdn\path'
+$files = Get-ChildItem -Path $root -File
+
+foreach ($file in $files) {
+    $match = $file.BaseName -match '.*_\d(?<year>\d{2})(?<month>\d{2}).*'    
+    if (-not $match) {
+        Write-Warning ""Could not extract year/month from: $file""
+        continue
+    }    
+      $subdir = [IO.Path]::Combine($root, $matches.year, $matches.month)
+    if (-not (Test-Path -Path $subdir)) {
+        New-Item -Path $subdir -ItemType Directory > $null
+    }
+    $newfile = Join-Path -Path $subdir -ChildPath $file.Name
+    if (Test-Path -Path $newfile) {
+        Write-Warning ""File $($file.Name) already exists in: $subdir""
+        continue
+    }
+    Move-Item -Path $file.FullName -Destination $subdir
+}

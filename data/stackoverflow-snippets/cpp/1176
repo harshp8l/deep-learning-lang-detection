@@ -1,0 +1,39 @@
+void LongComputation(std::atomic<bool>& running, std::atomic<float>& progress)
+{
+    // do long computation
+    while (running)
+    {
+
+        //update progress 
+    }
+}
+
+void ProgressCounter(std::atomic<bool>& running, std::atomic<float>& progress)
+{
+    while (running)
+    {
+        std::cout << progress << ""\n"";
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+    }
+}
+
+int main() {
+
+    std::atomic<bool> running{true};
+    std::atomic<float> progress{0};
+
+    std::thread t1([&running, &progress]() { LongComputation(running, progress); });
+    std::thread t2([&running, &progress]() { ProgressCounter(running, progress); });
+
+    //simulating GUI loop 
+    while (!getch())
+    {
+
+    }
+
+    running = false;
+    t1.join();
+    t2.join();
+    return 0;
+
+}

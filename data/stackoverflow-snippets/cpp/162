@@ -1,0 +1,44 @@
+#include <iostream>
+#include <cstdlib>
+
+using namespace std;
+
+struct A
+{
+    int v;
+
+    static __device__ void add(A* a, int n)
+    {
+        a->v += n;
+    }
+};
+
+template<typename Fun, typename... Args>
+__global__
+void launchStatic(Fun f, Args... as)
+{
+    f(as...);
+}
+
+
+void __global__ mainKernel(A* a)
+{
+    launchStatic<<<1,1>>>(&A::add, a, 5);
+}
+
+int main(int argc, char * argv[])
+{
+    A* a;
+    cudaMallocManaged(&a, sizeof(A));
+
+    a->v = 0;
+
+    cout << a->v << endl;
+
+    mainKernel<<<1,1>>>(a);
+    cudaDeviceSynchronize();
+
+    cout << a->v << endl;
+
+    return EXIT_SUCCESS;
+}

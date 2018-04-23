@@ -1,0 +1,23 @@
+import spark.implicits._
+import org.apache.spark.sql.functions._
+
+val df1 = Seq(
+  (Seq(""k"", ""l""), 1), (Seq(""m"", ""n""), 2), (Seq(""o""), 3)
+).toDF(""key1"", ""value"")
+val df2 = Seq(""k"", ""l"", ""m"", ""n"", ""o"").toDF(""key2"")
+
+val keys = df2.as[String].collect.map((_, 0)).toMap
+
+val toKeyMap = udf((xs: Seq[String]) => 
+   xs.foldLeft(keys)((acc, x) => acc + (x -> 1)))
+
+
+df1.select(toKeyMap($""key1"").alias(""key3""), $""value"").show(false)
+
+// +-------------------------------------------+-----+
+// |key3                                       |value|
+// +-------------------------------------------+-----+
+// |Map(n -> 0, m -> 0, l -> 1, k -> 1, o -> 0)|1    |
+// |Map(n -> 1, m -> 1, l -> 0, k -> 0, o -> 0)|2    |
+// |Map(n -> 0, m -> 0, l -> 0, k -> 0, o -> 1)|3    |
+// +-------------------------------------------+-----+

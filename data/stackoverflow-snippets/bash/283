@@ -1,0 +1,37 @@
+TARGETDIR=./pdb_files
+for dir in $(find . -maxdepth 1 -type d -not -name .)
+do
+  PREFIXES=( $(
+    for file in ${dir}/2_4/*.txt
+    do
+      filename=$(basename $file)
+      echo ${filename%%\#*.txt}
+    done | sort -u 
+  ) )
+
+  if [ ${PREFIXES[0]} != '*.txt' ]
+  then
+    for oldpdb in ${dir}/*.pdb
+    do
+      pdbname=${oldpdb%%.pdb}
+      pdbsuffix=$(IFS=_ ; echo ""${PREFIXES[*]}"")
+      newpdb=${TARGET}/$(basename $pdbname)_${pdbsuffix}.pdb
+      echo -------------------------
+      echo Directory: $dir
+      echo Old file name: $oldpdb
+      echo New file name: $newpdb
+      # I think this is what you want?
+      cp $oldpdb $newpdb
+    done
+  else
+    for oldpdb in ${dir}/*.pdb
+    do
+      echo -------------------------
+      echo Directory: $dir
+      echo Old file name: $oldpdb
+      echo New file name: do not rename file
+      # maybe you want to copy unmodified files?
+      # cp $oldpdb $TARGET
+    done
+  fi
+done

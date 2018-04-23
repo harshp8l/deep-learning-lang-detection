@@ -1,0 +1,255 @@
+<?php
+    include_once('funcionesComunes.php');
+    require_once('mysqli_connect.php');
+    $outputTblEvolucion = '';
+    $outputTblPaciente = $outputData = '';
+    $searchByRut_error = '';
+    $searchByRut = '';
+    $dv_input = '';
+    $iCompleteFirstQuery = $iHaveToDoSecondQuery = 0;
+    $countDataFromTblPaciente = 0;
+    //$searchByRut = $_GET[""searchByRut""];
+    $searchByRut = isset($_GET[""searchByRut""]) ? $_GET[""searchByRut""] : '';
+    $dv = isset($_GET[""dv""]) ? $_GET[""dv""] : '';
+    echo ""<br>"". ""0searchByRut={"" . $searchByRut .""}"";
+    echo ""<br>"". ""0dv={"" . $dv .""}"";
+    if(isset($_GET['searchByRut']))
+    {
+        //there are just validation if my id entered to search is valid, please ignore this part:
+        $error = '';
+        $dv                   = $_GET[""dv""];
+        $dv_input             = $_GET[""dv""];
+        $searchByRut  = $_GET[""searchByRut""];
+        echo ""<br>"". ""searchByRut={"" . $searchByRut .""}"";
+        if ($dv == ""k"") 
+            $dv = ""K"";
+        $searchByRut_error = rutValidar($searchByRut, $dv, $error);
+
+        //here I am checking if any error ocurred in the previous validation
+        if ($searchByRut_error == '')
+        {
+            $rut = $_GET['searchByRut'];
+            $queryDatosPaciente = mysqli_query($dbc,
+                                       ""SELECT CONCAT(pa.clmNombres, ' ', pa.clmApellidos) as clmNombres
+                                              ,pa.clmEmail
+                                       FROM    tblPaciente    pa
+                                         WHERE  pa.clmRut    = '$rut'
+                                          ""
+                                ) or die('Error while searching!: {' . mysqli_error($dbc) . '}');
+            $countDataFromTblPaciente = mysqli_num_rows($queryDatosPaciente);
+            $iCompleteFirstQuery = 1;
+
+        }
+    }
+
+    //this variable iCompleteFirstQuery will tell me that I have to execute second query in detail table tblEvolucion, because I found already the main record in customer table tblPaciente
+    if ($iCompleteFirstQuery == 1)
+    {
+        if($countDataFromTblPaciente == 0)
+        {
+            $outputTblPaciente = 'It did not find client!';
+            $iHaveToDoSecondQuery = 0;
+        }
+        else
+        {
+            //Here I just build the Table with result from query of customer tblPaciente
+            $iHaveToDoSecondQuery = 1;
+            $outputTblPaciente .= ""<table id='table1' border='1' align='left' cellspacing='5' cellpadding='8'>"";
+            $outputTblPaciente .= ""<tr><td align='left'><b>Name     </b></td>
+                                         <td align='left'><b>Email  </b></td>
+                                     </tr>"";
+
+            while($row = mysqli_fetch_array($queryDatosPaciente))
+            {
+                $nombres    = utf8_encode($row['clmNombres']);
+                $email      = $row['clmEmail'];
+
+                $outputTblPaciente .= ""<td align='left'> $nombres      </td>
+                                         <td align='left'> $email        </td>"";
+                $outputTblPaciente .= ""</tr></table><br><br><br><br><br>"";
+            }
+        }
+    }
+
+    //In this IF condition is the part that I required to make as pagination, for the result of table tblEvolucion
+    if ($iHaveToDoSecondQuery == 1)
+    {
+        $sqlCount = ""SELECT  COUNT(*)
+                    FROM     tblEvolucion    ev
+                    WHERE    ev.clmRut = '$rut'"";
+        $resultadoQueryCount = mysqli_query($dbc,$sqlCount) or die('Error to select!: {' . mysqli_error($dbc) . '}');
+
+        $r = mysqli_fetch_row($resultadoQueryCount);
+        $countRecordsFound = $r[0];
+        echo ""<br>"". ""countRecordsFound={"" . $countRecordsFound .""}"";
+        echo ""<br><br>"";
+
+        $resultsPerPage = 2;
+        $totalPages = ceil($countRecordsFound / $resultsPerPage);
+
+        // get the current page or set a default
+        if (isset($_GET['currentPage']) && is_numeric($_GET['currentPage']))
+        {
+            // cast var as int
+            $currentPage = (int) $_GET['currentPage'];
+        }
+        else
+        {
+            // default page num
+            $currentPage = 1;
+        }
+
+        // if current page is greater than total pages...
+        if ($currentPage > $totalPages)
+        {
+            // set current page to last page
+            $currentPage = $totalPages;
+        }
+        // if current page is less than first page...
+        if ($currentPage < 1)
+        {
+            // set current page to first page
+            $currentPage = 1;
+        }
+
+        // the offset of the list, based on current page 
+        $offset = ($currentPage - 1) * $resultsPerPage;
+
+        // get the info from the db 
+        $sqlDespliegaDatos =""SELECT ev.clmDescripcion
+                             FROM     tblEvolucion    ev
+                             WHERE    ev.clmRut    = '$rut'
+                             ORDER by ev.clmSerie DESC
+                             LIMIT  $offset
+                                   ,$resultsPerPage"";
+        $resultadoQueryDespliegaDatos = mysqli_query($dbc,$sqlDespliegaDatos) or die('Error to select!: {' . mysqli_error($dbc) . '}');
+
+        $iHaveToDoSecondQuery = 1;
+        if($countRecordsFound == 0)
+        {
+            $outputData = 'No reults from Table tblEvolucion!';
+        }
+        else
+        {
+            //From there I build the table with my records from tblEvolucion wish I required to be with pagination
+            $outputData = '';
+            $outputData .= '<table border=1 align=""left"" cellspacing=""5"" cellpadding=""8"">
+                                        <tr><td align=""left""><b>Description                  </b></td>
+                                    </tr>';
+
+            while ($list = mysqli_fetch_assoc($resultadoQueryDespliegaDatos))
+            {
+                $descripcion               = utf8_encode($list['clmDescripcion']);
+
+                $outputData .= '<tr>';
+                $outputData .= ""<td align='left'><textarea id='descripcion' name='descripcion' tabindex='4' cols='50' rows='6' maxlength='1000'
+                                                           value = '"".$descripcion.""' 
+                                                           readonly>"".($descripcion).""</textarea>
+                                </td>"";
+                $outputData .= '</tr>';
+
+            }
+            $outputData .= '</table>';
+
+            $outputTblEvolucion = '';
+            /******  build the pagination links ******/
+            // range of num links to show
+            $range = 3;
+
+            // if not on page 1, don't show back links
+            if ($currentPage > 1)
+            {
+                // show << link to go back to page 1
+                //$outputTblEvolucion .= "" <a href='{$_SERVER['PHP_SELF']}?currentPage=1'> << </a> "";
+                $outputTblEvolucion .= "" <a href='{$_SERVER['PHP_SELF']}?currentPage=1""
+                                                                          .""&searchByRut=$searchByRut""
+                                                                          .""&dv=$dv
+                                                                            '>First Page</a> "";
+                // get previous page num
+                $prevpage = $currentPage - 1;
+                // show < link to go back to 1 page
+                //$outputTblEvolucion .= "" <a href='{$_SERVER['PHP_SELF']}?currentPage=$prevpage'> Previous Page+ </a> "";
+                $outputTblEvolucion .= "" <a href='{$_SERVER['PHP_SELF']}?currentPage=$prevpage""
+                                                                          .""&searchByRut=$searchByRut""
+                                                                          .""&dv=$dv
+                                                                            '>Previous Page+ </a> "";
+
+            }
+
+            // loop to show links to range of pages around current page
+            for ($x = ($currentPage - $range); $x < (($currentPage + $range) + 1); $x++)
+            {
+                // if it's a valid page number...
+                if (($x > 0) && ($x <= $totalPages))
+                {
+                    // if we're on current page...
+                    if ($x == $currentPage)
+                    {
+                        // 'highlight' it but don't make a link
+                        $outputTblEvolucion .= "" [<b>$x</b>] "";
+
+                    // if not current page...
+                    } else
+                    {
+                        // make it a link
+                        //$outputTblEvolucion .= "" <a href='{$_SERVER['PHP_SELF']}?currentPage=$x'>$x</a> "";
+                        //ERROR
+                        $outputTblEvolucion .= "" <a href='{$_SERVER['PHP_SELF']}?currentPage=$x""
+                                                                                .""&searchByRut=$searchByRut""
+                                                                                .""&dv=$dv
+                                                                                    '>$x</a> "";
+
+                    }
+                }
+            }
+
+            // if not on last page, show forward and last page links        
+            if ($currentPage != $totalPages)
+            {
+                // get next page
+                $nextpage = $currentPage + 1;
+                // echo forward link for next page
+                //Here is wich I think I am doing something wrong and I though to pass also my variable searchByRut but I am not able to received after pressing click on ""Next Page""
+                $outputTblEvolucion .= "" <a href='{$_SERVER['PHP_SELF']}?currentPage=$nextpage""
+                                                                          .""&searchByRut=$searchByRut""
+                                                                          .""&dv=$dv
+                                                                            '>Next Page</a> "";
+                // echo forward link for lastpage
+                $outputTblEvolucion .= "" <a href='{$_SERVER['PHP_SELF']}?currentPage=$totalPages""
+                                                                          .""&searchByRut=$searchByRut""
+                                                                          .""&dv=$dv
+                                                                            '>Last Page</a> "";
+            } // end if
+        }
+    }
+?>
+<html>
+    <head>
+        <title>Pagination with Form</title>
+    </head>
+    <body>
+        <h1>Pagination with Form</h1>
+        <form id=""frmPacienteBuscar"" action="""" method=""get"">
+            <fieldset>
+                <span class=""error""><?= $searchByRut_error ?></span><br>
+                RUT: <input name=""searchByRut"" id=""searchByRut"" type=""text"" placeholder=""Search by RUT.."" tabindex=""2"" size=""15"" maxlength=""8""
+                            value=""<?= $searchByRut ?>"" > - 
+                     <input name=""dv"" id=""dv"" type=""text"" value=""<?= $dv_input ?>"" size=""1"" tabindex=""2"" maxlength=""1""
+                            value=""<?= $dv_input ?>"" >  Sample: 12345678-1<br>
+                <button name=""buscar"" type=""submit"" id=""contact-submit"" data-submit=""...Sending"">Search</button><br>
+            </fieldset>
+        </form>
+        <?php
+            /*Here I will be printing the result of:
+                - the main table from tblPaciente
+                - the table which I required to do pagination tblEvolucion
+                - the links to navigate to the next and previous pages
+            */
+            echo $outputTblPaciente;
+            echo ""<br>"";
+            echo $outputData;
+            echo ""<br>"";
+            echo $outputTblEvolucion;
+        ?>
+    </body>
+</html>

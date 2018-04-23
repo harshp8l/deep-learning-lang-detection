@@ -1,0 +1,37 @@
+add_action( 'save_post', 'testimonials_save_post' );
+function testimonials_save_post( $post_id ) {
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
+        return;
+
+    if ( ! empty( $_POST['testimonials'] ) && ! wp_verify_nonce( $_POST['testimonials'], 'testimonials' ) )
+        return;
+
+    if ( ! empty( $_POST['post_type'] ) && 'page' == $_POST['post_type'] ) {
+        if ( ! current_user_can( 'edit_page', $post_id ) )
+            return;
+    } else {
+        if ( ! current_user_can( 'edit_post', $post_id ) )
+            return;
+    }
+
+    if ( ! wp_is_post_revision( $post_id ) && 'testimonials' == get_post_type( $post_id ) ) {
+        remove_action( 'save_post', 'testimonials_save_post' );
+
+        wp_update_post( array(
+            'ID' => $post_id,
+            'post_title' => 'Testimonial - ' . $post_id
+        ) );
+
+        add_action( 'save_post', 'testimonials_save_post' );
+    }
+
+    if ( ! empty( $_POST['testimonial'] ) ) {
+        $testimonial_data['client_name'] = ( empty( $_POST['testimonial']['client_name'] ) ) ? '' : sanitize_text_field( $_POST['testimonial']['client_name'] );
+        $testimonial_data['source'] = ( empty( $_POST['testimonial']['source'] ) ) ? '' : sanitize_text_field( $_POST['testimonial']['source'] );
+        $testimonial_data['link'] = ( empty( $_POST['testimonial']['link'] ) ) ? '' : esc_url( $_POST['testimonial']['link'] );
+
+        update_post_meta( $post_id, '_testimonial', $testimonial_data );
+    } else {
+        delete_post_meta( $post_id, '_testimonial' );
+    }
+}

@@ -1,0 +1,38 @@
+func (f Foo) ValueStrings() []string {
+  v := reflect.ValueOf(f)
+  ss := make([]string, v.NumField())
+  for i := range ss {
+    ss[i] = fmt.Sprintf(""%v"", v.Field(i))
+  }
+  return ss
+}
+
+func main() {
+  foos := []Foo{Foo{1, true, ""foo"", 2.34, nil}, Foo{2, false, ""bar"", 3.45, 1234}}
+  w := csv.NewWriter(os.Stdout)
+
+  // Write the CSV header.
+  t := reflect.TypeOf(foos[0])
+  names := make([]string, t.NumField())
+  for i := range names {
+    names[i] = t.Field(i).Name
+  }
+  if err := w.Write(names); err != nil {
+    panic(err)
+  }
+
+  // Write the CSV rows.
+  for _, foo := range foos {
+    if err := w.Write(foo.ValueStrings()); err != nil {
+      panic(err)
+    }
+  }
+  w.Flush()
+
+  if err := w.Error(); err != nil {
+    panic(err)
+  }
+}
+// A,B,C,D,E
+// 1,true,foo,2.34,<nil>
+// 2,false,bar,3.45,1234

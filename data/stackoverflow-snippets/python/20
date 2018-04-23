@@ -1,0 +1,19 @@
+from datetime import datetime
+from xlrd import xldate
+
+now = datetime.now()
+
+def datetime2ole(date):
+    date = datetime.strptime(date, '%d-%b-%Y')
+    OLE_TIME_ZERO = datetime(1899, 12, 30)
+    delta = date - OLE_TIME_ZERO
+    return float(delta.days) + (float(delta.seconds) / 86400)  # 86,400 seconds in day
+
+def datetime2xl(date):
+    date = datetime.strptime(date, '%d-%b-%Y')
+    parts = ('year', 'month', 'day', 'hour', 'minute', 'second')
+    components = tuple(getattr(date, x) for x in parts)
+    return xldate.xldate_from_datetime_tuple(components, 0)
+
+print(datetime2ole('22-Apr-2018'))  # 43212.0
+print(datetime2xl('22-Apr-2018'))   # 43212.0

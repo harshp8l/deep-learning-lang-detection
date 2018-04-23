@@ -1,0 +1,23 @@
+$ cat ip.txt
+23 12 0 33
+3 4 19
+5 3 0
+34 01 02
+
+$ # mapping each element except last to add x^n
+$ # -a option will auto-split input on whitespaces, content in @F array
+$ # $#F will give index of last element (indexing starts at 0)
+$ # $i>0 condition check to prevent x^0 for last element
+$ perl -lane '$i=$#F; print join ""+"", map {$i>0 ? $_.""x^"".$i-- : $_} @F' ip.txt
+23x^3+12x^2+0x^1+33
+3x^2+4x^1+19
+5x^2+3x^1+0
+34x^2+01x^1+02
+
+$ # with post processing
+$ perl -lape '$i=$#F; $_ = join ""+"", map {$i>0 ? $_.""x^"".$i-- : $_} @F;
+              s/\+0(x\^\d+)?\b|x\K\^1\b//g' ip.txt 
+23x^3+12x^2+33
+3x^2+4x+19
+5x^2+3x
+34x^2+01x+02

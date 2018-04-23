@@ -1,0 +1,29 @@
+import org.apache.spark.sql.functions._
+import scala.collection.mutable
+
++----+---------+
+|col1|     col2|
++----+---------+
+|   a|[a, b, c]|
+|   d|[a, b, c]|
+|   e|[a, b, c]|
+|  aa|[a, b, c]|
+|   c|[a, b, c]|
+|   f|       []|
++----+---------+
+
+def compareStrAgainstArray() = udf((str: String,lst: mutable.WrappedArray[String]) => 
+                                 if (lst.exists(str.matches(_)))""present"" else ""missing"")  
+
+df.withColumn(""status"",compareStrAgainstArray()($""col1"",$""col2"")).show()
+
++----+---------+-------+
+|col1|     col2| status|
++----+---------+-------+
+|   a|[a, b, c]|present|
+|   d|[a, b, c]|missing|
+|   e|[a, b, c]|missing|
+|  aa|[a, b, c]|missing|
+|   c|[a, b, c]|present|
+|   f|       []|missing|
++----+---------+-------+    

@@ -1,0 +1,31 @@
+$YourService = ""YourServiceName""
+$credential = Get-Credential
+
+$params = @{
+  ""Namespace"" = ""root\CIMV2""
+  ""Class"" = ""Win32_Service""
+  ""Filter"" = ""Name='$YourService'""
+}
+$service = Get-WmiObject @params
+
+$service.Change($null,
+  $null,
+  $null,
+  $null,
+  $null,
+  $null,
+  $credential.UserName,
+  $credential.GetNetworkCredential().Password,
+  $null,
+  $null,
+  $null)
+
+Restart-Service $YourService
+
+Get-WMIObject -Class Win32_Service -Filter  ""Name='$YourService'"" | 
+
+Select-Object Name,StartName | Write-Host -fore Green
+
+Write-Host -fore Yellow ***Verify Correct Login Account Above ***
+
+PAUSE

@@ -1,0 +1,22 @@
+class FooSpec extends AsyncWordSpec {
+
+  trait IntAdder {
+    val adder = new Adder[Int] {
+      override implicit val num = IntIsIntegral
+      private var sum = Future.successful(num.zero)
+      override def add(number: Int): Unit = sum = sum.map(_ + number)
+      override def result: Future[Int] = sum
+    }
+  }
+  trait SomeMoreFixture {
+
+  }
+
+  ""Testing"" should {
+    ""be productive"" in {
+      val fixture = new IntAdder with SomeMoreFixture
+      import fixture._
+      Foo.doubleSum(adder, Seq(1, 2, 3)).map(sum => assert(sum == 12))
+    }
+  }
+}

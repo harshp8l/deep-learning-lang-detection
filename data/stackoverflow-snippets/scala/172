@@ -1,0 +1,33 @@
+import scala.concurrent.{Await, Future}
+
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+
+val f1: Future[Seq[Int]] = Future {
+  // Do something here
+  Seq(1, 2, 3)
+}.recover { case ex =>
+    // If Future fails, let's log an exception and return default value
+    println(s""Unable to complete f1: $ex"")
+    Seq.empty[Int]
+}
+
+val f2: Future[Seq[Int]] = Future {
+  // Do something here
+  Seq(4, 5, 6)
+}.recover { case ex =>
+  // If Future fails, let's log an exception and return default value
+  println(s""Unable to complete f2: $ex"")
+  Seq.empty[Int]
+}
+// f1 and f2 have started
+
+// we use for-comprehension on Future to get the result
+val f = for {
+  seq1 <- f1
+  seq2 <- f2
+} yield seq1 ++ seq2
+
+// Blocking current thread and wait 1 seconds for the result
+val r = Await.result(f, 1.seconds)
+println(s""Result: $r"")

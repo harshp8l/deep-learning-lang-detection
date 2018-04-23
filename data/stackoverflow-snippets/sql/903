@@ -1,0 +1,11 @@
+SELECT a.id_brg, a.nm_brg, a.jen_sat, a.nm_kat,a.stok,a.laku, (a.stok-a.laku) difference FROM(SELECT B.id_brg, B.nm_brg, jen_sat, nm_kat, SUM( IFNULL(SB.stok, 0 )) stok, IFNULL(laku, 0) laku
+FROM barang B
+JOIN satuan S ON B.id_sat = S.id_sat
+JOIN kategori ON barang.id_kat = kategori.id_kat
+LEFT JOIN stok_brg SB ON B.id_brg = SB.id_brg
+LEFT JOIN (SELECT B.id_brg, SUM( IFNULL(BL.dibeli, 0)) laku
+           FROM barang B
+           INNER JOIN brg_laku BL ON B.id_brg = BL.id_brg
+           WHERE (a.stok-a.laku) <= 3
+           GROUP BY B.id_brg ASC) brg_laku BL ON B.id_brg = BL.id_brg
+GROUP BY B.id_brg ASC) a;

@@ -1,0 +1,28 @@
+class HelloWorldTask : RunControllableTask<void> {
+  // see https://stackoverflow.com/a/16729619/1329652
+  ...
+};
+
+class MainWindow : public QMainWindow {
+  QThreadPool m_pool;
+  QVector<QFuture<void>> m_futures;
+public:
+  explicit MainWindow(QWidget * parent = {}) : QMainWindow(parent) {
+    m_pool.setMaxThreadCount(1);
+  }
+  void startTask() {
+    auto future = TaskExecutor::run(new HelloWorldTask());
+    m_futures.push_back(future);
+  }
+  void stopAllTasks() {
+    m_pool.cancel();
+    for (auto &future : m_futures)
+      future.cancel();
+    while (!m_futures.isEmpty())
+      m_futures.takeLast().waitForFinished(); // this will free the task too!
+    Q_ASSERT(!m_pool.activeThreadCount());
+  }
+  ~MainWindow() override {
+    stopAllTasks();
+  }
+};

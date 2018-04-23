@@ -1,0 +1,73 @@
+private final static Pattern VERSION_PREFIX_PATTERN = Pattern.compile(""/v(\\d+)/"");
+private final static Pattern LATEST_PREFIX_PATTERN = Pattern.compile(""/latest/"");
+
+private int apiVersion;
+private boolean latest;
+
+public ApiVersionCondition(int apiVersion, boolean latest) {
+    this.apiVersion = apiVersion;
+    this.latest = latest;
+}
+
+/**
+ * Latest definition will take effect, that means method definition will override the classes definition
+ *
+ * @param otherApiVersionCondition other condition that is matching.
+ * @return latest definition of matching condition.
+ */
+public ApiVersionCondition combine(ApiVersionCondition otherApiVersionCondition) {
+    return new ApiVersionCondition(otherApiVersionCondition.getApiVersion(), otherApiVersionCondition.isLatest());
+}
+
+/**
+ * Define matcher to match the pattern for api versioning.
+ * When version number requested is equal to or greater than configured, condition will be returned.
+ *
+ * @param request Request instance
+ * @return ApiVersionCondition based on match
+ */
+
+public ApiVersionCondition getMatchingCondition(HttpServletRequest request) {
+    Matcher m = LATEST_PREFIX_PATTERN.matcher(request.getRequestURI());
+    if (m.find() && isLatest()) {
+        return this;
+    }
+
+    m = VERSION_PREFIX_PATTERN.matcher(request.getRequestURI());
+    if (m.find()) {
+        Integer version = Integer.valueOf(m.group(1));
+        if (version >= this.apiVersion)
+            return this;
+    }
+    return null;
+}
+
+/**
+ * When more than one configured version number passes the match rule, the bigest one will take effect.
+ *
+ * @param otherApiVersionCondition other api version condition that was satisfied.
+ * @param request                  Request instance
+ * @return 1 if other version condition has greater api version, -1 if this condition has greater api version, 0 if they are same.
+ */
+public int compareTo(ApiVersionCondition otherApiVersionCondition, HttpServletRequest request) {
+    return otherApiVersionCondition.getApiVersion() - this.apiVersion;
+}
+
+/**
+ * Getter for api version.
+ *
+ * @return api version for the condition.
+ */
+private int getApiVersion() {
+    return apiVersion;
+}
+
+/**
+ * Getter for whether latest is configured in annotation.
+ *
+ * @return true if latest is configured in annotation, else false.
+ */
+
+private boolean isLatest() {
+    return latest;
+}

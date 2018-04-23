@@ -1,0 +1,27 @@
+case class AnyValMap[K]( m: Map[K, Vector[(Type, Any)]] ) extends AnyVal {
+  def add[V](k: K, v: V)(implicit tag: TypeTag[V]) = this.copy(
+    m = this.m + (k -> (this.m.getOrElse(k, Vector.empty) :+ (tag.tpe, v)))
+  )
+  def grab[V](k: K)(implicit tag: TypeTag[V]): V = {
+    m(k).collectFirst {
+      case (tpe, value: V @unchecked) if tpe <:< tag.tpe => value
+    }.getOrElse(throw new NoSuchElementException(s""no suitable value for key: $k""))
+  }
+}
+
+scala> val avMap = AnyValMap[String](Map.empty).
+         add(""a"", List(1, 2, 3)).
+         add(""a"", Some(""abc""))
+
+scala> avMap.grab[Seq[Int]](""a"")
+res20: Seq[Int] = List(1, 2, 3)
+
+scala> avMap.grab[Option[String]](""a"")
+res21: Option[String] = Some(abc)
+
+scala> avMap.grab[String](""a"")
+java.util.NoSuchElementException: no suitable value for key: a
+  at AnyValMap$.$anonfun$grab$extension$1(<console>:32)
+  at scala.Option.getOrElse(Option.scala:121)
+  at AnyValMap$.grab$extension(<console>:32)
+  ... 31 elided

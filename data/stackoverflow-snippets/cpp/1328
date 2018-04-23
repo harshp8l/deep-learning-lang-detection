@@ -1,0 +1,71 @@
+pass;  zmq_VERSION = zmq.zmq_version_info()
+if     zmq_VERSION[0] < 4:
+           print ""ZMQ{0:} ver < than expected, will exit"".format( zmq_VERSION )
+
+aCTX = zmq.Context( 2 )                        # if performance boosting is needed
+
+#PUB ---------------------------------------------------------------------------
+aPUB = aCTX.socket( zmq.PUB )
+aPUB.setsockopt(    zmq.LINGER,          0 )   # protect your server
+aPUB.setsockopt(    zmq.MAXMSGSIZE,      m )   # protect your server from DoS
+aPUB.setsockopt(    zmq.AFFINITY,        3 )   # protect your server resources
+aPUB.setsockopt(    zmq.HEARTBEAT_IVL,   ivl ) #     server L3-helper Heartbeats
+aPUB.setsockopt(    zmq.HEARTBEAT_TTL,   ttl ) #     server L3-helper Heartbeats
+aPUB.setsockopt(    zmq.INVERT_MATCHING, 1 )   #   avoid server sending data back
+aPUB.setsockopt(    zmq.IMMEDIATE,       1 )   # avoid Queueing for dead-ends
+aPUB.setsockopt(    zmq.TOS,             tos ) # allow for L3-router TOS-policies
+...
+#PUB PERFORMANCE & RESOURCES TWEAKING DETAILS GO WAY BEYOND THE SCOPE OF THIS POST
+aPUB.bind(   ""tcp://*:5557"" )                  # expose AccessPoint on tcp://
+
+#PULL --------------------------------------------------------------------------
+aPULL = aCTX.socket( zmq.PULL )
+aPULL.setsockopt(    zmq.LINGER,          0 )  # protect your server
+aPULL.setsockopt(    zmq.MAXMSGSIZE,      m )  # protect your server from DoS
+aPULL.setsockopt(    zmq.AFFINITY,        3 )  # protect your server resources
+aPULL.setsockopt(    zmq.HEARTBEAT_IVL,   ivl )#     server L3-helper Heartbeats
+aPULL.setsockopt(    zmq.HEARTBEAT_TTL,   ttl )#     server L3-helper Heartbeats
+...
+#PULL PERFORMANCE & RESOURCES TWEAKING DETAILS GO WAY BEYOND THE SCOPE OF THIS POST
+aPULL.bind(   ""tcp://*:5558"" )                 # expose AccessPoint on tcp://
+...
+
+#main loop ---------------------------------------------------------------------
+pass; notSoftFLAG = True
+while notSoftFLAG:
+    NOP_SLEEP = 10                            #  set a 10 [ms] sleep in case NOP
+    if aPULL.poll( 0 ):                       #  NEVER block/wait
+       aMSG = aPULL.recv( zmq.DONTWAIT )      #  NEVER .recv()-s own data back
+       #CPY = zmq_msg_copy( &aMSG );          // WARNING ABOUT NATIVE C-API
+       #                                      // HANDLING, NEED .COPY()
+       #                                      //           NEED .CLOSE()
+       aPUB.send( aMSG,   zmq.DONTWAIT )      #  re-PUB-lish to all others but sender
+       ...< process aMSG payload on server-side, if needed >...
+
+       NOP_SLEEP = 0                          # !NOP, avoid 10[ms] NOP-loop sleep
+       pass
+
+    if aReasonToFlagLoopEXIT:
+       notSoftFLAG = False
+       ...
+       NOP_SLEEP = 0
+       pass
+
+    if ...:
+       ...
+       pass
+
+    sleep( NOP_SLEEP )                        # a soft-real-time controlled sleep on NOP
+#main loop ---------------------------------------------------------------------
+pass
+
+#########
+# ALWAYS:
+#          better using context-aware try:/except:/finally:
+
+aRetCODE = [ aSOCK.close() for aSOCK in ( aPUB, aPULL, ) ]
+...
+
+aCTX.term()
+#   .term()
+#########

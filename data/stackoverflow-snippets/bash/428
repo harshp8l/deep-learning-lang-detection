@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+template='{
+  ""files"": [
+    {
+      ""aql"": {
+        ""items.find"": {
+          ""repo"": ""release-repo"",
+          ""modified"": { ""$before"": ""30d"" },
+          ""type"": { ""$eq"": ""folder"" },
+          ""$or"": [],
+          ""depth"": ""2""
+        }
+      }
+    }
+  ]
+}'
+
+shas=(
+  ""a991fef6bb9e9759d513fd4b277fe3674b44e4f4""
+  ""5a562d34bb1d4ab4264acc2c61327651218524ad""
+  ""d4e296c35644743e58aed35d1afb87e34d6c8823""
+)
+
+jq -n \
+        --argjson template ""$template"" \
+        --arg shas_str ""${shas[*]}"" \
+'
+reduce ($shas_str | split("" "") | .[]) as $sha ($template;
+  .files[0].aql[""items.find""][""$or""] += [{
+    ""$and"": [{""name"": {""$nmatch"": (""*"" + $sha + ""*"")}}]
+  }]
+)
+'

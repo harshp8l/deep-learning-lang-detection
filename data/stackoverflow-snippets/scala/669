@@ -1,0 +1,24 @@
+import $ivy.`work.martins.simon::scala-expect:6.0.0`
+
+import work.martins.simon.expect.core._
+import work.martins.simon.expect.core.actions._
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+
+val timeout = 5 seconds
+
+val e = new Expect(""python3 -i -"", defaultValue = ""?"")(
+    new ExpectBlock(
+      new StringWhen("">>> "")(
+        Sendln(""""""print(""hello, world"")"""""")
+      )
+    ),
+    new ExpectBlock(
+      new RegexWhen(""""""(.*)\n>>> """""".r)(
+        ReturningWithRegex(_.group(1).toString)
+      )
+    )
+  )
+
+e.run(timeout).onComplete(println)

@@ -1,0 +1,45 @@
+package main
+
+import(
+    ""fmt""
+    ""sync""
+    ""time""
+)
+
+func first(wg *sync.WaitGroup) {
+    defer wg.Done()
+    fmt.Println(""Starting a first"")
+    // do some stuff... here's a sleep to make some time pass
+    time.Sleep(250 * time.Millisecond)
+    fmt.Println(""Done with a first"")
+}
+
+func second(wg *sync.WaitGroup) {
+    defer wg.Done()
+    fmt.Println(""Starting a second"")
+    // do some followup stuff
+    time.Sleep(50 * time.Millisecond)
+    fmt.Println(""Done with a second"")
+}
+
+func main() {
+    wg := new(sync.WaitGroup) // you'll need a pointer to avoid a copy when passing as parameter to goroutine function
+
+    // let's start 5 firsts and then wait for them to finish
+    wg.Add(5)
+    go first(wg)
+    go first(wg)
+    go first(wg)
+    go first(wg)
+    go first(wg)
+    wg.Wait()
+
+    // now that we're done with all the firsts, let's do the seconds
+    // how about two of these
+    wg.Add(2)
+    go second(wg)
+    go second(wg)
+    wg.Wait()
+
+    fmt.Println(""All done"")
+}

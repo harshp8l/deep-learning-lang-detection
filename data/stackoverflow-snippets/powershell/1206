@@ -1,0 +1,20 @@
+$Product = Get-CimInstance -ClassName Win32_Product | Where-Object {$_.Vendor -match '(microsoft|intel)'}
+$Group = $Product | Group-Object -Property Vendor
+$result = foreach ($Vendor in $Group) {
+    $Products = foreach ($item in $Vendor.Group) {
+        ""$($item.Caption);$($item.Version)""
+    }
+    $Products = $Products -join ','
+    ""$($Vendor.Name),$Products""
+}
+
+$HeaderLength = ($result | ForEach-Object {($_ -split ',').Count} | Sort-Object -Descending)[0]-1
+$Header = ""Vendor,""
+$x = 1
+$Header += do {
+    $x++
+    ""Caption;Version,""
+} until ($x -eq $HeaderLength)
+
+$Header | Out-File -FilePath $env:TEMP\strange.csv
+$result | Out-File -FilePath $env:TEMP\strange.csv -Append

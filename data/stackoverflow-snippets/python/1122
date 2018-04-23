@@ -1,0 +1,34 @@
+import sys
+
+import random
+
+from PyQt4 import QtGui, QtCore
+
+def movePoints():
+    p = line.path()
+    for i in range(p.elementCount()):
+        xo, yo = p.elementAt(i).x, p.elementAt(i).y
+        xn, yn = (e+10*(random.random()-0.5) for e in  (xo, yo))
+        p.setElementPositionAt(i, xn, yn)
+    line.setPath(p)
+
+if __name__ == '__main__':
+    app = QtGui.QApplication(sys.argv)
+    w = QtGui.QGraphicsView()
+    scene = QtGui.QGraphicsScene(w)
+    w.setScene(scene)
+    timer = QtCore.QTimer()
+    timer.timeout.connect(movePoints)
+
+    path = QtGui.QPainterPath()
+    path.moveTo(0, 0)
+    path.lineTo(10, 0)
+    path.lineTo(10, 10)
+    path.lineTo(0, 10)
+
+    line = QtGui.QGraphicsPathItem()
+    line.setPath(path)
+    scene.addItem(line)
+    timer.start(1000)
+    w.show()
+    sys.exit(app.exec_())

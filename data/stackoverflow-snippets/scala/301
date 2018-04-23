@@ -1,0 +1,55 @@
+import java.time.{DayOfWeek, LocalDate}
+import java.time.format.DateTimeFormatter
+
+// If that is your format date
+object MyFormat {
+  val formatter = DateTimeFormatter.ofPattern(""yyyy-MM-dd"")
+}
+
+object MainSample {
+  import MyFormat._
+
+  def main(args: Array[String]): Unit = {
+    import java.sql.Date
+    import org.apache.spark.sql.types.{DateType, IntegerType}
+
+    import spark.implicits._  
+
+    import org.apache.spark.sql.types.{ StringType, StructField, StructType }
+    import org.apache.spark.sql.functions._
+
+    implicit val spark: SparkSession =
+          SparkSession
+            .builder()
+            .appName(""YourApp"")
+            .config(""spark.master"", ""local"")
+            .getOrCreate()
+
+    val someData = Seq(
+      Row(1,""2013-01-30""),
+      Row(2,""2012-01-01"")
+    )
+
+    val schema = List(StructField(""id"", IntegerType), StructField(""date"",StringType))
+    val sourceDF = spark.createDataFrame(spark.sparkContext.parallelize(someData), StructType(schema))
+
+    sourceDF.show()
+
+    val _udf = udf { (dt: String) =>
+      // Parse your date, dt is a string
+      val localDate = LocalDate.parse(dt, formatter)
+
+      // Check the week day and add days in each case
+      val newDate = if ((localDate.getDayOfWeek == DayOfWeek.SATURDAY)) {
+        localDate.plusDays(2)
+      } else if (localDate.getDayOfWeek == DayOfWeek.SUNDAY) {
+        localDate.plusDays(1)
+      } else {
+        localDate.plusDays(1)
+      }
+      newDate.toString
+    }
+
+    sourceDF.withColumn(""NewDate"", _udf('date)).show()
+  }
+}

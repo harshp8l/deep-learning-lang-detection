@@ -1,0 +1,37 @@
+#include <string>
+#include <sstream>
+#include <iostream>
+
+using namespace std;
+
+string EncryptString( const char* String, const char* Key )
+{
+    std::stringstream lpStream;
+    const int keyLength = strlen( Key );
+    for( int i = 0; String[i] != '\0'; i++ ) {
+        char ec = String[i] ^ Key[i % keyLength];
+        unsigned char uc = static_cast<unsigned char>( ec );
+        lpStream << ""\\x"" << std::hex << static_cast<unsigned int>( uc );
+    }
+    return lpStream.str();
+}
+
+void DecryptString( string& String, const char* Key )
+{
+    const int keyLength = strlen( Key );
+    for( string::size_type i = 0; i < String.length(); i++ ) {
+        String[i] ^= Key[i % keyLength];
+    }
+}
+
+int main()
+{
+    system( ""ChCp 1251"" );
+    const char* key = ""Пётр"";
+    cout << EncryptString( ""Антон Тодуа"", key ) << endl;
+    const char raw[] = ""\xf\x55\x0\x1e\x22\x98\x20\x1e\x2b\x4b\x12"";
+    string data( raw, sizeof( raw ) - 1 );
+    DecryptString( data, key );
+    cout << data << endl;
+    return 0;
+}

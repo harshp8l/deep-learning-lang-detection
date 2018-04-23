@@ -1,0 +1,41 @@
+   traphandle OID|default PROGRAM [ARGS ...]
+          invokes the specified program (with the given arguments) whenever a notification is received that matches the OID  token.   For
+          SNMPv2c  and  SNMPv3 notifications, this token will be compared against the snmpTrapOID value taken from the notification.  For
+          SNMPv1 traps, the generic and specific trap values and the enterprise OID will be converted into the equivalent OID  (following
+          RFC 2576).
+
+          Typically,  the  OID  token  will be the name (or numeric OID) of a NOTIFICATION-TYPE object, and the specified program will be
+          invoked for notifications that match this OID exactly.  However this token also supports a simple form of  wildcard  suffixing.
+          By  appending  the  character ´*' to the OID token, the corresponding program will be invoked for any notification based within
+          subtree rooted at the specified OID.  For example, an OID token of .1.3.6.1.4.1* would match any enterprise specific  notifica‐
+          tion (including the specified OID itself).  An OID token of .1.3.6.1.4.1.* would would work in much the same way, but would not
+          match this exact OID - just notifications that lay strictly below this root.  Note that this syntax does not support full regu‐
+          lar expressions or wildcards - an OID token of the form oid.*.subids is not valid.
+
+          If the OID field is the token default then the program will be invoked for any notification not matching another (OID specific)
+          traphandle entry.
+
+   Details of the notification are fed to the program via its standard input.  Note that this will always use the SNMPv2-style  notifica‐
+   tion  format,  with SNMPv1 traps being converted as per RFC 2576, before being passed to the program.  The input format is, if you use
+   the default set by the ""format execute %B\n%b\n%V\n%v\n"", one entry per line:
+
+          HOSTNAME
+                 The name of the host that sent the notification, as determined by gethostbyaddr(3).
+
+          ADDRESS
+                 The transport address, like
+                 ""[UDP: [172.16.10.12]:23456->[10.150.0.8]]""
+
+          VARBINDS
+                 A list of variable bindings describing the contents of the notification, one per line.  The first token on each line (up
+                 until  a  space)  is the OID of the varind, and the remainder of the line is its value.  The format of both of these are
+                 controlled by the outputOption directive (or similar configuration).
+
+                 The first OID should always be SNMPv2-MIB::sysUpTime.0, and the second should be SNMPv2-MIB::snmpTrapOID.0.  The remain‐
+                 ing  lines  will  contain  the payload varbind list.  For SNMPv1 traps, the final OID will be SNMPv2-MIB::snmpTrapEnter‐
+                 prise.0.
+
+          Example:
+                 A traptoemail script has been included in the Net-SNMP package that can be used within a traphandle directive:
+
+                 traphandle default /usr/bin/perl /usr/bin/traptoemail -s mysmtp.somewhere.com -f admin@somewhere.com me@somewhere.com

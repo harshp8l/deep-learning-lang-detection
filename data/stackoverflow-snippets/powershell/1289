@@ -1,0 +1,10 @@
+$ListOfOUs=""OU=Users01,DC=Domain,DC=local"",""OU=Users02,DC=Domain,DC=local"",""OU=Users03,DC=Domain,DC=local""
+$ListOfOUs | ForEach {Get-ADUser -Filter * -SearchBase $_ -Properties sAMAccountName,whenCreated,lastLogon, `
+pwdLastSet,""msDS-UserPasswordExpiryTimeComputed"",cannotChangePassword,passwordNeverExpires,MemberOf | 
+Select-Object sAMAccountName,whenCreated, `
+@{Name=""lastLogon"";Expression={[DateTime]::FromFileTime($_.lastLogon)}}, `
+@{Name=""pwdLastSet"";Expression={[DateTime]::FromFileTime($_.pwdLastSet)}}, `
+@{Name=""PasswordExpiry"";Expression={[DateTime]::FromFileTime($_.""msDS-UserPasswordExpiryTimeComputed"")}}, `
+cannotChangePassword,passwordNeverExpires, `
+@{Name=""GroupMember"";Expression={($_ | Select -ExpandProperty MemberOf) | Where {$_ -Like ""*Desired.Group*""}}} |  
+Export-Csv -Path ""C:\UserInfo.csv"" -Append -NoTypeInformation}

@@ -1,0 +1,48 @@
+package main
+
+import (
+    ""fmt""
+    ""sync""
+)
+
+type TestValContainer struct {
+    wg   sync.WaitGroup
+    sema chan struct{}
+    data chan int
+}
+
+func doSomething(number int) {
+    fmt.Println(number)
+}
+
+func main() {
+    //semaphore limit 10 routines at time
+    tvc := TestValContainer{
+        sema: make(chan struct{}, 10),
+        data: make(chan int),
+    }
+
+    for i := 0; i <= 100; i++ {
+        tvc.wg.Add(1)
+        go func(i int) {
+            tvc.sema <- struct{}{}
+            defer func() {
+                <-tvc.sema
+                tvc.wg.Done()
+            }()
+
+            tvc.data <- i
+        }(i)
+    }
+    // wait in the background so that waiting and closing the channel dont
+    // block the for loop below
+    go func() {
+        tvc.wg.Wait()
+        close(tvc.data)
+    }()
+    // get channel results
+    for res := range tvc.data {
+        doSomething(res)
+    }
+
+}

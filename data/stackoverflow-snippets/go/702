@@ -1,0 +1,24 @@
+type SendResult struct {
+  Status    string
+  ReturnIds []string
+}
+
+var doSendResultRegex = regexp.MustCompile(""^Send (.*?)\\.<ReturnIDs>(.*?)</ReturnIDs>$"")
+
+func ParseSendResult(s string) *SendResult {
+  ss := doSendResultRegex.FindStringSubmatch(s)
+  if ss == nil {
+    return nil
+  }
+  return &SendResult{
+    Status:    ss[1],
+    ReturnIds: strings.Split(ss[2], "";""),
+  }
+}
+
+// ...
+fmt.Println(""%#v\n"", ParseSendResult(response.Result.RawMessage))
+// &main.SendResult{
+//   Status:    ""OK"",
+//   ReturnIds: []string{""c71cf425f5"", ""e5e4dbb5ca""}
+// }

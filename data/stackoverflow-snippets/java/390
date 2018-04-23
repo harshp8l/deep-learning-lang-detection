@@ -1,0 +1,34 @@
+public class HibernateUtil {
+
+    private static SessionFactory factory;
+    private static final int MAX_RETRIES;
+
+    static {
+        int retries = 0;
+        Throwable nestedException = null;
+        while (factory == null && retries < MAX_RETRIES) {
+            try {
+                Configuration configuration = new Configuration().configure(""hibernate.cfg.xml"");     
+                factory = configuration.buildSessionFactory();
+            } catch (Throwable ex) {
+                System.err.println(""Failed to create sessionFactory object."" + ex);
+                nestedException = ex;
+            }
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            ++retries;
+        }
+
+        if (factory == null) {
+            raise new ExceptionInInitializerError(nestedException);
+        }
+    }
+
+    public static SessionFactory GetSessionFactory() {
+        return factory;
+    }
+
+}

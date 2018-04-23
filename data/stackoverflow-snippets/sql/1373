@@ -1,0 +1,34 @@
+declare @T table (ID int primary key, grp int);
+insert into @T values
+       (1, NULL)
+     , (3, 100)
+     , (5, 200)
+     , (6, 200)
+     , (7, 100)
+     , (8, NULL)
+     , (9, 200)
+     , (10, 100)
+     , (11, NULL)
+     , (12, 150);
+select ttt.* 
+  from (  select tt.* 
+               , sum(ff) over (order by tt.ID) as sGrp
+          from ( select t.*
+                      , iif(grp is null or lag(grp) over (order by id) is null, 1, 0) as ff 
+                   from @T t
+               ) tt
+       ) ttt
+order by ttt.sGrp, ttt.grp, ttt.id
+
+ID          grp         ff          sGrp
+----------- ----------- ----------- -----------
+1           NULL        1           1
+3           100         1           2
+7           100         0           2
+5           200         0           2
+6           200         0           2
+8           NULL        1           3
+10          100         0           4
+9           200         1           4
+11          NULL        1           5
+12          150         1           6

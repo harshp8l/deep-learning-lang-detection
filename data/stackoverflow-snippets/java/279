@@ -1,0 +1,192 @@
+package com.tobee.tests.oop;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class StaticNoStaticTest {
+
+    public static void main(String[] args)
+    {
+        ScanResultStore clsStores[] = new ScanResultStore[2];
+
+        List<ScanResult> results = new ArrayList<ScanResult>();
+
+        ScanResult result1 = new ScanResult();
+        result1.BSSID=""AF-DF-CF-ED-EF"";
+        result1.RSSI=2;
+        result1.level=4;
+        results.add(result1);
+        ScanResult result2 = new ScanResult();
+        result2.BSSID=""AD-DF-CF-ED-EF"";
+        result2.RSSI=1;
+        result2.level=3;
+        results.add(result2);
+        ScanResult result3 = new ScanResult();
+        result3.BSSID=""AD-DG-CF-ED-EF"";
+        result3.RSSI=2;
+        result3.level=5;
+        results.add(result3);
+
+        clsStores[0] = new ScanResultStore();
+
+        clsStores[0].setScanResult(results);
+
+        clsStores[0].main();
+
+        clsStores[1] = new ScanResultStore();
+        clsStores[1] = new ScanResultStore();
+        results = new ArrayList<ScanResult>();
+
+        ScanResult result4 = new ScanResult();
+        result3.BSSID=""AD-DG-CF-ED-TF"";
+        result3.RSSI=1;
+        result3.level=5;
+        results.add(result4);
+
+        clsStores[1].setScanResult(results);
+
+        clsStores[1].main();
+    }
+
+    public static void main2(String[] args)
+    {
+        ScanResultStore clsStore = new ScanResultStore();
+        List<ScanResult> results = new ArrayList<ScanResult>();
+
+        ScanResult result1 = new ScanResult();
+        result1.BSSID=""AF-DF-CF-ED-EF"";
+        result1.RSSI=2;
+        result1.level=4;
+        results.add(result1);
+        ScanResult result2 = new ScanResult();
+        result2.BSSID=""AD-DF-CF-ED-EF"";
+        result2.RSSI=1;
+        result2.level=3;
+        results.add(result2);
+        ScanResult result3 = new ScanResult();
+        result3.BSSID=""AD-DG-CF-ED-EF"";
+        result3.RSSI=2;
+        result3.level=5;
+        results.add(result3);
+
+        clsStore.setScanResult(results);
+
+        clsStore.main();
+
+        clsStore = new ScanResultStore();
+        results = new ArrayList<ScanResult>();
+
+        ScanResult result4 = new ScanResult();
+        result3.BSSID=""AD-DG-CF-ED-TF"";
+        result3.RSSI=1;
+        result3.level=5;
+        results.add(result4);
+
+        clsStore.setScanResult(results);
+
+        clsStore.main();
+    }
+}
+
+class ScanResult {
+    public String BSSID; // MAC address of the AP
+    public int RSSI; // RSSI value in dBm
+    public int level;
+}
+
+class ScanResultStore {
+    private List<ScanResult> results; // A list of ScanResult is given by
+                                        // system
+    private ArrayList<ScanObject> scanObjectList = new ArrayList<ScanObject>();
+    private ArrayList<ScanInfo> listOfScanInfoObjects = new ArrayList<ScanInfo>();
+    private int index = 0;
+    ScanInfo scanInfo = null;
+
+    public void setScanResult(List<ScanResult> results)
+    {
+        this.results = results;
+    }
+
+    public void main() {
+        processRawResult();
+
+        listOfScanInfoObjects.add(index++, scanInfo);
+        for (int q = 0; q < listOfScanInfoObjects.size(); q++) {
+            System.out.println(""SIZE:"" + listOfScanInfoObjects.get(q).getScanObjects().size());
+        }
+
+        scanObjectList.clear();
+    }
+
+    // process results object
+    public void processRawResult() {
+        long systemTime = System.currentTimeMillis();
+
+        scanObjectList = new ArrayList<ScanObject>();
+        for (int i = 0; i < results.size(); i++) {
+            String mac = results.get(i).BSSID;
+            int rssi = results.get(i).level;
+            ScanObject scanObject = new ScanObject(mac, rssi);
+            scanObjectList.add(i, scanObject);
+        }
+
+        scanInfo = new ScanInfo(systemTime, scanObjectList);
+    }
+}
+
+class ScanObject {
+    private String BSSID; // MAC address of the AP
+    private int RSSI; // RSSI value in dBm
+
+    public ScanObject(String mac, int rssi) {
+        setBSSID(mac);
+        setRSSI(rssi);
+    }
+
+    // setter methods
+    public void setBSSID(String mac) {
+        this.BSSID = mac;
+    }
+
+    public void setRSSI(int rssi) {
+        this.RSSI = rssi;
+    }
+
+    // getter methods
+    public String getBSSID() {
+        return this.BSSID;
+    }
+
+    public int getRSSI() {
+        return this.RSSI;
+    }
+}
+
+class ScanInfo {
+    private long timeStamp;
+    private ArrayList<ScanObject> scanObjectList;
+
+    public ScanInfo(long time, ArrayList<ScanObject> scanList) {
+        setTimeSamp(time);
+        setScanObjects(scanList);
+    }
+
+    // setter methods
+    public void setTimeSamp(long time) {
+        this.timeStamp = time;
+    }
+
+    public void setScanObjects(ArrayList<ScanObject> scanList) {
+        scanObjectList = new ArrayList<ScanObject>();
+        this.scanObjectList = scanList;
+    }
+
+    // getter methods
+    public long getTimeStamp() {
+        return this.timeStamp;
+    }
+
+    public ArrayList<ScanObject> getScanObjects() {
+        return this.scanObjectList;
+    }
+}

@@ -1,0 +1,21 @@
+import shapeless.{Poly1, Witness}
+import shapeless.syntax.singleton._
+
+sealed trait Type
+trait A extends Type
+trait B extends Type
+
+case class Basic(int: Int, bool: Boolean)
+
+val someInt: Int = 2
+val someBool: Boolean = false
+val someType: String = ""a""
+
+object myPoly extends Poly1 {
+  implicit val aCase: Case.Aux[Witness.`""a""`.T, Basic with A] = at(_ => new Basic(someInt, someBool) with A)
+  implicit val bCase: Case.Aux[Witness.`""b""`.T, Basic with B] = at(_ => new Basic(someInt, someBool) with B)
+}
+
+myPoly(""a"".narrow)
+myPoly(""b"".narrow)
+//  myPoly(""c"".narrow) // doesn't compile

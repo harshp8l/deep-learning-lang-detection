@@ -1,0 +1,20 @@
+Set-Alias ?: Invoke-Ternary
+function Invoke-Ternary {
+    param(
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [scriptblock]$Condition,
+        [Parameter(Mandatory=$true, Position=0)]
+        [scriptblock]$Expression
+    )
+    process {
+        $TrueExpression = ($PSCmdlet.MyInvocation.BoundParameters['Expression'] -split '(?: +)?;(?: +)?')[0]
+        $FalseExpression = ($PSCmdlet.MyInvocation.BoundParameters['Expression'] -split '(?: +)?;(?: +)?')[1]
+        if (Invoke-Command -ScriptBlock $Condition) {
+            Invoke-Command -ScriptBlock ([scriptblock]::Create($TrueExpression -replace '\{|\}'))
+        } else {
+            Invoke-Command -ScriptBlock ([scriptblock]::Create($FalseExpression -replace '\{|\}'))
+        }
+    }
+}
+{[IntPtr]::Size -eq 4} |?: {{'I like Soup'} ; {'I''d rather have toast'}}
+{[IntPtr]::Size -eq 8} |?: {{'I like Soup'} ; {'I''d rather have toast'}}

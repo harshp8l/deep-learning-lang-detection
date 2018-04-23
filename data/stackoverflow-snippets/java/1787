@@ -1,0 +1,21 @@
+//load DOM    
+DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+Document dom = builder.parse(new File(""products.xml""));
+//get all products
+NodeList products = dom.getElementsByTagName(""product"");
+for (int i = 0; i < products.getLength(); i++) {
+    Node product = products.item(i);
+    NodeList nodes = product.getChildNodes();
+    for (int j = 0; j < nodes.getLength(); j++) {
+        Node node = nodes.item(j);
+        // check content
+        if (""#delete"".equals(node.getTextContent())) {
+            product.removeChild(node);
+        }
+    }
+}
+//write to system out
+writer = new BufferedWriter(new OutputStreamWriter(System.out));
+OutputFormat format = new OutputFormat(Method.XML, encoding, true);
+XMLSerializer xml = new XMLSerializer(writer, format);
+xml.serialize(dom);

@@ -1,0 +1,34 @@
+#include <QApplication>
+#include <QVBoxLayout>
+#include <QPushButton>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+
+    QWidget* w = new QWidget;
+    QVBoxLayout* layout = new QVBoxLayout;
+    QPushButton* on = new QPushButton(""On"");
+    QPushButton* off = new QPushButton(""Off"");
+    layout->addWidget(on);
+    layout->addWidget(off);
+    w->setLayout(layout);
+
+    QNetworkAccessManager *manager = new QNetworkAccessManager();
+
+    QObject::connect(on, &QPushButton::clicked,
+                     [manager](){
+        manager->get(QNetworkRequest(QUrl(""http://192.168.1.xxx/LED=ON"")));
+    });
+
+    QObject::connect(off, &QPushButton::clicked,
+                     [manager](){
+        manager->get(QNetworkRequest(QUrl(""http://192.168.1.xxx/LED=OFF"")));
+    });
+
+    w->show();
+
+    return a.exec();
+}

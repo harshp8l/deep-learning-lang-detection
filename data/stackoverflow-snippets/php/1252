@@ -1,0 +1,37 @@
+function display()
+{
+    $arrContextOptions = array(
+        ""ssl"" => array(
+            ""verify_peer"" => false,
+            ""verify_peer_name"" => false,
+        ) ,
+    );
+    $getVoucherList = ""https://www.planyo.com/rest/?method=list_vouchers&api_key=yourkey&resource_id=110556"";
+    $cleanVoucherList = preg_replace(""/ /"", ""%20"", $getVoucherList);
+    $voucherlist = file_get_contents(""$cleanVoucherList"", false, stream_context_create($arrContextOptions));
+    $voucherList = json_decode($voucherlist, true);
+    $testsubject = ""TESTVOUCHER-B"";
+    $testamount = ""5,00"";
+    $doesvoucherexists = false;
+    foreach($voucherList['data']['results'] as $testVoucher => $testVoucherArr) {
+        if ($testsubject == $testVoucherArr['code']) {
+            $doesvoucherexists = true;
+            if (date(""Y-m-d"") <= $testVoucherArr['rental_end_date']) {
+                echo ""this code can be used <br />"";
+                echo $testamount - $testVoucherArr['discount_value'] . ""<br />"";
+            }
+            else {
+                echo ""this code is expired"";
+            }
+            break;
+        }
+
+    }
+    if ($doesvoucherexists === false) {
+        echo ""this needs to only show when there are no results <br />"";
+    }
+}
+
+if (isset($_POST['submit'])) {
+    display();
+}

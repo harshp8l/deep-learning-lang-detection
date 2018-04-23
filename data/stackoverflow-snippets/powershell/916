@@ -1,0 +1,29 @@
+workflow do-something
+{
+
+    param
+    (
+        [object]$WebhookData
+    )
+    inlinescript {
+
+        if ($using:WebhookData -ne $null) {
+            $WebhookName =  $using:WebhookData.WebhookName
+            $WebhookBody =  $using:WebhookData.RequestBody
+
+            $webhookBodyObject = $WebhookBody | ConvertFrom-JSON
+            $customerEmail = $webhookBodyObject.customerEmail
+            $customerName = $webhookBodyObject.customerName
+            $dataLocation = $webhookBodyObject.dataLocation
+
+        } else {
+            ""The WebhookData is totally and completely  null""
+            exit (0)
+        }
+        $webhookjson = $using:WebhookData | ConvertTo-JSON
+        ""The webhookdata is $webhookjson""
+        ""The webhook name is $WebhookName""
+        ""The customer email is $customerEmail""
+        ""The body s $WebhookBody""
+    }
+}

@@ -1,0 +1,29 @@
+#include <iostream>
+
+class myDebug {
+    bool is_first{true};
+    bool is_last{true};
+public:
+    myDebug() = default;
+    myDebug(myDebug const &) = delete;
+    myDebug & operator = (myDebug const &) = delete;
+    myDebug & operator = (myDebug &&) = delete;
+    myDebug(myDebug && dc) noexcept 
+      : is_first{false} {
+        dc.is_last = false;
+    }
+    ~myDebug() {
+        if (is_last)
+            std::cout << '\n';
+    }
+    template <typename T>
+    friend myDebug operator<<(myDebug db, const T& x) {
+        if (db.is_first)
+            db.is_first = false;
+        else
+            std::cout << ' ';
+
+        std::cout << x;
+        return db;
+    }
+};

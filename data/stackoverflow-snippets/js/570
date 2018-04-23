@@ -1,0 +1,23 @@
+var _gcs = window.getComputedStyle;
+var _sections = document.querySelectorAll('[role=""tabpanel""]');
+var _tabs = document.querySelectorAll('[role=""tab""]');
+
+var _setARIAAttributes = () => {
+  var currentHash;
+
+  /* set aria-hidden on panels */
+  [..._sections].forEach( ( s ) => {
+        var hidden = +( _gcs( s ).getPropertyValue( 'opacity' ) ) < 1;
+        s.setAttribute( 'aria-hidden', hidden);  
+        if (!hidden) currentHash = s.id;
+  }); 
+
+  /* set aria-controls on tabs */
+  [..._tabs].forEach( ( t ) => {
+        var selected = t.getAttribute( 'aria-controls' ) === currentHash;
+        t.setAttribute( 'aria-selected', selected );  
+  }); 
+}
+
+if (!!location.hash) { _setARIAAttributes() }
+window.addEventListener('transitionend', () => { _setARIAAttributes(); });

@@ -1,0 +1,30 @@
+DROP TRIGGER TR_UPD_TABLE2 
+GO
+
+CREATE TRIGGER TR_UPD_TABLE2 ON TABLE1 AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON
+
+    DECLARE @columnID INT = NULL 
+
+    IF (SELECT COUNT(*) FROM INSERTED)=1 BEGIN
+        -- SINGLE INSERT
+        SET @columnID = (SELECT columnID FROM INSERTED)
+
+        EXEC TableTwoUpdateProcedure @columnID
+
+    END ELSE BEGIN
+        -- MASSIVE INSERT (IF NEEDED)
+        SET @columnID = 0
+
+        WHILE @columnID IS NOT NULL  BEGIN
+            SET @columnID = (SELECT MIN(columnID) FROM INSERTED WHERE columnID > @columnID)
+
+            IF @columnID IS NOT NULL BEGIN
+                EXEC TableTwoUpdateProcedure @columnID
+            END
+        END
+
+    END 
+END

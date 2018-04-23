@@ -1,0 +1,24 @@
+import os
+import xml.etree.ElementTree as ET
+
+
+def extract_line_id_data(line_element):
+    line_id = line_element[0].text
+    quantity = line_element[1].text
+    line_amount = line_element[2].text
+
+    return line_id, quantity, line_amount
+
+
+# Iterate over all files in a directory
+for _, dirs, files in os.walk('/path/to_folder/with/xml_files/'):
+    with open('output.csv', 'a') as output:
+        output.write('Filename,LineID,Quantity,LineAmount,TotalAmount\n')  # Headers
+        for xml_file in files:
+            # If not all files in the folder files are XML you'll need to catch an exception here
+            tree = ET.parse(xml_file)  # might need to use os.path.abspath
+            root = tree.getroot()
+            total_amount = root[0][0].text  # Get total amount value
+            # Iterate over all ""Line"" elements
+            for e in root[1:]:
+                output.write('{},{},{},{},{}\n'.format(xml_file, * extract_line_id_data(e), total_amount))

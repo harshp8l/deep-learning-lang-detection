@@ -1,0 +1,103 @@
+#include <iostream>
+#include <iomanip>
+
+using namespace std; 
+
+int main()
+{
+    bool positions[50][50], new_positions[50][50];
+
+    // clear the board
+    for(int i=0; i<50; i++)
+        for(int x=0; x<50; x++)
+            positions[i][x]=false;
+
+    //This is some patterns i've put manually into array just for testing, 
+    //they should ""be alive"" at least for 3-4 cycles    
+    positions[5][5]=true;
+    positions[5][6]=true;
+    positions[5][7]=true;
+    positions[6][5]=true;
+    positions[5][8]=true;
+    positions[5][9]=true;
+    positions[5][10]=true;
+    positions[5][11]=true;
+
+    positions[5][5]=true;
+    positions[6][5]=true;
+    positions[7][5]=true;
+    positions[5][6]=true;
+    positions[8][5]=true;
+    positions[5][7]=true;
+    positions[6][8]=true;
+    positions[7][9]=true;
+    positions[8][10]=true;
+    positions[9][5]=true;
+
+    positions[11][11]=true;
+    positions[11][12]=true;
+    positions[12][11]=true;
+    positions[12][12]=true;
+
+    // print the initial board
+    for(int i=0; i<50; i++) {
+        cout << setw(4) << i << setw(1) << "" "";
+        for(int x=0; x<50; x++)
+            cout << (positions[i][x]==true?""X"":""."");
+        cout << ""\n"";
+    }
+    cout << endl;
+
+    for(int steps=0; steps<15; steps++) {
+        for(int i=0; i<50; i++) {
+            for(int x=0; x<50; x++) {
+
+                // count the neighbours
+                int neighbours=0;
+                for(int pozI=i-1; pozI<=i+1; pozI++)
+                    for(int pozX=x-1; pozX<=x+1; pozX++)
+                        if(pozX!=x || pozI!=i) // don't check position[i][x]
+                            if(pozX>=0 && pozX<50 && pozI>=0 && pozI<50)
+                                if(positions[pozI][pozX]==true)
+                                    neighbours++;
+
+                // set the new board
+                new_positions[i][x]=false;
+                if(positions[i][x]==true)
+                    if(neighbours==2 || neighbours==3)
+                        new_positions[i][x]=true; // staying alive
+                if(positions[i][x]==false)
+                    if(neighbours==3)
+                        new_positions[i][x]=true; // being born
+            }
+        }
+
+        // print the old board and the new one
+        for(int i=0; i<50; i++) {
+            cout << setw(4) << i << setw(1) << "" "";
+            for(int x=0; x<50; x++)
+                cout << (positions[i][x]==true?""X"":""."");
+            cout << ""    "";
+            for(int x=0; x<50; x++)
+                cout << (new_positions[i][x]==true?""X"":""."");
+            cout << ""\n"";
+        }
+        cout << endl;
+
+        // save the generation
+        for(int i=0; i<50; i++)
+            for(int x=0; x<50; x++)
+                positions[i][x]=new_positions[i][x];
+    }
+
+    // print the final board
+    for(int i=0; i<50; i++) {
+        cout << setw(4) << i << setw(1) << "" "";
+        for(int x=0; x<50; x++)
+            cout << (positions[i][x]==true?""X"":""."");
+        cout << ""\n"";
+    }
+    cout << endl;
+
+    return 0;
+}

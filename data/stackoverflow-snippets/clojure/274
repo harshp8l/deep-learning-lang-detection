@@ -1,0 +1,89 @@
+(ns tst.clj.core
+  (:use clj.core tupelo.test)
+  (:require
+    [tupelo.core :as t]
+    [tupelo.forest :as tf] ))
+(t/refer-tupelo)
+
+(defn hid->enlive [hid]
+  (tf/hiccup->enlive (tf/hid->hiccup hid)))
+
+(defn empty-kids?
+  [path]
+  (let [hid     (last path)
+        result  (and (tf/node-hid? hid)
+                  (empty? (grab :kids (tf/hid->tree hid))))]
+       result))
+
+; delete any nodes without children
+(dotest
+  (tf/with-forest (tf/new-forest)
+    (let [e0          {:tag     :root
+                       :attrs   {}
+                       :content [{:tag     :a
+                                  :attrs   {}
+                                  :content [1 2 3]}
+                                 {:tag     :b
+                                  :attrs   {}
+                                  :content [{:tag     :c
+                                             :attrs   {}
+                                             :content []}
+                                            {:tag     :d
+                                             :attrs   {}
+                                             :content [1 2 3]}
+                                            ]}]}
+          root-hid    (tf/add-tree-enlive e0)
+          empty-paths (tf/find-paths-with root-hid [:** :*] empty-kids?)
+          empty-hids  (mapv last empty-paths)]
+       (is= (hid->enlive root-hid) ; This is the original tree structure (Enlive format)
+         {:tag   :root,
+          :attrs {},
+          :content
+                 [{:tag   :a,
+                   :attrs {},
+                   :content
+                          [{:tag :tupelo.forest/raw, :attrs {}, :content [1]}
+                           {:tag :tupelo.forest/raw, :attrs {}, :content [2]}
+                           {:tag :tupelo.forest/raw, :attrs {}, :content [3]}]}
+                  {:tag   :b,
+                   :attrs {},
+                   :content
+                          [{:tag :c, :attrs {}, :content []}
+                           {:tag   :d,
+                            :attrs {},
+                            :content
+                                   [{:tag :tupelo.forest/raw, :attrs {}, :content [1]}
+                                    {:tag :tupelo.forest/raw, :attrs {}, :content [2]}
+                                    {:tag :tupelo.forest/raw, :attrs {}, :content [3]}]}]}]})
+      (apply tf/remove-hid empty-hids) ; remove the nodes with no child nodes
+      (is= (hid->enlive root-hid) ; this is the result (Enlive format)
+        {:tag   :root,
+         :attrs {},
+         :content
+                [{:tag   :a,
+                  :attrs {},
+                  :content
+                         [{:tag :tupelo.forest/raw, :attrs {}, :content [1]}
+                          {:tag :tupelo.forest/raw, :attrs {}, :content [2]}
+                          {:tag :tupelo.forest/raw, :attrs {}, :content [3]}]}
+                 {:tag   :b,
+                  :attrs {},
+                  :content
+                         [{:tag   :d,
+                           :attrs {},
+                           :content
+                                  [{:tag :tupelo.forest/raw, :attrs {}, :content [1]}
+                                   {:tag :tupelo.forest/raw, :attrs {}, :content [2]}
+                                   {:tag :tupelo.forest/raw, :attrs {}, :content [3]}]}]}]})
+      (is= (tf/hid->hiccup root-hid) ; same result in Hiccup format
+        [:root
+         [:a
+          [:tupelo.forest/raw 1]
+          [:tupelo.forest/raw 2]
+          [:tupelo.forest/raw 3]]
+         [:b
+          [:d
+           [:tupelo.forest/raw 1]
+           [:tupelo.forest/raw 2]
+           [:tupelo.forest/raw 3]]]])
+  )))

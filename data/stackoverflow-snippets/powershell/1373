@@ -1,0 +1,13 @@
+$date=get-date -Format o
+$date=$date.Split(""T"")
+$date=$date[0]
+$disabled = (get-aduser -filter * -properties lastlogondate | Where-Object {$_.enabled -eq $false -and $_.lastlogondate -lt (get-date).adddays(-90)} |select Name).name
+try {
+New-ADOrganizationalUnit -Name $date -Path ""OU=Disabled, DC=mydomain, DC=net""
+} catch {
+#If we want another action
+}
+foreach($user in $disabled)
+{
+Get-ADUser $user | Move-ADObject -TargetPath ""OU=$date, OU=Disabled, DC=mydomain, DC=net"" -ErrorAction SilentlyContinue
+} 

@@ -1,0 +1,47 @@
+add_filter( 'woocommerce_cart_item_name', 'booking_details_after_name', 30, 3 );
+function booking_details_after_name( $product_name, $cart_item, $cart_item_key ) {
+
+    if ( isset( $cart_item['booking']['duration'] ) ){
+        // Duration
+        $duration      = (int) $cart_item['booking']['_duration'];
+        $resource_id   = $cart_item['booking']['_resource_id'];
+        $start_time    = $cart_item['booking']['_start_date'];
+        $end_time      = $cart_item['booking']['_end_date'];
+        $loop_time     = (int) $start_time;
+        $day           = 86400; // In seconds
+
+
+        // Price cost ( they can be many different )
+        $res_block_cost  = get_post_meta( $cart_item['product_id'], '_resource_block_costs', true );
+        $booking_pricing = get_post_meta( $cart_item['product_id'], '_wc_booking_pricing', true );
+
+        foreach ( $res_block_cost as $key => $value ){
+            if( $key == $resource_id ){
+                $bloc_cost = $value;
+                break;
+            }
+        }
+
+        $cost = array();
+
+        foreach ( $booking_pricing as $key => $value ){
+            $from = strtotime($value['from']); 
+            $to   = strtotime($value['to']) + 86399;
+            for( $i = 0; $i < $duration; $i++ ){
+                if( $loop_time >= $from && $loop_time <= $to ){
+                    $cost[] = $value['cost'];
+                    $loop_time += $day;
+                }
+            }
+        }
+
+        $cost  = array_sum( $cost ) / $duration;
+
+        // Output
+        $product_name .= '<br><span class=""booking-details"">';
+        $product_name .= $duration . __("" x Night Price "", ""woocommerce"") . wc_price($bloc_cost + $cost);
+        $product_name .= '</span>';
+    }
+
+    return $product_name;
+}

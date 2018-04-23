@@ -1,0 +1,28 @@
+import org.apache.spark.sql.functions._
+def remarkUdf = udf((column: Seq[Row])=>{
+  if(column.size == 1) Seq(remarks(column(0).getAs(0), column(0).getAs(1), column(0).getAs(2), ""one""))
+  else if(column.size == 2) {
+    if(column(0) == column(1)) column.map(x => remarks(x.getAs(0), x.getAs(1), x.getAs(2), ""Random""))
+    else{
+      if(column(0).getAs(0) == column(1).getAs(0) && column(0).getAs(1) == column(1).getAs(1)){
+        if(column(0).getAs[Int](2) < column(1).getAs[Int](2)) Seq(remarks(column(0).getAs(0), column(0).getAs(1), column(0).getAs(2), ""oldDate""), remarks(column(1).getAs(0), column(1).getAs(1), column(1).getAs(2), ""recentdate""))
+        else Seq(remarks(column(0).getAs(0), column(0).getAs(1), column(0).getAs(2), ""recentdate""), remarks(column(1).getAs(0), column(1).getAs(1), column(1).getAs(2), ""oldDate""))
+      }
+      else{
+        if(column(0).getAs[Int](0) < column(1).getAs[Int](0) && column(0).getAs[Int](1) < column(1).getAs[Int](1)) {
+          Seq(remarks(column(0).getAs(0), column(0).getAs(1), column(0).getAs(2), ""less""), remarks(column(1).getAs(0), column(1).getAs(1), column(1).getAs(2), ""more""))
+        }
+        else Seq(remarks(column(0).getAs(0), column(0).getAs(1), column(0).getAs(2), ""more""), remarks(column(1).getAs(0), column(1).getAs(1), column(1).getAs(2), ""less""))
+      }
+    }
+  }
+  else{
+    column.map(x => remarks(x.getAs(0), x.getAs(1), x.getAs(2), ""not defined""))
+  }
+
+})
+
+df.groupBy(""id"").agg(collect_list(struct(""val"", ""visits"", ""date"")).as(""value""))
+  .withColumn(""value"", explode(remarkUdf(col(""value""))))
+  .select(col(""id""), col(""value.*""))
+  .show(false)

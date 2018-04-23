@@ -1,0 +1,30 @@
+sealed trait Trampoline[+A] {
+  final def runT: A =
+    this match {
+      case Done(a) => a
+      case More(k) => k().runT
+      case t: FlatMap[Any, A] => t match {
+        case Done(a) FlatMap f => f(a).runT
+        case More(k) FlatMap f => k().flatMap(f).runT
+        case FlatMap(xg: FlatMap[Any, A], f) =>
+          xg.a.flatMap(a => xg.f(a)).runT
+      }
+    }
+
+  def map[B](f: A => B): Trampoline[B] =
+    flatMap(x => More(() => Done(f(x))))
+
+  def flatMap[B](f: A => Trampoline[B]): Trampoline[B] = this match {
+    case FlatMap(a, g: Any) => FlatMap(a, (x: Any) => g(x) flatMap f)
+    case x => FlatMap(x, f)
+  }
+}
+
+case class More[+A](k: () => Trampoline[A])
+  extends Trampoline[A]
+
+case class Done[+A](result: A)
+  extends Trampoline[A]
+
+case class FlatMap[A, B](a: Trampoline[A], f: A => Trampoline[B])
+  extends Trampoline[B]

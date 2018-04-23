@@ -1,0 +1,20 @@
+class Person < ApplicationRecord
+  has_many :roles
+  # Reach through the Roles association to get the CardHolders, via polymorphic :rollable.
+  # Unfortunately, you can't has_one, so you'll have to enforce uniqueness in Role
+  # with a validation.
+  has_many :card_holders, through: :roles, source: :rollable, source_type: 'CardHolder'
+end
+
+class Role < ApplicationRecord
+  belongs_to :person
+  # Here is where our actual polymorphic connection is:
+  belongs_to :rollable, polymorphic: true
+end
+
+class CardHolder < ApplicationRecord
+  # The other side of the polymorphic connection, with has_one:
+  has_one :role, as: :rollable
+  # Get the person via the role, just like the inverse:
+  has_one :person, through: :role
+end

@@ -1,0 +1,42 @@
+def zip() = Action {
+  // Create Source that listens to an OutputStream
+  // and pass it to `fileByteData` method.
+  val zipSource: Source[ByteString, Unit] =
+    StreamConverters
+      .asOutputStream()
+      .mapMaterializedValue(fileByteData)
+  Ok.chunked(zipSource).withHeaders(
+    CONTENT_TYPE -> ""application/zip"",
+    CONTENT_DISPOSITION -> s""attachment; filename = test.zip"")
+}
+
+// Send the file data, given an OutputStream to write to.
+def fileByteData(os: OutputStream): Unit = {
+  val fileList = List(
+    new java.io.File(""C:\\Users\\a.csv""),
+    new java.io.File(""C:\\Users\\b.csv"")
+  )
+
+  val zos = new ZipOutputStream(os)
+  val buffer: Array[Byte] = new Array[Byte](2048)
+  try {
+    for (file <- fileList) {
+      zos.putNextEntry(new ZipEntry(file.toPath.getFileName.toString))
+      val fis = new Files.newInputStream(file.toPath)
+      try {
+        @tailrec
+        def zipFile(): Unit = {
+          val bytesRead = fis.read(buffer)
+          if (bytesRead == -1) () else {
+            zos.write(buffer, 0, bytesRead)
+            zipFile()
+          }
+        }
+        zipFile()
+      } finally fis.close()
+      zos.closeEntry()
+    }
+  } finally {
+    zos.close()
+  }
+}

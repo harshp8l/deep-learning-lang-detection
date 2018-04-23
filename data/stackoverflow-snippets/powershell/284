@@ -1,0 +1,59 @@
+function Connect-ToTfs
+{
+    Param([string] $Collectionurl)
+    #the collection url will be cast as a uri to the getteamproject collection. 
+    Write-Verbose $Collectionurl
+    if ($CollectionUrl -ne '')
+    {
+        #if collection is passed then use it and select all projects
+        $tfs = [Microsoft.TeamFoundation.Client.TfsTeamProjectCollectionFactory]::GetTeamProjectCollection([uri]$CollectionUrl)
+    }
+    else
+    {
+        #if no collection specified, open project picker to select it via gui
+        $picker = New-Object Microsoft.TeamFoundation.Client.TeamProjectPicker([Microsoft.TeamFoundation.Client.TeamProjectPickerMode]::NoProject, $false)
+        $dialogResult = $picker.ShowDialog()
+        if ($dialogResult -ne 'OK')
+        {
+            #exit
+        }
+        $tfs = $picker.SelectedTeamProjectCollection
+    }
+    $tfs    
+}
+function Invoke-VisualStudioDlls
+{
+    if (Test-Path 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer')
+    {
+        Write-Verbose ""importing Visual Studio 2015 Dll's""
+        Invoke-Visual15StudioDlls
+    }
+    elseif (Test-Path 'C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\IDE\ReferenceAssemblies\v2.0')
+    {
+        Write-Verbose ""importing Visual Studio 2013 Dll's""
+        Invoke-Visual13StudioDlls
+    }
+}
+function Invoke-Visual15StudioDlls
+{
+    $visualStudiopath = 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer'
+    #$visualStudiopath45 = 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer'
+    Add-Type -Path ""$visualStudiopath\Microsoft.TeamFoundation.VersionControl.Client.dll""
+    Add-Type -Path ""$visualStudiopath\Microsoft.TeamFoundation.Common.dll""
+    Add-Type -Path ""$visualStudiopath\Microsoft.TeamFoundation.WorkItemTracking.Client.dll""
+    Add-Type -Path ""$visualStudiopath\Microsoft.TeamFoundation.Client.dll""
+    Add-type -path ""$visualStudiopath\Microsoft.TeamFoundation.ProjectManagement.dll""
+    Add-Type -Path ""$visualStudiopath\Microsoft.TeamFoundation.Build.Common.dll""
+
+}
+
+function Invoke-Visual13StudioDlls
+{
+    $visualStudiopath = 'C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\IDE\ReferenceAssemblies\v2.0'
+    $visualStudiopath45 = 'C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\ide\ReferenceAssemblies\v4.5'
+    Add-Type -Path ""$visualStudiopath\Microsoft.TeamFoundation.VersionControl.Client.dll""
+    Add-Type -Path ""$visualStudiopath\Microsoft.TeamFoundation.Common.dll""
+    Add-Type -Path ""$visualStudiopath\Microsoft.TeamFoundation.WorkItemTracking.Client.dll""
+    Add-Type -Path ""$visualStudiopath\Microsoft.TeamFoundation.Client.dll""
+    Add-type -path ""$visualStudiopath45\Microsoft.TeamFoundation.ProjectManagement.dll""  
+}

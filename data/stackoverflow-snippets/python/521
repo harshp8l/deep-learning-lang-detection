@@ -1,0 +1,53 @@
+import http.server
+import socketserver
+import threading
+import unittest
+import urllib.request
+
+
+def example_production_function(accept_header):
+    req = urllib.request.Request('http://localhost:8888', headers={'Accept': accept_header});
+    try:
+        urllib.request.urlopen(req)
+        return 'Allowed'
+    except urllib.error.HTTPError as e:
+        return 'Not allowed'
+
+
+class TestServer(unittest.TestCase):
+
+    def test(self):
+
+        class MockHandler(http.server.BaseHTTPRequestHandler):
+            protocol_version = 'HTTP/1.1'
+
+            def do_GET(self):
+                if 'text/html' not in self.headers['Accept']:
+                    self.send_response(406)
+                else:
+                    self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'some data')
+
+        class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+            pass
+
+        server_address = ('localhost', 8888)
+        server = ThreadedHTTPServer(server_address, MockHandler)
+        server.daemon_threads = True
+        thread = threading.Thread(target=server.serve_forever)
+        thread.daemon = True
+        thread.start()
+
+        result = example_production_function('text/html')
+        self.assertEqual(result, 'Allowed')
+
+        result = example_production_function('application/json')
+        self.assertEqual(result, 'Not allowed')
+
+        server.shutdown()
+        server.server_close()
+
+
+if __name__ == '__main__':
+    unittest.main()

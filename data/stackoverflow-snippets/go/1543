@@ -1,0 +1,61 @@
+package main
+
+import (
+    ""fmt""
+)
+
+func toPassword(n, length int, alphabet []rune) string {
+    base := len(alphabet)
+
+    // This will be our output
+    result := make([]rune, length)
+
+    // Start filling from the right
+    i := length - 1
+
+    // This is essentially a conversion to base-b, where b is
+    // the number of possible letters (5 in the case of ""ABCDE"")
+    for n > 0 {
+        // Filling from the right, put the right digit mod b
+        result[i] = alphabet[n%base]
+
+        // Divide the number by the base so we're ready for
+        // the next digit
+        n /= base
+
+        // Move to the left
+        i -= 1
+    }
+
+    // Fill anything that's left with ""zeros"" (first letter of
+    // the alphabet)
+    for i >= 0 {
+        result[i] = alphabet[0]
+        i -= 1
+    }
+
+    return string(result)
+}
+
+// Convenience function that just returns successive values from
+// toPassword starting at start
+func nextPassword(start, length int, alphabet []rune) func() string {
+    n := start
+    return func() string {
+        result := toPassword(n, length, alphabet)
+        n += 1
+        return result
+    }
+}
+
+func main() {
+    for i := 5; i < 11; i++ {
+        fmt.Println(toPassword(i, 2, []rune(""ABCDE"")))
+    } // BA, BB, BC, BD, BE, CA
+
+    // Now do the same thing using nextPassword
+    np := nextPassword(5, 2, []rune(""ABCDE""))
+    for i := 0; i < 6; i++ {
+        fmt.Println(np())
+    } // BA, BB, BC, BD, BE, CA
+}

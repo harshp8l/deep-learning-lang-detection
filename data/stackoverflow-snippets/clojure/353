@@ -1,0 +1,23 @@
+(ns tst.clj.core
+  (:use clj.core clojure.test tupelo.test)
+  (:require
+    [clojure.string :as str]
+    [clojure.walk :as walk]
+    [clojure.pprint :refer [pprint]]
+    [tupelo.core :as t]
+    [tupelo.string :as ts]
+  ))
+(t/refer-tupelo)
+
+(def data
+  {:person-123 {:xxx [1 5]
+                :zzz [2 3 4]}
+   :person-456 {:yyy [6 7]}})
+
+(defn reformat-gen [data]
+  (t/lazy-gen
+    (doseq [[outer-key outer-val] data]
+      (let [int-str (str/replace (name outer-key) ""person-"" """")]
+        (doseq [[inner-key inner-val] outer-val]
+          (let [inner-key-str (name inner-key)]
+            (t/yield {:person int-str :item inner-key-str})))))))

@@ -1,0 +1,23 @@
+for(auto& slave : slaveList) {
+    try {
+        auto client = kj::heap<capnp::EzRpcClient>(slave.second->address);
+        auto comparer = kj::heap<CompareNetwork::Client>(client->getMain<CompareNetwork>());
+        auto request = comparer->loadRequest();
+        std::string addrCopy(slave.first);
+        request.setIds(loadData);
+        auto loadPromise = request.send();
+        promList.add(loadPromise.then([addrCopy, client = std::move(client), comparer = std::move(comparer)](auto response) {
+            return std::make_pair(addrCopy, response.getStatus());
+        },
+        [&, addrCopy](kj::Exception && exception) {
+            slaveListLock.lock();
+            slaveList.erase(addrCopy);//something failed, remove this slave!
+            slaveListLock.unlock();
+            std::cout << ""ErrLoad0: "" << std::string(exception.getDescription()) << std::endl;
+            return std::make_pair(addrCopy, CompareNetwork::Status::ERROR);
+        }));
+    }
+    catch(...) {
+        std::cout << ""Error sending load to: "" << slave.first << std::endl;
+    }
+}

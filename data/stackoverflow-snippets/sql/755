@@ -1,0 +1,13 @@
+select location, date, user_id,
+       sum(opened) as opens, sum(closed) as closes, sum(cancelled) as cancels
+from ((select location, date, opened_id as user_id, 1 as opened, 0 as closed, 0 as cancelled
+       from t
+      ) union all
+      (select location, date, closed_id as user_id, 0 as opened, 1 as closed, 0 as cancelled
+       from t
+      ) union all
+      (select location, date, cancelled_id as user_id, 0 as opened, 0 as closed, 1 as cancelled
+       from t
+      )
+     ) t
+group by location, date, user_id;

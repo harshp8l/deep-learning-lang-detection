@@ -1,0 +1,34 @@
+class DataWorker
+  include Sidekiq::Worker
+
+  def perform
+    file = File.new(""sidekiq_profiling.csv"", ""a"")
+    memory_usage = gc_start
+    workers = Sidekiq::Workers.new
+    worker_running_counts = workers.map {|pid, thrd, wrkr| wrkr[""payload""][""class""]}.group_by {|cls| cls}.map {|k, v| {k => v.count}}
+    datetime = DateTime.now
+    worker_running_counts.each do |wc|
+      file << ""#{datetime},#{wc.keys[0]},#{wc.values[0]},#{memory_usage}\n""
+    end
+    file.close
+  end
+
+
+  def rss_usage
+    `ps -o rss= -p #{Process.pid}`.chomp.to_i * 1024
+  end
+
+  # def gc_stats
+  #   GC.stat.slice(:heap_available_slots, :heap_live_slots, :heap_free_slots)
+  # end
+
+  def gc_start
+    GC.start
+    # gc_stats.each do |key, value|
+    #   puts ""GC.#{key}: #{value.to_s(:delimited)}""
+    # end
+    ""#{rss_usage.to_s(:human_size, precision: 3)}""
+  end
+
+  Sidekiq::Cron::Job.create(name: 'DataWorker', cron: '* * * * *', class: 'DataWorker')
+end

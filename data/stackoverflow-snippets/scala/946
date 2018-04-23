@@ -1,0 +1,21 @@
+object MapperWrapper extends java.io.Serializable {
+
+  // @transient is set or not set for both fields depending on its presence at ""lazy val"" 
+  [@transient] private var mapperValue: ObjectMapper = null
+  [@transient] @volatile private var mapperInitialized = false
+
+  def mapper: ObjectMapper = {
+    if (!mapperInitialized) {
+      this.synchronized {
+        val mapper = new ObjectMapper
+        mapper.registerModule(DefaultScalaModule)
+        mapperValue = mapper
+        mapperInitialized = true
+      }
+    }
+    mapperValue
+  }
+
+
+  def readValue[T](content: String, valueType: Class[T]): T = mapper.readValue(content, valueType)
+}

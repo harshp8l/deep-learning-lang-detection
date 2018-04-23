@@ -1,0 +1,19 @@
+import cats._, cats.implicits._
+
+def getItems: Either[ApiFail, Seq[Item]] = {
+  case class ItemRaw(sn: String, ownerId: Int, borrowerId: Int)
+
+  get[List[ItemRaw]](""items.cgi"").flatMap(itemRawList =>
+    itemRawList.traverse[({type T[A]=Either[ApiFail, A]})#T, Item](itemRaw => {
+      for {
+        owner <- get[User](s""users.cgi?id=${itemRaw.ownerId}"")
+        borrower <-
+          if (itemRaw.borrowerId > 0)
+            get[User](s""users.cgi?id=${itemRaw.borrowerId}"").map(Some(_))
+          else
+            Right(None)
+      } yield
+        Item(itemRaw.sn, owner, borrower)
+    })
+  )
+}

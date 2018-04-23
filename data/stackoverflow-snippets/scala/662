@@ -1,0 +1,20 @@
+def nodeToMap(xml: Elem): Map[String, String] = {
+
+  def nodeToMapWithPrefix(prefix: String, xml: Node): Map[String, String] = {
+    val pathAndText = for {
+      child <- xml.child
+    } yield {
+      child match {
+        case e: Elem if e.prefix == null =>
+          nodeToMapWithPrefix(s""$prefix/${e.label}"", e)
+        case e: Elem => 
+          nodeToMapWithPrefix(s""$prefix/${e.prefix}:${e.label}"", e)
+        case t: Text => Map(prefix -> t.text)
+        case er: EntityRef => Map(prefix -> er.text)
+      }
+    }
+    pathAndText.foldLeft(Map.empty[String, String]){_ ++ _}
+  }
+
+  nodeToMapWithPrefix(xml.label, xml)
+}

@@ -1,0 +1,42 @@
+public class Main {
+    public static void main(String[] args) throws Exception{
+        int N = 100;
+        PrintingThread oddNumberThread = new PrintingThread(N - 1);
+        PrintingThread evenNumberThread = new PrintingThread(N);
+        oddNumberThread.start();
+        // make sure that even thread only start after odd thread
+        while (!evenNumberThread.isAlive()) {
+            if(oddNumberThread.isAlive()) {
+                evenNumberThread.start();
+            } else {
+                Thread.sleep(100);
+            }
+        }
+
+    }
+}
+
+class PrintingThread extends Thread {
+    private static final Object object = new Object(); // lock for both threads
+    final int N;
+    // N determines whether given thread is even or odd
+    PrintingThread(int N) {
+        this.N = N;
+    }
+
+    @Override
+    public void run() {
+        synchronized (object) {
+            int start = N % 2 == 0 ? 2 : 1; // if N is odd start from 1 else start from 0
+            for (int i = start; i <= N; i = i + 2) {
+                System.out.println(i);
+                try {
+                    object.notify(); // will notify waiting thread
+                    object.wait(); // will make current thread wait
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+}

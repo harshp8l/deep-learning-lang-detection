@@ -1,0 +1,24 @@
+add_action( 'woocommerce_payment_complete', 'action_payment_complete', 20, 1 );
+function action_payment_complete( $order_id ) {
+    // get an instance of the WC_Order object
+    $order = wc_get_order( $order_id );
+    // Initialising variables
+    $subtotal = $subtotal_taxes = 0; 
+
+    // Get order items subtotal and subtotal tax
+    foreach( $order->get_items() as $item ){
+        $subtotal += (double) $item->get_subtotal();
+        $subtotal_taxes += (double) $item->get_subtotal_tax();
+    }
+    // Order subtotal without any discounts, shipping…
+    $order_subtotal = $subtotal + $subtotal_taxes;
+
+    // Get order shipping totals
+    $shipping_total = $order->get_shipping_total();
+    $shipping_total_tax = $order->get_shipping_tax();
+
+    // Order subtotal with shipping but without any discounts
+    $order_subtotal_with_shipping = round($order_subtotal + $shipping_total + $shipping_total_tax, 2);
+
+    // Your other code goes here
+}

@@ -1,0 +1,42 @@
+function which {
+<#
+.SYNOPSIS
+Identifies the source of a PowerShell command.
+.DESCRIPTION
+Identifies the source of a PowerShell command. External commands (Applications) are identified by the path to the executable
+(which must be in the system PATH); cmdlets and functions are identified as such and the name of the module they are defined in
+provided; aliases are expanded and the source of the alias definition is returned.
+.INPUTS
+No inputs; you cannot pipe data to this function.
+.OUTPUTS
+.PARAMETER Name
+The name of the command to be identified.
+.EXAMPLE
+PS C:\Users\Smith\Documents> which Get-Command
+
+Get-Command: Cmdlet in module Microsoft.PowerShell.Core
+
+(Identifies type and source of command)
+.EXAMPLE
+PS C:\Users\Smith\Documents> which notepad
+
+C:\WINDOWS\SYSTEM32\notepad.exe
+
+(Indicates the full path of the executable)
+#>
+    param(
+    [String]$name
+    )
+
+    $cmd = Get-Command $name
+    $redirect = $null
+    switch ($cmd.CommandType) {
+        ""Alias""          { ""{0}: Alias for ({1})"" -f $cmd.Name, (. { which cmd.Definition } ) }
+        ""Application""    { $cmd.Source }
+        ""Cmdlet""         { ""{0}: {1} {2}"" -f $cmd.Name, $cmd.CommandType, (. { if ($cmd.Source.Length) { ""in module {0}"" -f $cmd.Source} else { ""from unspecified source"" } } ) }
+        ""Function""       { ""{0}: {1} {2}"" -f $cmd.Name, $cmd.CommandType, (. { if ($cmd.Source.Length) { ""in module {0}"" -f $cmd.Source} else { ""from unspecified source"" } } ) }
+        ""Workflow""       { ""{0}: {1} {2}"" -f $cmd.Name, $cmd.CommandType, (. { if ($cmd.Source.Length) { ""in module {0}"" -f $cmd.Source} else { ""from unspecified source"" } } ) }
+        ""ExternalScript"" { $cmd.Source }
+        default          { $cmd }
+    }
+}

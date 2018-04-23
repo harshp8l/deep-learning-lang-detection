@@ -1,0 +1,26 @@
+$filepath = "".\input.txt""
+$logpath  = "".\log_$compname.log""
+
+while ($server = (Read-Host ""Server"")) {
+    $server.Trim() | Out-File $filepath -Append
+}
+
+$test1 = {
+    $createfolder = ""C:\TestFolder""
+    Write-Log ""Creating folder in $env:COMPUTERNAME""
+
+    New-Item -Path $createfolder -ItemType Directory -Force
+    Write-Log ""Done""
+}
+
+foreach ($comp1 in $comp_array) {
+
+   $compname =""Invoke-Command -ComputerName $comp1 -ScriptBlock {$env:computername}""
+
+   $logpath  = "".\$compname.log""
+   Start-Transcript -Path $logpath
+
+    Invoke-Command -ComputerName $comp1 -ScriptBlock $test1
+
+    Stop-Transcript
+}

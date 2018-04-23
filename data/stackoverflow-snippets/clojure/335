@@ -1,0 +1,23 @@
+(defn my-distinct
+  ""Returns distinct values from a seq, as defined by id-getter.""
+  [id-getter coll]
+  (let [seen-ids (volatile! #{})
+        seen?    (fn [id] (if-not (contains? @seen-ids id)
+                            (vswap! seen-ids conj id)))]
+    (filter (comp seen? id-getter) coll)))
+
+(my-distinct identity ""abracadabra"")
+; (\a \b \r \c \d)
+
+(->> (for [i (range 50)] {:id (mod (* i i) 21) :value i})
+     (my-distinct :id)
+     pprint)
+
+; ({:id  0, :value 0}
+;  {:id  1, :value 1}
+;  {:id  4, :value 2}
+;  {:id  9, :value 3}
+;  {:id 16, :value 4}
+;  {:id 15, :value 6}
+;  {:id  7, :value 7}
+;  {:id 18, :value 9})

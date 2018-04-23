@@ -1,0 +1,12 @@
+type Ex =
+    /// Modify the exception, preserve the stacktrace and add the current stack, then throw (.NET 2.0+).
+    /// This puts the origin point of the exception on top of the stacktrace.
+    static member inline throwPreserve ex =
+        let preserveStackTrace = 
+            typeof<Exception>.GetMethod(""InternalPreserveStackTrace"", BindingFlags.Instance ||| BindingFlags.NonPublic)
+
+        (ex, null) 
+        |> preserveStackTrace.Invoke  // alters the exn, preserves its stacktrace
+        |> ignore
+
+        raise ex

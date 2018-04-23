@@ -1,0 +1,17 @@
+case class ConnectionProfile(host: String, username: String, password: String)
+
+object ExecutorSingleton {
+  var profile: ConnectionProfile = _
+  lazy val session = createConnection(profile)
+  def createJDBCSession(profile: ConnectionProfile) = { ... }
+}
+
+rdd.foreachPartition {
+    msgIterator => {
+      ExecutorSingleton.profile = ConnectionProfile(""host"", ""username"", ""password"")
+      msgIterator.foreach {msg =>
+        val session = ExecutorSingleton.session
+        session.execute(msg)
+      }
+    }
+}

@@ -1,0 +1,71 @@
+var cheerio = require('cheerio');
+var request = require('request-promise');
+var util = require('../helpers/util.js');
+var postgreSQLlib = require('./postgreSQLlib.js');
+
+var methods = {};
+
+var countries = {
+'Italy': 'ITA',
+'Latvia': 'LVA',
+'Netherlands': 'NLD'
+};
+
+var outDir = './output/';
+var finalData = outDir + 'coverage-eu.json'
+
+var jsons = [];
+
+methods.download = async function(req, res) {
+await Promise.all(Object.values(countries).map(async country=> {
+    var url = 
+'http://apps.who.int/immunization_monitoring/globalsummary/coverages?c=' + country;
+
+    const html = await request(url);
+    $ = cheerio.load(html);
+
+    var years = [];
+    var vaccines = [];
+    var coverages = [];
+
+    $('.ts .year').each(function() {
+        years.push($(this).text().trim());
+    });
+    $('.ts .odd td a, .ts .even td a').each(function() {
+        vaccines.push($(this).text().trim());
+    });
+    $('.ts .odd .statistics_small, .ts .even 
+.statistics_small').each(function() {
+        coverages.push($(this).text().trim());
+    });
+
+    const numYears = years.length;
+    const numVaccines = vaccines.length;
+    for(var vaccineIdx = 0; vaccineIdx < numVaccines; vaccineIdx++) {
+        for(var yearIdx = 0; yearIdx < numYears; yearIdx++) {
+            let obj = {
+                year: years[yearIdx],
+                country: country,
+                region: """",
+                vaccine: vaccines[vaccineIdx],
+                coverage: coverages[vaccineIdx*numYears + yearIdx]
+            }
+
+            // save on db
+            const query = {
+                text: 'INSERT INTO coverages (vaccine, country, 
+region, year, value) VALUES($1, $2, $3, $4, $5)',
+                values: [vaccines[vaccineIdx], country, '', 
+years[yearIdx], coverages[vaccineIdx*numYears + yearIdx]],
+            }
+            var queryRes = await postgreSQLlib.query(query);
+
+            // save on file
+            jsons.push(obj);
+        }
+    }
+    await util.printOnFile(jsons, finalData);
+}))
+}
+
+module.exports = methods;

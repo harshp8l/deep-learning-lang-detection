@@ -1,0 +1,33 @@
+#define BUFSIZE 1024
+
+char buf[BUFSIZE], *pbuf;
+FILE *file = fopen(soubor, ""rb"");
+...
+size_t bytes_loaded;
+do
+{
+    bytes_loaded = fread(buf, 1, BUFSIZE, file);
+    if (bytes_loaded < 1)
+    {
+        if ((!feof(file)) && ferror(file))
+            fprintf(stderr, ""Couldn't read the file\n"");
+        break;
+    }
+
+    pbuf = buf; 
+    do
+    {
+        bytestx = send(client_socket, pbuf, bytes_loaded, 0);
+        if (bytestx < 0)
+        {
+            perror(""ERROR in send"");
+            break;
+        }
+        pbuf += bytestx;
+        bytes_loaded -= bytestx;
+    }
+    while (bytes_loaded > 0);
+}
+while (bytes_loaded == 0);
+fclose(file);
+... 

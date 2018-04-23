@@ -1,0 +1,46 @@
+namespace App\FormType;
+
+use App\Entity;
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type as NativeType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\NotBlank;
+
+class User extends AbstractType
+{
+    public function getParent(): string
+    {
+        return BaseType::class;
+    }
+
+
+    public function buildForm(FormBuilderInterface $builder, array $options)
+    {
+        // This maps `Entity\User::username` to the respective field
+        $builder->add(
+            'username',
+            NativeType\EmailType::class,
+            ['label' => 'username']
+        );
+
+        // This maps `Entity\User::password` to the respective field    
+        $builder->add(
+            'password',
+            NativeType\RepeatedType::class,
+            [
+                'constraints' => [new NotBlank()],
+                'invalid_message' => 'nonMatchingPasswords',
+                'first_options' => ['label' => 'password'],
+                'second_options' => ['label' => 'password again'],
+                'type' => NativeType\PasswordType::class,
+            ]
+        );
+    }
+
+    // This tells Symfony to resolve the form to the `Entity\User` class
+    public function configureOptions(OptionsResolver $resolver)
+    {
+        $resolver->setDefaults(['data_class' => Entity\User::class]);
+    }
+}

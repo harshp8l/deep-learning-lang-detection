@@ -1,0 +1,23 @@
+type AgentCommands =
+   | Received of Email
+   | StatusRequest of RequestParams
+   | ...
+
+let agent = Agent.Start(fun inbox ->    
+  let rec loop emails = async {
+     let! cmd = inbox.Receive
+     match cmd with
+     | Received email ->
+        let emails = email::emails
+        return! loop emails
+     | StatusRequest emailStatusRequest ->
+         match emailStatusRequest with
+         | Get channel -> channel.Reply emails
+     return! loop emails }
+  loop [])
+
+let receiveLoop = async {
+      while true do
+         let! email = ReceiveEmail()
+         agent.Post (Received email)   
+   } |> Async.Start

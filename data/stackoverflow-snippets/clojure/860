@@ -1,0 +1,29 @@
+(set! *unchecked-math* true)
+
+(defn turn-off [^ints grid [r1 c1 r2 c2]]
+  (doseq [i (range r1 (inc r2))
+          k (range (+ c1 (* i 1000)) (+ c2 (* i 1000) 1))]
+    (aset grid k 0)))
+
+(defn turn-on [^ints grid [r1 c1 r2 c2]]
+  (doseq [i (range r1 (inc r2))
+          k (range (+ c1 (* i 1000)) (+ c2 (* i 1000) 1))]
+    (aset grid k 1)))
+
+(defn toggle [^ints grid [r1 c1 r2 c2]]
+  (doseq [i (range r1 (inc r2))
+          k (range (+ c1 (* i 1000)) (+ c2 (* i 1000) 1))]
+    (aset grid k (- 1 (aget grid k)))))
+
+(defn count-on [^ints grid]
+  (areduce grid i cnt 0 (+ cnt (aget grid i))))
+
+(defn day06a []
+  (let [grid (int-array (* 1000 1000))] ; 0-initialized via Java
+    (with-open [rdr (clojure.java.io/reader ""input/input06.txt"")]
+      (doseq [cmd (line-seq rdr)]
+        (let [v (map #(Integer/parseInt %) (re-seq #""[0-9]+"" cmd))]
+          (cond (.startsWith cmd ""turn off"") (turn-off grid v)
+                (.startsWith cmd ""turn on"")  (turn-on grid v)
+                (.startsWith cmd ""toggle"")   (toggle grid v)))))
+    (count-on grid)))

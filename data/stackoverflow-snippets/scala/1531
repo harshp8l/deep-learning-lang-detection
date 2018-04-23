@@ -1,0 +1,33 @@
+val data = sc.parallelize(List((""1"",       ""A"",       ""2015-01-01 00:00:00""),
+     |      | (""1"",       ""A"",       ""2014-10-01 00:00:00""),
+     |      | (""1"",       ""A"",       ""2014-01-01 00:00:00""),
+     |      | (""1"",       ""B"",       ""2014-01-01 00:00:00""),
+     |      | (""2"",       ""A"",       ""2015-01-01 00:00:00""),
+     |      | (""2"",       ""A"",       ""2014-10-01 00:00:00""),
+     |      | (""2"",       ""A"",       ""2014-01-01 00:00:00""),
+     |      | (""2"",       ""A"",       ""2013-10-01 00:00:00"")
+     |      | )).toDF(""id"",""status"",""Date"");
+
+
+    val data2 =data.select($""id"",$""status"",to_date($""Date"").alias(date));
+
+
+import org.apache.spark.sql.expressions.Window
+
+
+import org.apache.spark.sql.functions._
+
+val wSpec3 = Window.partitionBy(""id"",""status"").orderBy(desc(""date""));
+
+val data3 = data2.withColumn(""diff"",datediff(lag(data2(""date""), 1).over(wSpec3),$""date"")).filter($""diff"">182.5 || $""diff"".isNull);
+
+data3.show
++---+------+----------+----+
+| id|status|      date|diff|
++---+------+----------+----+
+|  1|     A|2015-01-01|null|
+|  1|     A|2014-01-01| 273|
+|  1|     B|2014-01-01|null|
+|  2|     A|2015-01-01|null|
+|  2|     A|2014-01-01| 273|
++---+------+----------+----+

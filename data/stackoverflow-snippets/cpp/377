@@ -1,0 +1,108 @@
+bool emailAddressIsValid(std::string _email)
+{
+    bool retVal = false;
+
+    //Tolower cast
+    std::transform(_email.begin(), _email.end(), _email.begin(), ::tolower);
+
+    //Edit these to change valid characters you want to be supported to be valid. You can edit it for each section. Remember to edit the array size in the for-loops below.
+
+    const char* validCharsName = ""abcdefghijklmnopqrstuvwxyz0123456789.%+_-""; //length = 41, change in loop
+    const char* validCharsDomain = ""abcdefghijklmnopqrstuvwxyz0123456789.-""; //length = 38, changein loop
+    const char* validCharsTld = ""abcdefghijklmnopqrstuvwxyz""; //length = 26, change in loop
+
+    bool invalidCharacterFound = false;
+    bool atFound = false;
+    bool dotAfterAtFound = false;
+    uint16_t letterCountBeforeAt = 0;
+    uint16_t letterCountAfterAt = 0;
+    uint16_t letterCountAfterDot = 0;
+
+    for (uint16_t i = 0; i < _email.length(); i++) {
+        char currentLetter = _email[i];
+
+        //Found first @? Lets mark that and continue
+        if (atFound == false && dotAfterAtFound == false && currentLetter == '@') {
+            atFound = true;
+            continue;
+        }
+
+        //Found '.' after @? lets mark that and continue
+        if (atFound == true && dotAfterAtFound == false && currentLetter == '.') {
+            dotAfterAtFound = true;
+            continue;
+        }
+
+        //Count characters before @ (must be > 0)
+        if (atFound == false && dotAfterAtFound == false) {
+            letterCountBeforeAt++;
+        }
+
+        //Count characters after @ (must be > 0)
+        if (atFound == true && dotAfterAtFound == false) {
+            letterCountAfterAt++;
+        }
+
+        //Count characters after '.'(dot) after @ (must be between 2 and 6 characters (.tld)
+        if (atFound == true && dotAfterAtFound == true) {
+            letterCountAfterDot++;
+        }
+
+        //Validate characters, before '@'
+        if (atFound == false && dotAfterAtFound == false) {
+            bool isValidCharacter = false;
+            for (uint16_t j = 0; j < 41; j++) {
+                if (validCharsName[j] == currentLetter) {
+                    isValidCharacter = true;
+                    break;
+                }
+            }
+            if (isValidCharacter == false) {
+                invalidCharacterFound = true;
+                break;
+            }
+        }
+
+        //Validate characters, after '@', before '.' (dot)
+        if (atFound == true && dotAfterAtFound == false) {
+            bool isValidCharacter = false;
+            for (uint16_t k = 0; k < 38; k++) {
+                if (validCharsDomain[k] == currentLetter) {
+                    isValidCharacter = true;
+                    break;
+                }
+            }
+            if (isValidCharacter == false) {
+                invalidCharacterFound = true;
+                break;
+            }
+        }
+
+        //After '.' (dot), and after '@' (.tld)
+        if (atFound == true && dotAfterAtFound == true) {
+            bool isValidCharacter = false;
+            for (uint16_t m = 0; m < 26; m++) {
+                if (validCharsTld[m] == currentLetter) {
+                    isValidCharacter = true;
+                    break;
+                }
+            }
+            if (isValidCharacter == false) {
+                invalidCharacterFound = true;
+                break;
+            }
+        }
+
+        //Break the loop to speed up thigns if one character was invalid
+        if (invalidCharacterFound == true) {
+            break;
+        }
+    }
+
+    //Compare collected information and finalize validation. If all matches: retVal -> true!
+    if (atFound == true && dotAfterAtFound == true && invalidCharacterFound == false && letterCountBeforeAt >= 1 && letterCountAfterAt >= 1 && letterCountAfterDot >= 2 && letterCountAfterDot <= 6) {
+        retVal = true;
+    }
+
+    return retVal;
+}

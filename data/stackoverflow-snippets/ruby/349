@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+class Block < Hash
+
+  def initialize(h, b=nil)
+    [:x, :y, :z].each do |s|
+      # We start by trying to assign the coordinate that is in the 
+      # input hash
+      if h[s]
+        self[s] = h[s]
+      else
+      # If the coordinate is not in h, we check for it in b, but we have to
+      # remember that if the block that we are providing in b does not have
+      # the method :[] or the coordinate is nil we may raise an exception
+        begin
+          self[s] = b[s]
+          raise if not self[s]
+        rescue
+          raise(Exception, ""Cannot initialize block."")   
+        end  
+      end
+    end 
+  end
+
+  def inspect
+    ""block:(x: #{self[:x]}, y: #{self[:y]}, z: #{self[:z]}""
+  end
+end
+
+# Let's try it!
+blocks = [] 
+blocks << Block.new({ x:0, y:100, z:20}) 
+puts blocks
+puts
+blocks << Block.new({x:100}, blocks[-1]) 
+puts blocks
+puts
+blocks << Block.new({y:0}, blocks[-1])
+puts blocks
+puts

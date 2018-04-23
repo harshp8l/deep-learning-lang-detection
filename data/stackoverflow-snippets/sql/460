@@ -1,0 +1,15 @@
+DECLARE @Table1 TABLE (line varchar(255));
+
+INSERT INTO @Table1 VALUES 
+( 'HD01 - Header record - 82 positions, 12 columns'),
+( 'IN01 - Invoice header - 438 positions, 54 columns'),
+( 'IN02 - Credit Note header - 438 positions, 33 columns'),
+( 'IN03 - Invoice detail - 507 positions, 41 columns'),
+( 'IN04 - Credit detail - 164 positions, 46 columns')
+
+SELECT LEFT(line,4) AS LineTypeCoded
+, SUBSTRING(line, 8, CHARINDEX('-', line, 10)-8)  AS LineTypeDescription
+, SUBSTRING(line, 2+CHARINDEX('-', line, CHARINDEX('-', line)+1), CHARINDEX('position', line) - 2-CHARINDEX('-', line, CHARINDEX('-', line)+1)) AS Positions
+, LTRIM(REPLACE(REPLACE(SUBSTRING(line, CHARINDEX(',', line, CHARINDEX('position', line))+1, 100), 'column', ''), 's', '')) AS Columns
+,line AS EntireLine
+FROM @Table1

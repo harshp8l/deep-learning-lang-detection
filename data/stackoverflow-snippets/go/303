@@ -1,0 +1,16 @@
+func settableSliceFromStruct(inStruct interface{}) ([]interface{}, error) {
+    t := reflect.TypeOf(inStruct)
+    if t.Kind() != reflect.Ptr {
+        return nil, errors.New(""can only assign values with pointer to struct"")
+    }
+    v := reflect.ValueOf(inStruct).Elem()
+    t = t.Elem()
+
+    dataColumns := make([]interface{}, 0, t.NumField())
+    for i := 0; i < t.NumField(); i++ {
+        if weWantToIncludeThis(t.Field(i)) {
+            dataColumns = append(dataColumns, v.Field(i).Addr().Interface())
+        }
+    }
+    return dataColumns, nil
+}

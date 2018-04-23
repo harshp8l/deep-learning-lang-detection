@@ -1,0 +1,44 @@
+require 'benchmark'
+
+def scramble_stefan1(s1,s2)
+  s2.chars.uniq.all? { |c| s1.count(c) >= s2.count(c) }
+end
+
+def scramble_stefan2(s1,s2)
+  pool = s1.chars.group_by(&:itself)
+  s2.chars.all? { |c| pool[c]&.pop }
+end
+
+def scramble_other(s1,s2)
+  ('a'..'z').all? { |c| s1.count(c) >= s2.count(c) }
+end
+
+def scramble_cary1(str1, str2)
+  h1 = char_counts(str1)
+  h2 = char_counts(str2)
+  h2.all? { |ch, nbr| nbr <= h1[ch] }
+end
+def char_counts(str)
+  str.each_char.with_object(Hash.new(0)) { |ch, h| h[ch] += 1 }
+end
+
+def scramble_cary2(str1, str2)
+  str2.chars.difference(str1.chars).empty?
+end
+class Array
+  def difference(other)
+    h = other.each_with_object(Hash.new(0)) { |e,h| h[e] += 1 }
+    reject { |e| h[e] > 0 && h[e] -= 1 }
+  end
+end
+
+Benchmark.bmbm do |x|
+  n = 100
+  s1 = (('a'..'z').to_a * (45000 / 26)).shuffle.join
+  s2 = s1.chars.shuffle.join
+  x.report('Stefan 1') { n.times { scramble_stefan1(s1, s2) } }
+  x.report('Stefan 2') { n.times { scramble_stefan2(s1, s2) } }
+  x.report('Other') { n.times { scramble_other(s1, s2) } }
+  x.report('Cary 1') { n.times { scramble_cary1(s1, s2) } }
+  x.report('Cary 2') { n.times { scramble_cary2(s1, s2) } }
+end

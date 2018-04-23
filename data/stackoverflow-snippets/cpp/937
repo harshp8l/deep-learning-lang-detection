@@ -1,0 +1,78 @@
+int main() {
+    std::vector<int> v(200001);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::iota(v.begin(), v.end(), -100000);
+    std::shuffle(v.begin(), v.end(), gen);
+
+    // random-sample without replacement
+    std::vector<int> randVec(v.begin(), v.begin() + 100000);
+    int val1, val2, val3;
+    std::clock_t start_time, end_time;
+
+    start_time = clock();
+    for (std::size_t i = 0; i < 100; i++)
+        val1 = boundedSumBen(randVec, 49900, 50100);
+    end_time = clock();
+
+    std::cout << ""time taken on sample w/o rep std::nth_element : "" <<
+        end_time - start_time << std::endl;
+
+    start_time = clock();
+    for (std::size_t i = 0; i < 100; i++)
+        val2 = boundedSumJoe(randVec, 49900, 50100);
+    end_time = clock();
+
+    std::cout << ""time taken on sample w/o rep indexing method by Joe : "" <<
+        end_time - start_time << std::endl;
+
+    start_time = clock();
+    for (std::size_t i = 0; i < 100; i++)
+        val3 = boundedSumOP(randVec, 49900, 50100);
+    end_time = clock();
+
+    std::cout << ""time taken on sample w/o rep naive approach with std::sort : "" <<
+        end_time - start_time << std::endl;
+
+    std::cout << ""All functions on sample w/o rep return the same value of : "" <<
+        val1 << "", "" << val2 << "", and "" << val3 << std::endl;
+
+
+    // Now we test a random sample with replacement
+    std::uniform_int_distribution<int> distribution(-100000, 100000);
+    for (std::size_t i = 0; i < 100000; i++)
+        randVec[i] = distribution(gen);
+
+    start_time = clock();
+    for (std::size_t i = 0; i < 100; i++)
+        val1 = boundedSumBen(randVec, 9900, 10100);
+    end_time = clock();
+
+    std::cout << ""time taken on sample with rep std::nth_element : "" <<
+        end_time - start_time << std::endl;
+
+    start_time = clock();
+    for (std::size_t i = 0; i < 100; i++)
+        val2 = boundedSumJoe(randVec, 9900, 10100);
+    end_time = clock();
+
+    std::cout << ""time taken on sample with rep indexing method by Joe : "" <<
+        end_time - start_time << std::endl;
+
+    start_time = clock();
+    for (std::size_t i = 0; i < 100; i++)
+        val3 = boundedSumOP(randVec, 9900, 10100);
+    end_time = clock();
+
+    std::cout << ""time taken on sample with rep naive approach with std::sort : "" <<
+        end_time - start_time << std::endl;
+
+    std::cout << ""All functions on sample with rep return the same value of : "" <<
+        val1 << "", "" << val2 << "", and "" << val3 << std::endl;
+
+    std::cout << ""Number of unique elements in vector with replacement ""
+             << std::set<int>(randVec.begin(), randVec.end()).size()
+             << std::endl;
+
+    return 0;
+}

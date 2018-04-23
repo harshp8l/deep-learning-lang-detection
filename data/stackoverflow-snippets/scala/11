@@ -1,0 +1,111 @@
+import org.apache.spark.sql.functions.{col, udf}
+import org.apache.spark.SparkConf
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.ml.feature.{IndexToString, StringIndexer}
+import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.sql.{Column, SparkSession}
+
+object Example {
+
+  case class Record(features: org.apache.spark.ml.linalg.Vector)
+
+  def main(args: Array[String]): Unit = {
+
+    val spark: SparkSession = SparkSession
+      .builder
+      .appName(""Example"")
+      .config(new SparkConf().setMaster(""local[2]""))
+      .getOrCreate
+
+    val sc = spark.sparkContext
+
+    import spark.implicits._
+
+    val data = sc.parallelize(
+      Array(
+        (Vectors.dense(0.9, 0.6), ""n""),
+        (Vectors.dense(0.1, 0.1), ""y""),
+        (Vectors.dense(0.2, 0.15), ""y""),
+        (Vectors.dense(0.8, 0.9), ""n""),
+        (Vectors.dense(0.3, 0.4), ""y""),
+        (Vectors.dense(0.5, 0.5), ""n""),
+        (Vectors.dense(0.6, 0.7), ""n""),
+        (Vectors.dense(0.3, 0.3), ""y""),
+        (Vectors.dense(0.3, 0.3), ""y""),
+        (Vectors.dense(-0.5, -0.1), ""dunno""),
+        (Vectors.dense(-0.9, -0.6), ""dunno"")
+      )).toDF(""features"", ""label"")
+
+    // NOTE: you're fitting StringIndexer to all your data.
+    // The StringIndexer orders the labels by label frequency.
+    // In this example there are 5 ""y"" labels, 4 ""n"" labels
+    // and 2 ""dunno"" labels, so the probability columns will be
+    // listed in the following order: ""y"", ""n"", ""dunno"".
+    // You can play with label frequencies to convince yourself
+    // that it sorts labels by frequency in provided data.
+    val labelIndexer = new StringIndexer()
+      .setInputCol(""label"")
+      .setOutputCol(""label_indexed"")
+      .fit(data)
+
+    val indexToLabel = new IndexToString()
+      .setInputCol(""prediction"")
+      .setOutputCol(""predicted_label"")
+      .setLabels(labelIndexer.labels)
+
+    // Here I use logistic regression, but the exact algorithm doesn't
+    // matter in this case.
+    val lr = new LogisticRegression()
+      .setFeaturesCol(""features"")
+      .setLabelCol(""label_indexed"")
+      .setPredictionCol(""prediction"")
+
+    val pipeline = new Pipeline().setStages(Array(
+      labelIndexer,
+      lr,
+      indexToLabel
+    ))
+
+    val model = pipeline.fit(data)
+
+    // Prepare test set
+    val toPredictDf = sc.parallelize(Array(
+      Record(Vectors.dense(0.1, 0.5)),
+      Record(Vectors.dense(0.8, 0.8)),
+      Record(Vectors.dense(-0.2, -0.5))
+    )).toDF(""features"")
+
+    // Make predictions
+    val results = model.transform(toPredictDf)
+
+    // The column containing probabilities has to be converted from Vector to Array
+    val vecToArray = udf( (xs: org.apache.spark.ml.linalg.Vector) => xs.toArray )
+    val dfArr = results.withColumn(""probabilityArr"" , vecToArray($""probability"") )
+
+    // labelIndexer.labels contains the list of your labels.
+    // It is zipped with index to match the label name with
+    // related probability found in probabilities array.
+    // In other words:
+    // label labelIndexer.labels.apply(idx)
+    // matches:
+    // col(""probabilityArr"").getItem(idx)
+    // See also: https://stackoverflow.com/a/49917851
+    val probColumns = labelIndexer.labels.zipWithIndex.map {
+      case (alias, idx) => (alias, col(""probabilityArr"").getItem(idx).as(alias))
+    }
+
+    // 'probColumns' is of type Array[(String, Column)] so now 
+    // concatenate these Column objects to DataFrame containing predictions
+    // See also: https://stackoverflow.com/a/43494322
+    val columnsAdded = probColumns.foldLeft(dfArr) { case (d, (colName, colContents)) =>
+      if (d.columns.contains(colName)) {
+        d
+      } else {
+        d.withColumn(colName, colContents)
+      }
+    }
+
+    columnsAdded.show()
+  }
+}

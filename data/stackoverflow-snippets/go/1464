@@ -1,0 +1,22 @@
+func (f *Filterers) UnmarshalJSON(b []byte) error {
+    var FilterFields map[string]*json.RawMessage
+    if err := json.Unmarshal(b, &FilterFields); err != nil {
+        return err
+    }
+    for LFKey, LFValue := range FilterFields {
+        if LFKey == ""FieldFilter"" {
+            var MyFieldFilters []*json.RawMessage
+            if err := json.Unmarshal(*LFValue, &MyFieldFilters); err != nil {
+                return err
+            }
+            for _, MyFieldFilter := range MyFieldFilters {
+                var filter FieldFilter
+                if err := json.Unmarshal(*MyFieldFilter, &filter); err != nil {
+                    return err
+                }
+                *f = append(*f, &filter)
+            }
+        }
+    }
+    return nil
+}

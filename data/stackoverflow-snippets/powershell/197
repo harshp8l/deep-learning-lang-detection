@@ -1,0 +1,98 @@
+do {
+
+# Phone code begins here
+$phoneform = New-Object System.Windows.Forms.Form
+$phoneform.Text = 'Phone numbers'
+$phoneform.Size = '300, 200'
+$phoneform.StartPosition = ""CenterScreen""
+$OKButton = New-Object System.Windows.Forms.Button
+$OKButton.Location = New-Object System.Drawing.Size(75, 120)
+$OKButton.Size = '75, 23'
+$OKButton.Text = 'OK'
+$OKButton.DialogResult = 'Ok'
+$phoneform.Controls.Add($OKButton)
+$CancelButton = New-Object System.Windows.Forms.Button
+$CancelButton.Location = '160, 120'
+$CancelButton.Size = '75, 23'
+$CancelButton.Text = 'Cancel'
+$CancelButton.DialogResult = 'Cancel'
+$phoneform.Controls.Add($CancelButton)
+$phoneform.Topmost = $True
+$phoneform.Add_Shown({ $phoneform.Activate() })
+
+$objLabel = New-Object System.Windows.Forms.Label
+$objLabel.Location = New-Object System.Drawing.Size(10,20) 
+$objLabel.Size = New-Object System.Drawing.Size(280,20) 
+$objLabel.Text = ""Work and mobile numbers for $IHIfirstname $IHIlastname""
+$phoneform.Controls.Add($objLabel) 
+
+$objLabel = New-Object System.Windows.Forms.Label
+$objLabel.Location = New-Object System.Drawing.Size(40,42) 
+$objLabel.Size = New-Object System.Drawing.Size(50,20) 
+$objLabel.Text = ""Work""
+$phoneform.Controls.Add($objLabel) 
+
+$objLabel = New-Object System.Windows.Forms.Label
+$objLabel.Location = New-Object System.Drawing.Size(40,72) 
+$objLabel.Size = New-Object System.Drawing.Size(60,20) 
+$objLabel.Text = ""Cellphone""
+$phoneform.Controls.Add($objLabel) 
+
+$objTextBox = New-Object System.Windows.Forms.TextBox 
+$objTextBox.Location = New-Object System.Drawing.Size(100,40) 
+$objTextBox.Size = New-Object System.Drawing.Size(160,20) 
+$phoneform.Controls.Add($objTextBox)
+
+$objTextBox2 = New-Object System.Windows.Forms.TextBox 
+$objTextBox2.Location = New-Object System.Drawing.Size(100,70) 
+$objTextBox2.Size = New-Object System.Drawing.Size(160,20) 
+$phoneform.Controls.Add($objTextBox2) 
+
+if('Ok' -eq $phoneform.ShowDialog()){
+    #write-host ""form OK button clicked""
+}else{
+    #Write-Host 'Form cancelled'
+    exit
+}
+
+$worknumber = $objTextBox.text
+$cellnumber = $objTextBox2.text
+$worknumber = $worknumber -replace '[()-. ]',''
+$cellnumber = $cellnumber -replace '[()-. ]',''
+#write-host $worknumber
+#write-host $cellnumber
+$worknumber.Length
+$cellnumber.Length
+if ($worknumber.Length -eq 0) {$worknumber = ""0000000000""}
+if ($cellnumber.Length -eq 0) {$cellnumber = ""0000000000""}
+
+if (($worknumber.Length -eq 10) -and ($cellnumber.Length -eq 10)) {
+    #write-host ""both match""
+    $worknumber = $worknumber.Insert(0,""("")
+    $worknumber = $worknumber.Insert(4,"")"")
+    $worknumber = $worknumber.Insert(5,"" "")
+    $worknumber = $worknumber.Insert(9,""-"")
+
+    $cellnumber = $cellnumber.Insert(0,""("")
+    $cellnumber = $cellnumber.Insert(4,"")"")
+    $cellnumber = $cellnumber.Insert(5,"" "")
+    $cellnumber = $cellnumber.Insert(9,""-"") 
+}
+Else 
+{
+    # Use Winforms MessageBox class instead of VBScript Dialog()
+    $result = [System.Windows.Forms.MessageBox]::Show(
+        ""Not enough digits entered`nWork Phone - $worknumber`nCell Phone -  $cellnumber"", 
+        ""Invalid Phone Number"", 
+        [System.Windows.Forms.MessageBoxButtons]::RetryCancel)
+    if ($result -eq ""Retry"")
+    {
+        continue
+    }
+    else
+    {
+        exit
+    }
+}
+
+} until ($false)

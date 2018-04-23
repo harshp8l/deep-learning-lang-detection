@@ -1,0 +1,18 @@
+void onTimeout(QNetworkReply *reply, int msec, std::function<void(const QByteArray &)> fun) {
+  auto call = [=]{
+    auto const data = reply->readAll();
+    if (!reply->isFinished())
+      reply->abort();
+    fun(data);
+  };
+  if (!reply->bytesAvailable()) {
+    QPointer<QObject> conn = new QObject(reply);
+    // single-shot connection
+    connect(reply, &QNetworkReply::downloadProgress, conn, [=](qint64 a, qint64 s){
+      if (a && s) {
+        QTimer::singleShot(msec, reply, call);
+        delete conn;
+      }
+    });
+  }
+}

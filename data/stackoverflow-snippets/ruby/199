@@ -1,0 +1,24 @@
+RSpec::Matchers.define :have_response do |expectation| 
+
+  supports_block_expectations
+
+  def expects_call_stack_jump?
+    true
+  end
+  #Actual matching logic 
+  match do |actual|
+     @actual_value = actual.respond_to?(:call) ? actual.call : actual
+    expect(@actual_value).to(expectation)
+  end
+
+  failure_message do |actual|
+    ""expected response to be #{expectation.expected} but response was #{@actual_value}""
+  end
+  failure_message_when_negated do |actual|
+    ""expected response not to be #{expectation.expected} but response was #{@actual_value}""
+  end
+
+end
+
+#define negation for chaining purposes as needed
+RSpec::Matchers.define_negated_matcher :not_have_response, :have_response

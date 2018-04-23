@@ -1,0 +1,27 @@
+def extractTxt(fpth, joinchar=' '):
+    loglines = []
+    with open(fpth) as f:
+        incall = False
+        calllines = []
+
+        for line in f:
+            if line.startswith('seq open') or line.startswith('seq log'):
+                loglines.append('NULL')
+            elif line.startswith('seq call'):
+                incall = True
+            elif incall:
+                if line.startswith('seq done'):
+                    incall = False
+                    call = joinchar.join(l for l in calllines if l)
+                    calllines = []
+
+                    if not call.strip():
+                        loglines.append('NULL')
+                    else:
+                        loglines.append(call)
+                else:
+                    calllines.append(line.strip())
+
+    return loglines
+
+extractTxt('seq.txt')

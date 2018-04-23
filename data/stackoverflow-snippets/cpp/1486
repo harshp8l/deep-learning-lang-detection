@@ -1,0 +1,23 @@
+#include <boost/interprocess/ipc/message_queue.hpp>
+
+namespace bip = boost::interprocess;
+
+struct named_message_queue : bip::message_queue {
+    template <typename Mode, typename... Args>
+    explicit named_message_queue(Mode mode, const char *name, Args... args)
+            : bip::message_queue(mode, name, args...), _name(name) {}
+
+    std::string name() const { return _name; }
+
+  private:
+    std::string _name;
+};
+
+#include <iostream>
+
+int main() {
+    named_message_queue mq(bip::create_only, ""message_queue"", 100, sizeof(int));
+
+    std::cout << ""Name: "" << mq.name() << ""\n"";
+    mq.remove(mq.name().c_str());
+}

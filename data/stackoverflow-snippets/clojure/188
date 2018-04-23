@@ -1,0 +1,37 @@
+(ns foo.core
+  (:require
+   [clojure.spec.gen.alpha :as gen]
+   [clojure.spec.alpha :as s]))
+
+(defn make-channel []
+  :mock-channel)
+
+(defn channel-gen
+  []
+  (gen/return (make-channel)))
+
+(s/def ::channel-type any?)
+
+(s/def ::channel (s/spec ::channel-type
+                         :gen channel-gen))
+
+(s/def ::id string?)
+
+(s/def ::connection (s/keys :req-un [::channel ::id]))
+
+(defn make-connection [c])
+
+(s/fdef make-connection
+  :args (s/cat :c ::channel)
+  :ret ::connection)
+
+(comment
+
+  (s/exercise ::connection)
+  ;;=> ([{:channel :mock-channel, :id """"} {:channel :mock-channel, :id """"}]
+  ;;    [{:channel :mock-channel, :id ""k""} {:channel :mock-channel, :id ""k""}] ,,,)
+
+  (s/exercise-fn `make-connection)
+  ;;=> ([(:mock-channel) nil] [(:mock-channel) nil] ,,,)
+
+  )

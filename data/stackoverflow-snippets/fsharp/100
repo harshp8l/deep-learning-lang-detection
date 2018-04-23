@@ -1,0 +1,23 @@
+task {
+    let token = task {
+        try
+            let! t = getAccessTokenAsync a b
+            return Some t
+        with
+            | ex -> printfn ""Failed to get access token.  %s"" ex.Message
+                    return None
+    }
+
+    let resouce t = task {
+        try 
+            let! r = getResourceAsync accessToken uri
+            // do stuff
+        with 
+            | ex -> printfn ""Failed to get API resource.  %s"" ex.Message
+    }
+
+    let! t = token
+    match t with
+       | None -> return ()
+       | Some token -> do! resource token
+}

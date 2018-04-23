@@ -1,0 +1,14 @@
+type StringIntCsvType = CsvProvider<Sample = ""item_number, num"", 
+                                    Schema = ""item_number (string), num (int)"", 
+                                    HasHeaders = true>
+
+let buildRowFromObject (row:string * int) = StringIntCsvType.Row(row)
+
+let qry = query {
+            for row in tbl1 do
+            groupBy row.ItemNumber into g
+            select (g.Key,g.Count())
+            }
+
+let csvout = qry |> Seq.map  buildRowFromObject
+(new StringIntCsvType(csvout)).Save(@""C:\tmp\test.csv"")

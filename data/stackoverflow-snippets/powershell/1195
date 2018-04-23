@@ -1,0 +1,35 @@
+process { 
+if ($GetHashOfFileWhichIsPlacedOnDesktop.MD5 -ne $GetHashOfFileWhichIsPlacedOnNetworkDrive.MD5) { 
+
+    Get-ChildItem  $PlaceOnANetworkDriveWhereBuildsAreHeld -Filter *.exe | Where-Object Name -NotMatch '.*NoDB\.exe$' | ForEach-Object {
+        New-Object psobject -Property @{
+            No   = [int]([regex]::Match($_.Name, '(?<=CL)\d+').Value)
+            Name = $_.FullName 
+        }
+    } | Sort-Object No -Descending | Select-Object -ExpandProperty Name -First 1 | Copy-Item -Destination $PathToTheLocalFolderWhereBuildsAreHeld
+}          
+$CheckClNumberOfABuildOnADesktop = Get-ChildItem  $PathToTheLocalFolderWhereBuildsAreHeld -Filter *.exe | Where-Object Name -NotMatch '.*NoDB\.exe$' | ForEach-Object {
+    New-Object psobject -Property @{
+        No   = [int]([regex]::Match($_.Name, '(?<=CL)\d+').Value)
+        Name = $_.FullName 
+    }
+} | Sort-Object No -Descending | Select-Object -ExpandProperty Name -First 1 
+
+$HashNumberOfTheCopiedBuild = Get-MyFileHash $CheckClNumberOfABuildOnADesktop -Algorithm MD5
+
+if ($HashNumberOfTheCopiedBuild.MD5 -eq $GetHashOfFileWhichIsPlacedOnNetworkDrive.MD5) {
+
+    Write-Verbose -Message ""Installation... Please, wait."" -Verbose
+
+    Get-ChildItem $PathToTheLocalFolderWhereBuildsAreHeld -Filter *.exe | Where-Object Name -Like '*OrthoSystemInstaller*' | ForEach-Object {
+        New-Object psobject -Property @{
+            No   = [int]([regex]::Match($_.Name, '(?<=CL)\d+').Value)
+            Name = $_.FullName
+        }
+    } | Sort-Object No -Descending | Select-Object -ExpandProperty Name -First 1 | ForEach-Object {& $_ -s2 -sp""-SilentInstallation=standalone -UpdateMaterials=yestoall -UpgradeDBIfRequired=yes""}     
+}
+else {
+    Write-Verbose -Message ""H"" -Verbose
+  }
+ }     
+}

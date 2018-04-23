@@ -1,0 +1,20 @@
+(defn assoc-at [data i item]
+  (if (associative? data)
+    (assoc data i item)
+    (if-not (neg? i)
+      (letfn [(assoc-lazy [i data]
+                (cond (zero? i) (cons item (rest data))
+                      (empty? data) data
+                      :else (lazy-seq (cons (first data)
+                                            (assoc-lazy (dec i) (rest data))))))]
+        (assoc-lazy i data))
+      data)))
+
+user> (assoc-at {:a 10} :b 20)
+;; {:a 10, :b 20}
+
+user> (assoc-at [1 2 3 4] 3 101)
+;; [1 2 3 101]
+
+user> (assoc-at (map inc [1 2 3 4]) 2 123)
+;; (2 3 123 5)

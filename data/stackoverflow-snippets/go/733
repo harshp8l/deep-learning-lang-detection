@@ -1,0 +1,61 @@
+func exec(w io.Writer, db *sql.DB, cmd string) error {
+    rows, err := db.Query(cmd)
+    if err != nil {
+        return err
+    }
+    defer rows.Close()
+    cols, err := rows.Columns()
+    if err != nil {
+        return err
+    }
+    if cols == nil {
+        return nil
+    }
+    vals := make([]interface{}, len(cols))
+    args := make([]interface{}, len(cols))
+    for i := 0; i < len(cols); i++ {
+        args[i] = &vals[i]
+        if i != 0 {
+            fmt.Fprint(w, ""\t"")
+        }
+        fmt.Fprint(w, cols[i])
+    }
+    for rows.Next() {
+        err = rows.Scan(args...)
+        if err != nil {
+            fmt.Fprintln(w, err)
+            continue
+        }
+        for i := 0; i < len(vals); i++ {
+            if i != 0 {
+                fmt.Print(""\t"")
+            }
+            printValue(w, vals[i])
+        }
+        fmt.Fprintln(w)
+
+    }
+    if rows.Err() != nil {
+        return rows.Err()
+    }
+    return nil
+}
+
+func printValue(w io.Writer, v interface{}) {
+    switch v := v.(type) {
+    case nil:
+        fmt.Fprint(w, ""NULL"")
+    case bool:
+        if v {
+            fmt.Fprint(w, ""1"")
+        } else {
+            fmt.Fprint(w, ""0"")
+        }
+    case []byte:
+        fmt.Fprint(w, string(v))
+    case time.Time:
+        fmt.Fprint(w, v.Format(""2006-01-02 15:04:05.999""))
+    default:
+        fmt.Fprint(w, v)
+    }
+}

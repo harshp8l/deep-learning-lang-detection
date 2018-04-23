@@ -1,0 +1,24 @@
+// Add a custom field to product in backend (for testing)
+add_action( 'woocommerce_product_options_pricing', 'add_field_product_options_pricing' );
+function add_field_product_options_pricing() {
+    global $post;
+
+    echo '<div class=""options_group"">';
+    woocommerce_wp_text_input( array(
+        'id'            => '_bestprice',
+        'label'         => __('Best price', 'woocommerce') . ' (' . get_woocommerce_currency_symbol() . ')',
+        'placeholder'   => __('Set the best price…', 'woocommerce'),
+        'description'   => __('Enter the custom value here.', 'woocommerce'),
+        'desc_tip'      => 'true',
+    ));
+    echo '</div>';
+}
+
+// Save product custom field to database when submitted in Backend (for testing)
+add_action( 'woocommerce_process_product_meta', 'save_product_options_custom_fields', 30, 1 );
+function save_product_options_custom_fields( $post_id ){
+    // Saving custom field value
+    if( isset( $_POST['_bestprice'] ) ){
+        update_post_meta( $post_id, '_bestprice', sanitize_text_field( $_POST['_bestprice'] ) );
+    }
+}

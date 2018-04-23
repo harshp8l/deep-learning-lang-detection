@@ -1,0 +1,38 @@
+object List {
+  def apply[T](x1: T, y1: T) = new Cons(x1, new Cons(y1, Nil))
+  def apply[T]() = Nil
+  def apply[T](x2: T) = new Cons(x2, Nil)
+}
+
+import scala.math.Ordering
+
+trait List[+T]{
+    def isEmpty : Boolean
+    def head : T
+    def tail : List[T]
+    def prepend [U >: T] (elem : U) : List[U] = new Cons(elem, this)
+    override def toString = if (this.isEmpty) ""."" else ""{"" + head + tail + ""}""
+    def isort [U >: T](xs: List[U])(implicit ord: Ordering[U]): List[U] = xs match {
+      case Nil => Nil
+      case Cons(y, ys) => this.isort(ys).insert(y)
+    }
+    def :: [U >: T] (elem: U) : List[U] = new Cons(elem, this)
+
+    def insert[U >: T](y: U)(implicit ord: Ordering[U]): List[U] = {
+      import ord._
+      this match {
+        case Nil => List(y)
+        case Cons(x, xs) => if (y <= x) Cons(y, xs.insert[U](x)) else Cons(x, xs.insert(y))
+      }
+    }
+}
+
+case class Cons[T](val head: T, val tail: List[T]) extends List[T] {
+  def isEmpty = false
+}
+
+case object Nil extends List[Nothing] {
+    def isEmpty = true
+    def head: Nothing = throw new Error(""head.List"")
+    def tail: Nothing = throw new Error(""tail.List"")
+}    

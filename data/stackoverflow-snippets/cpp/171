@@ -1,0 +1,33 @@
+template<int NBeg, int NEnd> struct Stage {};
+
+template<int N, int Saved>
+struct PipelineBuilder {
+    template<int M>
+    PipelineBuilder<M, Saved>
+    AddStage(Stage<N, M>) { return {}; }
+
+    void done() {
+        static_assert(Saved == N, ""Incompatible dim"");
+    }
+};
+
+template<int NIn, int NOut>
+struct Pipeline {
+    PipelineBuilder<NIn, NOut> GetBuilder() { return {}; }
+};
+
+int main() {
+    Stage<6,5> s1;
+    Stage<5,4> s2;
+    Stage<4,3> s3;
+
+    Pipeline<6, 2> p;
+
+    p
+        .GetBuilder()
+        .AddStage(s1)
+        .AddStage(s2)
+        .AddStage(s3)
+        .done()
+        ;
+}

@@ -1,0 +1,22 @@
+def full_product(d, d1, current = []):
+   if d == len(current):
+      yield current
+   else:
+      for i in range(d):
+        for b in range(1, d1):
+           yield from full_product(d, d1, current + [b])
+
+def final_results(data):
+  def wrapper():
+    for colors in data():
+       full_set = set(reduce(lambda x, y:x+y, [[a]+b for a, b in colors.items()]))
+       result = list(full_product(len(full_set), 4))
+       last_result = [a for i, a in enumerate(result) if all(a != c for c in result[:i])]
+       yield [dict(zip(full_set, i)) for i in last_result]
+  return wrapper
+
+@final_results
+def full_results():
+   return [{""A"":[""B""], ""B"":[""A""]}, {""A"":[""B"",""C""], ""B"":[""A""], ""C"":[""A""]}]
+
+print(list(full_results()))

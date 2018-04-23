@@ -1,0 +1,23 @@
+<?php
+$bean = new stdClass();
+$bean->first_name = 'John';
+$bean->last_name = 'Doe';
+$bean->organisation = 'PHP Company';
+
+$string = ""Hello {::first_name::} {::last_name::}, How are you? Your organisation is {::organisation::}"";
+
+// find all placeholders
+preg_match_all('/{::(.+?)::}/i', $string, $matches);
+
+$placeholders = $matches[0];
+
+//strings inside placeholders
+$parts = $matches[1];
+
+// return values from $bean by matching object property with strings inside placeholders
+$replacements = array_map(function($value) use ($bean) {
+    // use trim() to remove unexpected space
+    return $bean->{trim($value)};
+}, $parts);
+
+echo $newstring = str_replace($placeholders, $replacements, $string);

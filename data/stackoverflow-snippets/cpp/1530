@@ -1,0 +1,24 @@
+void KiUserCallbackDispatcher(...)
+{
+    __try {
+
+        //...
+    } __except(KiUserCallbackExceptionFilter(GetExceptionInformation())) {
+KiUserCallbackDispatcherContinue:
+        ZwCallbackReturn(0, 0, 0);
+    }
+}
+
+void LdrpLogFatalUserCallbackException(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT ContextRecord);
+
+int KiUserCallbackExceptionFilter(PEXCEPTION_POINTERS pep)
+{
+    if ( NtCurrentTeb()->ProcessEnvironmentBlock->ProcessParameters->Flags & 0x80000)
+    {
+        return EXCEPTION_EXECUTE_HANDLER;
+    }
+
+    LdrpLogFatalUserCallbackException(pep->ExceptionRecord, pep->ContextRecord);
+
+    return EXCEPTION_CONTINUE_EXECUTION;
+}

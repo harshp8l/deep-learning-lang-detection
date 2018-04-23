@@ -1,0 +1,24 @@
+create table tmp (id int not null,  code int not null, dt datetime not null,  data varchar(10)
+                   primary key (id, code, dt));
+create function dbo.CheckFunction(@id int, @code int)
+returns int
+as begin
+    return (select count(*) from tmp t where t.id <> @id and t.code = @code) 
+end;
+alter table tmp
+add constraint chk_CheckFunction
+check (dbo.CheckFunction(id, code) = 0);
+
+truncate table tmp;
+insert into tmp values 
+       (1 ,123, '3/28/2018', 'data 1')
+     , (1 ,123, '4/28/2018', 'data 2')
+     , (1 ,123, '5/28/2018', 'data 2');
+select * from tmp;
+select count(*) from tmp t where t.id <> 1 and t.code = 123;
+insert into tmp values 
+       (2 ,123, '3/28/2018', 'data 1');
+select * from tmp;
+
+drop table tmp;
+drop function dbo.CheckFunction;

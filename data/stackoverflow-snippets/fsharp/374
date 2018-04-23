@@ -1,0 +1,18 @@
+type MyMessage<'a, 'b> = 'a * AsyncReplyChannel<'b>
+
+type MyProcessor<'a, 'b>(f:'a->'b) =
+    // Using the MyMessage type here to simplify the signature
+    let agent = Agent<MyMessage<'a, 'b>>.Start(fun inbox -> 
+         let rec loop() = async {
+            let! msg, replyChannel = inbox.Receive()
+            let! result = f msg
+            // Sending the result back to the original poster
+            replyChannel.Reply result
+            return! loop()
+         }
+         loop()
+    )
+
+    // Notice the type change, may be handled differently, depends on you
+    member this.Post(msg:'a): Async<'b> = 
+        agent.PostAndAsyncReply(fun channel -> msg, channel)

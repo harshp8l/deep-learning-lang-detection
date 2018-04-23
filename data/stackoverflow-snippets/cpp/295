@@ -1,0 +1,52 @@
+import functools
+import sys
+
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt, QEvent, QCoreApplication
+from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QToolButton, QHBoxLayout, QLineEdit
+
+
+class KeyPad(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+        lay = QGridLayout(self)
+
+        letters = (((""1"", Qt.Key_1), (""2"", Qt.Key_2), (""3"", Qt.Key_3)),
+                   ((""4"", Qt.Key_4), (""5"", Qt.Key_5), (""6"", Qt.Key_6)),
+                   ((""7"", Qt.Key_7), (""8"", Qt.Key_8), (""9"", Qt.Key_9)),
+                   ((""."", Qt.Key_Colon), (""del"", Qt.Key_Delete), (""enter"", Qt.Key_Return)))
+
+        for i, row in enumerate(letters):
+            for j, (text, key) in enumerate(row):
+                button = QToolButton()
+                button.setFixedSize(64, 64)
+                button.setText(text)
+                lay.addWidget(button, i, j)
+                button.clicked.connect(functools.partial(self.on_clicked, text, key))
+
+    def on_clicked(self, text, key):
+        obj = QApplication.focusWidget()
+        if text == ""del"":
+            # select text
+            event = QtGui.QKeyEvent(QEvent.KeyPress, Qt.Key_A, Qt.ControlModifier, text)
+            QCoreApplication.postEvent(obj, event)
+        event = QtGui.QKeyEvent(QEvent.KeyPress, key, Qt.NoModifier, text)
+        QCoreApplication.postEvent(obj, event)
+
+
+class Widget(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+        lay = QHBoxLayout(self)
+        le = QLineEdit()
+        le.textChanged.connect(lambda text: print(""text Changed: {}"".format(text)))
+        le.returnPressed.connect(lambda: print(""pressed""))
+        lay.addWidget(le)
+        lay.addWidget(KeyPad())
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    w = Widget()
+    w.show()
+    sys.exit(app.exec_())

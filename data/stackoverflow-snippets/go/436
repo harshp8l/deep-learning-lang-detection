@@ -1,0 +1,16 @@
+do_compile() {
+    export GOBIN=""${B}/bin""
+    export CC=""${@d.getVar('BUILD_CC').strip()}""
+    rm -rf ${GOBIN} ${B}/pkg
+    mkdir ${GOBIN}
+    cd src
+    ./make.bash --host-only
+    cp ${B}/pkg/tool/${BUILD_GOTUPLE}/go_bootstrap ${B}
+    rm -rf ${B}/pkg/${TARGET_GOTUPLE}
+    ./make.bash --target-only
+    if [ -n ""${GO_DYNLINK}"" ]; then
+        cp ${B}/go_bootstrap ${B}/pkg/tool/${BUILD_GOTUPLE}
+        GO_FLAGS=""-buildmode=shared"" GO_LDFLAGS=""-extldflags \""${LDFLAGS}\"""" ./make.bash --target-only
+    fi
+    cd ${B}
+}

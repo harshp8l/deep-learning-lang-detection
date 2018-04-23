@@ -1,0 +1,82 @@
+import com.google.common.collect.Iterables;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+public class PerformanceTest {
+
+    private static long startTime;
+    private static long endTime;
+    private static LinkedHashMap<Integer, String> linkedmap;
+
+    public static void main(String[] args) {
+        linkedmap = new LinkedHashMap<Integer, String>();
+
+        linkedmap.put(12, ""Chaitanya"");
+        linkedmap.put(2, ""Rahul"");
+        linkedmap.put(7, ""Singh"");
+        linkedmap.put(49, ""Ajeet"");
+        linkedmap.put(76, ""Anuj"");
+
+        //call a useless action  so that the caching occurs before the jobs starts.
+        linkedmap.entrySet().forEach(x -> {});
+
+
+
+        startTime = System.nanoTime();
+        FindLasstEntryWithArrayListMethod();
+        endTime = System.nanoTime();
+        System.out.println(""FindLasstEntryWithArrayListMethod : "" + ""took "" + new BigDecimal((endTime - startTime) / 1000000.000).setScale(3, RoundingMode.CEILING) + "" milliseconds"");
+
+
+         startTime = System.nanoTime();
+        FindLasstEntryWithArrayMethod();
+        endTime = System.nanoTime();
+        System.out.println(""FindLasstEntryWithArrayMethod : "" + ""took "" + new BigDecimal((endTime - startTime) / 1000000.000).setScale(3, RoundingMode.CEILING) + "" milliseconds"");
+
+        startTime = System.nanoTime();
+        FindLasstEntryWithReduceMethod();
+        endTime = System.nanoTime();
+
+        System.out.println(""FindLasstEntryWithReduceMethod : "" + ""took "" + new BigDecimal((endTime - startTime) / 1000000.000).setScale(3, RoundingMode.CEILING) + "" milliseconds"");
+
+        startTime = System.nanoTime();
+        FindLasstEntryWithSkipFunctionMethod();
+        endTime = System.nanoTime();
+
+        System.out.println(""FindLasstEntryWithSkipFunctionMethod : "" + ""took "" + new BigDecimal((endTime - startTime) / 1000000.000).setScale(3, RoundingMode.CEILING) + "" milliseconds"");
+
+        startTime = System.currentTimeMillis();
+        FindLasstEntryWithGuavaIterable();
+        endTime = System.currentTimeMillis();
+        System.out.println(""FindLasstEntryWithGuavaIterable : "" + ""took "" + (endTime - startTime) + "" milliseconds"");
+
+
+    }
+
+    public static String FindLasstEntryWithReduceMethod() {
+        return linkedmap.entrySet().stream().reduce((first, second) -> second).orElse(null).getValue();
+    }
+
+    public static String FindLasstEntryWithSkipFunctionMethod() {
+        final long count = linkedmap.entrySet().stream().count();
+        return linkedmap.entrySet().stream().skip(count - 1).findFirst().get().getValue();
+    }
+
+    public static String FindLasstEntryWithGuavaIterable() {
+        return Iterables.getLast(linkedmap.entrySet()).getValue();
+    }
+
+    public static String FindLasstEntryWithArrayListMethod() {
+        List<Entry<Integer, String>> entryList = new ArrayList<Map.Entry<Integer, String>>(linkedmap.entrySet());
+        return entryList.get(entryList.size() - 1).getValue();
+    }
+
+    public static String FindLasstEntryWithArrayMethod() {
+        return String.valueOf(linkedmap.entrySet().toArray()[linkedmap.size() - 1]);
+    }
+}

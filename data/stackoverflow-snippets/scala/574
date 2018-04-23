@@ -1,0 +1,31 @@
+val df = Seq(
+  (""a"", 0L), (""b"", 1L), (""c"", 1L), (""d"", 1L), (""e"", 0L), (""f"", 1L),
+  (""g"", 1L), (""h"", 0L), (""i"", 0L), (""j"", 1L), (""k"", 1L), (""l"", 1L)
+).toDF(""id"", ""flag"").
+  withColumn(""index"", monotonically_increasing_id).
+  withColumn(""run_key"", when($""flag"" === 1, $""index"").otherwise(0))
+
+import org.apache.spark.sql.expressions.Window
+
+df.withColumn( ""lag1"", lag(""flag"", 1, -1).over(Window.orderBy(""index"")) ).
+  withColumn( ""switched"", when($""flag"" =!= $""lag1"", $""index"") ).
+  withColumn( ""key"", last(""switched"", ignoreNulls = true).over(
+    Window.orderBy(""index"").rowsBetween(Window.unboundedPreceding, 0)
+  ) )
+
+// +---+----+-----+-------+----+--------+---+
+// | id|flag|index|run_key|lag1|switched|key|
+// +---+----+-----+-------+----+--------+---+
+// |  a|   0|    0|      0|  -1|       0|  0|
+// |  b|   1|    1|      1|   0|       1|  1|
+// |  c|   1|    2|      2|   1|    null|  1|
+// |  d|   1|    3|      3|   1|    null|  1|
+// |  e|   0|    4|      0|   1|       4|  4|
+// |  f|   1|    5|      5|   0|       5|  5|
+// |  g|   1|    6|      6|   1|    null|  5|
+// |  h|   0|    7|      0|   1|       7|  7|
+// |  i|   0|    8|      0|   0|    null|  7|
+// |  j|   1|    9|      9|   0|       9|  9|
+// |  k|   1|   10|     10|   1|    null|  9|
+// |  l|   1|   11|     11|   1|    null|  9|
+// +---+----+-----+-------+----+--------+---+

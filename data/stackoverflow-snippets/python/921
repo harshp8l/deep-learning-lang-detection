@@ -1,0 +1,35 @@
+#!/usr/bin/python3
+# 2018/04/16 13:20:07
+# 2018/04/16 14:13:03
+
+import cv2
+import numpy as np
+
+## (1) Read and convert to HSV
+img = cv2.imread(""euR2X.png"")
+hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+## (2) Find the target yellow color region in HSV
+hsv_lower = (25, 100, 50)
+hsv_upper = (33, 255, 255)
+mask = cv2.inRange(hsv, hsv_lower, hsv_upper)
+
+## (3) morph-op to remove horizone lines
+kernel = np.ones((5,1), np.uint8)
+mask2 = cv2.morphologyEx(mask, cv2.MORPH_OPEN,  kernel)
+
+
+## (4) crop the region
+ys, xs = np.nonzero(mask2)
+ymin, ymax = ys.min(), ys.max()
+xmin, xmax = xs.min(), xs.max()
+
+croped = img[ymin:ymax, xmin:xmax]
+
+pts = np.int32([[xmin, ymin],[xmin,ymax],[xmax,ymax],[xmax,ymin]])
+cv2.drawContours(img, [pts], -1, (0,255,0), 1, cv2.LINE_AA)
+
+
+cv2.imshow(""croped"", croped)
+cv2.imshow(""img"", img)
+cv2.waitKey()

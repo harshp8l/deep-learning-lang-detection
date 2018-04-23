@@ -1,0 +1,22 @@
+from flask import Flask, request 
+
+@app.route('/previouspage/', methods=['GET'])
+def previous_page():
+   item = Item.query.filter_by(id=item_id).first()
+   redirect(url_for('charge', amount=item.price), code=307)
+
+
+@app.route('/charge/<amount>', methods=['GET', 'POST'])
+def charge(amount):
+
+    customer = stripe.Customer.create(
+        email='customer@example.com',
+        source=request.form['stripeToken']
+        )
+
+    charge = stripe.Charge.create(
+        customer=customer.id,
+        amount=amount,
+        currency='usd',
+        description='Test'
+        )

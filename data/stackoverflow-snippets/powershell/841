@@ -1,0 +1,13 @@
+ Use using current version cmdlets while on a legacy OS, i.e, Win7SP1 needing to use Test-NetConnection
+
+$RemotePoSHModuleUNCFolder = '\\WS2012r2\$C\Windows\System32\WindowsPowerShell\v1.0\Modules'
+$LocalhostPoSHModuleUNCFolder = 'C:\Windows\System32\WindowsPowerShell\v1.0\Modules'
+'NetTCPIP','DnsClient','NetSecurity' `
+| % {Copy-Item -Path $RemotePoSHModuleUNCFolder\$_ -Destination $LocalhostPoSHModuleUNCFolder}
+
+'NetTCPIP','DnsClient','NetSecurity' `
+| % {Import-Module -Name ""C:\Windows\System32\WindowsPowerShell\v1.0\Modules\$_"" -Verbose}
+
+# Use cmdlet proxy, import module from remote machine WS201R2
+$W2K12RemoteSession = New-PSSession -ComputerName 'WS2K12'
+Import-Module NetTCPIP -PSSession $W2K12RemoteSession

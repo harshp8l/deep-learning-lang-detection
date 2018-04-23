@@ -1,0 +1,34 @@
+CREATE function [dbo].[fn_enum2str]
+(
+  @enum as varchar(1000),
+  @table_name as varchar(100)
+)
+returns varchar(1000)
+as
+begin
+  declare @result varchar(1000)
+
+  if @enum is null
+    return ''
+
+  if @table_name = 'sys_user'
+    set @result = (
+      select stuff(
+        (
+          select ',' + realname from sys_user
+          where ','+@enum+',' like '%,'+cast(u_id as varchar(10))+',%' for xml path('')
+        ),1,1,''
+      )
+    )
+  if @table_name = 'sys_attachment'
+    set @result = (
+      select stuff(
+        (
+          select ',/' + filepath from sys_attachment
+          where ','+@enum+',' like '%,'+cast(aid as varchar(10))+',%' for xml path('')
+        ),1,1,''
+      )
+    )
+  return @result
+end
+GO

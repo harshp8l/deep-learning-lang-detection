@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby
+require ""bunny""
+
+quit = false
+consumer_queued = false
+
+connection = Bunny.new
+connection.start
+
+consumer = Thread.new do
+  puts ""consumer start""
+  cn  = connection.create_channel
+  ex = cn.topic(""weathr"", :auto_delete => true)
+
+  q = cn.queue("""", :exclusive => true).bind(ex, :routing_key => ""americas.north.#"")
+  consumer_queued = true
+  q.subscribe do |delivery_info, properties, payload|
+    puts ""An update for North America: #{payload}, routing key is #{delivery_info.routing_key}""
+    $stdout.flush
+  end
+
+  sleep 1 while !quit
+
+  cn.close
+  puts ""consumer done""
+end
+
+# ensure queue is ready
+sleep 0.125  while !consumer_queued
+
+channel = connection.create_channel
+exchange = channel.topic(""weathr"", :auto_delete => true)
+exchange.on_return do |basic_return, properties, payload|
+  puts ""#{payload} was returned! reply_code = #{basic_return.reply_code}, reply_text = #{basic_return.reply_text}""
+  $stdout.flush
+end
+
+exchange.publish(""San Diego update"", :mandatory => true, :routing_key => ""americas.north.us.ca.sandiego"").
+  publish(""Berkeley update"",         :mandatory => true, :routing_key => ""americas.north.us.ca.berkeley"").
+  publish(""San Francisco update"",    :mandatory => true, :routing_key => ""americas.north.us.ca.sanfrancisco"").
+  publish(""New York update"",         :mandatory => true, :routing_key => ""americas.north.us.ny.newyork"").
+  publish(""São Paolo update"",        :mandatory => true, :routing_key => ""americas.south.brazil.saopaolo"").
+  publish(""Hong Kong update"",        :mandatory => true, :routing_key => ""asia.southeast.hk.hongkong"").
+  publish(""Kyoto update"",            :mandatory => true, :routing_key => ""asia.southeast.japan.kyoto"").
+  publish(""Shanghai update"",         :mandatory => true, :routing_key => ""asia.southeast.prc.shanghai"").
+  publish(""Rome update"",             :mandatory => true, :routing_key => ""europe.italy.roma"").
+  publish(""Paris update"",            :mandatory => true, :routing_key => ""europe.france.paris"")
+
+channel.close
+sleep 5
+
+quit = true
+consumer.join
+connection.close

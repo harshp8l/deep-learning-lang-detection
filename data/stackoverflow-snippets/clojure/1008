@@ -1,0 +1,18 @@
+user> (<!!
+        (let [c1 (chan)
+              values [""hi"" ""there""]
+              vcount (count values)]
+           (doseq [value values]
+             (thread
+                  (>!! c1 value)))
+           (thread
+               (loop [recvalue (<!! c1)
+                      reccount 1]
+                  (println ""Read"" recvalue)
+                  (if (= reccount vcount)
+                      (do (close! c1)
+                          :done)
+                      (recur (<!! c1) (inc reccount)))))))
+Read hi
+Read there
+:done

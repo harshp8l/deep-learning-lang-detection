@@ -1,0 +1,9 @@
+$UserList=Get-Content ""C:\UserList.txt""
+ForEach ($UserName in $UserList) {Get-ADUser ""$UserName"" -Properties *,""msDS-UserPasswordExpiryTimeComputed"" | 
+Select-Object sAMAccountName,whenCreated, `
+@{Name=""lastLogon"";Expression={[DateTime]::FromFileTime($_.lastLogon)}}, `
+@{Name=""pwdLastSet"";Expression={[DateTime]::FromFileTime($_.pwdLastSet)}}, `
+@{Name=""PasswordExpiry"";Expression={[DateTime]::FromFileTime($_.""msDS-UserPasswordExpiryTimeComputed"")}}, `
+cannotChangePassword,passwordNeverExpires, `
+@{Name=""GroupMember"";Expression={($_ | Select -ExpandProperty MemberOf) | Where {$_ -Like ""*Desired.Group*""}}} |  
+Export-Csv -Path ""C:\UserInfo.csv"" -Append -NoTypeInformation}

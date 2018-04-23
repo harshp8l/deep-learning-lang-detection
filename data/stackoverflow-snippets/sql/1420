@@ -1,0 +1,35 @@
+with
+  ForeignKeys as (
+    -- All foreign keys with their associated tables and columns.
+    select fk.name as ConstraintName, fk.object_id as ContraintObjectId,
+      pt.name as ParentTable, pt.object_id as ParentTableObjectId, pc.name as ParentColumn, pc.column_id as ParentColumnId,
+      ft.name as ForeignTable, ft.object_id as ForeignTableObjectId, fc.name as ForeignColumn, fc.column_id as ForeignColumnId
+      from sys.foreign_keys as fk inner join
+        sys.foreign_key_columns as fkc on fkc.constraint_object_id = fk.object_id inner join
+        sys.tables as pt on pt.object_id = fkc.parent_object_id inner join
+        sys.columns as pc on pc.object_id = pt.object_id and pc.column_id = fkc.parent_column_id inner join
+        sys.tables as ft on ft.object_id = fkc.referenced_object_id inner join
+        sys.columns as fc on fc.object_id = ft.object_id and fc.column_id = fkc.referenced_column_id ),
+  RelatedTables as (
+    -- All ordered pairs of directly related tables.
+    select distinct ParentTable, ParentTableObjectId, ForeignTable, ForeignTableObjectId
+      from ForeignKeys ),
+  RelatedTablesHierarchy as (
+    -- Hierarchy of related tables.
+    -- Start from each distinct table that has a foreign key relation ...
+    select ParentTable, ParentTableObjectId, ForeignTable, ForeignTableObjectId,
+      Cast( ParentTable + '»' + ForeignTable as NVarChar(4000) ) as Path
+      from RelatedTables
+    union all
+    -- ... and add any other table to which the foreign table is related.
+    select RTH.ParentTable, RTH.ParentTableObjectId, RT.ForeignTable, RT.ForeignTableObjectId,
+      Cast( Path + '»' + RT.ForeignTable as NVarChar(4000) )
+      from RelatedTablesHierarchy as RTH inner join
+        RelatedTables as RT on RT.ParentTableObjectId = RTH.ForeignTableObjectId
+      -- NB: Avoid getting caught in reference loops.
+      where '»' + Path + '»' not like '%»' + RT.ForeignTable + '»%'
+      )
+    -- Output the results with   Path   made a little easier to read.
+    select Replace( Path, '»', ' » ' ) as Path, ParentTable, ParentTableObjectId, ForeignTable, ForeignTableObjectId
+      from RelatedTablesHierarchy
+      order by Path;

@@ -1,0 +1,61 @@
+public function action_edit($id) {
+        $id = (int) $id;
+        if ($this->validateInput()) {
+            $data = array(
+                'id_information' => $id,
+                'title' => $this->input->post('title', true),
+                'id_user' => $this->session->userdata('id'),
+                'date' => date('Y-m-d H:i:s'),
+            );
+
+            $q = $this->db->where('id_information', $id)->get('information');
+            if ($q->num_rows() > 0) {
+                $old_image = $q->row()->img;
+            } else {
+                $old_image = null;
+            }
+
+            //UPLOAD
+            if ($_FILES['img']['name'] != '') {
+                $this->load->library('upload');
+                $config['allowed_types'] = 'png|jpg';
+                $config['upload_path'] = './uploads/info';
+                $path = $_FILES['img']['name'];
+                $config['file_name'] = 'info_' . date('YmdHis') . '.' . pathinfo($path, PATHINFO_EXTENSION);
+                $config['max_size'] = 1024 * 3;
+                if ($id != null && $old_image != null) { // modified
+                    //$old_img = $this->db->where('id_information', $id)->get('information')->row()->img;
+                    unlink($config['upload_path'] . '/' . $old_img);
+                }
+                $this->upload->initialize($config);
+                if ($this->upload->do_upload('img')) {
+                    $data['img'] = $config['file_name'];
+                } else {
+                    $this->session->set_flashdata('alertMessage', 'FAILED!');
+                    $this->session->set_flashdata('alertStatus', 'danger');
+                    redirect(base_url('site/information/edit_information/' . $id));
+                }
+            } elseif (is_null($old_image)) {
+                // now this will only be triggered if we don't have an image in the database
+                // or one currently being uploaded
+                $this->session->set_flashdata('alertMessage', 'MUST INPUT IMAGE!');
+                $this->session->set_flashdata('alertStatus', 'danger');
+                redirect(base_url('site/information/edit_information/' . $id));
+            }
+
+            $this->information->updateInformation($data);
+            if ($this->db->affected_rows() == 1) {
+                $this->session->set_flashdata('alertMessage', 'SUCCESS');
+                $this->session->set_flashdata('alertStatus', 'success');
+                redirect(base_url('site/information/'));
+            } else {
+                $this->session->set_flashdata('alertMessage', 'UPDATE FAILED');
+                $this->session->set_flashdata('alertStatus', 'danger');
+                redirect(base_url('site/information/edit_information/' . $id));
+            }
+        } else {
+            $this->session->set_flashdata('alertMessage', 'UPDATE FAILED');
+            $this->session->set_flashdata('alertStatus', 'danger');
+            redirect(base_url('site/information/edit_information/' . $id));
+        }
+    }

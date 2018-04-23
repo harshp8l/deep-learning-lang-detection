@@ -1,0 +1,64 @@
+public class XmlPathIterator implements Iterator<String> {
+    private static XMLInputFactory factory = XMLInputFactory.newFactory();
+    private final XMLStreamReader xmlReader;
+    private List<String> tags = new ArrayList<>(); // really need just Stack but it is old and Vector-based
+
+    public XmlPathIterator(XMLStreamReader xmlReader) {
+        this.xmlReader = xmlReader;
+        moveNext();
+    }
+
+    public static XmlPathIterator fromInputStream(InputStream is) {
+        try {
+            return new XmlPathIterator(factory.createXMLStreamReader(is));
+        } catch (XMLStreamException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static XmlPathIterator fromReader(Reader reader) {
+        try {
+            return new XmlPathIterator(factory.createXMLStreamReader(reader));
+        } catch (XMLStreamException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void moveNext() {
+        try {
+            while (xmlReader.hasNext()) {
+                int type = xmlReader.next();
+                switch (type) {
+                    case XMLStreamConstants.END_DOCUMENT:
+                        tags.clear(); // finish
+                        return;
+
+                    case XMLStreamConstants.START_ELEMENT:
+                        QName qName = xmlReader.getName();
+                        tags.add(qName.getLocalPart());
+                        return;
+
+                    case XMLStreamConstants.END_ELEMENT:
+                        tags.remove(tags.size() - 1);
+                        break; // but continue the loop!
+
+                    // also continue  the loop on everything else
+                }
+            }
+        } catch (XMLStreamException ex) {
+            throw new RuntimeException(ex); // just pass throw
+        }
+    }
+
+    @Override
+    public boolean hasNext() {
+        return !tags.isEmpty();
+    }
+
+    @Override
+    public String next() {
+        String cur = ""/"" + String.join(""/"", tags);
+        moveNext();
+        return cur;
+    }
+}

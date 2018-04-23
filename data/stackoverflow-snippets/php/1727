@@ -1,0 +1,41 @@
+$objGetEmAll = new DOMDocument();
+$objGetEmAll->loadXML($theXML);
+$datas = $objGetEmAll->getElementsByTagName('data');
+$responseValue = array();
+
+
+foreach($datas as $data)        //each element of DATA
+{
+
+    $dataValue = array();
+    $product_desc_counter = 0;
+    $offer_counter = 0;
+
+    if($data->childNodes->length) 
+    {
+
+        foreach($data->childNodes as $i) {
+
+            // for v1:product_desc group case :1
+            if($i->nodeName == 'v1:product_desc' ){
+
+                foreach($i->childNodes as $p) { 
+                    $dataValue[$i->nodeName][ $product_desc_counter][$p->nodeName] = $p->nodeValue;
+                }
+
+                $product_desc_counter ++;
+            } else if($i->nodeName == 'v1:offer' ) // for offer group case:2
+            {
+                foreach($i->childNodes as $p) {
+                    $dataValue[$i->nodeName][ $offer_counter][$p->nodeName] = $p->nodeValue;
+                }
+                $offer_counter ++;
+            }
+            else // case:3
+                $dataValue[$i->nodeName] = $i->nodeValue;
+            }
+
+    }
+
+    $responseValue[] = $dataValue;
+}

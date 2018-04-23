@@ -1,0 +1,29 @@
+import ctypes
+import math
+
+def SimpleTestFunction_asm(X):
+    Input_Length_Array = []
+    Input_Length_Array.append(len(X)*8)
+
+    CA_X = (ctypes.c_double * len(X))(*X)
+
+    length_array_out = (ctypes.c_double * len(Input_Length_Array))(*Input_Length_Array)
+
+    hDLL = ctypes.WinDLL('test')
+    CallName = hDLL.Main_Entry_fn
+    CallName.argtypes = [ctypes.POINTER(ctypes.c_double),ctypes.POINTER(ctypes.c_double),ctypes.POINTER(ctypes.c_longlong)]
+    CallName.restype = ctypes.POINTER(ctypes.c_int64)
+
+    LibraryCB = ctypes.WINFUNCTYPE(ctypes.c_double, ctypes.c_double)
+
+    def LibraryCall(ax):
+        bx = math.ceil(ax)
+        return (bx)
+
+    lib_call = LibraryCB(LibraryCall)
+    lib_call = ctypes.cast(lib_call,ctypes.POINTER(ctypes.c_longlong))
+
+    ret_ptr = CallName(CA_X,length_array_out,lib_call)
+    print('{:016X} {:016X} {:016X} {}'.format(ctypes.addressof(CA_X),ctypes.addressof(length_array_out),ctypes.addressof(lib_call.contents),ret_ptr.contents))
+
+SimpleTestFunction_asm([1.1,2.2,3.3])

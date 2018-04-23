@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <body>
+
+        <p>Open a new window, and resize the width and height of the new window.</p>
+
+        <button onclick=""openWin()"">Create window</button>
+        <button onclick=""resizeWinTo()"">Resize the window to 800px * 600px</button>
+        <button onclick=""resizeWinBy()"">Make the new window smaller</button>
+
+        <script>
+            var myWindow;
+
+            function openWin() {
+                myWindow = window.open("""", """", ""width=250, height=250"");
+                myWindow.resizeBy = function (deltaX, deltaY) {
+                    var X = parseInt(myWindow.innerWidth) + parseInt(deltaX)
+                            , Y = parseInt(myWindow.innerHeight) + parseInt(deltaY);
+                    myWindow.resizeTo(X > 0 ? X : 0, Y > 0 ? Y : 0);
+                    myWindow.focus();
+                };
+                myWindow.onresize = function (event) {
+                    console.log('outerHeight -> ' + myWindow.outerHeight);
+                    console.log('outerWidth -> ' + myWindow.outerWidth);
+                };
+            }
+
+            function resizeWinTo() {
+                myWindow.resizeTo(800, 600);
+                myWindow.focus();
+            }
+
+            function resizeWinBy() {
+                var prevValY = myWindow.outerHeight
+                    , prevValX = myWindow.outerWidth
+                    , deltaX = -100
+                    , deltaY = -50;
+                myWindow.resizeBy(deltaX, deltaY);
+                if ((prevValX == myWindow.outerWidth || (myWindow.outerWidth - prevValX) > deltaX)
+                        && (prevValY == myWindow.outerHeight || myWindow.outerHeight == 0)) {
+                    myWindow.dispatchEvent(new Event('resize'));
+                }
+                myWindow.focus();
+            }
+        </script>
+
+    </body>
+</html>

@@ -1,0 +1,17 @@
+@NonNull
+public static List<String> getUniqueEmoji(CharSequence charSequence) {
+    Set<String> emojiList = new HashSet<>();
+    CharSequence processed = EmojiCompat.get().process(charSequence, 0, charSequence.length() -1, Integer.MAX_VALUE, EmojiCompat.REPLACE_STRATEGY_ALL);
+    if (processed instanceof Spannable) {
+        Spannable spannable = (Spannable) processed;
+
+        EmojiSpan[] emojiSpans = spannable.getSpans(0, spannable.length() - 1, EmojiSpan.class);
+        for (EmojiSpan emojiSpan : emojiSpans) {
+            int spanStart = spannable.getSpanStart(emojiSpan);
+            int spanEnd = spannable.getSpanEnd(emojiSpan);
+            CharSequence emojiCharSequence = spannable.subSequence(spanStart, spanEnd);
+            emojiList.add(String.valueOf(emojiCharSequence));
+        }
+    }
+    return emojiList.size() > 0 ? new ArrayList<>(emojiList) : new ArrayList<String>();
+}

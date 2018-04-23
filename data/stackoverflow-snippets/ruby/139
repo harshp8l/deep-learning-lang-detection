@@ -1,0 +1,22 @@
+ # Retrieves the policy for the given record, initializing it with the record
+  # and current user and finally throwing an error if the user is not
+  # authorized to perform the given action.
+  #
+  # @param record [Object] the object we're checking permissions of
+  # @param query [Symbol, String] the predicate method to check on the policy (e.g. `:show?`).
+  #   If omitted then this defaults to the Rails controller action name.
+  # @raise [NotAuthorizedError] if the given query method returned false
+  # @return [Object] Always returns the passed object record
+  def authorize(record, query = nil)
+    query ||= params[:action].to_s + ""?""
+
+    @_pundit_policy_authorized = true
+
+    policy = policy(record)
+
+    unless policy.public_send(query)
+      raise NotAuthorizedError, query: query, record: record, policy: policy
+    end
+
+    record
+  end

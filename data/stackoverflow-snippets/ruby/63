@@ -1,0 +1,17 @@
+class QuestionsController < ApplicationController
+    before_action :set_page, only: [:view]
+    QUESTIONS_PER_PAGE = 1
+    def view
+        questions=[]
+        @evaluation = Evaluation.pluck(:content).last
+        @evaluation.each do |question|
+          questions << question
+        end
+        @questions = Question.where(content: questions).offset(QUESTIONS_PER_PAGE * @page).limit(QUESTIONS_PER_PAGE)
+    end
+
+    private
+    def set_page
+       @page = (params[:page] || 0).to_i
+    end
+end

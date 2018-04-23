@@ -1,0 +1,19 @@
+(defn -db-producer-factory [order-ids-chan next-chan]
+  (go-loop [order-id (<! order-ids-chan)]
+    (condp = order-id
+
+      nil
+      ;; exiting
+      nil
+
+      :finished (do
+                  (>! next-chan :finished)
+                  (recur (<! order-ids-chan)))
+      (do
+        (supress-w-nextexc
+         (->>
+          (-> (r/-get-order :live order-id)
+              denorm/order->denormalized)
+          (hash-map :data)
+          (>! next-chan)))
+        (recur (<! order-ids-chan))))))

@@ -1,0 +1,18 @@
+type I(a: int) = 
+    member this.ap(b: string) = a + b.Length
+    member this.ap(b: int) = string( a + b )
+
+type S(a: string) = 
+    member this.ap(b: int) = b + a.Length
+    member this.ap(b: string) = b.Length + a.Length
+
+type W = W with
+    static member inline ($) (W, a: int) = I a
+    static member inline ($) (W, a: string) = S a
+
+let inline ap (a: ^a) (b: ^b) = (^a : (member ap: ^b -> ^c) (a, b)) 
+let inline (==>) (a: ^a) (b: ^b) = ap (W $ a) b
+
+let aa = 5 ==> ""55""   // = 7
+let bb = ""55"" ==> 5   // = 7
+let cc = 5 ==> ""55"" ==> 7 ==> ""abc"" ==> 9  // = ""14""

@@ -1,0 +1,25 @@
+QTcpSocket socket;
+qint64 readBufferSize; // Current max read buffer size.
+bool flag = false; // flag for changing max read buffer size.
+bool isReadBufferLimitReached = false;
+
+void App::CheckReadBufferLimitReached()
+{
+    if (readBufferSize <= socket.bytesAvailable())
+        isReadBufferLimitReached = true;
+    else if (isReadBufferLimitReached)
+    {
+        if (flag)
+        {
+            readBufferSize++;
+            flag = !flag;
+        }
+        else
+        {
+            readBufferSize--;
+            flag = !flag;
+        }
+        socket.setReadBufferSize(readBufferSize);
+        isReadBufferLimitReached = false;
+    }
+}

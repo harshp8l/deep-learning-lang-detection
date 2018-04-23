@@ -1,0 +1,63 @@
+(ns clj.core
+  (:use tupelo.core)
+  (:require [clojure.core               :as clj]
+            [schema.core                :as s]
+            [tupelo.types               :as tt]
+            [tupelo.schema              :as ts]
+  ))
+
+; Prismatic Schema type definitions
+(s/set-fn-validation! true)   ; #todo add to Schema docs
+
+(def data [ {:a 1 :b 2} {:a 3 :b 4} {:a 1 :b 6} {:a 3 :b 9} {:a 5 :b 1} {:a 6 :b 1} ] )
+
+(defn accum-smallest-b-entries
+  [cum-map-a2b 
+      ; A map where both keys and vals are simple 1-entry maps
+      ; like:   {:a 1} -> {:b 2}
+      ;         {:a 2} -> {:b 9}
+   new-a-b-map
+      ; next entry, like {:a 1 :b 2}
+  ]
+  (newline)
+  (println ""---------------------------------"")
+  (let [new-a-map   (select-keys new-a-b-map [:a] )  ; like {:a 1}
+        _ (spyx new-a-map)
+        new-b-map   (select-keys new-a-b-map [:b] )  ; like {:b 2}
+        _ (spyx new-b-map)
+        curr-b-map  (get cum-map-a2b new-a-map)
+        _ (spyx curr-b-map)
+        next-b-map  (if (or (nil? curr-b-map)
+                            (< (grab :b new-b-map) (grab :b curr-b-map)))
+                      new-b-map 
+                      curr-b-map)
+        _ (spyx next-b-map)
+  ]
+    (spyx (assoc cum-map-a2b new-a-map next-b-map))))
+
+(def a2b-map (reduce accum-smallest-b-entries {} data))
+(spyx a2b-map)
+
+(defn combine-keyvals-from-a2b-map
+  [cum-result
+      ; final result like:  [ {:a 1 :b 2}
+      ;                       {:a 2 :b 9} ]
+   a2b-entry
+      ; next entry from a2b-map like [ {:a 5} {:b 1} ]
+   ]
+  (newline)
+  (println ""combine-keyvals-from-a2b-map"")
+  (println ""---------------------------------"")
+  (spyx cum-result)
+  (spyx a2b-entry)
+  (let [combined-ab-map (glue (first a2b-entry) (second a2b-entry)) 
+        _ (spyx combined-ab-map)
+        new-result      (append cum-result combined-ab-map)
+        _ (spyx new-result)
+        ]
+    new-result))
+
+(def a-and-b-map (reduce combine-keyvals-from-a2b-map [] a2b-map))
+(spyx a-and-b-map)
+
+(defn -main [] )

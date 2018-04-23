@@ -1,0 +1,89 @@
+#include <boost/array.hpp>
+#include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/bind.hpp>
+#include <iostream>
+
+class udpFind {
+public:
+    udpFind(boost::asio::io_context& service, boost::asio::ip::udp::endpoint listen_endpoint, unsigned int port)
+    : broadcastEndpoint_(boost::asio::ip::address_v4::broadcast(), port),
+      timer(service),
+      socket_(service, listen_endpoint)
+    {
+        socket_.set_option(boost::asio::ip::udp::socket::reuse_address(true));
+        socket_.set_option(boost::asio::socket_base::broadcast(true));
+
+        find();
+    }
+
+    void find () {
+        std::array<unsigned int, 2> data = {{255, 255}};
+        for (auto it = std::begin(data); it != std::end(data); ++it)
+            std::cout << *it;
+
+        socket_.async_send_to(
+                              boost::asio::buffer(data, 2), broadcastEndpoint_,
+                              boost::bind(&udpFind::handle_send, this,
+                                          boost::asio::placeholders::error,
+                                          boost::asio::placeholders::bytes_transferred));
+    }
+
+    void handle_receive(const boost::system::error_code& error,
+                        std::size_t bytes_transferred)
+    {
+        // Read has finished, so cancel the timer.
+        timer.cancel();
+        if (!error) {
+            std::cout << ""Received Data"" << bytes_transferred << "" from "" << senderEndpoint_ << std::endl;
+        }
+    }
+
+    void handle_retry(const boost::system::error_code& error) {
+        std::cout << ""retrying""  << std::endl;
+        find();
+    }
+
+
+    void handle_timeOut(const boost::system::error_code& error) {
+        if (!error) {
+            std::cout << ""Timeout""  << std::endl;
+            // Timer has expired cancel read operation
+            socket_.cancel();
+            timer.expires_from_now(boost::posix_time::milliseconds(10000));
+            timer.async_wait(boost::bind(&udpFind::handle_retry,
+                                         this, boost::asio::placeholders::error));
+        }
+    }
+
+
+    void handle_send(const boost::system::error_code& error, std::size_t bytes_transferred)
+    {
+        std::cout << ""Sent Data ""  << bytes_transferred << "" ("" << error.message() << "")"" << std::endl;
+        buffer_= {};
+        socket_.async_receive_from(
+                                   boost::asio::buffer(buffer_), senderEndpoint_,
+                                   boost::bind(&udpFind::handle_receive, this,
+                                               boost::asio::placeholders::error,
+                                               boost::asio::placeholders::bytes_transferred));
+
+        timer.expires_from_now(boost::posix_time::milliseconds(10000));
+        timer.async_wait(boost::bind(&udpFind::handle_timeOut,
+                                     this, boost::asio::placeholders::error));
+    }
+
+private:
+    boost::asio::ip::udp::endpoint broadcastEndpoint_;
+    boost::asio::deadline_timer timer;
+    boost::asio::ip::udp::socket socket_;
+    boost::asio::ip::udp::endpoint senderEndpoint_;
+    std::array<char, 128> buffer_;
+};
+
+int main()
+{
+    boost::asio::io_context service;
+    boost::asio::ip::udp::endpoint listen_endpoint(boost::asio::ip::address::from_string(""0.0.0.0""), 0);
+    udpFind find(service, listen_endpoint, 9000);
+    service.run();
+}

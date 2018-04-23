@@ -1,0 +1,33 @@
+(defn- drop-common-prefix [v w]
+  (loop [v v, a (.charAt v 0), s (.substring v 1),
+         w w, b (.charAt w 0), t (.substring w 1)]
+    (if (and (= a b)
+             (not-empty s)
+             (not-empty t))
+      (recur s (.charAt s 0) (.substring s 1)
+             t (.charAt t 0) (.substring t 1))
+      [v a s, w b t])))
+
+(def prefix-pair-gen
+  (gen/fmap
+   (fn [[u v w]]
+     [(str u v) (str u w)])
+   (spec/gen
+    (spec/and (spec/coll-of string? :type vector? :count 3)
+              (fn [[u v w]]
+                (and (not-empty v)
+                     (not-empty w)))))))
+
+(spec/def ::prefix-pair
+  (spec/with-gen
+    (spec/coll-of string? :type vector? :count 2)
+    (constantly prefix-pair-gen)))
+
+(spec/fdef drop-common-prefix
+           :args ::prefix-pair
+           :ret (spec/tuple string? char? string?, string? char? string?)
+           :fn (fn [{[v w] :args, [v' a s, w' b t] :ret}]
+                 (and (= v' (str a s))
+                      (.endsWith v v')
+                      (= w' (str b t))
+                      (.endsWith w w'))))

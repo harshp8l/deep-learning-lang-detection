@@ -1,0 +1,24 @@
+(defn preparse-comments
+  [s]
+  (-> s
+    (s/replace #""<!--"" ""<comment>"")
+    (s/replace #""-->"" ""</comment>"")))
+
+(defn revert-comments 
+  [s]
+  (-> s
+    (s/replace #""<comment>"" ""<!--"")
+    (s/replace #""</comment>"" ""-->"")))
+
+(defn load-data
+  [xml-filename]
+  (-> xml-filename
+    (slurp)
+    (preparse-comments)
+    (clojure.data.xml/parse-str)))
+
+(defn emit-and-prep
+  [data]
+  (-> data
+    (clojure.data.xml/emit-str)
+    (revert-comments)))

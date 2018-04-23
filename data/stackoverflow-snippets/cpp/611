@@ -1,0 +1,35 @@
+class Shape
+{
+public:
+    template<typename T>
+    Shape(T t)
+        : container(std::make_shared<Model<T>>(std::move(t)))
+    {}
+
+    friend void draw(const Shape &shape)
+    {
+        shape.container->drawImpl();
+    }
+    // add more functions similar to draw() here if you wish
+    // remember also to add a wrapper in the Concept and Model below
+
+private:
+    struct Concept
+    {
+        virtual ~Concept() = default;
+        virtual void drawImpl() const = 0;
+    };
+
+    template<typename T>
+    struct Model : public Concept
+    {
+        Model(T x) : m_data(move(x)) { }
+        void drawImpl() const override
+        {
+            draw(m_data);
+        }
+        T m_data;
+    };
+
+    std::shared_ptr<const Concept> container;
+};

@@ -1,0 +1,31 @@
+client.receive().then([](websocket_incoming_message msg) {
+            std::cout << ""receiving data from socket"";
+
+            // msg.message_type();
+            return msg.extract_string();
+            //1..i have one string
+            //cout<<""\n///////////test""<< msg.extract_string().get().c_str();
+            //  // 2.convert to json array
+            //json::value::parse(   ::to_string_t(msg.extract_string().get()))
+            //
+
+        }).then([](std::string body) {
+
+            //std::cout << ""displaying the data"";
+            std::cout << body << std::endl;
+
+
+            std::string ss = body;
+            ptree pt;
+            std::istringstream is(ss);
+            read_json(is, pt);
+
+            std::cout <<""\n 1st""<< ""action:     "" << pt.get<std::string>(""action"") << ""\n"";
+            std::cout <<""\n 2nd""<< ""data: "" << pt.get<std::string>(""data"") << ""\n"";
+            std::cout << ""--------------------------------------------------------------"";
+            for (auto& e : pt.get_child(""data.users_list"")) {
+            std::cout << ""\n"" << ""users id "" << e.second.get<std::string>(""user_id"") << ""\n"";
+
+
+            }
+        });

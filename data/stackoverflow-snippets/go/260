@@ -1,0 +1,23 @@
+ServerAddr, err := net.ResolveUDPAddr(""udp"", ""192.168.11.6:10001"")
+CheckError(err)
+buf := make([]byte, 1024)
+Conn, err := net.DialUDP(""udp"", nil, ServerAddr)
+CheckError(err)
+
+defer Conn.Close()
+i := 0
+for {
+    msg := strconv.Itoa(i)
+    i++
+    fmt.Printf(msg)
+    n, err := Conn.Write([]byte(msg))
+    CheckError(err)
+    fmt.Printf(""sent %d bytes"", n)
+    n, addr, err := Conn.ReadFromUDP(buf)
+    if err == nil {
+        fmt.Printf(""%s %s\n"", buf, addr)
+    } else {
+        fmt.Printf(""some err %v\n"", err)
+    }
+    time.Sleep(time.Second * 1)
+}

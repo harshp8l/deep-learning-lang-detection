@@ -1,0 +1,25 @@
+SELECT 
+    OrderNumber,
+    PriceCategory,
+    COUNT(1) AS 'NumberOfPurchases',
+    AVG(val) as 'AverageTotalCost',
+    SUM(val) as 'TotalCost'
+FROM
+(
+SELECT 
+  OrderNumber = CASE 
+                      WHEN (orderid % 10) > 7 THEN 'Purchase Order'
+                      WHEN (orderid % 10) < 2 THEN 'Discounted Order'
+                      WHEN (orderid % 2)  = 1 THEN 'Special Order'
+                      WHEN (orderid % 2)  = 0 THEN 'Open Markent Purchase Agreement'
+                      ELSE 'Missing Value' END
+, PriceCategory = CASE 
+                WHEN val < 1000 THEN '1. Low Price'
+                WHEN val >= 1000 AND val <= 3000 THEN '2. Average Price'
+                WHEN val > 3000 THEN '3.High End Price'
+                ELSE 'Missing Value' END
+,val
+from Sales.OrderValues
+) AS T
+GROUP BY OrderNumber,PriceCategory
+order by PriceCategory,OrderNumber

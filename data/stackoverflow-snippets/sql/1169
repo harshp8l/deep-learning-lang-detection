@@ -1,0 +1,28 @@
+CREATE TRIGGER INSTEADOF_INS
+ON Staff_Allocation
+INSTEAD OF INSERT AS
+BEGIN
+
+DECLARE @CNT_ALLOC TINYINT
+DECLARE @CNT_ALLOC_TAB TINYINT
+DECLARE @ST_DATE DATE
+DECLARE @END_DATE DATE
+
+SELECT @ST_DATE=DATEADD(dd, -(DATEPART(dw, GETDATE())-1), GETDATE()) 
+SELECT @END_DATE=DATEADD(dd, 7-(DATEPART(dw, GETDATE())), GETDATE()) 
+
+SELECT @CNT_ALLOC=COUNT(*) 
+FROM Staff_Allocation S INNER JOIN INSERTED I
+ON S.staff_Id = I.staff_Id AND S.staff_start_date>@ST_DATE AND S.staff_end_date<@END_DATE
+
+IF (@CNT_ALLOC >8 )
+BEGIN
+RAISERROR (N'8 rows Per Week',
+16, 1)
+RETURN
+END
+INSERT INTO Staff_Allocation (allocationId, staff_Id, branch_Id,staff_start_date,staff_end_date) 
+SELECT allocationId, staff_Id, branch_Id,staff_start_date,staff_end_date 
+FROM inserted 
+END
+GO

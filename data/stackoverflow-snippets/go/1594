@@ -1,0 +1,112 @@
+package main
+
+import (
+    ""bytes""
+    ""encoding/json""
+    ""errors""
+    ""fmt""
+)
+
+type StreamMessage struct {
+    Data []*Data `json:""data""`
+    Ts   float64 `json:""ts""`
+}
+
+type Data struct {
+    Type    string
+    XRate   *XRateData
+    Balance *BalanceData
+    Event   *EventData
+    Sync    *SyncData
+}
+
+func (d *Data) UnmarshalJSON(b []byte) error {
+    dec := json.NewDecoder(bytes.NewReader(b))
+    t, _ := dec.Token()
+    if delim, ok := t.(json.Delim); !ok || delim != '[' {
+        return errors.New(""expecting data to be an array"")
+    }
+
+    if err := dec.Decode(&d.Type); err != nil {
+        return err
+    }
+
+    var err error
+    switch d.Type {
+    case ""xrate"":
+        err = dec.Decode(&d.XRate)
+    case ""sync"":
+        err = dec.Decode(&d.Sync)
+    case ""balance"":
+        err = dec.Decode(&d.Balance)
+    case ""event"":
+        err = dec.Decode(&d.Event)
+    default:
+        return errors.New(""unknown data type "" + d.Type)
+    }
+
+    if err != nil {
+        return err
+    }
+
+    t, _ = dec.Token()
+    if delim, ok := t.(json.Delim); !ok || delim != ']' {
+        return errors.New(""expecting array to be two elements"")
+    }
+
+    return nil
+}
+
+type XRateData struct {
+    Rate json.Number `json:""rate""`
+    CCY  string      `json:""ccy""`
+}
+
+type BalanceData struct {
+    // TODO
+}
+
+type EventData struct {
+    // TODO
+}
+
+type SyncData struct {
+    Token string `json:""Token""`
+}
+
+var streamSnapshot = []byte(
+
+    `{ 
+   ""ts"": 1496244373.04,
+   ""data"":[
+      [""xrate"", {""rate"":1.2916,""ccy"":""USD""}],
+      [""balance"", 
+         {
+            ""open_stake"":[""GBP"", 0.0],
+            ""balance"":[""GBP"", 0.0]
+         }
+      ],
+      [""event"", 
+         {
+            ""competition_id"":""545"",
+            ""ir_status"":""pre_event"",
+            ""start_time"":""2017-09-10T17:00:00+00:00"",
+            ""competition_name"":""USA NFL"",
+            ""event_id"":""2017-09-10,21617,21635"",
+            ""home"":""Buffalo Bills"",
+            ""away"":""New York Jets"",
+            ""sport"":""af"",
+            ""competition_country"":""US""
+         }
+      ],
+      [""sync"", {""Token"":""eb1c57132d004f8d8fb967c076921fac""}]
+   ]
+}`)
+
+func main() {
+    var sm StreamMessage
+    if err := json.Unmarshal(streamSnapshot, &sm); err != nil {
+        panic(err)
+    }
+    fmt.Println(sm)
+}

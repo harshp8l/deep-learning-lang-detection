@@ -1,0 +1,17 @@
+(ns shrink-tree
+  (:require [clojure.walk :refer [postwalk]]))
+
+(letfn[(rule-1 [node] 
+         (and (vector? node) 
+              (= 'nope (last node))))
+       (rule-2 [node] 
+         (and 
+           (map? node) 
+           (not-any? #(and (vector? %) (= 'ds1 (last %))) 
+                     (tree-seq vector? seq (-> node vals first)))))
+       (remove-marked [node] 
+                      (if (coll? node) 
+                        (into (empty node) (remove (some-fn rule-1 rule-2) node)) 
+                        node))]
+  (= output (postwalk remove-marked input)))
+;; => true

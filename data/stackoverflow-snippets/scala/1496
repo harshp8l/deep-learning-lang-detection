@@ -1,0 +1,10 @@
+// Renamed ""lines"" to ""files"" as it is more explicit.  
+val fileNames = Source.fromFile(""path/to/file1.txt"").getLines.toList
+
+val firstLinesRDDs = fileNames.map(sc.hadoopFile(_,classOf[TextInputFormat],classOf[LongWritable],classOf[Text]).flatMap {
+  case (k, v) => if (k.get == 0) Seq(v.toString) else Seq.empty[String]
+})
+
+// firstLinesRDDs is a list of RDD[String]. Based on this code, each RDD
+// should consist in a single String value. We collect them using RDD#collect:
+val firstLines = firstLinesRDDs.map(_.collect)

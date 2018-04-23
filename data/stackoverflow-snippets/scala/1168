@@ -1,0 +1,42 @@
+def processFileWithIncrementalUpdates(
+  allLines: ????,
+  totalLines: Int,
+  batchSize: Int,
+  dbUtil: DBUtil
+): Future[Unit] = {
+  val promise = Promise[Unit]()
+  Future {
+    val batch: List[Pollable] = allLines.poll
+    if (batch.isEmpty) {
+      promise.completeWith(Future.successful[Unit]())
+    }
+    else {
+      val myMax = batch.map(_.toInt).max
+      println(""Starting new batch with max line: "" + myMax)
+
+      //processing work happens here
+      batch.map(processSync)
+      println(""Finished processing batch with max line: "" + myMax)
+
+      //send a progress update to be persisted to the DB
+      val progressCall = Future[Unit] { dBUtil.incrementProgress(batch.size) }
+
+      progressCall.onComplete{
+        case Success(s) => // don't care
+        case Failure(e) => logger.error(""Unable to persist progress from actor "")
+      }
+
+      progressCall.onComplete({
+        case _ => promise.completeWith(processFileWithIncrementalUpdates(allLines, totalLines, batchSize, dBUtil))
+      })
+    }
+    promise.future
+  }
+}
+
+val allLines = KafkaUtil.getConnect(fileKey)
+val totalLines = KafkaUtil.getSize
+val batchSize = 500
+val dBUtil = new DBUtil(totalLines)
+
+val processingFuture = processFileWithIncrementalUpdates(allLines, totalLines, batchSize, dBUtil)

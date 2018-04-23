@@ -1,0 +1,19 @@
+val fMaintainers: Future[Vector[String]] = Future {Vector(""m1"", ""m2"", ""m3"")}
+
+val fUsersToReview: Future[Vector[String]] = Future {Vector(""u1"", ""u2"", ""u3"")}
+
+def doIt(users: Vector[String], maintainers: Vector[String]): Future[Vector[(String, String)]] = {
+  Future.sequence(for (u ← users) yield {
+    Future.successful((u, maintainers.head))
+  })
+}
+
+val result: Future[Vector[(String, String)]] = for {
+  maintainers ← fMaintainers
+  usersToReview ← fUsersToReview
+  msg_id ← doIt(usersToReview, maintainers)
+} yield {
+  msg_id
+}
+
+println(Await.result(result, 1.second))

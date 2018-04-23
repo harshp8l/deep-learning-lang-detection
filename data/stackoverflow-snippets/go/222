@@ -1,0 +1,28 @@
+import (
+    ""bufio""
+    ""fmt""
+    ""log""
+    ""os""
+
+    ""github.com/reiver/go-oi""
+    ""github.com/reiver/go-telnet""
+)
+
+type caller struct{}
+
+func (c caller) CallTELNET(ctx telnet.Context, w telnet.Writer, r telnet.Reader) {
+    scanner := bufio.NewScanner(os.Stdin)
+    for scanner.Scan() {
+        oi.LongWrite(w, scanner.Bytes())
+        oi.LongWrite(w, []byte(""\n""))
+    }
+}
+
+func main() {
+    fmt.Printf(""Dial to %s:%d\n"", ""localhost"", 8080)
+    err := telnet.DialToAndCall(fmt.Sprintf(""%s:%d"", ""localhost"", 8080), caller{})
+
+    if err != nil {
+        log.Fatal(err)
+    }
+}

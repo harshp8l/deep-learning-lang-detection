@@ -1,0 +1,24 @@
+case class DataF[F[_]](a: F[Int], b: F[Int])
+type Data = DataF[Option]
+type Id[X] = X
+type DataX = DataF[Id]
+
+def sequenceCase[
+  D[F[_]], // Types like DataF
+  F[_]: Applicative,
+  IL <: HList,
+  OL <: HList
+](i: D[F])(implicit
+  genI: Generic.Aux[D[F], IL], // D[F] <=> IL
+  restrict: UnaryTCConstraint[IL, F], // All elements of IL <=> D[F] are F[something]
+  folder: RightFolder.Aux[IL, F[HNil], sequenceFold.type, F[OL]], // Can sequence IL to O[OL]
+  genO: Generic.Aux[D[Id], OL] // OL <=> D[Id]
+): F[D[Id]] = sequenceH(genI.to(i))(Applicative[F], restrict, folder).map(genO.from)
+
+// Type inference is fixed here
+Seq(DataF[Option](None   , None   ),
+    DataF[Option](Some(1), None   ),
+    DataF[Option](None   , Some(1)),
+    DataF[Option](Some(1), Some(1))
+).map(sequenceCase(_))
+// None, None, None, Some(DataF[Id](1, 1))

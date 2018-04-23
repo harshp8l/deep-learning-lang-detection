@@ -1,0 +1,46 @@
+function CountSquareless(AMin, AMax: Int64): Integer;
+
+var
+  PrSqList: TList<Int64>;
+
+procedure MakePrimeList; //Eratosphenes sieve
+var
+  num: array of Byte;
+  i, j: Integer;
+begin
+  SetLength(num, 1000001);
+  PrSqList := TList<Int64>.Create;
+  for i := 2 to 1000000 div 2 do
+    for j := 2 to (1000000 div i) do
+       num[i * j] := 1;
+  for i := 2 to 1000000 do
+    if num[i] = 0 then
+       PrSqList.Add(Int64(i) * i);
+end;
+
+var
+  num: array of Byte;
+  i, nr: Integer;
+  psq, first: Int64;
+begin
+  nr := AMax - AMin;
+  SetLength(num, nr + 1);
+  MakePrimeList;
+
+  for psq in PrSqList do begin
+    first := ((AMin + psq - 1) div psq) * psq;
+    while first < AMax do begin //Eratosphenes-like sieve uses prime squares
+      num[first - AMin] := 1;
+      first := first + psq;
+    end;
+  end;
+
+  Result := 0;
+  for i := 0 to nr - 1 do
+    if num[i] = 0 then
+      Result := Result + 1;
+end;
+
+procedure TForm1.Button1Click(Sender: TObject);
+begin
+  Memo1.Lines.Add(IntToStr(CountSquareless(1000000000000 - 1000000, 1000000000000)));

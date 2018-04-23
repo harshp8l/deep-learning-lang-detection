@@ -1,0 +1,51 @@
+#include <iostream>
+
+/////////// Helper
+
+template<class F, class... Fs>
+struct overloaded : F, overloaded<Fs...>
+{
+  using F::operator();
+  using overloaded<Fs...>::operator();
+
+  overloaded(F&& f, Fs&&... fs)
+    : F(std::move(f))
+    , overloaded<Fs...>(std::move(fs)...)
+  {}
+};
+
+template<class F>
+struct overloaded<F> : F
+{
+  using F::operator();
+
+  overloaded(F&& f)
+    : F(std::move(f))
+  {}
+};
+
+template<class... Ts>
+overloaded<Ts...> overload(Ts&&...lambdas)
+{ return overloaded<Ts...>{std::move(lambdas)...}; }
+
+///////// Recursive Variadic Lambda
+
+int     main(void)
+{
+  auto lambda = [](auto... args)
+    {
+      auto lambda_impl = overload(
+        [](auto self)
+        {
+        },
+        [] (auto self, auto first, auto...rest)
+        {
+          std::cout << first << std::endl;
+          self(self, rest...);
+        });
+
+      lambda_impl(lambda_impl, args...);
+    };
+
+  lambda(4, ""lol"", 8.3);
+}

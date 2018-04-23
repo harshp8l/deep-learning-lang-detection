@@ -1,0 +1,25 @@
+import ast
+SAFE_LIST = ['sum', 'len', 'max', 'min', 'abs', 'float', 'True', 'False', ' 
+    value']
+class allnames(ast.NodeVisitor):
+    def visit_Module(self, node):
+        self.names = set()
+        self.assign = False
+        self.generic_visit(node)
+        for value in self.names:
+            if value not in SAFE_LIST:
+                return 'Variables other than value is used'
+        if self.assign:
+            return 'Assignment operator is used'
+        return True
+
+    def visit_Name(self, node):
+        self.names.add(node.id)
+
+    def visit_Assign(self, node):
+        self.assign = True
+        self.generic_visit(node)
+
+rule = 'value = 1 or value(3) or ((sum(value) == 1 or value[0] == ""failed"" or value[0] ==  ""blocked"" or value[0] == ""errored"") and value[1] == ""passed"") or ((value[0] == ""failed"") and value[1] == ""blocked"") or ((value[0] == ""blocked"") and value[1] == ""failed"") or ((value[0] == ""errored"") and value[1] == ""failed"") or ((value[0] == ""errored"") and value[1] == ""blocked"")'
+t = ast.parse(rule)
+print(allnames().visit(t))

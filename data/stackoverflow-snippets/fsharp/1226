@@ -1,0 +1,50 @@
+#load "".\Scripts\load-project.fsx""
+
+#time
+
+open System
+open System.Collections.Generic
+
+open Newtonsoft.Json
+
+[<CLIMutable>]
+type Test1 =
+    {
+        Strings : string seq
+    }
+
+type Test2 () =
+    member val Strings = Seq.empty : IEnumerable<string> with get, set
+
+type Test3 () =
+    member val Strings = Seq.empty : String seq with get, set
+
+type Test4 () =
+    member val Strings : IEnumerable<string> = Seq.empty : IEnumerable<string> with get, set
+
+type Test5 () =
+    member val Strings : IEnumerable<string> = [] |> List.toSeq : IEnumerable<string> with get, set
+
+type Test6 () =
+    member val Strings = [] |> List.toSeq : string seq with get, set
+
+let test1 = { Strings = Seq.empty }
+let test2 = new Test2 ()
+let test3 = new Test3 () 
+let test4 = new Test4 () 
+let test5 = new Test5 () 
+let test6 = new Test6 () 
+
+let json1 = JsonConvert.SerializeObject(test1)
+let json2 = JsonConvert.SerializeObject(test2)
+let json3 = JsonConvert.SerializeObject(test3)
+let json4 = JsonConvert.SerializeObject(test4)
+let json5 = JsonConvert.SerializeObject(test5)
+let json6 = JsonConvert.SerializeObject(test6)
+
+let deserialized1 = JsonConvert.DeserializeObject<Test1>(json1) // Fails
+let deserialized2 = JsonConvert.DeserializeObject<Test2>(json2) // Fails
+let deserialized3 = JsonConvert.DeserializeObject<Test3>(json3) // Fails
+let deserialized4 = JsonConvert.DeserializeObject<Test4>(json4) // Fails
+let deserialized5 = JsonConvert.DeserializeObject<Test5>(json5) // Passes
+let deserialized6 = JsonConvert.DeserializeObject<Test5>(json6) // Passes

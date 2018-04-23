@@ -1,0 +1,61 @@
+case class Crawler() {
+  def getConnection(url: String) = Jsoup.connect(url)
+
+  def getLinksPage(urlToCrawl: String): Option[List[String]] = {
+    val conn = getConnection(urlToCrawl)
+
+    ...
+  }
+}
+
+class CrawerSpec extends WordSpec with MockFactory {
+
+  trait LinksFixture {
+
+    val connection = mock[Connection]
+    val getConnection = mockFunction[String, Connection]
+
+    lazy val crawler = new Crawler() {
+      override def getConnection(url: String) = LinksFixture.this.getConnection(url)
+    }
+  }
+
+  trait LoopFixture {
+
+    val getLinksPage = mock[String, Option[List[String]]]
+
+    lazy val crawler = new Crawler() {
+      override def getLinksPage(url: String) = LoopFixture.this.getLinksPage(url)
+    }
+  }
+
+  ""getLinksPage"" should {
+
+    ""return the links"" in new LinksFixture {
+
+      val url = ""http://bad-wolf""
+
+      getConnection expects(url) returning connection
+      // add other expects on connection
+
+      crawler.getLinksPage(url) shouldBe expected // define expected
+    }
+  }
+
+  ""loop"" should {
+
+    ""loop over the links"" in new LoopFixture {
+
+      getLinksPage expects(*) onCall {
+        _ match {
+          case ""a"" => Some(List(""b"",""c""))
+          case ""b"" => Some(List(""d""))
+          case _ => None
+        }
+      }
+      // add any other expects
+
+      crawler.loop(Some(List(""a"")), List.empty[String]) shouldBe // define expected
+    }
+  }
+}

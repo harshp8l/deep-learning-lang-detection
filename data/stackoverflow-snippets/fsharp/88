@@ -1,0 +1,21 @@
+let tripleExponentialSmoothing series slen alpha beta gamma nPreds =
+    let mutable smooth = 0.
+    let mutable trend = 0.
+    let seasonals = initialSeasonalComponents series 12 |> Dictionary 
+    seq {
+        for i in 0..(series.Length+nPreds-1) do
+          match i with
+          | 0 ->     // initial values        
+              smooth <- series |> Array.head |> float
+              trend <- initialTrend series slen
+              yield series |> Array.head |> float
+          | i when i >= series.Length -> // we are forecasting
+              let m = i - series.Length + 1
+              yield (smooth + float m * trend) + seasonals.[i%slen]
+          | _ -> 
+              let v = series |> Array.head  |> float
+              let lastSmooth = smooth
+              smooth <- alpha*(v-seasonals.[i%slen]) + (1.-alpha)*(smooth+trend)
+              trend <- beta * (smooth-lastSmooth) + (1.-beta)*trend
+              seasonals.[i%slen] <- gamma*(v-smooth) + (1.-gamma)*seasonals.[i%slen]
+              yield smooth + trend + seasonals.[i%slen] }

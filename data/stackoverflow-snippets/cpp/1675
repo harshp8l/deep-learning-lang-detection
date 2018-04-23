@@ -1,0 +1,44 @@
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/function.hpp>
+#include <iostream>
+
+typedef int result_t;
+struct A { int i; };
+struct B : A { int j; };
+
+typedef boost::shared_ptr<A> APtr;
+typedef boost::shared_ptr<B> BPtr;
+
+result_t f1(APtr) { return 1; }
+result_t f2(BPtr) { return 2; }
+
+typedef boost::function <result_t(APtr const&)> funOfA;
+typedef boost::function <result_t(BPtr const&)> funOfB;
+
+struct Wrapper {
+    typedef result_t result_type;
+    funOfB _f;
+
+    result_t operator()(APtr const& a) { 
+        return _f(boost::static_pointer_cast<B>(a));
+    }
+};
+
+funOfA wrapFunOfB(const funOfB f) {
+    Wrapper wrap = { f };
+    return wrap;
+}
+
+void F(const funOfA f) {
+    APtr a = boost::make_shared<A>();
+    APtr b = boost::make_shared<B>();
+
+    //std::cout << ""f(a): "" << f(a) << ""\n""; // UNDEFINED BEHAVIOUR if f wraps a funOfB
+    std::cout << ""f(b): "" << f(b) << ""\n"";
+}
+
+int main() {
+    F(f1);
+    F(wrapFunOfB(f2));
+}

@@ -1,0 +1,13 @@
+select p.person_id,
+       sum(case when seqnum = 1 then num else 0 end) as num_quarter_1,
+       sum(case when seqnum = 2 then num else 0 end) as num_quarter_2,
+       sum(case when seqnum = 3 then num else 0 end) as num_quarter_3,
+       sum(case when seqnum = 4 then num else 0 end) as num_quarter_4
+from production p join
+     (select year(curdate()) as p_year, quarter(curdate()) as p_quarter, 1 as seqnum union all
+      select year(curdate() - interval 1 quarter) as p_year, month(curdate() - interval 1 quarter) as p_quarter, 2 as seqnum union all
+      select year(curdate() - interval 2 quarter) as p_year, month(curdate() - interval 2 quarter) as p_quarter, 3 as seqnum union all
+      select year(curdate() - interval 2 quarter) as p_year, month(curdate() - interval 3 quarter) as p_quarter, 4 as seqnum           
+     ) yq
+     using (p_year, p_quarter)
+group by p.person_id;

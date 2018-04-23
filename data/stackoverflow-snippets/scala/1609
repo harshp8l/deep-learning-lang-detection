@@ -1,0 +1,33 @@
+import akka.actor.ActorSystem
+import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, RunnableGraph, Sink, Source, Zip}
+import akka.stream.{ActorMaterializer, ClosedShape}
+import akka.{Done, NotUsed}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+object Main extends App {
+
+  implicit val system: ActorSystem = ActorSystem(""my-system"")
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
+
+  val graph = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
+    import GraphDSL.Implicits._
+    val src: Source[Int, NotUsed] = Source(List(1, 2, 3))
+    val someRestApiFlow: Flow[Int, Int, NotUsed] = Flow[Int].mapAsync(10)(x => Future(x + 1))
+    val out: Sink[(Int, Int), Future[Done]] = Sink.foreach[(Int, Int)](println)
+
+    val bcast = builder.add(Broadcast[Int](2))
+    val zip = builder.add(Zip[Int, Int])
+
+
+    src ~> bcast ~>                    zip.in0
+           bcast ~> someRestApiFlow ~> zip.in1
+                                       zip.out ~> out
+
+    ClosedShape
+  })
+
+  graph.run()
+
+}

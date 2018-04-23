@@ -1,0 +1,37 @@
+#include <iostream>
+
+template <typename T>
+class Factory
+{
+    public:
+        Factory(Type d) : data(std::move(d)) {}
+        T   get() const { return data; }; 
+        T & get()       { return data; };
+    private:
+        T data;
+};
+
+template<typename Object, typename ... Args>
+Factory<Object> MakeObject(Args && ... args)
+{
+    return Factory<Object>{ Object{ std::forward<Args>(args) ... } };
+}
+
+struct book
+{
+    std::string name;
+    int         phone;
+    book(std::string s, int t) : name(s), phone(t) {}
+};
+
+void print(Factory<book> const & k)
+{
+    std::cout << ""[ Factory ] : "" << k.get().name << "", "" << k.get().phone << std::endl;
+}
+
+int main()
+{
+    auto obj = MakeObject<book>(""Hello World"", 91520);
+    print(obj);
+    return 0;
+}

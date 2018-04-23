@@ -1,0 +1,26 @@
+ object InterruptTest {
+
+    // this method takes some seconds, longer and longer, a few seconds 
+    // until it reaches 45 on my some years old machine, enough time 
+    // to interrupt it. For larger values, you soon have to increase 
+    // startparams, like: 
+    //           scala -J-Xms512m -J-Xmx4G InterruptTest 80
+    @annotation.tailrec
+    def partition (count: Int, ziel: Int, sofar: Vector [Vector [Int]]) : Vector [Vector [Int]] = {
+        println (s""i: $count\tlen: ${sofar.size}"")
+        if (count == ziel) sofar else {
+            val ll = Vector (sofar.view.map (li => (li.head + 1) +: li.tail), sofar.view.map (li => 1 +: li)).flatten.map(_.sorted).distinct
+            partition (count+1, ziel, ll)
+        }
+    }
+
+    def main (args: Array[String]) : Unit = try {
+            args.map (s => partition (1, s.toInt, Vector (Vector (1))))
+        } catch {
+            case ie: InterruptedException => println (""ie: exit gracefully"")
+            case re: RuntimeException => println (""re: exit gracefully"")
+    }
+}
+
+val test = InterruptTest
+test.main (Array (""45""))

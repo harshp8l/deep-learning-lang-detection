@@ -1,0 +1,103 @@
+import sys
+
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QApplication, QListWidget, QListWidgetItem, QMenu
+
+
+class MenuWidget(QListWidget):
+    DependenciesRole = Qt.UserRole
+
+    def __init__(self, items, parent=None):
+        QListWidget.__init__(self, parent)
+        for it in items:
+            name = it[""name""]
+            dependencies = it[""dependencies""]
+            it = QListWidgetItem(name)
+            self.addItem(it)
+            it.setData(MenuWidget.DependenciesRole, dependencies)
+
+    def mousePressEvent(self, event):
+        QListWidget.mousePressEvent(self, event)
+        it = self.itemAt(event.pos())
+        if it is not None:
+            dependencies = it.data(MenuWidget.DependenciesRole)
+            if dependencies:
+                menu = QMenu(self)
+                MenuWidget.add_submenu(menu, dependencies)
+                p = self.visualRect(self.indexAt(event.pos())).topRight()
+                menu.popup(self.mapToGlobal(p))
+
+    @staticmethod
+    def add_submenu(menu, items):
+        for it in items:
+            name = it[""name""]
+            dependencies = it[""dependencies""]
+            if dependencies:
+                mn = menu.addMenu(name)
+                MenuWidget.add_submenu(mn, dependencies)
+            else:
+                menu.addAction(name)
+
+
+d = [
+    {
+        'name': 'foo',
+        'dependencies': [
+            {
+                'name': 'bar',
+                'dependencies': [],
+            },
+            {
+                'name': 'when',
+                'dependencies': [
+                    {
+                        'name': 'subitem',
+                        'dependencies': [],
+                    },
+                    {
+                        'name': 'will',
+                        'dependencies': [
+                            {
+                                'name': 'it',
+                                'dependencies': [
+                                    {
+                                        'name': 'end',
+                                        'dependencies': [],
+                                        'version': 8,
+                                        'latest': 10,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                    {
+                        'name': 'another',
+                        'dependencies': [],
+                    },
+                ],
+            },
+            {
+                'name': 'thing',
+                'dependencies': [],
+            },
+        ],
+    },
+    {
+        'name': 'some_other_thing',
+        'dependencies': [],
+    },
+    {
+        'name': 'an_asset_with_data',
+        'dependencies': [],
+    },
+    {
+        'name': 'more_things',
+        'dependencies': [],
+    },
+]
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    w = MenuWidget(d)
+    w.show()
+    sys.exit(app.exec_())

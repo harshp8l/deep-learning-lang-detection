@@ -1,0 +1,16 @@
+String multicastAddress = ""230.0.0.1"";
+NetworkInterface networkInterface = mainInterface();
+Future isListening = Future.future();
+vertx.createDatagramSocket(new DatagramSocketOptions()
+            .setReuseAddress(true)
+            .setReusePort(true))
+            .listen(6112, ""0.0.0.0"", next -> {
+                next.result().listenMulticastGroup(multicastAddress, networkInterface.getName(), null, listener -> {
+                    final DatagramSocket socket = listener.result();
+                    socket.handler(packet -> {
+                        // Your handler here
+                    });
+
+                    isListening.complete();
+                });
+            });

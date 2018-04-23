@@ -1,0 +1,28 @@
+ ds.Tables[0].Columns.Add(""Encrypted_Age"", typeof(string));
+            int i = 0;
+            foreach (DataRow row in ds.Tables[0].Rows)
+            {
+
+                if (ds.Tables[0].Rows[i][3].ToString() == """")
+                {
+                    ds.Tables[0].Rows[i][3] = Crypto.GetEncryptedQueryString(row[""age""].ToString());
+                }
+                i++;
+            }
+
+            ds.Tables[0].AcceptChanges();
+
+            con.Close();
+
+            HyperLinkField Age = new HyperLinkField();
+            string[] dataNavigateUrlFields = { ""Encrypted_Age"" };
+
+            Age.DataNavigateUrlFormatString = ""./testpage.aspx?id={0}"";
+            Age.DataNavigateUrlFields = dataNavigateUrlFields;
+            Age.DataTextField = ""Encrypted_Age"";
+            Age.HeaderText = ""Age"";
+
+            GridView1.Columns.Add(Age);
+
+            GridView1.DataSource = ds;
+            GridView1.DataBind();

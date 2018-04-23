@@ -1,0 +1,15 @@
+type Drink() =
+    member m.X = 1
+
+type Dish() =
+    member m.Y = 2
+
+type Menu(dishes:Dish list, drinks:Drink list, total:int) =
+    member m.Dishes = dishes
+    member m.Drinks = drinks
+    member m.Total = total
+
+let drinkGenerator = Arb.generate<unit> |> Gen.map (fun () -> Drink())
+let dishGenerator = Arb.generate<unit> |> Gen.map (fun () -> Dish())
+let menuGenerator =
+    Gen.map3 (fun a b c -> Menu(a,b,c)) <| Gen.listOf dishGenerator <| Gen.listOf drinkGenerator <| Arb.generate<int>

@@ -1,0 +1,12 @@
+case class List(values: String*) extends SingleColumnCondition {
+    // requires Scala 2.12 to define a Condition by a lambda
+    override def apply(column: String) = row => values.contains(value(row, column))
+}
+
+case class And(conditions: Condition*) extends Condition {
+    override def isTrue(row: Row): Boolean = conditions.forall(_.isTrue(row))
+}
+
+case class SingleColumnAnd(conditions: SingleColumnCondition*) extends SingleColumnCondition {
+    override def apply(column: String) = And(conditions.map(_(column))
+}

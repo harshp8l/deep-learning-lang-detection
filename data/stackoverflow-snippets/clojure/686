@@ -1,0 +1,27 @@
+user> (require '[clojure.core.async :as a])
+nil
+
+user> (def shared-ch (a/chan 3 (take 3)))
+#'user/shared-ch
+
+user> (a/go-loop []
+        (when-let [val (a/<! shared-ch)]
+          (println :reading val)
+          (recur)))
+
+#object[clojure.core.async.impl.channels.ManyToManyChannel 0x6bb1dee5 ""clojure.core.async.impl.channels.ManyToManyChannel@6bb1dee5""]
+
+user> (a/>!! shared-ch 1)
+true:reading 1
+
+user> (a/>!! shared-ch 2)
+true:reading 2
+
+user> (a/>!! shared-ch 3)
+true:reading 3
+
+user> (a/>!! shared-ch 4)
+false
+
+user> (a/>!! shared-ch 5)
+false

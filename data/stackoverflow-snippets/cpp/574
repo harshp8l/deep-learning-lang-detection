@@ -1,0 +1,82 @@
+#include <algorithm>
+#include <iostream>
+#include <cstddef>
+#include <string>
+#include <vector>
+
+struct Item {
+  std::string name;
+  int price = 0;
+  int sold = 0;
+};
+
+class Main {
+private:
+  std::vector<Item> items;
+public:
+  void input_item () {
+    auto &item = items.emplace_back ();
+    std::cout << ""--------- ENTER NEW ITEMS ---------\n"";
+    std::cout << ""\n"";
+    std::cout << ""Please enter the item Name: "";
+    std::cin >> item.name;
+    std::cout << ""\n"";
+
+    std::cout << ""Please enter the price of: "" << item.name << ""\n"";
+    std::cin >> item.price;
+    std::cout << ""\n"";
+  }
+
+  void input_items () {
+    std::string sChoice = ""y"";
+    while ((sChoice == ""Y"" || sChoice == ""y"")) {
+      input_item ();
+      std::cout << ""Would you like to enter another item? Y/N \n"";
+      std::cin >> sChoice;
+    }
+  }
+
+  void input_sold_item_qty () {
+    std::cout << ""--------- INPUT SOLD ITEMS ---------\n"";
+    std::cout << ""\n"";
+    std::cout << ""Please select an item: \n"";
+    for (size_t i = 0; i < items.size (); i++) {
+      std::cout << 1 + i << "": "" << items.at (i).name << ""\n"";
+    }
+    int item_num;
+    std::cin >> item_num;
+    std::cout << ""\n"";
+    auto &item = items.at (item_num - 1);
+    std::cout << ""Please enter the ammount sold: "" << item.name << ""\n"";
+    std::cout << ""Quantity: "";
+    std::cin >> item.sold;
+    std::cout << ""\n"";
+    std::cout << ""You have sold "" << item.sold << "" of "" << item.name << ""\n"";
+  }
+
+  void input_sold_item_qtys () {
+    std::string sChoice = ""y"";
+    while (sChoice == ""Y"" || sChoice == ""y"") {
+      input_sold_item_qty ();
+      std::cout << ""Would you like to input more sold items? Y/N \n"";
+      std::cin >> sChoice;
+    }
+  }
+
+  static bool sold_compare (const Item &l, const Item &r) {
+    return l.sold < r.sold;
+  }
+
+  void print_least_most_sold_items () {
+    auto pair = std::minmax_element (std::begin (items), std::end (items), sold_compare);
+    std::cout << ""Most sold item: "" << pair.second->name << ""\n"";
+    std::cout << ""Least sold item: "" << pair.first->name << ""\n"";
+  }
+};
+
+int main () {
+  Main m;
+  m.input_items ();
+  m.input_sold_item_qtys ();
+  m.print_least_most_sold_items ();
+}

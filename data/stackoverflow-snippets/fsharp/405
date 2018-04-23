@@ -1,0 +1,37 @@
+type Notifications
+    | InputWasEmpty
+    | OutputWasEmpty
+    | NumberOfBlankLinesInOutput of int
+    | NumberOfDuplicateLinesInOutput of int
+    | NumberOfIgnoredErrors of int
+    // Whatever else...
+
+type ResultWithNotifications<'a> = 'a * Notifications list
+// The syntax ""TypeA * TypeB"" is F# syntax for Tuple<TypeA,TypeB>
+// And the 'a is F# syntax for a generic type
+
+type outputRecord = // ... insert your own data type here
+
+// Returns the filename of the output file, plus various notifications
+// that the caller can take action on if they want to
+let doSomeProcessing data : ResultWithNotifications<outputRecord list>
+    let mutable notifications = []
+    let outputFileName = getSafeOutputFilename()
+    if List.isEmpty data then
+        notifications <- InputWasEmpty :: notifications
+    let output = data |> List.choose (fun record ->
+        try
+            let result = record |> createOutputRecordFromInputRecord
+            Some result
+        except e
+            eprintfn ""Got exception processing %A: %s"" record (e.ToString())
+            None
+    )
+    if List.isEmpty output then
+        notifications <- OutputWasEmpty :: notifications
+    if List.length output < List.length data then
+        let skippedRecords = List.length data - List.length output
+        notifications <- (NumberOfIgnoredErrors skippedRecords) :: notifications
+    // And so on. Eventually...
+    output |> writeOutputToFilename outputFileName
+    outputFileName, notifications  // Function result

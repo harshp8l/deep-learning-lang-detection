@@ -1,0 +1,30 @@
+import re
+from collections import OrderedDict
+from itertools import chain
+
+some_list = ['path/to/bar_foo.csv',
+             'path/to/foo_baz.csv',
+             'path/to/foo_bar(ignore_this).csv',
+             'path/to/foo(ignore_this).csv',
+             'other/path/to/foo_baz.csv']
+presorted_list = ['foo_baz', 'foo']
+expected_list = ['path/to/foo_baz.csv',
+                 'other/path/to/foo_baz.csv',
+                 'path/to/foo(ignore_this).csv',
+                 'path/to/bar_foo.csv',
+                 'path/to/foo_bar(ignore_this).csv']
+
+def my_sort(lst, presorted_list):
+    rgx = re.compile(r""^(.*/)?([^/(.]*)(\(.*\))?(\.[^.]*)?$"")
+    d = OrderedDict((n, []) for n in presorted_list)
+    d[None] = []
+    for p in some_list:
+        m = rgx.match(p)
+        n = m.group(2) if m else None
+        if n not in d:
+            n = None
+        d[n].append(p)
+    return list(chain.from_iterable(d.values()))
+
+print(my_sort(some_list, presorted_list) == expected_list)
+# True

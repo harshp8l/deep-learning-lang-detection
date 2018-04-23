@@ -1,0 +1,41 @@
+WITH cte(rate_name, cages, use_date) AS (
+  SELECT 'I1',      8, DATE'2017-11-04' FROM DUAL UNION ALL
+  SELECT 'I1',      8, DATE'2017-11-05' FROM DUAL UNION ALL
+  SELECT 'I1',      7, DATE'2017-11-07' FROM DUAL UNION ALL
+  SELECT 'I1',      7, DATE'2017-11-10' FROM DUAL UNION ALL
+  SELECT 'I1',      7, DATE'2017-11-11' FROM DUAL UNION ALL
+  SELECT 'I1',      8, DATE'2017-11-12' FROM DUAL UNION ALL
+  SELECT 'I1',      8, DATE'2017-11-13' FROM DUAL UNION ALL
+  SELECT 'I1',      8, DATE'2017-11-14' FROM DUAL UNION ALL
+  SELECT 'I1 - BR', 5, DATE'2017-11-01' FROM DUAL UNION ALL
+  SELECT 'I1 - BR', 5, DATE'2017-11-02' FROM DUAL UNION ALL
+  SELECT 'I1 - BR', 5, DATE'2017-11-03' FROM DUAL UNION ALL
+  SELECT 'I1 - BR', 5, DATE'2017-11-04' FROM DUAL UNION ALL
+  SELECT 'I1 - BR', 5, DATE'2017-11-05' FROM DUAL UNION ALL
+  SELECT 'I1 - BR', 1, DATE'2017-11-06' FROM DUAL UNION ALL
+  SELECT 'I1 - BR', 1, DATE'2017-11-07' FROM DUAL UNION ALL
+  SELECT 'I1 - BR', 1, DATE'2017-11-08' FROM DUAL UNION ALL
+  SELECT 'I1 - BR', 5, DATE'2017-11-09' FROM DUAL UNION ALL
+  SELECT 'I1 - BR', 5, DATE'2017-11-10' FROM DUAL UNION ALL
+  SELECT 'I1 - BR', 5, DATE'2017-11-11' FROM DUAL
+),
+recur as (
+  SELECT
+    c1.use_date,
+    c1.rate_name,
+    c1.cages, 
+    case when c3.rate_name is null then c1.use_date else null end as start_date,
+    case when c2.rate_name is null then c1.use_date else null end as end_date
+  FROM cte c1
+  -- next day
+  left join cte c2 on c2.rate_name = c1.rate_name and c2.use_date = c1.use_date +1 and c2.cages = c1.cages
+  -- prev day
+  left join cte c3 on c3.rate_name = c1.rate_name and c3.use_date = c1.use_date -1 and c3.cages = c1.cages
+)
+select rate_name, cages, start_date, 
+    (select min(e.end_date) from recur e
+        where e.rate_name = s.rate_name
+          and e.end_date >= s.start_date) as end_date
+from recur s
+where start_date is not null
+order by rate_name, start_date;

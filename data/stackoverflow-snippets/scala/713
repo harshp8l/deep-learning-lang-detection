@@ -1,0 +1,20 @@
+Source(1 to 100)
+    .map(n => new ProducerRecord(topic1, partition0, null: Array[Byte], n.toString))
+    .runWith(Producer.plainSink(producerSettings))
+
+val consumerSettings = createConsumerSettings(group1)
+
+val (control, probe1) = Consumer.committableSource(consumerSettings, TopicSubscription(Set(topic1)))
+  .filterNot(_.record.value == InitialMsg)
+  .mapAsync(10) { elem =>
+    elem.committableOffset.commitScaladsl().map { _ => Done }
+  }
+  .toMat(TestSink.probe)(Keep.both)
+  .run()
+
+probe1
+  .request(25)
+  .expectNextN(25).toSet should be(Set(Done))
+
+probe1.cancel()
+Await.result(control.isShutdown, remainingOrDefault)

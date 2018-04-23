@@ -1,0 +1,22 @@
+select C.Company_RecID
+    , C.Contact_RecID
+    , C.First_Name
+    , C.Last_Name
+    , C.Title
+    , C.Inactive_Flag
+    , e.Description
+    , EmailAddress = MAX(case when communication_type_recID = 1 then e.Description end)
+    , CellPhone = MAX(case when communication_type_recID = 4 then e.Description end)
+    , DirectNumber = MAX(case when communication_type_recID = 2 then e.Description end)
+    , PersonalCellPhone = MAX(case when communication_type_recID = 14 then e.Description end)
+FROM dbo.Contact AS C 
+LEFT OUTER JOIN dbo.Contact_Communication AS e ON C.Contact_RecID = e.Contact_RecID 
+                                        AND e.Communication_Type_RecID IN (1,2,4,14) 
+                                        AND e.Default_Flag = 1
+group by C.Company_RecID
+    , C.Contact_RecID
+    , C.First_Name
+    , C.Last_Name
+    , C.Title
+    , C.Inactive_Flag
+    , e.Description

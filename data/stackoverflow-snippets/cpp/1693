@@ -1,0 +1,50 @@
+class Foo {
+public:
+    struct Modifier {
+        friend class Foo;
+        static void modify( class Foo& f );
+    };
+private:
+    Modifier modifier;
+    int f;
+
+public: 
+    Foo : f(5) {}
+
+    int fOf() const {
+        return f;
+    }
+
+    Foo::Modifier caller() {
+        modifier.modify( *this );
+        return this->modifier;
+    }
+
+private:
+    static friend struct FooModifier;
+    static friend void Modifier::modifier( Foo& f );
+};
+
+#include ""Foo.h"";
+
+void Foo::Modifier::modify( class Foo& f ) {
+    F.f *= 4;
+}
+
+#include <iostream>
+#include ""Foo.h""
+
+int main() {
+    Foo foo;
+    std::cout << foo.fOf() << std::endl;
+    Foo::Modifier m = foo.caller();
+    std::cout << foo.fOf() << std::endl;
+
+    m.modifiy( foo );
+    std::cout << foo.fOf() << std::endl;
+
+    // you can now pass the struct instance of `m` to your 
+    // library which conatiners the modifier function.
+
+    return 0;
+}

@@ -1,0 +1,18 @@
+ val substPattern = """"""\$\{(.+?)\}"""""".r
+ import java.util.regex.Matcher.{ quoteReplacement => qq }
+ def processSubstitutions(
+   input: String, 
+   vars: Map[String, String]
+ ) = substPattern.replaceAllIn(
+     input, { m => 
+       val ref = m.group(1)
+       qq(vars.getOrElse(ref, ref)
+     }
+ )
+
+ val vars = Map(""subjectArea"" -> ""Member"")
+ val  messageProp = ConfigFactory.load(""message.properties"")
+ val log=processSubstitutions(
+    messageProp.getString(""log.subject.area""),
+    vars
+ )

@@ -1,0 +1,10 @@
+import org.apache.spark.sql.functions._
+import spark.implicits._
+import org.apache.spark.sql.types._
+
+// per column name, create a struct (similar to a tuple) of the column name and value:
+def arrayItem(name: String) = struct(lit(name) cast IntegerType as ""depth"", $""$name"" as ""user_count"")
+
+// create an array of these per column, explode it and select the relevant columns:
+df.withColumn(""tmp"", explode(array(df.columns.tail.map(arrayItem): _*)))
+  .select($""ak"", $""tmp.depth"", $""tmp.user_count"")

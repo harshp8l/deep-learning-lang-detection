@@ -1,0 +1,62 @@
+# Define location
+
+$crs = ""C:\temp\CRSENGCY_PS.xlsx""
+$english = ""English""
+$welsh = ""Welsh""
+$SubSection = ""SubSection""
+
+# Create instance
+
+$objExcel = New-Object -ComObject Excel.Application 
+$workBook = $objExcel.Workbooks.Open($crs)
+$englishSheet = $workBook.Worksheets.Item($english)
+$welshSheet = $workBook.Worksheets.Item($welsh)
+$subSectionSheet = $workBook.Worksheets.Item($SubSection)
+$objExcel.Visible=$false
+
+# Num of rows
+
+$engRowMax = 1812
+$subRowMax = 677
+
+# Define columns 
+
+$rowName,$colName = 2,1
+
+# Vars
+
+$engSubID = $englishSheet.Cells.Item($rowName+$s,8)
+$welSubID = $welshSheet.Cells.Item($rowName+$s,8)
+
+
+for ($i=0; $i -le 339; $i++)
+{
+    $SubSectionName = $subSectionSheet.Cells.Item($rowName+$i,2).text
+    $SubSecID = $subSectionSheet.Cells.Item($rowName+$i,1).text
+    #$3SubSections = $SubSectionName.Substring(0,3)
+    $SubSecRef = $SubSectionName.Substring(0, $SubSectionName.IndexOf(' ')) 
+    #Write-Host($SubSecRef)
+
+        for ($s=1; $s -le 1811; $s++)
+        {
+            $englishName = $englishSheet.Cells.Item($rowName+$s,$colName).text
+            #$3englishName = $englishName.Substring(0,$englishName.)
+            $refno = $englishName.Substring(0, $englishName.IndexOf('.') + 1 + $englishName.Substring($englishName.IndexOf('.') + 1).IndexOf('.'))
+
+            if ($SubSecRef -eq $refno)
+            {
+                $englishSheet.Cells.Item($rowName+$s,8) = $SubSecID
+                Write-host(""Match!!"")
+            }
+            else 
+            {
+                #Write-host(""No Match "" + $3SubSections + "" "" + $3englishName)
+            }
+
+        }
+        Write-Host($i)
+}
+
+$workBook.Save()
+$workBook.Close()
+$objExcel.Quit() 

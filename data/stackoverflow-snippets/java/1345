@@ -1,0 +1,38 @@
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class StackOverFlow {
+    public static void main(String[] args) {
+        Object monitor = new Object();
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        for (int i = 0; i < 100; i++) {
+            executorService.submit(new Task(monitor));
+        }
+        executorService.shutdown();
+    }
+
+}
+
+class Task implements Runnable {
+    Object monitor;
+
+    public Task(Object monitor) {
+        this.monitor = monitor;
+    }
+
+    void syncMethod() {
+        synchronized (monitor) {
+            System.out.println(""This is the sync method causing issues"");
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void run() {
+        syncMethod();
+    }
+}

@@ -1,0 +1,134 @@
+    $global:CertificateInfo = @{} ;
+function Connect-Azure {
+   [CmdletBinding()]
+    param
+    (
+            [parameter(Mandatory=$true)] 
+            [string] $TenantId
+    )
+    Write-Host ""Connect-Azure - Enter                                   - $($MyInvocation.MyCommand.Name)""
+    Write-Host ""Get-ApplicatonKeyCredentials - Parameters""
+    Write-Host ""                               TenantId                 - $($TenantId)""
+    $ErrorActionPreference = 'Stop';
+
+    Connect-AzureAD -TenantId $TenantId
+    Write-Host ""Connect-Azure - Exit                                    - $($MyInvocation.MyCommand.Name)""
+}
+function Add-AzureADApplicationKeyCredential { 
+   [CmdletBinding()]
+    param
+    (
+            [parameter(Mandatory=$true)] 
+            [string] $DisplayName,
+            [parameter(Mandatory=$false)] 
+            [Switch] $Force
+    )
+    Write-Host ""Add-AzureADApplicationKeyCredential - Enter                    - $($MyInvocation.MyCommand.Name)""
+    Write-Host ""Add-AzureADApplicationKeyCredential - Parameters""
+    Write-Host ""                                      DisplayName              - $($DisplayName)""
+    $ErrorActionPreference = 'Stop';
+
+    if ($global:CertificateInfo.Certificate -eq $null)
+    {
+        throw ""No certificate has been selected or created yet.""
+    }
+    $filter = ""DisplayName eq '"" + $($DisplayName) + ""'"" ;
+    $global:CertificateInfo.Application = Get-AzureADApplication -filter $filter
+
+
+    $certificateThumbprint = [System.Convert]::ToBase64String($global:CertificateInfo.Certificate.GetCertHash()) ;
+    foreach($keyCredential in $global:CertificateInfo.Application.KeyCredentials)
+    {
+        [String]$keyCredentialThumbPrint = [System.Convert]::ToBase64String($keyCredential.CustomkeyIdentifier) ;
+        if([String]::Equals($keyCredentialThumbPrint,$certificateThumbprint,[StringComparison]::CurrentCultureIgnoreCase)) {
+            throw ""This certificate already exists within the keyCredentials collection with KeyId"" + ""'"" + $keyCredential.KeyId + ""'"" ;
+        }
+    }
+
+    $keycredential = New-Object Microsoft.Open.AzureAD.Model.KeyCredential
+    $keycredential.CustomKeyIdentifier = $global:CertificateInfo.Certificate.GetCertHash() ;
+    $keycredential.Value = $global:CertificateInfo.Certificate.GetRawCertData() ;
+    $keycredential.EndDate = $global:CertificateInfo.Certificate.NotAfter ;
+    $keycredential.StartDate = $global:CertificateInfo.Certificate.NotBefore ;
+    $keycredential.Type = ""AsymmetricX509Cert""
+    $keycredential.Usage = ""Verify"" ;
+    $keycredential.KeyId = [Guid]::NewGuid().ToString() ;
+    $global:CertificateInfo.Application.KeyCredentials.Add($keycredential) ;
+
+    Set-AzureADApplication -ObjectID $global:CertificateInfo.Application.ObjectId -KeyCredentials $global:CertificateInfo.Application.KeyCredentials
+
+    Write-Host ""Add-AzureADApplicationKeyCredential - Exit""     
+
+}
+function Select-Certificate {
+   [CmdletBinding()]
+    param
+    (
+            [parameter(Mandatory=$false)]
+            [string] $CertStoreLocation = ""Cert:\LocalMachine\My"",
+            [parameter(Mandatory=$true)] 
+            [string] $ThumbPrint
+    )
+
+    Write-Host ""Create-SelfSignedCertificate - Enter                    - $($MyInvocation.MyCommand.Name)""
+    Write-Host ""Get-ApplicatonKeyCredentials - Parameters""    $ErrorActionPreference = 'Stop';
+    $certificateLocation = $CertStoreLocation + ""\"" + $ThumbPrint ;
+    $global:CertificateInfo.Certificate = (Get-ChildItem –Path ""$($certificateLocation)"")
+}
+function Create-SelfSignedCertificate {
+   [CmdletBinding()]
+    param
+    (
+            [parameter(Mandatory=$false)] 
+            [string] $Subject, 
+            [parameter(Mandatory=$false)]
+            [string] $HashAlgorithm = ""SHA256"",
+            [parameter(Mandatory=$false)]
+            [string] $CertStoreLocation = ""Cert:\LocalMachine\My"",
+            [parameter(Mandatory=$true)]
+            $NotAfter
+    )
+
+
+   ## see https://blogs.technet.microsoft.com/scotts-it-blog/2014/12/30/working-with-certificates-in-powershell/
+    Write-Host ""Create-SelfSignedCertificate - Enter                    - $($MyInvocation.MyCommand.Name)""
+    Write-Host ""Get-ApplicatonKeyCredentials - Parameters""
+    if([string]::IsNullOrEmpty($Subject)) {
+        $currentDate = (Get-Date) ;
+        $Subject = [String]::Format(""SelfSigned{0:yyyymmddHHMMss}"",$currentDate) ;
+   }
+    Write-Host ""                               Subject                 - $($Subject)""
+    Write-Host ""                               HashAlgorithm           - $($HashAlgorithm)""
+    Write-Host ""                               CertStoreLocation       - $($CertStoreLocation)""
+    Write-Host ""                               NotAfter                - $($NotAfter)""
+    $ErrorActionPreference = 'Stop';
+
+    Write-Host ""Create-SelfSignedCertificate - Exit                     - $($MyInvocation.MyCommand.Name)""
+    $SaveChooser = New-Object -Typename System.Windows.Forms.SaveFileDialog
+    $SaveChooser.CreatePrompt  = $false ;
+    $SaveChooser.Title = ""Save certficate"" ;
+    $SaveChooser.DefaultExt = ""pfx"" ;
+    $dialogResult = $SaveChooser.ShowDialog()  
+    if($dialogResult -eq [System.Windows.Forms.DialogResult]::Cancel) {        
+        return ;
+    }
+
+    $CertificatePath = $SaveChooser.Filename ;
+
+    $certificatePassword = Read-host ""Please provide a password for the exported certificate.""  -AsSecureString 
+
+    $certParameters = @{} ;
+    $certParameters.CertStoreLocation = $CertStoreLocation;
+    $certParameters.Subject = $Subject;
+    $certParameters.KeySpec = ""KeyExchange"";
+    $certParameters.HashAlgorithm = $HashAlgorithm;
+    $certParameters.CertStoreLocation = $CertStoreLocation;
+    if ($NotAfter -ne $null) {
+        $certParameters.NotAfter = $NotAfter;
+    }
+    $global:CertificateInfo.Certificate = New-SelfSignedCertificate @certParameters ;
+
+    $certificateLocation = $CertStoreLocation + ""\"" + $global:CertificateInfo.Certificate.Thumbprint ;
+
+    Export-PfxCertificate -Cert $certificateLocation  -FilePath ""$($CertificatePath)"" -Password $certificatePassword  
+}

@@ -1,0 +1,25 @@
+SELECT ck.id,
+       ck.site,
+       rq.location_id AS last_location,
+       CASE WHEN (rq.location_id IS NULL OR rq.location_id = (SELECT MAX(location_id)
+                                                             FROM checks_locations clk
+                                                             WHERE clk.check_id = ck.id))
+                THEN MIN(cl.location_id)
+            ELSE
+                rq.location_id + 1
+            END AS next_Location        
+FROM checks ck
+LEFT OUTER JOIN (SELECT check_id,
+                        location_id
+                        FROM requests
+                        WHERE id IN (SELECT MAX(Id) 
+                                     FROM requests
+                                     GROUP BY check_id
+                                     )
+                ) AS rq
+ON ck.id = rq.check_id 
+LEFT JOIN checks_locations cl
+ON ck.id = cl.check_id
+GROUP BY ck.id,
+       ck.site,
+       rq.location_id;

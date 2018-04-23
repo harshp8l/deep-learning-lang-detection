@@ -1,0 +1,17 @@
+IBusControl ConfigureBus()
+        {
+            return Bus.Factory.CreateUsingRabbitMq(cfg =>
+            {
+                var host = cfg.Host(new Uri(""rabbitmq://localhost""), h =>
+                {
+                    h.Username(""guest"");
+                    h.Password(""guest"");
+                });
+
+                cfg.ReceiveEndpoint(host, ""event_queue"", e =>
+                {
+                    e.Handler<YourMessageClass>(context =>
+                        Console.Out.WriteLineAsync($""Message received : {context.Message.MyCustomParameter}""));
+                })
+            });
+        }

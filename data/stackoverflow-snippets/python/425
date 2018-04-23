@@ -1,0 +1,86 @@
+import dataclasses
+import functools
+import inspect
+
+# Helper to make calling field() less verbose
+def kwonly(default=dataclasses.MISSING, **kwargs):
+    kwargs.setdefault('metadata', {})
+    kwargs['metadata']['kwonly'] = True
+    return dataclasses.field(default=default, **kwargs)
+
+def mydataclass(_cls, *, init=True, **kwargs):
+    if _cls is None:
+        return functools.partial(mydataclass, **kwargs)
+
+    no_generated_init = (not init or '__init__' in _cls.__dict__)
+    _cls = dataclasses.dataclass(_cls, **kwargs)
+    if no_generated_init:
+        # No generated __init__. The user will have to provide __init__,
+        # and they probably already have. We assume their __init__ does
+        # what they want.
+        return _cls
+
+    fields = dataclasses.fields(_cls)
+    if any(field.metadata.get('kwonly') and not field.init for field in fields):
+        raise TypeError('Non-init field marked kwonly')
+
+    # From this point on, ignore non-init fields - but we don't know
+    # about InitVars yet.
+    init_fields = [field for field in fields if field.init]
+    for i, field in enumerate(init_fields):
+        if field.metadata.get('kwonly'):
+            first_kwonly = field.name
+            num_kwonly = len(init_fields) - i
+            break
+    else:
+        # No kwonly fields. Why were we called? Assume there was a reason.
+        return _cls
+
+    if not all(field.metadata.get('kwonly') for field in init_fields[-num_kwonly:]):
+        raise TypeError('non-kwonly init fields following kwonly fields')
+
+    required_kwonly = [field.name for field in init_fields[-num_kwonly:]
+                       if field.default is field.default_factory is dataclasses.MISSING]
+
+    original_init = _cls.__init__
+
+    # Time to handle InitVars. This is going to get ugly.
+    # InitVars don't show up in fields(). They show up in __annotations__,
+    # but the current dataclasses implementation doesn't understand string
+    # annotations, and we want an implementation that's robust against
+    # changes in string annotation handling.
+    # We could inspect __post_init__, except there doesn't have to be a
+    # __post_init__. (It'd be weird to use InitVars with no __post_init__,
+    # but it's allowed.)
+    # As far as I can tell, that leaves inspecting __init__ parameters as
+    # the only option.
+
+    init_params = tuple(inspect.signature(original_init).parameters)
+    if init_params[-num_kwonly] != first_kwonly:
+        # InitVars following kwonly fields. We could adopt a convention like
+        # ""InitVars after kwonly are kwonly"" - in fact, we could have adopted
+        # ""all fields after kwonly are kwonly"" too - but it seems too likely
+        # to cause confusion with inheritance.
+        raise TypeError('InitVars after kwonly fields.')
+    # -1 to exclude self from this count.
+    max_positional = len(init_params) - num_kwonly - 1
+
+    @functools.wraps(original_init)
+    def __init__(self, *args, **kwargs):
+        if len(args) > max_positional:
+            raise TypeError('Too many positional arguments')
+        check_required_kwargs(kwargs, required_kwonly)
+        return original_init(self, *args, **kwargs)
+    _cls.__init__ = __init__
+
+    return _cls
+
+def check_required_kwargs(kwargs, required):
+    # Not strictly necessary, but if we don't do this, error messages for
+    # required kwonly args will list them as positional instead of
+    # keyword-only.
+    missing = [name for name in required if name not in kwargs]
+    if not missing:
+        return
+    # We don't bother to exactly match the built-in logic's exception
+    raise TypeError(f""__init__ missing required keyword-only argument(s): {missing}"")

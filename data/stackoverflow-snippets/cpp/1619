@@ -1,0 +1,44 @@
+#include <QApplication>
+#include <QMainWindow>
+#include <QMenuBar>
+#include <QTimer>
+
+class CenterMenu: public QMenu{
+    Q_OBJECT
+public:
+    CenterMenu(QWidget *parent = Q_NULLPTR):QMenu{parent}{
+        connect(this, &CenterMenu::aboutToShow, this, &CenterMenu::centerMenu);
+    }
+    CenterMenu(const QString &title, QWidget *parent = Q_NULLPTR): QMenu{title, parent}{
+        connect(this, &CenterMenu::aboutToShow, this, &CenterMenu::centerMenu);
+    }
+private slots:
+    void centerMenu(){
+        QTimer::singleShot(0, [this](){
+            move(pos() + QPoint(0, -height()/2));
+        });
+    }
+};
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    QMainWindow w;
+
+    auto fileMenu = new QMenu(""Menu1"");
+    w.menuBar()->addMenu(fileMenu);
+    fileMenu->addAction(""action1"");
+    fileMenu->addAction(""action2"");
+    auto children_menu = new CenterMenu(""children menu"");
+    children_menu->addAction(""action1"");
+    children_menu->addAction(""action2"");
+    children_menu->addAction(""action3"");
+    children_menu->addAction(""action4"");
+    children_menu->addAction(""action5"");
+    children_menu->addAction(""action6"");
+    fileMenu->addMenu(children_menu);
+    w.show();
+    return a.exec();
+}
+
+#include ""main.moc""

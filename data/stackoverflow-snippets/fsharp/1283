@@ -1,0 +1,46 @@
+module Example =       
+    open ChangeLib
+
+    let change (o: int[]) =
+        o.[0] <- 42
+        Changed o
+
+    let copy (o: int[]) =
+        let o' = o |> Array.map (fun i -> i + 1)
+        Unchanged o'
+
+    let dump (o: int[])=
+        printfn ""%A"" o
+        Unchanged o
+
+    // has signature ""int[] -> Changed int[]""
+    let transmogrifyWithChanges x = 
+        x 
+        |> change
+        |> bindCU dump
+
+    // has signature ""int[] -> Unchanged int[]""        
+    let transmogrifyWithoutChanges x =
+        x
+        |> copy
+        |> bindUU dump
+
+    // mixing and matching will preserve state
+    // so this function returns a Changed
+    // and has signature ""int[] -> Changed int[]""        
+    let transmogrify x =
+        x
+        |> transmogrifyWithoutChanges
+        |> bindUC transmogrifyWithChanges
+
+    // do some tests            
+    let a = [| 1;2;3 |]
+
+    let changedA = 
+        a |> transmogrifyWithChanges
+
+    let unchangedA = 
+        a |> transmogrifyWithoutChanges
+
+    let changedA2 = 
+        a |> transmogrify 

@@ -1,0 +1,21 @@
+#include <RcppArmadillo.h>
+// [[Rcpp::depends(RcppArmadillo)]]
+
+using namespace arma;
+
+// [[Rcpp::export]]
+vec arma_sort(vec x, vec y, vec z) {
+    // Order the elements of x by sorting y and z;
+    // we order by y unless there's a tie, then order by z.
+    // First create a vector of indices
+    uvec idx = regspace<uvec>(0, x.size() - 1);
+    // Then sort that vector by the values of y and z
+    std::sort(idx.begin(), idx.end(), [&](int i, int j){
+        if ( y[i] == y[j] ) {
+            return z[i] < z[j];
+        }
+        return y[i] < y[j];
+    });
+    // And return x in that order
+    return x(idx);
+}

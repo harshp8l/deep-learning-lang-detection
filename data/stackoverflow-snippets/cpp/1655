@@ -1,0 +1,31 @@
+#include <stdio.h>
+#include <string.h>
+
+struct TextTag { const char *text; };
+
+template <const TextTag &TRUE, const TextTag &FALSE>
+struct TextTaggedBool
+{
+  const char *GetAsText() const { return m_value ? TRUE.text: FALSE.text; }
+  void SetByText(const char *s) { m_value = !strcmp(s, TRUE.text); }
+  bool m_value;
+};
+
+class Foo
+{
+public:
+    void method()
+    {
+        m_tbool.SetByText(""True!"");  printf(""%s\n"", m_tbool.GetAsText());
+        m_tbool.SetByText(""False!""); printf(""%s\n"", m_tbool.GetAsText());
+        m_tbool.m_value = true;  printf(""%s\n"", m_tbool.GetAsText());
+        m_tbool.m_value = false; printf(""%s\n"", m_tbool.GetAsText());
+    }
+
+private:
+    static constexpr TextTag TrueTag = { ""True!"" };
+    static constexpr TextTag FalseTag = { ""False!"" };
+    TextTaggedBool<TrueTag, FalseTag> m_tbool;
+};
+
+void main() { Foo().method(); }

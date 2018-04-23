@@ -1,0 +1,33 @@
+//snippet inside recordGeo function
+//...
+
+callback := """"
+geoRec := geoData{}
+queries := r.URL.Query()
+
+//See http://api.jquery.com/jQuery.ajax/
+//for 'jsonp' data type parameters.
+for key, val := range queries {
+    if key == ""callback"" {
+        callback = val[0]
+    } else if key == ""_"" {
+        //the Timestamp
+    } else {
+        //JSON data in the key
+        dec := json.NewDecoder(bytes.NewBufferString(key))
+        err := dec.Decode(&geoRec)
+        if err != nil {
+            log.Println(err)
+        }
+        log.Printf(""DATA=%#v"", geoRec)
+    }
+}
+
+//...
+//do some processing
+response := ""{YOUR RESPONSE DATA}""
+if callback != """" {
+    w.Header().Set(""Content-Type"", ""application/javascript"")
+    response = fmt.Sprintf(""%s(%s);"", callback, response)
+}
+w.Write([]byte(response))

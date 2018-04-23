@@ -1,0 +1,36 @@
+#include <map>
+#include <typeinfo>
+#include <typeindex>
+
+class Base {
+public:
+    virtual ~Base() {}
+};
+
+class Manager
+{
+private:
+    static std::map<std::type_index, Base*> m_instances;
+
+public:
+    template<typename T>
+    static void addInstance(Base *inst) {
+        if (!m_instances.insert(std::make_pair(std::type_index(typeid(T)), inst)).second)
+            throw ...; // only 1 instance allowed at a time!
+    }
+
+    template<typename T>
+    static void removeInstance() {
+        auto iter = m_instances.find(std::type_index(typeid(T)));
+        if (iter != m_instances.end())
+            m_instances.erase(iter);
+    }
+
+    template<typename T>
+    static T* getInstance() {        
+        auto iter = m_instances.find(std::type_index(typeid(T)));
+        if (iter != m_instances.end())
+            return static_cast<T*>(iter->second);
+        return nullptr;
+    }
+};

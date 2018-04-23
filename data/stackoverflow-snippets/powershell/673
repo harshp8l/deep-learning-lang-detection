@@ -1,0 +1,137 @@
+Function Request-CertificateDetails
+{
+    [CmdletBinding()]
+
+    [Alias('rcd')]
+
+    Param
+    (
+        [string[]]$Destination = (Read-Host 'Enter a NetBIOS name, FQDN or URL to the host'),
+        [string]$Port = '443',
+        [switch]$CertificateChain
+    )
+
+    $WebRequest = [Net.WebRequest]::CreateHttp(""https://$($Destination):$Port"")
+    $WebRequest.AllowAutoRedirect = $true
+    $chain = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Chain
+    [Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+
+    #Request website
+    try {$Response = $WebRequest.GetResponse()}
+    catch {}
+
+    #Creates Certificate
+    $Certificate = $WebRequest.ServicePoint.Certificate.Handle
+    $Issuer = $WebRequest.ServicePoint.Certificate.Issuer
+    $Subject = $WebRequest.ServicePoint.Certificate.Subject
+
+    #Build chain
+    $chain.Build($Certificate)
+    $chain.ChainElements.Count #This returns ""1"" meaning none of the CA certs are included.
+    $chain.ChainElements[0].Certificate.IssuerName.Name
+
+    [Net.ServicePointManager]::ServerCertificateValidationCallback = $null
+
+    If($CertificateChain)
+    {
+        $chain.ChainElements.Certificate
+        $chain.ChainElements.Certificate | Select-Object *
+    }
+}
+
+# Is the cert available and valid
+Request-CertificateDetails -Destination 'stackoverflow.com' -Port 443
+
+
+#Results
+
+True
+3
+CN=DigiCert SHA2 High Assurance Server CA, OU=www.digicert.com, O=DigiCert Inc, C=US
+
+
+# Is the cert available and valid and list the cert chain
+Request-CertificateDetails -Destination 'stackoverflow.com' -Port 443 -CertificateChain
+
+
+# Results
+
+
+True
+3
+CN=DigiCert SHA2 High Assurance Server CA, OU=www.digicert.com, O=DigiCert Inc, C=US
+
+Thumbprint                                Subject                                                                                                                       
+----------                                -------                                                                                                                       
+47ADB03649A2EB18F63FFA29790818349A99CAB7  CN=*.stackexchange.com, O=""Stack Exchange, Inc."", L=New York, S=NY, C=US                                                      
+A031C46782E6E6C662C2C87C76DA9AA62CCABD8E  CN=DigiCert SHA2 High Assurance Server CA, OU=www.digicert.com, O=DigiCert Inc, C=US                                          
+5FB7EE0633E259DBAD0C4C9AE6D38F1A61C7DC25  CN=DigiCert High Assurance EV Root CA, OU=www.digicert.com, O=DigiCert Inc, C=US                                              
+
+EnhancedKeyUsageList : {Server Authentication (1.3.6.1.5.5.7.3.1), Client Authentication (1.3.6.1.5.5.7.3.2)}
+DnsNameList          : {*.stackexchange.com, stackoverflow.com, *.stackoverflow.com, stackauth.com...}
+SendAsTrustedIssuer  : False
+Archived             : False
+Extensions           : {System.Security.Cryptography.Oid, System.Security.Cryptography.Oid, System.Security.Cryptography.Oid, System.Security.Cryptography.Oid...}
+FriendlyName         : 
+IssuerName           : System.Security.Cryptography.X509Certificates.X500DistinguishedName
+NotAfter             : Wed 14 Aug 02019 05:00:00
+NotBefore            : Fri 20 May 02016 17:00:00
+HasPrivateKey        : False
+PrivateKey           : 
+PublicKey            : System.Security.Cryptography.X509Certificates.PublicKey
+RawData              : {48, 130, 7, 30...}
+SerialNumber         : 0E11BBD70D54B710D0C6F540B6B52CA4
+SubjectName          : System.Security.Cryptography.X509Certificates.X500DistinguishedName
+SignatureAlgorithm   : System.Security.Cryptography.Oid
+Thumbprint           : 47ADB03649A2EB18F63FFA29790818349A99CAB7
+Version              : 3
+Handle               : 1932723065648
+Issuer               : CN=DigiCert SHA2 High Assurance Server CA, OU=www.digicert.com, O=DigiCert Inc, C=US
+Subject              : CN=*.stackexchange.com, O=""Stack Exchange, Inc."", L=New York, S=NY, C=US
+
+
+EnhancedKeyUsageList : {Server Authentication (1.3.6.1.5.5.7.3.1), Client Authentication (1.3.6.1.5.5.7.3.2)}
+DnsNameList          : {DigiCert SHA2 High Assurance Server CA}
+SendAsTrustedIssuer  : False
+Archived             : False
+Extensions           : {System.Security.Cryptography.Oid, System.Security.Cryptography.Oid, System.Security.Cryptography.Oid, System.Security.Cryptography.Oid...}
+FriendlyName         : 
+IssuerName           : System.Security.Cryptography.X509Certificates.X500DistinguishedName
+NotAfter             : Sun 22 Oct 02028 05:00:00
+NotBefore            : Tue 22 Oct 02013 05:00:00
+HasPrivateKey        : False
+PrivateKey           : 
+PublicKey            : System.Security.Cryptography.X509Certificates.PublicKey
+RawData              : {48, 130, 4, 177...}
+SerialNumber         : 04E1E7A4DC5CF2F36DC02B42B85D159F
+SubjectName          : System.Security.Cryptography.X509Certificates.X500DistinguishedName
+SignatureAlgorithm   : System.Security.Cryptography.Oid
+Thumbprint           : A031C46782E6E6C662C2C87C76DA9AA62CCABD8E
+Version              : 3
+Handle               : 1932723063856
+Issuer               : CN=DigiCert High Assurance EV Root CA, OU=www.digicert.com, O=DigiCert Inc, C=US
+Subject              : CN=DigiCert SHA2 High Assurance Server CA, OU=www.digicert.com, O=DigiCert Inc, C=US
+
+
+EnhancedKeyUsageList : {Server Authentication (1.3.6.1.5.5.7.3.1), Client Authentication (1.3.6.1.5.5.7.3.2), Secure Email (1.3.6.1.5.5.7.3.4), Code Signing 
+                       (1.3.6.1.5.5.7.3.3)...}
+DnsNameList          : {DigiCert High Assurance EV Root CA}
+SendAsTrustedIssuer  : False
+Archived             : False
+Extensions           : {System.Security.Cryptography.Oid, System.Security.Cryptography.Oid, System.Security.Cryptography.Oid, System.Security.Cryptography.Oid}
+FriendlyName         : DigiCert
+IssuerName           : System.Security.Cryptography.X509Certificates.X500DistinguishedName
+NotAfter             : Sun 09 Nov 02031 16:00:00
+NotBefore            : Thu 09 Nov 02006 16:00:00
+HasPrivateKey        : False
+PrivateKey           : 
+PublicKey            : System.Security.Cryptography.X509Certificates.PublicKey
+RawData              : {48, 130, 3, 197...}
+SerialNumber         : 02AC5C266A0B409B8F0B79F2AE462577
+SubjectName          : System.Security.Cryptography.X509Certificates.X500DistinguishedName
+SignatureAlgorithm   : System.Security.Cryptography.Oid
+Thumbprint           : 5FB7EE0633E259DBAD0C4C9AE6D38F1A61C7DC25
+Version              : 3
+Handle               : 1932723062704
+Issuer               : CN=DigiCert High Assurance EV Root CA, OU=www.digicert.com, O=DigiCert Inc, C=US
+Subject              : CN=DigiCert High Assurance EV Root CA, OU=www.digicert.com, O=DigiCert Inc, C=US

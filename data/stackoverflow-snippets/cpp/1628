@@ -1,0 +1,17 @@
+auto functionSpan = [](auto&& fn) {
+    auto t1 = std::chrono::high_resolution_clock::now();
+    fn();
+    auto t2 = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count();
+};
+
+auto copy_helper = [](auto && ... args) {
+    return [args...]() {
+        std::copy(args...);
+    };
+};
+
+std::vector<int> vec {1,2,3,4,5,6,7,8,9};
+functionSpan(copy_helper(vec.begin(), vec.end(),
+                         std::ostream_iterator<int>(std::cout, "" "")
+                        ));

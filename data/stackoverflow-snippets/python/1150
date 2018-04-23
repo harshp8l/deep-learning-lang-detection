@@ -1,0 +1,116 @@
+import msvcrt
+import os
+import sys
+
+if os.name != 'nt':
+    raise NotImplementedError('This module works only on MS Windows!')
+
+CTRL_00         = 0
+CTRL_E0         = 224
+KEY_BACKSPACE   = 8
+KEY_DELETE      = 83                                            # CTRL
+KEY_END         = 79                                            # CTRL
+KEY_ESC         = 27
+KEY_HOME        = 71                                            # CTRL
+KEY_INSERT      = 82                                            # CTRL
+KEY_LEFT        = 75                                            # CTRL
+KEY_RETURN      = 13
+KEY_RIGHT       = 77                                            # CTRL
+
+flush = sys.stdout.flush
+write = sys.stdout.write
+
+mode    = ('[OVR]> ', '[INS]> ')                                # overwrite, insert
+prefix  = len(mode[0])
+
+def _update_line(insert, source, length, line, target):
+    """"""Write a new line and position the cursor.
+    source: previous cursor position
+    length: old line length
+    line:   edited line
+    target: next cursor position
+    """"""
+    write('\b' * source)                                        # set cursor to start of line
+    write(' ' * length)                                         # erase old line
+    write('\b' * length)                                        # again, set cursor to start of line
+    write(mode[insert] + line[prefix:])                         # write updated line
+    write('\b' * (len(line) - target))                          # set cursor to new position
+    flush()                                                     # write buffer to screen
+
+def mswin_line_edit(default_string, insert=True):
+    """"""Edit a MS Windows CLI line.""""""
+
+    insert = insert
+    line = mode[insert] + default_string
+    count = len(line)
+    before = line[:count]
+    after = line[count:]
+    print(line, end='', flush=True)
+    cursor = count
+
+    while True:
+        key = msvcrt.getwch()
+        num = ord(key)
+        if num == KEY_ESC:                                      # abort edit
+            return default_string
+        if num == KEY_RETURN:                                   # finish edit
+            return line
+        if num == KEY_BACKSPACE:                                # delete character before cursor
+            if cursor > prefix:
+                before = line[:cursor - 1]
+                after = line[cursor:]
+                line = before + after
+                _update_line(insert, cursor, count, line, cursor - 1)
+                cursor -= 1
+                count = len(line)
+        elif num == CTRL_E0 or num == CTRL_00:                  # CTRL
+            ctrl = ord(msvcrt.getwch())
+            if ctrl == KEY_END:                                     # set cursor after last character
+                if cursor < count:
+                    before = line
+                    after = ''
+                    _update_line(insert, cursor, count, line, count)
+                    cursor = count
+            elif ctrl == KEY_HOME:                                  # set cursor before first character
+                if cursor > prefix:
+                    before = ''
+                    after = line
+                    _update_line(insert, cursor, count, line, prefix)
+                    cursor = prefix
+            elif ctrl == KEY_LEFT:                                  # move cursor 1 character to the left
+                if cursor > prefix:
+                    before = line[:cursor]
+                    after = line[cursor:]
+                    _update_line(insert, cursor, count, line, cursor - 1)
+                    cursor -= 1
+            elif ctrl == KEY_RIGHT:                                 # move cursor 1 character to the right
+                if cursor < count:
+                    before = line[:cursor]
+                    after = line[cursor:]
+                    _update_line(insert, cursor, count, line, cursor + 1)
+                    cursor += 1
+            elif ctrl == KEY_DELETE:                                # delete character after cursor
+                if cursor < count:
+                    before = line[:cursor]
+                    after = line[cursor + 1:]
+                    line = before + after
+                    _update_line(insert, cursor, count, line, cursor)
+                    count = len(line)
+            elif ctrl == KEY_INSERT:                                # switch insert/overwrite mode
+                insert ^= True
+                _update_line(insert, cursor, count, line, cursor)
+        else:                                                   # ordinary character
+            before = line[:cursor] + key
+            if insert:
+                after = line[cursor:]
+            else:
+                after = line[cursor + 1:]
+            line = before + after
+            _update_line(insert, cursor, count, line, cursor + 1)
+            cursor += 1
+            count = len(line)
+
+if __name__ == '__main__':
+    test_string = input('test string: ')
+    result = mswin_line_edit(test_string)
+    print(f'\n{result}')

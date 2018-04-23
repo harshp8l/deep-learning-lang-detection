@@ -1,0 +1,23 @@
+func ValidateParam(conf map[string]interface{}, paramName string, out interface{}) error {
+    param, ok := conf[paramName]
+
+    if !ok {
+        return errors.New(""some error"")
+    }
+
+    // Output is pointer to value.
+    vo := reflect.ValueOf(out)
+    if vo.Kind() != reflect.Ptr {
+        return errors.New(""out must be poitner"")
+    }
+    vo = vo.Elem()  // deref ptr
+
+    // Can input be assigned to output?
+    vi := reflect.ValueOf(param)
+    if !vi.Type().AssignableTo(vo.Type()) {
+        return fmt.Errorf(""param %s of type %v is not assignable to %v"", paramName, vi.Type(), vo.Type())
+    }
+
+    vo.Set(vi)
+    return nil
+}

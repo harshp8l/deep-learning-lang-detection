@@ -1,0 +1,31 @@
+--query, get some sorting in place
+if object_id('tempdb..#x') is not null drop table #x
+SELECT c.userid,
+        c.checktime,
+       ROW_NUMBER() OVER(PARTITION BY c.userid ORDER BY c.checktime) AS 'Sorted'
+INTO #x 
+FROM #checkinout AS c --replace with your table, and everything should work
+
+
+--label the rows by checkin or checkout
+if object_id('tempdb..#y') is not null drop table #y
+SELECT x.*,
+       CASE WHEN x.Sorted % 2 <> 0 THEN 'Checkin' ELSE 'Checkout' END  AS 'Type'
+INTO #y
+FROM #x AS x
+
+
+--get data into format desired
+SELECT cin.userid,
+       CAST(cin.checktime AS DATE) AS 'CheckDate',
+       CAST(cin.checktime AS TIME) AS 'Checkin',
+       CAST(cout.checktime AS TIME) AS 'Checkout',
+       DATEDIFF(HOUR, cin.checktime, cout.checktime) AS 'Hours'
+FROM #y AS cin
+     outer APPLY
+     (
+        SELECT y.checktime 
+        FROM #y AS y
+        WHERE y.userid=cin.userid AND y.Type='Checkout' AND y.Sorted=cin.Sorted+1
+     ) AS cout
+WHERE cin.Type='Checkin' AND cout.checktime IS NOT null

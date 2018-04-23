@@ -1,0 +1,55 @@
+package main
+
+import (
+    ""fmt""
+    ""sync""
+)
+
+func main() {
+    //WaitGroup is needed only if need a clean exit for producer
+    //that is the producer should have exited before consumer (main)
+    //exits - the code works even without the WaitGroup
+    var wg sync.WaitGroup
+    quit := make(chan bool)
+    res := make(chan int)
+
+    go func() {
+        idx := 0
+        for {
+
+            fmt.Println(""goroutine is doing stuff.."", idx)
+            res <- idx
+            idx++
+            if <-quit {
+                fmt.Println(""Producer quitting.."")
+                wg.Done()
+                return
+            }
+
+            //select {
+            //case <-quit:
+            //fmt.Println(""Detected quit signal!"")
+            //time.Sleep(1000 * time.Millisecond)
+            //  return
+            //default:
+            //fmt.Println(""goroutine is doing stuff.."", idx)
+            //res <- idx
+            //idx++
+            //}
+        }
+
+
+    }()
+    wg.Add(1)
+    for r := range res {
+        if r == 6 {
+            fmt.Println(""Consumer exit condition met: "", r)
+            quit <- true
+            break
+        }
+        quit <- false
+        fmt.Println(""I received: "", r)
+    }
+    wg.Wait()
+
+}

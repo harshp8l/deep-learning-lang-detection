@@ -1,0 +1,12 @@
+SELECT TOP 5 t.TEXT AS 'SQL Text'
+    ,st.execution_count
+    ,ISNULL(st.total_elapsed_time / st.execution_count, 0) AS 'AVG Excecution Time'
+    ,st.total_worker_time / st.execution_count AS 'AVG Worker Time'
+    ,st.total_worker_time
+    ,st.max_logical_reads
+    ,st.max_logical_writes
+    ,st.creation_time
+    ,ISNULL(st.execution_count / DATEDIFF(second, st.creation_time, getdate()), 0) AS 'Calls Per Second'
+FROM sys.dm_exec_query_stats st
+CROSS APPLY sys.dm_exec_sql_text(st.sql_handle) t
+ORDER BY st.total_elapsed_time DESC

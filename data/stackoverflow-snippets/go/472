@@ -1,0 +1,31 @@
+type Data struct {
+    output []byte
+    error  error
+}
+
+func runCommand(ch chan<- Data) {
+    cmd := exec.Command(""ls"", ""-la"")
+    data, err := cmd.CombinedOutput()
+    ch <- Data{
+        error:  err,
+        output: data,
+    }
+}
+
+func main() {
+    c := make(chan Data)
+
+    // This will work in background
+    go runCommand(c)
+
+    // Do other things here
+
+    // When everything is done, you can check your background process result
+    res := <-c
+    if res.error != nil {
+        fmt.Println(""Failed to execute command: "", res.error)
+    } else {
+        // You will be here, runCommand has finish successfuly
+        fmt.Println(string(res.output))
+    }
+}

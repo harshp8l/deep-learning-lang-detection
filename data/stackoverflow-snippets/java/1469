@@ -1,0 +1,53 @@
+public class MyClass {
+
+private static BlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
+
+private static Map<String, String> dataComputed = new ConcurrentHashMap<>();
+
+public static void writeValues(String key) {
+    Random r = new Random();
+    try {
+        // Simulate working for long time
+        TimeUnit.SECONDS.sleep(r.nextInt(11));
+        String value = ""Hello there fdfsd"" + Math.random();
+        queue.offer(value);
+        dataComputed.putIfAbsent(key, value);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+
+}
+
+private static String getValueOrTimeout(String key) throws InterruptedException {
+    String result = dataComputed.get(key);
+    if (result == null) {
+        result = queue.poll(10, TimeUnit.SECONDS);
+    }
+    return result;
+}
+
+
+public static void main(String... args) throws InterruptedException, ExecutionException {
+    String key = ""TheKey"";
+
+    Thread producer = new Thread(() -> {
+        writeValues(key);
+    });
+
+    Thread consumer = new Thread(() -> {
+        try {
+            String message = getValueOrTimeout(key);
+            if (message == null) {
+                System.out.println(""No message in 10 seconds"");
+            } else {
+                System.out.println(""The message:"" + message);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    });
+
+    consumer.start();
+    producer.start();
+
+}

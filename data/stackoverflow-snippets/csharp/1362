@@ -1,0 +1,25 @@
+public ActionResult downloadF(int? id)
+{
+    var attach = db.details.First(a => a.id == id);
+
+    using (var memoryStream = new MemoryStream())
+    {
+        using (var ziparchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+        {
+            AddToArchive(ziparchive, ""foto.png"", attach.foto.ToArray());
+            AddToArchive(ziparchive, ""passport.png"", attach.passport.ToArray());
+            AddToArchive(ziparchive, ""degree.png"", attach.degree.ToArray());
+        }
+        return File(memoryStream.ToArray(), ""application/zip"", ""Attachments.zip"");
+    }
+}
+
+private void AddToArchive(ZipArchive ziparchive, string fileName, byte[] attach)
+{
+    var zipEntry = ziparchive.CreateEntry(fileName, CompressionLevel.Optimal);
+    using (var zipStream = zipEntry.Open())
+    using (var streamIn = new MemoryStream(attach))
+    {
+        streamIn.CopyTo(zipStream);
+    }
+}

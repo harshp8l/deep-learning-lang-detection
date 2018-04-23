@@ -1,0 +1,19 @@
+#!/usr/bin/env python2.7
+
+from ctypes import *
+
+PyString_AsStringAndSize = pythonapi.PyString_AsStringAndSize
+PyString_AsStringAndSize.argtypes = [
+    py_object, POINTER(POINTER(c_int8)), POINTER(c_ssize_t)]
+PyString_AsStringAndSize.restype = c_int
+
+s = 'foo\0bar'
+buf = POINTER(c_int8)()
+size = c_ssize_t()
+
+res = PyString_AsStringAndSize(s, byref(buf), byref(size))
+print res
+print size.value
+bufa = cast(buf, POINTER(c_int8 * size.value))
+print bufa.contents[:size.value]
+print repr(''.join(chr(c) for c in bufa.contents[:size.value]))

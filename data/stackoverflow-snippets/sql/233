@@ -1,0 +1,29 @@
+SQL> with test (ccase, crole) as
+  2    (select 'cb190', 'plaintiff' from dual union
+  3     select 'cb190', 'defendant' from dual union
+  4     select 'cb191', 'plaintiff' from dual union
+  5     select 'cb192', 'defendant' from dual union
+  6     select 'cb193', 'none'      from dual
+  7    ),
+  8  inter as
+  9    (select ccase, min(crole) minrole, max(crole) maxrole
+ 10     from test
+ 11     group by ccase
+ 12    )
+ 13  select ccase,
+ 14    case when minrole <> maxrole then 'ok'
+ 15         when minrole =  maxrole and minrole = 'plaintiff' then 'pltf'
+ 16         when minrole =  maxrole and minrole = 'defendant' then 'def'
+ 17         else 'none'
+ 18    end anycolname
+ 19  from inter
+ 20  order by ccase;
+
+CCASE ANYC
+----- ----
+cb190 ok
+cb191 pltf
+cb192 def
+cb193 none
+
+SQL>

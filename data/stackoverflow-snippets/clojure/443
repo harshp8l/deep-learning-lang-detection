@@ -1,0 +1,20 @@
+(s/defn find-patterns :- [s/Int]
+  [pattern-vec :- tsk/List
+   data-vec :- tsk/List]
+  (let [parts         (partition (count pattern-vec) 1 data-vec)
+        idxs          (keep-indexed
+                        (fn [idx candidate]
+                          (when (= candidate pattern-vec)
+                            idx))
+                        parts)]
+    idxs))
+
+(s/defn find-pattern :- s/Int
+  [pattern  :- tsk/List
+   data     :- tsk/List ]
+  (first (find-patterns pattern data)))
+
+(deftest t-find-pattern
+;              0 1 2  3    4    5    6    7   8 9]
+  (let [data [ 0 1 2 0xAA 0xFA 0xFF 0xDA 0xDD 8 9] ]
+    (is= 5 (find-pattern  [0xFF 0xDA] data))))

@@ -1,0 +1,12 @@
+select t.*
+from (select t.*,
+             row_number() over (partition by name
+                                order by (case when Genre like '%HORROR%' then 'HORROR'
+                                               when Genre like '%COMEDY%' then 'COMEDY'
+                                          end)
+                               ) as seqnum
+      from `dataset-table`
+      where name in ('Alex', 'Sarah', 'James') and
+            (genre like '%HORROR%' or genre like '%COMEDY%')
+     ) t
+where seqnum <= 20;

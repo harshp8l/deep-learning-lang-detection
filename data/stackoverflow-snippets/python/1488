@@ -1,0 +1,33 @@
+#Import libraries
+import networkx as nx
+import pandas as pd
+from io import StringIO
+
+#Read in data into a pandas dataframe    
+txt = StringIO(""""""ID|Identifier1|Identifier2
+1|a|c
+2|b|f
+3|a|g
+4|c|h
+5|b|j
+6|d|f
+7|e|k
+8|i|    
+9|l|h"""""")   
+
+df = pd.read_csv(txt,sep='|')
+
+#Create Graph network using networkx
+
+G = nx.from_pandas_dataframe(df,source='Identifier1',target='Identifier2')
+
+#Create output dataframe using graph `nodes` and `node_connected_component`
+df1 = pd.DataFrame({'Identifier':sorted(G.nodes())})\
+        .apply(lambda x: pd.Series([x.Identifier,
+               sorted(list(nx.node_connected_component(G,x.Identifier)))]), axis=1)
+df1.columns = ['Identifier','Gr.Members']
+
+#Use pd.factorize to create unique ids for each group of connected components
+df1['Gr_ID'] = pd.factorize(df1['Gr.Members'].apply(tuple))[0] + 1
+
+df1

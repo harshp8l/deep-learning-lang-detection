@@ -1,0 +1,19 @@
+import numpy as np
+import tensorflow as tf
+
+def tf_cov(x):
+    mean_x = tf.reduce_mean(x, axis=0, keep_dims=True)
+    mx = tf.matmul(tf.transpose(mean_x), mean_x)
+    vx = tf.matmul(tf.transpose(x), x)/tf.cast(tf.shape(x)[0], tf.float32)
+    cov_xx = vx - mx
+    return cov_xx
+
+data = np.array([[1., 4, 2], [5, 6, 24], [15, 1, 5], [7,3,8], [9,4,7]])
+
+with tf.Session() as sess:
+    print(sess.run(tf_cov(tf.constant(data, dtype=tf.float32))))
+
+
+## validating with numpy solution
+pc = np.cov(data.T, bias=True)
+print(pc)

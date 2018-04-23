@@ -1,0 +1,29 @@
+before_save :set_running_balance
+after_save :recalculate_running_balance, on: :update
+
+private
+
+def set_running_balance
+  previous_balance = previous_transaction_for_user.try(:balance) || 0
+  self.balance = previous_balance + amount
+end
+
+def recalculate_running_balance
+  # this will recursively trigger the `recalculate_next_running_balance` 
+  # callback on the following transactions and thereby update all later 
+  # transactions
+  next_transaction_for_user.try(:save)
+end
+
+def previous_transaction_for_user
+  scope = Transaction.where(user: user).order(:id)
+  scope = scope.where('id < ?', id) if persisted?
+
+  scope.last
+end
+
+def next_transaction_for_user
+  return if new_record?
+
+  Transaction.where(user: user).where('id > ?', id).order(:id).first
+end

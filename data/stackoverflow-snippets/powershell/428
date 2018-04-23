@@ -1,0 +1,40 @@
+##################################
+#DATABASES DETAILS INSERT
+##################################
+#Create SQL Insert Statement
+
+$db_insert_stmt = ""INSERT INTO [dbo].[SQLAuditStaging] ([event_time], [class_desc], [action_id], [session_id], [server_instance_name], [database_name], [server_principal_name], [schema_name], [object_name], [statement], [containing_group_name], [covering_action_name])
+VALUES (@event_time,
+@class_desc,
+@action_id,
+@session_id,
+@server_instance_name,
+@database_name,
+@server_principal_name,
+@schema_name,
+@object_name,
+@statement,
+@containing_group_name,
+@covering_action_name)"" 
+
+#Loop through each row   
+foreach ($row in $AuditOutput) {
+    $cmddb = $conn.CreateCommand()
+    $cmddb.CommandText = $db_insert_stmt
+
+    # Assign parameter values
+    $cmddb.Parameters.Add('@event_time'           ,[System.Data.SqlDbType]::DateTime2).Value = $row.event_time
+    $cmddb.Parameters.Add('@class_desc'           ,[System.Data.SqlDbType]::NVarChar).Value  = $row.class_desc
+    $cmddb.Parameters.Add('@action_id'            ,[System.Data.SqlDbType]::Int).Value       = $row.action_id
+    $cmddb.Parameters.Add('@session_id'           ,[System.Data.SqlDbType]::Int).Value       = $row.session_id
+    $cmddb.Parameters.Add('@server_instance_name' ,[System.Data.SqlDbType]::NVarChar).Value  = $row.server_instance_name
+    $cmddb.Parameters.Add('@database_name'        ,[System.Data.SqlDbType]::NVarChar).Value  = $row.database_name
+    $cmddb.Parameters.Add('@server_principal_name',[System.Data.SqlDbType]::NVarChar).Value  = $row.server_principal_name
+    $cmddb.Parameters.Add('@schema_name'          ,[System.Data.SqlDbType]::NVarChar).Value  = $row.schema_name
+    $cmddb.Parameters.Add('@object_name'          ,[System.Data.SqlDbType]::NVarChar).Value  = $row.object_name
+    $cmddb.Parameters.Add('@statement'            ,[System.Data.SqlDbType]::NVarChar).Value  = $row.statement
+    $cmddb.Parameters.Add('@containing_group_name',[System.Data.SqlDbType]::NVarChar).Value  = $row.containing_group_name
+    $cmddb.Parameters.Add('@covering_action_name' ,[System.Data.SqlDbType]::NVarChar).Value  = $row.covering_action_name
+
+    $cmddb.ExecuteNonQuery()
+}

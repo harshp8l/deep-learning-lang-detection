@@ -1,0 +1,19 @@
+let any (list: Async<'T>[])=
+    let tcs = new TaskCompletionSource<'T>()
+
+    list |> Array.map (fun wf->Async.Start (async{
+                let! res=wf
+                tcs.TrySetResult (res) |> ignore
+            }))
+         |> ignore
+
+    Async.AwaitTask tcs.Task
+
+let async1 = async {
+        do! Async.Sleep (System.Random().Next(1000, 2000))
+        return 1 }
+let async2 = async {
+        do! Async.Sleep (System.Random().Next(1000, 2000))
+        return 2 }
+
+printfn ""%d"" <| ([|async1;async2|] |> any |> Async.RunSynchronously)

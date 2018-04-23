@@ -1,0 +1,21 @@
+select distinct y.case#,
+case 
+when x.role='Plaintiff' and y.cnt=1 then 'PLTF'
+when x.role='Defendant' and y.cnt=1 then 'Def'
+when x.role='none' and y.cnt=1 then 'NONE'
+when y.cnt=2 then
+  case
+  when exists(select 1 from TABLE_NAME where role='Plaintiff' and CASE#=y.case#) and
+  exists(select 1 from TABLE_NAME where role='Defendant' and CASE#=y.case#)
+  then 'OK'
+  end
+end 
+from 
+(select case#,
+count(case#) as cnt
+from TABLE_NAME
+group by case#
+order by case#) y, TABLE_NAME x
+where x.case#=y.case#
+order by y.case#
+;

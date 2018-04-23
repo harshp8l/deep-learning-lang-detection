@@ -1,0 +1,17 @@
+lookup_headers = { ""old"": ""new"", ""cat"": ""dog"" } # The desired header swaps
+
+CSV($>, headers: true, write_headers: true) do |csv_out|
+  CSV.foreach( ARGV[0],
+               headers: true, 
+               # the following lambda replaces the header if it is found, leaving it if not...
+               header_converters: lambda{ |h| lookup_headers[h] || h}, 
+               return_headers: true) do |master_row|
+
+    if master_row.header_row?
+      # The headers are now correctly replaced by calling the updated headers
+      csv_out << master_row.headers
+    else
+      csv_out << master_row
+    end
+  end
+end

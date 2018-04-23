@@ -1,0 +1,22 @@
+var listOP = (from f in db.T_COLLECT_OP_DTL
+              from ii in db.T_SETUP_UNIT
+              join g in db.T_COLLECT_OP_DTL_KIMPER on new { A = f.PTDHCARD_ID, B f.PRODUCTION_DATE, C = f.SHIFT } equals new { A = g.PTDHCARD_ID, B = g.PRODUCTION_DATE, C = g.SHIFT}
+              join h in db.M_PRODUCT_MODEL on g.MODEL equals h.MODEL_CODE
+              join i in db.M_EQUIPMENT on new {A = ii.EQUIPMENT_ID, B = h.PRODUCT_MODEL_ID} equals new {A = i.EQUIPMENT_ID, B = i.PRODUCT_MODEL_ID}
+              let kimperid = (from codk in g
+                              select codk.KIMPER_ID).Max()
+              where f.PRODUCTION_DATE == prodDate 
+              && ( (f.SHIFT == shifts || f.SHIFT == shift) )
+              && ii.PRODUCTION_DATE == fsu
+              && ii.SHIFT == fsh
+              && ii.CURRENT_DELAY != ""Breakdown""
+              select new
+                      {
+                          f.OPERATOR_ID,
+                          f.PRODUCTION_DATE,
+                          f.SHIFT,
+                          g.MODEL,
+                          g.KIMPER_ID,
+                          g.EXP_UNIT,
+                          i.UNIT_NO
+                      }).ToList();

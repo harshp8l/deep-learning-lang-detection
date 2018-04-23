@@ -1,0 +1,38 @@
+WNDPROC oldproc;
+
+LRESULT CALLBACK newproc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)oldproc);
+    __try {
+        *(int*)0=0;
+        //RaiseException(STATUS_ACCESS_VIOLATION, 0, 0, 0);
+
+    } __finally {
+        DbgPrint(""in finally\n"");
+        CallWindowProc(oldproc, hwnd, uMsg, wParam, lParam);
+    }
+    return 0;
+}
+
+void test()
+{
+    RtlGetCurrentPeb()->ProcessParameters->Flags |= 0x80000;
+
+    if (HWND hwnd = CreateWindowExW(0, WC_EDIT, L""***"", WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        NULL, NULL, NULL, NULL))
+    {
+        oldproc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)newproc);
+        __try {
+            ShowWindow(hwnd, SW_SHOW);
+        }__except(EXCEPTION_EXECUTE_HANDLER){
+            DbgPrint(""no sense. never will be called\n"");
+        }
+
+        MSG msg;
+        while (0 < GetMessage(&msg, hwnd, 0, 0))
+        {
+            DispatchMessage(&msg);
+        }
+    }
+}

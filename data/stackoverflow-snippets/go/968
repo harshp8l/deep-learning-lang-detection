@@ -1,0 +1,25 @@
+function gofork() {
+  if [ $# -ne 2 ] || [ -z ""$1"" ] || [ -z ""$2"" ]; then
+    echo 'Usage: gofork yourFork originalModule'
+    echo 'Example: gofork github.com/YourName/go-contrib github.com/heirko/go-contrib'
+    return
+  fi
+   echo ""Go get fork $1 and replace $2 in GOPATH: $GOPATH""
+   go get $1
+   go get $2
+   currentDir=$PWD
+   cd $GOPATH/src/$1
+   remote1=$(git config --get remote.origin.url)
+   cd $GOPATH/src/$2
+   remote2=$(git config --get remote.origin.url)
+   cd $currentDir
+   rm -rf $GOPATH/src/$2
+   mv $GOPATH/src/$1 $GOPATH/src/$2
+   cd $GOPATH/src/$2
+   git remote add their $remote2
+   echo Now in $GOPATH/src/$2 origin remote is $remote1
+   echo And in $GOPATH/src/$2 their remote is $remote2
+   cd $currentDir
+}
+
+export -f gofork

@@ -1,0 +1,4 @@
+    $Groups = $ACLs.Access | #Expand the Access property
+        ?{ $_.IsInherited -eq $false -and $_.AccessControlType -eq 'Allow' -and $_.IdentityReference -notmatch 'BUILTIN|NT AUTHORITY|CREATOR|-----|Identity'} | #Only instances that allow access, are not inherited, and aren't a local group or special case
+        %{$_.IdentityReference -replace 'JAC.*?\\'} | #Expand the IdentityReference property, and replace anything that starts with JAC all the way to the first backslash (likely domain name trimming)
+        Select -Unique #Select only unique values

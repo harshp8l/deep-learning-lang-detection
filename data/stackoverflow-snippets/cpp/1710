@@ -1,0 +1,42 @@
+#include <stdexcept>
+#include <iostream>
+
+struct stream {
+    template <typename value> value read ();
+    template <typename value> void read (value &);
+};
+
+template <unsigned valid>
+struct foo
+{
+    int a;
+    float b;
+    char c;
+
+    auto & get_a () { static_assert (valid & 1); return a; }
+    auto & get_b () { static_assert (valid & 2); return b; }
+    auto & get_c () { static_assert (valid & 4); return c; }
+};
+
+template <unsigned valid>
+foo <valid> read_foo (stream & Stream)
+{
+    if (Stream.read <unsigned> () != valid)
+        throw std::runtime_error (""unexpected input"");
+
+    foo <valid> Foo;
+
+    if (valid & 1) Stream.read (Foo.a);
+    if (valid & 2) Stream.read (Foo.b);
+    if (valid & 4) Stream.read (Foo.c);
+}
+
+void do_something (stream & Stream)
+{
+    auto Foo = read_foo <3> (Stream);
+
+    std::cout << Foo.get_a () << "", "" << Foo.get_b () << ""\n"";
+
+    // don't touch c cause it will fail here
+    // Foo.get_c ();
+}

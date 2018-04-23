@@ -1,0 +1,32 @@
+// MuxListener takes a net.Listener and returns two listeners, one that
+// accepts connections that start with ""SSH"", and another that accepts
+// all others. This allows SSH and HTTPS to be served from the same port.
+func MuxListener(l net.Listener) (ssh net.Listener, other net.Listener) {
+    sshListener, otherListener := newListener(l), newListener(l)
+    go func() {
+        for {
+            conn, err := l.Accept()
+            if err != nil {
+                log.Println(""Error accepting conn:"", err)
+                continue
+            }
+            conn.SetReadDeadline(time.Now().Add(time.Second * 10))
+            bconn := bufferedConn{conn, bufio.NewReaderSize(conn, 3)}
+            p, err := bconn.Peek(3)
+            conn.SetReadDeadline(time.Time{})
+            if err != nil {
+                log.Println(""Error peeking into conn:"", err)
+                continue
+            }
+            prefix := string(p)
+            selectedListener := otherListener
+            if prefix == ""SSH"" {
+                selectedListener = sshListener
+            }
+            if selectedListener.accept != nil {
+                selectedListener.accept <- bconn
+            }
+        }
+    }()
+    return sshListener, otherListener
+}

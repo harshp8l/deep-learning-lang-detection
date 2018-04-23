@@ -1,0 +1,24 @@
+function node_create ($id, $children = []) {
+  return [ ""id"" => $id, ""children"" => $children ];
+}
+
+function node_add_child ($node, $child) {
+  return node_create ($node['id'], array_merge ($node['children'], [ $child ]));
+}
+
+$flat =
+  [ [ '10', 'hoho' ]
+  , [ '10', null ]
+  , [ '13', null ]
+  , [ '10', 'ahha' ]
+  ];
+
+$result =
+  array_reduce ($flat, function ($acc, $item) {
+    list ($id, $value) = $item;
+    if (! array_key_exists ($id, $acc))
+      $acc [$id] = node_create ($id);
+    if (! is_null ($value))
+      $acc [$id] = node_add_child ($acc [$id], $value);
+    return $acc;
+  }, []);

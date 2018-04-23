@@ -1,0 +1,16 @@
+workflow clusterCheck {
+
+     $Clusternodes= * some 50 elements *
+     $Standbynodes= * some 50 elements *
+
+    foreach -parallel ($cluster in $Clusternodes) {
+        $NotOnline += Get-ClusterGroup -Cluster $Cluster |
+                  where {$_.State -ne ""Online""} |
+                  Select-Object Name,OwnerNode,State
+        foreach -parallel ($node in $Standbynodes) {
+                  $Standbys += Get-ClusterGroup -Cluster $Cluster |
+                  where {$_.OwnerNode -eq ""$node""} |
+                  Select-Object Name,OwnerNode,State
+        }
+    }
+}

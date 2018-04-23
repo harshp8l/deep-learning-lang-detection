@@ -1,0 +1,18 @@
+select month, count(DISTINCT rep_id), count(DISTINCT user_id) 
+  from
+( 
+  select date_trunc('month', date)::date as month, 
+    CASE WHEN created_date <= date THEN rep_id ELSE NULL END rep_id, 
+    case when applied_date <= date then user_id else null end) user_id
+  from
+  ( 
+    select r.rep_id, r.created_date, u.id as user_id, u.applied_date
+    from reps r
+    left outer join clients u on r.id = u.rep_id
+  ) z
+cross join
+  (select * from calendar
+    where date between '2018-01-01' and convert_timezone('PST', getdate())
+  ) c
+) sub
+group by 1

@@ -1,0 +1,46 @@
+package main
+
+import (
+    ""fmt""
+    ""math/rand""
+    ""time""
+)
+
+const (
+    workers   = 1
+    randCount = 5000000
+)
+
+var results = [randCount]int{}
+
+func randRoutine(start, counter int, c chan bool) {
+    r := rand.New(rand.NewSource(time.Now().UnixNano()))
+    for i := 0; i < counter; i++ {
+        results[start+i] = r.Intn(5000)
+    }
+    c <- true
+}
+
+func main() {
+    startTime := time.Now()
+    c := make(chan bool)
+
+    start := 0
+    for w := 0; w < workers; w++ {
+        go randRoutine(start, randCount/workers, c)
+        start += randCount / workers
+    }
+
+    for i := 0; i < workers; i++ {
+        <-c
+    }
+
+    elapsedTime := time.Since(startTime)
+    for _, i := range results {
+        fmt.Println(i)
+    }
+    fmt.Println(""Time calulating"", elapsedTime)
+
+    elapsedTime = time.Since(startTime)
+    fmt.Println(""Toal time"", elapsedTime)
+}

@@ -1,0 +1,35 @@
+// Front: Display Total Volume in ""Order received"" (thankyou) and ""View Order"" (my account) pages
+add_action( 'woocommerce_order_items_table', 'display_order_volume_total', 20 );
+function display_order_volume_total() {
+    global $wp;
+
+    // Only in thankyou ""Order-received"" and My account ""Order view"" pages
+    if( is_wc_endpoint_url( 'order-received' ))
+        $endpoint = 'order-received';
+    elseif( is_wc_endpoint_url( 'view-order' ))
+        $endpoint = 'view-order';
+    else
+        return; // Exit
+
+    $order_id  = absint( $wp->query_vars[$endpoint] ); // Get Order ID
+    $order_id > 0 ? $order = wc_get_order($order_id) : exit(); // Get the WC_Order object
+
+    $total_volume = 0;
+
+    echo '</tbody><tbody>';
+
+    // Loop through cart items and calculate total volume
+    foreach( $order->get_items() as $item ){
+        $product_volume = (float) get_post_meta( $item->get_product_id(), '_item_volume', true );
+        $total_volume  += $product_volume * $item->get_quantity();
+    }
+
+    if( $total_volume > 0 ){
+
+        // The Output
+        echo '<tr>
+            <th scope=""row"">' . __( ""Total Shipping Volume"", ""woocommerce"" ) . '</th>
+            <td data-title=""total-volume"">' . number_format($total_volume, 2) . ' m3</td>
+        </tr>';
+    }
+}

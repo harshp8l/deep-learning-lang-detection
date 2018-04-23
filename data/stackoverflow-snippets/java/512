@@ -1,0 +1,11 @@
+            BigInteger r, s;
+            // This works because bouncycastle isn't picky like the updated JCE is.
+            try(ASN1InputStream is = new ASN1InputStream(origSigBytes)) {
+                    ASN1Sequence seq = (ASN1Sequence)is.readObject();
+                    ASN1Integer r_int = (ASN1Integer)seq.getObjectAt(0);
+                    ASN1Integer s_int = (ASN1Integer)seq.getObjectAt(1);
+                    r = r_int.getValue();
+                    s = s_int.getValue();
+            }
+            DERSequence out = new DERSequence(new ASN1Encodable[] {new DERInteger(r), new DERInteger(s)});
+            byte[] sigBytes = out.getEncoded();

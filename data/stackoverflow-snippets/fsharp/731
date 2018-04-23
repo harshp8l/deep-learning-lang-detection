@@ -1,0 +1,25 @@
+let rec dedupe equalityfn prev (s:'a seq) : 'a seq =
+    if Seq.isEmpty s then
+        Seq.empty
+    else
+        let rest = Seq.skipWhile (equalityfn prev) s
+        let valid = Seq.takeWhile (equalityfn prev) s
+        let valid2 = if Seq.isEmpty valid  then Seq.singleton prev else (Seq.last valid) |> Seq.singleton
+        let filtered = if Seq.isEmpty rest then Seq.empty else dedupe equalityfn (Seq.head rest) (rest)
+        Seq.append valid2 filtered
+
+let t = [(""a"", 1); (""b"", 2); (""b"", 3); (""b"", 4); (""c"", 5)]
+        |> dedupe (fun (x1, y1) (x2, y2) -> x1=x2) (""asdfasdf"",1)
+        |> List.ofSeq;;
+
+#time
+List.init 1000 (fun _ -> 1)
+|> dedupe (fun x y -> x = y) (189234784)
+|> List.ofSeq
+#time;;
+--> Timing now on
+
+Real: 00:00:00.007, CPU: 00:00:00.006, GC gen0: 0, gen1: 0
+val it : int list = [189234784; 1]
+
+--> Timing now off

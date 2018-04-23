@@ -1,0 +1,35 @@
+## To run the script
+# .\get_status.ps1 -Hostname <host> -Service_Action <action> -Service_Name <name>
+
+#$Hostname = ""hostname""
+#$Service_Action = ""Get-Service""
+#$Service_Name = ""service_name""
+
+param(
+    [string]$Hostname,
+    [string]$Service_Action,
+    [string]$Service_Name
+)
+
+$ScriptBlockContent = {
+    param($Service_Action, $Service_Name)
+    & $Service_Action $Service_Name
+    }
+
+# user credentials
+$Username = ""username""
+$Password = ""password""
+
+# To avoid Manual entry of Username and Password
+$Secure_String = convertto-securestring $Password -asplaintext -force
+$User_cred = new-object -typename System.Management.Automation.PSCredential -argumentlist $Username, $Secure_String
+
+# Create a Session
+$pso = New-PSSessionOption -NoMachineProfile
+$sess = New-PSSession -ComputerName $Hostname -SessionOption $pso -credential $User_cred
+
+#Run a powershell script in the session.
+Invoke-Command -Session $sess -ScriptBlock $ScriptBlockContent -ArgumentList $Service_Action, $Service_Name
+
+# Remove session
+Remove-PSSession $sess`enter code here`

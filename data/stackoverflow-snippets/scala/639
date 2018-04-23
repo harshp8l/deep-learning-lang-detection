@@ -1,0 +1,22 @@
+val conf = new SparkConf().setMaster(""local"").setAppName(""My app"")
+val sc = new SparkContext(conf)
+val sqlContext = new SQLContext(sc)
+
+import sqlContext.implicits._
+// For implicit conversions like converting RDDs to DataFrames
+val df = sc.parallelize(Seq(
+  (1, ""fn"", ""red""),
+  (2, ""fn"", ""blue""),
+  (3, ""fn"", ""green""),
+  (4, ""aa"", ""blue""),
+  (5, ""aa"", ""green""),
+  (6, ""bb"", ""red""),
+  (7, ""bb"", ""red""),
+  (8, ""aa"", ""blue"")
+) ).toDF(""id"",""dept"",""color"")
+
+
+val replace_val = udf((x: String,y:String) => if (Option(x).getOrElse("""").equalsIgnoreCase(""fn"")&&(!y.equalsIgnoreCase(""red""))) ""red"" else y)
+val final_df = df.withColumn(""color"", replace_val($""dept"",$""color""))
+
+final_df.show()

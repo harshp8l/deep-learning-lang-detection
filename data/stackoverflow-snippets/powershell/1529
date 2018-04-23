@@ -1,0 +1,15 @@
+$ComputerNames = Get-Content C:\example\list.txt
+Get-WmiObject -Class win32_softwarefeature -ComputerName $ComputerNames |
+    Where-Object {$_.Caption -match 'Microsoft\sOffice|Microsoft\sOutlook'} |
+    Select-Object Caption, @{n='LastUse';e={[int]($_.Lastuse.Substring(0, 8))}},PSComputername |
+    Group-Object PSComputername |
+    ForEach-Object {
+        $Group = $_.Group |
+            Sort-Object LastUse |
+            Select-Object -Last 1
+        [PSCustomObject]@{
+            ComputerName = $_.Name
+            Caption = $Group.Caption
+            LastUse = $Group.LastUse
+        }
+    }

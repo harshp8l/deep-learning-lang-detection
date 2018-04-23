@@ -1,0 +1,24 @@
+open System.Net
+
+let processRequest (client: Sockets.TcpClient) = async {  
+  printfn ""Incoming HTTP request...""
+  use stream = client.GetStream()
+  use sr = new System.IO.StreamReader(stream)
+  let line = sr.ReadLine()
+  printfn ""Request: %s"" line
+  let sw = new System.IO.StreamWriter(stream)
+  sw.WriteLine(""HTTP/1.1 200 OK\r\n\r\nHello World"")
+  sw.Flush()     
+  }
+
+let ip = IPAddress.Parse(""127.0.0.1"")
+let listener = Sockets.TcpListener(ip, 8080)
+let startServer = async { 
+  do listener.Start() 
+  do printfn ""Starting server...""
+  while true do 
+    let! context = listener.AcceptTcpClientAsync() |> Async.AwaitTask
+    processRequest context |> Async.Start
+  }
+
+Async.Start startServer

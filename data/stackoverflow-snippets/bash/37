@@ -1,0 +1,28 @@
+FNR==1 && rows {
+    # Compute average per column (same as END block)
+    for(i=1;i<=cols;i++) {
+        if(out) out = out OFS
+        out = out (sum[i]/rows)
+    }
+    print out
+    # Reset state for the new file
+    cols = 0; rows = 0; delete sum; out = """"
+}
+#FNR==1 { next }      # uncomment this to skip first line in each file
+cols && cols!=NF {
+    print ""ERROR: not equal number of elements, line: "" NR "", file: "" FILENAME
+    exit
+}
+{
+    rows++
+    cols = NF
+    for(i=1;i<=NF;i++)
+        sum[i] += $i
+}
+END {
+    for(i=1;i<=cols;i++) {
+        if(out) out = out OFS
+        out = out (sum[i]/rows)
+    }
+    print out
+}

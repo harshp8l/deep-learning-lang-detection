@@ -1,0 +1,16 @@
+$ cat downthemall.sh 
+#!/bin/bash
+
+## run: lftp -c 'help get'
+## to know how to use lftp to download files
+## with automatically retry+continue
+
+p=()                                     ## pid list
+
+for l in *\.lst; do
+  lftp -f ""$l"" >/dev/null &              ## run proccesses in parallel
+  p+=(""--pid=$!"")                        ## record pid
+done
+
+until [[ -f d.log ]]; do sleep 0.5; done ## wait for the log file
+tail -f d.log ${p[@]}                    ## print results when downloading

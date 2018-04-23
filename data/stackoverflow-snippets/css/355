@@ -1,0 +1,112 @@
+""use strict"";
+const http = require(`http`);
+
+const PORT = 8080;
+
+const htmlStart = `<!DOCTYPE html>
+<html lang=""en""><head>
+    <meta charset=""utf-8"">
+    <title>html streaming</title>
+    <meta name=""viewport"" content=""width=device-width"">
+    <style>
+
+section {
+    position: absolute;
+    left: 0;
+    right: 0;
+}
+
+section:not(:last-of-type) {
+    animation: comout 1.4s ease 0s;
+    left: -100%;
+    opacity: 0;
+}
+
+section:last-of-type, section.last {
+    animation: comin 1.4s ease 0s;
+    left: 0;
+    opacity: 1;
+}
+
+@keyframes comin {
+    0% {
+    left: 100%;
+    }
+    100% {
+    left: 0;
+    }
+}
+
+@keyframes comout {
+    0% {
+    left: 0;
+    opacity: 1;
+    }
+    100% {
+    left: -100%;
+    opacity: 0;
+    }
+}
+</style>
+    <script>
+        var observer = new MutationObserver(function() {
+            var list = document.querySelectorAll(""section"");
+            if (list.length === 0) return;
+            for (var i = 0; i < list.length; i++) {
+                list[i].classList.remove(""last"");
+            }
+            list[list.length - 1].classList.add(""last"");
+        });
+        var headLoaded = Date.now();
+        document.addEventListener(""DOMContentLoaded"", function() {
+            console.log((Date.now() - headLoaded) / 1000);
+            observer.disconnect();
+            var list = document.querySelectorAll(""section"");
+            for (var i = 0; i < list.length; i++) {
+                list[i].classList.remove(""last"");
+            }
+        });
+    </script>
+</head>
+<body>
+    <script>
+        observer.observe(document.body, { attributes: true, childList: true })
+    </script>
+    <h1>last-of-type test</h1>
+
+    <section>
+        <h2>First slide</h2>
+        <p>Some text 111111111</p>
+    </section>
+
+    <section>
+        <h2>2</h2>
+        <p>22222222222222</p>
+    </section>
+
+
+`;
+
+const htmlEnd = `
+<p>html finised loading</p>
+</body></html>`;
+
+
+const INTERVAL = 8000; // ms
+const server = http.createServer((request, response) => {
+response.setHeader(`Content-Type`, `text/html`);
+response.writeHead(200);
+response.write(htmlStart);
+setTimeout(function () {
+        response.write(`<section>
+            <h2>3</h2>
+            <p>33333333333</p>
+        </section>`);
+}, INTERVAL);
+setTimeout(function () {
+        response.end(htmlEnd);
+}, 3 * INTERVAL);
+});
+
+server.listen(PORT);
+console.log(`Listening on ${PORT}`);

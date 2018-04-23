@@ -1,0 +1,23 @@
+#Path to folder repository. Folder names must be the systems host name. 
+$rootpaths = (Import-Csv 'C:\CVS\path\Paths.csv').path
+
+#Systems found
+$systems = @()
+
+#Find system-folders inside each root
+Foreach ($root in $rootpaths){
+    Get-ChildItem $root | Where-Object { $_.PSIsContainer } | Foreach-object {
+        #Foreach system-folder, generate a result object
+        $systems += New-Object PSObject -Property @{
+            #No need to split the path. The object already contains the leaf-name in the Name-property
+            ""Name"" = $_.Name
+            ""Path"" = $_.FullName
+        }
+    }
+}
+
+#No need for write-host if you're writing everything as strings anyways
+$systems | Format-table | Out-String
+
+""Number of root folders: $($rootpaths.Count)""
+""Number of host folders $($systems.Count)""

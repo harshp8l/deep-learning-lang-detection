@@ -1,0 +1,46 @@
+void create_entry(const char col1[], const char col2[], const char col3[],
+                  float col4, float col5, float col6)
+{
+    sqlite3 *db;
+    int rc;
+    const char *sql;
+    static const char db_name[] = ""db_test.db"";
+    sqlite3_stmt *stmt;
+
+    sql = ""INSERT INTO Department1 (Date,Time,Accept,Factor1,Factor2,Factor3)""
+          "" VALUES (?,?,?,?,?,?)"";
+
+    rc = sqlite3_open(db_name, &db);
+    if( rc != SQLITE_OK )
+    {
+        fprintf(stderr, ""Can't open database: %s\n"", sqlite3_errmsg(db));
+        return;
+    }
+
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if( rc != SQLITE_OK )
+    {
+        fprintf(stderr, ""Can't prepare query: %s\n"", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, col1, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, col2, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, col3, -1, SQLITE_STATIC);
+    sqlite3_bind_double(stmt, 4, col4);
+    sqlite3_bind_double(stmt, 5, col5);
+    sqlite3_bind_double(stmt, 6, col6);
+
+    rc = sqlite3_step(stmt);
+    if( rc != SQLITE_DONE )
+    {
+        fprintf(stderr, ""Can't execute query: %s\n"", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+        return;
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+}

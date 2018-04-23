@@ -1,0 +1,17 @@
+(def call-counts (atom {}))
+
+(defn instrumented-fn [original-fn]
+  (let [wrapping-fn (fn this [& args]
+                      (swap! call-counts
+                             update-in
+                             [original-fn]
+                             inc)
+                      (apply original-fn args))]
+    (swap! call-counts assoc original-fn 0)
+    wrapping-fn))
+
+    (defn have-been-called?
+      [original-fn]
+      (pos? (@call-counts original-fn 0))
+
+    (defn reset-counters! [] (reset! call-counts {}))

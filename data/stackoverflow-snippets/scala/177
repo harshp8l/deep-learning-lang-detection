@@ -1,0 +1,16 @@
+object Seq extends SeqFactory[Seq]
+abstract class SeqFactory[CC[X] <: Seq[X] with GenericTraversableTemplate[X, CC]] extends GenSeqFactory[CC] with TraversableFactory[CC]
+abstract class GenSeqFactory[CC[X] <: GenSeq[X] with GenericTraversableTemplate[X, CC]] extends GenTraversableFactory[CC]
+abstract class GenTraversableFactory[CC[X] <: GenTraversable[X] with GenericTraversableTemplate[X, CC]] extends GenericCompanion[CC]
+abstract class GenericCompanion[+CC[X] <: GenTraversable[X]] {
+    ...
+    def apply[A](elems: A*): CC[A] = {
+      if (elems.isEmpty) empty[A]
+      else {
+        val b = newBuilder[A]
+        b ++= elems
+        b.result()
+      }
+    }
+    ...
+}

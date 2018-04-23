@@ -1,0 +1,22 @@
+ (defmacro search-patient-resource
+ ""This macro searches for a specified resource based on the
+  Patient Id""
+ [res id json?]
+ (let [tmp (symbol res)]
+   (if json?
+     `(. (. (. (. (. (. @restful-client search)
+                     (forResource (identity ~(symbol res))))
+                  encodedJson)
+               (where
+                 (.
+                  (. ~(resolve tmp)  PATIENT)
+                  (hasId (~str ~id)))))
+            (returnBundle Bundle))
+         execute)
+     `(. (. (. (. (. @restful-client search)
+                  (forResource (identity ~(symbol res))))
+               (where (. (. ~(symbol res)
+                            PATIENT)
+                         (hasId (str ~id)))))
+            (returnBundle Bundle))
+         execute))))

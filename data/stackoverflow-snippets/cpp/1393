@@ -1,0 +1,71 @@
+#include <functional>
+#include <iostream>
+#include <string>
+
+class Base
+{
+public:
+    Base() { }
+
+    void functionA(int a, int b) {
+        if (fnA_) {
+            fnA_(a, b);
+        }
+    } 
+    void functionB(int a, int b) {
+        if (fnB_) {
+            fnB_(a, b);
+        }
+    } 
+protected:
+    typedef std::function<void(int, int)> FunctionA;
+    typedef std::function<void(int, int)> FunctionB;
+
+    FunctionA& fnA() { return fnA_;}
+    FunctionB& fnB() { return fnB_;}
+
+private:
+    FunctionA fnA_;
+    FunctionB fnB_;
+};
+
+class Child : public Base {
+public:
+    Child() {
+        fnA() = std::bind(&Child::functionAImpl, this, std::placeholders::_1, std::placeholders::_2);
+        fnB() = std::bind(&Child::functionBImpl, this, std::placeholders::_1, std::placeholders::_2);
+    }
+private:
+    // Please make them different names
+    void functionAImpl(int a, int b) {
+        std::cout << ""Child::functionAImpl: a="" << a << "", b="" << b << std::endl;
+    } 
+    void functionBImpl(int a, int b) {
+        std::cout << ""Child::functionBImpl: a="" << a << "", b="" << b << std::endl;
+    } 
+};
+
+class WildChild : public Base {
+public:
+    WildChild() {
+        fnA() = std::bind(&WildChild::functionAImpl, this, std::placeholders::_1, std::placeholders::_2);
+        fnB() = std::bind(&WildChild::functionBImpl, this, std::placeholders::_1, std::placeholders::_2);
+    }
+private:
+    // Please make them different names
+    void functionAImpl(int a, int b) {
+        std::cout << ""WildChild::functionAImpl: a="" << a * 2 << "", b="" << b * -3 << std::endl;
+    } 
+    void functionBImpl(int a, int b) {
+        std::cout << ""WildChild::functionBImpl: a="" << a * -4 << "", b="" << b * 5 << std::endl;
+    } 
+};
+int main(int argc, const char** argv) {
+    Child child;
+    child.functionA(3, 4);
+    child.functionB(5, 6);
+    WildChild wildChild;
+    wildChild.functionA(3, 4);
+    wildChild.functionB(5, 6);
+    return 0;
+}

@@ -1,0 +1,19 @@
+CREATE VIEW INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+AS
+    SELECT DB_NAME()                AS CONSTRAINT_CATALOG,
+           SCHEMA_NAME(c.schema_id) AS CONSTRAINT_SCHEMA,
+           c.NAME                   AS CONSTRAINT_NAME,
+           DB_NAME()                AS TABLE_CATALOG,
+           SCHEMA_NAME(t.schema_id) AS TABLE_SCHEMA,
+           t.NAME                   AS TABLE_NAME,
+           CASE c.type
+             WHEN 'C ' THEN 'CHECK'
+             WHEN 'UQ' THEN 'UNIQUE'
+             WHEN 'PK' THEN 'PRIMARY KEY'
+             WHEN 'F ' THEN 'FOREIGN KEY'
+           END                      AS CONSTRAINT_TYPE,
+           'NO'                     AS IS_DEFERRABLE,
+           'NO'                     AS INITIALLY_DEFERRED
+      FROM sys.objects c
+           LEFT JOIN sys.tables t ON t.object_id = c.parent_object_id
+     WHERE c.type IN ('C', 'UQ', 'PK', 'F') 

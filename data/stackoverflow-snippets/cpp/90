@@ -1,0 +1,64 @@
+#include <iostream>
+
+#include <boost/property_tree/json_parser.hpp>
+using boost::property_tree::ptree;
+
+std::istringstream sample_json();
+ptree sample_ptree();
+
+#include ""yaml-cpp/yaml.h""
+
+void to_yaml(ptree const& node, YAML::Emitter &m_out) {
+    if (node.empty()) {
+        m_out << YAML::Value << node.data(); 
+    } else {
+        m_out << YAML::BeginMap;
+        for (auto const&item : node) {
+            m_out << YAML::Key << item.first;
+            to_yaml(item.second, m_out);
+        }
+        m_out << YAML::EndMap;
+    }
+}
+
+std::string to_yaml(ptree const& tree) {
+    YAML::Emitter out;
+    to_yaml(tree, out);
+    return out.c_str();
+}
+
+int main() {
+    write_json(std::cout, sample_ptree());
+
+    {
+        auto stream = sample_json();
+        std::cout << YAML::Load(stream) << ""\n"";
+    }
+
+    std::cout << to_yaml(sample_ptree()) << ""\n"";
+}
+
+std::istringstream sample_json() {
+    return std::istringstream(R""({
+        ""fibonacci"": {
+            ""type"": ""series"",
+            ""entities"": {
+                ""golden_ratio"": {
+                    ""ratio"": 2.3
+                },
+                ""function"": {
+                    ""power_series"": 2
+                }
+            }
+        }
+    })"");
+}
+
+ptree sample_ptree() {
+    ptree pt;
+    {
+        auto stream = sample_json();
+        read_json(stream, pt);
+    }
+    return pt;
+}

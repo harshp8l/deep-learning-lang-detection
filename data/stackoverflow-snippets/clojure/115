@@ -1,0 +1,29 @@
+  (let [a  (ref 0)
+        b  (ref 0)
+        f1 (future
+             (dosync
+               (println ""f1 start"")
+               (alter a inc)
+               (Thread/sleep 500)
+               (alter b inc)
+               (println ""f1 end"")))
+        f2 (future
+             (dosync
+               (Thread/sleep 100)
+               (println ""f2 start"")
+               (alter a inc)
+               (println ""f2 end"")))]
+    (println @f1)
+    (println @f2)
+    (println @a)
+    (println @b))
+
+f1 start
+f2 start
+f2 end
+f1 start
+f1 end
+(clojure.core/deref f1) => nil
+(clojure.core/deref f2) => nil
+(clojure.core/deref a) => 2
+(clojure.core/deref b) => 1

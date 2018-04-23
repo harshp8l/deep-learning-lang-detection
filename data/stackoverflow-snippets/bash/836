@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# create associative arrays 
+declare -A month2num=([Jan]=1 [Feb]=2 [Mar]=3 [Apr]=4 [May]=5 [Jun]=6 [Jul]=7 [Aug]=8 [Sep]=9 [Oct]=10 [Nov]=11 [Dec]=12])
+declare -A p ds de  # date start and date end
+declare -A -i sum   # set integer attribute 
+
+# function to convert 5-Jun-2011 to 20110605
+date2num() { local d m y; IFS=""-"" read -r d m y <<< ""$1""; printf ""%d%.2d%.2d\n"" $y ${month2num[$m]} $d; }
+
+# read all columns to variables p1 p2 d1 d2 s
+while IFS="","" read -r p1 p2 d1 d2 s; do
+
+  # if associative array is still empty for this entry
+  # fill with current strings/value
+  if [[ -z ${p[$p1,$p2]} ]]; then
+    p[$p1,$p2]=""$p1,$p2""
+    ds[$p1,$p2]=""$d1""
+    de[$p1,$p2]=""$d2""
+    sum[$p1,$p2]=""$s""
+    continue
+  fi
+
+  # compare strings, set new strings and sum value
+  if [[ ${p[$p1,$p2]} == ""$p1,$p2"" ]]; then
+    [[ $(date2num ""$d1"") < $(date2num ${ds[$p1,$p2]}) ]] && ds[$p1,$p2]=""$d1""
+    [[ $(date2num ""$d2"") > $(date2num ${de[$p1,$p2]}) ]] && de[$p1,$p2]=""$d2""
+    sum[$p1,$p2]=sum[$p1,$p2]+s
+  fi
+
+done < file
+
+# print content of all associative arrays with key vom associative array p
+for i in ""${!p[@]}""; do echo ""${p[$i]},${ds[$i]},${de[$i]},${sum[$i]}""; done

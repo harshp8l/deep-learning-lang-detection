@@ -1,0 +1,21 @@
+function Get-WSManCredSSPState
+{
+  $res = [pscustomobject]@{DelegateTo = @(); ReceiveFromRemote = $false}
+
+  $wsmTypes = [ordered]@{}
+  (gcm Get-WSManCredSSP).ImplementingType.Assembly.ExportedTypes `
+  | %{$wsmTypes[$_.Name] = $_}
+
+  $wmc = new-object $wsmTypes.WSManClass.FullName
+  $wms = $wsmTypes.IWSManEx.GetMethod('CreateSession').Invoke($wmc, @($null,0,$null))
+  $cli = $wsmTypes.IWSManSession.GetMethod('Get').Invoke($wms, @(""winrm/config/client/auth"", 0))
+  $res.ReceiveFromRemote = [bool]([xml]$cli).Auth.CredSSP
+
+  $afcPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation\AllowFreshCredentials'
+  if (test-path $afcPath)
+  {
+    $afc = gi $afcPath
+    $res.DelegateTo = $afc.GetValueNames() | sls '^\d+$' | %{$afc.GetValue($_)}
+  }
+  return $res
+}

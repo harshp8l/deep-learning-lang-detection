@@ -1,0 +1,16 @@
+let (?) (o: obj) name : 'R =
+    let bindingFlags = System.Reflection.BindingFlags.GetProperty
+    let invocation args =
+        o.GetType().InvokeMember(name, bindingFlags, null, o, args)
+    let implementation args =
+        let argType, resType = FSharpType.GetFunctionElements typeof<'R>
+        if argType = typeof<unit> then [| |]
+        elif FSharpType.IsTuple argType then FSharpValue.GetTupleFields args 
+        else [| args |]
+        |> invocation
+        |> fun res -> if resType = typeof<unit> then null else res
+
+    if FSharpType.IsFunction typeof<'R> then
+        FSharpValue.MakeFunction(typeof<'R>, implementation)
+    else invocation null
+    |> unbox<'R>

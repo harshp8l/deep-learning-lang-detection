@@ -1,0 +1,32 @@
+package main
+
+import (
+    ""fmt""
+    ""time""
+)
+
+func waitForInput(didInput chan<- bool) {
+    // Wait for a valid input here
+
+    didInput <- true
+}
+
+func main() {
+    didInput := make(chan bool, 1)
+    timeout := make(chan bool, 1)
+
+    go func() {
+        time.Sleep(5 * time.Second)
+        timeout <- true
+    }()
+
+    go waitForInput(didInput)
+
+    select {
+    case <-didInput:
+        fmt.Println("""")
+        // Continue your application here
+    case <-timeout:
+        // Input timed out, quit your application here
+    }
+}

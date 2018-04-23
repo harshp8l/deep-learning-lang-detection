@@ -1,0 +1,17 @@
+member __.EvalRequireReference istate m path = 
+    if Path.IsInvalidPath(path) then
+        error(Error(FSIstrings.SR.fsiInvalidAssembly(path),m))
+    // Check the file can be resolved before calling requireDLLReference 
+    let resolutions = tcImports.ResolveAssemblyReference(AssemblyReference(m,path),ResolveAssemblyReferenceMode.ReportErrors)
+    tcConfigB.AddReferencedAssemblyByPath(m,path)
+    let tcState = istate.tcState 
+    let tcEnv,(_dllinfos,ccuinfos) = 
+        try
+            RequireDLL tcImports tcState.TcEnvFromImpls m path 
+        with e ->
+            tcConfigB.RemoveReferencedAssemblyByPath(m,path)
+            reraise()
+    let optEnv = List.fold (AddExternalCcuToOpimizationEnv tcGlobals) istate.optEnv ccuinfos
+    istate.ilxGenerator.AddExternalCcus (ccuinfos |> List.map (fun ccuinfo -> ccuinfo.FSharpViewOfMetadata)) 
+    resolutions,
+    { istate with tcState = tcState.NextStateAfterIncrementalFragment(tcEnv); optEnv = optEnv }

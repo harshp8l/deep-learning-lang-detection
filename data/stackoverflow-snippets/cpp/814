@@ -1,0 +1,94 @@
+#ifndef MY_CARTESIAN_POINT_H
+#define MY_CARTESIAN_POINT_H
+
+// #include <iostream>      // cin, cout
+#include <sstream>          // stringstream
+#include <cmath>            // sqrt()
+#include <limits>           // INT_MAX
+#include <stdexcept>        // out_of_range
+
+// using namespace std;
+
+class CartesianPoint {
+private:
+    int myX;
+    int myY;
+
+    static int sharedLimit;
+public:
+
+    CartesianPoint() : myX( 0 ), myY( 0 ) {} // I chose 0, but you can choose any default values for (x,y)
+    CartesianPoint( int x, int y ) : 
+        myX( validate( x ) ), 
+        myY( validate( y ) ) {
+    }
+    CartesianPoint( int& x, int& y ) :
+        myX( validate( x ) ),
+        myY( validate( y ) ) {
+    }
+
+    int GetX() const { return myX; }
+    int GetY() const { return myY; } 
+
+    // by value
+    void SetX(int x) { myX = validate(x); } 
+    void SetY(int y) { myY = validate(y); } 
+    void SetPoint(int x, int y) { 
+        myX = validate( x );
+        myY = validate( y );
+    }
+
+    // by reference
+    void SetX( int& x ) { myX = validate(x); }
+    void SetY( int& y ) { myX = validate(y); }
+    void SetPoint( int& x, int& y ) {
+        myX = validate( x );
+        myY = validate( y );
+    }
+
+    double GetDistanceTo(CartesianPoint pointTo) const; 
+    string ToString() const;
+
+    static int GetLimit() { return sharedLimit; }
+    static void SetLimit(int limit) { sharedLimit = abs(limit); }
+
+  private:
+    int validate( int value ) const;   // by value
+    int validate( int& value ) const;  // by reference
+};  
+
+int CartesianPoint::sharedLimit = INT_MAX;    
+
+double CartesianPoint::GetDistanceTo(CartesianPoint& pointTo) const  {
+    int xDelta = pointTo.myX - myX; 
+    int yDelta = pointTo.myY - myY;
+    return sqrt((xDelta * xDelta) + (yDelta * yDelta));
+} 
+
+std::string CartesianPoint::ToString() const {
+    std::stringstream strOut;
+    strOut << ""("" << myX << "", "" << myY << "")"";
+    return strOut.str();
+}
+
+int CartesianPoint::validate(int value) const {
+    return validate( value );
+}
+
+int CartesianPoint::validate( int& value ) const {
+    if((value < -sharedLimit || value > sharedLimit)) {
+        std::ostringstream stream;
+        stream << ""Out Of Range: Parameter ("" 
+               << + ToString(value) 
+               << + "") must be between "" 
+               << + ToString(-sharedLimit) 
+               << + "" and "" 
+               << + ToString(sharedLimit) 
+               << + '.';                
+        throw stream.str();
+    }
+    return value;
+}
+
+
+#endif

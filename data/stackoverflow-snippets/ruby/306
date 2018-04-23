@@ -1,0 +1,29 @@
+# lib/youtube_api/o_auth_client.rb
+
+require 'google/api_client/auth/storage'
+require 'google/api_client/auth/storages/file_store'
+require 'google/api_client/auth/installed_app'
+
+module YoutubeApi
+  class OAuthClient
+    YOUTUBE_SCOPE = 'https://www.googleapis.com/auth/youtube'
+    CREDENTIALS_FILE = Rails.root.join('tmp', 'google_api_credentials.json')
+
+    def initialize
+      @credentials_storage = ::Google::APIClient::Storage.new(
+        ::Google::APIClient::FileStore.new(CREDENTIALS_FILE)
+      )
+    end
+
+    def authorize
+      @credentials_storage.authorize || begin
+        installed_app_flow = ::Google::APIClient::InstalledAppFlow.new(
+          client_id:     Rails.application.secrets.youtube_client_id,
+          client_secret: Rails.application.secrets.youtube_client_secret,
+          scope:         [YOUTUBE_SCOPE]
+        )
+        installed_app_flow.authorize(@credentials_storage)
+      end
+    end
+  end
+end

@@ -1,0 +1,41 @@
+import seaborn as sns
+
+def masked_vs_unmasked_facets(output_dir, merged_df, target_col, thresholds):
+    z_min = merged_df[['z_full', 'z_masked']].min(axis=0, skipna=True).min(skipna=True)
+    z_max = merged_df[['z_full', 'z_masked']].max(axis=0, skipna=True).max(skipna=True)
+    z_range_value = max(abs(z_min), abs(z_max))
+
+    for i, val in enumerate(thresholds):
+        merged_df.loc[merged_df.info_score_masked > val, 'PlotSet'] = i
+        # Catch instances where there are no values in category, to ensure all facets are drawn each time
+        if i not in merged_df['PlotSet'].unique():
+            dummy_row = pd.DataFrame(columns=merged_df.columns, data={'PlotSet': [i]})
+            merged_df = merged_df.append(dummy_row)
+
+    g = sns.FacetGrid(merged_df, col='PlotSet', size=8)
+
+    def facet_scatter(x, y, c, **kwargs):
+        kwargs.pop(""color"")
+        plt.scatter(x, y, c=c, **kwargs)
+
+    vmin, vmax = 0, 1
+    norm=plt.Normalize(vmin=vmin, vmax=vmax)
+
+    g = (g.map(facet_scatter, 'z_full', 'z_masked', 'info_score_masked', norm=norm, cmap='viridis'))
+
+    titles = [""Correlation for all masked / unmasked z-score with {} above {}"".format(target_col, threshold) for threshold in thresholds]
+
+    axs = g.axes.flatten()
+    for i, ax in enumerate(axs):
+        ax.set_title(titles[i])
+        ax.set_xlim([-z_range_value * 1.1, z_range_value * 1.1])
+        ax.set_ylim([-z_range_value * 1.1, z_range_value * 1.1])
+        ax.plot(ax.get_xlim(), ax.get_ylim(), ls=""--"", c="".3"")
+
+
+    cbar_ax = g.fig.add_axes([1.015,0.13, 0.015, 0.8])
+    plt.colorbar(cax=cbar_ax)
+    # extra_artists used here
+    plt.savefig(os.path.join(output_dir, 'masked_vs_unmasked_scatter_final.png'), bbox_extra_artists=(cbar_ax,),  bbox_inches='tight')
+
+masked_vs_unmasked_facets(output_dir, masking_results, 'info_score_masked', [0, 0.7, 0.9])

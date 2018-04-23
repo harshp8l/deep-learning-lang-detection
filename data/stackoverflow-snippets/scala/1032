@@ -1,0 +1,36 @@
+trait Hash {
+  type U
+  type V
+  def hash(u: U): V
+}
+
+trait Product {
+  type Hasher <: Hash
+
+  val key: Hasher#U
+  def hashKey: Hasher#V
+}
+
+trait ProductReader[P <: Product] {
+  def getByKey(key: P#Hasher#U): P
+  def getByHashed(hash: P#Hasher#V): P
+}
+
+object MyHash extends Hash {
+  override type U = String
+  override type V = Long
+
+  def hash(key: String): Long = ???
+}
+
+class MyProduct(val hasher: MyHash.type) extends Product {
+  override type Hasher = hasher.type
+
+  def hashKey: Long = MyHash.hash(key)
+  override val key: String = ""MyProduct""
+}
+
+class MyProductReader extends ProductReader[MyProduct] {
+  override def getByKey(key: String): MyProduct = ???
+  override def getByHashed(hash: Long): MyProduct = ???
+}

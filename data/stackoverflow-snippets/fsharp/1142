@@ -1,0 +1,24 @@
+open System
+open System.Linq
+
+// Helpers to recreate your circumstances.
+type Context = { id : Int32; col1 : Nullable<Double>; col2 : Nullable<Double>; col3 : Nullable<Double>}
+let context = Unchecked.defaultof<IQueryable<Context>>
+
+
+let result = query { for row in context do
+                     where (row.id = 111111)
+                     select (row.col1,row.col2,row.col3) }
+
+
+let seqTuple =
+    result
+    |> Seq.fold (fun (col1s, col2s, col3s) (col1, col2, col3) ->
+        (if col1.HasValue then col1.Value :: col1s else col1s),
+        (if col2.HasValue then col2.Value :: col2s else col2s),
+        (if col3.HasValue then col3.Value :: col3s else col3s)
+    ) ([], [], [])
+    |> fun (col1s, col2s, col3s) ->
+        List.rev col1s,
+        List.rev col2s,
+        List.rev col3s

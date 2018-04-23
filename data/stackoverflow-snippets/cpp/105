@@ -1,0 +1,185 @@
+#include <iostream>
+#include <cstdlib>
+#include <iomanip>
+#include <vector>
+#include <immintrin.h>
+
+using FP_TYPE = double;
+
+constexpr size_t N = 4;
+// Power factor tells us how many matrices need to be multiplied.
+// For the standard Wilson action, this is 4.
+// For the first improvement, 6.
+// But the relative runtime ration is independent of this.
+constexpr size_t POWER_FACTOR = 4;
+constexpr size_t ITERATIONS = 10 * 1000 * 1000;
+constexpr bool GENERATE_NEW_RANDOMS = false;
+
+struct Matrix
+{
+  FP_TYPE m[N][N] __attribute__ ((aligned (32))) = {{0}};
+};
+
+using multiply_func = void (*) (const Matrix&, const Matrix&, Matrix&);
+using set_func = FP_TYPE (*) ();
+using transform_func = FP_TYPE (*) (FP_TYPE value);
+
+FP_TYPE random (FP_TYPE min, FP_TYPE max);
+void randomize_matrix (Matrix &matrix);
+void test_run (const std::vector<Matrix> &source_matrices,
+               const multiply_func &func,
+               const std::string &func_name);
+void multiply_plain (const Matrix &a, const Matrix &b, Matrix &c);
+void multiply_intrinsics (const Matrix &a, const Matrix &b, Matrix &c);
+void set_each_matrix_value (Matrix &matrix, const set_func &func);
+void init_matrix (const Matrix &source_matrix, Matrix &matrix,
+                  size_t iteration);
+
+FP_TYPE random (FP_TYPE min, FP_TYPE max)
+{
+  return min + (max - min) * FP_TYPE(rand()) / FP_TYPE(RAND_MAX);
+}
+
+void set_each_matrix_value (Matrix &matrix, const set_func &func)
+{
+  for (auto &j : matrix.m)
+    {
+      for (auto &k : j)
+        {
+          k = func ();
+        }
+    }
+}
+
+void randomize_matrix (Matrix &matrix)
+{
+  // Assign random numbers to imaginary and real parts
+  set_each_matrix_value (matrix, [] ()
+  {
+    return random(-1.0, 1.0);
+  });
+}
+
+void multiply_plain (const Matrix &a, const Matrix &b, Matrix &c)
+{
+  for (size_t j = 0; j < N; j++)
+    {
+      for (size_t k = 0; k < N; k++)
+        {
+          auto &val = c.m[j][k];
+          val = 0.0;
+          for (size_t i = 0; i < N; i++)
+            {
+              val += a.m[j][i] * b.m[i][k];
+            }
+        }
+    }
+}
+
+void multiply_intrinsics (const Matrix &a, const Matrix &b, Matrix &c)
+{
+  static_assert (N == 4);
+  static_assert (sizeof (FP_TYPE) == 8);
+  static_assert (N * sizeof(FP_TYPE) == 256 / 8);
+  // In addition the array in Matrix.m must be properly aligned
+
+  //__m256d *B256 = (__m256d *) B;
+  //__m256d *C256 = (__m256d *) C;
+
+  // load values from B
+  __m256d b0 = _mm256_loadu_pd (&b.m[0][0]);
+  __m256d b1 = _mm256_loadu_pd (&b.m[1][0]);
+  __m256d b2 = _mm256_loadu_pd (&b.m[2][0]);
+  __m256d b3 = _mm256_loadu_pd (&b.m[3][0]);
+
+  for (size_t i = 0; i < 4; i++)
+    {
+      // load values from A
+      __m256d a0 = _mm256_set1_pd (a.m[i][0]);
+      __m256d a1 = _mm256_set1_pd (a.m[i][1]);
+      __m256d a2 = _mm256_set1_pd (a.m[i][2]);
+      __m256d a3 = _mm256_set1_pd (a.m[i][3]);
+
+      __m256d sum;
+      sum = _mm256_mul_pd (a0, b0);
+      sum = _mm256_fmadd_pd (a1, b1, sum);
+      sum = _mm256_fmadd_pd (a2, b2, sum);
+      sum = _mm256_fmadd_pd (a3, b3, sum);
+
+      //   asm (""vmovupd %1, %0"" : ""=m""(C256[i]) : ""x""(sum));
+      _mm256_storeu_pd(&c.m[i][0], sum);
+    }
+}
+
+void init_matrix (const Matrix &source_matrix, Matrix &matrix, size_t iteration)
+{
+  for (size_t j = 0; j < N; j++)
+    {
+      for (size_t k = 0; k < N; k++)
+        {
+          matrix.m[j][k] = source_matrix.m[j][k] + 1.0 / static_cast<FP_TYPE>
+                           (iteration + 1);
+        }
+    }
+}
+
+void test_run (const std::vector<Matrix> &source_matrices,
+               const multiply_func &func, const std::string &func_name)
+{
+  clock_t timer = clock ();
+
+  Matrix matrix_dummy1;
+  Matrix matrix_dummy2;
+  Matrix matrix_dummy3;
+
+  std::vector<Matrix> matrices (POWER_FACTOR);
+  FP_TYPE trace = 0.0;
+
+  // Read source matrices in own data format
+  // We do the whole process ITERATIONS times to get less error for the runtime .
+  for (size_t n = 0; n < ITERATIONS; n++)
+    {
+      if constexpr (GENERATE_NEW_RANDOMS)
+        {
+          for (auto &matrix : matrices)
+            {
+              randomize_matrix (matrix);
+            }
+        }
+      else
+        {
+          for (size_t i = 0; i < POWER_FACTOR; i++)
+            {
+              init_matrix (source_matrices[i], matrices[i], n);
+            }
+        }
+
+      func (matrices[0], matrices[1], matrix_dummy1);
+      func (matrices[2], matrices[3], matrix_dummy2);
+      func (matrix_dummy1, matrix_dummy2, matrix_dummy3);
+
+      for (size_t j = 0; j < N; j++)
+        {
+          trace += matrix_dummy3.m[j][j];
+        }
+    }
+  std::cout << std::setprecision(15);
+  std::cout << ""Trace "" << func_name << "" = \t"";
+  std::cout << trace / static_cast<FP_TYPE> (ITERATIONS);
+  std::cout << ""    took "";
+  std::cout << static_cast<double> (clock() - timer) / CLOCKS_PER_SEC << ""s\n"";
+  std::cout << std::endl;
+}
+
+int main ()
+{
+  std::vector<Matrix> source_matrices (POWER_FACTOR);
+  std::cout << ""Beginning computation\n"";
+  std::cout << std::endl;
+  for (auto &matrix : source_matrices)
+    {
+      randomize_matrix (matrix);
+    }
+  test_run (source_matrices, multiply_plain, ""For Point"");
+  test_run (source_matrices, multiply_intrinsics, ""Intrinsics"");
+}

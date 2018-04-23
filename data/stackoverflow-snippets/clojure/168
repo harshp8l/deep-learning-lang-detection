@@ -1,0 +1,30 @@
+    (def send-influx
+    (influxdb/influxdb {
+        :host ""localhost""
+        :db ""riemann""
+        :username ""riemann""
+        :password ""riemann""
+        :tag-fields #(:id)})
+
+(streams
+(where (and (not (expired? event)) (service ""service""))
+    #(info %)
+    (by [:host :service :id]
+    (changed :metric {:pairs? true}
+        (fn [[startEvent endEvent]]
+            (when-not (empty? startEvent)
+                (let [diff (- (:metric endEvent) (:metric startEvent))]
+                    (send-influx [{
+                        :host (:host startEvent),
+                        :service (:service startEvent),
+                        :id (:id startEvent),
+                        :metric diff,
+                        :time (:time startEvent) },
+                        :id (:id startEvent) }]  
+                    )
+                )
+            )
+        )
+    )
+)
+)) 

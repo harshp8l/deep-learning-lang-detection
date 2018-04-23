@@ -1,0 +1,28 @@
+import (
+    ""fmt""
+    ""io/ioutil""
+
+    ""github.com/nicksnyder/go-i18n/i18n""
+)
+
+func loadI18nFiles() {
+    files, _ := ioutil.ReadDir(""i18n"")
+    exists := false
+
+    for _, file := range files {
+        if err := i18n.LoadTranslationFile(fmt.Sprintf(""i18n/%s"", file.Name())); err != nil {
+            log.Errorf(""i18n: error loading file %s. err: %s"", file.Name(), err)
+        } else {
+            log.Infof(""i18n: lang file %s loaded"", file.Name())
+        }
+
+        # Check if you have a default language
+        if file.Name() == fmt.Sprintf(""%s.json"", ""en-US"") {
+            exists = true
+        }
+    }
+
+    if !exists {
+        panic(fmt.Sprintf(""Hey! You can't use a default language (%s) that doesn't exists on i18n folder"", props.DefaultLang))
+    }
+}

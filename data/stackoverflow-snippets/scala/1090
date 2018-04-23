@@ -1,0 +1,19 @@
+2
++----+-----------------------+---------+
+|name|r_infos                |has_black|
++----+-----------------------+---------+
+|d   |[[4,orange], [2,black]]|true     |
++----+-----------------------+---------+
+== Physical Plan ==
+*Filter (has_black#112632 = true)
++- InMemoryTableScan [name#112622, r_infos#112628, has_black#112632], [(has_black#112632 = true)]
+      +- InMemoryRelation [name#112622, r_infos#112628, has_black#112632], true, 10000, StorageLevel(disk, memory, deserialized, 1 replicas)
+            +- *Project [coalesce(name#112606, name#112614) AS name#112622, infos#112615 AS r_infos#112628, UDF(infos#112615) AS has_black#112632]
+               +- *Filter isnull(infos#112607)
+                  +- SortMergeJoin [name#112606], [name#112614], FullOuter
+                     :- *Sort [name#112606 ASC NULLS FIRST], false, 0
+                     :  +- Exchange hashpartitioning(name#112606, 200)
+                     :     +- LocalTableScan [name#112606, infos#112607]
+                     +- *Sort [name#112614 ASC NULLS FIRST], false, 0
+                        +- Exchange hashpartitioning(name#112614, 200)
+                           +- LocalTableScan [name#112614, infos#112615]

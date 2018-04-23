@@ -1,0 +1,27 @@
+(defmacro def-language-404s [languages]
+  `(do
+     ~@(for [lang languages]
+         `(deftemplate ~(symbol (str ""not-found-"" lang)) ~(str lang ""/404.html"")
+            [{path# :path}]
+            [:#path] (e/content path#)))
+     (defn get-template [page# lang#]
+       (case page#
+         :page/not-found (case lang#
+                           ~@(for [lang languages
+                                   clause [(keyword lang)
+                                           (symbol (str ""not-found-"" lang))]]
+                               clause))))))
+
+user> (macroexpand-1 '(def-language-404s [en fr]))
+(do
+  (deftemplate not-found-en ""en/404.html""
+    [{path__2275__auto__ :path}]
+    [:#path] (content path__2275__auto__))
+  (deftemplate not-found-fr ""fr/404.html""
+    [{path__2275__auto__ :path}]
+    [:#path] (content path__2275__auto__))
+  (defn get-template [page__2276__auto__ lang__2277__auto__]
+    (case page__2276__auto__
+      :page/not-found (case lang__2277__auto__
+                        :en not-found-en
+                        :fr not-found-fr))))

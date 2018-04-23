@@ -1,0 +1,20 @@
+class HomeController @Inject()(cc: ControllerComponents)(implicit val config: Configuration)
+  extends AbstractController(cc) {
+
+  def removeIdElement(uid: String) = HAction(uid, ""AuthEvent"", 1, ""login"", parse.text).async {
+    implicit request: Request[String] =>
+
+    Future {
+      val removeId = request.body.toLong
+      println(s""Removing id $removeId"")
+      removeId
+    }.flatMap(id => idElementsDAO.remove(id, uid.toLong))
+     .map(_ => Ok(""""))
+     .recover {
+       case t: Throwable =>
+         val errorMessage = getMessageFromThrowable(t)
+         println(s""Removing id element failed: ${errorMessage}"")
+         BadRequest(errorMessage)
+     }
+  }
+}

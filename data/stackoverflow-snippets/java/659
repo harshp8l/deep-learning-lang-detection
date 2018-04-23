@@ -1,0 +1,101 @@
+public enum Command {
+    PLAY, STOP, MUTE;
+}
+
+import java.io.File;
+
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.FloatControl;
+
+import java.util.Objects;
+import java.util.Scanner;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+/**
+ * This class simply plays a background music in a separate thread
+ *
+ * @author Mohammad Nafis
+ * @version 1.0
+ * @since 04-03-2018
+ */
+public class AudioPlayer implements Runnable {
+    private final String filename;
+    private final BlockingQueue<Command> commandQueue =
+            new LinkedBlockingQueue<>();
+
+    public final static int LOUD = -20;
+    public final static int QUIET = -80;
+
+    public AudioPlayer(String filename) {
+        this.filename = Objects.requireNonNull(filename);
+    }
+
+    public void perform(Command command) throws InterruptedException {
+        commandQueue.put(Objects.requireNonNull(command));
+    }
+
+    @Override
+    public void run() {
+        try {
+            File soundFile = new File(filename);
+            AudioInputStream ais = AudioSystem.getAudioInputStream(soundFile);
+            AudioFormat format = ais.getFormat();
+            DataLine.Info info = new DataLine.Info(Clip.class, format);
+            Clip clip = (Clip)AudioSystem.getLine(info);
+            clip.open(ais);
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
+
+            //controlling the volume
+            FloatControl gainControl = (FloatControl)
+                    clip.getControl(FloatControl.Type.MASTER_GAIN);
+            gainControl.setValue(LOUD);
+            clip.start();
+
+            forever: while (true) {
+                switch (commandQueue.take()) {
+                    case PLAY:
+                        gainControl.setValue(LOUD);
+                        break;
+                    case MUTE:
+                        gainControl.setValue(QUIET);
+                        break;
+                    case STOP:
+                        break forever;
+                }
+            }
+
+            clip.stop();
+            clip.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        AudioPlayer player = new AudioPlayer(args[0]);
+        Thread thread = new Thread(player);
+        thread.start();
+
+        Scanner in = new Scanner(System.in);
+        String cmd = """";
+        System.out.println(""Type mute or play. Or stop to exit."");
+        do {
+            System.out.print("": "");
+            System.out.flush();
+            cmd = in.nextLine();
+            if (""play"".equals(cmd)) player.perform(Command.PLAY);
+            else if (""mute"".equals(cmd)) player.perform(Command.MUTE);
+            else if (""stop"".equals(cmd)) player.perform(Command.STOP);
+            else System.out.println(""I didn't understand that, sorry."");
+        } while (!""stop"".equals(cmd));
+
+        player.perform(Command.STOP);
+        thread.join();
+        System.out.println(""Be seeing you."");
+    }
+}

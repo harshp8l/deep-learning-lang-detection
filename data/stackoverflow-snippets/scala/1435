@@ -1,0 +1,15 @@
+val flow = Flow.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
+  import GraphDSL.Implicits._
+
+  val pw = builder.add(split)
+  val flowProcess = builder.add(wrapFunctionInFlowShape[RequestProcess, SuccessProcess](convertFlow))
+  val flowWrite = builder.add(wrapFunctionInFlowShape[SuccessProcess, SuccessProcess](writeFlow))
+  val flowWrap = builder.add(wrapFunctionInFlowShape[SuccessProcess, MsgSuccess](wrapFlow))
+
+  val mrg = builder.add(Merge[MsgSuccess](2))
+
+  pw.out0 ~> flowProcess ~> flowWrite ~> flowWrap ~> mrg.in(0)
+  pw.out1 ~> mrg.in(1)
+
+  FlowShape(pw.in, mrg.out)
+})

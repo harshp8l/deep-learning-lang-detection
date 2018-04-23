@@ -1,0 +1,45 @@
+require_relative 'my_server'  #relative path to server
+require_relative 'my_client'  #relative path to client
+
+describe MyServer do 
+
+  before(:example) do
+    @server = MyServer.new
+
+    Thread.new do
+      @server.start
+    end
+
+    sleep 1  #Allow server to start, so client doesn't send data 
+             #to the server before the server creates the socket.
+
+    @client = MyClient.new
+    @data = 'hello'
+    @client.send_data @data  #Make sure server has started before doing this.
+  end
+
+  after(:example) do
+    @server.server_socket.close #Will send nil to client, causing gets() to unblock,
+                 #allowing recv_data() to finish executing.
+    @server.client.close
+    @client.socket.close  
+  end
+
+  describe '#handle_data' do
+    context 'given a string' do
+      it ""returns reversed string"" do
+        expect(@server.handle_data(@data)).to eql(@data.reverse)
+      end
+    end
+  end
+
+  describe '- client receives correct response' do
+    context 'given a string' do
+      it ""returns reversed string"" do
+        greeting = @client.recv_data
+        expect(@client.recv_data).to eql(""Your string in reverse is: #{@data.reverse}\n"")
+      end
+    end
+  end
+
+end

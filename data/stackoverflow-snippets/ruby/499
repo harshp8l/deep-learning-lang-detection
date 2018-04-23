@@ -1,0 +1,31 @@
+r = /
+    ^                     # match start of line
+    (?<country>[\p{L} ]+) # match >= 1 letters and spaces in named group country
+    :[ ]+                 # match a colon and >= 1 spaces
+    (?<dial_number>       # begin a named group dial_mumber
+      \+                  # match a literal +
+      (?:                 # begin a non-capture group
+        # US and Canada
+        1[ ]+             # match 1 followed by >= 1 spaces
+        \(\d{3}\)         # match a left paren, 3 digits, a right paren
+        [ ]+              # match >= 1 spaces
+        \d{3}\-\d{4}      # match 3 digits, a dash and 4 digits
+        |                 # or
+        # rest of world
+        \d{2,3}           # match 2 or 3 digits
+        (?:               # begin a non-capture group
+          [ ]+            # match >=1 spaces
+          \d{1,4}         # match 1 to 4 digits
+        ){3,5}            # close non-capture group and perform 3-5 times
+      )                   # close non-capture group
+    )                     # close named group dial_number
+    /x                    # free-spacing regex definition mode
+
+h = str.each_line.with_object({}) do |line, h|
+  m = line.match r
+  h[m[:country]] = m[:dial_number] unless m.nil?
+end
+  #=> {""Australia""=>""+61 2 9037 3201"", ""United States""=>""+1 (571) 417-3429"",
+  #    ""Austria""=>""+43 7 1081 5425"", ""Belgium""=>""+32 28 92 6018"",
+  #    ...
+  #    ""Switzerland""=>""+41 225 3290 67"", ""United Kingdom""=>""+44 17 3515 4021""}

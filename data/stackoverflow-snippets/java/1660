@@ -1,0 +1,28 @@
+long offsetInMilliseconds = 1000 * 60 * 60
+
+Dimension dimension1 = new Dimension();
+        dimension.setName(""TableName"");
+        dimension.setValue(""INT_LOG_TABLE"");
+
+Dimension dimension2 = new Dimension();
+        dimension.setName(""Operation"");
+        dimension.setValue(""PutItem"");
+GetMetricStatisticsRequest request1 = new GetMetricStatisticsRequest()
+        .withStartTime(new Date(new Date().getTime() - offsetInMilliseconds))
+        .withNamespace(""AWS/DynamoDB"")
+        .withPeriod(60*60)
+        .withDimensions(dimension1, dimension2)
+        .withMetricName(""SuccessfulRequestLatency"")
+        .withStatistics(""Average"")
+        .withEndTime(new Date());
+
+
+GetMetricStatisticsResult getMetricStatisticsResult = cw.getMetricStatistics(request1);
+
+double avgRequestLatency = 0;
+List dataPoint = getMetricStatisticsResult.getDatapoints();
+for (Object aDataPoint : dataPoint){
+    Datapoint dp = (Datapoint) aDataPoint;
+    avgRequestLatency = dp.getAverage();
+
+}

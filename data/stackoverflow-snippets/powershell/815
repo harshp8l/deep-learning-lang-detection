@@ -1,0 +1,34 @@
+# POST method: $req
+$requestBody = Get-Content $req -Raw | ConvertFrom-Json
+$name = $requestBody.name
+
+# GET method: each querystring parameter is its own variable
+if ($req_query_name) 
+{
+    $name = $req_query_name 
+}
+function LogToAzureTable( $log )
+{
+    $time = Get-Date -Format O
+    $entity = [PSObject]@{
+        PartitionKey = $EXECUTION_CONTEXT_INVOCATIONID
+        RowKey = ""PID($PID): ($time)""
+        LogContent = $log
+    }
+     $time = Get-Date -Format O
+    $entity2 = [PSObject]@{
+       PartitionKey = $EXECUTION_CONTEXT_INVOCATIONID
+    RowKey = ""PID($PID): ($time)2""
+    LogContent = ""$log-2""
+    }
+
+    [PSObject []] $sampleArray = $entity,$entity2 
+
+     $sampleArray |ConvertTo-Json| Out-File $outputTable
+
+    $outputTable.done
+}
+
+Out-File -Encoding Ascii -FilePath $res -inputObject ""Hello $name""
+
+LogToAzureTable ""Hello $name""

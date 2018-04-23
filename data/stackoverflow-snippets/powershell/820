@@ -1,0 +1,27 @@
+function Get-RemoteDate {
+    [CmdletBinding()]
+    param(
+        [Parameter(
+            Mandatory=$True,
+            ValueFromPipeLine=$True,
+            ValueFromPipeLineByPropertyName=$True,
+            HelpMessage=""ComputerName or IP Address to query via WMI""
+        )]
+        [string[]]$ComputerName
+    )
+    foreach($computer in $ComputerName) {
+        $timeZone=Get-WmiObject -Class win32_timezone -ComputerName $computer
+        $localTime=([wmi]"""").ConvertToDateTime((Get-WmiObject -Class Win32_OperatingSystem -ComputerName $computer).LocalDateTime)
+        $output=[pscustomobject][ordered]@{
+            'ComputerName'=$computer;
+            'TimeZone'=$timeZone.Caption;
+            'Year'=$localTime.Year;
+            'Month'=$localTime.Month;
+            'Day'=$localTime.Day;
+            'Hour'=$localTime.Hour;
+            'Minute'=$localTime.Minute;
+            'Seconds'=$localTime.Second;
+        }
+        Write-Output $output
+    }
+}

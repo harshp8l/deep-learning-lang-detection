@@ -1,0 +1,18 @@
+declare @TestTable table (ID int,  PolicyNumber varchar(50), PolicyType varchar(50))
+insert into @TestTable values 
+                       (001, 'ENV1','Primary'),
+                       (002, 'ENV1',NULL),
+                       (003, 'ENV2','Claim Made'),
+                       (004, 'ENV3','Claim Made'),
+                       (005, 'ENV3',NULL),
+                       (006, 'ENV3',NULL)
+
+select  t.ID,  
+        t.PolicyNumber, 
+        PolicyType = case when t.PolicyType is null then (select top 1 PolicyType 
+                                                          from @TestTable 
+                                                          where PolicyType is not null 
+                                                               and PolicyNumber = t.PolicyNumber
+                                                          order by ID desc) 
+                         else PolicyType end
+from @TestTable t

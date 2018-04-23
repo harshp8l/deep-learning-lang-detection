@@ -1,0 +1,47 @@
+DECLARE @tbl TABLE(ID INT IDENTITY,ID_SP VARCHAR(100),ID_GM VARCHAR(100));
+INSERT INTO @tbl VALUES
+ ('136,338,342','512,338,112')
+,('512,112,208','512,338,112')
+,('587,641,211','512,338,112');
+
+WITH Splitted AS
+(
+    SELECT t.*
+          ,CAST('<x>' + REPLACE(t.ID_SP,',','</x><x>') + '</x>' AS xml) AS PartedSP
+          ,CAST('<x>' + REPLACE(t.ID_GM,',','</x><x>') + '</x>' AS xml) AS PartedGM
+    FROM @tbl AS t
+)
+,SetSP AS
+(
+    SELECT Splitted.ID
+          ,Splitted.ID_SP
+          ,x.value('text()[1]','int') AS SP_ID 
+    FROM Splitted
+    CROSS APPLY PartedSP.nodes('/x') AS A(x)
+)
+,SetGM AS
+(
+    SELECT Splitted.ID
+          ,Splitted.ID_GM
+          ,x.value('text()[1]','int') AS GM_ID 
+    FROM Splitted
+    CROSS APPLY PartedGM.nodes('/x') AS A(x)
+)
+,BackToYourRawData AS --Here is the point you should do this in advance!
+(
+SELECT SetSP.ID
+      ,SetSP.SP_ID 
+      ,SetGM.GM_ID
+FROM SetSP
+INNER JOIN SetGM ON SetSP.ID=SetGM.ID 
+                 AND SetSP.SP_ID=SetGM.GM_ID
+)
+SELECT ID
+      ,STUFF((
+        SELECT ',' + CAST(rd2.SP_ID AS VARCHAR(10))
+        FROM BackToYourRawData AS rd2
+        WHERE rd.ID=rd2.ID
+        ORDER BY rd2.SP_ID
+        FOR XML PATH('')),1,1,'') AS CommonID
+FROM BackToYourRawData AS rd
+GROUP BY ID;

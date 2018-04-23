@@ -1,0 +1,36 @@
+add_filter( 'woocommerce_email_headers', 'student_email_notification', 20, 3 );
+function student_email_notification( $header, $email_id, $order ) {
+    // Only for 'wc_course_order' notification
+    if( 'wc_course_order' != $email_id ) return $header; 
+
+    $student_emails = array();
+    $enroll_num = 0;
+
+    // Loop though  Order IDs
+    foreach( $order->get_items() as $item_id => $item_data ){
+        $course_qty = $item_data->get_quantity();
+        $q = 1;
+        while ( $q <= $course_qty){
+            $enroll_num++;
+            // Get the student full Name
+            $full_name     = wc_get_order_item_meta( $item_id, 'First Name - '.$enroll_num, true );
+            $full_name    .= ' ' . wc_get_order_item_meta( $item_id, 'Last Name - '.$enroll_num, true );
+            // Get the student email
+            $student_email = wc_get_order_item_meta( $item_id, 'Student Email - '.$enroll_num, true );
+            if( ! empty($student_email) && $full_name != ' ' )
+                // Format the name and the email and set it in an array
+                $student_emails[] = utf8_decode($full_name . ' <' . $student_email . '>'); // Add name + email to the array
+            $q++;
+        }
+    }
+    // $student_emails = array( utf8_decode('Louis Marce <loic@cbleu.net>'),utf8_decode('Test WC 3 site <louis@cbleu.com>'));
+
+    // If any student email exist we add it
+    if( count($student_emails) > 0 ){
+        // Remove duplicates (if there is any)
+        $student_emails = array_unique($student_emails);
+        // Add the emails to existing recipients
+        $header .= 'Bcc: ' . implode(',', $student_emails) . ""\r\n"";
+    }
+    return $header;
+}

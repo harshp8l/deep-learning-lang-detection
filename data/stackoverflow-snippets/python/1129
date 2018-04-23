@@ -1,0 +1,33 @@
+from pandas_datareader import data as pdr
+from datetime import datetime as dtt
+
+import pandas as pd
+import plotly.offline as py_offline
+import plotly.graph_objs as go
+import fix_yahoo_finance as yf
+
+
+TnS_dataframe = pd.read_csv(""data/TnS.csv"")
+TnS_dataframe['EventTime'] = TnS_dataframe['EventTime'].map(lambda x: datetime.strptime(str(x[:19]), ""%Y%m%d-%H%M%S.%f""))
+
+df = TnS_dataframe.loc[:, [""EventTime"", ""Price""]]
+df = df.set_index('EventTime')
+test = df.resample('1min').ohlc().bfill()['Price']
+
+yf.pdr_override()
+symbol_candle = go.Candlestick(x=test.index,
+                            open=test.open,
+                            high=test.high,
+                            low=test.low,
+                            close=test.close,
+                            increasing=dict(line=dict(color= '#00FF00')),
+                            decreasing=dict(line=dict(color= '#FF0000'))
+                           )
+data = [symbol_candle]
+
+layout = go.Layout(
+    plot_bgcolor='rgb(59,68,75)'
+)
+
+fig = go.Figure(data=data, layout=layout)
+py_offline.iplot(fig, filename='Candle Stick')

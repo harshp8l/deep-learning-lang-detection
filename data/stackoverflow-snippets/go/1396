@@ -1,0 +1,24 @@
+func (r *ItemRepository) UpdateByID(itemId int, item *domain.Item) error {
+    var err error
+
+    if item.Tax == nil {
+        _, err = r.db.Exec(`
+            UPDATE item
+            SET tax_id = ?, name = ?, description = ?, price = ?
+            WHERE id = ?
+            LIMIT 1
+        `, nil, item.Name, item.Description, item.Price, itemId)
+    } else {
+        _, err = r.db.Exec(`
+            UPDATE item
+            SET tax_id = ?, name = ?, description = ?, price = ?
+            WHERE id = ?
+            LIMIT 1
+        `, item.Tax.ID, item.Name, item.Description, item.Price, itemId)
+    }
+    if err != nil {
+        return err
+    }
+
+    return nil
+}

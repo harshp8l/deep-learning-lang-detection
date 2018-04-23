@@ -1,0 +1,15 @@
+$Results = @()
+foreach ($VM in (Get-VM))
+{
+    $Row = """" | Select Name,CPUs,'Dynamischer Arbeitsspeicher','RAM Maximum (inMB)','RAM Minimum (in MB)',Size
+    $Row.Name = $VM.Name
+    $Row.CPUs = $VM.ProcessorCount
+    $Row.'Dynamischer Arbeitsspeicher' = $VM.DynamicMemoryEnabled
+    $Row.'RAM Maximum (inMB)' = $VM.MemoryMaximum/1MB
+    $Row.'RAM Minimum (in MB)' = $VM.MemoryMinimum/1MB
+    $Total=0; ($VM.VMId | Get-VHD | %{$Total += ($_.FileSize/1GB)})
+    $Row.Size = [math]::Round($Total)
+    $Results += $Row
+}
+
+$Results | Export-Csv c:\vm.csv -NoTypeInformation

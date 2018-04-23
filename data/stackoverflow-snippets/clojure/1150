@@ -1,0 +1,23 @@
+(def column [""col1"" ""col2"" ""col3"" ""col4""])
+(def maxInclude [nil nil 1000 nil])
+(def minInclude [nil 200 300  nil])
+(def columntype ['int 'float 'int 'int])
+
+(defn remove-nil-vals [m]
+  (into {} (map (fn [e]
+                  (vector (key e)
+                          (into {} (remove (comp nil? val) (val e)))))
+             m)))
+
+(remove-nil-vals
+ (reduce merge
+         (map #(hash-map (keyword %1) {:columntype (str %2)
+                                       :minInclude %3
+                                       :maxInclude %4})
+              column columntype minInclude maxInclude)))
+
+
+{:col4 {:columntype ""int""},
+ :col3 {:columntype ""int"", :minInclude 300, :maxInclude 1000},
+ :col2 {:columntype ""float"", :minInclude 200},
+ :col1 {:columntype ""int""}}

@@ -1,0 +1,97 @@
+package main
+
+import (
+    “bytes”
+    “encoding/binary”
+    “fmt”
+    “os”
+    “os/exec”
+    “syscall”
+)
+
+// parses through the /proc/bus/input/devices file for keyboard devices.
+// Copied from `github.com/gearmover/keylogger` with trivial modification.
+func dumpDevices() ([]string, error) {
+    cmd := exec.Command(“/bin/sh”, “-c”, “/bin/grep -E ‘Handlers|EV=’ /proc/bus/input/devices | /bin/grep -B1 ‘EV=120013’ | /bin/grep -Eo ‘event[0-9]+’”)
+
+    output, err := cmd.Output()
+    if err != nil {
+        return nil, err
+    }
+
+    buf := bytes.NewBuffer(output)
+
+    var devices []string
+
+    for line, err := buf.ReadString(‘\n’); err == nil; {
+        devices = append(devices, “/dev/input/”+line[:len(line)-1])
+
+        line, err = buf.ReadString(‘\n’)
+    }
+
+    return devices, nil
+}
+
+// Using MS names, just because I don’t feel like looking up the Linux versions.
+var keys = map[uint16]string{
+    0xa3: “VK_MEDIA_NEXT_TRACK”,
+    0xa5: “VK_MEDIA_PREV_TRACK”,
+    0xa6: “VK_MEDIA_STOP”,
+    0xa4: “VK_MEDIA_PLAY_PAUSE”,
+}
+
+// Most of the code here comes from `github.com/gearmover/keylogger`.
+func main() {
+    // drop privileges when executing other programs
+    syscall.Setgid(65534)
+    syscall.Setuid(65534)
+
+    // dump our keyboard devices from /proc/bus/input/devices
+    devices, err := dumpDevices()
+    if err != nil {
+        fmt.Println(err)
+    }
+    if len(devices) == 0 {
+        fmt.Println(“No input devices found”)
+        return
+    }
+
+    // bring back our root privs
+    syscall.Setgid(0)
+    syscall.Setuid(0)
+
+    // Open the first keyboard device.
+    input, err := os.OpenFile(devices[0], os.O_RDONLY, 0600)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    defer input.Close()
+
+    // Log media keys
+    var buffer = make([]byte, 24)
+    for {
+        // read the input events as they come in
+        n, err := input.Read(buffer)
+        if err != nil {
+            return
+        }
+
+        if n != 24 {
+            fmt.Println(“Weird Input Event Size: “, n)
+            continue
+        }
+
+        // parse the input event according to the <linux/input.h> header struct
+        binary.LittleEndian.Uint64(buffer[0:8]) // Time stamp stuff I could care less about
+        binary.LittleEndian.Uint64(buffer[8:16])
+        etype := binary.LittleEndian.Uint16(buffer[16:18])        // Event Type. Always 1 for keyboard events
+        code := binary.LittleEndian.Uint16(buffer[18:20])         // Key scan code
+        value := int32(binary.LittleEndian.Uint32(buffer[20:24])) // press(1), release(0), or repeat(2)
+
+        if etype == 1 && value == 1 && keys[code] != “” {
+            // In a real application I would send a message here.
+            fmt.Println(keys[code])
+        }
+    }
+}

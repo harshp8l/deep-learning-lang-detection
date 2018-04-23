@@ -1,0 +1,9 @@
+Set-Location -Path ..\Grammar -PassThru
+$javaProcess = Start-Process java.exe -ArgumentList '-jar', '..\Tools\antlr-4.7-complete.jar ClarionLexer.g4 -Dlanguage=JavaScript ClarionExprParser.g4 -visitor -no-listener -Dlanguage=JavaScript' -PassThru
+do{
+    $javaProcess = Get-Process -Id $javaProcess.Id -ErrorAction SilentlyContinue
+
+}while($javaProcess -ne $null)
+
+Get-ChildItem -Recurse -Path ..\Grammar | Where {($_.Extension -eq '.js') -or ($_.Extension -eq '.tokens')} | Move-Item -Destination ..\JavaScript\src\Generated
+Set-Location ../JavaScript -PassThru

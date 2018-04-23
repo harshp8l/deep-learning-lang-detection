@@ -1,0 +1,12 @@
+$connectionString = ""Data Source=.;Initial Catalog=AdventureWorks2012;Integrated Security=SSPI""
+$connection = New-Object System.Data.SqlClient.SqlConnection($connectionString)
+$command = New-Object System.Data.SqlClient.SqlCommand(""CHECKPOINT"", $connection)
+$connection.Open()
+[void]$command.ExecuteNonQuery()
+$command.CommandText = ""SELECT * FROM Person.Person WHERE LastName = @PersonsName;"";
+$person = ""Duffy"";
+[void](($command.Parameters.Add(""@PersonsName"", [System.Data.SqlDbType]::NVarChar, 100)).Value = $person);
+$dt = New-Object System.Data.DataTable
+$da = New-Object System.Data.SqlClient.SqlDataAdapter($command)
+[void]$da.Fill($dt)
+$dt | Format-Table

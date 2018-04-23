@@ -1,0 +1,19 @@
+class TestControllerSpec extends PlaySpecification with Mockito {
+  ""the POST request"" should {    
+    ""return an OK response"" in new Context {
+      new WithApplication(application) {
+        val identity = User(LoginInfo(...))
+        implicit val env = FakeEnvironment[DefaultEnv](Seq(identity.loginInfo -> identity))
+        val request = FakeRequest(POST, ""/api/test"")
+          .withAuthenticator(identity.loginInfo)
+
+        val result = route(app, request).get
+        status(result) must be equalTo OK
+      }
+    }
+  }
+
+  trait Context extends Scope {
+    ...
+  }
+}

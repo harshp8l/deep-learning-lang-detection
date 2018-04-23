@@ -1,0 +1,15 @@
+g, h = e.next
+  #=> [{:entity_type=>""Mac"", :entity_ids=>[2], :cascade_id=>2, :location_id=>1},
+  #    {{:entity_type=>""Mac"", :cascade_id=>2, :location_id=>1}=>
+  #     {:entity_type=>""Mac"", :entity_ids=>[3], :cascade_id=>2, :location_id=>1}}]
+g #=> {:entity_type=>""Mac"", :entity_ids=>[2], :cascade_id=>2, :location_id=>1}
+h #=> {{:entity_type=>""Mac"", :cascade_id=>2, :location_id=>1}=>
+  #    {:entity_type=>""Mac"", :entity_ids=>[3, 2], :cascade_id=>2, :location_id=>1}}
+a = g.reject { |k,_| k==:entity_ids }
+  #=> {:entity_type=>""Mac"", :cascade_id=>2, :location_id=>1}
+h.update(a=>g) do |_,o,n|
+  puts ""_=#{_}, o=#{o}, n=#{n}""
+  o.merge(entity_ids: o[:entity_ids] + n[:entity_ids])
+end
+  #=> {{:entity_type=>""Mac"", :cascade_id=>2, :location_id=>1}=>
+  #    {:entity_type=>""Mac"", :entity_ids=>[3, 2], :cascade_id=>2, :location_id=>1}}

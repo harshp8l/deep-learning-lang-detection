@@ -1,0 +1,99 @@
+package main
+
+import (
+    ""fmt""
+    ""io/ioutil""
+    ""log""
+    ""net/http""
+    ""sync""
+    ""time""
+)
+
+// using structs is a nice way to organize your code
+type Worker struct {
+    wg        sync.WaitGroup
+    semaphore chan struct{}
+    result    chan Result
+    client    http.Client
+}
+
+// group returns so that you don't have to send to many channels
+type Result struct {
+    duration float64
+    results  string
+}
+
+// closing your channels will stop the for loop in main
+func (w *Worker) Close() {
+    close(w.semaphore)
+    close(w.result)
+}
+
+func (w *Worker) MakeRequest(url string) {
+    // a semaphore is a simple way to rate limit the amount of goroutines running at any single point of time
+    // google them, Go uses them often
+    w.semaphore <- struct{}{}
+    defer func() {
+        w.wg.Done()
+        <-w.semaphore
+    }()
+
+    start := time.Now()
+
+    resp, err := w.client.Get(url)
+    if err != nil {
+        log.Println(""error"", err)
+        return
+    }
+    defer resp.Body.Close()
+
+    // don't have any examples where I need to also POST anything but the point should be made
+    // resp, err = http.Post(url, ""text/plain"", bytes.NewBuffer([]byte(""Hey"")))
+    // if err != nil {
+    // log.Println(""error"", err)
+    // return
+    // }
+    // defer resp.Body.Close()
+
+    secs := time.Since(start).Seconds()
+
+    b, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        log.Println(""error"", err)
+        return
+    }
+    w.result <- Result{duration: secs, results: string(b)}
+}
+
+func main() {
+    urls := []string{""https://facebook.com/"", ""https://twitter.com/"", ""https://google.com/"", ""https://youtube.com/"", ""https://linkedin.com/"", ""https://wordpress.org/"",
+        ""https://instagram.com/"", ""https://pinterest.com/"", ""https://wikipedia.org/"", ""https://wordpress.com/"", ""https://blogspot.com/"", ""https://apple.com/"",
+    }
+
+    workerNumber := 5
+    worker := Worker{
+        semaphore: make(chan struct{}, workerNumber),
+        result:    make(chan Result),
+        client:    http.Client{Timeout: 5 * time.Second},
+    }
+
+    // use sync groups to allow your code to wait for
+    // all your goroutines to finish
+    for _, url := range urls {
+        worker.wg.Add(1)
+        go worker.MakeRequest(url)
+    }
+
+    // by declaring wait and close as a seperate goroutine
+    // I can get to the for loop below and iterate on the results
+    // in a non blocking fashion
+    go func() {
+        worker.wg.Wait()
+        worker.Close()
+    }()
+
+    // do something with the results channel
+    for res := range worker.result {
+        fmt.Printf(""Request took %2.f seconds.\nResults: %s\n\n"", res.duration, res.results)
+    }
+}

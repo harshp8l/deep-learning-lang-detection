@@ -1,0 +1,20 @@
+val df = Seq(
+  (""foo"", ""bar"", 0.5, 0.6, 0.7)
+).toDF(""Name"", ""Date"", ""Length"", ""Width"", ""Height"")
+
+def zipDimension = udf(
+  (l: Double, w: Double, h: Double) => Seq( (l, ""Length""), (w, ""Width""), (h, ""Height"") )
+)
+
+val df2 = df.
+  withColumn(""Temp"", explode( zipDimension($""Length"", $""Width"", $""Height"") )).
+  select($""Name"", $""Date"", $""Temp._1"".as(""Value""), $""Temp._2"".as(""Dimension""))
+
+df2.show
++----+----+-----+---------+
+|Name|Date|Value|Dimension|
++----+----+-----+---------+
+| foo| bar|  0.5|   Length|
+| foo| bar|  0.6|    Width|
+| foo| bar|  0.7|   Height|
++----+----+-----+---------+

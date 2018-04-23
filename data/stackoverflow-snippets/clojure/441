@@ -1,0 +1,19 @@
+(require '[compojure.core :refer :all])
+(require '[ring.util.response :as resp])
+(require '[ring.server.standalone :as server])
+(require '[ring.middleware.params :refer [wrap-params]])
+
+(def x
+  (POST ""/echo"" [message]
+      :summary ""info log the input message and echo it back""
+      :description nil
+      :return String
+      :form-params [message :- String]
+      (let [resp (-> (resp/response (str ""message: "" message))
+                     (resp/status 200)
+                     (resp/header ""Content-Type"" ""text/plain""))]
+        resp)))
+
+(defroutes app (wrap-params x))
+
+(server/serve app {:port 4042})

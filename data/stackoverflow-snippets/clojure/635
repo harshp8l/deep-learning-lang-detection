@@ -1,0 +1,17 @@
+(defmacro apply-macro
+  ""Applies macro to the argument list formed by prepending intervening
+  arguments to args.""
+  {:arglists '([macro args]
+               [macro x args]
+               [macro x y args]
+               [macro x y z args]
+               [macro a b c d & args])}
+  [macro & args+rest]
+  (let [args (butlast args+rest)
+        rest-args (eval (last args+rest))]
+    `(eval
+       (apply (deref (var ~macro))
+              '(~macro ~@args ~@rest-args)
+              nil
+              ~@(map #(list 'quote %) args)
+              '~rest-args))))

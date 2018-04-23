@@ -1,0 +1,34 @@
+char Sadr[max(sizeof(sockaddr_in), sizeof(sockaddr_in6))] = {0};
+int ncbSzSadr = sizeof(Sadr);
+if(getpeername(hSockAccept, (sockaddr*)Sadr, &ncbSzSadr) == 0)
+{
+    if(ncbSzSadr == sizeof(sockaddr_in))
+    {
+        //IPv4
+        sockaddr_in* psadr_v4 = (sockaddr_in*)Sadr;
+
+        print(""Connected to client from %s, port %u...\n"", 
+            inet_ntoa(psadr_v4->sin_addr),
+            (int)htons(psadr_v4->sin_port));
+    }
+    else if(ncbSzSadr == sizeof(sockaddr_in6))
+    {
+        //IPv6
+        sockaddr_in6* psadr_v6 = (sockaddr_in6*)Sadr;
+
+        WCHAR buff[256];
+        PCTSTR p_strIpv6 = InetNtop(AF_INET6, psadr_v6->sin6_addr, buff, _countof(buff));
+
+        _tprintf(L""Connected to client from %s, port %u...\n"", 
+            p_strIpv6,
+            (int)htons(psadr_v6->sin6_port));
+    }
+    else
+    {
+        _tprintf(L""ERROR: getpeername bad size=%d\n"", ncbSzSadr);
+    }
+}
+else
+{
+    _tprintf(L""ERROR: (%d) getpeername\n"", WSAGetLastError());
+}

@@ -1,0 +1,37 @@
+var (
+    ch = make(chan bool)
+)
+
+func main() {
+    i := 0
+    wg := sync.WaitGroup{}
+    for i < 100 {
+        i++
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            err := onlyOne()
+            if err != nil {
+                fmt.Println(""Error: "", err)
+            } else {
+                fmt.Println(""Ok"")
+            }
+        }()
+        go func() {
+            ch <- true
+        }()
+    }
+
+    wg.Wait()
+}
+
+
+func onlyOne() error {
+    select {
+    case <-ch:
+        // do stuff
+        return nil
+    default:
+        return errors.New(""Busy"")
+    }
+}

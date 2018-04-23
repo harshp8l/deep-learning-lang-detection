@@ -1,0 +1,19 @@
+open System 
+
+let parseLine (input:string) =
+    let split = input.Split [|','|]
+    let id, zipCode = split.[0], Int32.Parse split.[1]
+    let street = 
+        split.[5..8] 
+        |> Array.filter (String.IsNullOrWhiteSpace >> not)
+        |> String.concat "" ""
+    (id, zipCode, street)
+
+let printLine (id, zipCode, street) = sprintf ""%s|%i|%s"" id zipCode street
+
+let lines = 
+    IO.File.ReadLines @""D:\input.txt""
+    |> Seq.map parseLine 
+    |> Seq.distinctBy (fun (id,_,_) -> id)
+
+IO.File.WriteAllLines(@""D:\CSharp.txt"", Seq.map printLine lines)

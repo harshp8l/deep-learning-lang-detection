@@ -1,0 +1,29 @@
+$ExecutionContext.InvokeCommand.PreCommandLookupAction = `
+{ 
+    param($commandName, $commandLookupEvent)
+
+    if ($commandName -eq 'Get-Command')
+    {
+        $commandLookupEvent.CommandScriptBlock = `
+        {
+            $getCommandArgs = @{}
+
+            for ($i = 0; $i -lt $args.Length; $i += 2)
+            {
+                $parameterName = $args[$i]
+                $parameterValue = $args[$i + 1]
+
+                if (-not $getCommandArgs.ContainsKey($parameterName))
+                {
+                    $getCommandArgs.$parameterName = New-Object Collections.ArrayList
+                }
+
+                $getCommandArgs.$parameterName.Add($parameterValue) | Out-Null
+            }
+
+            Microsoft.PowerShell.Core\Get-Command @getCommandArgs
+        }
+    }
+}
+
+Get-Command -Name ""Get-Service"" -Name ""Get-Item""

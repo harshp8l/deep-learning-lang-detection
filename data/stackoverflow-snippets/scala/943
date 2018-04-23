@@ -1,0 +1,50 @@
+import scala.language.experimental.macros
+import scala.annotation.{StaticAnnotation, compileTimeOnly}
+
+
+@compileTimeOnly(""enable macro to expand macro annotations"")
+class CheckReturnTypeMacroAnnotation extends StaticAnnotation {
+  def macroTransform(annottees: Any*) = macro CheckReturnTypeMacro.process
+}
+
+
+object CheckReturnTypeMacro {
+
+  import scala.reflect.macros._
+  import scala.reflect.macros.whitebox.Context
+
+  def process(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+    import c.universe._
+    val methodDef = annottees.map(_.tree).toList match {
+      case x :: Nil => x
+      case _ => c.abort(c.enclosingPosition, ""Method definition is expected"")
+    }
+    //c.warning(c.enclosingPosition, s""methodDef ${methodDef.getClass} => $methodDef"")
+
+    val returnType = methodDef match {
+      case q""$mods def $name[..$tparams](...$paramss): $tpt = $body"" => tpt
+      case _ => c.abort(c.enclosingPosition, ""Method definition is expected"")
+    }
+    //c.warning(NoPosition, s""returnType ${returnType.getClass} => $returnType"")
+
+    val respType = returnType match {
+      case tq""scala.concurrent.Future[scala.util.Either[String, ${resp}]]"" =>
+        c.warning(c.enclosingPosition, s""1 resp ${resp.getClass} => $resp"")
+        resp
+      case tq""Future[Either[String, ${resp}]]"" =>
+        c.warning(c.enclosingPosition, s""2 resp ${resp.getClass} => $resp"")
+        resp
+      case tq""scala.concurrent.Future[Either[String, ${resp}]]"" =>
+        c.warning(c.enclosingPosition, s""3 resp ${resp.getClass} => $resp"")
+        resp
+      case tq""Future[scala.util.Either[String, ${resp}]]"" =>
+        c.warning(c.enclosingPosition, s""4 resp ${resp.getClass} => $resp"")
+        resp
+
+      case _ =>
+        c.abort(c.enclosingPosition, s""Method does not have required result type Future[Either[String, ?]]"")
+    }
+
+    c.Expr[Any](methodDef) //this is in fact a no-op macro. it only does verification of return type
+  }
+}

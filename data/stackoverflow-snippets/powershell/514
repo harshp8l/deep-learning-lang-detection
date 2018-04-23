@@ -1,0 +1,25 @@
+# Define the helper type and method.
+Add-Type -Namespace same2u.net -Name Util -MemberDefinition  @'
+  [DllImport(""user32.dll"", SetLastError=true)]
+  static extern IntPtr FindWindow(string lpszClass, string lpszWindow);
+
+  // Return value is the *thread* ID
+  [DllImport(""user32.dll"", SetLastError=true)]
+  static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+  static IntPtr GetTaskbarHwnd() {
+    return FindWindow(""Shell_TrayWnd"", null);
+  }
+
+  // The only public method.
+  public static uint GetTaskbarProcessId() {
+    uint pid;
+    GetWindowThreadProcessId(GetTaskbarHwnd(), out pid);
+    return pid;
+  }
+'@
+
+# Call the helper method.
+# Return value is the shell Explorer process' PID.
+# Pass it to `Get-Process -ID` to get a process object, if needed.
+[same2u.net.Util]::GetTaskbarProcessID()

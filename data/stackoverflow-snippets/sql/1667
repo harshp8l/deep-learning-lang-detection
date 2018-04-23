@@ -1,0 +1,50 @@
+ -- might use an existing calendar table to get those rows
+create table yearmonth( ym int not null primary key);
+insert into yearmonth values
+(201701),
+(201702),
+(201703),
+(201704),
+(201705),
+(201706),
+(201707),
+(201708),
+(201709),
+(201710),
+(201711),
+(201712);
+
+
+with allLists as
+ (  -- get all existing lists first
+    -- (a table with those rows probably exists)
+   select distinct List
+   from Waitinglists
+ )
+, allCombinations as
+ ( -- all year/month/list combinations
+   select ym, list
+   from yearmonth cross join allLists
+ )
+, WaitingYM as
+ ( -- start/end date as YYYYMM
+   select -- *
+      list, 
+      year(begindate)*100+month(begindate) as beginYM,
+      coalesce(year(enddate)*100+month(enddate), 999999) as endYM
+   from Waitinglists
+ )
+select a.ym, a.list, 
+   count(w.list), -- current month
+
+   -- difference to previous month
+   count(w.list) -      
+   lag(count(w.list))  -- previous month
+   over (partition by a.list
+         order by a.ym) 
+from allCombinations as a
+left join WaitingYM as w
+  on a.list = w.list
+ and ym between w.beginYM and w.endYM  -- expand to one row per year/month
+group by a.list, a.ym
+order by a.list, a.ym

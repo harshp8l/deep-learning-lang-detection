@@ -1,0 +1,84 @@
+def create_tfrecord_for_prediction(batch_size, stoke_data, tfrecord_file):
+    def parse_line(stoke_data):
+        """"""Parse provided stroke data and ink (as np array) and classname.""""""
+        inkarray = json.loads(stoke_data)
+        stroke_lengths = [len(stroke[0]) for stroke in inkarray]
+        total_points = sum(stroke_lengths)
+        np_ink = np.zeros((total_points, 3), dtype=np.float32)
+        current_t = 0
+        for stroke in inkarray:
+            if len(stroke[0]) != len(stroke[1]):
+                print(""Inconsistent number of x and y coordinates."")
+                return None
+            for i in [0, 1]:
+                np_ink[current_t:(current_t + len(stroke[0])), i] = stroke[i]
+            current_t += len(stroke[0])
+            np_ink[current_t - 1, 2] = 1  # stroke_end
+        # Preprocessing.
+        # 1. Size normalization.
+        lower = np.min(np_ink[:, 0:2], axis=0)
+        upper = np.max(np_ink[:, 0:2], axis=0)
+        scale = upper - lower
+        scale[scale == 0] = 1
+        np_ink[:, 0:2] = (np_ink[:, 0:2] - lower) / scale
+        # 2. Compute deltas.
+        #np_ink = np_ink[1:, 0:2] - np_ink[0:-1, 0:2]
+        #np_ink = np_ink[1:, :]
+        np_ink[1:, 0:2] -= np_ink[0:-1, 0:2]
+        np_ink = np_ink[1:, :]
+
+        features = {}
+        features[""ink""] = tf.train.Feature(float_list=tf.train.FloatList(value=np_ink.flatten()))
+        features[""shape""] = tf.train.Feature(int64_list=tf.train.Int64List(value=np_ink.shape))
+        f = tf.train.Features(feature=features)
+        ex = tf.train.Example(features=f)
+        return ex
+
+    if stoke_data is None:
+        print(""Error: Stroke data cannot be none"")
+        return
+
+    example = parse_line(stoke_data)
+
+    #Remove the file if it already exists
+    if tf.gfile.Exists(tfrecord_file):
+        tf.gfile.Remove(tfrecord_file)
+
+    writer = tf.python_io.TFRecordWriter(tfrecord_file)
+    for i in range(batch_size):
+        writer.write(example.SerializeToString())
+    writer.flush()
+    writer.close()
+
+def get_classes():
+  classes = []
+  with tf.gfile.GFile(FLAGS.classes_file, ""r"") as f:
+    classes = [x.rstrip() for x in f]
+  return classes
+
+def main(unused_args):
+  print(""%s: I Starting application"" % (datetime.now()))
+
+  estimator, train_spec, eval_spec = create_estimator_and_specs(
+      run_config=tf.estimator.RunConfig(
+          model_dir=FLAGS.model_dir,
+          save_checkpoints_secs=300,
+          save_summary_steps=100))
+  tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
+
+  if FLAGS.predict_for_data != None:
+      print(""%s: I Starting prediction"" % (datetime.now()))
+      class_names = get_classes()
+      create_tfrecord_for_prediction(FLAGS.batch_size, FLAGS.predict_for_data, FLAGS.predict_temp_file)
+      predict_results = estimator.predict(input_fn=get_input_fn(
+          mode=tf.estimator.ModeKeys.PREDICT,
+          tfrecord_pattern=FLAGS.predict_temp_file,
+          batch_size=FLAGS.batch_size))
+
+      #predict_results = estimator.predict(input_fn=predict_input_fn)
+      for idx, prediction in enumerate(predict_results):
+          index = prediction[""class_index""]  # Get the predicted class (index)
+          probability = prediction[""probabilities""][index]
+          class_name = class_names[index]
+          print(""%s: Predicted Class is: %s with a probability of %f"" % (datetime.now(), class_name, probability))
+          break #We care for only the first prediction, rest are all duplicates just to meet the batch size

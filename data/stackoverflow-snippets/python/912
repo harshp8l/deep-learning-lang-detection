@@ -1,0 +1,18 @@
+def get_path(node, tree, seen=None):
+    if seen is None:
+        seen = set()
+    parent = node.get('parent')
+    if parent:
+        if  parent in seen:
+            raise ValueError(
+                'Already handled {!r}, cycle detected. '
+                'Check all of {}'.format(
+                    parent, sorted(seen)))
+        seen.add(parent)
+    node_login = '{0[login]},{0[server_id]}'.format(node)  # cleaner method to generate the key
+    if not parent:
+        return []
+    elif parent == node_login:
+        return [parent]
+    path = get_path(tree[parent], tree, seen)  # pass seen along to recursive calls
+    return [parent] + path

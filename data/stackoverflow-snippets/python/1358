@@ -1,0 +1,29 @@
+# tests.py
+
+from django.db import connection
+from django.test import TestCase
+
+from myapp.models import Unmanaged
+
+
+class ModelsTestCase(TestCase):
+    def setUp(self):
+        super().setUp()
+
+        with connection.schema_editor() as schema_editor:
+            schema_editor.create_model(Unmanaged)
+
+            if Unmanaged._meta.db_table not in connection.introspection.table_names():
+                raise ValueError(""Table `{table_name}` is missing in test database."".format(table_name=Unmanaged._meta.db_table))
+
+    def tearDown(self):
+        super().tearDown()
+
+        with connection.schema_editor() as schema_editor:
+            schema_editor.delete_model(Unmanaged)
+
+    def test_unmanaged_model(self):
+        with self.assertNumQueries(num=3):
+            self.assertEqual(0, Unmanaged.objects.all().count())
+            Unmanaged.objects.create()
+            self.assertEqual(1, Unmanaged.objects.all().count())

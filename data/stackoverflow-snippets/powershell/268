@@ -1,0 +1,7 @@
+Get-ChildItem E:\Media -Recurse -File | # Recursively find files
+    Group-Object -Property {(Get-FileHash $_.FullName).Hash} | # Group by file hash
+        Where-Object Count -gt 1 | # Groups with more than one item contain duplicates
+            ForEach-Object { $_.Group } | # 'Expand' groups with duplicates
+                Sort-Object -Property LastWriteTime | # Oldest item will be first
+                    Select-Object -Skip 1 | # Skip first (oldest) item
+                        Remove-Item -Force # Remove duplicate files

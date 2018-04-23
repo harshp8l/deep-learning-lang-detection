@@ -1,0 +1,26 @@
+template <typename Event> struct EventChecker {
+
+    bool alive;
+    std::thread checkerThread;
+    Event event;
+
+    EventChecker() {
+        alive = true;
+        checkerThread = std::thread([this]() {
+            while (alive) {
+                event.wait();
+                std::this_thread::sleep_for(std::chrono::microseconds(1)); // comment this for more fun
+            }
+        });
+    }
+
+    void notify() {
+        event.notify();
+    }
+
+    ~EventChecker() {
+        alive = false;
+        notify();
+        checkerThread.join();
+    }
+};

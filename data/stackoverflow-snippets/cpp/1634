@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+struct do_copy
+{
+    do_copy(char m) : match(m) {}
+    char match;
+    size_t pos;
+    bool found {false};
+
+    bool operator()(const std::string& s)
+    {
+        if (found)
+        {
+            return s.size() > pos && 
+                   s[pos] == match && 
+                   std::count(s.begin(), s.end(), match) == 1;
+        }
+
+        for (int p = 0; p < s.size(); ++p)
+        {
+            if (s[p] == match)
+            {
+                pos = p;
+                found = true;
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+int main() {
+    std::vector<std::string> v = { ""CRYPT"", ""CYSTS"", ""WRYLY"", ""TRYST"" };
+    std::vector<std::string> r;
+    char guess = 'Y';
+
+    std::copy_if(v.begin(), 
+                 v.end(), 
+                 std::back_inserter(r), 
+                 do_copy(guess));
+
+    // Print the result
+    std::cout << r.size() << "" elements found:"" << std::endl;
+    for (auto& s : r) 
+    {
+        std::cout << s << std::endl;
+    }
+
+    return 0;
+}

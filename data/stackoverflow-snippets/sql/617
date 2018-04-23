@@ -1,0 +1,38 @@
+SELECT 
+    Treatment.Treatment_Date, 
+    Salutation.Value as Title,
+    Customer.Firstname,
+    Customer.Lastname,
+    Address.Value as Street, 
+    Postal.Postal, 
+    Postal.City, 
+    Patient.Name as AnimalName,
+    TreatmentType.Type as Treatment,
+    Treatment.Price,
+    Tax.Value as Tax,
+    SUM(Treatment.Price) as TotalExTax,
+    SUM(Treatment.Price * Tax.Value / 100) as TotalTax,
+    SUM(Treatment.Price) + (SUM(Treatment.Price * Tax.Value / 100)) as TotalPrice
+
+FROM Treatment
+INNER JOIN Patient ON Treatment.Patient_FK = Patient.ID
+INNER JOIN AnimalType ON Patient.Type_FK = AnimalType.ID
+INNER JOIN Customer ON Patient.Owner_FK = Customer.ID
+INNER JOIN TreatmentType ON Treatment.TreatmentType_FK = TreatmentType.ID
+INNER JOIN Salutation ON Customer.Salutation_FK = Salutation.ID
+INNER JOIN Address ON Customer.Address_FK = Address.ID
+INNER JOIN Postal ON Address.Postal_FK = Postal.Postal
+INNER JOIN Tax ON Treatment.Tax_FK = Tax.ID
+
+WHERE Customer.ID = 151 AND Treatment.Treatment_Date between '11/12/2014 00:00:00 AM' and '12/12/2014 12:00:00 PM'
+group by Treatment.Treatment_Date, 
+    Salutation.Value,
+    Customer.Firstname,
+    Customer.Lastname,
+    Address.Value, 
+    Postal.Postal, 
+    Postal.City, 
+    Patient.Name,
+    TreatmentType.Type,
+    Treatment.Price,
+    Tax.Value

@@ -1,0 +1,21 @@
+<?php
+
+// Configuration
+$hostname = 'localhost';
+$username = 'root';
+$password = '';
+$database = 'dmcs';
+
+try {
+    $dbh = new PDO('mysql:host=' . $hostname . ';dbname=' . $database, $username, $password);
+} catch (PDOException $e) {
+    echo '<h1>An error has occurred.</h1><pre>', $e->getMessage(), '</pre>';
+}
+
+$sth = $dbh->prepare(""SELECT * FROM people WHERE name LIKE %:keyword% OR building LIKE %:keyword% OR floor LIKE %:keyword% OR room LIKE %:keyword%"");
+$sth->execute([':keyword' => $_GET['keyword']]);
+$sth->setFetchMode(PDO::FETCH_ASSOC);
+$json['keyword'] = $sth->fetchAll();
+$json['content'] = count($json['keyword']);
+
+echo json_encode($json);

@@ -1,0 +1,28 @@
+$disk = (gwmi win32_DiskDrive -Property * | ?{$_.PnpDeviceID -eq 'SCSI\DISK&VEN_SAMSUNG&PROD_SSD_850_EVO_1TB\4&3BDA36C&0&010000'})
+$PnpEntity = gwmi -query ""ASSOCIATORS OF {$($Disk.__RELPATH)} where resultclass = Win32_PnpEntity""
+switch ($Disk.InterfaceType)
+{
+    'IDE' 
+    {
+        $parentID = (gwmi -query ""ASSOCIATORS OF {$($PnpEntity.__RELPATH)} where resultclass = Win32_IDEController"").PnpDeviceID
+        break; 
+    }
+
+
+    'SCSI' 
+    {
+        $parentID = (gwmi -query ""ASSOCIATORS OF {$($PnpEntity.__RELPATH)} where resultclass = Win32_SCSIController"").PnpDeviceID
+        break;
+    }
+
+    'USB' 
+    {
+        $parentID = (gwmi -query ""ASSOCIATORS OF {$($PnpEntity.__RELPATH)} where resultclass = Win32_USBController"").PnpDeviceID
+        break;
+    }
+
+    Default {}
+}
+
+
+Write-host $parentID

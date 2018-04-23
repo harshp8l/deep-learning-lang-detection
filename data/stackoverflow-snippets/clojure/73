@@ -1,0 +1,20 @@
+(defn product-type [p]
+  (rand-nth [:new :old]))
+
+(defn row->product [row]
+  (let [p (zipmap [:id :name :price] row)]
+    (assoc p :type (product-type p))))
+
+(defmulti to-csv :type)
+(defmethod to-csv :new [product] ...)
+(defmethod to-csv :old [product] ...)
+
+(defn generate-report [from to]
+  (with-open [rdr (io/reader from)
+              wrtr (io/writer to)]
+    (->> (rest (csv/read-csv rdr))
+         (map row->product)
+         (map #(do (.write wrtr (to-csv %)) %))
+         (map :type)
+         (frequencies)
+         (doall))))

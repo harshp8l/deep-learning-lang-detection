@@ -1,0 +1,52 @@
+this should be your login.php
+   <?php
+  session_start();
+  if(isset($_POST['submit'])){
+  include 'you database connectivity file';
+
+  $uname=mysqli_real_escape_string($conn, $_POST['uname']);
+  $pass=mysqli_real_escape_string($conn, $_POST['pass']);
+  if((empty($uname)) || (empty($pass))){
+  header(""Location: ../login.php?login=erroremptyform"");
+  exit();
+ }else{
+$sql = ""select * from table_name where user_name='$uname'"";
+$result=mysqli_query($conn, $sql);
+$resultCheck=mysqli_num_rows($result);
+if($resultCheck<1){
+  header(""Location: ../login.php?login=errornorec"");
+  exit();
+}else{
+  if($row = mysqli_fetch_assoc($result)){
+  if(base64_encode($pass) == $row['password']){
+    //login in the user here
+    $array = array(
+        'uname' => $row['user_name'],
+        'fname' => $row['f_name'],
+        'lname' => $row['l_name'],
+        'email' => $row['email'],
+        'contact' => $row['contact_number'],
+        'addrs' => $row['address'],
+        'id' => $row['id'],
+     );
+
+     $_SESSION['logindetails'] = $array;
+    echo ""<h3>"". $_SESSION['uname'].""</h3>"";
+    header(""Location: ../index.php?login=success"");
+
+    exit();
+
+  }
+  else{
+    header(""Location: ../login.php?login=errorpassfail"");
+    exit();
+  }
+  }
+}
+ }
+}
+
+   else{
+    header(""Location: ../login.php?login=error"");
+   }
+?>

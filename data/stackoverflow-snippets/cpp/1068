@@ -1,0 +1,51 @@
+QGestureRecognizer::Result PanGestureRecognizer::recognize(QGesture *state, QObject *, QEvent *event)
+{
+  QMouseEvent * mouse = dynamic_cast<QMouseEvent*>(event);
+  if(mouse != 0)
+  {
+    if(mouse->type() == QMouseEvent::MouseButtonPress)
+    {
+      QPanGesture * gesture = dynamic_cast<QPanGesture*>(state);
+      if(gesture != 0)
+      {
+        panning = true;
+        startpoint = mouse->pos();
+        gesture->setLastOffset(QPointF());
+        gesture->setOffset(QPointF());
+        return TriggerGesture;
+      }
+    }
+    if(panning && (mouse->type() == QMouseEvent::MouseMove))
+    {
+      QPanGesture * gesture = dynamic_cast<QPanGesture*>(state);
+      if(gesture != 0)
+      {
+        gesture->setLastOffset(gesture->offset());
+        gesture->setOffset(mouse->pos() - startpoint);
+        return TriggerGesture;
+      }
+    }
+    if(mouse->type() == QMouseEvent::MouseButtonRelease)
+    {
+      QPanGesture * gesture = dynamic_cast<QPanGesture*>(state);
+      if(gesture != 0)
+      {
+        QPointF endpoint = mouse->pos();
+        if(startpoint == endpoint)
+        {
+          return CancelGesture;
+        }
+        panning = false;
+        gesture->setLastOffset(gesture->offset());
+        gesture->setOffset(mouse->pos() - startpoint);
+        return FinishGesture;
+      }
+    }
+    if(mouse->type() == QMouseEvent::MouseButtonDblClick)
+    {
+      panning = false;
+      return CancelGesture;
+    }
+    return Ignore;
+  }
+}

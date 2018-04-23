@@ -1,0 +1,54 @@
+class CassandraInputStream[T: ClassTag]
+(_ssc: StreamingContext, keyspace:String, table:String)
+(implicit rrf: RowReaderFactory[T], ev: ValidRDDType[T]) 
+extends InputDStream[T](_ssc) with InputStreamQuery[T] {
+
+var lastElm:Option[T] = None
+var partitionKey : Any = _
+
+override def start(): Unit = {
+
+  // find a partition key which stores some records
+  def findStartValue(cql : String, value:Any): Any = {
+    val rdd  = _ssc.sparkContext.cassandraTable[T](keyspace, table).where(cql, value).limit(1)
+
+    if (rdd.cassandraCount() > 0 ) value
+    else {
+      nextValue(value).map( findStartValue( cql, _)).getOrElse( value)
+    }
+  }
+  // get query string and initial value from partitionCond method
+  val (cql, value) = partitionCond
+  partitionKey = findStartValue(cql, value)
+}
+
+override def stop(): Unit = {}
+
+override def compute(validTime: Time): Option[RDD[T]] = {
+  val (cql, _) = partitionCond
+  val (wh, whKey) = whereCond
+
+  def fetchNext( patKey: Any) : Option[CassandraTableScanRDD[T]] = {
+    // query with partitioning condition
+    val query = _ssc.sparkContext.cassandraTable[T](keyspace, table).where( cql, patKey)
+
+    val rdd = lastElm.map{ x =>
+      query.where( wh, whKey(x)).withAscOrder.limit(batchSize)
+    }.getOrElse( query.withAscOrder.limit(batchSize))
+
+    if ( rdd.cassandraCount() > 0 ) {
+      // store the last element of this RDD
+      lastElm = Some(rdd.collect.last)
+      Some(rdd)
+    }
+    else {
+      // find the next partition key which stores data
+      nextValue(patKey).flatMap{ k =>
+        partitionKey = k
+        fetchNext(k)}
+    }
+  }
+
+  fetchNext( partitionKey)
+}
+}

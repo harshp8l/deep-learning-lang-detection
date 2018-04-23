@@ -1,0 +1,28 @@
+// load session manager once
+sess := connectSess()
+
+func authCheck(ctx context.Context) {
+    session := sess.Start(ctx)
+    // Load your user here.
+    // [...]
+    // Save the returning user to the local storage of this handlers chain, once. 
+    ctx.Values().Set(""user"", user) // <-- IMPORTANT
+}
+
+app.Get(""/"", func(ctx context.Context) {
+    // Get the user from our handlers chain's local storage.
+    user := ctx.Values().Get(""user"") // <-- IMPORTANT
+
+    // Bind the ""{{.user}}"" to the user instance.
+    ctx.ViewData(""user"", user)
+    // Render the template file.
+    ctx.View(""index.html"")
+})
+
+app.Get(""dashboard"", func(ctx context.Context) {
+    // The same, get the user from the local storage...
+    user := ctx.Values().Get(""user"") // <-- IMPORTANT
+
+    ctx.ViewData(""user"", user)
+    ctx.View(""index.html"")
+})

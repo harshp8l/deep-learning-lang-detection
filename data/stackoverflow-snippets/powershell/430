@@ -1,0 +1,15 @@
+Get-QARSOperation -ParentContainer 'somedomain.com/OU1/OU2' -TargetObjectType 'user' |
+    Where-Object {$_.Status -eq 'Completed' -and $_.Controls.ID -eq 'OperationReason'} |
+    ForEach-Object {Get-QARSApprovalTask -Operation $_.ID} |
+    ForEach-Object {
+        [PSCustomObject][Ordered]@{
+            ""Target"" = $_.Operation.TargetObjectInfo.DN.Split('=,')[1]
+            ""Operation ID"" = $_.Operation.ID
+            ""Approver"" = $_.CompletedBy.DN.Split('=,')[1]
+            ""StartedOn"" = $_.Created
+            ""Completed"" = $_.Completed
+            ""Comments"" = $_.CompletionReason
+            ""Operation Type"" = $_.Operation.Type
+        }
+    } |
+    Export-Csv C:\Path\To\File.csv -NoTypeInformation

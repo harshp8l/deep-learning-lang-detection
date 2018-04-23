@@ -1,0 +1,25 @@
+// Make a copy of args:
+args2 := append([]string{}, args...)
+
+// Unmarshal:
+var m map[string]interface{}
+if err := json.Unmarshal([]byte(args2[1]), &m); err != nil {
+    panic(err)
+}
+
+// Modify:
+m[""kubernetes.io/secret/access-key""] = ""XXX""
+m[""kubernetes.io/secret/secret-key""] = ""YYY""
+
+// Marshal:
+s2, err := json.Marshal(m)
+if err != nil {
+    panic(err)
+}
+args2[1] = string(s2)
+
+// Verify:
+fmt.Println(args2[1])
+
+// Now use args2 to log
+filelogger.Info(""First log"", zap.Strings(""(masked) input args"", args2))

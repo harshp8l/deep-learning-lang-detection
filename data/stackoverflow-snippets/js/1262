@@ -1,0 +1,27 @@
+...
+const BUCKET_NAME = <...>
+const COGNITO_USER_NAME = <...>
+
+const restrictedPolicy = {
+    Version:'2012-10-17',
+    Statement: [{
+        Effect: 'Allow',
+        Action: 's3:PutObject',
+        Resource: `arn:aws:s3:::${BUCKET_NAME}/${COGNITO_USERNAME}/*`
+    }]
+}
+
+sts.assumeRole({
+    DurationInSeconds: 3600, // expiration time in seconds
+    RoleArn: '<...>', // role that have have write access to whole s3 bucket
+    RoleSessionName: '<cognito username>', // not much important
+    Policy: JSON.stringify(restrictedPolicy) // write access only for Cognito username folder
+}, (err, data) => {
+    if(err) {
+        ...
+    } else {
+        const temporaryCredentials = data.Credentials // Lambda need to return that to API Gateway via callback
+        ...
+    }
+});
+...

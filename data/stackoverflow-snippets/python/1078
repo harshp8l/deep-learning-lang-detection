@@ -1,0 +1,17 @@
+from keras.models import Model
+from keras.layers import Conv2D, Dense, Input, Embedding, multiply, Reshape, concatenate
+
+img = Input(shape=(64, 64, 3))
+features = Input(shape=(14,))
+embedded = Embedding(input_dim=14, output_dim=60*32)(features)
+embedded = Reshape(target_shape=(14, 60,32))(embedded)
+
+encoded = Conv2D(32, (3, 3), activation='relu')(img)
+encoded = Conv2D(32, (3, 3), activation='relu')(encoded)
+
+x = concatenate([embedded, encoded], axis=1)
+x = Dense(64, activation='relu')(x)
+x = Dense(64, activation='relu')(x)
+main_output = Dense(1, activation='sigmoid', name='main_output')(x)
+
+model = Model([img, features], [main_output])

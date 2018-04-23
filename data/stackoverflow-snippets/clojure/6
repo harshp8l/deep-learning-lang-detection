@@ -1,0 +1,32 @@
+(def charset ""0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"")
+
+(def num->char
+  (into {} (map-indexed vector charset)))
+
+(def char->num
+  (into {} (map-indexed (comp vec reverse vector) charset)))
+
+(def base (count charset))
+
+(def divmod (juxt quot rem))
+
+(defn exp [x n]
+  (loop [acc 1 n n]
+    (if (zero? n) acc
+        (recur (* x acc) (dec n)))))
+
+(defn encode [n]
+  (loop [n n a """"]
+    (let [[div mod] (divmod n base)]
+      (if (zero? div)
+        (str (get num->char mod) a)
+        (recur div (str (get num->char mod) a))))))
+
+(defn decode-pair [idx chr]
+  (* (get char->num chr)
+     (exp base idx)))
+
+(def sum (partial reduce +))
+
+(defn decode [s]
+  (sum (map-indexed decode-pair (reverse s))))

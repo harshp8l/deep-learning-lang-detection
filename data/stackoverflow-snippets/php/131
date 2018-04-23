@@ -1,0 +1,38 @@
+#!/bin/bash
+#===============================================================================
+#
+#          File: addhead.sh
+# 
+#         Usage: ./addhead.sh 
+# 
+#   Description: Adds HEADERLINE to all html files if it's not already present
+# 
+#       Options: ---
+#  Requirements: ---
+#          Bugs: ---
+#         Notes: ---
+#        Author: Bernhard Brunner (bernhard.brunner@it-transforms.ch)
+#  Organization: 
+#       Created: 2018/04/20 09:32
+# Last modified: 2018-04-20 09:44
+#      Revision:  ---
+#===============================================================================
+
+tmpfile=`mktemp`
+HEADERLINE='<link rel=""stylesheet"" href=""https://test.com/my.css>'
+
+function error()
+{
+    echo ""*** ERROR:"" $*
+    exit 1
+}
+
+for f in *.html ; do 
+    if ! head -n 1 $f | grep -q ""$HEADERLINE"" ; then
+        echo adding header to $f
+        echo ""$HEADERLINE"" > $tmpfile
+        cat $f >> $tmpfile || error reading $f
+        cp $tmpfile $f || error writing $f
+    fi
+done
+rm $tmpfile

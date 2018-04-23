@@ -1,0 +1,17 @@
+# The path to your files
+$CameraShareRoot = 'D:\Shares\Cameras';
+
+# Number of Hours
+$NumberOfHours = 1;
+
+# Date and time of significance.  It's $NumberOfHours in the past.
+$MinFileAge = (Get-Date).AddHours( - $NumberOfHours);
+
+# Get all the folders at the camera share root
+Get-ChildItem -Path $CameraShareRoot -Directory | ForEach-Object {
+    # Get the most recently created file in each folder
+    $_ | Get-ChildItem -Recurse -Filter '*.mkv' -File | Sort-Object -Property CreationTime -Descending | Select-Object -First 1
+} | Where-Object {
+    # Remove any files that were created after our datetime
+    $_.CreationTime -lt $MinFileAge;
+} | Select-Object -Property FullName, CreationTime

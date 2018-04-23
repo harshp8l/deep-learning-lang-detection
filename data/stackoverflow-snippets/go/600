@@ -1,0 +1,33 @@
+db := service.ConnectDb()
+sessionCopy := db.Copy()
+defer sessionCopy.Close() // clean up
+
+collection := sessionCopy.DB(service.MongoDB.DTB).C(MessageCol.tbl)
+
+log.Println(""before to write: "", msg)
+
+// Update record inserts and creates an ID if wasn't set (Returns created record with new Id)
+info, err := collection.Upsert(nil, msg)
+if err != nil {
+    log.Println(""Error write message upsert collection: "", err)
+    return MessageMgo{}, err
+}
+
+if info.UpsertedId != nil {
+    msg.Id = info.UpsertedId.(bson.ObjectId)
+}
+
+// gets room from mongo
+room, err := GetRoom(msg.Rid)
+if err != nil {
+    return msg, err
+}
+
+// increments the msgcount and update it
+room.MsgCount = room.MsgCount + 1
+err = UpdateRoom(room)
+if err != nil {
+    return msg, err
+}
+
+return msg, err

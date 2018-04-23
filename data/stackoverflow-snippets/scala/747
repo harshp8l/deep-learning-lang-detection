@@ -1,0 +1,49 @@
+import scala.language.higherKinds
+import cats.Functor
+
+/** Dummy for spark-Encoder */
+trait Encoder[X]
+
+/** Dummy for spark-Dataset */
+trait Dataset[X] {
+  def map[Y](f: X => Y)(implicit enc: Encoder[Y]): Dataset[Y]
+}
+
+/** Coyoneda-esque wrapper for `Dataset` 
+  * that simply stashes all arguments to `map` away
+  * until a concrete `Encoder` is supplied during the
+  * application of `toDataset`.
+  *
+  * Essentially: the wrapped original dataset + concatenated
+  * list of functions which have been passed to `map`.
+  */
+abstract class MappedDataset[X] private () { self =>
+  type B
+  val base: Dataset[B]
+  val path: B => X
+  def toDataset(implicit enc: Encoder[X]): Dataset[X] = base map path
+
+  def map[Y](f: X => Y): MappedDataset[Y] = new MappedDataset[Y] {
+    type B = self.B
+    val base = self.base
+    val path: B => Y = f compose self.path
+  }
+}
+
+object MappedDataset {
+  /** Constructor for MappedDatasets.
+    * 
+    * Wraps a `Dataset` into a `MappedDataset` 
+    */
+  def apply[X](ds: Dataset[X]): MappedDataset[X] = new MappedDataset[X] {
+    type B = X
+    val base = ds
+    val path = identity
+  }
+
+}        
+
+object MappedDatasetFunctor extends Functor[MappedDataset] {
+  /** Functorial `map` */
+  def map[A, B](da: MappedDataset[A])(f: A => B): MappedDataset[B] = da map f
+}

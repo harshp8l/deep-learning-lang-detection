@@ -1,0 +1,21 @@
+select event.date, event.name as event_name, 
+       event_param.value.string_value as review_meta_name, 
+       count(case 
+                when event.name = 'review_meta_click_purchase_product' 
+                   then 1 
+             end) as ct_purchase,
+       count(case 
+                when event.name = 'review_meta_with_product' 
+                   then 1 
+             end) as ct_product 
+from `com_zibann_littlehome_debugEug_ANDROID.app_events_20180403`,
+      UNNEST(event_dim) as event,
+      UNNEST(event.params) as event_param
+where DATE(TIMESTAMP_MICROS(event.timestamp_micros)) >=
+         DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+      and event.name IN ('review_meta_click_purchase_product', 'review_meta_with_product')
+      and event_param.key = ""review_meta_name""
+group by event.date, 
+         event.name, 
+         event_param.key, 
+         event_param.value.string_value

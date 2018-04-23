@@ -1,0 +1,124 @@
+import org.slf4j.LoggerFactory
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException}
+import scala.util.Try
+import scala.util.control.NonFatal
+
+sealed abstract class FallbackFuture[T] private(private val future: Future[T]) {
+  def value: T
+}
+
+object FallbackFuture {
+  final case class Recoverable[T](future: Future[T], fallback: T) extends FallbackFuture[T](future) {
+    override def value: T = {
+      if (future.isCompleted) future.value.flatMap(t => t.toOption).getOrElse(fallback)
+      else fallback
+    }
+  }
+
+  object Recoverable {
+    def apply[T](fun: => T, fallback: T)(implicit ec: ExecutionContext): FallbackFuture[T] = {
+      new Recoverable[T](Future(fun), fallback)
+    }
+  }
+
+  final case class Irrecoverable[T](future: Future[T]) extends FallbackFuture[T](future) {
+    override def value: T = {
+      def except = throw new IllegalAccessException(""Required future did not compelete before timeout"")
+      if (future.isCompleted) future.value.flatMap(_.toOption).getOrElse(except)
+      else except
+    }
+  }
+
+  object Irrecoverable {
+    def apply[T](fun: => T)(implicit ec: ExecutionContext): FallbackFuture[T] = {
+      new Irrecoverable[T](Future(fun))
+    }
+  }
+
+  object Implicits {
+    private val logger = LoggerFactory.getLogger(Implicits.getClass)
+
+    type FF[X] = FallbackFuture[X]
+
+    implicit class Tuple2Ops[V1, V2](t: (FF[V1], FF[V2])) {
+      def fallbackAfter[R](timeout: Duration)(fn: ((FF[V1], FF[V2])) => R): R =
+        awaitAll(timeout, t) {
+          fn(t)
+        }
+    }
+
+    implicit class Tuple3Ops[V1, V2, V3](t: (FF[V1], FF[V2], FF[V3])) {
+      def fallbackAfter[R](timeout: Duration)(fn: ((FF[V1], FF[V2], FF[V3])) => R): R =
+        awaitAll(timeout, t) {
+          fn(t)
+        }
+    }
+
+    implicit class Tuple4Ops[V1, V2, V3, V4](t: (FF[V1], FF[V2], FF[V3], FF[V4])) {
+      def fallbackAfter[R](timeout: Duration)(fn: ((FF[V1], FF[V2], FF[V3], FF[V4])) => R): R =
+        awaitAll(timeout, t) {
+          fn(t)
+        }
+    }
+
+    implicit class Tuple5Ops[V1, V2, V3, V4, V5](t: (FF[V1], FF[V2], FF[V3], FF[V4], FF[V5])) {
+      def fallbackAfter[R](timeout: Duration)(fn: ((FF[V1], FF[V2], FF[V3], FF[V4], FF[V5])) => R): R =
+        awaitAll(timeout, t) {
+          fn(t)
+        }
+    }
+
+    implicit class Tuple6Ops[V1, V2, V3, V4, V5, V6](t: (FF[V1], FF[V2], FF[V3], FF[V4], FF[V5], FF[V6])) {
+      def fallbackAfter[R](timeout: Duration)(fn: ((FF[V1], FF[V2], FF[V3], FF[V4], FF[V5], FF[V6])) => R): R =
+        awaitAll(timeout, t) {
+          fn(t)
+        }
+    }
+
+    implicit class Tuple7Ops[V1, V2, V3, V4, V5, V6, V7](t: (FF[V1], FF[V2], FF[V3], FF[V4], FF[V5], FF[V6], FF[V7])) {
+      def fallbackAfter[R](timeout: Duration)(fn: ((FF[V1], FF[V2], FF[V3], FF[V4], FF[V5], FF[V6], FF[V7])) => R): R =
+        awaitAll(timeout, t) {
+          fn(t)
+        }
+    }
+
+    implicit class Tuple8Ops[V1, V2, V3, V4, V5, V6, V7, V8](t: (FF[V1], FF[V2], FF[V3], FF[V4], FF[V5], FF[V6], FF[V7], FF[V8])) {
+      def fallbackAfter[R](timeout: Duration)(fn: ((FF[V1], FF[V2], FF[V3], FF[V4], FF[V5], FF[V6], FF[V7], FF[V8])) => R): R =
+        awaitAll(timeout, t) {
+          fn(t)
+        }
+    }
+
+    implicit class Tuple9Ops[V1, V2, V3, V4, V5, V6, V7, V8, V9](t: (FF[V1], FF[V2], FF[V3], FF[V4], FF[V5], FF[V6], FF[V7], FF[V8], FF[V9])) {
+      def fallbackAfter[R](timeout: Duration)(fn: ((FF[V1], FF[V2], FF[V3], FF[V4], FF[V5], FF[V6], FF[V7], FF[V8], FF[V9])) => R): R =
+        awaitAll(timeout, t) {
+          fn(t)
+        }
+    }
+
+    implicit class Tuple10Ops[V1, V2, V3, V4, V5, V6, V7, V8, V9, V10](t: (FF[V1], FF[V2], FF[V3], FF[V4], FF[V5], FF[V6], FF[V7], FF[V8], FF[V9], FF[V10])) {
+      def fallbackAfter[R](timeout: Duration)(fn: ((FF[V1], FF[V2], FF[V3], FF[V4], FF[V5], FF[V6], FF[V7], FF[V8], FF[V9], FF[V10])) => R): R =
+        awaitAll(timeout, t) {
+          fn(t)
+        }
+    }
+
+    private implicit def toFutures(fallbackFuturesTuple: Product): Seq[Future[Any]] = {
+      fallbackFuturesTuple.productIterator.toList
+        .map(_.asInstanceOf[FallbackFuture[Any]])
+        .map(_.future)
+    }
+
+    private def awaitAll[R](timeout: Duration, futureSeq: Seq[Future[Any]])(fn: => R) = {
+      Try {
+        Await.ready(Future.sequence(futureSeq), timeout)
+      } recover {
+        case _: TimeoutException => logger.warn(""Call timed out"")
+        case NonFatal(ex) => throw ex
+      }
+      fn
+    }
+  }
+}

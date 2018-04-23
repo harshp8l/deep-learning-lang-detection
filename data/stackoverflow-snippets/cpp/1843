@@ -1,0 +1,147 @@
+#include <iostream>
+#include <string>
+#include <chrono>
+#include <sstream>
+#include <functional>
+
+
+template <typename F> void time_measurement(F f, const std::string& comment)
+{
+    typedef std::chrono::high_resolution_clock clock;
+    typedef std::chrono::duration<float, std::milli> mil;
+    std::string r;
+    auto t0 = clock::now();
+    f(r);
+    auto t1 = clock::now();
+    std::cout << ""\n-------------------------"" << comment << ""-------------------\n"" <<r << '\n';
+    std::cout << mil(t1-t0).count() << ""ms\n"";
+    std::cout << ""---------------------------------------------------------------------------\n"";
+
+}
+
+inline void clear(std::ostringstream& x)
+{
+    x.str("""");
+    x.clear();
+}
+
+void test()
+{
+    std:: cout << std::endl << ""----------------String Comparison---------------- "" << std::endl;
+    const int n=100000;
+    {
+        auto f=[](std::string& l_czTempStr)
+        {
+            std::string s1=""Test data1"";
+            for (int i = 0; i < n; ++i)
+            {
+                l_czTempStr = s1 + ""Test data2"" + ""Test data3"";
+            }
+        };
+        time_measurement(f, ""string, plain addition"");
+   }
+
+   {
+        auto f=[](std::string& l_czTempStr)
+        {
+            for (int i = 0; i < n; ++i)
+            {
+                l_czTempStr =  ""Test data1"";
+                l_czTempStr += ""Test data2"";
+                l_czTempStr += ""Test data3"";
+            }
+        };
+        time_measurement(f, ""string, incremental"");
+    }
+
+    {
+         auto f=[](std::string& l_czTempStr)
+         {
+            for (int i = 0; i < n; ++i)
+            {
+                l_czTempStr =  ""Test data1"";
+                l_czTempStr.append(""Test data2"");
+                l_czTempStr.append(""Test data3"");
+            }
+         };
+         time_measurement(f, ""string, append"");
+     }
+
+    {
+         auto f=[](std::string& l_czTempStr)
+         {
+            for (int i = 0; i < n; ++i)
+            {
+                std::ostringstream oss;
+                oss << ""Test data1"";
+                oss << ""Test data2"";
+                oss << ""Test data3"";
+                l_czTempStr = oss.str();
+            }
+         };
+         time_measurement(f, ""oss, creation in each loop, incremental"");
+     }
+
+    {
+         auto f=[](std::string& l_czTempStr)
+         {
+            std::ostringstream oss;
+            for (int i = 0; i < n; ++i)
+            {
+                oss.str("""");
+                oss.clear();
+                oss << ""Test data1"";
+                oss << ""Test data2"";
+                oss << ""Test data3"";
+            }
+            l_czTempStr = oss.str();
+         };
+         time_measurement(f, ""oss, 1 creation, incremental"");
+     }
+
+    {
+         auto f=[](std::string& l_czTempStr)
+         {
+            std::ostringstream oss;
+            for (int i = 0; i < n; ++i)
+            {
+                oss.str("""");
+                oss.clear();
+                oss << ""Test data1"" << ""Test data2"" << ""Test data3"";
+            }
+            l_czTempStr = oss.str();
+         };
+         time_measurement(f, ""oss, 1 creation, plain addition"");
+     }
+
+    {
+         auto f=[](std::string& l_czTempStr)
+         {
+            std::ostringstream oss;
+            for (int i = 0; i < n; ++i)
+            {
+                clear(oss);
+                oss << ""Test data1"" << ""Test data2"" << ""Test data3"";
+            }
+            l_czTempStr = oss.str();
+         };
+         time_measurement(f, ""oss, 1 creation, clearing calling inline function, plain addition"");
+     }
+
+
+    {
+         auto f=[](std::string& l_czTempStr)
+         {
+            for (int i = 0; i < n; ++i)
+            {
+                std::string x;
+                x =  ""Test data1"";
+                x.append(""Test data2"");
+                x.append(""Test data3"");
+                l_czTempStr=x;
+            }
+         };
+         time_measurement(f, ""string, creation in each loop"");
+     }
+
+}

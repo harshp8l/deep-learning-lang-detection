@@ -1,0 +1,31 @@
+import net.liftweb.json._
+import net.liftweb.json.Serialization._
+
+trait SocialMonitorData
+
+case class FacebookData(raw_data: String, id: String, social: String) extends SocialMonitorData
+
+
+class SocialMonitorParser[C <: SocialMonitorData : Manifest] extends Serializable {
+
+  def toJSON(socialMonitorData: C): String = {
+    // Requirements.notNull(socialMonitorData, ""This field cannot be NULL!"")
+    implicit val formats = DefaultFormats
+    write(socialMonitorData)
+  }
+
+  def fromJSON(json: String): Option[C] = {
+    implicit val formats = DefaultFormats // Brings in default date formats etc.
+    val jsonObj = parse(json)
+
+    try {
+      val socialData = jsonObj.extract[C]
+      Some(socialData)
+    } catch {
+      case e: Exception => {
+        // Logger.get(this.getClass.getName).warn(""Unable to parse the following JSON:\n"" + json + ""\nException:\n"" + e.toString())
+        None
+      }
+    }
+  }
+}

@@ -1,0 +1,46 @@
+function Send-ImportantReport {
+    [Net.ServicePointManager]::SecurityProtocol = ""tls12, tls11, tls""
+    $obj = New-Object psobject
+    $obj | Add-Member -MemberType NoteProperty -Name ""username"" -Value ""XXXXX""
+    $obj | Add-Member -MemberType NoteProperty -Name ""password"" -Value ""XXXXX""
+    $body = ConvertTo-Json -InputObject $obj
+
+    $login=""https://2ndENDPOINT.com/v4/login?fbsite=https://XXXXX.com/""
+
+
+    Invoke-RestMethod -ContentType 'application/json' -Method Post -Body $body -Uri $login -OutVariable AUTHtemp
+
+    $filepath=""C:\files\""
+    $data_files = Get-ChildItem $Folder_file_path
+
+    $filesss=$data_files | Write-Output
+
+    $Data2= $filesss -split ""`n""
+    $var2= @{}
+
+    $i2=0
+    foreach ($item2 in $Data2)
+    {
+
+
+        $headers = New-Object ""System.Collections.Generic.Dictionary[[String],[String]]""
+        $headers.Add(""Accept"", 'application/pdf')
+
+        $fileName=""C:\files\$item2""
+        $fileContent = get-content -Raw $fileName
+        $fileContentBytes = [System.Text.Encoding]::Default.GetBytes($fileContent)
+        $fileContentEncoded = [System.Convert]::ToBase64String($fileContentBytes)
+
+
+        $data = ConvertTo-Json @{
+            encrypted=""false"";
+            allowSaveBinaryData=""true"";
+            binaryData=""$fileContentEncoded""
+            divider=""Expense Report"";
+            extension=""pdf"";
+            name=""$fileContentEncoded"";
+            relProjectId=""31"";
+            fileID=""597""
+        }
+    }
+}

@@ -1,0 +1,25 @@
+import play.api.libs.json.{JsError, JsSuccess, Json, Reads}
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+
+case class User(id:Int, user: Option[User])
+
+val userJsVal = Json.parse(
+  """"""
+    | {
+    |   ""id"" : 22,
+    |   ""myuser"" : { ""id"":2  }
+    | }
+  """""".stripMargin)
+
+
+implicit lazy val UserReads: Reads[User] = (
+    (__ \ 'id).read[Int] and
+    ( __ \ 'myuser).lazyReadNullable(UserReads)
+  )(User.apply _)
+
+val us = Json.fromJson[User](userJsVal)(UserReads)
+
+us match {
+  case s:JsSuccess[User] => println(s.get)
+  case e:JsError =>  println(JsError.toJson(e).toString()) }

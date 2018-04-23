@@ -1,0 +1,60 @@
+#ifndef GENERATOR_H
+#define GENERATOR_H
+
+#include <limits>
+#include <chrono>
+#include <random>
+#include <type_traits>
+
+enum SeedType { USE_CHRONO_CLOCK, USE_RANDOM_DEVICE, USE_SEED_VALUE, USE_SEED_SEQ };
+
+template<class Engine, class Type, template<typename> class Distribution>
+class Generator {
+public:
+    using Clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady,
+        std::chrono::high_resolution_clock,
+        std::chrono::steady_clock>;
+
+private:
+    Engine _engine;
+    Distribution<Type> _distribution;
+    Type _value;
+
+public:
+
+    template<class... Params>
+    explicit Generator( Engine engine, Params... params ) : _engine( engine ) {
+        _distribution = Distribution<Type>( params... );
+    }
+
+    void seed( SeedType type = USE_RANDOM_DEVICE, std::size_t seedValue = 0, std::initializer_list<std::size_t> list = {} ) {
+        switch( type ) {
+            case USE_CHRONO_CLOCK:  { _engine.seed( getTimeNow() );  break; }
+            case USE_RANDOM_DEVICE: { std::random_device device{};
+                                      _engine.seed( device() );      break; }
+            case USE_SEED_VALUE:    { _engine.seed( seedValue );     break; }
+            case USE_SEED_SEQ:      { std::seed_seq seq( list );
+                                      _engine.seed( seq );           break; }
+        }
+    }
+
+    void generate() {
+        _value = _distribution( _engine );
+    }
+
+    Type getGeneratedValue() const {
+        return _value;
+    }
+
+    Distribution<Type> getDistribution() const {
+        return _distribution;
+    }
+
+    std::size_t getTimeNow() {
+        std::size_t now = static_cast<std::size_t>(Clock::now().time_since_epoch().count());
+        return now;
+    }
+
+};
+
+#endif // !GENERATOR_H

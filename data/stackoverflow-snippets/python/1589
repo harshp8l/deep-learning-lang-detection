@@ -1,0 +1,19 @@
+log_start = re.compile(r""[A-Z][a-z]{2}\d{2} \d{2}:\d{2}:\d{2} [A-Z]{4}"")
+search_pattern = re.compile(r""a dict: (.*)"")
+
+def process_log_line(line):
+    if not line:  # ignore empty matches (start and optional EOF)
+        return
+    matches = search_pattern.search(line)  # search the full log line for your pattern
+    if matches:  # if matched, do whatever you want with it...
+        print(matches.groups())
+
+buffer_line = """"  # a line buffer for multiline events
+with open(""<log file path>"", ""r"") as f:
+    for line in f:  # iterate over the file line by line
+        if log_start.match(line):  # a new log line detected
+            process_log_line(buffer_line)  # process the buffered log line
+            buffer_line = line  # restart the buffer
+        else:
+            buffer_line += line  # add the current line to the buffer
+    process_log_line(buffer_line)  # process the last buffered line

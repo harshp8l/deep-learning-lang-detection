@@ -1,0 +1,243 @@
+#include ""client.h""
+
+Client::Client(QObject *parent) : QObject(parent)
+{
+    qRegisterMetaType<PeerData>(""PeerData"");
+    qRegisterMetaType<QHostAddress>(""QHostAddress"");
+
+    m_socket = nullptr;
+    m_size = 0;
+
+    m_udp_socket = nullptr;
+
+    m_timer = new QTimer(this);
+    connect(m_timer, &QTimer::timeout, this, &Client::timeout);
+    m_timer->setSingleShot(true);
+}
+
+Client::~Client()
+{
+    disconnectedPrivate();
+}
+
+//Disconnects the socket
+void Client::abort()
+{
+    if (m_socket)
+        m_socket->abort();
+}
+
+//Start connection to server
+void Client::connectToHost(const QString &host, quint16 port)
+{
+    if (m_socket)
+        return;
+
+    m_socket = new QTcpSocket(this);
+
+    SETTONULLPTR(m_socket);
+
+    connect(m_socket, &QTcpSocket::readyRead, this, &Client::readyReadPrivate);
+    connect(m_socket, &QTcpSocket::connected, this, &Client::connectedPrivate);
+    connect(m_socket, &QTcpSocket::disconnected, this, &Client::disconnectedPrivate);
+    connect(m_socket, static_cast<void(QTcpSocket::*)(QTcpSocket::SocketError)>(&QTcpSocket::error), this, &Client::errorPrivate);
+
+    m_timer->start(10 * 1000);
+
+    m_socket->connectToHost(host, port);
+}
+
+//Perform udp broadcast to search peers
+void Client::searchPeers(quint16 port)
+{
+    if (m_udp_socket)
+        return;
+
+    m_udp_socket = new QUdpSocket(this);
+
+    SETTONULLPTR(m_udp_socket);
+
+    connect(m_udp_socket, &QUdpSocket::readyRead, this, &Client::UDPReadyRead);
+
+    m_udp_port = port;
+
+    QTimer::singleShot(50, this, &Client::UDPWrite);
+}
+
+//Ready read specific for udp socket
+void Client::UDPReadyRead()
+{
+    while (m_udp_socket->hasPendingDatagrams())
+    {
+        QByteArray data;
+        data.resize(m_udp_socket->pendingDatagramSize());
+
+        QHostAddress peer_address;
+        quint16 peer_port;
+
+        m_udp_socket->readDatagram(data.data(), data.size(), &peer_address, &peer_port);
+
+        //Test the header used in this udp broadcast, you can freely change this value,
+        //but do for both client and server
+        if (QLatin1String(data) == QLatin1Literal(""TEST""))
+            emit peerFound(peer_address);
+    }
+}
+
+//Send the udp broadcast message to all the network interfaces
+void Client::UDPWrite()
+{
+    QList<QHostAddress> broadcast;
+
+    foreach (QHostAddress address, QNetworkInterface::allAddresses())
+    {
+        if (address.protocol() == QAbstractSocket::IPv4Protocol)
+        {
+            address.setAddress(address.toIPv4Address());
+            QStringList list = address.toString().split(""."");
+            list.replace(3, ""255"");
+
+            QString currentbroadcast = list.join(""."");
+
+            QHostAddress address = QHostAddress(QHostAddress(currentbroadcast).toIPv4Address());
+
+            broadcast.append(address);
+        }
+    }
+
+    QByteArray datagram = QString(""TEST"").toLatin1();
+
+    foreach (const QHostAddress &address, broadcast)
+        m_udp_socket->writeDatagram(datagram, address, m_udp_port);
+
+    //Wait 0.5 seconds for an answer
+    QTimer::singleShot(500, this, &Client::searchPeersEnd);
+}
+
+//Stop the udp socket
+void Client::searchPeersEnd()
+{
+    m_udp_socket->deleteLater();
+    emit searchPeersFinished();
+}
+
+void Client::timeout()
+{
+    emit error(""Operation timed out"");
+    stop();
+}
+
+//Handle connected state
+void Client::connectedPrivate()
+{
+    QHostAddress host = m_socket->peerAddress();
+    qintptr descriptor = m_socket->socketDescriptor();
+
+    PeerData pd;
+    pd.host = host;
+    pd.descriptor = descriptor;
+
+    emit connected(pd);
+
+    m_timer->stop();
+}
+
+//Handle disconnected state
+void Client::disconnectedPrivate()
+{
+    if (!m_socket)
+        return;
+
+    QHostAddress host = m_socket->peerAddress();
+    qintptr descriptor = m_socket->socketDescriptor();
+
+    stop();
+
+    PeerData pd;
+    pd.host = host;
+    pd.descriptor = descriptor;
+
+    emit disconnected(pd);
+}
+
+//Handle error
+void Client::errorPrivate(QAbstractSocket::SocketError e)
+{
+    if (e != QAbstractSocket::RemoteHostClosedError)
+    {
+        QString err = m_socket->errorString();
+        emit error(err);
+    }
+
+    stop();
+}
+
+//Stop the tcp socket
+void Client::stop()
+{
+    m_timer->stop();
+
+    m_size = 0;
+    m_buffer.clear();
+
+    if (m_socket)
+    {
+        m_socket->abort();
+        m_socket->deleteLater();
+    }
+}
+
+//Write data to the server
+int Client::write(const QByteArray &data)
+{
+    if (!m_socket)
+        return 0;
+
+    m_socket->write(getBytes<qint32>(data.size()));
+    m_socket->write(data);
+
+    return 1;
+}
+
+//Receive message from server
+void Client::readyReadPrivate()
+{
+    if (!m_socket)
+        return;
+
+    while (m_socket->bytesAvailable() > 0)
+    {
+        m_buffer.append(m_socket->readAll());
+
+        while ((m_size == 0 && m_buffer.size() >= 4) || (m_size > 0 && m_buffer.size() >= m_size))
+        {
+            if (m_size == 0 && m_buffer.size() >= 4)
+            {
+                m_size = getValue<qint32>(m_buffer.mid(0, 4));
+                m_buffer.remove(0, 4);
+
+                if (m_size < 0 || m_size > MAX_NETWORK_CHUNK_SIZE)
+                {
+                    m_socket->abort();
+                    return;
+                }
+            }
+            if (m_size > 0 && m_buffer.size() >= m_size)
+            {
+                QByteArray data = m_buffer.mid(0, m_size);
+                m_buffer.remove(0, m_size);
+                m_size = 0;
+
+                QHostAddress host = m_socket->peerAddress();
+                qintptr descriptor = m_socket->socketDescriptor();
+
+                PeerData pd;
+                pd.data = data;
+                pd.host = host;
+                pd.descriptor = descriptor;
+
+                emit readyRead(pd);
+            }
+        }
+    }
+}

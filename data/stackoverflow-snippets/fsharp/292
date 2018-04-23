@@ -1,0 +1,23 @@
+let inline item (i:int) (a: 'A) : 'a = (^A : (member get_Item: _ -> _) a, i)
+
+type T = T with
+    static member ($) (T, _:Vector<float>) = fun (x:float list) -> vector x
+    static member ($) (T, _:Matrix<float>) = fun (x:float list) -> matrix [x]
+    static member ($) (T, _:DV           ) = fun (x: D list  ) -> toDV (List.toArray x)
+
+let inline toDestType (x:'t list) :'D = (T $ Unchecked.defaultof<'D>) x
+
+type V = V with
+    static member ($) (V, x:float        ) = fun (y: float) -> x * y : float
+    static member ($) (V, x:D            ) = fun (y: float) -> x * y : D
+
+let inline mult (y:float) (x:'t)  :'t = (V $ x) y
+
+let inline transform (a:'T) :'T =
+    let x1, y1 = mult l1 (cos (item 0 a)), mult l1 (sin (item 0 a))
+    let x2, y2 = x1 + mult l2 (cos ((item 0 a) + (item 1 a))), y1 + mult l2 (sin ((item 0 a) + (item 1 a)))
+    let g = toDestType [x1; y1; x2; y2]
+    g 
+
+let b = transform  (DV [| 1. ;  2.|])
+let a = transform  (vector [1. ; 2.])

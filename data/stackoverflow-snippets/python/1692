@@ -1,0 +1,52 @@
+import sys
+
+import numpy as np
+
+import matplotlib
+matplotlib.use('Qt5Agg')
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+
+from PyQt5 import QtWidgets
+
+
+class OrthoView3D():
+    def __init__(self, fig):
+        x = np.linspace(0, 2*np.pi, 400)
+        y = np.sin(x**2)
+        xrows, xcols = 2, 2
+        self._axes = [fig.add_subplot(xrows, xcols, i+1) for i in range(xrows*xcols)] # create the axes
+        fig.set_size_inches((8, 8), forward=True)  # set the size of axes
+        self._axes[0].plot(x,y)
+
+
+class OrthoCanvas(FigureCanvas):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        ortho = OrthoView3D(fig)
+        FigureCanvas.__init__(self, fig)
+        self.setParent(parent)
+
+        FigureCanvas.setSizePolicy(self,
+                                   QtWidgets.QSizePolicy.Expanding,
+                                   QtWidgets.QSizePolicy.Expanding)
+        FigureCanvas.updateGeometry(self)
+
+
+class ApplicationWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        QtWidgets.QMainWindow.__init__(self)
+        self.main_widget = QtWidgets.QWidget(self)
+        l = QtWidgets.QVBoxLayout(self.main_widget)
+        canvas = OrthoCanvas()
+        self.main_widget.setFocus()
+        self.setCentralWidget(self.main_widget)
+        l.addWidget(canvas)
+        self.show()
+
+
+qApp = QtWidgets.QApplication(sys.argv)
+
+aw = ApplicationWindow()
+aw.show()
+sys.exit(qApp.exec_())

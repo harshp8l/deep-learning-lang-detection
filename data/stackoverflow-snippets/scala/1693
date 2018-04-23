@@ -1,0 +1,22 @@
+// Out of my control
+class MyObject(content: String) {
+  def resized(length : Int): MyObject = new MyObject(content.substring(0, length))
+}
+
+object MyObjectImplicits {
+
+  implicit class OptionalUpdate[A](val optional: Option[A]) extends AnyVal {
+    def update(operation: (A, MyObject) => MyObject): MyObject => MyObject =
+      (obj: MyObject) => optional.map(a => operation(a, obj)).getOrElse(obj)
+  }
+
+}
+object Test {
+  val my = new MyObject(""test"")
+  val option = Option(2)
+  import MyObjectImplicits._
+  Seq(
+    option.update((size, value) => value.resized(size)),
+    // more options...
+  ).foldLeft(my)(_)
+}

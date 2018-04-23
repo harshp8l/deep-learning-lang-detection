@@ -1,0 +1,24 @@
+private static async void GetRequestStreamCallback(IAsyncResult ar)
+{
+    HttpWebRequest req = (HttpWebRequest)ar.AsyncState; 
+    Stream postStream = req.EndGetRequestStream(ar); // Here flag req.m_RequestSubmitted is true already
+    byte[] byteArray = Encoding.UTF8.GetBytes(""id=1"");
+    await postStream.WriteAsync(byteArray, 0, byteArray.Length);
+    postStream.Close();
+    req.Proxy = new WebProxy(""localhost:8888"", true);
+    allDone.WaitOne();
+}
+private static ManualResetEvent allDone = new ManualResetEvent(false);
+static void Main(string[] args)
+{
+    HttpWebRequest req = (HttpWebRequest)WebRequest.Create(""http://localhost:64343/api/products"");
+    req.Method = ""POST"";
+    req.UserAgent = ""Magic"";
+    req.AutomaticDecompression = DecompressionMethods.GZip;
+    req.CookieContainer = new CookieContainer();
+    req.ContentType = ""application/x-www-form-urlencoded"";
+    var bytes = Encoding.UTF8.GetBytes(""id=2"");
+    req.ContentLength = bytes.Length;
+    req.BeginGetRequestStream(new AsyncCallback(GetRequestStreamCallback), req);
+    allDone.WaitOne();
+}

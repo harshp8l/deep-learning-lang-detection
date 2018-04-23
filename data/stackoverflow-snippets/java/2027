@@ -1,0 +1,50 @@
+@BeforeSuite
+// Invoking ExtentReports functionality
+public void reportSetup() {
+
+    htmlReporter = new ExtentHtmlReporter(new File(System.getProperty(""user.dir"") + ""/AutomationReports.html""));
+    htmlReporter.loadXMLConfig(new File(System.getProperty(""user.dir"") + ""/src/resource/XML/Extent-Config.xml""));
+    reports = new ExtentReports();
+    reports.setSystemInfo(""Environment"", ""Automation"");
+    reports.attachReporter(htmlReporter);
+
+}
+
+@BeforeMethod
+public void testMethodName(Method method) {
+
+    String testName = method.getName();
+    testInfo = reports.createTest(testName);
+
+}
+
+@AfterMethod
+public void capture_TestStatus(ITestResult result) {
+
+    try {
+
+        if (result.getStatus() == ITestResult.SUCCESS) {
+            testInfo.log(Status.PASS, ""Test method "" + ""'"" + result.getName() + ""'"" + result.getStatus());
+        } else if (result.getStatus() == ITestResult.FAILURE) {
+            testInfo.log(Status.FAIL, ""Test method "" + ""'"" + result.getName() + ""'"" + result.getStatus());
+            testInfo.log(Status.FAIL, ""Test error "" + result.getThrowable());
+        } else if (result.getStatus() == ITestResult.SKIP) {
+            testInfo.log(Status.SKIP, ""Test method "" + ""'"" + result.getName() + ""'"" + result.getStatus());
+        }
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+
+    }
+
+}
+
+@AfterSuite
+public void tearDown() {
+
+    CommonMethods.pauseTime(5);
+    reports.flush();
+    driver.quit();
+
+}

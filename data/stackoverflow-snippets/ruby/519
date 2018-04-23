@@ -1,0 +1,26 @@
+require 'watir'
+
+b = Watir::Browser.new :firefox
+b.goto(""google.com"")
+
+# Load html2canvas - currently  v1.0.0-alpha.9
+h2c_payload = %<
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src =  'https://html2canvas.hertzen.com/dist/html2canvas.js';
+  document.head.appendChild(script);
+>.gsub(/\s+/, ' ').strip
+b.execute_script(h2c_payload)
+
+# Wait for html2canvas to load
+b.wait_while { b.execute_script(""return typeof html2canvas === 'undefined'"") }
+
+# Generate the canvas
+h2c_activator = 'html2canvas(document.body).then(canvas => {window.canvasImgContentDecoded = canvas.toDataURL(""image/png"");});'
+b.execute_script h2c_activator
+
+# Wait for canvas to be created
+result = nil
+b.wait_until { result = b.execute_script ""return window.canvasImgContentDecoded;"" }
+p result
+#=> ""data:image/png;base64,iVBORw0KGgoA...""

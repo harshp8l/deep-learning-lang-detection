@@ -1,0 +1,21 @@
+(defn indexes-of-value [v coll]
+  (into []
+        (comp (map-indexed #(if (== v %2) %1))
+              (remove nil?))
+        coll))
+
+(defn coord' [v path coll]
+  (cond
+    ;; node is a leaf: empty or coll of numbers
+    (or (empty? coll)
+        (number? (first coll)))
+    (when-let [indexes (seq (indexes-of-value v coll))]
+      (map #(conj path %) indexes))
+
+    ;; node is branch: a coll of colls
+    (coll? (first coll))
+    (seq (sequence (comp (map-indexed vector)
+                         (mapcat #(coord' v (conj path (first %)) (second %))))
+                   coll))))
+
+(defn coords [v coll] (coord' v [] coll))

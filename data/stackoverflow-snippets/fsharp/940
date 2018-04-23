@@ -1,0 +1,27 @@
+open System
+open System.Net
+
+[<EntryPoint>]
+let main argv = 
+
+    let test =
+        async{
+        let! exc = Async.Catch( async{
+            try
+                let w = new Net.WebClient();
+                let! str = Async.AwaitTask (w.DownloadStringTaskAsync """") // throws ArgumentException
+                return Some str
+            with 
+            | _ -> 
+                System.Diagnostics.Debug.WriteLine ""in with"" // We get here.
+                return None // not caught
+            }
+            )
+        match exc with
+        | Choice1Of2 r -> return r
+        | Choice2Of2 ext -> return None  // not caught
+        }
+
+    let res = Async.RunSynchronously(test)
+    let str = Console.ReadLine();
+    0 // return an integer exit code

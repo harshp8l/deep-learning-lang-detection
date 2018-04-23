@@ -1,0 +1,50 @@
+#include <future>
+#include <iostream>
+#include <conio.h>
+#include <thread>
+#include <chrono>
+
+int a()
+{
+    std::cout << 'a' << std::flush;
+    return 1;
+}
+
+int b()
+{
+    std::cout << 'b' << std::flush;
+    return 2;
+}
+
+bool shouldQuit()
+{
+    while (_kbhit())
+    {
+        if (_getch() == 27)
+            return true;
+    }
+    return false;
+}
+
+int main()
+{
+    auto threadFunctions = { a, b };
+
+    while(!shouldQuit())
+    {
+        auto threadFutures = std::vector<std::future<int>>{};
+
+        // Run asynchronous tasks
+        for (auto& threadFunction: threadFunctions)
+            threadFutures.push_back(std::async(threadFunction));
+
+        // Wait for all tasks to complete
+        for (auto& threadFuture : threadFutures)
+            threadFuture.get();
+
+        // Wait a second
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    return 0;
+}

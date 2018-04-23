@@ -1,0 +1,23 @@
+# rakefile.rb
+namespace :db do
+  env = 'development' || ENV['env']
+
+  db_config       = YAML::load(File.open('config/database.yml'))[env]
+  db_config_admin = db_config.merge({ 'database' => 'postgres','schema_search_path' => 'public' })
+  # add following line to create variable for the :seed task
+  db_config_seed = db_config.merge({ 'schema_search_path' => 'public' })
+
+  ...
+
+  desc ""Seed the database""
+  task :seed do
+    # change variable referenced in the connection line below
+    ActiveRecord::Base.establish_connection(db_config_seed)
+    require_all 'models/*.rb'
+    require_relative 'db/seeds.rb'
+    puts ""Database seeded.""
+  end
+
+  ...
+
+end

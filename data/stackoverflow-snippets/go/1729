@@ -1,0 +1,37 @@
+func GetCustomerByID(APIKey, cusID string) Customer {
+  cus := new(Customer)
+  getURLToTarget(fmt.Sprintf(""http://someurl.com/%s/customerbyid/:%s"", APIKey, cusID), &cus)
+  return cus
+}
+
+func main() {
+  apikey := ""some api key""
+
+  c := make(chan Customer, 3)
+
+  go func() {
+    cus := GetCustomerByID(apikey, ""43279843"")
+    c <- cus
+  }()
+
+  go func() {
+    cus := GetCustomerDiscounts(apikey, ""43279843"")
+    c <- cus
+  }()
+
+  go func() {
+    cus := GetProductByID(apikey, ""32124"")
+    c <- cus
+  }()
+
+  // Print the result
+  var i int
+  for cus := range c {
+    fmt.Printf(""%#v\n"", cus)
+    i++
+
+    if i == 3 {
+      break
+    }
+  }
+}

@@ -1,0 +1,45 @@
+import org.apache.spark.sql.functions._
+import spark.implicits._
+
+// I'm assuming we have these case classes (or similar)
+case class Influencer(screenName: String)
+case class ClusterInfo(cluster_id: String, influencers: Array[Influencer])
+
+// I'm assuming this method is supplied - with your own implementation
+def getClusterInfo(clusterId: String): ClusterInfo =
+  ClusterInfo(clusterId, Array(Influencer(clusterId)))
+
+// some sample data - assuming both columns are integers:
+val df = Seq((222, 3), (333, 4)).toDF(""Report_id"", ""Cluster_number"")
+
+// actual solution:
+
+// UDF that returns an array of ClusterInfo;
+// Array size is 'clusterNo', creates cluster id for each element and maps it to info
+val clusterInfoUdf = udf { (clusterNo: Int, reportId: Int) =>
+  (1 to clusterNo).map(v => s""${reportId}_$v"").map(getClusterInfo)
+}
+
+// apply UDF to each record and explode - to create one record per array item
+val result = df.select(explode(clusterInfoUdf($""Cluster_number"", $""Report_id"")))
+
+result.printSchema()
+// root
+// |-- col: struct (nullable = true)
+// |    |-- cluster_id: string (nullable = true)
+// |    |-- influencers: array (nullable = true)
+// |    |    |-- element: struct (containsNull = true)
+// |    |    |    |-- screenName: string (nullable = true)
+
+result.show(truncate = false)
+// +-----------------------------+
+// |col                          |
+// +-----------------------------+
+// |[222_1,WrappedArray([222_1])]|
+// |[222_2,WrappedArray([222_2])]|
+// |[222_3,WrappedArray([222_3])]|
+// |[333_1,WrappedArray([333_1])]|
+// |[333_2,WrappedArray([333_2])]|
+// |[333_3,WrappedArray([333_3])]|
+// |[333_4,WrappedArray([333_4])]|
+// +-----------------------------+

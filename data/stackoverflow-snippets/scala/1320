@@ -1,0 +1,22 @@
+import scala.collection.mutable.PriorityQueue
+
+case class Point(val name:String, val x:Double, val y:Double)
+val target = Point(""myPoint"", 34, 42)
+val points = List(...) //list of points
+
+def distance(p1: Point, p2: Point) = ??? //distance between two points
+
+//load points-priority-queue with first 10 points
+val ppq = PriorityQueue(points.take(10):_*){
+  case (a,b) => distance(a,target) compare distance(b,target) //prioritize points
+}
+
+//step through everything after the first 10
+points.drop(10).foldLeft(distance(ppq.head,target))((mxDst,nextPnt) => 
+  if (mxDst > distance(nextPnt,target)) {
+    ppq.dequeue()             //drop current far point
+    ppq.enqueue(nextPnt)      //load replacement point
+    distance(ppq.head,target) //return new max distance
+  } else mxDst)
+
+val result: List[Double] = ppq.dequeueAll  //10 closest points

@@ -1,0 +1,29 @@
+const numRoutines = 10
+
+func fooStage(inChan <-chan *Bar) <-chan *Bar {
+    out := make(chan *Bar, 10000)
+    routines := make(chan struct{}, numRoutines)
+    go func() {
+        defer close(out)
+        wg := sync.WaitGroup{}
+        for {
+            select {
+            case event, ok := <-inChan:
+                if !ok {
+                    // inChan closed
+                    break
+                }
+                wg.Add(1)
+                routines <- struct{}{}
+                go func() {
+                    time.Sleep(5 * time.Second)
+                    out <- event
+                    wg.Done()
+                    <-routines
+                }()
+            }
+        }
+        wg.Wait()
+    }()
+    return out
+}

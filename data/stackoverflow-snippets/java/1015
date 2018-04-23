@@ -1,0 +1,45 @@
+   static List<String> retrieveMostFrequentlyUsedWords(String literatureText, List<String> wordsToExclude) {
+    List<String> words = Arrays.asList(literatureText.split(""[.!?'\\s+]""));
+    Set<Map.Entry<String, Integer>> set =
+            words.stream()
+                    .filter(word -> !wordsToExclude.contains(word))
+                    .collect(Collectors.toMap(word -> word.toLowerCase(),
+                            word -> 1, Integer::sum))
+                    .entrySet();
+
+    return set.stream()
+            .collect(Collectors.collectingAndThen(
+                    maxEntryList(Comparator.comparing(Map.Entry::getValue)),
+                    a -> a.stream().map(Map.Entry::getKey).collect(Collectors.toList())));
+
+
+}
+  static <T> Collector<T, List<T>, List<T>> maxEntryList(Comparator<T> comparator) {
+
+    return Collector.of(ArrayList::new,
+            (list, t) -> {
+                int c;
+                if (list.isEmpty() || (c = comparator.compare(t, list.get(0))) == 0) {
+                    list.add(t);
+                } else if (c > 0) {
+                    list.clear();
+                    list.add(t);
+                }
+            },
+            (list1, list2) -> {
+                if (list1.isEmpty())
+                    return list2;
+                else if (list2.isEmpty())
+                    return list1;
+                int c = comparator.compare(list1.get(0), list2.get(0));
+                if (c > 0) {
+                    return list1;
+                } else if (c < 0) {
+                    return list2;
+                } else {
+                    list1.addAll(list2);
+                    return list1;
+                }
+            }
+    );
+}

@@ -1,0 +1,100 @@
+#include <iostream>
+#include <vector>
+#include <chrono>
+
+
+using namespace std ;
+
+void printvector(vector<double> v) {
+cout << ""vector : "" ;
+for (double n : v) {
+cout << n << "" "" ;
+}
+cout << endl ;
+}
+
+vector<double> QuickSort(vector<double>& vec1){
+
+    double i = 0;
+    double j = vec1.size()-2;
+    double tmp;
+    int pivotindex = vec1.size()-1 ;
+    double pivot = vec1[pivotindex];
+
+    if ( vec1.size()<=1 )
+        return vec1 ;
+
+    cout << ""QuickSort: "";
+    printvector(vec1) ;
+
+    while (i <= j) {
+        while (vec1[i] < pivot) {
+            i++;
+        }
+        while (vec1[j] > pivot)
+            j--;
+         if (i <= j) {
+            tmp = vec1[i];
+            vec1[i] = vec1[j];
+            vec1[j] = tmp;
+            i++;
+            j--;
+        }
+    }
+    // pivot change
+    vec1[pivotindex] = vec1[i] ;
+    vec1[i]=pivot ;
+    pivotindex=i ;
+
+    cout << ""pivotting: "";
+    printvector(vec1) ;
+
+    if (vec1.size()<=2 )
+        return vec1 ;
+    // partition
+    vector<double> left_vec, right_vec ;
+    vector<double>::iterator pivotiter = vec1.begin()+pivotindex ;
+    copy(vec1.begin(), pivotiter, back_inserter(left_vec)) ;
+    copy(pivotiter+1, vec1.end(), back_inserter(right_vec)) ;
+
+    cout << ""left: "";
+    printvector(left_vec) ;
+    cout << ""right: "";
+    printvector(right_vec) ;
+
+   if (left_vec.size()>0 ) {
+        QuickSort(left_vec);
+        copy(left_vec.begin(), left_vec.end(), vec1.begin()) ;
+    }
+   if (right_vec.size()>0 ) {
+        QuickSort(right_vec);
+        copy(right_vec.begin(), right_vec.end(), pivotiter+1) ;
+    }
+    return vec1;
+}
+
+int main()
+{
+//vector<double> v { 5 } ;
+//vector<double> v { 5, 3 } ;
+//vector<double> v { 5, 3, 1 } ;
+//vector<double> v { 1, 3, 5 } ;
+//vector<double> v { 9,4,8,5,1,2,7 } ;
+vector<double> v  ;
+//srand( time(NULL) ) ;
+int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+srand( now ) ;
+for (int i=0; i<rand()%30+1; i++) {
+    v.push_back( rand()%10000 ) ;
+}
+
+cout << ""input values: "" ;
+printvector(v) ;
+
+vector<double> ret = QuickSort(v) ;
+cout << ""output values: "" ;
+printvector(ret) ;
+cout << endl << endl ;
+
+return 0 ;
+}

@@ -1,0 +1,56 @@
+#include <iostream>
+
+class Base{
+protected:
+  void **vt_ptr;
+public:
+
+    int a;
+    //Executed prior to base member initialization
+    //and reexecuted prior to Base destructor call
+    void set_dynamic_type(){
+      vt_ptr = Base::vtable;
+    }
+
+    /*virtual*/
+    void fun1(){
+       reinterpret_cast<void(*)(Base&)>(vt_ptr[1])(*this);
+    }
+    void fun2(){
+       fun1();
+     }
+
+private:
+  static void func1_def(Base& pseudo_obj_arg){
+        Base* this=&pseudo_obj_arg;
+        std::cout<<""Hello Base""<<std::endl;
+    }
+  static void* vtable[2];
+};
+
+void* Base::vtable[2]={
+     reinterpret_cast<void*>(&type_id_of_Base),
+     reinterpret_cast<void*>(&Base::func1_def)};
+
+class Derived: public Base
+{
+    int a;
+    //Executed after Base intialization, 
+    //before Derived member initialization.
+    //Reexecuted prior to Derived destructor call
+    void set_dynamic_type(){
+      Base::vt_ptr = Derived::vtable;
+    }
+
+
+private:
+  static void func1_def(Base& pseudo_obj_arg){
+      Derived* this=static_cast<Derived*>(&pseudo_obj_arg);
+      std::cout<<""Hello Derived""<<std::endl;
+  }
+  static void* vtable[2];  
+};
+
+void* Derived::vtable[2]={
+     reinterpret_cast<void*>(&type_id_of_Derived),
+     reinterpret_cast<void*>(&Derived::func1_def)};

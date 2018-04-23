@@ -1,0 +1,49 @@
+func http_fetch(req_host string) {
+    buf := make([]byte, 1024)
+    conf := &tls.Config {
+        InsecureSkipVerify: true,
+    }   
+
+    conn, err := tls.Dial(""tcp"", proxy_host, conf)
+    if err != nil {
+        //panic(err)
+        failure()
+        return
+    }   
+    defer conn.Close()
+
+    // SSL CONNECT
+    if _, err = conn.Write([]byte(""CONNECT "" + req_host + "" HTTP/1.0\r\n\r\n"")); err != nil {
+        // FIXME: need debug logger?
+        //panic(err)
+        failure()
+        return
+    }   
+
+    // Read response
+    if _, err = conn.Read(buf); err != nil {
+        //panic(err)
+        failure()
+        return
+    }   
+
+    // Send http GET
+    if _, err = conn.Write([]byte(""GET / HTTP/1.0\r\n"")); err != nil {
+        //panic(err)
+        failure()
+        return
+    }   
+    if _, err = conn.Write([]byte(""User-Agent: golang\r\n\r\n"")); err != nil {
+        //panic(err)
+        failure()
+        return
+    }   
+
+    // Read response
+    if _, err = conn.Read(buf); err != nil {
+        //panic(err)
+        failure()
+        return
+    }   
+    success()
+}   

@@ -1,0 +1,13 @@
+def signup(request):
+    if request.method == 'POST':
+        form = StudentSignUpForm(request.POST)
+        if form.is_valid():
+            user_obj = form.save(commit=False)
+            user_obj.set_password(form.cleaned_data.get('password1'))
+            user_obj.save()
+            user_login = auth.authenticate(username=user_obj.username, password=form.cleaned_data.get('password1'))
+            login(request, user_login)
+            return redirect('student_register')
+    else:
+        form = StudentSignUpForm()
+    return render(request, 'registration/signup_form.html', {'form': form})

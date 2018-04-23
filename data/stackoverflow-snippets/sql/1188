@@ -1,0 +1,26 @@
+declare @table1 table (id int, value int, date1 date, date2 date, date3 date)
+declare @table2 table (id int, colname varchar(5))
+
+insert into @table1 values (1,10,'04/03/2018','04/03/2017','01/03/2016')
+insert into @table1 values (2,1 ,'04/03/2018','05/03/2015','02/03/2018')
+insert into @table1 values (3,2 ,'04/03/2016','06/03/2016','03/03/2018')
+insert into @table1 values (4,1 ,'04/03/2015','07/03/2018','04/03/2017')
+insert into @table1 values (5,2 ,'04/03/2017','09/03/2018','05/03/2019')
+
+insert into @table2 values (1, 'date1')
+insert into @table2 values (2, 'date3')
+insert into @table2 values (3, 'date3')
+insert into @table2 values (4, 'date2')
+insert into @table2 values (5, 'date1')
+
+select id, colname, newdate
+from
+(
+    select sq.id, sq.colname, dateadd(month, sq.value, sq.dn) as newdate
+    from @table1 t1
+    unpivot
+    (
+        dn for colname in ([date1], [date2], [date3])
+    )sq
+    inner join @table2 t2 on sq.id = t2.id and sq.colname = t2.colname
+)sq where newdate between '1/1/2018' and '12/31/2018'

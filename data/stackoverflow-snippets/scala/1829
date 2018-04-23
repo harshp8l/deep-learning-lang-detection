@@ -1,0 +1,15 @@
+def partition[T](l: List[T])(f: T => Boolean): (List[T], List[T]) = {
+  @tailrec
+  def partitionInternal(l: List[T])(acc: (ListBuffer[T], ListBuffer[T])): (ListBuffer[T], ListBuffer[T])  = {
+    l match {
+      case Nil => acc
+      case head :: tail =>
+        val (leftAcc, rightAcc) = acc
+        if (f(head)) partitionInternal(tail)((leftAcc += head, rightAcc))
+        else partitionInternal(tail)((leftAcc, rightAcc += head))
+    }
+  }
+
+  val (lf, r) = partitionInternal(l)((ListBuffer.empty[T], ListBuffer.empty[T]))
+  (lf.toList, r.toList)
+}

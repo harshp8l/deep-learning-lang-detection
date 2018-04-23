@@ -1,0 +1,13 @@
+Add-Type -Path ""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.IO.Compression.FileSystem.dll""
+$logFolder=Read-Host ""enter foldername (eg=c:/temp)""
+$zipFileName=Read-Host ""enter a name for zip file (eg=filename.zip)"" 
+$finalPath=$logFolder+""/""+$zipFileName
+Write-Host $finalPath
+$startDate=Read-Host ""enter date in the format mm/dd/yyyy"" 
+$endDate=Read-Host ""enter date in the format mm/dd/yyyy""
+# creates empty zip file:
+[System.IO.Compression.ZipArchive] $archive = [System.IO.Compression.ZipFile]::Open($finalPath,[System.IO.Compression.ZipArchiveMode]::Update)
+# add your files to archive
+Get-ChildItem -path $logFolder | foreach {[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive,$_.FullName,$_.Name)}
+# archive will be updated with files after you close it. normally, in C#, you would use ""using ZipArchvie arch = new ZipFile"" and object would be disposed upon exiting ""using"" block. here you have to dispose manually:
+$archive.Dispose()

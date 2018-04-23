@@ -1,0 +1,23 @@
+val callback = BooleanObservableCallback()
+        viewModel.isLoading.addOnPropertyChangedCallback(callback)
+
+viewModel.onLoginButtonClicked()
+
+assertThat(callback.recordedInvocations, hasSize(2))
+        assertThat(callback.recordedInvocations[0], `is`(true))
+        assertThat(callback.recordedInvocations[1], `is`(false))
+
+
+class BooleanObservableCallback : Observable.OnPropertyChangedCallback() {
+
+    private val _recordedInvocations = mutableListOf<Boolean>()
+
+    val recordedInvocations: List<Boolean>
+        get() = _recordedInvocations.toList()
+
+    override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+        if (sender is ObservableBoolean) {
+            _recordedInvocations.add(sender.get())
+        }
+    }
+}

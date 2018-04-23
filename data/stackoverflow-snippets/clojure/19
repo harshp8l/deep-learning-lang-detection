@@ -1,0 +1,16 @@
+(defn merge-opt-keys
+  [fspec]
+  (let [keymap (atom (into {} (map (fn [pair] (vec pair)) (partition 2 (rest fspec)))))]
+  (cond
+    (contains? @keymap :opt)
+      (swap! keymap assoc :req (vec (concat (@keymap :req) (@keymap :opt))))
+    (contains? @keymap :opt-un)
+      (swap! keymap assoc :req-un (vec (concat (@keymap :req-un) (@keymap :opt-un)))))
+  (swap! keymap dissoc :opt :opt-un)
+  (cons 'clojure.spec.alpha/keys (mapcat identity @keymap))))
+
+(clojure.spec.alpha/def ::name string?)
+(clojure.spec.alpha/def ::desc string?)
+(clojure.spec.alpha/def ::book (clojure.spec.alpha/keys :req [::name] :opt [:desc]))
+
+(clojure.spec.gen.alpha/generate (clojure.spec.alpha/gen (eval (merge-opt-keys (clojure.spec.alpha/form ::book)))))

@@ -1,0 +1,31 @@
+(defn primitive-compute-bbox-new [^floats data]
+  (let [n (alength data)]
+    (loop [i (int 0)
+           minx (aget data 0)
+           maxx (aget data 0)
+           miny (aget data 1)
+           maxy (aget data 1)
+           minz (aget data 2)
+           maxz (aget data 2)]
+      (if (< i n)
+        (let [x (aget data (unchecked-add i 0))
+              y (aget data (unchecked-add i 1))
+              z (aget data (unchecked-add i 2))]
+          (if (and (Float/isFinite x)
+                   (Float/isFinite y)
+                   (Float/isFinite z))
+            (recur (unchecked-add-int i 4)
+                   (FastMath/min (float minx) x)
+                   (FastMath/max (float maxx) x)
+                   (FastMath/min (float miny) y)
+                   (FastMath/max (float maxy) y)
+                   (FastMath/min (float minz) z)
+                   (FastMath/max (float maxz) z))
+            (recur (unchecked-add-int i 4)
+                   minx
+                   maxx
+                   miny
+                   maxy
+                   minz
+                   maxz)))
+        [minx maxx miny maxy minz maxz]))))

@@ -1,0 +1,29 @@
+struct Tester {
+    boost::asio::io_context ioc;
+    boost::optional<boost::asio::io_context::work> work{ioc};
+    std::thread t { io_context_runner{ioc} };
+
+    ssl::context ctx{ssl::context::sslv23_client};
+
+    Tester() {
+        load_root_certificates(ctx);
+    }
+
+    void run(int remaining = 1) {
+        if (remaining <= 0)
+            return;
+
+        auto s = std::make_shared<session>(ioc, ctx, [=] { run(remaining - 1); });
+        s->run(""127.0.0.1"", ""443"", ""/BBB/http_client_async_ssl.cpp"", 11);
+    }
+
+    ~Tester() {
+        work.reset();
+        if (t.joinable()) t.join();
+    }
+};
+
+int main(int argc, char *argv[]) {
+    Tester tester;
+    tester.run(argc>1? atoi(argv[1]):1);
+}

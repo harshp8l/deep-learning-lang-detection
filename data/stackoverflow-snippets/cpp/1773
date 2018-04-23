@@ -1,0 +1,32 @@
+#include <Windows.h>
+#include <iostream>
+#include <string>
+#include <system_error>
+
+std::wstring GetTempDir(std::wstring const& root_dir) {
+    while (true) {
+        ::SYSTEMTIME st{};
+        ::GetSystemTime(&st);
+
+        ::FILETIME ft{};
+        if (!::SystemTimeToFileTime(&st, &ft)) {
+            auto error_code{ ::GetLastError() };
+            throw std::system_error(error_code, std::system_category(),
+                                    ""SystemTimeToFileTime()"");
+        }
+
+        ULARGE_INTEGER ft_uli{ ft.dwLowDateTime, ft.dwHighDateTime };
+        auto dir_name{ std::to_wstring(ft_uli.QuadPart) };
+        auto dir_name_full{ root_dir + dir_name };
+        if (::CreateDirectoryW(dir_name_full.c_str(), nullptr)) {
+            return dir_name_full;
+        }
+        else {
+            auto error_code{ ::GetLastError() };
+            if (error_code != ERROR_ALREADY_EXISTS) {
+                throw std::system_error(error_code, std::system_category(),
+                                        ""CreateDirectoryW()"");
+            }
+        }
+    }
+}

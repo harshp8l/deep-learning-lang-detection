@@ -1,0 +1,43 @@
+DX::ThrowIfFailed(
+    CoInitializeEx( nullptr, COINIT_MULTITHREADED )
+);
+
+Microsoft::WRL::ComPtr<IXAudio2> pXAudio2;
+// Note that only IXAudio2 (and APOs) are COM reference counted
+DX::ThrowIfFailed(
+    XAudio2Create( pXAudio2.GetAddressOf(), 0 )
+);
+
+IXAudio2MasteringVoice* pMasteringVoice = nullptr;
+DX::ThrowIfFailed(
+    pXAudio2->CreateMasteringVoice( &pMasteringVoice )
+);
+
+IXAudio2SourceVoice* pSourceVoice1 = nullptr;
+DX::ThrowIfFailed(
+    pXaudio2->CreateSourceVoice( &pSourceVoice1, &wfx ) )
+    // The default 'pSendList' will be just to the pMasteringVoice
+);
+
+IXAudio2SourceVoice* pSourceVoice2 = nullptr;
+DX::ThrowIfFailed(
+    pXaudio2->CreateSourceVoice( &pSourceVoice2, &wfx) )
+    // Doesn't have to be same format as other source voice
+    // And doesn't have to match the mastering voice either
+);
+
+DX::ThrowIfFailed(
+    pSourceVoice1->SubmitSourceBuffer( &buffer )
+);
+
+DX::ThrowIfFailed(
+    pSourceVoice2->SubmitSourceBuffer( &buffer /* could be different WAV data or not */)
+);
+
+DX::ThrowIfFailed(
+    pSourceVoice1->Start( 0 );
+);
+
+DX::ThrowIfFailed(
+    pSourceVoice2->Start( 0 );
+);

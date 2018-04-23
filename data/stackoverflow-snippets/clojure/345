@@ -1,0 +1,18 @@
+(defn make-timer [sec exit-fn enter5-fn]
+  (let [data (atom [])
+        five-entered? (fn [] (->> @data
+                                  (filter #(= (first %)))
+                                  (map second)
+                                  distinct
+                                  count
+                                  (<= 5)))]
+    (future
+      (loop []
+        (println :tick @data)
+        (if-let [[_ exit-id] (some #(= (first %) :exit) @data)]
+          (future (exit-fn exit-id))
+          (if (five-entered?)
+            (future (enter5-fn))
+            (do (Thread/sleep (* 1000 sec))
+                (recur))))))
+    #(swap! data conj %)))

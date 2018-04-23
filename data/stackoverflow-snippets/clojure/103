@@ -1,0 +1,19 @@
+(require '[clojure.zip :as z])
+
+(loop [curr (z/zipper map? :children (fn [n ch] (assoc n :children (vec ch))) data)]
+  (if (z/end? curr)
+    (z/root curr)
+    (recur (z/next
+            (let [node (z/node curr)]
+              (if (:id node)
+                curr
+                (z/replace curr
+                           (assoc node :id
+                                  (str ""id-"" (rand-int Integer/MAX_VALUE))))))))))
+
+;;=> {:type ""view"", 
+;;    :children [{:type ""view"", :id ""123""} 
+;;               {:type ""view"", 
+;;                :children [{:type ""view"", :id ""id-92807721""}], 
+;;                :id ""id-1357268462""}], 
+;;    :id ""id-803083206""}

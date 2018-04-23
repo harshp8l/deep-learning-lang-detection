@@ -1,0 +1,49 @@
+import functools
+import graphviz as gv
+
+from pathlib import Path
+from waflib import Utils
+
+# Make sure that dot.exe is in your system path. I had to do this as
+# Graphviz (the program, not the package) is installed with conda. I am
+# sure there is a proper way to do this with Waf.
+library_bin = Path(sys.executable).parent / 'Library' / 'bin' / 'graphviz'
+os.environ['PATH'] += str(library_bin) + ';'
+
+
+def make_dot_file(ctx):
+    # Create DAG
+    dag = digraph()
+
+    # Loop over task groups
+    for group in ctx.groups:
+
+        # Loop over tasks
+        for taskgen in group:
+            # Get name and add node for task
+            name = taskgen.get_name()
+            add_nodes(dag, [name])
+
+            # Add nodes for dependencies and edges to task
+            deps = Utils.to_list(getattr(taskgen, 'deps', []))
+            for dep in deps:
+                dep = Path(dep).name
+                add_nodes(dag, [dep])
+                add_edges(dag, [(dep, name)])
+
+            # Add nodes for targets and edges to task
+            targets = Utils.to_list(getattr(taskgen, 'target', []))
+            for target in targets:
+                target = Path(target).name
+                add_nodes(dag, [target])
+                add_edges(dag, [(name, target)])
+
+    # Make the DAG pretty
+    dag = apply_styles(dag, styles)
+
+    # Save DAG
+    dag.render(<output path of graphic>)
+
+def build(bld):
+    # Build stuff ...
+    bld.add_post_fun(make_dot_file)

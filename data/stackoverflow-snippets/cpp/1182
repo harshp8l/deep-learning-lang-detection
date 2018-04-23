@@ -1,0 +1,84 @@
+#include <tuple>
+#include <string>
+#include <iostream>
+#include <type_traits>
+
+template <typename T, typename>
+class StrongType
+ {
+   private:
+      std::string mName;
+      T mValue;
+
+   public:
+      explicit StrongType (std::string n) : mName{std::move(n)}, mValue{}
+       { }
+
+      template <typename U>
+      explicit StrongType (std::string n, U v)
+         : mName{std::move(n)}, mValue{std::forward<U>(v)}
+       { }
+
+      T const & value () const
+       { return mValue; }
+
+      std::string const & name () const
+       { return mName; }
+ };
+
+template <typename ... Ts>
+class AdvTuple
+ {
+   private:
+      std::tuple<Ts...> aTuple;
+
+      template <std::size_t ... Is>
+      auto getTuple (std::index_sequence<Is...> const &) const
+       { return std::make_tuple(std::get<Is>(aTuple).value()...); }
+
+      template <typename F, std::size_t ... Is>
+      auto call (F f, std::index_sequence<Is...> const &) const
+       { return f(std::get<Is>(aTuple).value()...); }
+
+   public:
+      template <typename ... Us>
+      explicit AdvTuple (Us && ... us)
+         : aTuple{std::make_tuple(std::forward<Us>(us)...)}
+       { }
+
+      template <std::size_t i>
+      auto get() const
+       { return std::get<i>(aTuple).value(); }
+
+      auto getTuple () const
+       { return getTuple(std::make_index_sequence<sizeof...(Ts)>{}); }
+
+      template <typename F>
+      auto call(F f) const
+       { return call(f, std::make_index_sequence<sizeof...(Ts)>{}); }
+ };
+
+struct aTag {};
+struct bTag {};
+struct cTag {};
+
+using aType = StrongType<int, aTag>;
+using bType = StrongType<std::string, bTag>;
+using cType = StrongType<int, cTag>;
+
+int main ()
+ {
+   aType a(""a"", 2);
+   bType b(""b"", std::string {""b""});
+   cType c(""c"", 10);
+
+   AdvTuple<aType,bType,cType> t(a,b,c);
+
+   auto nt = t.getTuple();
+   std::cout << std::tuple_size<decltype(nt)>() << ""\n"";
+   std::cout << std::get<0>(nt) << ""\n"";
+
+   t.call([](int, std::string, int){ std::cout << ""Lambda!"" << std::endl; });
+
+   return 0;
+ }

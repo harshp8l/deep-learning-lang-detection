@@ -1,0 +1,18 @@
+REFERENCE ASSEMBLY [Newtonsoft.Json];
+REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats]; 
+
+@trial2 = 
+    EXTRACT jsonString string FROM @""/<your-json-file>.json"" USING Extractors.Tsv(quoting:false);
+
+@cleanUp = SELECT jsonString FROM @trial2 WHERE (!jsonString.Contains(""Part: h"" ) AND jsonString!= ""465}"");
+
+@jsonify = SELECT Microsoft.Analytics.Samples.Formats.Json.JsonFunctions.JsonTuple(jsonString) AS props FROM @cleanUp;
+
+@columnized = SELECT 
+        props[""prop1""] AS prop1,
+        props[""prop2""] AS prop2
+FROM @jsonify;
+
+OUTPUT @columnized
+TO @""/out.csv""
+USING Outputters.Csv();

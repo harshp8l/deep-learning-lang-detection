@@ -1,0 +1,22 @@
+val df_new = df_orig
+ .withColumn(""measurement"", sum(when($""Type""===""Init"",1)).over(Window.orderBy($""rn"")))
+ .withColumn(""pass"", $""rn""===max(when($""Error_Type""===""E"",$""rn"")).over(Window.partitionBy($""measurement"")))
+ .show()
+
++-----+---+----------+----------+-----------+-----+
+| Type| rn|X_ChannelC|Error_Type|measurement| pass|
++-----+---+----------+----------+-----------+-----+
+| Init|  1|        17|         I|          1|false|
+|TypeA|  2|        17|         W|          1|false|
+|TypeA|  3|        17|         E|          1|false|
+|TypeA|  4|        17|         W|          1|false|
+|TypeA|  5|        17|         E|          1| true|
+|TypeA|  6|        17|         W|          1|false|
+| Init|  7|        12|         I|          2|false|
+|TypeB|  8|        12|         W|          2|false|
+|TypeB|  9|        12|         E|          2|false|
+|TypeB| 10|        12|         W|          2|false|
+|TypeB| 11|        12|         W|          2|false|
+|TypeB| 12|        12|         E|          2|false|
+|TypeB| 13|        12|         E|          2| true|
++-----+---+----------+----------+-----------+-----+

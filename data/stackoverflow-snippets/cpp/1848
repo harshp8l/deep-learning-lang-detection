@@ -1,0 +1,67 @@
+#include <iterator>
+#include <memory>
+
+#pragma once
+
+class Stack {
+private:
+    struct ListNode {
+        int content;
+        std::unique_ptr<ListNode> pNext;
+    };
+
+public:
+    Stack() = default;
+    Stack(const Stack&) = delete;
+    Stack(Stack&&) = delete;
+    Stack& operator=(const Stack&) = delete;
+    Stack& operator=(Stack&&) = delete;
+
+    void push(int);
+    int pop();
+
+    class const_iterator {
+    public:
+        using difference_type = std::ptrdiff_t;
+        using value_type = const int;
+        using pointer = const int*;
+        using reference = const int&;
+        using iterator_category = std::forward_iterator_tag;
+
+        const_iterator() = delete;
+        const_iterator(const const_iterator&) = default;
+        const_iterator& operator=(const const_iterator&) = default;
+
+        // Constructor making a const_iterator pointing to a particular
+        // list node.
+        const_iterator(ListNode*);
+
+        // Pre-increment operator, e.g. called by ++i
+        const_iterator& operator++();
+
+        // Post-increment operator, e.g. called by i++
+        const_iterator operator++(int);
+
+        // Deference operator, e.g. called by *i
+        reference operator*() const;
+
+        // Comparison operators
+        bool operator==(const const_iterator&) const;
+        bool operator!=(const const_iterator&) const;
+
+    private:
+        ListNode* pNode;
+
+        friend class Stack;
+    };
+
+    // Accessors to create iterators to start and end of stack.
+    // Note that the stack is traversed from most recent to least
+    // recent entries.  Also note that a pop() operation will invalidate
+    // any iterator referring to the most recent entry of the stack.
+    const_iterator begin() const;
+    const_iterator end() const;
+
+private:
+    std::unique_ptr<ListNode> top;
+};

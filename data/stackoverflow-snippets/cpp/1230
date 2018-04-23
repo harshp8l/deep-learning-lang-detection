@@ -1,0 +1,32 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <Windows.h>
+
+int main()
+{
+    std::string msg = ""ABCD - abcd - 1234"";
+
+    std::vector<INPUT> vec;
+    for(auto ch : msg)
+    {
+        INPUT input = { 0 };
+        input.type = INPUT_KEYBOARD;
+        input.ki.dwFlags = KEYEVENTF_UNICODE;
+        input.ki.wScan = ch;
+        vec.push_back(input);
+
+        input.ki.dwFlags |= KEYEVENTF_KEYUP;
+        vec.push_back(input);
+    }
+
+    //Find a notepad window or another window for send
+    HWND hwnd = FindWindow(""Notepad"", 0);
+    if (hwnd)
+        SetForegroundWindow(hwnd);
+    else
+        std::cout << ""no window!\n"";
+
+    SendInput(vec.size(), vec.data(), sizeof(INPUT));
+    return 0;
+}

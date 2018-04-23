@@ -1,0 +1,23 @@
+CREATE TRIGGER SkipZeroManufacture ON T_Manufacture AFTER INSERT
+AS
+BEGIN
+
+    IF EXISTS (SELECT 'zero record inserted' FROM inserted AS I WHERE I.ManufactureID = 0)
+    BEGIN
+
+        INSERT INTO T_Manufacture (
+            Manufacture,
+            ManufactureDescription)
+        SELECT
+            I.Manufacture,
+            I.ManufactureDescription
+        FROM
+            inserted AS I
+        WHERE
+            i.ManufactureID = 0
+
+        DELETE T_Manufacture WHERE ManufactureID = 0
+
+    END
+
+END

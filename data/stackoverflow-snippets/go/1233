@@ -1,0 +1,121 @@
+package main
+
+import (
+    ""bufio""
+    ""io""
+    ""log""
+    ""os""
+    ""os/signal""
+    ""path/filepath""
+    ""syscall""
+    ""time""
+)
+
+type Watcher struct {
+    Dirs    []DirInfo
+    Ticker  *time.Ticker
+    Stop    chan os.Signal
+    Command chan string
+}
+
+type DirInfo struct {
+    LastMod time.Time
+    Path    string
+}
+
+func New() *Watcher {
+    return &Watcher{
+        Stop:    make(chan os.Signal, 1),
+        Ticker:  time.NewTicker(1 * time.Second),
+        Command: make(chan string),
+    }
+}
+
+func (w *Watcher) addPath(path string, f os.FileInfo) {
+    shouldAppend := true
+    for i, d := range w.Dirs {
+        if d.Path == path {
+            w.Dirs[i].LastMod = f.ModTime()
+            shouldAppend = false
+            break
+        }
+    }
+    if shouldAppend {
+        w.Dirs = append(w.Dirs, DirInfo{f.ModTime(), path})
+    }
+}
+
+func (w *Watcher) List() {
+    if len(w.Dirs) == 0 {
+        log.Println(""Nothing to show"")
+        return
+    }
+
+    for _, d := range w.Dirs {
+        log.Println(d.Path)
+    }
+    return
+}
+
+func (w *Watcher) isNew(path string, f os.FileInfo) bool {
+    for _, d := range w.Dirs {
+        if path == d.Path {
+            t := f.ModTime()
+            return t.After(d.LastMod)
+        }
+    }
+    return true
+}
+
+func (w *Watcher) Sync(tops []string) {
+    for _, top := range tops {
+        err := filepath.Walk(top, func(path string, f os.FileInfo, err error) error {
+            if err != nil {
+                return err
+            }
+            if f.IsDir() && w.isNew(path, f) {
+                w.addPath(path, f)
+            }
+            return nil
+        })
+
+        if err != nil {
+            log.Printf(""Error %v\n"", err)
+        }
+    }
+}
+
+
+func main() {
+    w := New()
+    tops := []string{}
+
+    signal.Notify(w.Stop, syscall.SIGINT, syscall.SIGTERM)
+
+    go func() {
+        s := bufio.NewScanner(os.Stdin)
+
+        for {
+            for s.Scan() {
+                w.Command <- s.Text()
+            }
+        }
+    }()
+
+    for {
+        select {
+        case <-w.Ticker.C:
+            w.Sync(tops)
+        case <-w.Stop:
+            log.Println(""signalled to stop"")
+            w.List()
+            os.Exit(0)
+        case cmd := <-w.Command:
+            switch cmd {
+            case ""list"":
+                w.List()
+            }
+        }
+    }
+
+}

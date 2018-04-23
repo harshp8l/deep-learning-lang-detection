@@ -1,0 +1,32 @@
+ type ReverseProxy struct {
+        ...
+
+        // ModifyResponse is an optional function that
+        // modifies the Response from the backend
+        // If it returns an error, the proxy returns a StatusBadGateway error.
+        ModifyResponse func(*http.Response) error
+    }
+
+
+
+func rewriteBody(resp *http.Response) (err error) {
+    b, err := ioutil.ReadAll(resp.Body) //Read html
+    if err != nil {
+        return  err
+    }
+    err = resp.Body.Close()
+    if err != nil {
+        return err
+    }
+    b = bytes.Replace(b, []byte(""server""), []byte(""schmerver""), -1) // replace html
+    body := ioutil.NopCloser(bytes.NewReader(b))
+    resp.Body = body
+    resp.ContentLength = int64(len(b))
+    resp.Header.Set(""Content-Length"", strconv.Itoa(len(b)))
+    return nil
+}
+
+// ...
+target, _ := url.Parse(""http://example.com"")
+proxy := httputil.NewSingleHostReverseProxy(target)
+proxy.ModifyResponse = rewriteBody

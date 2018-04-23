@@ -1,0 +1,39 @@
+open System
+
+type Operator = 
+| Parse of (string -> int)
+| Unary of (int -> int)
+| Binary of (int -> int -> int)
+| Print of (int -> unit)
+
+type Data =
+| Int of int
+| String of string
+
+type StackContent =
+| Data of Data
+| Operator of Operator
+
+let input = [
+    Data (String ""3"")
+    Operator (Parse Int32.Parse)
+    Data (String ""5"")
+    Operator (Parse Int32.Parse)
+    Operator (Binary (+))
+    Operator (Unary (~-))
+    Operator (Print (printfn ""%d""))]
+
+let eval input =
+    let rec eval = function
+        | Data d :: inputTail, stack -> eval (inputTail, d::stack)
+        | Operator (Parse parse) :: inputTail, String s :: stackTail -> eval (inputTail, Int (parse s) :: stackTail)
+        | Operator (Binary (++)) :: inputTail, Int l :: Int r :: stackTail -> eval (inputTail, Int (l ++ r) :: stackTail)
+        | Operator (Unary (!)) :: inputTail, Int i :: stackTail -> eval (inputTail, Int !i :: stackTail)
+        | Operator (Print print) :: inputTail, Int i :: stackTail ->
+            print i
+            eval (inputTail, stackTail)
+        | [], [] -> ()
+        | input, stack -> failwithf ""the following thing is not properly typed\nInput: %A\Stack: %A"" input stack
+    eval (input,[])
+
+eval input

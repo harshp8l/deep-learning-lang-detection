@@ -1,0 +1,46 @@
+if (!function_exists('mkdir_r')) {
+    /**
+     * create directory recursively
+     * @param $dirName
+     * @param int $rights
+     * @param string $dir_separator
+     * @return bool
+     */
+    function mkdir_r($dirName, $rights = 0744, $dir_separator = DIRECTORY_SEPARATOR) {
+        $dirs = explode($dir_separator, $dirName);
+        $dir = '';
+        $created = false;
+        foreach ($dirs as $part) {
+            $dir .= $part . $dir_separator;
+            if (!is_dir($dir) && strlen($dir) > 0) {
+                $created = mkdir($dir, $rights);
+            }
+        }
+        return $created;
+    }
+}
+
+if (!function_exists('ensure_dir')) {
+    /**
+     * ensure directory exist if not create 
+     * @param $dir_path
+     * @param int $mode
+     * @param bool $use_mask
+     * @param int $mask
+     * @return bool
+     */
+    function ensure_dir($dir_path, $mode = 0744, $use_mask = true, $mask = 0002) {
+        // set mask 
+        $old_mask = $use_mask && $mask != null
+            ? umask($mask)
+            : null;
+        try {
+            return is_dir($dir_path) || mkdir_r($dir_path, $mode);
+        } finally {
+            if ($use_mask && $old_mask != null) {
+                // restore original
+                umask($old_mask);
+            }
+        }
+    }
+}

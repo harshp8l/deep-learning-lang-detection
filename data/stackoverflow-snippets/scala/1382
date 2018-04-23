@@ -1,0 +1,82 @@
+object KryoReadStage {
+  def flow[T](kryoSupport: KryoSupport,
+              `class`: Class[T],
+              serializer: Serializer[_]): Flow[ByteString, immutable.Seq[T], NotUsed] =
+    Flow.fromGraph(new KryoReadStage[T](kryoSupport, `class`, serializer))
+}
+
+final class KryoReadStage[T](kryoSupport: KryoSupport,
+                             `class`: Class[T],
+                             serializer: Serializer[_])
+  extends GraphStage[FlowShape[ByteString, immutable.Seq[T]]] {
+
+  override def shape: FlowShape[ByteString, immutable.Seq[T]] = FlowShape.of(in, out)
+
+  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = {
+    new GraphStageLogic(shape) {
+
+      setHandler(in, new InHandler {
+
+        override def onPush(): Unit = {
+          val bytes =
+            if (previousBytes.length == 0) grab(in)
+            else ByteString.fromArrayUnsafe(previousBytes) ++ grab(in)
+
+          Managed(new Input(new ByteBufferBackedInputStream(bytes.asByteBuffer))) { input =>
+            var position = 0
+            val acc = ListBuffer[T]()
+
+            kryoSupport.withKryo { kryo =>
+              var last = false
+
+              while (!last && !input.eof()) {
+                tryRead(kryo, input) match {
+                  case Some(t) =>
+                    acc += t
+                    position = input.total().toInt
+                    previousBytes = EmptyArray
+                  case None =>
+                    val bytesLeft = new Array[Byte](bytes.length - position)
+
+                    val bb = bytes.asByteBuffer
+                    bb.position(position)
+                    bb.get(bytesLeft)
+
+                    last = true
+                    previousBytes = bytesLeft
+                }
+              }
+
+              push(out, acc.toList)
+            }
+          }
+        }
+
+        private def tryRead(kryo: Kryo, input: Input): Option[T] =
+          try {
+            Some(kryo.readObject(input, `class`, serializer))
+          } catch {
+            case _: KryoException => None
+          }
+
+      })
+
+      setHandler(out, new OutHandler {
+        override def onPull(): Unit = {
+          pull(in)
+        }
+      })
+
+      private val EmptyArray: Array[Byte] = Array.empty
+
+      private var previousBytes: Array[Byte] = EmptyArray
+
+    }
+  }
+
+  override def toString: String = ""KryoReadStage""
+
+  private lazy val in: Inlet[ByteString] = Inlet(""KryoReadStage.in"")
+  private lazy val out: Outlet[immutable.Seq[T]] = Outlet(""KryoReadStage.out"")
+
+}

@@ -1,0 +1,32 @@
+-- {1} Add a chair: the chair_id must exist in PRODUCTS.
+insert into chairs ( id, color ) values ( 1000, 'maroon' ) ;
+-- ORA-02291: integrity constraint ... violated - parent key not found
+
+-- Each chair needs an entry in PRODUCTS first:
+insert into products ( name, availability, chair_id ) 
+  values ( 'this is a chair', 'in stock', 1000 ) ;
+insert into chairs ( id, color ) values ( 1000, 'maroon' ) ;
+-- okay
+
+-- {2} We cannot add another chair that has the same chair_id. Good.
+insert into products ( chair_id ) values ( 1000 ) ;
+-- ORA-00001: unique constraint ... violated
+
+
+-- {3} Add a table.
+insert into products ( name, availability, table_id ) 
+  values ( 'this is a table', 'unavailable', 1000 ) ; 
+-- okay
+insert into tables ( id, size_ ) values ( 1000, 60 ) ;
+
+-- {4} Is it possible to add another table, with the same table_id? No. Good.
+insert into tables ( id, size_ ) values ( 1000, 60 ) ;
+-- ORA-00001: unique constraint ... violated
+insert into products ( name, availability, table_id ) 
+  values ('this is a table', 'unavailable', 1000 ) ; 
+-- ORA-00001: unique constraint ... violated
+
+-- {5} We cannot add something that is a chair _and_ a table (at the same time).
+insert into products ( name, availability, table_id, chair_id )
+  values ( 'hybrid', 'awaiting delivery', 2000, 2000 ) ;
+-- ORA-02290: check constraint ... violated

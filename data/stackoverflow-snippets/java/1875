@@ -1,0 +1,22 @@
+private SqlSession createSqlSession(String id) {
+
+        TransactionFactory transactionFactory = new JdbcTransactionFactory();
+        Environment environment = new Environment(id, transactionFactory, dataSourceMap.get(id));
+        Configuration configuration = new Configuration(environment);
+        configuration.addMapper(SaleInfoMapper.class);
+
+        return new SqlSessionTemplate(sqlSessionFactoryBuilder.build(configuration));
+    }
+
+    @Bean
+    public Map<String, SqlSession> sqlSessionMap() {
+
+        Map<String, SqlSession> sqlSessionMap = new HashMap<>();
+
+        for ( String id : dataSourceMap.keySet() )
+        {
+            sqlSessionMap.put(id, createSqlSession(id));
+        }
+
+        return sqlSessionMap;
+    }

@@ -1,0 +1,23 @@
+MongoDatabase.db[collection].aggregate([
+    { ""$match"": { ""RECORD_DATA.FIELD_TYPE"": ""Primary"" } },
+    { ""$project"": {
+        ""DATA"": {
+            ""$arrayElemAt"": [
+                {
+                    ""$map"": {
+                        ""input"": {
+                            ""$filter"": {
+                                ""input"": ""$RECORD_DATA"",
+                                ""as"": ""record"",
+                                ""cond"": { ""$eq"": [""$$record.FIELD_TYPE"", ""Primary""] }
+                            }
+                        },
+                        ""as"": ""el"",
+                        ""in"": ""$$el.DATA""
+                    }
+                },
+                0
+            ]
+        }
+    } }
+])

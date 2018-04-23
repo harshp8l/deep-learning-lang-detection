@@ -1,0 +1,88 @@
+#include <utility>
+template <typename Data>
+class SLList
+{
+public:
+    class Node
+    {
+    public:
+        Node(const Data &rDATA, Node *const pNEXT = nullptr)
+            : mData(rDATA), mNext(pNEXT)
+        {
+        }
+
+        Node(const Node &rSRC)
+            : mData(rSRC.mData), mNext(nullptr)
+        {
+        }
+
+        Node &operator=(const Node &rRHS)
+        {
+            if (&rRHS != this)
+                mData = rRHS.mData;
+            return *this;
+        }
+
+    private:
+        Data mData;
+        Node *mNext;
+
+        friend class SLList<Data>;
+    };
+
+    SLList()
+        : mHead(nullptr), mTail(nullptr)
+    {
+    }
+
+    SLList(const SLList &rSRC)
+        : mHead(nullptr), mTail(nullptr)
+    {
+        Node *pNode = rSRC.mHead;
+        while (pNode)
+        {
+            pushBack(pNode->mData);
+            pNode = pNode->mNext;
+        } 
+    }
+
+    SLList &operator=(const SLList &rRHS)
+    {
+        if (&rRHS != this)
+        {
+            SLList temp(rRHS);
+            std::swap(mHead, temp.mHead);
+            std::swap(mTail, temp.mTail);
+        }
+        return *this;
+    }
+
+    ~SLList()
+    {
+        clear();
+    }
+
+    void clear()
+    {
+        Node *pNode = mHead;
+        mHead = mTail = nullptr;
+        while (pNode)
+        {
+            Node *pNext = pNode->mNext;
+            delete pNode;
+            pNode = pNext;
+        }
+    }
+
+    void pushBack(const Data &rDATA)
+    {
+        Node *pNode = new Node(rDATA);
+        if (!mHead) mHead = pNode;
+        if (mTail) mTail->mNext = pNode;
+        mTail = pNode;
+    }
+
+private:
+    Node *mHead;
+    Node *mTail;
+};

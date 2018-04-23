@@ -1,0 +1,25 @@
+//should know the distinct w to check for the output
+val distinctListOfW = df.select(""w"").distinct().collect.map(row => row.getAs[String](0))
+
+//selecting p ans s of any random w (first here) to check of p and s repetion across all w collected above
+val firstW = distinctListOfW(0)
+val p_and_s_of_first_w = df.filter($""w"" === firstW).select(""p"", ""s"").collect().map(row => (row.getAs[String](0), row.getAs[String](1)))
+
+//creating empty dataframe for merging sebsequent dataframes which matches the logic
+val emptyDF = Seq((""temp"", ""temp"", ""temp"")).toDF(""w"", ""p"", ""s"")
+
+//fold left on the p and s collected of any random w and if the condition of count of distinct w matches with p and s then merge else return the previous df
+val finaldf = p_and_s_of_first_w.foldLeft(emptyDF){(tempdf, ps) => {
+  val filtered = df.filter($""p"" === ps._1 && $""s"" === ps._2)
+  val tempdistinctListOfW = filtered.select(""w"").distinct().collect.map(row => row.getAs[String](0))
+
+  if(filtered.count() > 0 && (tempdistinctListOfW.length == distinctListOfW.length)){
+    tempdf.union(filtered)
+  }
+  else{
+    tempdf
+  }
+}}.filter($""w"" =!= ""temp"")
+
+// this is the final required result
+finaldf.show(false)

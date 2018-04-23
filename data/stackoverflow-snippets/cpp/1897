@@ -1,0 +1,30 @@
+template<class T, class M=std::mutex, template<class...>class S=std::unique_lock, template<class...>class U=std::unique_lock>
+struct mutex_protected {
+  template<class F>
+  auto read( F&& f ) const
+  -> typename std::result_of<F&&(T const&)>::type
+  {
+    auto l = lock();
+    return std::forward<F>(f)(data);
+  }
+  template<class F>
+  auto write( F&& f ) 
+  -> typename std::result_of<F&&(T&)>::type
+  {
+    auto l = lock();
+    return std::forward<F>(f)(data);
+  }
+  mutex_protected(mutex_protected&&)=delete;
+  mutex_protected& operator=(mutex_protected&&)=delete;
+
+  template<class...Args>
+  mutex_protected( Args&&...args ):
+    data( std::forward<Args>(args)... )
+  {}
+private:
+  mutable M m;
+  T data;
+
+  U<M> lock() { return U<M>(m); }
+  S<M> lock() const { return S<M>(m); }
+};

@@ -1,0 +1,51 @@
+<?php
+function getFriends($userID){
+  global $mysql; # get friends of user id
+  $friends = $mysql->prepare(""SELECT DISTINCT uid1, uid2 FROM users_friendships WHERE uid1 = ? OR uid2 = ?"");
+  $friends->bind_param(""ii"", $userID, $userID);
+  $friends->execute();
+  $friends->store_result();
+  if(($numFriends = $friends->num_rows) > 0){
+    $friendsArr = array();
+    $friends->bind_result($friendID1, $friendID2);
+    while($friends->fetch()){
+     if($friendID1 == $userID && !in_array($friendID2, $friendsArr)){
+      $friendsArr[] = $friendID2;
+     } else if($friendID2 == $userID && !in_array($friendID1, $friendsArr)){
+      $friendsArr[] = $friendID1;
+     }
+    }
+    $friends->close();
+    return $friendsArr; 
+  } else { 
+    return false;
+  }
+} // function end
+
+# $myFriends used to store original friendIDs of you, plus all your friend's friends after. Only uniques found... 
+if(($myFriends = getFriends($myid)) !== false){ // if array has friend ids, get their friend ids 
+  $numFriends = count($myFriends);
+  $otherFriends = array(); // array for friends of friends
+  for($loopFriends = 0; $loopFriends < $numFriends; $loopFriends++){
+    if(($theirFriends = getFriends($myFriends[$loopFriends])) !== false){ # their friend has friends... 
+      $numTheir = count($theirFriends);
+      for($loopTheir = 0; $loopTheir < $numTheir; $loopTheir++){  // loop through their friends 
+        if(!in_array($theirFriends[$loopTheir], $otherFriends) !== false){ // friend id NOT in other friends
+          $otherFriends[] = $theirFriends[$loopTheir]; // add their friend to otherfriends 
+        }
+      } // loop through their friends
+    } // their friend has friends
+  } // loop my friends
+
+  $numOthers = count($otherFriends);
+  for($loopOthers = 0; $loopOthers < $otherFriends; $loopOthers++){
+    if(!in_array($otherFriends[$loopOthers], $myFriends) !== false){
+      $myFriends[] = $otherFriends[$loopOthers]; # add their friend to the array of all friends
+    }
+  }
+
+} else {
+  // you have no friends 
+}
+
+?>

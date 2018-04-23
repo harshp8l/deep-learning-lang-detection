@@ -1,0 +1,20 @@
+SELECT No,Code,Stats FROM
+(SELECT No,Code,Stats,
+  Case when @Code = t.Code Then
+            Case when @stats != t.stats  Then
+                 @DenseRank := @DenseRank + 1
+            ELSE
+                 @DenseRank := 1
+            END
+   Else
+      @DenseRank := 1 
+   END as DenseRank,
+  @Code :=t.code as VarCode,
+  @stats :=t.stats as varstatus
+  FROM Table1 t join
+  (Select @DenseRank := 1,@Code := '',@stats := '' )r
+Order BY CODE,Stats DESC)
+AS T1
+WHERE
+DenseRank=1
+Order BY CODE,Stats DESC;

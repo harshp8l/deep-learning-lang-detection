@@ -1,0 +1,14 @@
+(defn string->semantic-version [version-string]
+  ""Create map representing the given version string. Returns nil if the
+  string does not follow guidelines setforth by Semantic Versioning 2.0.0,
+  http://semver.org/""
+  ;; <MajorVersion>.<MinorVersion>.<PatchVersion>[-<Qualifier>][-SNAPSHOT]
+  (if-let [[_ major minor patch qualifier snapshot]
+           (re-matches
+            #""(\d+)\.(\d+)\.(\d+)(?:-(?!SNAPSHOT)([^\-]+))?(?:-(SNAPSHOT))?""
+            version-string)]
+    (->> [major minor patch]
+         (map #(Integer/parseInt %))
+         (zipmap [:major :minor :patch])
+         (merge {:qualifier qualifier
+                 :snapshot snapshot}))))

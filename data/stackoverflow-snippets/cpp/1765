@@ -1,0 +1,53 @@
+#include <vector>
+#include <map>
+#include <algorithm>
+
+namespace Solution3
+{
+  template<class T>
+  struct CompareDeref
+  {
+    bool operator()( const T& a, const T& b ) const
+    { return *a < *b; }
+  };
+
+
+  template<class T, class U>
+  struct Pair2nd
+  {
+    const U& operator()( const std::pair<T,U>& a ) const
+    { return a.second; }
+  };
+
+  template<class IterIn, class IterOut>
+  void sort_idxtbl( IterIn first, IterIn last, IterOut out )
+  {
+    std::multimap<IterIn, int, CompareDeref<IterIn> > v;
+    for( int i=0; first != last; ++i, ++first )
+      v.insert( std::make_pair( first, i ) );
+    std::transform( v.begin(), v.end(), out,
+                Pair2nd<IterIn const,int>() );
+  }
+}
+
+#include <iostream>
+
+int main()
+{
+  int ai[10] = { 15,12,13,14,18,11,10,17,16,19 };
+
+  std::cout << ""#################"" << std::endl;
+  std::vector<int> aidxtbl( 10 );
+
+
+  // use another namespace name to test a different solution
+  Solution3::sort_idxtbl( ai, ai+10, aidxtbl.begin() );
+
+
+  for( int i=0; i<10; ++i )
+  std::cout << ""i="" << i
+            << "", aidxtbl[i]="" << aidxtbl[i]
+            << "", ai[aidxtbl[i]]="" << ai[aidxtbl[i]]
+            << std::endl;
+  std::cout << ""#################"" << std::endl;
+}

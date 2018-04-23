@@ -1,0 +1,31 @@
+CREATE FUNCTION getNextFewCharacters(
+                    @sourceText             VARCHAR(1000), 
+                    @subText                VARCHAR(1000), 
+                    @startPosAfterSubText   INT, 
+                    @endPosAfterSubText     INT)
+RETURNS VARCHAR(1000)
+AS BEGIN
+    DECLARE @subTextLength      INT;
+    DECLARE @subTextStartPos    INT;
+    DECLARE @subTextEndPos      INT;
+    DECLARE @returnTextStartPos INT;
+    DECLARE @returnTextLength   INT;
+    DECLARE @returnText         VARCHAR(1000);
+
+    SET @subTextLength      = LEN(@subText);
+    SET @subTextStartPos    = CHARINDEX(@subText, @sourceText, 1);
+
+    -- if sub text is not found in the source text
+    -- consider that the sub text ended just before the start of the source text
+    IF @subTextStartPos = 0
+        SET @subTextEndPos = 0
+    ELSE 
+        SET @subTextEndPos = @subTextStartPos + @subTextLength -1
+
+    SET @returnTextStartPos = @subTextEndPos + @startPosAfterSubText;
+    SET @returnTextLength   = @endPosAfterSubText - @startPosAfterSubText + 1;
+
+    SET @returnText         = SUBSTRING(@sourceText, @returnTextStartPos, @returnTextLength);
+
+    RETURN @returnText;
+END

@@ -1,0 +1,18 @@
+sealed trait Event {
+  def fold[X]( withSomeEvent: String => X,
+               withOtherEvent: String => X ): X
+}
+
+object Event {
+  private case class SomeEvent(msg: String) extends Event {
+    def fold[X]( withSomeEvent: String => X,
+                 withOtherEvent: String => X ): X = withSomeEvent(msg)
+  }
+  private case class OtherEvent(code: String) extends Event {
+    def fold[X]( withSomeEvent: String => X,
+                 withOtherEvent: String => X ): X = withOtherEvent(code)
+  }
+
+  def someEvent(msg: String): Event = SomeEvent(msg)
+  def otherEvent(code: String): Event = OtherEvent(code)
+}

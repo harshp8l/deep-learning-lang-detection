@@ -1,0 +1,26 @@
+// true only if T is a non-const lvalue reference
+template<typename T>
+using StringReplaceIsInPlace = std::conditional_t<std::is_lvalue_reference<T>::value && !std::is_const<std::remove_reference_t<T>>::value, std::true_type, std::false_type>;
+
+// lvalue, lvalue reference, rvalue reference, 
+template<typename Str, typename = std::enable_if_t<StringReplaceIsInPlace<Str>::value>>
+Str StringReplace(
+    Str&& str,
+    const std::remove_reference_t<Str>& from,
+    const std::remove_reference_t<Str>& to
+) {
+    return std::forward<Str>(str); // forward might be redundant, as Str is always an lvalue reference.
+}
+
+// const lvalue, const lvalue reference, rvalue, const rvalue, const rvalue reference, string literal
+// std::decay ensures that return is by-value and compiler can use RVO
+template<typename Str, typename = std::enable_if_t<!StringReplaceIsInPlace<Str>::value>>
+std::decay_t<Str> StringReplace(
+    Str&& str,
+    const std::remove_reference_t<Str>& from,
+    const std::remove_reference_t<Str>& to
+) {
+    std::decay_t<Str> mutableStr{std::forward<Str>(str)}; // move construct for non-const rvalues, otherwise copy-construct
+    StringReplace(mutableStr, from, to);
+    return mutableStr; // RVO-compatible
+}

@@ -1,0 +1,37 @@
+package main
+
+import (
+    ""bufio""
+    ""fmt""
+    ""io""
+    ""os""
+)
+
+/* Function to run the groutine to run for stdin read */
+func read(r io.Reader) <-chan string {
+    lines := make(chan string)
+    go func() {
+        defer close(lines)
+        scan := bufio.NewScanner(r)
+        for scan.Scan() {
+            s := scan.Text()
+            lines <- s
+        }
+    }()
+    return lines
+}
+
+func main() {
+    mes := make(chan string, 1)
+    ch := read(os.Stdin) //Reading from Stdin
+    go func() {
+        for m := range ch {
+            fmt.Println(""Message to channel 2"")
+            mes <- m
+        }
+    }()
+    for anu := range mes {
+        fmt.Println(""Message to stdout"")
+        fmt.Println(anu) //Writing to Stdout
+    }
+}

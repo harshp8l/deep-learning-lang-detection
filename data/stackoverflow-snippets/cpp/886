@@ -1,0 +1,39 @@
+template<class T, std::size_t N>
+struct slotted_consumer {
+  bool consume( std::size_t I, sink<T> sink ) {
+    std::optional<T> data;
+    std::condition_variable cv;
+    std::mutex m;
+    bool worked = slots.produce(
+      {
+        I,
+        [&](auto&& t){
+          {
+            std::unique_lock<std::mutex> l(m);
+            data.emplace(std::move(t));
+          }
+          cv.notify_one();
+        }
+      }
+    );
+    if (!worked) return false;
+    std::unique_lock<std::mutex> l(m);
+    cv.wait(l, [&]()->bool{
+      return (bool)data;
+    });
+    sink( std::move(*data) );
+    return true;
+  }
+  bool produce( T t ) {
+    return slots.consume(
+        [&](auto&& f) {
+            f.t( std::move(t) );
+        }
+    );
+  }
+  void finish() {
+      slots.finish();
+  }
+private:
+  async_slots< sink<T>, N > slots;
+};

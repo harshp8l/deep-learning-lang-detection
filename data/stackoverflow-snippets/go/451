@@ -1,0 +1,58 @@
+func FetchTickerData() (*gjson.Result, *gjson.Result, error) {
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+
+    var result1, result2 *gjson.Result
+    var err1, err2 error
+    var wg sync.WaitGroup
+
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        result1, err1 := fetchPriceTicket(ctx)
+        if err1 != nil {
+            cancel() // Abort the context, so the other function can abort early
+        }()
+    }
+
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        result2, err2 := fetchWhatToMine(ctx)
+        if err2 != nil {
+            cancel() // Abort the context, so the other function can abort early
+        }
+    }()
+
+    wg.Wait()
+
+    // if err1 == context.Canceled, that means the second goroutine had
+    // an error and aborted the first goroutine, so return err2.
+    // If err1 == nil, err2 may still be set, so return it in this case
+    // as well.
+    if err1 == context.Canceled || err1 == nil {
+        return result1, result2, err2
+    }
+    return result1, result2, err1
+}
+
+func fetchPriceTicket(ctx context.Context) (*gjson.Result, error) {
+    req, err := http.NewRequest(http.MethodGet, ""https://api.coinmarketcap.com/v1/ticker/"", nil)
+    if err != nil {
+        return nil, err
+    }
+
+    req = req.WithContext(ctx)
+    resp, err := client.Do(req)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return nil, err
+    }
+    json := gjson.GetBytes(body, """")
+    return &json, nil
+}

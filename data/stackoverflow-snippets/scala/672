@@ -1,0 +1,20 @@
+val patDF = Seq(
+  (1001, ""Ah Teck"", ""1991-12-31"", ""2012-01-20""),
+  (1002, ""Kumar"", ""2011-10-29"", ""2012-09-20""),
+  (1003, ""Ali"", ""2011-01-30"", ""2012-10-21"")
+)toDF(""patientID"", ""name"", ""dateOtBirth"", ""lastVisitDate"")
+
+patDF.createOrReplaceTempView(""patTable"")
+
+val result1 = spark.sqlContext.sql(""""""
+  select * from patTable where to_timestamp(lastVisitDate, 'yyyy-MM-dd')
+    between '2012-09-15' and current_timestamp() order by lastVisitDate
+"""""")
+
+result1.show
+// +---------+-----+-----------+-------------+
+// |patientID| name|dateOtBirth|lastVisitDate|
+// +---------+-----+-----------+-------------+
+// |     1002|Kumar| 2011-10-29|   2012-09-20|
+// |     1003|  Ali| 2011-01-30|   2012-10-21|
+// +---------+-----+-----------+-------------+

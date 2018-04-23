@@ -1,0 +1,60 @@
+#include ""conio.h""
+#include <thread>
+#include <mutex>
+#include <queue>
+#include <chrono>
+#include <iostream>
+#include <condition_variable>
+
+using namespace std;
+
+mutex smtx;
+condition_variable cvAdd;
+bool running ;
+queue<int> buffer;
+
+void ProducerThread(){
+    static int data = 0;
+    while(running){
+        unique_lock<mutex> lock(smtx);
+        if( !running) return;
+        buffer.push(data++);
+        lock.unlock();
+        cvAdd.notify_one();
+        this_thread::sleep_for(chrono::milliseconds(300));
+    }
+}
+
+void ConsumerThread(){
+
+     while(running){
+
+        unique_lock<mutex> lock(smtx);
+        cvAdd.wait(lock,[](){ return !running || !buffer.empty(); });
+         if( !running) return;
+        while( !buffer.empty() )
+        {
+            auto data = buffer.front();
+            buffer.pop();
+            cout << data <<"" \n"";
+
+            this_thread::sleep_for(chrono::milliseconds(300)); 
+        }                
+
+     }
+
+}
+
+int main()
+{
+    running = true;
+    thread producer = thread([](){ ProducerThread(); }); 
+    thread consumer = thread([](){ ConsumerThread(); });
+
+    while(!getch())
+    { }    
+
+    running = false;
+    producer.join();
+    consumer.join();  
+}

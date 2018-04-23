@@ -1,0 +1,15 @@
+[<Property(QuietOnSuccess = true, MaxTest=10000)>]
+let ``moving checker retains set count`` () =
+    gen {
+        let! piece = Arb.generate<Piece>
+        let! destination = Arb.generate<Space>
+
+        let! otherPositions = Arb.generate<Space list>
+        let! positions =
+            Occupied piece :: destination :: otherPositions |> Gen.shuffle
+
+        let! status = Arb.generate<Status>
+        return piece, destination, positions |> Array.toList, status }
+    |> Arb.fromGen
+    |> Prop.forAll
+    // ... the rest of the test goes here...

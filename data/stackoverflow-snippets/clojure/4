@@ -1,0 +1,13 @@
+(def filename ""mockorderDatabase.dat"")
+(def database (atom (try
+                        (clojure.edn/read-string (slurp filename))
+                        (catch Exception e []))))
+
+(require '[com.rpl.specter :refer :all])
+
+(defn change-order [*database id productid amount desc]
+    (transform [ATOM ALL (comp (partial = id) :orderid)]
+               #(assoc % :productid productid :amount amount :description desc)
+               *database))
+
+(prn (change-order database 0 111 222 ""XXXX-YYYY""))

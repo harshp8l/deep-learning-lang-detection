@@ -1,0 +1,37 @@
+type MultiReaderBuffer struct {
+    mu  sync.RWMutex
+    buf []byte
+}
+
+func (b *MultiReaderBuffer) Write(p []byte) (n int, err error) {
+    if len(p) == 0 {
+        return 0, nil
+    }
+    b.mu.Lock()
+    b.buf = append(b.buf, p...)
+    b.mu.Unlock()
+    return len(p), nil
+}
+
+func (b *MultiReaderBuffer) NewReader() io.Reader {
+    return &mrbReader{mrb: b}
+}
+
+type mrbReader struct {
+    mrb *MultiReaderBuffer
+    off int
+}
+
+func (r *mrbReader) Read(p []byte) (n int, err error) {
+    if len(p) == 0 {
+        return 0, nil
+    }
+    r.mrb.mu.RLock()
+    n = copy(p, r.mrb.buf[r.off:])
+    r.mrb.mu.RUnlock()
+    if n == 0 {
+        return 0, io.EOF
+    }
+    r.off += n
+    return n, nil
+}

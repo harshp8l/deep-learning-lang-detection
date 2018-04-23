@@ -1,0 +1,12 @@
+(->> data
+     (map (juxt ffirst (comp first #(keep :meat-balance %) val first)))
+     (sort-by first)
+     (partition-by #(-> % second neg?))
+     (filter #(-> % first second neg?))
+     (map (fn [neg-run]
+           (let [[start-date _] (first neg-run)
+                 [end-date end-value] (last neg-run)]
+             {:period-start start-date
+              :period-end end-date
+              :end-period-balance end-value})))
+;;=> [{:end-period-balance -70, :period-start 2007-08-06, :period-end 2007-08-07 }]

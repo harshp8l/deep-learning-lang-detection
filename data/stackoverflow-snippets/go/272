@@ -1,0 +1,40 @@
+package main
+
+import(
+    ""errors""
+    ""flag""
+    ""github.com/jrefior/run"" // update this path for your filesystem
+)
+
+func main() {
+    // do something to get configuration values
+    portFlag := flag.Int(""p"", 0, ""Override default listen port"")
+    logLevelFlag := flag.Int(""l"", 0, ""Override default log level"")
+    flag.Parse()
+
+    // put your runner options here
+    runnerOpts := make([]func(*run.Runner) error, 0)
+
+    // with flags, we're not sure if port was set by flag, so test
+    if *portFlag > 0 {
+        runnerOpts = append(runnerOpts, func(runner *run.Runner) error {
+            if *portFlag < 1024 {
+                return errors.New(""Ports below 1024 are privileged"")
+            }
+            runner.Port = *portFlag
+            return nil
+        })
+    }
+    if *logLevelFlag > 0 {
+        runnerOpts = append(runnerOpts, func(runner *run.Runner) error {
+            if *logLevelFlag > 8 {
+                return errors.New(""The maximum log level is 8"")
+            }
+            runner.LogLevel = *logLevelFlag
+            return nil
+        })
+    }
+    // other configuration if applicable
+    runner := run.NewRunner(runnerOpts...)
+    runner.Run()
+}

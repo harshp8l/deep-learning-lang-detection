@@ -1,0 +1,37 @@
+require 'benchmark'
+
+string = 'ruby'
+@n = 10**7
+
+Benchmark.bm(20) do |x|
+  @x = x
+  def report(name, &block)
+    @x.report(name) {
+      @n.times(&block)
+    }
+  end
+  report('toro2k') {
+    string.size.times.collect { |i| string[0..i] }
+  }
+  report('marek_lipka') {
+    (0...(string.length)).map{ |i| string[0..i] }
+  }
+  report('jorg_w_mittag') {
+    string.chars.inject([[], '']) { |(res, memo), c| 
+      [res << memo += c, memo] 
+    }.first
+  }
+  report('jorg_w_mittag_2') {
+    acc = ''
+    string.chars.map {|c| acc += c }
+  }
+  report('stefan') {
+    Array.new(string.size) { |i| string[0..i] }
+  }
+  report('stefanpochmann') {
+    (1..string.size).map { |i| string[0, i] }
+  }
+  report('stefanpochmann 2') {
+    Array.new(string.size) { |i| string[0, i+1] }
+  }
+end

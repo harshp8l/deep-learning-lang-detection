@@ -1,0 +1,22 @@
+(ns tst.demo.core
+  (:use tupelo.test)
+  (:require [tupelo.core :as t]
+            [clojure.string :as str] ))
+(def text
+ ""I;am;a;line;
+  This;is;another;one
+  Followed;by;this;"")
+
+(def tmp-file-name ""/tmp/lines.txt"")
+
+(dotest
+  (spit tmp-file-name text) ; write it to a tmp file
+  (let [lines       (str/split-lines (slurp tmp-file-name))
+        result      (for [line lines]
+                      (for [word (str/split line #"";"")]
+                        (str/trim word)))
+        result-flat (flatten result)]
+(is= result
+  [[""I"" ""am"" ""a"" ""line""]
+   [""This"" ""is"" ""another"" ""one""]
+   [""Followed"" ""by"" ""this""]])

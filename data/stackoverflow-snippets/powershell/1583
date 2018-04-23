@@ -1,0 +1,29 @@
+cd $home
+dotnet new classlib --name psmodule
+cd .\psmodule
+dotnet add package PowerShellStandard.Library --version 3.0.0-preview-01
+Remove-Item .\Class1.cs
+@'
+using System.Management.Automation;
+
+namespace PSCmdletExample
+{
+    [Cmdlet(""Get"", ""Foo"")]
+    public class GetFooCommand : PSCmdlet
+    {
+        [Parameter]
+        public string Name { get; set; } = string.Empty;
+
+        protected override void EndProcessing()
+        {
+            this.WriteObject(""Foo is "" + this.Name);
+            base.EndProcessing();
+        }
+    }
+}
+'@ | Out-File GetFooCommand.cs -Encoding UTF8
+
+dotnet build
+cd .\bin\Debug\netstandard2.0\
+ipmo .\psmodule.dll
+get-foo

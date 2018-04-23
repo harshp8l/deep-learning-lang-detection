@@ -1,0 +1,27 @@
+val string =
+  ""fisrt_arg, some_foo(arg1, foo2(arg1, arg2, foo3()),  arg3), third_arg""
+
+val result = (string :+ ',')
+// The accumulator of foldLeft is a tuple  (previous splits,
+// current split, nbr of opened parentheses)
+  .foldLeft(List[String](), List[Char](), 0) {
+    // Opening of parenthesis (might be the first opening or not) =>
+    // increment nbr of opened parentheses to stop splitting:
+    case ((splits, currSplit, openPar), '(') =>
+      (splits, '(' :: currSplit, openPar + 1)
+    // Closing of parenthesis (might bring us back to 0, in which case
+    // we can start splitting again):
+    case ((splits, currSplit, openPar), ')') =>
+      (splits, ')' :: currSplit, openPar - 1)
+    // ',' (split char) and if the nbr of opened parentheses is 0 =>
+    // we can split!
+    case ((splits, currSplit, 0), ',') =>
+      (currSplit.reverse.mkString :: splits, Nil, 0)
+    // In any other case, we just add the new char to the current split:
+    case ((splits, currSplit, openPar), char) =>
+      (splits, char :: currSplit, openPar)
+  }
+  ._1
+  .reverse
+
+result.foreach(println)

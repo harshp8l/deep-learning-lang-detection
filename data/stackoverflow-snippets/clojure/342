@@ -1,0 +1,32 @@
+(ns so43769408
+  (:require [ring.adapter.jetty :as jetty]
+            [clojure.java.io :as io]
+            [ring.util.response :as response]
+            [ring.core.protocols :as protocols])
+  (:import (java.io OutputStream)
+           (java.util.concurrent LinkedBlockingQueue)))
+
+(extend-protocol protocols/StreamableResponseBody
+  LinkedBlockingQueue
+  (write-body-to-stream [output-queue _ ^OutputStream output-stream]
+    (with-open [out (io/writer output-stream)]
+      (loop [chunk (.take output-queue)]
+        (when-not (= chunk ::EOF)
+          (.write out (str chunk))
+          (.flush out)
+          (recur (.take output-queue)))))))
+
+
+(defn send-stuff [request]
+  (response/response
+    (let [output-queue (LinkedBlockingQueue.)]
+      (future
+        (.put output-queue ""start\n"")
+        (Thread/sleep 1000)
+        (.put output-queue ""end\n"")
+        (.put output-queue ::EOF))
+      output-queue)))
+
+(comment
+  (def server (jetty/run-jetty #'send-stuff {:port 8888 :join? false}))
+  (.stop server))

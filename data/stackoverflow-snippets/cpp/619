@@ -1,0 +1,37 @@
+#include <iostream>
+#include <regex>
+using namespace std;    
+int main (int argc, const char * argv[]) {
+std::string test = R""(
+""People""
+{
+    ""Person 1""
+    {
+        ""age""       ""34""
+        ""name""      ""John""
+        ""gender""    ""male""
+        ""skills""
+        {
+            ""skill 1""   ""Intelligent""
+            ""skill 2""   ""Wise""
+            ""skill 3""   ""Buff as a bear!""
+        }
+    }
+    ""Person 2""
+    {
+        ""age""       ""25""
+        ""name""      ""Jamie""
+        ""gender""    ""helicopter""
+    }
+}
+)"";
+    regex reg(R""((""[^""]+"")\s+(""[^""]+""))"");
+    test = std::regex_replace(test, reg, ""$1:$2,"");
+    regex reg2(R""((?:\A|\n)\s*(""[^""]+"")\s*(\n|\Z))"");
+    test = std::regex_replace(test, reg2, ""$1:"");
+    regex reg3(R""(}\s*(""[^""]+""):\s*\{)"");
+    test = std::regex_replace(test, reg3, ""},\n$1: {"");
+    regex reg4(R""(,\s*})"");
+    test = std::regex_replace(test, reg4, ""}"");
+    cout << ""{"" << test << ""}"" << endl;
+}

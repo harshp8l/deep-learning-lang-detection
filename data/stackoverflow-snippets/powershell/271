@@ -1,0 +1,29 @@
+#Get list of cserver names from file
+$Servers = Get-Content -Path  serverlist.txt
+#Prompt user foe credentials
+$Cred = Get-Credential 
+
+foreach ($Svr in $Servers)
+{
+    #path to share (\\ServerName\Admin$)
+    $Path = '\\' + $Svr + '\Admin$'
+
+    Try
+    {
+        #Map admin share as PS Drive (NOT visable in the GUI) 
+        #ErrorAction stop will jump to catch block if the connection is unsuccessfull
+        New-PSDrive -Name TEST -PSProvider FileSystem -Root $Path  -Credential $Cred -ErrorAction Stop
+
+        #Success Message
+        Write-Output ""Connection Successful $Svr""
+
+        #Remove drive before next loop
+        Remove-PSDrive -Name TEST
+    }
+
+    Catch
+    {
+        #Error message if connection fails
+        Write-Warning -Message ""Connect failed $Svr""
+    }
+}

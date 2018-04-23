@@ -1,0 +1,71 @@
+import java.nio._
+import java.io._
+import scala.annotation.tailrec
+import scala.util.{Try, Success, Failure}
+
+object FloatBigEndialLittleEndian {
+    val floatSize: Int = java.lang.Float.SIZE / 8
+
+    def main(args: Array[String]): Unit = {
+        println(s""Float size: $floatSize"")
+        // floats in little endian (1, 2, 3, 4, 5)
+        val littleEndians = Array[Int](0x0000803f, 0x00000040, 
+                                       0x00004040, 0x00008040, 
+                                       0x0000a040)
+
+        val bs = new ByteArrayInputStream(getBytes(littleEndians))
+        val ds = new DataInputStream(bs)
+
+        val floats = toBigEndians(ds)
+        println(floats)
+
+        ds.close()
+        bs.close()
+
+    }
+    // it just helper method to get Array[Byte] and create DataInputStream
+    def getBytes(rawData: Array[Int]): Array[Byte] = {
+        val b = ByteBuffer.allocate(rawData.length * floatSize)
+        b.order(ByteOrder.BIG_ENDIAN)
+        rawData.foreach(f => b.putInt(f))
+        b.rewind()
+        return b.array()
+    }
+
+    def toBigEndians(stream: DataInputStream): Seq[Float] = {
+        val bf = streamToByteBuffer(stream)
+        // rewind the buffer to make it ready for reading
+        bf.rewind()
+
+        // when we read, we want to get it in BIG_ENDIAN
+        val floatBuffer = bf.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
+        val n = floatBuffer.remaining
+
+        @tailrec
+        def floatBufferToArray_(idx: Int, floats: Array[Float]):  Array[Float] = {
+            if (floatBuffer.hasRemaining) {
+                // floatBuffer.get returns current an increments position
+                floats(idx) = floatBuffer.get
+                floatBufferToArray_(idx + 1, floats)
+            }
+            else floats
+        }
+        // allocate result float array
+        val floatArray = Array.ofDim[Float](n)
+        floatBufferToArray_(0, floatArray)
+    }
+    def streamToByteBuffer(stream: DataInputStream): ByteBuffer = {
+        @tailrec
+        def streamToByteBuffer_(stream: DataInputStream, 
+                               bf: ByteBuffer): ByteBuffer = {
+            Try(bf.put(stream.readByte())) match {
+                case Success(_) => streamToByteBuffer_(stream, bf)
+                case Failure(ex) if ex.isInstanceOf[EOFException] => bf
+                case Failure(ex) => throw ex
+            }
+        }
+        // pre-allocate with the size of the stream
+        val bf = ByteBuffer.allocateDirect(stream.available)
+        streamToByteBuffer_(stream, bf)
+    }
+}

@@ -1,0 +1,24 @@
+import pandas as pd, numpy as np
+from itertools import chain
+
+df = pd.DataFrame({'id': ['id01', 'id02', 'id03', 'id04'],
+                   'val': [['a', 'b'], ['b'], [], ['a', 'c']]})
+
+df = pd.concat([df]*100000)
+
+def jp(df):
+    lens = list(map(len, df['val']))
+
+    res = pd.DataFrame({'id': np.repeat(df['id'].values, lens),
+                        'val': list(chain.from_iterable(df['val']))})
+
+    return res
+
+def jez(df):
+    return (pd.DataFrame(df['val'].values.tolist(), index=df['id'])
+              .stack()
+              .reset_index(level=1, drop=True)
+              .reset_index(name='val'))
+
+%timeit jp(df)   # 137 ms per loop
+%timeit jez(df)  # 197 ms per loop

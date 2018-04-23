@@ -1,0 +1,63 @@
+import sbt.Level
+name := ""my-multiproject-build""
+
+lazy val ProjectOne = project
+lazy val ProjectTwo = project
+
+lazy val root = project.in( file(""."") ).aggregate(ProjectOne, ProjectTwo)
+
+val wrapLogger = (project: Project, inner: AbstractLogger) => {
+  new AbstractLogger {
+
+    override def log(level: Level.Value, message: => String): Unit = {
+      inner.log(
+        level,
+        ""["" + project.id + ""] "" + message
+      )
+    }
+
+    override def setTrace(flag: Int): Unit = inner.setTrace(flag)
+
+    override def setLevel(newLevel: Level.Value): Unit = {
+      // MultiLogger keeps setting this to debug
+      inner.setLevel(Level.Info)
+    }
+
+    override def setSuccessEnabled(flag: Boolean): Unit = inner.setSuccessEnabled(flag)
+
+    override def logAll(events: Seq[LogEvent]): Unit = {
+      events.foreach(log)
+    }
+
+    override def control(event: _root_.sbt.ControlEvent.Value, message: => String): Unit
+      = inner.control(event, message)
+
+    override def successEnabled: Boolean = inner.successEnabled
+
+    override def getLevel = inner.getLevel
+
+    override def getTrace: Int = inner.getTrace
+
+    override def trace(t: => Throwable): Unit = inner.trace(t)
+
+    override def success(message: => String): Unit = inner.success(message)
+  }
+}
+
+extraLoggers in ProjectOne := {
+  val currentFunction = extraLoggers.value
+  (key: ScopedKey[_]) => {
+    val logger = wrapLogger(ProjectOne, ConsoleLogger())
+    logger.setLevel(Level.Info)
+    logger +: currentFunction(key)
+  }
+}
+
+extraLoggers in ProjectTwo := {
+  val currentFunction = extraLoggers.value
+  (key: ScopedKey[_]) => {
+    val logger = wrapLogger(ProjectTwo, ConsoleLogger())
+    logger.setLevel(Level.Info)
+    logger +: currentFunction(key)
+  }
+}

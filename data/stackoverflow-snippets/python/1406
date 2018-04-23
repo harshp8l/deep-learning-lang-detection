@@ -1,0 +1,28 @@
+tickers = [""PIH"",""AAPL"",""AMZN""]
+dfs = []
+for t in tickers:
+    print (t)
+    # Updates every loop
+    ticker_yahoo_financials = YahooFinancials(t)
+
+    # Get financial info
+    bs_hist = ticker_yahoo_financials.get_financial_stmts('annual', 'balance')
+    bs_hist = bs_hist['balanceSheetHistory']
+    income_hist = ticker_yahoo_financials.get_financial_stmts('annual', 'income')
+    income_hist = income_hist['incomeStatementHistory']
+    cash_hist = ticker_yahoo_financials.get_financial_stmts('annual', 'cash')
+    cash_hist = cash_hist['cashflowStatementHistory']
+
+    bs_df = pd.concat([pd.DataFrame(x) for x in bs_hist[t]], axis=1)
+    income_df = pd.concat([pd.DataFrame(x) for x in income_hist[t]], axis=1)
+    cash_df = pd.concat([pd.DataFrame(x) for x in cash_hist[t]], axis=1)
+    comb = pd.concat([bs_df, income_df, cash_df])
+
+    #check duplicated index  
+    print (comb[comb.index.duplicated(keep=False)])
+    #remove duplicated rows(because same)
+    comb = comb[~comb.index.duplicated()]
+    dfs.append(comb)
+
+
+df = pd.concat(dfs, keys=tickers, axis=1)

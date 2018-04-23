@@ -1,0 +1,27 @@
+sealed trait Wrapping
+sealed trait PinkWrap extends Wrapping
+sealed trait GreenWrap extends Wrapping
+
+sealed trait Foo[M[_], A] {}
+case class MintFoo[M[_], A](a : A) extends Foo[M, A]
+case class LiquoriceFoo[M[_], A](a : A) extends Foo[M, A]
+sealed trait WrappedFoo[M[_], _, A] {
+  def m: Foo[M, A]
+  def tasteFoo: String = {
+    m match {
+      case MintFoo(a) => ""Mint""
+      case LiquoriceFoo(a) => ""Liquorice""
+    }
+  }
+}
+case class FooInPinkWrap[M[_], A](m: Foo[M, A]) extends WrappedFoo[M, PinkWrap, A]
+case class FooInGreenWrap[M[_], A](m: Foo[M, A]) extends WrappedFoo[M, GreenWrap, A]
+
+object Utils {
+  def analyzeFoo[M[_], S <: Wrapping, A](w: WrappedFoo[M, S, A]): String = {
+    w match {
+      case f: FooInPinkWrap[M, A] => f.tasteFoo + "" in Pink wrapping""      
+      case f: FooInGreenWrap[M, A] => f.tasteFoo + "" in Green wrapping""
+    }
+  }
+}

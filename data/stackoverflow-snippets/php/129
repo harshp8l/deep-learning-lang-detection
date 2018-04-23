@@ -1,0 +1,36 @@
+<?php
+
+class MyThread extends Thread{
+    public $promise;
+    public $terminated;
+    public function __construct($promise) {
+        $this->terminated=false;
+        $this->promise=$promise;
+    }
+    public function run(){
+        $this->promise->wait();
+        $this->terminated=true;
+    }
+}
+
+
+
+$client = new Client();
+
+$promise = $client->getAsync('https://www.foaas.com/version')->then(
+    function (ResponseInterface $res) {
+        return \GuzzleHttp\json_decode($res->getBody()->getContents(), true);
+    },
+    function (RequestException $e) {
+        throw $e;
+    }
+);
+
+$start = microtime(true);
+print $start;
+$thread = new MyThread($promise);
+while(!$thread->terminated){
+    usleep(1);
+}
+$end = microtime(true) - $start;
+print "" - "".$end; 

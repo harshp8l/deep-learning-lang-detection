@@ -1,0 +1,27 @@
+#include <immintrin.h>
+
+#ifdef __AVX2__
+// inclusive min and max
+__m256i  setAlphaFromRangeCheck_AVX2(__m256i src, __m256i mins, __m256i max_minus_min)
+{
+    __m256i tmp = _mm256_sub_epi8(src, mins);   // out-of-range wraps to a high signed value
+
+    // (x-min) <= (max-min)  equivalent to:
+    // (x-min) - (max-min) saturates to zero
+    __m256i RGB_inrange = _mm256_subs_epu8(tmp, max_minus_min);
+    // 0x00000000 for in-range pixels, 0x00?????? (some higher value) otherwise
+
+    // this has minor advantages over compare against zero, see full comments on Godbolt    
+    __m256i new_alpha = _mm256_sub_epi32(RGB_inrange, _mm256_set1_epi32(1));
+    // 0x00000000 - 1  = 0xFFFFFFFF
+    // 0x00?????? - 1  = 0x00??????    high byte = new alpha value
+
+    const __m256i RGB_mask = _mm256_set1_epi32(0x00FFFFFF);  // blend mask
+    // without AVX512, the only byte-granularity blend is a 2-uop variable-blend with a control register
+    // On Ryzen, it's only 1c latency, so probably 1 uop that can only run on one port.  (1c throughput).
+    // For 256-bit, that's 2 uops of course.
+    __m256i alpha_replaced = _mm256_blendv_epi8(new_alpha, src, RGB_mask);  // RGB from src, 0/FF from new_alpha
+
+    return alpha_replaced;
+}
+#endif  // __AVX2__

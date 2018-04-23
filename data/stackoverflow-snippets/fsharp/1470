@@ -1,0 +1,18 @@
+let rec drawingLoop(clr, from) = async {
+   // Wait for the first MouseMove occurrence
+   let! move = Async.AwaitObservable(form.MouseMove)
+   if (move.Button &&& MouseButtons.Left) = MouseButtons.Left then
+      // Refresh the window & continue looping
+      drawRectangle(clr, from, (move.X, move.Y))
+      return! drawingLoop(clr, from)
+   else
+      // Return the end position of rectangle
+      return (move.X, move.Y) }
+
+let waitingLoop() = async {
+   while true do
+      let! down = Async.AwaitObservable(form.MouseDown)
+      let downPos = (down.X, down.Y)
+      if (down.Button &&& MouseButtons.Left) = MouseButtons.Left then
+         let! upPos = drawingLoop(Color.IndianRed, downPos)
+         do printfn ""Drawn rectangle (%A, %A)"" downPos upPos }

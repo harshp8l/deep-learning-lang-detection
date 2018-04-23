@@ -1,0 +1,21 @@
+SQL> create table person_info(id int, key varchar2(25), value varchar2(25));
+SQL> create table person_info2(id int, name varchar2(25), address varchar2(125), region varchar2(25));
+SQL> insert into person_info values(4150521,'contact_no',772289317);
+SQL> insert into person_info values(4150522,'alt_id','98745612V');
+SQL> insert into person_info values(4150522,'birth_date',date '1990-04-21');
+SQL> insert into person_info values(4150522,'contact_no',777894561);
+
+SQL> insert into person_info2 values(4150521,'ABC','AAAAAA','ASD');
+SQL> insert into person_info2 values(4150522,'XYZ','BBBBB','WER');
+
+SQL> select p1.id, name, address, region, alt_id, birth_date, contact_no  
+  from person_info
+ pivot
+(
+ max(value) for key in ('alt_id' as alt_id,'birth_date' as birth_date,'contact_no' as contact_no)
+) p1 join person_info2 p2 on (p1.id = p2.id);
+
+ID      NAME    ADDRESS REGION  ALT_ID      BIRTH_DATE  CONTACT_NO
+------- ------- ------- ------  ---------   ----------  ----------
+4150521 ABC     AAAAAA  ASD     12345678V   21-APR-89   772289317
+4150522 XYZ     BBBBB   WER     98745612V   21-APR-90   777894561

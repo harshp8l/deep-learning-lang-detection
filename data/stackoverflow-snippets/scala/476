@@ -1,0 +1,28 @@
+val df = Seq(
+  (""A"", ""U"", ""PIERRE"", 1),
+  (""A"", ""U"", ""THOMAS"", 2),
+  (""A"", ""U"", ""MICHAEL"", 3),
+  (""A"", ""V"", ""TOM"", 2),
+  (""A"", ""V"", ""JACK"", 3),
+  (""A"", ""W"", ""MICHEL"", 2),
+  (""A"", ""W"", ""JULIEN"", 3)
+).toDF(""ID1"", ""ID2"", ""VAL1"", ""VAL2"")
+
+import org.apache.spark.sql.functions._
+
+// Gather key/value column lists based on specific filtering criteria
+val keyCols = df.columns.filter(_.startsWith(""ID""))
+val valCols = df.columns diff keyCols
+
+// Group by keys to aggregate combined value-columns then re-expand
+df.groupBy(keyCols.map(col): _*).
+  agg(first(struct(valCols.map(col): _*)).as(""VALS"")).
+  select($""ID1"", $""ID2"", $""VALS.*"")
+
+// +---+---+------+----+
+// |ID1|ID2|  VAL1|VAL2|
+// +---+---+------+----+
+// |  A|  W|MICHEL|   2|
+// |  A|  V|   TOM|   2|
+// |  A|  U|PIERRE|   1|
+// +---+---+------+----+

@@ -1,0 +1,21 @@
+type QueueName = String
+
+val nameToRequest : (QueueName) => CreateQueueRequest = ???  //implementation unimportant
+
+type QueueURL = String
+
+val nameToURL : (AmazonSQS) => (QueueName) => QueueURL = {
+  val nameToURL = mutable.Map.empty[QueueName, QueueURL]
+
+  (sqs) => (queueName) => nameToURL.get(queueName) match {
+    case Some(url) => url
+    case None => {
+      sqs.createQueue(nameToRequest(queueName))
+      val url = sqs.getQueueUrl(queueName).getQueueUrl()
+
+      nameToURL put (queueName, url)
+
+      url
+    }
+  }
+}

@@ -1,0 +1,40 @@
+(ns foo.core
+  (:require
+   ;; For clojure 1.9.0-alpha16 and higher, it is called spec.alpha
+   [clojure.spec.alpha :as s]
+   [clojure.spec.test.alpha :as stest]))
+
+
+;; Extract takes a map and returns a seq
+(s/fdef extract
+  :args (s/cat :m map?)
+  :ret seq?)
+
+(defn extract [m]
+  (keys m))
+
+
+;; multiple takes a coll of numbers and returns a coll of numbers
+(s/fdef multiple
+  :args (s/cat :xs (s/coll-of number?))
+  :ret (s/coll-of number?))
+
+(defn multiple [xs]
+  (map #(* 2 %) xs))
+
+
+(defn process [xs]
+  (-> xs
+      (multiple)     ; seq -> seq
+      (extract))) ; map -> seq ... fails
+
+;; This needs to come after the definition of the specs,
+;; but before the call to process.
+;; This is something I imagine can be handled automatically
+;; by tooling at some point.
+(stest/instrument)
+
+;; The println is to force evaluation.
+;; If not it wouldn't run because it's lazy and
+;; not used for anything.
+(println (process [1 2 3]))

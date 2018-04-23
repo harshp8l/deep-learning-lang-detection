@@ -1,0 +1,35 @@
+import pydicom
+import numpy as np
+import cProfile
+import pstats
+
+
+def parse_coords(contour):
+    """"""Given a contour from a DICOM ROIContourSequence, returns coordinates
+    [loop][[x0, x1, x2, ...][y0, y1, y2, ...][z0, z1, z2, ...]]""""""
+    if not hasattr(contour, ""ContourSequence""):
+        return [] # empty structure
+    cd_tag = pydicom.tag.Tag(0x3006, 0x0050) # ContourData tag
+    def _reshape_contour_data(loop):
+        val = super(loop.__class__, loop).__getitem__(cd_tag).value
+        try:
+            double_string = val.decode(encoding='utf-8')
+            double_vec = np.fromstring(double_string, dtype=float, sep=chr(92)) # 92 is '/'
+        except AttributeError: # 'MultiValue'  has no 'decode' (bytes does)
+            # It's already been converted to doubles and cached
+            double_vec = loop.ContourData
+        return np.reshape(np.array(double_vec),
+                          (3, len(double_vec) // 3),
+                          order='F')
+    return list(map(_reshape_contour_data, contour.ContourSequence))
+
+
+def profile_load_contours():
+    rs = pydicom.dcmread('RS.gyn1.dcm')
+    structs = [parse_coords(contour) for contour in rs.ROIContourSequence]
+
+
+profile_load_contours()
+cProfile.run('profile_load_contours()','prof.stats')
+p = pstats.Stats('prof.stats')
+p.sort_stats('cumulative').print_stats(15)

@@ -1,0 +1,26 @@
+// true only if T is const
+template<typename T>
+using StringReplaceIsConst = std::conditional_t<std::is_const<std::remove_reference_t<T>>::value, std::true_type, std::false_type>;
+
+
+// lvalue, lvalue reference, rvalue, rvalue reference, string literal
+template<typename Str, typename = std::enable_if_t<!StringReplaceIsConst<Str>::value>>
+Str StringReplace(
+    Str&& str,
+    const std::remove_reference_t<Str>& from,
+    const std::remove_reference_t<Str>& to
+) {
+    return std::forward<Str>(str);
+}
+
+// const lvalue, const lvalue reference, const rvalue, const rvalue reference
+template<typename Str, typename = std::enable_if_t<StringReplaceIsConst<Str>::value>>
+std::decay_t<Str> StringReplace(
+    Str&& str,
+    const std::remove_reference_t<Str>& from,
+    const std::remove_reference_t<Str>& to
+) {
+    std::decay_t<Str> mutableStr{std::forward<Str>(str)};
+    StringReplace(mutableStr, from, to);
+    return mutableStr;
+}

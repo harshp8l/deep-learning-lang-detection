@@ -1,0 +1,16 @@
+import scala.io
+import akka.stream.scaladsl.Source
+import akka.http.scaladsl.model.HttpEntity.{Chunked, ChunkStreamPart}
+import akka.http.scaladsl.model.{HttpResponse, ContentTypes}
+
+val fileContentsSource : (String, String) => Source[ChunkStreamPart, _] =
+  (fileName, enc) =>
+    Source
+      .fromIterator( io.Source.fromFile(fileName, enc).getLines )
+      .map(ChunkStreamPart.apply)
+
+
+val fileEntityResponse : (String, String) => HttpResponse =
+  (fileName, enc) => 
+    HttpResponse(entity = Chunked(ContentTypes.`text/plain(UTF-8)`,
+                                  fileContentsSource(fileName, enc)))

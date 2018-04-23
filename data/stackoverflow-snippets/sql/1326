@@ -1,0 +1,26 @@
+declare @end as date
+-- calculate ""next"" Monday
+set @end = dateadd(d,-(datediff(d,0,getdate()) % 7)+7 ,cast(getdate() as date))
+declare @start as date
+set @start = dateadd(wk,-8,@end)
+;with drange as (
+  select @start as dt, datepart(dw,@start) dw
+  union all
+  select dateadd(d,1,dt) , datepart(dw,dateadd(d,1,dt))
+  from drange
+  where dateadd(d,1,dt) <= @end
+  )
+, p as (
+  select 
+         SDay
+       , idPatient
+       , dateadd(d,SDay-1,dateadd(d,-datediff(d,0,getdate()) % 7,cast(getdate() as date))) Ndate
+  from tblScheduledOrder
+  )  
+select 
+     dt, dw, p.Sday, vdate, ndate, coalesce(v.idpatient,p.idPatient) idpatient
+from drange
+left join tblVisits v on drange.dt = v.Vdate
+left join p on drange.dt = p.Ndate
+where drange.dw between 1 and 5
+order by dt DESC, coalesce(v.idpatient,p.idPatient)

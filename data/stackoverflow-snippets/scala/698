@@ -1,0 +1,19 @@
+import spray.json._
+
+//prevent confusion with java.time.LocalDateTime
+import org.joda.time.{LocalDateTime => JodaLocalDateTime}
+
+implicit val jodaLocalDateTimeFormat: JsonFormat[JodaLocalDateTime] = 
+  new JsonFormat[JodaLocalDateTime] {
+    override def write(obj: JodaLocalDateTime): JsValue = JsString(obj.toString)
+
+    override def read(json: JsValue): JodaLocalDateTime = json match {
+      case JsString(s) => Try(JodaLocalDateTime.parse(s)) match {
+        case Success(result) => result
+        case Failure(exception) => 
+          deserializationError(s""could not parse $s as Joda LocalDateTime"", exception)
+      }
+      case notAJsString => 
+        deserializationError(s""expected a String but got a $notAJsString"")
+    }
+  }

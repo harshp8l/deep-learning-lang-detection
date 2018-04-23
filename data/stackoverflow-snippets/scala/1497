@@ -1,0 +1,32 @@
+val test = spark.read.format(""json"").load(""Downloads/yql.json"")
+
+val testFinal = test.
+    select(
+        ""query.created"",
+        ""query.results.channel.item.lat"",
+        ""query.results.channel.item.long"",
+        ""query.results.channel.units.temperature"",
+        ""query.results.channel.item.forecast"").
+    withColumn(""forecast_explode"", explode($""forecast"")).
+    withColumn(""date"", $""forecast_explode.date"").
+    withColumn(""forecast_high"", $""forecast_explode.high"").
+    withColumn(""forecast_low"", $""forecast_explode.low"").
+    drop($""forecast"").
+    drop($""forecast_explode"")
+
+testFinal.show() 
+
++--------------------+--------+----------+-----------+-----------+-------------+------------+
+|             created|     lat|      long|temperature|       date|forecast_high|forecast_low|
++--------------------+--------+----------+-----------+-----------+-------------+------------+
+|2017-11-08T14:57:15Z|40.71455|-74.007118|          F|08 Nov 2017|           48|          39|
+|2017-11-08T14:57:15Z|40.71455|-74.007118|          F|09 Nov 2017|           52|          39|
+|2017-11-08T14:57:15Z|40.71455|-74.007118|          F|10 Nov 2017|           47|          27|
+|2017-11-08T14:57:15Z|40.71455|-74.007118|          F|11 Nov 2017|           40|          25|
+|2017-11-08T14:57:15Z|40.71455|-74.007118|          F|12 Nov 2017|           48|          33|
+|2017-11-08T14:57:15Z|40.71455|-74.007118|          F|13 Nov 2017|           51|          45|
+|2017-11-08T14:57:15Z|40.71455|-74.007118|          F|14 Nov 2017|           53|          43|
+|2017-11-08T14:57:15Z|40.71455|-74.007118|          F|15 Nov 2017|           52|          39|
+|2017-11-08T14:57:15Z|40.71455|-74.007118|          F|16 Nov 2017|           54|          43|
+|2017-11-08T14:57:15Z|40.71455|-74.007118|          F|17 Nov 2017|           54|          44|
++--------------------+--------+----------+-----------+-----------+-------------+------------+

@@ -1,0 +1,40 @@
+# all_on_start: false               # run all tests in group on startup, default: true
+# all_after_pass: true              # run all tests in group after changed specs pass, default: false
+# cli: '--test'                     # pass arbitrary Minitest CLI arguments, default: ''
+# test_folders: ['tests']           # specify an array of paths that contain test files, default: %w[test spec]
+# include: ['lib']                  # specify an array of include paths to the command that runs the tests
+# test_file_patterns: %w[test_*.rb] # specify an array of patterns that test files must match in order to be run, default: %w[*_test.rb test_*.rb *_spec.rb]
+# spring: true                      # enable spring support, default: false
+# zeus: true                        # enable zeus support; default: false
+# drb: true                         # enable DRb support, default: false
+# bundler: false                    # don't use ""bundle exec"" to run the minitest command, default: true
+# rubygems: true                    # require rubygems when running the minitest command (only if bundler is disabled), default: false
+# env: {}                           # specify some environment variables to be set when the test command is invoked, default: {}
+# all_env: {}                       # specify additional environment variables to be set when all tests are being run, default: false
+# autorun: false                    # require 'minitest/autorun' automatically, default: true
+options = {
+  spring: 'bin/rails test', # NOTE: true = run all tests on every run
+  all_on_start: false,
+  all_after_pass: false
+}
+guard :minitest, options do
+  # with Minitest::Unit
+  watch(%r{^test/(.*)\/?test_(.*)\.rb$})
+  watch(%r{^test/(.*)\/.+_test\.rb$})
+  watch(%r{^lib/(.*/)?([^/]+)\.rb$})     { |m| ""test/#{m[1]}test_#{m[2]}.rb"" }
+  watch(%r{^test/test_helper\.rb$})      { 'test' }
+  watch(%r{^test/.+_test\.rb$})
+
+  # watch('test/test_helper.rb')                        { 'test' }
+  watch('config/routes.rb')                           { 'test/routing' }
+  watch('app/controllers/application_controller.rb')  { 'test/controllers' }
+  watch(%r{^app/(.+)\.rb$})                           { |m| ""test/#{m[1]}_test.rb"" }
+  watch(%r{^app/(.*)(\.erb|\.haml|\.slim)$})          { |m| ""test/#{m[1]}#{m[2]}_test.rb"" }
+  watch(%r{^lib/(.+)\.rb$})                           { |m| ""test/lib/#{m[1]}_test.rb"" }
+  watch(%r{^app/controllers/(.+)_(controller)\.rb$})  { |m| [""test/routing/#{m[1]}_routing_test.rb"", ""test/#{m[2]}s/#{m[1]}_#{m[2]}_test.rb"", ""test/system/#{m[1]}_test.rb""] }
+
+  # with Minitest::Spec
+  watch(%r{^spec/(.*)_spec\.rb$})
+  watch(%r{^lib/(.+)\.rb$})         { |m| ""spec/#{m[1]}_spec.rb"" }
+  watch(%r{^spec/spec_helper\.rb$}) { 'spec' }
+end

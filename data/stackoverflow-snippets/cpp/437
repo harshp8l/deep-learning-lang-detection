@@ -1,0 +1,32 @@
+/// <summary> Count the number of 'set' (1-valued) bits in a range of memory. </summary>
+/// <param name=""p""> Pointer to an array of 64-bit ulong values to scan </param>
+/// <param name=""c""> Size of the memory block as a count of 64-bit ulongs </param>
+/// <returns> The total number of 1-bits </returns>
+public static int OnesCount(ulong* p, int c)
+{
+    ulong z = 0, y = 0, x = 0, w = 0;
+    int tot = 0;
+
+    for (; (c & 0xF) != 0; c--)
+        tot += OnesCount(*p++);
+
+    for (; c > 0; c -= 16)
+        tot += OnesCount(CSA(ref w,
+                            CSA(ref x,
+                                CSA(ref y,
+                                    CSA(ref z, *p++, *p++),
+                                    CSA(ref z, *p++, *p++)),
+                                CSA(ref y,
+                                    CSA(ref z, *p++, *p++),
+                                    CSA(ref z, *p++, *p++))),
+                            CSA(ref x,
+                                CSA(ref y,
+                                    CSA(ref z, *p++, *p++),
+                                    CSA(ref z, *p++, *p++)),
+                                CSA(ref y,
+                                    CSA(ref z, *p++, *p++),
+                                    CSA(ref z, *p++, *p++))))) << 4;
+
+    return tot +
+        (OnesCount(w) << 3) + (OnesCount(x) << 2) + (OnesCount(y) << 1) +  OnesCount(z);
+}

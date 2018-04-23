@@ -1,0 +1,54 @@
+(ns cl-myfn.core)
+
+(defprotocol MyCallable
+  (call [this magic args]))
+
+
+(extend-protocol MyCallable
+  ;; a clojure function implements IFn
+  ;; we use this knowledge to simply call it
+  ;; and ignore the magic
+  clojure.lang.IFn
+  (call [this _magic args]
+    (apply this args)))
+
+(deftype MyFun [myFun]
+  MyCallable
+  ;; this is our magic type
+  ;; for now it only adds the magic as first argument
+  ;; you may add all the checks here
+  (call [this magic args]
+    (apply (.myFun this) magic args)))
+
+;;turn this into a macro if you want more syntactic sugar
+(defn make-myfun [fun]
+  (MyFun. fun))
+
+(defmacro with-myfuns [magic & funs]
+  `(do ~@(map (fn [f#]
+                ;; if f# is a sequence it is treated as a function call                
+                (if (seq? f#)
+                  (let [[fun# & args#] f#]
+                    `(call ~fun# ~magic [~@args#]))
+
+                  ;; if f# is nonsequential it is left alone
+                  f#))
+                funs)))
+
+
+(let [my-prn (make-myfun prn)]
+  (with-myfuns :a-kind-of-magic
+    123 
+    [1 2 3]
+    (prn :hello) 
+    (my-prn 123)))
+
+
+;; for your convenience: the macro-expansion 
+
+(let [my-prn (make-myfun prn)]
+  (prn (macroexpand-1 '(with-myfuns :a-kind-of-magic
+                         123
+                         [1 2 3]
+                         (prn :hello) 
+                         (my-prn 123)))))

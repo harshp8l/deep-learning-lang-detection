@@ -1,0 +1,15 @@
+$installers = @{
+    ""vagrant.msi"" = ""https://releases.hashicorp.com/vagrant/2.0.0/vagrant_2.0.0_x86_64.msi"";
+    ""chrome.exe"" = ""https://dl.google.com/tag/s/defaultbrowser/chrome/install/ChromeStandaloneSetup64.exe"";
+}
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+foreach ($i in $installers.GetEnumerator()) 
+{
+    $value=$i.Value
+    $Downloadpath=""$env:USERPROFILE\Downloads\$($i.Name)""
+    Start-Job -ScriptBlock {param($value,$Downloadpath)Invoke-WebRequest $value -Method Get -OutFile $Downloadpath} -ArgumentList $value,$Downloadpath
+}
+
+Get-Job|Wait-Job

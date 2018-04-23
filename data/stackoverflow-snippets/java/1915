@@ -1,0 +1,21 @@
+import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
+
+@Configuration
+public class UndertowConfig {
+
+@Value(""${server.http.port}"")
+private int httpPort;
+
+@Value(""${server.http.interface}"")
+private String httpInterface;
+
+@Bean
+public WebServerFactoryCustomizer<UndertowServletWebServerFactory> containerCustomizer() {
+    return (WebServerFactoryCustomizer) factory -> {
+        UndertowServletWebServerFactory undertowFactory = (UndertowServletWebServerFactory) factory;
+        undertowFactory.getBuilderCustomizers().add(builder -> {
+            builder.addHttpListener(httpPort, httpInterface);
+        });
+    };
+}

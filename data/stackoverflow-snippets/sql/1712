@@ -1,0 +1,37 @@
+DROP TABLE IF EXISTS orders;
+CREATE TABLE orders (
+  `id` SERIAL PRIMARY KEY
+  );
+
+INSERT INTO orders VALUES
+(100),(101);
+
+DROP TABLE IF EXISTS items;
+
+CREATE TABLE `items` (
+  `id` SERIAL PRIMARY KEY,
+  `order_id` int(10) unsigned NOT NULL,
+  `status` enum('pending','processing','completed','on-hold','cancelled')
+);
+
+INSERT INTO items VALUES
+(1,100,'completed'),
+(2,100,'completed'),
+(3,100,'completed'),
+(4,101,'completed'),
+(5,101,'processing');
+
+
+SELECT DISTINCT o.* 
+           FROM orders o
+           LEFT 
+           JOIN items i 
+             ON i.order_id = o.id 
+            AND i.status <> 'completed' 
+          WHERE i.id IS NULL;
+
++-----+
+| id  |
++-----+
+| 100 |
++-----+

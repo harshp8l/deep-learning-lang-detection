@@ -1,0 +1,14 @@
+@receiver(post_save, sender=Sesion)
+def cierre(*args, **kwargs):
+instance = Sesion.objects.filter(fin_sesion__isnull=True).latest('ini_sesion')
+sesion_abierta = None
+try:
+    sesion_abierta = Sesion.objects.filter(maq=instance.maq).filter(fin_sesion__isnull=True) \
+            .filter(ini_sesion__lt=instance.ini_sesion).latest('ini_sesion')
+except Exception:
+    print('Ha ocurrido una excepcion!')
+if sesion_abierta:
+    sesion_abierta.con_fin_a = instance.con_fin_a
+    sesion_abierta.con_fin_b = instance.con_fin_b
+    sesion_abierta.fin_sesion = instance.ini_sesion
+    sesión_abierta.save()

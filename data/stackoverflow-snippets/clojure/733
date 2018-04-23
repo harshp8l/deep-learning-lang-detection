@@ -1,0 +1,21 @@
+(defn intersect-by [key-fn data]
+  (let [normalized (map (fn [map-data]
+                          (->> map-data
+                               (group-by key-fn)
+                               (map (fn [[key val]]
+                                      [key (apply merge val)]))
+                               (into {})))
+                        data)
+        normalized-keys (map (comp set keys) normalized)
+        intersection (apply clojure.set/intersection normalized-keys)
+        merged-data (apply merge-with merge normalized)]
+    (vals (select-keys merged-data intersection))))
+#'user/foo
+
+(def data [[{:id 1} {:id 2} {:id 3, :x 3}]
+           [{:id 3, :y 4} {:id 4} {:id 5} {:id 1}]
+           [{:id 33} {:id 3} {:id 3, :z 5} {:id 1}]])
+#'user/data
+
+(intersect-by :id data)
+({:id 1} {:id 3, :x 3, :y 4, :z 5})

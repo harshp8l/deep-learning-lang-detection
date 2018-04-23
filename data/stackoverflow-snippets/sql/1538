@@ -1,0 +1,31 @@
+-- Declare test data
+declare @users table (id int, name varchar(10), teamid int);
+declare @application table (id int, name varchar(15));
+declare @applicationuser table (id int, applicationid int, userid int, assigneddate date, unassigneddate date);
+
+insert into @users values (1, 'user1', 1),(2, 'user2',2);
+insert into @application values (1, 'application1'),(2, 'application1');
+insert into @applicationuser values (1,1,1,'2018-03-01','2018-03-02'),(2,1,2,'2018-03-02','2018-03-03'),(2,2,2,'2018-03-02','2018-03-05');
+
+
+-- Find the maximum date range possible to create a dates table that covers all possible application periods
+declare @MinDate date = (select min(AssignedDate) from @applicationuser);
+declare @MaxDate date = (select max(UnassignedDate) from @applicationuser);
+
+            -- This is a derived table that simply returns 10 rows
+with t(t) as(select * from(values(1),(1),(1),(1),(1),(1),(1),(1),(1),(1))t(t))
+            -- This then CROSS JOINs the 10 rows to create 10*10*10*10*10 = 100,000 rows
+            -- Then uses the ROW_NUMBER function to add a number of days to the @MinDate value, to get a table of incrementing dates
+    ,d(d) as(select top(datediff(day,@MinDate,@MaxDate)+1) dateadd(day,row_number() over (order by (select null))-1,@MinDate) from t,t t2,t t3,t t4,t t5)
+select d.d                            -- Output is a row per date and teamid where there was an open application.
+      ,u.teamid                       -- When grouped together this gives you a COUNT of open applications by teamid
+      ,count(1) as OpenApplications
+from d
+    join @ApplicationUser as au
+        on d.d between au.assigneddate and au.unassigneddate
+    join @users as u
+        on au.userid = u.id
+group by d.d
+      ,u.teamid
+order by d.d
+        ,u.teamid

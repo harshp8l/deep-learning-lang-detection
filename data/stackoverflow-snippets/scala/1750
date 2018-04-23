@@ -1,0 +1,15 @@
+abstract class CodeTree
+case class Fork(left: CodeTree, right: CodeTree, chars: List[Char], weight: Int) extends CodeTree
+case class Leaf(char: Char, weight: Int) extends CodeTree  
+
+def walk[T](t: CodeTree, op: CodeTree => T, cmb: (T,T) => T): T = t match {
+  case Fork(l,r,_,_) => cmb(op(l), op(r))
+  case t: Leaf     => op(t)
+}
+
+def weight(tree: CodeTree): Int = walk[Int](tree, weight, _ + _)
+
+def chars(tree: CodeTree): List[Char] = tree match {
+  case Fork(l,r,x,_) => chars(l) ++ chars(r)
+  case Leaf(x,_)     => List(x)
+}

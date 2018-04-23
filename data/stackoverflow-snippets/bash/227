@@ -1,0 +1,228 @@
+ME=$(basename $0)
+IPC=""/tmp/$ME.ipc""      #interprocess communication file (global thread accounting stats)
+DBG=/tmp/$ME.log
+echo 0 > $IPC           #initalize counter
+F1=thread
+SPAWNED=0
+COMPLETE=0
+SPAWN=1000              #number of jobs to process
+SPEEDFACTOR=1           #dynamically compensates for execution time
+THREADLIMIT=50          #maximum concurrent threads
+TPS=1                   #threads per second delay
+THREADCOUNT=0           #number of running threads
+SCALE=""scale=5""         #controls bc's precision
+START=$(date +%s)       #whence we began
+MAXTHREADDUR=6         #maximum thread life span - demo mode
+
+LOWER=$[$THREADLIMIT*100*90/10000]   #90% worker utilization threshold
+UPPER=$[$THREADLIMIT*100*95/10000]   #95% worker utilization threshold
+DELTA=10                             #initial percent speed change
+
+threadspeed()        #dynamically adjust spawn rate based on worker utilization
+{
+   #vaguely assumes thread execution average will be consistent
+   THREADCOUNT=$(threadcount)
+   if [ $THREADCOUNT -ge $LOWER ] && [ $THREADCOUNT -le $UPPER ] ;then
+      echo SPEED HOLD >> $DBG
+      return
+   elif [ $THREADCOUNT -lt $LOWER ] ;then
+      #if maxthread is free speed up
+      SPEEDFACTOR=$(echo ""$SCALE;$SPEEDFACTOR*(1-($DELTA/100))""|bc)
+      echo SPEED UP $DELTA%>> $DBG
+   elif [ $THREADCOUNT -gt $UPPER ];then
+      #if maxthread is active then slow down
+      SPEEDFACTOR=$(echo ""$SCALE;$SPEEDFACTOR*(1+($DELTA/100))""|bc)
+      DELTA=1                            #begin fine grain control
+      echo SLOW DOWN $DELTA%>> $DBG
+   fi
+
+   echo SPEEDFACTOR $SPEEDFACTOR >> $DBG
+
+   #average thread duration   (total elapsed time / number of threads completed)
+   #if threads completed is zero (less than 100), default to maxdelay/2  maxthreads
+
+   COMPLETE=$(cat $IPC)
+
+   if [ -z $COMPLETE ];then
+      echo BAD IPC READ ============================================== >> $DBG
+      return
+   fi
+
+   #echo Threads COMPLETE $COMPLETE >> $DBG
+   if [ $COMPLETE -lt 100 ];then
+      AVGTHREAD=$(echo ""$SCALE;$MAXTHREADDUR/2""|bc)
+   else
+      ELAPSED=$[$(date +%s)-$START]
+      #echo Elapsed Time $ELAPSED >> $DBG
+      AVGTHREAD=$(echo ""$SCALE;$ELAPSED/$COMPLETE*$THREADLIMIT""|bc)
+   fi
+   echo AVGTHREAD Duration is $AVGTHREAD >> $DBG
+
+   #calculate timing to achieve spawning each workers fast enough
+   # to utilize threadlimit - average time it takes to complete one thread / max number of threads
+   TPS=$(echo ""$SCALE;($AVGTHREAD/$THREADLIMIT)*$SPEEDFACTOR""|bc)
+   #TPS=$(echo ""$SCALE;$AVGTHREAD/$THREADLIMIT""|bc)  # maintains pretty good
+   #echo TPS $TPS >> $DBG
+
+}
+function plot()
+{
+   echo -en \\033[${2}\;${1}H
+
+   if [ -n ""$3"" ];then
+         if [[ $4 = ""good"" ]];then
+            echo -en ""\\033[1;32m""
+         elif [[ $4 = ""warn"" ]];then
+            echo -en ""\\033[1;33m""
+         elif [[ $4 = ""fail"" ]];then
+            echo -en ""\\033[1;31m""
+         elif [[ $4 = ""crit"" ]];then
+            echo -en ""\\033[1;31;4m""
+         fi
+   fi
+      echo -n ""$3""
+      echo -en ""\\033[0;39m""
+}
+
+trackthread()   #displays thread status
+{
+   WORKERID=$1
+   THREADID=$2
+   ACTION=$3    #setactive | setfree | update
+   AGE=$4
+
+   TS=$(date +%s)
+
+   COL=$[(($WORKERID-1)/50)*40]
+   ROW=$[(($WORKERID-1)%50)+1]
+
+   case $ACTION in
+      ""setactive"" )
+         touch /tmp/$ME.$F1$WORKERID  #redundant - see main loop
+         #echo created file $ME.$F1$WORKERID >> $DBG
+         plot $COL $ROW ""Worker$WORKERID: ACTIVE-TID:$THREADID INIT    "" good
+         ;;
+      ""update"" )
+         plot $COL $ROW ""Worker$WORKERID: ACTIVE-TID:$THREADID AGE:$AGE"" warn
+         ;;
+      ""setfree"" )
+         plot $COL $ROW ""Worker$WORKERID: FREE                         "" fail
+         rm /tmp/$ME.$F1$WORKERID
+         ;;
+      * )
+
+      ;;
+   esac
+}
+
+getfreeworkerid()
+{
+   for i in $(seq 1 $[$THREADLIMIT+1])
+   do
+      if [ ! -e /tmp/$ME.$F1$i ];then
+         #echo ""getfreeworkerid returned $i"" >> $DBG
+         break
+      fi
+   done
+   if [ $i -eq $[$THREADLIMIT+1] ];then
+      #echo ""no free threads"" >> $DBG
+      echo 0
+      #exit
+   else
+      echo $i
+   fi
+}
+
+updateIPC()
+{
+   COMPLETE=$(cat $IPC)        #read IPC
+   COMPLETE=$[$COMPLETE+1]     #increment IPC
+   echo $COMPLETE > $IPC       #write back to IPC
+}
+
+
+worker()
+{
+   WORKERID=$1
+   THREADID=$2
+   #echo ""new worker WORKERID:$WORKERID THREADID:$THREADID"" >> $DBG
+
+   #accessing common terminal requires critical blocking section
+   (flock -x -w 10 201
+      trackthread $WORKERID $THREADID setactive
+   )201>/tmp/$ME.lock
+
+   let ""RND = $RANDOM % $MAXTHREADDUR +1""
+
+   for s in $(seq 1 $RND)               #simulate random lifespan
+   do
+      sleep 1;
+      (flock -x -w 10 201
+         trackthread $WORKERID $THREADID update $s
+      )201>/tmp/$ME.lock
+   done
+
+   (flock -x -w 10 201
+      trackthread $WORKERID $THREADID setfree
+   )201>/tmp/$ME.lock
+
+   (flock -x -w 10 201
+      updateIPC
+   )201>/tmp/$ME.lock
+}
+
+threadcount()
+{
+   TC=$(ls /tmp/$ME.$F1* 2> /dev/null | wc -l)
+   #echo threadcount is $TC >> $DBG
+   THREADCOUNT=$TC
+   echo $TC
+}
+
+status()
+{
+   #summary status line
+   COMPLETE=$(cat $IPC)
+   plot 1 $[$THREADLIMIT+2] ""WORKERS $(threadcount)/$THREADLIMIT  SPAWNED $SPAWNED/$SPAWN  COMPLETE $COMPLETE/$SPAWN SF=$SPEEDFACTOR TIMING=$TPS""
+   echo -en '\033[K'                   #clear to end of line
+}
+
+function main()
+{
+   while [ $SPAWNED -lt $SPAWN ]
+   do
+      while [ $(threadcount) -lt $THREADLIMIT ] && [ $SPAWNED -lt $SPAWN ]
+      do
+         WID=$(getfreeworkerid)
+         worker $WID $SPAWNED &
+         touch /tmp/$ME.$F1$WID    #if this loops faster than file creation in the worker thread it steps on itself, thread tracking is best in main loop
+         SPAWNED=$[$SPAWNED+1]
+         (flock -x -w 10 201
+            status
+         )201>/tmp/$ME.lock
+         sleep $TPS
+        if ((! $[$SPAWNED%100]));then
+           #rethink thread timing every 100 threads
+           threadspeed
+        fi
+      done
+      sleep $TPS
+   done
+
+   while [ ""$(threadcount)"" -gt 0 ]
+   do
+      (flock -x -w 10 201
+         status
+      )201>/tmp/$ME.lock
+      sleep 1;
+   done
+
+   status
+}
+
+clear
+threadspeed
+main
+wait
+status
+echo

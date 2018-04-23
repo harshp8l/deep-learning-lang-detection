@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include <Windows.h>
+
+int main()
+{
+    SetProcessDPIAware();
+    HWND hwnd = FindWindow(NULL, ""Calculator"");
+    if(!IsWindow(hwnd))
+        return 0;
+
+    SetForegroundWindow(hwnd);
+    Sleep(500);
+
+    RECT rc;
+    GetWindowRect(hwnd, &rc);
+    int width = rc.right - rc.left;
+    int height = rc.bottom - rc.top;
+
+    HDC hdc = GetDC(HWND_DESKTOP);
+    HDC memdc = CreateCompatibleDC(hdc);
+    HBITMAP hbitmap = CreateCompatibleBitmap(hdc, width, height);
+    BITMAPFILEHEADER filehdr = { 'MB', 54 + size, 0, 0, 54 };
+    BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), width, height, 1, 32 };
+
+    HBITMAP oldbmp = (HBITMAP)SelectObject(memdc, hbitmap);
+    BitBlt(memdc, 0, 0, width, height, hdc, rc.left, rc.top, SRCCOPY);
+    SelectObject(memdc, oldbmp);
+
+    DWORD size = width * height * 4;
+    std::vector<BYTE> bits(size);
+    GetDIBits(memdc, hbitmap, 0, height, &bits[0], (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+
+    DeleteObject(hbitmap);
+    DeleteDC(memdc);
+    ReleaseDC(HWND_DESKTOP, hdc);
+
+    TCHAR* filename = TEXT(""c:\\test\\_bmp.bmp"");
+    std::ofstream f(filename, std::ios::binary);
+    f.write((char*)&filehdr, sizeof(filehdr));
+    f.write((char*)&bi, sizeof(bi));
+    f.write((char*)bits.data(), size);
+    ShellExecute(0, 0, filename, 0, 0, SW_SHOW);
+
+    return 0;
+}

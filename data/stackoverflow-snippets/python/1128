@@ -1,0 +1,14 @@
+def _parse_function(filename):
+    image_string = tf.read_file(filename)
+    image_decoded = tf.cond(
+        tf.image.is_jpeg(image_string),
+        lambda: tf.image.decode_jpeg(image_string, channels=3),
+        lambda: tf.image.decode_png(image_string, channels=3))
+    image_resized = tf.image.resize_images(image_decoded, [90, 90])
+    return image_resized
+filenames = [""/var/data/image1.jpg"", ""/var/data/image2.jpg"", ...]
+labels = [0, 37, 29, 1, ...]
+dataset = tf.data.Dataset.from_tensor_slices((filenames, labels))
+dataset = dataset.map(_parse_function)
+dataset = dataset.batch(batch_size)
+iterator = dataset.make_one_shot_iterator()

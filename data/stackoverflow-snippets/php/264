@@ -1,0 +1,24 @@
+$fileName = __DIR__ . DIRECTORY_SEPARATOR . 'whatever.txt';
+$linesToDelete = array( 3, 5 );
+
+// Working File
+$file = new SplFileObject( $fileName, 'a+' );
+$file->flock( LOCK_EX );
+// Temp File
+$tempFileName = tempnam( sys_get_temp_dir(), rand() );
+$temp = new SplFileObject( $tempFileName,'w+');
+$temp->flock( LOCK_EX );
+// Write the temp file without the lines
+foreach( $file as $key => $line )
+{
+  if( in_array( $key + 1, $linesToDelete ) === false )
+  {
+    $temp->fwrite( $line );
+  }
+}
+// File Rename
+$file->flock( LOCK_UN );
+$temp->flock( LOCK_UN );
+unset( $file, $temp ); // Kill the SPL objects relasing further locks
+unlink( $fileName );
+rename( $tempFileName, $fileName );

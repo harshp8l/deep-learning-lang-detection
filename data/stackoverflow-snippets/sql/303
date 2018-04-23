@@ -1,0 +1,20 @@
+select 
+     r.id, r.event_group_id, r.parameterized_split_name, r.bib_number
+   , e.id as effort_id
+   , e.event_id
+   , s.split_id
+from raw_times r
+left join (
+            select ef.id, ef.event_id, ef.bib_number, ev.event_group_id
+            from efforts ef
+            inner join events ev on ef.event_id = ev.id
+           ) e on r.bib_number = e.bib_number
+               and e.event_group_id = r.event_group_id
+left join lateral (
+            select a.split_id from aid_stations a
+            inner join splits s on a.split_id = s.id
+            where a.event_id = e.event_id
+            and s.parameterized_base_name = r.parameterized_split_name
+            limit 1) s on true
+order by r.bib_number, r.id
+;

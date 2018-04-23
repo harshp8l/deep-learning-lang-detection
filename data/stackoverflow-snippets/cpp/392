@@ -1,0 +1,30 @@
+using namespace std;
+try {
+    errno = 0;
+
+    // Construct the stream here (part of RAII) then you don't need to call
+    // open() or close() manually.
+    ifstream file(config_file);   
+    if (!file.is_open()) {
+        throw invalid_argument(""Could not open the file"");
+    }
+
+    while (getline(file, line)) {
+        // do all your processing as if no errors will occur (getline will 
+        // be explicitly cast to a false when an error occurs). If there is
+        // something wrong with a line (bad format, etc.) then throw an
+        // exception without echoing it to cerr.
+    }
+    if (file.bad()) {
+        throw invalid_argument(""Problem while reading file"");
+    }
+}
+catch (const invalid_argument& e) {
+    // Whatever your error handling needs to be. config_file should still
+    // be valid so you can add it here, you don't need to add it to each
+    // individual exception. Also you can echo to cerr here, you don't need
+    // to do it inside the loop. If you want to use errno it should still
+    // be set properly at this point. If you want to pass the exception to
+    // the next level you can either rethrow it or generate a new one that
+    // adds additional details (like strerror and the filename).
+}

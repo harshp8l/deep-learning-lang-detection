@@ -1,0 +1,31 @@
+CREATE TABLE #Date([Month] int, [Date] int)
+
+INSERT INTO #Date 
+VALUES(201306, 1)
+    ,(201306, 2)
+    ,(201306, 5)
+    ,(201306, 6)
+    ,(201306, 7)
+    ,(201307, 1)
+    ,(201307, 4)
+    ,(201307, 6)
+    ,(201309, 1)
+    ,(201309, 2)
+
+;WITH CTE AS 
+    (
+        SELECT
+        *,LEAD([Date]) OVER(ORDER BY [Month],[Date]) AS NextDate
+        FROM #Date d
+    )
+    SELECT 
+        d.[Month], m.Dt AS [Date]
+    FROM CTE d
+    CROSS APPLY(    SELECT v.Dt 
+                    FROM 
+                        (VALUES(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11)
+                                ,(11),(12),(13),(14),(15),(16),(17),(18),(19),(20)
+                                ,(21),(22),(23),(24),(25),(26),(27),(28),(29),(30),(31)
+                        ) AS v(Dt)
+                    WHERE v.Dt > d.Date AND v.Dt < d.NextDate
+                ) m

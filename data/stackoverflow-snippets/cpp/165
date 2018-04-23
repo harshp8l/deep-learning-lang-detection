@@ -1,0 +1,52 @@
+#include <type_traits>
+#include <iostream>
+#include <memory>
+#include <vector>
+
+template <typename>
+std::false_type is_pointer_like (unsigned long);
+
+template <typename T>
+auto is_pointer_like (int)
+   -> decltype( * std::declval<T>(), std::true_type{} );
+
+template <typename T>
+auto is_pointer_like (long)
+   -> decltype( std::declval<T>().operator->(), std::true_type{} );
+
+template <typename T>
+using is_pointer_like_arrow_dereferencable = decltype(is_pointer_like<T>(0));
+
+template <typename T>
+static auto const is_pointer_like_arrow_dereferencable_v
+   = is_pointer_like_arrow_dereferencable<T>::value;
+
+
+template <typename T>
+struct Test
+ {
+   T & operator*  () { return *this; }
+   T * operator-> () { return  this; }
+ }; 
+
+int main()
+ {
+   std::cout << is_pointer_like_arrow_dereferencable_v<int>
+      << std::endl, // false
+   std::cout << is_pointer_like_arrow_dereferencable_v<int*>
+      << std::endl, // true
+   std::cout << is_pointer_like_arrow_dereferencable_v<std::vector<int>>
+      << std::endl, // false
+   std::cout << is_pointer_like_arrow_dereferencable_v<std::vector<int>*>
+      << std::endl, // true
+   std::cout << is_pointer_like_arrow_dereferencable_v<Test<int>>
+      << std::endl, // true
+   std::cout << is_pointer_like_arrow_dereferencable_v<Test<int>*>
+      << std::endl, // true
+   std::cout << is_pointer_like_arrow_dereferencable_v<std::shared_ptr<int>>
+      << std::endl, // true
+   std::cout << is_pointer_like_arrow_dereferencable_v<std::shared_ptr<int>*>
+      << std::endl, // true
+   std::cout << is_pointer_like_arrow_dereferencable_v<int***>
+      << std::endl; // true
+ }

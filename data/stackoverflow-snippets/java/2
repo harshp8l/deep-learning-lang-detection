@@ -1,0 +1,33 @@
+public abstract class HttpRequestAsyncTask extends AsyncTask<Void, Void, String> {
+
+    public HttpResponseListener mHttpResponseListener;
+    private final Context mContext;
+
+    HttpRequestAsyncTask(Context mContext, HttpResponseListener listener) {
+        this.mContext = mContext;
+        this.mHttpResponseListener = listener;
+    }
+
+    @Override
+    protected String doInBackground(Void... params) {
+        String result = null;
+
+        try {
+            result = login(mContext); // use the context if necessary
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    @Override
+    protected void onPostExecute(final String result) {
+        mHttpResponseListener.httpResponseReceiver(result);
+    }
+
+    @Override
+    protected void onCancelled() {
+        mHttpResponseListener.httpResponseReceiver(null);
+    }
+}

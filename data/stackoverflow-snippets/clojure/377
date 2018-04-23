@@ -1,0 +1,57 @@
+; Basic zprint pretty-print of a similar map.  Note that it orders the keys
+; alphabetically
+
+user=> (zprint soq)
+{:do #<Fn@4d0e1990 clojure.lang.PersistentList/Primordial>,
+ :do-hypothetically #<Fn@4d0e1990 clojure.lang.PersistentList/Primordial>,
+ :from {:dockclass :input,
+        :name :left-operand,
+        :nodeid :plus,
+        :ref [:plus :left-operand],
+        :value {:args [:result :right-operand],
+                :f #<Fn@4d0e1990 clojure.lang.PersistentList/Primordial>}},
+ :name :boost,
+ :to {:dockclass :output,
+      :name :output,
+      :nodeid :source11,
+      :ref [:source11 :output],
+      :value 11},
+ :type :move}
+
+; You can order the keys so the ones you care about come in the order
+; you want.
+
+user=> (zprint soq {:map {:key-order [:name :from :to]}})
+{:name :boost,
+ :from {:name :left-operand,
+        :dockclass :input,
+        :nodeid :plus,
+        :ref [:plus :left-operand],
+        :value {:args [:result :right-operand],
+                :f #<Fn@4d0e1990 clojure.lang.PersistentList/Primordial>}},
+ :to {:name :output,
+      :dockclass :output,
+      :nodeid :source11,
+      :ref [:source11 :output],
+      :value 11},
+ :do #<Fn@4d0e1990 clojure.lang.PersistentList/Primordial>,
+ :do-hypothetically #<Fn@4d0e1990 clojure.lang.PersistentList/Primordial>,
+ :type :move}
+
+; You can get zprint to ignore keys completely
+
+user=> (zprint soq {:map {:key-order [:name :from :to] :key-ignore-silent [[:from :name] :dockclass :nodeid :value :do :do-hypothetically :type [:to :name]]}})
+{:name :boost,
+ :from {:ref [:plus :left-operand]},
+ :to {:ref [:source11 :output]}}
+
+; You can configure zprint to do this all the time
+
+user=> (zprint.core/set-options! {:map {:key-order [:name :from :to] :key-ignore-silent [[:from :name] :dockclass :nodeid :value :do :do-hypothetically :type [:to :name]]}})
+
+; Now you just zprint it...
+
+user=> (zprint soq)
+{:name :boost,
+ :from {:ref [:plus :left-operand]},
+ :to {:ref [:source11 :output]}}

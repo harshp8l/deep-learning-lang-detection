@@ -1,0 +1,159 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Linq;
+
+using ImmutableDictionary = System.Collections.Immutable.ImmutableDictionary; // select implementation to benchmark here
+
+namespace DictPerf
+{
+    class Program
+    {
+        static string alphaNum = ""0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"";
+
+        static string NextString(Random r, char[] buf)
+        {
+            int i = 0, len = r.Next(buf.Length) + 1;
+            for (; i < len; i++)
+            {
+                buf[i] = alphaNum[r.Next(alphaNum.Length)];
+            }
+            return new string(buf, 0, len);
+        }
+
+        static HashSet<string> strings = new HashSet<string>();
+
+        private static void Seed()
+        {
+            var r = new Random();
+            var buf = new char[64];
+            for (int i = 0; i < 100000; i++)
+            {
+                strings.Add(NextString(r, buf));
+            }
+        }
+
+        static void Main(string[] args)
+        {
+            Seed();
+
+            Benchmark(RunDictionaryBuilderBenchmark, RunImmutableDictionaryBuilderBenchmark, ""BuilderBenchmark"");
+            Benchmark(RunDictionarySetItemBenchmark, RunImmutableDictionarySetItemBenchmark, ""SetItemBenchmark"");
+            Benchmark(RunDictionaryLookupBenchmark, RunImmutableDictionaryLookupBenchmark, ""LookupBenchmark"");
+        }
+
+        private static string Stats(IEnumerable<double> source)
+        {
+            var avg = source.Average();
+            var variance = source.Select(val => (val - avg) * (val - avg)).Sum();
+            var stdev = Math.Sqrt(variance / (source.Count() - 1));
+            return $""Avg={avg,7:0.000}, Stdev{stdev,7:0.000}"";
+        }
+
+        private static void Benchmark(Action<ICollection<string>, Stopwatch> benchmark1, Action<ICollection<string>, Stopwatch> benchmark2, string benchmarkName)
+        {
+            var xs = new List<double>();
+            var ys = new List<double>();
+
+            var sw = Stopwatch.StartNew();
+            for (int i = 0; i < 10; i++)
+            {
+                sw.Restart();
+                benchmark1(strings, sw);
+                xs.Add(sw.Elapsed.TotalMilliseconds);
+                sw.Restart();
+                benchmark2(strings, sw);
+                ys.Add(sw.Elapsed.TotalMilliseconds);
+            }
+
+            var x = xs.Average();
+            var y = ys.Average();
+            var a = xs.Select(v => v / 100).Average();
+            var b = ys.Select(v => v / 100).Average();
+
+            Console.WriteLine($""{benchmarkName} elapsed time"");
+            Console.WriteLine($"" Mutable   : {Stats(xs)} [ms] ({y / x,7:0.0}x)"");
+            Console.WriteLine($"" Immutable : {Stats(ys)} [ms]"");
+            Console.WriteLine($""{benchmarkName} per op"");
+            Console.WriteLine($"" Mutable   : {Stats(xs.Select(v => v / 100))} [us] ({b / a,7:0.0}x)"");
+            Console.WriteLine($"" Immutable : {Stats(ys.Select(v => v / 100))} [us]"");
+        }
+
+        private static void RunDictionaryBuilderBenchmark(ICollection<string> strings, Stopwatch sw)
+        {
+            var d = new Dictionary<string, object>();
+            foreach (var s in strings)
+            {
+                d[s] = null;
+            }
+        }
+
+        private static void RunImmutableDictionaryBuilderBenchmark(ICollection<string> strings, Stopwatch sw)
+        {
+            var d = ImmutableDictionary.CreateBuilder<string, object>();
+            foreach (var s in strings)
+            {
+                d[s] = null;
+            }
+            d.ToImmutableDictionary();
+        }
+
+        private static void RunDictionarySetItemBenchmark(ICollection<string> strings, Stopwatch sw)
+        {
+            var d = new Dictionary<string, object>();
+            foreach (var s in strings)
+            {
+                d[s] = null;
+            }
+        }
+
+        private static void RunImmutableDictionarySetItemBenchmark(ICollection<string> strings, Stopwatch sw)
+        {
+            var d = ImmutableDictionary.Create<string, object>();
+            foreach (var s in strings)
+            {
+                d = d.SetItem(s, null);
+            }
+        }
+
+        private static void RunDictionaryLookupBenchmark(ICollection<string> strings, Stopwatch timer)
+        {
+            timer.Stop();
+
+            var d = new Dictionary<string, object>();
+            foreach (var s in strings)
+            {
+                d[s] = null;
+            }
+
+            timer.Start();
+
+            foreach (var s in strings)
+            {
+                object v;
+                d.TryGetValue(s, out v);
+            }
+        }
+
+        private static void RunImmutableDictionaryLookupBenchmark(ICollection<string> strings, Stopwatch timer)
+        {
+            timer.Stop();
+
+            var d = ImmutableDictionary.CreateBuilder<string, object>();
+            foreach (var s in strings)
+            {
+                d[s] = null;
+            }
+            var x = d.ToImmutableDictionary();
+
+            timer.Start();
+
+            foreach (var s in strings)
+            {
+                object v;
+                x.TryGetValue(s, out v);
+            }
+        }
+    }
+}

@@ -1,0 +1,21 @@
+SELECT [MailboxOwnerUPN]
+      ,[MailboxResolvedOwnerName]
+      ,[LastAccessed]
+      ,[ClientIPAddress]
+      ,[ClientInfoString]
+      ,[MailboxGuid]
+      ,[Operation]
+      ,[OperationResult]
+      ,[LogonType]
+      ,[ExternalAccess]
+      ,[InternalLogonType]
+      ,[LogonUserDisplayName]
+      ,[OriginatingServer]
+  FROM dbo.New
+  WHERE [Processed] = 1 and
+        NOT EXISTS (Select * From dbo.Existing
+                          Where New.LastAccessed = Existing.LastAccessed and 
+                                New.ClientIPAddress = Existing.ClientIPAddress and
+                                New.ClientInfoString = Existing.ClientInfoString and
+                                New.MailboxGuid = Existing.MailboxGuid)
+GO

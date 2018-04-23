@@ -1,0 +1,33 @@
+select s.submission_id,
+       (CASE WHEN FL.FORM_LINE_ID = '2001' THEN 'Same-Day'
+             WHEN FL.FORM_LINE_ID = '2002' THEN 'Daily'
+        END) as Posting_Type,
+       ff.form_field_tx as Response_Type,
+       v.data_date as Day_Of_Year,
+       v.utc_offset as GMT_Offset,
+       MAX(CASE WHEN FF.FORM_FIELD_TX IN ('UTC0', 'UTC1', 'UTC2', 'UTCD') and v.HR_NUM = 1
+                THEN to_char(v.HR, 'DD-MM-YY HH24:MI:SS')
+                WHEN FF.FORM_FIELD_TX IN ('Tutoring', 'Studying') and v.HR_NUM = 1
+               THEN Value_Tx
+           END) as HR1,
+          MAX(CASE WHEN FF.FORM_FIELD_TX IN ('UTC0', 'UTC1', 'UTC2', 'UTCD') and v.HR_NUM = 2
+                   THEN to_char(v.HR, 'DD-MM-YY HH24:MI:SS')
+                   WHEN FF.FORM_FIELD_TX IN ('Time Reading', 'Time Working Out') and v.HR_NUM = 2
+                   THEN Value_Tx
+               END) as HR2
+ from submission s join
+      submission_value sv
+      on s.submission_id = sv.submission_id
+      value v
+      on v.value_id = sv.value_id join
+      form_field ff
+      on sv.form_field_id = ff.form_field_id join
+      form_line fl
+      on ff.form_line_id = fl.form_line_id
+ group by s.submission_id,
+          (CASE WHEN FL.FORM_LINE_ID = '2001' THEN 'Same-Day'
+                WHEN FL.FORM_LINE_ID = '2002' THEN 'Daily'
+           END),
+          ff.form_field_tx,
+          v.data_date,
+          v.utc_offset;

@@ -1,0 +1,24 @@
+(defn trades-chan
+  ""Open the URL as a tab-separated values stream of trades. 
+  Returns a core.async channel of the trades, represented as maps.
+  Closes the HTTP stream on channel close!""
+  [dump-url]
+  (let[stream (-> dump-url
+                 (client/get {:as :stream})
+                 :body) ;;This is an example of 3. 
+       lines  (-> stream
+                 io/reader 
+                 line-seq) 
+       ;; This is an example of 2. I don't want to make multiple readers just because I use them in multiple expressions.
+
+       ;;fields and transducer are examples of 1.
+       fields (map keyword (str/split (first lines) #""\t"")) 
+       transducer (map (comp #(zipmap fields %) #(str/split % #""\t"")))
+
+       ;;output-chan is another example of 2  
+       output-chan (async/chan 50 transducer)]
+    (async/go-loop [my-lines (drop 1 lines)]
+                   (if (async/>! output-chan (first my-lines))   
+                     (recur (rest my-lines))         
+                     (.close stream)))  ;;Here, the closure closes the HTTP stream, so it needs a name to refer to it by.             
+    output-chan))

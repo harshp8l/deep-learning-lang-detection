@@ -1,0 +1,31 @@
+SELECT *
+FROM   (
+  SELECT POLICY_NUMBER,
+         CASE
+           WHEN CLM.reported_date IS NULL OR CLM.loss_date IS NULL THEN 'No claim'
+           WHEN CLM.reported_date - CLM.loss_date <=  5            THEN 'Within 5 days'
+           WHEN CLM.reported_date - CLM.loss_date <= 10            THEN '6-10 days'
+           WHEN CLM.reported_date - CLM.loss_date <= 15            THEN '11-15 days'
+           WHEN CLM.reported_date - CLM.loss_date <= 20            THEN '16-20 days'
+           WHEN CLM.reported_date - CLM.loss_date <= 25            THEN '21-25 days'
+           WHEN CLM.reported_date - CLM.loss_date <= 30            THEN '26-30 days'
+                                                                   ELSE '31 or more days'
+         END  Lag_Time                                
+  FROM   policy_table IRP
+         LEFT OUTER JOIN claim_table CLM   
+         ON IRP.KEY = CLM.KEY                                
+  WHERE  IRP.POLICY_NUMBER in  ('12345678')
+) t
+PIVOT(
+  COUNT( 1 )
+  FOR lag_time IN (
+    'No claim'        AS ""no_claims"",
+    'Within 5 days'   AS ""within_5_days"",
+    '6-10 days'       AS  ""6_to_10_days"",
+    '11-15 days'      AS ""11_to_15_days"",
+    '16-20 days'      AS ""16_to_20_days"",
+    '21-25 days'      AS ""21_to_25_days"",
+    '26-30 days'      AS ""26_to_30_days"",
+    '31 or more days' AS ""31_or_more_days""
+  )
+);

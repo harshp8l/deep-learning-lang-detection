@@ -1,0 +1,18 @@
+void copymappedfile(QString in_filename, QString out_filename)
+{
+    QFile in_file(in_filename);
+    if(in_file.open(QFile::ReadOnly))
+    {
+        QFile out_file(out_filename);
+        if(out_file.open(QFile::WriteOnly))
+        {
+            const qint64 filesize = in_file.size();
+            uchar * mem = in_file.map(0, filesize, QFileDevice::MapPrivateOption);
+            out_file.write(reinterpret_cast<const char *>(mem) , filesize);
+            in_file.unmap(mem);
+
+            out_file.close();
+        }
+        in_file.close();
+    }
+}

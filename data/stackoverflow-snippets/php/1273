@@ -1,0 +1,33 @@
+<?php
+class Tracker_model extends CI_Model {
+    #insert follower count 
+    public function twitter_followers(){
+        $query = $this->db->get('icos');
+        if($query->num_rows() > 0) {
+            foreach($query->result() as $row) {
+                $ico_id = $row->id;
+                $twitter_url = $row->twitter;
+
+                $page = @file_get_contents($twitter_url);
+                $followers = @explode(""followers_count&quot;:"", explode("",&quot;friends_count"", $page)[0])[1];  
+
+                $data = array (
+                    'ico_id'      => $ico_id,
+                    'twitter_url' => $twitter_url,
+                    'year'        => date(""Y""),
+                    'month'       => date(""m""),
+                    'month_word'  => date(""F""),
+                    'day'         => date(""d""),
+                    'day_word'    => date(""l""),
+                    'week'        => date(""W""),
+                    'followers'   => $followers
+                );
+
+                $insert_followers = $this->db->insert('twitter_followers', $data);               
+            }
+        } else {
+            return false;
+        }
+    } 
+}
+?>

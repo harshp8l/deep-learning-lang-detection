@@ -1,0 +1,16 @@
+UserProfileMatch.getNewUser(item.fk_user_id)
+                .then(user => ActiveAuctionProfile.closeActiveAuctionProfile(item.aap_id))
+                .then(() => user.length  > 0 ? ActiveAuctionProfile.isProfileActive(user[0].profile_id)
+                                             : (console.log(""niet""), page++, next()))
+                .then(is_active => [UserProfileMatch.countActiveProfilesForUser(item.fk_user_id), is_active.result])
+                .then(([number_of_profiles,n]) => n === 0 &&
+                                                  number_of_profiles < config.settings.lovingbids_start_profile ? UserProfileMatch.updateProfileMatch(item.fk_user_id, user[0].profile_id,1,false))
+                                                                                                                : (console.log(""exists""),
+                                                                                                                   ExpireProfileRegister.removeExpireResult(item.id),
+                                                                                                                   page++,
+                                                                                                                   next());
+                .then(() => ActiveAuctionProfile.createNewActiveProfile({ fk_auction_profile_id: user[0].profile_id,
+                                                                          start_date           : moment().format(""YYYY-MM-DD HH:mm:ss"") ,
+                                                                          expire_date          : moment().add(config.settings.increment_settings,'seconds').format(""YYYY-MM-DD HH:mm:ss"")
+                                                                        })
+                .then(() => (ExpireProfileRegister.removeExpireResult(item.id), page++, next()));

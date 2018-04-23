@@ -1,0 +1,23 @@
+function Invoke-SQL($dataSource, $database, $sqlCommand, $tradeDate) {
+
+    $result = New-Object System.Data.DataSet    
+
+    $connectionString = ""Data Source=$dataSource; Integrated Security=SSPI; Initial Catalog=$database""
+
+    $connection = new-object system.data.SqlClient.SQLConnection($connectionString)
+
+
+    $command = new-object system.data.sqlclient.sqlcommand($sqlCommand, $connection)
+    $command.CommandType = [System.Data.CommandType]::StoredProcedure
+
+    # $parameter = New-Object System.Data.SqlClient.SqlParameter (""@TradeDateParam"", $tradeDate)
+    $command.Parameters.AddWithValue(""@TradeDateParam"", $tradeDate) | Out-Null  # <--Added this pipe to suppress parameter output
+
+    $adapter = New-Object System.Data.sqlclient.sqlDataAdapter $command
+
+    $connection.Open()   
+    $adapter.Fill($result) | Out-Null
+    $connection.Close()
+
+    return $result.Tables  
+}

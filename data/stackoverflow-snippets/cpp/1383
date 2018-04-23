@@ -1,0 +1,38 @@
+#include <QMainWindow>
+#include <QDialog>
+
+class MyDialog : public QDialog
+{
+public:
+    MyDialog(QWidget *parent = 0) :
+        QDialog(parent)
+    { show(); }
+
+    void keyPressEvent(QKeyEvent* /*e*/){
+        close();
+    }
+};
+
+class MainWindow : public QMainWindow
+{
+    Q_OBJECT
+public:
+    explicit MainWindow(QWidget *parent = 0) :
+        QMainWindow(parent),
+        mDialog(Q_NULLPTR)
+    {
+        qDebug()<<""Current thread:""<<QThread::currentThread();
+        MyThread* myThread = new MyThread(this);
+        connect(myThread, &MyThread::somethingHappened,
+                this, &MainWindow::createDialog, Qt::QueuedConnection);
+        myThread->start();
+    }
+private slots:
+    void createDialog(){
+        qDebug()<<""Current thread:""<<QThread::currentThread();
+        if(mDialog == Q_NULLPTR)
+            mDialog = new MyDialog(this);
+    }
+private:
+    MyDialog* mDialog;
+};

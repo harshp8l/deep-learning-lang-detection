@@ -1,0 +1,25 @@
+(* by looking at the xfer_type, really the arg passed to main, 
+we can determine the report type parameter for the Access 
+database. *)
+let select_report_type xfer_type =
+    match xfer_type with
+    | ""/al"" -> 0
+    | ""/am"" -> 1
+    | ""/ap"" -> 2
+    | ""/pm"" -> 3
+    | ""/pp"" -> 4
+    | _     -> 99
+
+let query = ""select count(*) from ProcessStatus where ReportType = ? and ReportDate = ? and ReportFileName = ? ""
+use cmd = new OleDbCommand(query , db_con)
+cmd.Parameters.Add(new OleDbParameter(""ReportType"",(OleDbType.VarChar,5))) |> ignore
+cmd.Parameters.[0].Value <- ((select_report_type xfer_type).ToString())
+
+cmd.Parameters.Add(new OleDbParameter(""ReportDate"",OleDbType.VarChar, 11)) |> ignore
+cmd.Parameters.[1].Value <- report_date
+
+cmd.Parameters.Add(new OleDbParameter(""ReportFileName"",OleDbType.VarChar, 100)) |> ignore
+cmd.Parameters.[2].Value <- fn
+
+let sql_reader = cmd.ExecuteReader ()
+        if (sql_reader.Read ()) then

@@ -1,0 +1,24 @@
+-module(z).
+-define(DELAY(X), fun() -> X end).
+-define(FORCE(X), X()).
+
+create(Dx, N) ->
+    [0 | ?DELAY(create_loop(Dx, N))].
+
+create_loop(Dx, N) ->
+    [Dx*N | ?DELAY(create_loop(Dx, N-1)]; % This is an abuse of improper lists
+create_loop(_, 0) -> [].
+
+map(F, []) -> [];
+map(F, [V | Thunk]) ->
+    [F(V) | ?DELAY(map(F, ?FORCE(Thunk)))].
+
+sum([], Acc) -> Acc;
+sum([V | Thunk], Acc) ->
+    sum(?FORCE(Thunk), V + Acc).
+
+integral(X1,X2,Dx, F) ->
+    N = trunc((X2-X1) / Dx),
+    Points = create(Dx, N),
+    Vals = map(fun(X) -> F(X)*Dx end, Points),
+    sum(Vals).

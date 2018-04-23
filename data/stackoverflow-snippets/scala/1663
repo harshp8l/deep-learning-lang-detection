@@ -1,0 +1,19 @@
+import org.apache.spark.sql.functions._
+import spark.implicits._
+
+val N = 65
+
+val result = df.where($""videos"" > N)           // filter playlists with enough views
+  .select(explode($""tags"") as ""tag"", $""views"") // explode tags into separate records
+  .groupBy(""tag"")                              // group by tag
+  .sum(""views"")                                // sum views per tag
+
+result.show(false)
+// +---+----------+
+// |tag|sum(views)|
+// +---+----------+
+// |t5 |553       |
+// |t4 |1015      |
+// |t2 |1015      |
+// |t6 |462       |
+// +---+----------+

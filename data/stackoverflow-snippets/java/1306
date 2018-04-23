@@ -1,0 +1,62 @@
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Shape;
+
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.WindowConstants;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter.HighlightPainter;
+import javax.swing.text.JTextComponent;
+
+
+public class HighlightTest {
+
+    public static void main(String[] args) {
+        JTextArea textArea = new JTextArea(10, 30);
+        textArea.setText(""It's a small test to understand whether proxy works or not."");
+        try {
+            textArea.getHighlighter().addHighlight(5, 15,
+                    new ProxyHighlightPainer(new DefaultHighlighter.DefaultHighlightPainter(Color.RED)));
+        } catch (Exception e) {
+            // add something when required
+        }
+        textArea.addCaretListener(e -> textArea.repaint()); // must provoke repaint of highlighter
+        JFrame frm = new JFrame(""Test"");
+        frm.add(new JScrollPane(textArea));
+        frm.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frm.pack();
+        frm.setLocationRelativeTo(null);
+        frm.setVisible(true);
+    }
+    private static class ProxyHighlightPainer implements HighlightPainter {
+
+        private final HighlightPainter delegate;
+
+        public ProxyHighlightPainer(HighlightPainter delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void paint(Graphics g, int p0, int p1, Shape bounds, JTextComponent c) {
+            int startSel = c.getSelectionStart();
+            int endSel = c.getSelectionEnd();
+            if (startSel == endSel || startSel >= p1 || endSel <= p0) {
+                // no selection or no intersection: paint normal
+                delegate.paint(g, p0, p1, bounds, c);
+            } else if (startSel >= p0 && endSel >= p1) {
+                delegate.paint(g, p0, startSel, bounds, c);
+            } else if (startSel <= p0 && endSel <= p1) {
+                delegate.paint(g, endSel, p1, bounds, c);
+            } else if (startSel <= p0 && endSel <= p1) {
+                delegate.paint(g, p0, startSel, bounds, c);
+                delegate.paint(g, endSel, p1, bounds, c);
+            } else {
+                // just to be safe
+                delegate.paint(g, p0, p1, bounds, c);
+            }
+        }
+
+    }
+}

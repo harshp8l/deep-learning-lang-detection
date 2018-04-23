@@ -1,0 +1,29 @@
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ranked_index.hpp>
+#include <boost/multi_index/member.hpp>
+
+using namespace boost::multi_index;
+
+template<typename K,typename T>
+using ranked_map=multi_index_container<
+  std::pair<K,T>,
+  indexed_by<
+    ranked_unique<member<std::pair<K,T>,K,&std::pair<K,T>::first>>
+  >
+>;
+
+#include <cassert>
+#include <string>
+
+int main()
+{
+  ranked_map<std::string,std::string> m;
+
+  m.emplace(""a"",""value for a"");
+  m.emplace(""b"",""value for b"");
+
+  assert(m.nth(0)->first==""a"");
+  assert(m.nth(1)->first==""b"");
+  assert(m.nth(1)->second==""value for b"");
+  assert(m.find(""a"")->second==""value for a"");
+}

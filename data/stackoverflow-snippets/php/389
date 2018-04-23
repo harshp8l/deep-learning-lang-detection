@@ -1,0 +1,25 @@
+protected function sendLoginResponse(Request $request)
+    {
+        // save old session token (shopping cart is related to this one)
+
+        $old_session_token = session()->get('_token');
+
+        // regenerate new session (prevent session fixation)
+        $request->session()->regenerate();
+
+        // get new session token
+        $new_session_token = session()->get('_token');
+
+        // update session token in cart table
+
+        $shopping_cart = Cart::where('session_token', $old_session_token)->first();
+
+        $shopping_cart->session_token = $new_session_token;
+
+        $shopping_cart->save();
+
+        $this->clearLoginAttempts($request);
+
+        return $this->authenticated($request, $this->guard()->user())
+            ?: redirect()->intended($this->redirectPath());
+    }

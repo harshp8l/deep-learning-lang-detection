@@ -1,0 +1,27 @@
+r = /
+    \A             # match beginning of string
+    (?:            # begin a non-capture group
+      MAINT        # match 'MAINT'
+      |            # or
+      STRY\-\d+    # match 'STRY-' followed by one or more digits
+    )              # end non-capture group
+    :[ ]           # match a colon followed by a space
+    [[:alpha:]]+   # match one or more letters
+    (?<!           # begin a negative lookbehind
+      ed           # match 'ed'
+      |            # or
+      ing          # match 'ing'
+    )              # end negative lookbehind
+    [ ]            # match a space
+    /x             # free-spacing regex definition mode
+
+   ""MAINT: Refactor something"".match?(r)   #=> true
+   ""STRY-1: Add something"".match?(r)       #=> true
+   ""STRY-2: Update something"".match?(r)    #=> true
+
+   ""MAINT: Refactored something"".match?(r) #=> false
+   ""STRY-1: Added something"".match?(r)     #=> false
+   ""STRY-2: Updated something"".match?(r)   #=> false
+
+   ""A MAINT: Refactor something"".match?(r) #=> false
+   ""STRY-1A: Add something"".match?(r)      #=> false

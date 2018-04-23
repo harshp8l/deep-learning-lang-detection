@@ -1,0 +1,18 @@
+invokeAMethod(C*, int (C::*)()): # @invokeAMethod(C*, int (C::*)())
+  // c is in rdi, method.adj is in rdx, and method.ptr is in rdx
+  // adjust this pointer
+  add rdi, rdx
+  // check whether method is virtual
+  test sil, 1
+  // if it is not, skip the following
+  je .LBB0_2
+  // load the vtable pointer from the object
+  mov rax, qword ptr [rdi]
+  // index into the vtable with the corrected offset to load actual method address
+  mov rsi, qword ptr [rax + rsi - 1]
+.LBB0_2:
+  // here the actual address of the method is in rsi, we call it
+  // in this particular case we return the same type
+  // and do not need to call any destructors
+  // so we can tail call
+  jmp rsi # TAILCALL

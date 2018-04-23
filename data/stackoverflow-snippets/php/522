@@ -1,0 +1,113 @@
+// Register main datepicker jQuery plugin script
+add_action( 'wp_enqueue_scripts', 'enabling_date_picker' );
+function enabling_date_picker() {
+
+    // Only on front-end and checkout page
+    if( is_admin() || ! is_checkout() ) return;
+
+    // Load the datepicker jQuery-ui plugin script
+    wp_enqueue_script( 'jquery-ui-datepicker' );
+    wp_enqueue_style('jquery-ui', ""http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/smoothness/jquery-ui.css"", '', '', false);
+    ## wp_enqueue_style('datepicker', plugins_url('/css/datepicker.css', __FILE__), '', '', false);
+}
+
+// Datepicker field and select time field
+add_action( 'woocommerce_before_order_notes', 'datepicker_custom_field' );
+function datepicker_custom_field($checkout) {
+
+    // $globalText = get_post_meta( $order_parent_id, 'e_deliverydate', true);
+
+    echo '<div id=""date-time-wrapper"">';
+
+    woocommerce_form_field('delivery_date', array(
+        'type' => 'text',
+        'class'=> array('delivery-date-class form-row-first'),
+        'label' => __('Your Delivery Date'),
+        'required' => true,
+        'placeholder' => __('Pick a date')
+    ), $checkout->get_value('delivery_date') );
+
+    $options = array('' => __('Time to pick…') );
+
+    woocommerce_form_field( 'delivery_time', array(
+        'type'          => 'select',
+        'class'         => array('delivery-time-class form-row-last'),
+        'label'         => __('Your Delivery time'),
+        'required'      => true,
+        'options'       => $options,
+    ),  $checkout->get_value( 'delivery_time' ) );
+
+    // Restricted options array
+    $options1 = array(
+        '10:00'   => __( '10:00', 'wps' ),
+        '10:30'   => __( '10:30', 'wps' ),
+        '11:00'   => __( '11:00', 'wps' ),
+        '11:30'   => __( '11:30', 'wps' ),
+        '12:00'   => __( '12:00', 'wps' ),
+        '12:30'   => __( '12:30', 'wps' ),
+        '13:00'   => __( '13:00', 'wps' ),
+        '13:30'   => __( '13:30', 'wps' ),
+        '14:00'   => __( '14:00', 'wps' ),
+        '14:30'   => __( '14:30', 'wps' ),
+        '15:00'   => __( '15:00', 'wps' ),
+    );
+
+    // The other part of options array
+    $options2 = array(
+        '15:30'   => __( '15:30', 'wps' ),
+        '16:00'   => __( '16:00', 'wps' ),
+        '16:30'   => __( '16:30', 'wps' ),
+        '17:00'   => __( '17:00', 'wps' ),
+        '17:30'   => __( '17:30', 'wps' ),
+        '18:00'   => __( '18:00', 'wps' ),
+    );
+
+    // Merging options arrays 
+    $options1 = array_merge($options, $options1); // Partial
+    $options  = array_merge($options1,$options2); // Full
+
+    echo '<br clear=""all""></div>';
+
+    ?>
+    <script language=""javascript"">
+    jQuery( function($){
+        var a = <?php echo json_encode($options); ?>,
+            b = <?php echo json_encode($options1); ?>,
+            c = new Date(),
+            s = 'select#delivery_time';
+
+        // Utility function to fill dynamically the select field options
+        function dynamicSelectOptions( opt ){
+            var o = '';
+            $.each( opt, function( key, value ){
+                o += '<option value=""'+key+'"">'+value+'</option>';
+            });
+            $(s).html(o);
+        }
+
+        // Once DOM is loaded
+        if( c.getDay() == 6 || c.getDay() == 0 )
+            dynamicSelectOptions( b );
+        else
+            dynamicSelectOptions( a );
+
+        // Select time to selectWoo
+        $(s).selectWoo();
+
+        // Datepicker
+        $('#delivery_date').datepicker({
+            dateFormat: 'MM d, yy',
+            minDate:1,
+            onSelect: function(){
+                // Live event: On selected date event
+                var d = new Date($(this).val());
+                if( d.getDay() == 6 || d.getDay() == 0 )
+                    dynamicSelectOptions( b );
+                else
+                    dynamicSelectOptions( a );
+            }
+        }).parent().after('<div id=""order-desc""></div>');
+    });
+    </script>
+    <?php
+}

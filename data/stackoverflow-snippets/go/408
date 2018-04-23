@@ -1,0 +1,72 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+)
+
+type (
+    images struct {
+        Image []image `json:""image""`
+    }
+
+    image struct {
+        Active string `json:""active,omitempty""`
+        common
+    }
+
+    newImages struct {
+        Image []newImage `json:""image""`
+    }
+
+    newImage struct {
+        common
+        Inactive string `json:""inactive,omitempty""`
+    }
+
+    common struct {
+        Bytesize string `json:""bytesize""`
+        Default  string `json:""default,omitempty""`
+    }
+)
+
+var i = []byte(`
+ {""image"": [
+  {
+    ""bytesize"": ""-2"",
+    ""default"": ""redlight_drdefault""
+  },
+  {
+    ""active"": ""JV77tdMcHkChFaF2H9uoDHepPhUcrlprYEsQr-r-1lg="",
+    ""bytesize"": ""566806""
+  }
+]}
+`)
+
+func main() {
+
+    var images images
+    e := json.Unmarshal(i, &images)
+    if e != nil {
+        panic(e)
+    }
+
+    var newImages newImages
+    for k, _ := range images.Image {
+
+        newImg := newImage{}
+        if len(images.Image[k].Active) > 0 {
+            newImg.Inactive = images.Image[k].Active
+        }
+        newImg.Default = images.Image[k].Default
+        newImg.Bytesize = images.Image[k].Bytesize
+        newImages.Image = append(newImages.Image, newImg)
+
+    }
+
+    result, e := json.Marshal(newImages)
+    if e != nil {
+        panic(e)
+    }
+    fmt.Println(string(result))
+}

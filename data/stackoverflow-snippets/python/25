@@ -1,0 +1,19 @@
+MIN_SIZE = 40
+MAX_SIZE = 300
+THIN_THRESHOLD = max(10, MIN_SIZE)
+PADDING = 2
+
+# ...
+
+idx = 0
+# For each contour, find the bounding rectangle and extract it
+for contour in sorted_contours:
+    x, y, w, h = cv2.boundingRect(contour)
+    roi = img[(y + PADDING):(y + h - PADDING), (x + PADDING):(x + w - PADDING)]
+    # Skip thin contours (vertical and horizontal lines)
+    if (h < THIN_THRESHOLD) or (w < THIN_THRESHOLD):
+        continue
+    if (h > MAX_SIZE) and (w > MAX_SIZE):
+        continue
+    idx += 1
+    cv2.imwrite(str(idx) + '.png', roi)

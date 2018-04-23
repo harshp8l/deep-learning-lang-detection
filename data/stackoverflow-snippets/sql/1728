@@ -1,0 +1,93 @@
+SET DATEFIRST 1 -- Monday = 1, Sunday = 7
+
+;WITH Days AS
+(
+    -- Recursive anchor: hard-coded first date
+    SELECT
+        GeneratedDate = CONVERT(DATE, '2017-01-01')
+
+    UNION ALL
+
+    -- Recursive expression: all days until day X
+    SELECT
+        GeneratedDate = DATEADD(DAY, 1, D.GeneratedDate)
+    FROM
+        Days AS D
+    WHERE
+        DATEADD(DAY, 1, D.GeneratedDate) <= '2020-01-01'
+),
+NumberedDays AS
+(
+    SELECT
+        GeneratedDate = D.GeneratedDate,
+        DayOfWeek = DATEPART(WEEKDAY, D.GeneratedDate),
+        DayNumber = ROW_NUMBER() OVER (ORDER BY D.GeneratedDate ASC)
+    FROM
+        Days AS D
+),
+AttendancesWithNumberedDays AS
+(
+    SELECT
+        A.*,
+        N.*
+    FROM
+        Attendance AS A
+        INNER JOIN NumberedDays AS N ON A.Date = N.GeneratedDate
+),
+AbsenceSpree AS
+(
+    -- Recursive anchor: absence day with no previous absence, skipping weekends
+    SELECT
+        StartingAbsenceDate = A.Date,
+        CurrentDateNumber = A.DayNumber,
+        CurrentDateDayOfWeek = A.DayOfWeek,
+        AbsenceDays = 1,
+        StudentID = A.StudentID
+    FROM
+        AttendancesWithNumberedDays AS A
+    WHERE
+        NOT EXISTS (
+            SELECT
+                'no previous absence date'
+            FROM
+                AttendancesWithNumberedDays AS X
+            WHERE
+                X.StudentID = A.StudentID AND
+                X.DayNumber = CASE A.DayOfWeek 
+                    WHEN 1 THEN A.DayNumber - 3 -- When monday then friday (-3)
+                    WHEN 7 THEN A.DayNumber - 2 -- When sunday then friday (-2)
+                    ELSE A.DayNumber - 1 END)
+
+    UNION ALL
+
+    -- Recursive expression: find the next absence day, skipping weekends
+    SELECT
+        StartingAbsenceDate = S.StartingAbsenceDate,
+        CurrentDateNumber = A.DayNumber,
+        CurrentDateDayOfWeek = A.DayOfWeek,
+        AbsenceDays = S.AbsenceDays + 1,
+        StudentID = A.StudentID
+    FROM
+        AbsenceSpree AS S
+        INNER JOIN AttendancesWithNumberedDays AS A ON
+            S.StudentID = A.StudentID AND
+            A.DayNumber = CASE S.CurrentDateDayOfWeek
+                WHEN 5 THEN S.CurrentDateNumber + 3 -- When friday then monday (+3)
+                WHEN 6 THEN S.CurrentDateNumber + 2 -- When saturday then monday (+2)
+                ELSE S.CurrentDateNumber + 1 END
+)
+SELECT
+    StudentID = A.StudentID,
+    StartingAbsenceDate = A.StartingAbsenceDate,
+    EndingAbsenceDate = MAX(N.GeneratedDate),
+    AbsenceDays = MAX(A.AbsenceDays)
+FROM
+    AbsenceSpree AS A
+    INNER JOIN NumberedDays AS N ON A.CurrentDateNumber = N.DayNumber
+GROUP BY
+    A.StudentID,
+    A.StartingAbsenceDate
+HAVING
+    MAX(A.AbsenceDays) >= 3
+OPTION
+    (MAXRECURSION 5000)

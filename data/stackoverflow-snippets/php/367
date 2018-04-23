@@ -1,0 +1,19 @@
+    class PartiesController extends Controller
+{
+        public function index(\Illuminate\Http\Request $request) {
+          if($request->has('lat') && $request->has('long')){
+                $lat = $request->lat;
+                $long = $request->long; 
+            $parties=DB::select(DB::raw(""SELECT *,111.045*DEGREES(ACOS(COS(RADIANS(':lat'))*COS(RADIANS(`latitude`))*COS(RADIANS(`longitude`) - RADIANS(':long'))+SIN(RADIANS(':lat'))*SIN(RADIANS(`latitude`)))) AS distance_in_km FROM parties ORDER BY distance_in_km asc LIMIT 0,5""), array(
+                'lat' => $lat,
+                'long' => $long
+              ));
+            $hidacik = Parties::hydrate($parties);
+            return Fractal::includes('places')->collection($hidacik,new PartyTransformer);
+             }
+           else {
+                $parties = Parties::all();
+            }
+       return Fractal::includes('places')->collection($parties,new PartyTransformer);
+        }
+}

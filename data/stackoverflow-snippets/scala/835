@@ -1,0 +1,27 @@
+import akka.actor._
+import spray.can.Http
+import spray.routing._
+
+object MyActor {
+  case object GetListener
+  def props(route: => Route): Props = Props(new MyActor(route))
+}
+
+class MyActor(route: => Route) extends HttpServiceActor {
+  import MyActor._
+
+  var httpListener: Option[ActorRef] = None
+
+  def routeReceive: Receive = runRoute(route)
+
+  def serverLifecycleReceive: Receive = {
+    case b: Http.Bound =>
+      println(s""Successfully bound to ${b.localAddress}"")
+      val listener = sender()
+      httpListener = Some(listener)
+    case GetListener =>
+      httpListener.foreach(sender ! _)
+  }
+
+  def receive = routeReceive orElse serverLifecycleReceive
+}

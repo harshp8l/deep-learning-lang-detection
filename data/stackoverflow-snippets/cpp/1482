@@ -1,0 +1,79 @@
+class GraphicBase
+{
+    public:
+        virtual void Print()=0;
+        // for using with vtable polymorphism
+        GraphicBase* Get() { return this; }
+};
+
+
+class Point: public GraphicBase
+{
+    public:
+        Point( int, int ){}
+
+        void Print() override { std::cout << ""Point"" << std::endl; }
+        void PrintNonVirtual() { std::cout << ""Point"" << std::endl; }
+};
+
+class Line: public GraphicBase
+{
+    public:
+        Line( Point, Point ){}
+        void Print() override { std::cout << ""Line"" << std::endl; }
+        void PrintNonVirtual() { std::cout << ""Line"" << std::endl; }
+};
+
+
+template < typename T >
+class Graphics: public T
+{
+    public: 
+        using T::T;
+
+        // for using with variants
+        T GetNonVirtual() { return static_cast<T>(*this);}
+};  
+
+Graphics( int, int ) -> Graphics<Point>;
+Graphics( Point, Point ) -> Graphics<Line>;
+
+int main()
+{
+    Graphics p1(1,1);
+    Graphics l1({1,2},{3,4});
+
+    // using vtable polymorphism
+    std::vector<GraphicBase*> v;
+    v.push_back( &p1 );
+    v.push_back( &l1 );
+
+    for ( auto el: v ) el->Print();
+
+    // using the Get() to get the base pointer
+    GraphicBase* ptr;
+    ptr = p1.Get();
+    ptr->Print();
+
+    ptr = l1.Get();
+    ptr->Print();
+
+    // or using variants:
+    using VT = std::variant< Point, Line >;
+
+    std::vector<VT> var;
+    var.push_back( p1 );
+    var.push_back( l1 );
+
+    for ( auto& el: var )
+    {
+        std::visit( []( auto& v ){ v.PrintNonVirtual(); }, el );
+    }
+
+    // here we get a copy of the object ( references not allowed in variants! )
+    VT va1 = p1.GetNonVirtual();
+    VT va2 = p1.GetNonVirtual();
+
+    std::visit( []( auto& v ){ v.PrintNonVirtual(); }, va1 );
+    std::visit( []( auto& v ){ v.PrintNonVirtual(); }, va2 );
+ }

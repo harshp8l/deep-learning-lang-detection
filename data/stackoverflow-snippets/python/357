@@ -1,0 +1,56 @@
+#!/usr/bin/python
+import Tkinter as Tk
+
+class HoverInfo(Tk.Menu):
+    def __init__(self, parent, text):
+        Tk.Menu.__init__(self, parent, tearoff=0, 
+                         background='light goldenrod yellow')
+
+        self.__displayed = False
+        for line in text.split('\n'):
+            self.add_command(label=line)
+
+        parent.bind(""<Enter>"", self.__display)
+        parent.bind(""<Leave>"", self.__remove)
+
+    def __display(self, event):
+        if event.widget['state'] == Tk.NORMAL:
+            if not self.__displayed:
+                self.__displayed = True
+                self.post(event.x_root+5, event.y_root+5)
+
+    def __remove(self, event):
+        if self.__displayed:
+            self.__displayed = False
+            self.unpost()
+
+CONTROL = 4
+
+def button_pressed_cb(event):
+    if event.widget['state'] != Tk.DISABLED:
+        print(""You pressed "" + event.widget['text'])
+        if (event.state & CONTROL) == CONTROL:
+            event.widget.config(state=Tk.DISABLED)
+            event.widget.config(relief=Tk.SUNKEN)
+
+def button_release_cb(event):
+    if (event.state & CONTROL) != CONTROL:
+        print(""You released "" + event.widget['text'])
+        event.widget.config(state=Tk.NORMAL)
+        event.widget.config(relief=Tk.RAISED)
+
+
+root = Tk.Tk()
+button1 = Tk.Button(root, text=""button1"")
+button1.pack()
+button2 = Tk.Button(root, text=""button2"")
+button2.pack()
+
+button1.bind(""<ButtonPress>"", button_pressed_cb)
+button1.bind(""<ButtonRelease>"", button_release_cb)
+button2.bind(""<ButtonPress>"", button_pressed_cb)
+button2.bind(""<ButtonRelease>"", button_release_cb)
+
+HoverInfo(button1, ""Hint:\nYou can hold Ctrl key before\nclicking a button to latch it."")
+
+root.mainloop()

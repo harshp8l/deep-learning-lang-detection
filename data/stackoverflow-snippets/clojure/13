@@ -1,0 +1,14 @@
+(dotest
+  (let [N 100
+        puts-done (atom 0)
+        thread-count  10
+        executor (Executors/newFixedThreadPool thread-count)
+        abq (ArrayBlockingQueue. (+ 3 N))
+        putter (fn []
+                 (.put abq 0)
+                 (swap! puts-done inc))
+        putters (repeat N #(putter)) ]
+    (.invokeAll executor putters)
+    (println (format ""N: %d   puts-done: %d"" N @puts-done))
+    (assert (= N @puts-done)
+            (format ""should have put in puts-done items; N = %d   puts-done = %d"" N @puts-done))))

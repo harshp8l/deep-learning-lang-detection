@@ -1,0 +1,32 @@
+[MethodImpl(MethodImplOptions.AggressiveInlining)]
+private unsafe float ParseMyFloat(string value)
+{
+   double result = 0, dec = 0;
+   fixed (char* ptr = value)
+   {
+      char* c,d, start = ptr, length = ptr + value.Length;
+      if (*ptr == '-' || *ptr == '+') start++;
+
+      for (c = start; c < length && *c >= '0' && *c <= '9'; c++)
+         result = result * 10 + *c - 48;
+
+      if (*c == '.')
+      {
+         for (d = length - 1; d > c && *d >= '0' && *d <= '9'; d--)
+            dec = (dec + (*d - 48)) / 10;
+
+         if (c != d)
+            throw new FormatException(""Invalid float"");
+      }
+      else
+      {
+
+         if (c != length)
+            throw new FormatException(""Invalid float"");
+      }
+
+      result += dec;
+
+      return *ptr == '-' ? (float)result * -1 : (float)result;
+   }
+}

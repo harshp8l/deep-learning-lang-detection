@@ -1,0 +1,51 @@
+#X is divided in sublists of consecutive values
+dominiums = []
+for k, g in groupby(enumerate(X), lambda (i,j):i-j):
+    dominiums.append(map(itemgetter(1), g))
+
+number_of_subplots = len(dominiums)
+
+k = 0
+d = .01
+l = .015
+
+f, axes = plt.subplots(nrows = 1, ncols = number_of_subplots, sharex = 
+              False, sharey = True, gridspec_kw = {'width_ratios':
+              [3*len(dominiums[h]) for h in 
+              range(number_of_subplots)],'wspace':0.05})
+
+axes[0].yaxis.tick_left()
+axes[0].spines['right'].set_visible(False)
+
+kwargs = dict(transform = axes[0].transAxes, color='k', linewidth = 1, 
+         clip_on = False)
+axes[0].plot((1-d/1.5,1+d/1.5), (-d,+d), **kwargs)
+axes[0].plot((1-d/1.5,1+d/1.5),(1-d,1+d), **kwargs)
+kwargs.update(transform = axes[-1].transAxes)
+axes[-1].plot((-l,+l), (1-d,1+d), **kwargs)
+axes[-1].plot((-l,+l), (-d,+d), **kwargs)
+
+for i in range(number_of_subplots):
+    data_in_this_subplot = []
+    for j in range(len(dominiums[i])):
+        data_in_this_subplot.append([])
+        data_in_this_subplot[j] = Y[k]
+        k = k + 1
+
+    axes[i].boxplot(data_in_this_subplot, notch = 0, sym = '', 
+            positions = dominiums[i], medianprops = m_props, boxprops 
+            = b_props, whiskerprops = w_props, capprops = c_props)
+
+    if i != 0:
+        axes[i].spines['left'].set_visible(False)
+        axes[i].tick_params(axis = 'y', which = 'both', labelright = 
+                False, length = 0)
+    if i != number_of_subplots -1:
+        axes[i].spines['right'].set_visible(False)
+        kwargs = dict(transform = axes[i].transAxes, color='k', 
+                 linewidth = 1, clip_on=False)
+        axes[i].plot((1-l,1+l), (-d,+d), **kwargs)
+        axes[i].plot((1-l,1+l),(1-d,1+d), **kwargs)
+        kwargs.update(transform = axes[i].transAxes)
+        axes[i].plot((-l,+l), (1-d,1+d), **kwargs)
+        axes[i].plot((-l,+l), (-d,+d), **kwargs)

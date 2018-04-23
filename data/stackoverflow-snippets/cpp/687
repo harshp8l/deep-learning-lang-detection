@@ -1,0 +1,34 @@
+constexpr bool is_equal(const char* a, const char* b) {
+    for (; *a && *b; ++a, ++b) {
+        if (*a != *b) return false;
+    }   
+    return *b == '\0';
+}
+
+constexpr bool has_substr(const char* haystack, const char* needle) {
+    for(; *haystack; ++haystack) {
+        if (is_equal(haystack, needle)) {
+            return true;
+        }
+    }   
+    return false;
+}
+
+template <typename T>
+constexpr bool closure_check() {
+    return has_substr(__PRETTY_FUNCTION__,
+#ifdef __clang__
+            ""(lambda at""
+#else
+            ""::<lambda""
+#endif
+            );
+}
+
+template <typename T>
+constexpr bool is_closure_v = closure_check<T>();
+
+template <typename T>
+struct is_closure
+    : std::integral_constant<bool, is_closure_v<T>>
+{ };

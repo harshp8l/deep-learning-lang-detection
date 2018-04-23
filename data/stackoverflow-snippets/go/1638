@@ -1,0 +1,35 @@
+package main
+
+import (
+    ""bufio""
+    ""fmt""
+    ""os""
+)
+
+func main() {
+    scanner := bufio.NewScanner(os.Stdin)
+    msgQ := make(chan string)
+
+    defer close(msgQ)
+
+    go func() {
+        for {
+            // Prompt the user for a message
+            fmt.Print(""client1: "")
+            msg, ok := <-msgQ
+            if !ok {
+                return
+            }
+            fmt.Println(""\rclient1 said: "" + msg)
+            // Write the message over the current line
+            fmt.Println(""client2: Hello"")
+        }
+    }()
+
+
+    // Scan os.Stdin, splitting on bytes
+    for scanner.Scan() {
+        msgQ <- scanner.Text()
+    }
+
+}

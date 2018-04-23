@@ -1,0 +1,19 @@
+import scipy.interpolate    
+import numpy as np  
+
+N = 500 #number of points for plotting/interpolation    
+x, y, z = np.genfromtxt(r'data.dat', unpack=True)
+xll = x.min();  xul = x.max();  yll = y.min();  yul = y.max()
+
+xi = np.linspace(xll, xul, N)
+yi = np.linspace(yll, yul, N)
+zi = scipy.interpolate.griddata((x, y), z, (xi[None,:], yi[:,None]), method='cubic')
+
+contours = plt.contour(xi, yi, zi, 6, colors='black')
+plt.clabel(contours, inline=True, fontsize=7)
+plt.imshow(zi, extent=[xll, xul, yll, yul], origin='lower', cmap=plt.cm.jet, alpha=0.9)
+plt.xlabel(r'$x$')
+plt.ylabel(r'$y$')
+plt.clim(0, 1)
+plt.colorbar()
+plt.show()

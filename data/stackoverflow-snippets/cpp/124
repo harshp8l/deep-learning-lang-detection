@@ -1,0 +1,92 @@
+function [ sig ] = liveplot( host, port, signal_info, Fs, window_size_secs )
+%LIVEPLOT Plot live data from the signal processing engine
+%   The signal processing engine will send out data as a multiplexed stream
+%   of N double-precision values.
+%   The 'signal_info' argument should be a logical matrix of length N, where N is the
+%   number of channels that are being multiplexed.  if signal_info(K) is
+%   true, then that channel will be plotted.
+MAX_SESSION_TIME_SECS = 60;
+FRAMES_PER_SESSION = MAX_SESSION_TIME_SECS * Fs;
+FRAMES_PER_WINDOW = window_size_secs * Fs;
+REFRESH_TIME_SECS = 0.05;
+SAMPLE_DURATION=1/Fs;
+N = length(signal_info);
+FRAME_SZ = N * 8; % sizeof(double)
+conn = tcpip(host, port);
+conn.InputBufferSize = 1024 * FRAME_SZ;
+conn.BytesAvailableFcnCount = conn.InputBufferSize;
+conn.BytesAvailableFcnMode = 'byte';
+conn.BytesAvailableFcn = @bytesavailablecallback;
+conn.readAsyncMode = 'continuous';
+seconds_read = 0;
+
+asyncread_tic = tic;
+%   bytesavailablecallback(conn);
+
+% time window: incremented buy SAMPLE_DURATION each frame
+num_frames = 0;
+
+%Set up Plot
+
+% plot objects, one for  each N stream in frame
+h = figure;
+hold on                            %hold on makes sure all of the channels are plotted
+
+
+% Start the async read thread
+fopen(conn);
+
+last_refresh = tic;
+while ishandle(h) %Loop when Plot is Active will run until plot is closed
+
+   try 
+    %        if (toc(last_refresh) > REFRESH_TIME_SECS)
+    if (seconds_read < window_size_secs)
+        seconds_read = window_size_secs;
+    end
+    xlim([seconds_read-window_size_secs seconds_read]);
+
+    %            refreshdata(h, 'caller');
+    % fprintf('Refresh took %f seconds.\n', toc(last_refresh));
+    drawnow limitrate
+    last_refresh = tic;
+   catch ME
+       break
+   end
+    %        end
+end
+fclose(conn);
+delete(conn);
+
+    function bytesavailablecallback(conn, ~)
+
+        % initiate another read immediately to fill the buffer
+        %         readasync(conn, conn.InputBufferSize-conn.BytesAvailable);
+
+        n_frames_available = floor(conn.BytesAvailable / (N * 8));
+        if (n_frames_available > 0)
+            [frames_read, nread] = fread(conn, N * n_frames_available, 'double');
+            num_frames_read = nread / N;
+            if (num_frames_read ~= n_frames_available)
+                throw(MException('assert',sprintf('%d frames expected, but %d read',n_frames_available,num_frames_read )));
+            end
+            % need the following line when only partial read - fread fails to
+            % reshape the return value if nread < FRAMES_PER_READ
+            sig(:, 1+num_frames:num_frames+num_frames_read) = reshape(frames_read, N, []);
+            num_frames = num_frames + num_frames_read;
+            seconds_read = num_frames * SAMPLE_DURATION;
+
+            for i=1:N
+                ph = plots(i);
+                if (ph ~= 0)
+                    set(ph, 'Ydata', sig(i,:));
+                end
+            end
+            async_read_time = toc(asyncread_tic);
+            asyncread_tic = tic;
+            fprintf('Read %d frames in %f seconds, rate is %d fps\n', num_frames_read, async_read_time, round(num_frames_read / async_read_time));
+
+        end
+    end
+
+end

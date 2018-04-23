@@ -1,0 +1,30 @@
+template <typename T>
+class has_one
+{
+    template <typename C> static char test(decltype(&C::one));
+    template <typename C> static long test(...);
+
+public:
+    enum { value = sizeof(test<T>(0)) == sizeof(char) };
+}; 
+
+template <class T>
+class Foo {
+public:
+    template <int U>
+    enable_if_t<U != 1 || U == 1 && has_one<T>::value, std::string> bar() {
+        return m_data.one;
+    }
+
+private:
+    T m_data;
+};
+
+struct Tone { std::string one; };
+int main()
+{
+    Foo<int> f;
+    f.bar<1>(); // This causes compile-time error
+    Foo<Tone> f2;
+    f2.bar<2>();
+}

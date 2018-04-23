@@ -1,0 +1,42 @@
+#load ""../packages/FsLab.1.0.2/FsLab.fsx""
+open System
+open System.IO
+open MathNet.Numerics.LinearAlgebra.Double
+open MathNet.Numerics
+open MathNet.Numerics.LinearAlgebra
+open MathNet.Numerics.Distributions
+
+// implementation of the Fisher-Yates shuffle by Mathias
+// http://www.clear-lines.com/blog/post/Optimizing-some-old-F-code.aspx
+let swap fst snd i =
+   if i = fst then snd else
+   if i = snd then fst else
+   i
+let shuffle items (rng: Random) =
+   let rec shuffleTo items upTo =
+      match upTo with
+      | 0 -> items
+      | _ ->
+         let fst = rng.Next(upTo)
+         let shuffled = List.permute (swap fst (upTo - 1)) items
+         shuffleTo shuffled (upTo - 1)
+   let length = List.length items
+   shuffleTo items length
+
+let csvfile = @""/eUSB/sync/fsharp/UFLDL-tutorial-F#/housing.csv""
+let housingAsLines = 
+    File.ReadAllLines(csvfile)
+        |> Array.map (fun t -> t.Split(',')
+                            |> Array.map (fun t -> float t))
+let housingAsMatrix= DenseMatrix.OfRowArrays housingAsLines
+let housingAsMatrixTmp = housingAsMatrix.Transpose()
+let v1 = DenseVector.Create(housingAsMatrixTmp.ColumnCount,1.0)
+let housingAsMatrixT = housingAsMatrixTmp.InsertRow(0,v1)
+
+let m = housingAsMatrixT.RowCount - 1
+let listOfArray = [0..m]
+let random = new Random()
+let shuffled = shuffle listOfArray random
+
+let z = [for i in shuffled -> (housingAsMatrixT.[i, *])]
+let final = DenseMatrix.OfRowVectors z

@@ -1,0 +1,17 @@
+// First rename 'id' column to 'ids' avoid duplicate names further downstream
+val moviesRenamed = movies.withColumnRenamed(""id"", ""ids"")
+
+recommendations.select($""id"", expr(""stack(3, 'rec1', rec1, 'rec2', rec2, 'rec3', rec3) as (rec, movie_id)""))
+  .where(""rec is not null"")
+  .join(moviesRenamed, col(""movie_id"") === moviesRenamed.col(""ids""))
+  .groupBy(""id"")
+  .pivot(""rec"")
+  .agg(first(""name""))
+  .show()
++---+--------------------+---------+------------+
+| id|                rec1|     rec2|        rec3|
++---+--------------------+---------+------------+
+|  0|the Lord of the R...|Star Wars|   Star Trek|
+|  1|           Star Wars|Star Trek|Pulp Fiction|
+|  2|the Lord of the R...|Star Trek|Pulp Fiction|
++---+--------------------+---------+------------+

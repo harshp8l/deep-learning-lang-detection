@@ -1,0 +1,22 @@
+(defn group-lazy [delim coll]
+  (loop [curr [] coll coll]
+    (if (seq coll)
+      (let [curr (conj curr (first coll))]
+        (if (= delim (first coll))
+          (cons curr (lazy-seq (group-lazy delim (rest coll))))
+          (recur curr (next coll))))
+      (when (seq curr) [curr]))))
+
+user> (map (partial group-lazy 2)
+           [[]
+            nil
+            [1 2 3 1 2 3]
+            [1 2 3 1 2 3 2]
+            [2 1 2 3 1 2 3]
+            [1 3 4 1 3 4]])
+
+;;(nil nil 
+;; ([1 2] [3 1 2] [3]) 
+;; ([1 2] [3 1 2] [3 2]) 
+;; ([2] [1 2] [3 1 2] [3]) 
+;; [[1 3 4 1 3 4]])

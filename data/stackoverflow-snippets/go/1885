@@ -1,0 +1,50 @@
+import (
+    ""fmt""
+    ""math""
+)
+
+// Declare an interface type with dependencies
+type HGer interface {
+    H(float64) float64
+    G(float64) float64
+}
+
+// Declare a dependent type with embedded interface
+type Dependent struct {
+    HGer
+}
+
+func (d *Dependent) B(arg float64) float64 {
+    return d.H(arg) * d.G(arg)
+}
+
+// Implement the interface for an actual program
+type ImplHGer struct{}
+
+func (i *ImplHGer) H(arg float64) float64 {
+    return math.Pow(arg, 2)
+}
+
+func (i *ImplHGer) G(arg float64) float64 {
+    return math.Sqrt(arg)
+}
+
+// Implement the interface for mock of dependencies
+type MockHGer struct{}
+
+func (i *MockHGer) H(arg float64) float64 {
+    return float64(0)
+}
+
+func (i *MockHGer) G(arg float64) float64 {
+    return float64(0)
+}
+
+func main() {
+    // Use real implementation
+    a := Dependent{new(ImplHGer)}
+    // Use the mock
+    b := Dependent{new(MockHGer)}
+    fmt.Println(a.B(8)) // 181.01933598375618
+    fmt.Println(b.B(8)) // 0
+}

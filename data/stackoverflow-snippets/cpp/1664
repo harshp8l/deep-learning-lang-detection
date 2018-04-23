@@ -1,0 +1,152 @@
+// Source encoding: utf-8 with BOM ∩
+#include <string>               // std::(string)
+#include <iostream>             // std::(cout, cerr)
+#include <optional>             // std::(optional)
+#include <utility>              // std::(move)
+#include <vector>               // std::(vector)
+#include <fstream>              // std::(ifstream)
+#include <sstream>              // std::(istringstream)
+#include <stdexcept>            // std::(exception, runtime_error)
+using namespace std;
+
+auto hopefully( bool const e ) -> bool { return e; }
+[[noreturn]] auto fail( string const& s ) -> bool { throw runtime_error( s ); }
+
+auto optional_line_from( istream& stream )
+    -> optional<string>
+{
+    string result;
+    return getline( stream, result )? result : optional<string>{};
+}
+
+struct Student_info
+{
+    string first_name;
+    string last_name;
+    double gpa;
+    string id;
+    string email;
+};
+
+// Originally
+// void fillArr(vector <Student_info> &arr, vector <Student_info *> &ptrels):
+
+auto data_from( string const& filename )
+    -> vector<Student_info>
+{
+    ifstream in_file{ ""index.txt"" };
+    hopefully( not in_file.fail() )
+        or fail( ""Failed to open “index.txt” for reading."" );
+
+    vector<Student_info> result;
+    while( optional<string> line = optional_line_from( in_file ) )
+    {
+        Student_info temp;
+        istringstream items{ *line };
+        items >> temp.first_name >> temp.last_name >> temp.gpa >> temp.id >> temp.email;
+        hopefully( not items.fail() )
+            or fail( ""Failed to parse input line: “"" + *line + ""”."" );
+        result.push_back( move( temp) );
+    }
+    return result;
+}
+
+auto operator<<( ostream& stream, Student_info const& item )
+    -> ostream&
+{
+    stream
+        << item.first_name << ""    ""
+        << item.last_name<< ""    ""
+        << item.gpa << ""    ""
+        << item.id << ""    ""
+        << item.email;
+    return stream;
+}
+
+// Originally
+// void printFile(vector <student *> pointarray):
+
+void print( vector<Student_info const*> const& pointers )
+{
+    for( auto const p : pointers ) { cout << *p << endl; }
+}
+
+// Originally
+// void sortFile(vector <student> &arr, vector <student *> &pointarray):
+
+void sort( vector<Student_info const*>& pointarray )
+{
+    // TODO:
+    // Using std::sort is a good idea, if you're allowed to do that.
+    // std::tuple instances can be lexicographically compared with `<`, and
+    // `std::tie` produces a tuple. That's great for the current job.
+}
+
+// Originally
+// int main():
+
+void cpp_main()
+{
+    vector<Student_info> const data = data_from( ""index.txt"" );
+
+    vector<Student_info const*> pointers;
+    for( Student_info const& item : data ) { pointers.push_back( &item ); }
+
+    for( ;; )
+    {
+        cout << ""Please select\n""
+             << ""1 = Select All\n""
+             << ""2 = Order A-Z by Name\n""
+             << ""3 = To exit""
+             << endl;
+        try
+        {
+            switch( stoi( *optional_line_from( cin ) ) )
+            {
+                case 1:
+                {
+                    print( pointers );
+                    break;
+                }
+                case 2:
+                {
+                    sort( pointers );
+                    print( pointers );
+                    break;
+                }
+                case 3:
+                {
+                    return;
+                }
+                default:
+                {
+                    fail( """" );
+                }
+            }
+        }
+        catch( ... )
+        {
+            // Avoid infinite loop on input failure:
+            if( cin.fail() )
+            {
+                fail( ""Failed reading standard input."" );
+            }
+            cout << ""Invalid Try Again:"" << endl;
+        }
+    }
+}
+
+auto main()
+    -> int
+{
+    try
+    {
+        cpp_main();
+        return EXIT_SUCCESS;
+    }
+    catch( exception const& x ) 
+    {
+        cerr << ""!"" << x.what() << endl;
+    }
+    return EXIT_FAILURE;
+}

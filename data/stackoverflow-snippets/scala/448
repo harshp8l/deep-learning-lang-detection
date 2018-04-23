@@ -1,0 +1,26 @@
+def collectUsingGenerics[L <: Product : Encoder : TypeTag, R <: Product : Encoder : TypeTag](
+    left: Dataset[L],
+    right: Dataset[R],
+    joinCol: Column,
+    groupCol: Column): Dataset[(L, List[R])] = {
+
+    import left.sparkSession.implicits._
+    import org.apache.spark.sql.functions._
+
+    val result = left
+      .join(right, joinCol)
+      .select(
+        groupCol.as(""groupCol""),
+        struct(left(""*"")).as(""_1""),
+        struct(right(""*"")).as(""_2""))
+      .groupBy($""groupCol"")
+      .agg(
+        first($""_1"").as(""_1""),
+        collect_list($""_2"").as(""_2"")
+      )
+      .drop($""groupCol"")
+
+    //This does not Work!!!
+    //result.as[Result[L]]
+    result.as[(L,List[R])]
+  }

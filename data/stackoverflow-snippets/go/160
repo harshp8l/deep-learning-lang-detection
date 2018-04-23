@@ -1,0 +1,30 @@
+package main
+
+import (
+    ""context""
+    ""encoding/json""
+
+    ""github.com/aws/aws-lambda-go/events""
+    ""github.com/aws/aws-lambda-go/lambda""
+
+    _ ""partners.drinks.com/lib/config""
+    ""partners.drinks.com/lib/services""
+)
+
+
+func Handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+    statusCode := 200
+
+    keys, err := services.GetKeys()
+    if err != nil {
+        statusCode = 400
+    }
+    body, _ := json.Marshal(keys)
+
+    return events.APIGatewayProxyResponse{
+        Body:       string(body),
+        StatusCode: statusCode,
+    }, nil
+}
+
+...

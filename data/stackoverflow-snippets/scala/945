@@ -1,0 +1,23 @@
+trait HasPlus[T] {
+  def plus(x: T, y: T): T
+}
+
+case class MyInt(value: Int) {
+  def plus(other: MyInt): MyInt = MyInt(value + other.value)
+}
+
+object HasPlus {
+  implicit def numeric[T: Numeric] = new HasPlus[T] {
+    override def plus(x: T, y: T) = implicitly[Numeric[T]].plus(x, y)
+  }
+
+  implicit val myInt = new HasPlus[MyInt] {
+    override def plus(x: MyInt, y: MyInt) = x.plus(y)
+  }
+}
+
+class Col[T: HasPlus](val array: Iterable[T]) {
+  def sum(): T = {
+    array.reduce((a, b) => implicitly[HasPlus[T]].plus(a, b))
+  }
+}

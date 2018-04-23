@@ -1,0 +1,47 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+)
+
+type DeployMessage struct {
+    Server string
+    Repo   string
+}
+
+type PNMessage struct {
+    Messages []DeployMessage
+    Id       string
+    Channel  string
+}
+
+// testing to marshal this json
+func main() {
+    // imagine if we have receive our data here.
+    data := []byte(`[[{""Repo"":""images"",""Server"":""production""}], ""149514560987662985"", ""channel1""]`)
+
+    var getData []interface{}
+    err := json.Unmarshal(data, &getData)
+    if err != nil {
+        panic(err)
+    }
+    fmt.Printf(""result  getData = %+v\n"", getData[0])
+
+    getData2 := getData[0].([]interface{})
+    fmt.Printf(""result  getData = %+v\n"", getData2[0])
+
+    getData3 := getData2[0].(map[string]interface{})
+
+    var deployMessages []DeployMessage
+    deployMessages = append(deployMessages, DeployMessage{Server: getData3[""Server""].(string), Repo: getData3[""Repo""].(string)})
+
+    pNMessage := PNMessage{
+        Messages: deployMessages,
+        Id:       getData[1].(string),
+        Channel:  getData[2].(string),
+    }
+
+    fmt.Printf(""result  = %+v\n"", pNMessage)
+
+}

@@ -1,0 +1,28 @@
+#!/bin/sh
+
+.....
+
+failcnt=0 # this variable is only valid in the parent shell
+#variable xx captures all the outputs from the while loop
+xx=$(cat ${checkfile} | while read -r line; do
+    num1=$(echo $line | awk '{print $1}')
+    num2=$(echo $line | awk '{print $2}')
+    fname=$(echo $line | awk '{print $3}')
+    if [ -f ""$fname"" ]; then
+        res=$(sum $fname)
+        filegood=$(sum $fname | awk -v na=$num1 -v nb=$num2 -v fn=$fname '{ if (na == $1 && nb == $2) { print ""TRUE""; } else { print ""FALSE""; }}')
+        if [ ""$filegood"" = ""FALSE"" ]; then
+            failcnt=$(expr $failcnt + 1) # only in subshell
+            echo ""$fname BAD $failcnt""
+        fi
+    fi
+done | tail -1) # I am only interested in the final result
+# you can capture a whole bunch of texts and do further filtering
+failcnt=${xx#* BAD } # I am only interested in the number
+# this variable is in the parent shell
+echo failcnt $failcnt
+if [ $failcnt -gt 0 ]; then
+    echo $failcnt files failed
+else
+    echo download successful
+fi

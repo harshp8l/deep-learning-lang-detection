@@ -1,0 +1,48 @@
+$(document).ready(function ()
+{
+    $(""#update-components-btn"").click(function ()
+    {
+        var token = $(""[name=__RequestVerificationToken"").val();
+
+        var staffId = $(""[name=staffId"").val();
+
+        var postedValues = {};
+
+        postedValues[""__RequestVerificationToken""] = token;
+
+        postedValues.StaffId = staffId;
+
+        postedValues.StaffComponents = [];
+
+        $("".entry"").each(function ()
+        {
+            var component = {};
+
+            component.StaffId = staffId;
+
+            component.EntryId = $(this).attr('id');
+
+            component.ValueAmount = Number($(this).val());
+
+            postedValues.StaffComponents.push(component);
+        });
+
+        var postUrl = ""/staff/updatecomponents"";
+
+        $.post(postUrl, postedValues, function (result)
+        {
+            var report = JSON.parse(JSON.stringify(result));
+
+            if (report.status)
+            {
+                swal(""<span class=fa fa-thumbs-up"", report.message, ""success"");
+                setInterval(function () { window.location.reload(true); }, 5000);
+            }
+            else
+            {
+                swal(""<span class=fa fa-thumbs-down"", report.message, ""error"");
+            }
+        });
+    });
+}
+);

@@ -1,0 +1,29 @@
+data have;
+format animals_color $8. cats dogs parrots best.;
+
+do i=1 to 10;
+    do animals_color='black', 'brown','white', 'grey','gold','silver';
+        cats = floor(ranuni(1)*10);
+        dogs = floor(ranuni(1)*10);
+        parrots= floor(ranuni(1)*10);
+        output;
+    end;
+end;
+drop i;
+run;
+
+proc format ;
+value  $animal_ctype 'black'='black/brown'
+                   'brown'='black/brown'
+                   'white'='white/grey'
+                   'grey'='white/grey'
+                   'gold'='gold/silver'
+                   'silver'='gold/silver'
+                   other='unknown';
+run;
+
+proc means data=have sum;
+var cats dogs parrots;
+format animals_color $animal_ctype.;
+class animals_color;
+run;

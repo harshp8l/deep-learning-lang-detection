@@ -1,0 +1,24 @@
+class TagOwnerViewSet(viewsets.ModelViewSet):
+""""""
+TagOwner table view set.
+""""""
+    model = TagOwner
+    queryset = TagOwner.objects.all()
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    serializer_class = TagOwnerSerializer
+    renderer_classes = (BrowsableAPIRenderer, JSONRenderer,JSONPRenderer,XMLRenderer,YAMLRenderer)
+    filter_backends = (filters.DjangoFilterBackend, filters.SearchFilter ,filters.OrderingFilter)
+    filter_class = TagOwnerFilter
+    #search_fields = ('tag_id',)
+    ordering_fields = '__all__'
+    def get_queryset(self):
+        user = self.request.user
+        if self.request.user.is_authenticated():
+                if not user:
+                        return []
+                return TagOwner.objects.filter(user_id=user.id)
+        public_tags = TagReads.objects.filter(public=True).values_list('tag_id').distinct()
+        return TagOwner.objects.filter(tag_id__in=public_tags)
+
+    def pre_save(self, obj):
+        obj.user_id = self.request.user.id

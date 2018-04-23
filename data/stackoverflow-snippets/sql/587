@@ -1,0 +1,21 @@
+protected void btn Submit_Click(object sender, EventArgs e)
+{
+    // TODO: Ideally use a date/time picker etc.
+    DateTime date = Convert.ToDateTime(txtdate.Text);
+    DateTime time = Convert.ToDateTime(txttime.Text);
+
+    // You'd probably want to get the connection string dynamically, or at least have
+    // it in a shared constant somewhere.
+    using (var con = new SqlConnection(connectionString))
+    {
+        string sql = ""insert [date], [time] into DateTimeDemo values (@date, @time)"";
+        using (var cmd = new SqlCommand(sql))
+        {
+            cmd.Parameters.Add(""@date"", SqlDbType.Date).Value = date;
+            cmd.Parameters.Add(""@time"", SqlDbType.Time).Value = time.TimeOfDay;
+            int rows = cmd.ExecuteNonQuery();
+            string message = rows > 0 ? ""success"" : ""failed"";
+            Response.Write(message);
+        }
+    }
+}

@@ -1,0 +1,37 @@
+static inline uint32_t
+top12 (float x)
+{
+  return asuint (x) >> 20;
+}
+
+float
+__expf (float x)
+{
+  uint64_t ki, t;
+  /* double_t for better performance on targets with FLT_EVAL_METHOD==2.  */
+  double_t kd, xd, z, r, r2, y, s;
+
+  xd = (double_t) x;
+  // [...] skipping fast under/overflow handling
+
+  /* x*N/Ln2 = k + r with r in [-1/2, 1/2] and int k.  */
+  z = InvLn2N * xd;
+
+  /* Round and convert z to int, the result is in [-150*N, 128*N] and
+     ideally ties-to-even rule is used, otherwise the magnitude of r
+     can be bigger which gives larger approximation error.  */
+  kd = roundtoint (z);
+  ki = converttoint (z);
+  r = z - kd;
+
+  /* exp(x) = 2^(k/N) * 2^(r/N) ~= s * (C0*r^3 + C1*r^2 + C2*r + 1) */
+  t = T[ki % N];
+  t += ki << (52 - EXP2F_TABLE_BITS);
+  s = asdouble (t);
+  z = C[0] * r + C[1];
+  r2 = r * r;
+  y = C[2] * r + 1;
+  y = z * r2 + y;
+  y = y * s;
+  return (float) y;
+}

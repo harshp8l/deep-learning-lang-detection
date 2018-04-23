@@ -1,0 +1,46 @@
+#include <sstream>
+#include <vector>
+#include <tuple>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/split.hpp>
+
+template<class... ColumnTypes>
+class CsvRowParser
+{
+    std::vector<std::string> columns_; // Reuse it to avoid memory allocations.
+    char const separator_;
+
+    template<size_t... Idxs>
+    std::tuple<ColumnTypes...>
+    convert_csv_row(std::integer_sequence<size_t, Idxs...>) {
+        return std::tuple<ColumnTypes...>{boost::lexical_cast<ColumnTypes>(columns_[Idxs])...};
+    }
+
+public:
+    using RowType = std::tuple<ColumnTypes...>;
+
+    CsvRowParser(char separator)
+        : separator_(separator)
+    {}
+
+    RowType parse_row(std::string const& csv_row) {
+        boost::algorithm::split(columns_, csv_row, [this](char c) { return c == separator_; });
+        if(columns_.size() != sizeof...(ColumnTypes))
+            throw std::runtime_error(""Invalid csv row: "" + csv_row);
+        return convert_csv_row(std::make_index_sequence<sizeof...(ColumnTypes)>{});
+    }
+};
+
+int main() {
+    std::string my_csv;
+    my_csv += ""abc, 1, 1.1\n"";
+    my_csv += ""def, 2, 2.2\n"";
+    std::istringstream s(my_csv);
+
+    using Parser = CsvRowParser<std::string, int, double>;
+    Parser parser(',');
+    std::vector<Parser::RowType> rows;
+    for(std::string line; getline(s, line);)
+        rows.push_back(parser.parse_row(line));
+}

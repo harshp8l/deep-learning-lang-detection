@@ -1,0 +1,20 @@
+import org.apache.spark.sql.DataFrame
+
+def topN(df: DataFrame, key: String, n: Int)  = {
+   df.select(
+        lit(df.columns.indexOf(key)).alias(""index""), 
+        col(key).alias(""value""))
+     .groupBy(""index"", ""value"")
+     .count
+     .orderBy($""count"")
+     .limit(n)
+}
+
+topN(df, ""value"", 2).union(topN(df, ""country"", 2)).show
+// +-----+-----+-----+ 
+// |index|value|count|
+// +-----+-----+-----+
+// |    0|   MA|    2|
+// |    0|   OH|    4|
+// |    1|  USA|   17|
+// +-----+-----+-----+

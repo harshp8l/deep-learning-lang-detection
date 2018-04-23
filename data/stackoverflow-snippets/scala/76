@@ -1,0 +1,11 @@
+case class HasShow[A](x: A)(implicit val ev: Show[A])
+
+def appendOptional(to: Map[String, String], values: (String, Option[HasShow[_]])*): Map[String, String] =     
+    values.foldLeft(values) {
+        // value.ev.show(value.x)) can be extracted into a method on HasShow as well
+        case (collector, (key, Some(value: HasShow[a]))) => 
+            collector + (key -> value.ev.show(value.x)) 
+        case (collector, _) => collector
+    }
+
+val props = appendOptional(initial, ""name"" -> name.map(HasShow(_)), ""age"" -> age.map(HasShow(_)))

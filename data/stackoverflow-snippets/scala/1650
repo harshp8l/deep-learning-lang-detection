@@ -1,0 +1,19 @@
+""ParentActor "" should "" send XXX message to child actor if he receives YYY message"" in {
+   val parentActor = createParentActor(testActor, ""child_id"")
+   parentActor ! YYY(""test_id"")
+   expectMsg( XXX )
+}
+
+def createParentActor(mockedChild: ActorRef, mockedChildId: String): ParentActor = {
+    TestActorRef( new ParentActor(){
+      override def preStart(): Unit = {
+        context.actorOf( Props(new Forwarder(mockedChild)), mockedChildId)
+      }
+    } )
+  }
+
+  class Forwarder(target: ActorRef) extends Actor {
+    def receive = {
+      case msg => target forward msg
+    }
+  }

@@ -1,0 +1,25 @@
+function Get-ADPrincipalGroupMembershipRecursive ($groupName)
+{
+  # Empty list. The current function call knows nothing about who called it
+  $list = @()
+
+  # Add the current group to the list
+  $list += $groupName
+
+  Write-Host $groupName 
+
+  $groupsMembership = Get-ADPrincipalGroupMembership $groupName
+
+  foreach ($groupMembership in $groupsMembership.Name)
+  {
+    # Add all child groups to the list
+    $list += Get-ADPrincipalGroupMembershipRecursive -groupName $groupMembership
+  }
+
+  # Return the current group and all its children
+  return  $list
+}
+
+$groupsParent = Get-ADPrincipalGroupMembershipRecursive -groupName $groupName
+write-host ""Length"" $groupsParent.Length
+$groupsParent

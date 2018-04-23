@@ -1,0 +1,40 @@
+(defn push-not-down [expr]
+  (if (and (seq? expr) (seq? (second expr)))
+    (let [[outer-op & [[inner-op & inner-args] :as outer-args] :as expr] expr]
+      (if (= 'not outer-op)
+        (condp = inner-op
+          'and (cons 'or (map #(push-not-down (list 'not %)) inner-args))
+          'or (cons 'and (map #(push-not-down (list 'not %)) inner-args))
+          'not (first inner-args)
+          expr)
+        (if (#{'or 'and} outer-op)
+          (cons outer-op (map push-not-down outer-args))
+          expr)))
+    expr))
+
+(deftest push-not-down-test
+  (testing ""Not or and not and are transformed to and not and or not""
+    (is (= '(or (not :a) (not :b))
+           (push-not-down
+             '(not (and :a :b)))))
+    (is (= '(and (not :a) (not :b))
+           (push-not-down
+             '(not (or :a :b))))))
+  (testing ""Double nots cancel""
+    (is (= :a
+           (push-not-down
+             '(not (not :a))))))
+  (testing ""The rules work together in complex combinations""
+    (is (= '(and :a (and :b (not :c)))
+           (push-not-down
+             '(and (not (not :a)) (not (or (not :b) :c))))))
+    (is (= '(or (or (and (not :a))))
+           (push-not-down
+             '(or (or (and (not :a))))))))
+  (testing ""Nested expressions that don't fit the rules are preserved""
+    (is (= '(not (inc 1))
+           (push-not-down
+             '(not (inc 1)))))
+    (is (= '(inc (or 2 1))
+           (push-not-down
+             '(inc (or 2 1)))))))

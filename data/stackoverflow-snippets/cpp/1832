@@ -1,0 +1,20 @@
+namespace util {
+    template <typename Tag> struct FlavouredString : std::string {
+        using std::string::string;
+        using std::string::operator=;
+    };
+
+    template <typename Tag> struct Options {
+        using type = int; // TODO typed enums? Requires macro tedium
+
+        std::vector<char const*> _options;
+        Options(std::initializer_list<char const*> options) : _options(options) {}
+        Options(std::vector<char const*> options) : _options(options) {}
+
+        std::string to_string(type id)              const { return _options.at(id); }
+        type         to_id(std::string const& name) const { return find(_options.begin(), _options.end(), name) - _options.begin(); }
+    };
+
+    template <typename Tag> using Enum = typename Options<Tag>::type;
+    template <typename Tag> struct IcOptions : Options<Tag> { using Options<Tag>::Options; };
+}

@@ -1,0 +1,39 @@
+package main
+
+import (
+    ""database/sql""
+    ""fmt""
+    ""log""
+    ""time""
+
+    _ ""github.com/go-sql-driver/mysql""
+)
+
+func main() {
+    db, err := sql.Open(""mysql"", ""root@tcp(localhost)/test?charset=utf8"")
+    if err != nil {
+        log.Fatalln(err)
+    }
+
+    db.SetConnMaxLifetime(time.Second * 5)
+    db.SetMaxIdleConns(0)
+    db.SetMaxOpenConns(151)
+
+    rows, err := db.Query(""SELECT col1, col2, col3 FROM tbl2"")
+    if err != nil {
+        log.Fatalln(err)
+    }
+
+    for rows.Next() {
+        var col1 string
+        var col2 int32
+        var col3 uint64
+
+        err = rows.Scan(&col1, &col2, &col3)
+        if err != nil {
+            log.Fatalln(err)
+        }
+
+        fmt.Println(col1, col2, col3)
+    }
+}

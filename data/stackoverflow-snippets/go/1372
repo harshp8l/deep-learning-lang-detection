@@ -1,0 +1,19 @@
+func RunInParallel(funcs ...func() error) error {
+    var errcList [](<-chan error)
+    for _, f := range funcs {
+        errc := make(chan error, 1)
+        errcList = append(errcList, errc)
+        go func() {
+            // This line probably isn't being reached until your range
+            // loop has completed, meaning f is the last func by the time
+            // each goroutine starts. If you capture f
+            // in another variable inside the range, you won't have this issue.
+            err := f()
+            if err != nil {
+                errc <- err
+            }
+            close(errc)
+        }()
+    }
+    return WaitForPipeline(errcList...)
+}

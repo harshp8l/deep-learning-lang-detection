@@ -1,0 +1,51 @@
+WITH your_data ( id, value ) AS (
+  SELECT ROWNUM,
+         COLUMN_VALUE
+  FROM   TABLE( SYS.ODCINUMBERLIST( 4,2,3,6,5,1,3,4,2 ) )
+),
+changes( id, value, gradient, acceleration ) AS (
+  SELECT id,
+         value,
+         CASE
+           WHEN nxt IS NULL THEN prv
+           WHEN prv IS NULL THEN nxt
+           WHEN prv = -nxt THEN 0
+           WHEN nxt = 0    THEN prv
+           WHEN prv = 0    THEN nxt
+           ELSE nxt
+         END,
+         CASE
+           WHEN nxt IS NULL THEN COALESCE( prv, 0 )
+           WHEN prv IS NULL THEN nxt
+           WHEN prv =  1 AND nxt IN (0,-1) THEN -1
+           WHEN prv = -1 AND nxt IN (0, 1) THEN  1
+           ELSE 0
+         END
+  FROM   (
+    SELECT id,
+           value,
+           SIGN( value - LAG( value ) OVER ( ORDER BY id )  ) AS prv,
+           SIGN( LEAD( value ) OVER ( ORDER BY id ) - value ) AS nxt
+    FROM   your_data
+  )
+),
+minima ( id, value, gradient, acceleration, last_minima, next_minima ) AS (
+  SELECT id,
+         value,
+         gradient,
+         acceleration,
+         LAST_VALUE(  CASE WHEN acceleration = 1 THEN id END ) IGNORE NULLS
+           OVER ( ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING ),
+         FIRST_VALUE( CASE WHEN acceleration = 1 THEN id END ) IGNORE NULLS
+           OVER ( ORDER BY id ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING )
+  FROM   changes
+  ORDER BY id
+)
+SELECT ( SELECT LISTAGG( value, ',' ) WITHIN GROUP ( ORDER BY id )
+         FROM   minima n
+         WHERE  ( m.last_minima IS NULL OR m.last_minima <= n.id )
+         AND    ( m.next_minima IS NULL OR m.next_minima >= n.id )
+       ) As range
+FROM   minima m
+WHERE  gradient = 0
+AND    acceleration = -1

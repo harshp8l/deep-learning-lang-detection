@@ -1,0 +1,39 @@
+package main
+
+import (
+    ""encoding/json""
+    ""log""
+)
+
+type Repository struct {
+    Name string
+    Tags []Tag
+}
+
+type Tag struct {
+    Tag    string
+    Sha256 string
+}
+
+func (t *Tag) UnmarshalJSON(b []byte) error {
+    var s string
+
+    if err := json.Unmarshal(b, &s); err != nil {
+            return err
+    }
+
+    t.Tag = s
+    return nil
+}
+
+func main() {
+    b := []byte(`{ ""name"":""repo"", ""tags"":[""1.0"",""2.0"",""3.0""] }`)
+
+    var r Repository
+    err := json.Unmarshal(b, &r)
+    if err != nil {
+            log.Fatal(err)
+    }
+
+    log.Printf(""%+v\n"", r)
+}

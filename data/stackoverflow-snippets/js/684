@@ -1,0 +1,23 @@
+fetchOrders({commit, getters, state}) {
+    return service
+        .fetchUserOrdersIds(getters.user.id) // promist to get snapshot
+        .then(snapshot => { // promise to generate orders list based on snapshot
+            var listOfOrderPromises = [];
+            var tempOrderIds = snapshot.val();
+            for (let key in tempOrderIds) {
+                var thisOrderPromise = firebase // create a promise to get this order value
+                    .database()
+                    .ref(""orders"")
+                    .child(tempOrderIds[key])
+                    .once(""value"")
+                    .then(orderSnap => {
+                        return orderSnap.val();
+                    });
+                listOfOrderPromises.push(thisOrderPromise); // append this promise to a list of promises (one for each order)
+            }
+            return Promise.all(listOfOrderPromises); // resolve all of the promises: generates your expected `orderList`
+        })
+        .then((orderList)=>{ // commit the orders from the resolved order List
+            commit(""setUserOrders"", orderList);
+        })
+}

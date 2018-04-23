@@ -1,0 +1,77 @@
+#include <iostream>
+
+using namespace std;
+
+int countfreq (int *data, int dsize, int *freqvals, int freq)
+{
+    int last = *data,   /* set last to first value in data */
+        idx = 0,        /* index for freqvals to return */
+        seq = 1;        /* sequential values count */
+
+    if (freq <= 0 || freq > dsize)  /* is requested freq valid? */
+        return 0;
+
+    for (int i = 1; i < dsize; i++) {   /* loop 2nd value to end */
+        if (last == data[i])            /* if last == current */
+            seq++;                      /* increment sequential count */
+        else {  /* otherwise */
+            if (seq == freq)            /* sequential count == freq? */
+                freqvals[idx++] = last; /* add last value to freqvals */
+            seq = 1;                    /* reset sequential count 1 */
+        }
+        last = data[i];                 /* set last = current */
+    }
+    if (seq == freq)                    /* handle last value in data */
+        freqvals[idx++] = last;
+
+    return idx;     /* return freqvals index */
+}
+
+/* simple insertion sort */
+void inssort (int *arr, int size)
+{
+    for (int i = 0; i < size; i++)
+        for (int j = i - 1; j >= 0; j--)
+            if (arr[j] > arr[j + 1]) {
+                int tmp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = tmp;
+            }
+            else
+                break;
+}
+
+int main (void) {
+
+    int data[] = { 8, 9, 5, 6, 7, 6, 7, 9 },    /* unsorted data */
+        dsize  = sizeof data / sizeof *data,    /* number of elements */
+        *freqvals = new int[dsize],             /* allocate for freqvals */
+        freq  = 0,      /* frequency from user  */
+        nfreq = 0;      /* return from function */
+
+    for (int i = 0; i < dsize; i++)         /* zero the freqvals array */
+        freqvals[i] = 0;
+
+    inssort (data, dsize);                  /* sort data */
+
+    cout << ""enter requested frequency: "";  /* prompt for frequency input */
+    if (!(cin >> freq)) {
+        cerr << ""error: invalid input.\n"";
+        return 1;
+    }
+
+    /* call function saving return in nfreq */
+    if ((nfreq = countfreq (data, dsize, freqvals, freq))) {
+        cout << ""the values matching requested frequency were: "";
+        for (int i = 0; i < nfreq; i++)     /* output csv */
+            if (i)
+                cout << "", "" << freqvals[i];
+            else
+                cout << freqvals[i];
+        cout << ""\n"";
+    }
+    else    /* otherwise, no values matched requested frequency */
+        cout << ""no values appear with the requested frequency.\n"";
+
+    delete[] freqvals;  /* free allocated memory */
+}

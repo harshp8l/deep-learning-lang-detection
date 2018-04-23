@@ -1,0 +1,24 @@
+contains() {
+   local -a dates
+   local media_date=$(date -d ""$MEDIA_NDATE"" +%s)
+   local currDate
+   local j
+
+   for j in ""${arr[@]}""; do
+      if [ ""$j"" == ""$MEDIA_NDATE"" ]; then
+         echo ""Value of media_ndate --> $MEDIA_NDATE""
+         return 0
+      fi
+
+      currDate=$(date -d ""$j"" +%s)
+      (( currDate < media_date )) && dates+=($currDate)
+
+   done
+
+   [[ ${#dates[@]} -eq 0 ]] && return 1
+   local result=$(printf -- '%s\n' ""${dates[@]}"" | sort -nr | head -n 1)
+
+   MEDIA_NDATE=$(date -d ""@$result"" '+%Y-%m-%d')
+   echo ""Value of media_ndate --> $MEDIA_NDATE""
+   return 0 
+}

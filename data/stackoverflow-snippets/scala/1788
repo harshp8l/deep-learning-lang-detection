@@ -1,0 +1,38 @@
+trait PlusSupport[E] {
+  def plus(a: E, b: E): E
+}
+
+// place default implicit conversions into companion object
+private object PlusSupport {
+  // default conversion of A to PlusSupport[A]
+  implicit def mkPlusSupportForA: A => PlusSupport[A] = _ => (a1: A, a2: A) => a1
+
+  // default conversion of B to PlusSupport[B]
+  implicit def mkPlusSupportForB: B => PlusSupport[B] = _ => (b1: B, b2: B) => b1
+
+  // ... many other conversions goes here
+}
+
+
+def main(args: Array[String]): Unit = {
+  // no need to import from object PlusSupport
+
+  import syntax._
+
+  // setup my custom conversion for A
+  implicit val myCustomPlusForA: A => PlusSupport[A] = _ => (a1: A, a2: A) => a2
+
+  val a1: A = new A {}
+  val a2: A = new A {}
+  val b1: B = new B {}
+  val b2: B = new B {}
+
+  // myCustomPlusForA will be used
+  println((a1 + a2) == a1)
+  println((a1 + a2) == a2)
+
+  // default conversion for B will be used
+  println((b1 + b2) == b1)
+  println((b1 + b2) == b2)
+
+}

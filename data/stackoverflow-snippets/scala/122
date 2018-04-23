@@ -1,0 +1,31 @@
+sealed trait Foo
+final case class Bar(i:Int) extends Foo
+final case class Baz(d:Double) extends Foo
+
+final case class Container[F <: Foo](s:String, f:F) 
+
+
+val all:List[Container[Foo]] = List(
+  Container(""bar"", Bar(3)),
+  Container(""bar"", Bar(4)),
+  Container(""bar"", Bar(5)),
+  Container(""bar"", Bar(6)),
+  Container(""bar"", Bar(7)),
+  Container(""baz"", Baz(1.5)),
+  Container(""baz"", Baz(2.5)),
+  Container(""baz"", Baz(3.5)),
+  Container(""baz"", Baz(4.5)),
+  Container(""baz"", Baz(5.5))
+  )
+
+
+val bars:List[Container[Bar]] = all.collect { case Container(s, Bar(i)) => Container(s, Bar(i))}
+val baz:List[Container[Baz]] = all.foldRight(List.empty[Container[Baz]]) (
+    (elem, lst) => elem match {
+      case Container(s, Baz(d)) => Container(s, Baz(d)) :: lst
+      case _ => lst
+    }
+  )
+
+println(bars)
+println(baz)

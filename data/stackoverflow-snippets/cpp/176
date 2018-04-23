@@ -1,0 +1,37 @@
+class Evil {
+    int* p;
+    size_t idx;
+
+public:
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = int;
+    using pointer = int*;
+    using reference = int&;
+
+    Evil() : p(nullptr), idx(0) { }
+    Evil(int* p, size_t idx) : p(p), idx(idx) { }
+    Evil(Evil const& ) = default;
+    Evil& operator=(Evil const& ) = default;
+    ~Evil() = default;
+
+    // only p participates in comparison
+    bool operator==(Evil const& rhs) const {
+        return p == rhs.p && idx % 2 == rhs.idx % 2; 
+    }
+    bool operator!=(Evil const& rhs) const { return !(*this == rhs); }
+
+    // incrementing is sort of destructive
+    Evil& operator++() {
+        ++idx;
+        ++p[idx % 2];
+        return *this;
+    }
+    Evil operator++(int) {
+        auto tmp = *this;
+        ++*this;
+        return tmp;
+    }
+
+    int& operator*() { return p[idx % 2]; }
+};

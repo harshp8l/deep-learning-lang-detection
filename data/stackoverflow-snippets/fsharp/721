@@ -1,0 +1,108 @@
+/// ROP design with delayed executions
+module RopWithExec =
+
+    type Execute = unit -> unit
+
+    type Result<'success> =
+        | Success of 'success * Execute list
+        | Failure of string
+
+    let bind f x =
+        match x with
+        | Failure e -> Failure e 
+        | Success (s1,execList1) ->
+            match f s1 with
+            | Failure e ->
+                // return the error
+                Failure e 
+            | Success (s2,execList2) ->
+                // concatenate the exec lists
+                Success (s2, execList1 @ execList2)
+
+    let execute x =
+        match x with
+        | Failure e -> 
+            Failure e 
+        | Success (s,execList) ->
+            execList |> List.iter (fun exec -> exec())
+            Success (s,[])
+
+/// Example
+module LaunchWithExec =
+
+    open RopWithExec
+
+    let exec_refuel() =
+        printfn ""refuel""
+
+    let refuel ok =
+        if ok then
+            printfn ""checking if refuelling can be done""
+            Success (""refuel"", [exec_refuel])
+        else 
+            Failure ""refuel failed""
+
+    let exec_enterLaunchCodes() =
+        printfn ""entering launch codes""
+
+    let enterLaunchCodes ok refuelInfo =
+        if ok then
+            printfn ""checking if launch codes can be entered""
+            Success (""enterLaunchCodes"", [exec_enterLaunchCodes])
+        else 
+            Failure ""enterLaunchCodes failed""
+
+    let exec_fireMissile() =
+        printfn ""firing missile""
+
+    let fireMissile ok launchCodesInfo =
+        if ok then
+            printfn ""checking if missile can be fired""
+            Success (""fireMissile "", [exec_fireMissile])
+        else 
+            Failure ""fireMissile failed""
+
+    // test with failure at refuel
+    refuel false
+    |> bind (enterLaunchCodes true)
+    |> bind (fireMissile true)
+    |> execute
+    (*
+    val it : Result<string> = Failure ""refuel failed""
+    *)
+
+    // test with failure at enterLaunchCodes
+    refuel true
+    |> bind (enterLaunchCodes false)
+    |> bind (fireMissile true)
+    |> execute
+    (*
+    checking if refuelling can be done
+    val it : Result<string> = Failure ""enterLaunchCodes failed""
+    *)
+
+    // test with failure at fireMissile
+    refuel true
+    |> bind (enterLaunchCodes true)
+    |> bind (fireMissile false)
+    |> execute
+    (*
+    checking if refuelling can be done
+    checking if launch codes can be entered
+    val it : Result<string> = Failure ""fireMissile failed""
+    *)
+
+    // test with no failure 
+    refuel true
+    |> bind (enterLaunchCodes true)
+    |> bind (fireMissile true)
+    |> execute
+    (*
+    checking if refuelling can be done
+    checking if launch codes can be entered
+    checking if missile can be fired
+    refuel
+    entering launch codes
+    firing missile
+    val it : Result<string> = Success (""fireMissile "",[])
+    *)

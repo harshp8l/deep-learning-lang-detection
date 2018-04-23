@@ -1,0 +1,32 @@
+<?php 
+try {
+    $dbh = new PDO (""mysql:host=localhost;port=33000;dbname=magazinoacc"", 'root', 'administrator');
+} 
+catch (PDOException $e) {
+    echo ""Errore: "" . $e->getMessage();
+    die();
+}
+// var_dump($_POST);exit;
+if (! isset($_GET['term'])) {
+    $q=""%"";
+} else {
+    $q=$_GET['term'].""%"";
+}
+$sql=""  SELECT *
+        FROM pv
+        WHERE Cliente like :q;"";
+$stmt=$dbh->prepare($sql);
+$stmt->bindparam(':q',$q);
+$stmt->execute();
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+ $stringa = [];
+foreach($rows as $row){
+    $stringa[] = array(
+        'label' => $row['Cliente'],
+        'value' => $row['Cliente']
+    );
+    // $stringa.=sprintf('{cliente :"" %s"" localita"" : ""%s"" indirizzo: ""%s""},', $row['Cliente'], $row['Località'], $row['Indirizzo']);
+}
+// echo '['.substr($stringa,0,-1).']';
+echo json_encode($stringa)
+?>

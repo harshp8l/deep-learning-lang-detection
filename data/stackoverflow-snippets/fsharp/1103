@@ -1,0 +1,23 @@
+module Hop =
+  type Greet = 
+   | Greet of string
+   | Hello of IVar<bool>
+
+  let run n =
+    let timer = Stopwatch.StartNew ()
+
+    let greeterCh = ch ()
+    do greeterCh >>= function
+          | Greet who -> Job.unit ()
+          | Hello reply -> reply <-= true
+       |> Job.forever
+       |> server
+
+    Job.forUpToIgnore 1 n <| fun _ ->
+        let reply = ivar ()
+        greeterCh <-- Hello reply >>.
+        reply
+    |> run
+
+    let elapsed = timer.Elapsed
+    printfn ""%A"" elapsed

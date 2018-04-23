@@ -1,0 +1,30 @@
+(ns tst.clj.core
+  (:use clj.core tupelo.test)
+  (:require
+    [tupelo.core :as t]
+    [tupelo.schema :as tsk]
+    [schema.core :as s]))
+(t/refer-tupelo)
+(t/print-versions)
+
+(s/defn extract :- [s/Any]
+  [m :- tsk/Map]
+  (keys m))
+
+(s/defn multiply :- [s/Num]
+  [xs :- [s/Num]]
+  (mapv #(* 2 %) xs))
+
+(s/defn process :- s/Any
+  [xs :- [s/Num]]
+  (-> xs
+    (multiply) ; seq -> seq
+    (extract))) ; map -> seq ... fails
+
+(println (process [1 2 3])) 
+
+clojure.lang.ExceptionInfo: Input to extract does not match schema: 
+[(named (not (map? [2 4 6])) m)] {:type :schema.core/error, :schema [#schema.core.One{:schema {Any Any}, 
+:optional? false, :name m}], 
+:value [[2 4 6]], :error [(named (not (map? [2 4 6])) m)]}, 
+compiling:(tst/clj/core.clj:23:17)

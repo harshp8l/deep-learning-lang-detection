@@ -1,0 +1,54 @@
+class PlayGround extends Actor with ActorLogging {
+
+  var players = Set.empty[ActorRef]
+
+  var gameOnGoing = false
+
+  def passBallToNextPlayer(player: ActorRef, ball: Ball): Unit = {
+    if (gameOnGoing) {
+      getRandomNextPlayer(sender()) ! ball
+    }
+    else {
+      log.info(""Game has stopped. Ball is falling to the ground."")
+    }
+  }
+
+  def getRandomNextPlayer(player: ActorRef): ActorRef = {
+    val otherPlayers = (players - player).toVector
+    val otherPlayersCount = otherPlayers.size
+    if (otherPlayersCount > 0) {
+      otherPlayers((Math.random() * (otherPlayersCount - 1)).toInt)
+    }
+    else {
+      player
+    }
+  }
+
+  override def receive = {
+    case StartTheGame => startTheGame()
+    case StopTheGame => stopTheGame()
+    case PlayerJoin(player) => {
+      log.info(""A new player has joined the game - {}"", player)
+      players = players + player
+    }
+    case PlayerLeave(player) => {
+      log.info(""A player has left the game - {}"", player)
+      players = players - player
+    }
+    case BallThrow(ball) => passBallToNextPlayer(sender(), ball)
+  }
+
+  def startTheGame(): Unit = {
+    gameOnGoing = true
+    players.head ! Ball(0)
+  }
+
+  def stopTheGame(): Unit = {
+    gameOnGoing = false
+  }
+
+}
+
+object PlayGround {
+  def props: Props = Props(classOf[PlayGround])
+}

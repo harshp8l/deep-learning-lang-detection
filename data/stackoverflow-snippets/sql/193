@@ -1,0 +1,18 @@
+DECLARE @string varchar(8000) = 
+'Phone Call: Fairview Wines & Spirits
+Number Called: 1 604  601-8000
+Phone Description: Main
+Subject: Arrange meeting
+Result: Arranged interview
+Duration: 00:00:09';
+
+SELECT  
+  [Phone Call] = MAX(CASE s.n WHEN 1 THEN here.yougo END),
+  [Subject]    = MAX(CASE s.n WHEN 2 THEN here.yougo END),
+  [Result]     = MAX(CASE s.n WHEN 3 THEN here.yougo END),
+  [Duration]   = MAX(CASE s.n WHEN 4 THEN here.yougo END)
+FROM (VALUES (@string)) t(s) -- target.string
+CROSS APPLY (VALUES (1,'Phone Call:'),(2,'Subject:'),(3,'Result:'),(4,'Duration:')) s(n,t) -- search.text
+CROSS APPLY (VALUES (CHARINDEX(s.t, t.s), LEN(s.t))) st(l,ln)                              -- start.location, start.length
+CROSS APPLY (VALUES (ISNULL(NULLIF(CHARINDEX(char(10), t.s, st.l+st.ln+1),0),8000))) e(ln) -- end line
+CROSS APPLY (VALUES (SUBSTRING(t.s, st.l+st.ln, e.ln-(st.l+st.ln)))) here(yougo);

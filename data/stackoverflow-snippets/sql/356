@@ -1,0 +1,33 @@
+WITH Base AS (
+    SELECT
+        station,
+        [date] AS d,
+        ROW_NUMBER() OVER(PARTITION BY station ORDER BY [date]) i
+    FROM 
+        @d
+    WHERE
+        rain > 0
+    GROUP BY
+        station,
+        [date]),
+Ranges AS (
+    SELECT
+        station,
+        MIN(d) AS [start_date],
+        MAX(d) AS end_date,
+        DATEDIFF(DAY, MIN(d), MAX(d)) AS [days],
+        DENSE_RANK() OVER (ORDER BY DATEDIFF(DAY, MIN(d), MAX(d)) DESC) AS rank_id
+    FROM 
+        Base
+    GROUP BY
+        station,
+        DATEDIFF(DAY, i, d))
+SELECT
+    station,
+    [start_date],
+    end_date,
+    [days]
+FROM
+    Ranges
+WHERE
+    rank_id = 1;

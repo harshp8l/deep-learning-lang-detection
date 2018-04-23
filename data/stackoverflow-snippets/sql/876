@@ -1,0 +1,30 @@
+SQL> create or replace trigger trg_test
+  2  for update or insert on emp
+  3  compound trigger
+  4
+  5    type t_empcnt is record (deptno emp.deptno%type);
+  6    type r_empcnt is table of t_empcnt index by pls_integer;
+  7    g_empcnt r_empcnt;
+  8
+  9    after each row is
+ 10    begin
+ 11      g_empcnt(g_empcnt.count + 1).deptno := :new.deptno;
+ 12    end after each row;
+ 13
+ 14    after statement is
+ 15      l_cnt number;
+ 16    begin
+ 17      for i in 1 .. g_empcnt.count loop
+ 18        select count(*) into l_cnt
+ 19          from emp
+ 20          where deptno = g_empcnt(i).deptno;
+ 21
+ 22        if l_cnt > 4 then
+ 23          raise_application_error(-20000, 'Too many employees in department');
+ 24        end if;
+ 25      end loop;
+ 26    end after statement;
+ 27  end;
+ 28  /
+
+Trigger created.

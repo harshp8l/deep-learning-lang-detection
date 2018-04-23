@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+#include <memory>
+
+#define PROPERTY_TYPES \
+    X(CAR, ""A Car"") \
+    X(HOUSE, ""A House"") \
+    X(ISLAND, ""An Island"") // <-- add more types
+
+#define X(type, name) type, 
+enum class property_type : size_t
+{
+    PROPERTY_TYPES
+};
+#undef X
+
+#define X(type, name) name,
+const char *property_name[] =
+{
+    PROPERTY_TYPES
+};
+#undef X
+
+class Property
+{
+public:
+    virtual property_type type() = 0;
+};
+
+class Car : public Property
+{
+public:
+    Car(std::string name) : mName(name) {}
+    std::string mName;
+    property_type type() { return property_type::CAR; }
+};
+
+class House : public Property
+{
+public:
+    House(std::string name) : mName(name) {}
+    std::string mName;
+    property_type type() { return property_type::HOUSE; }
+};
+
+class Person
+{
+public:
+    std::vector< std::shared_ptr<Property> > properties;
+};
+
+std::ostream& operator<< (std::ostream& os, property_type type)
+{
+    os << property_name[static_cast<size_t>(type)];
+    return os;
+}
+
+int main()
+{
+    Person x;
+    auto y = std::shared_ptr<Property>(new Car(""my car""));
+    auto z = std::shared_ptr<Property>(new House(""my house""));
+    x.properties.push_back(y);
+    x.properties.push_back(z);
+    for (auto i : x.properties)
+    {
+        std::cout << i->type() << std::endl;
+    }
+    return 0;
+}

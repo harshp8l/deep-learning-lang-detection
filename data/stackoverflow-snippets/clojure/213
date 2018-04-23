@@ -1,0 +1,37 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; example/a.cljc
+
+(ns example.a
+  (:require [example.b :as b]))
+
+(defn foo []
+  (println ""foo""))
+
+#?(
+
+   :clj
+   (alter-var-root #'b/foo (constantly foo))                ; <- in clojure do this
+
+   :cljs
+   (set! b/foo foo)                                         ; <- in clojurescript do this
+
+   )
+
+(defn barfoo []
+  (b/bar)
+  (foo))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; example/b.cljc
+
+(ns example.b)
+
+;; Avoid circular dependency.  This gets set by example.a
+(defonce foo nil)
+
+(defn bar []
+  (println ""bar""))
+
+(defn foobar []
+  (foo)
+  (bar))

@@ -1,0 +1,15 @@
+-- Assume below two are inputs for creating new application
+DECLARE @newAppName varchar(max) = 'new application'
+DECLARE @category varchar(max) = 'test category'
+
+-- Below will set newAppId to 092. Not you have to adjust for when # apps > 999
+DECLARE @newAppId varchar(3) = (SELECT REPLACE(STR(CAST(MAX(Id) AS int) + 1, 3), ' ', 0) FROM Application)
+DECLARE @categoryId varchar(2) = (SELECT Id from AppCategory WHERE CategoryName = @category)
+
+DECLARE @newCategorySeqIndex int = (SELECT MAX(SeqIndex) + 1 FROM AppPerCategory WHERE CategoryId = @categoryId)
+
+INSERT Application (Id, ApplicationName)
+  VALUES (@newAppId, @newAppName)
+
+INSERT AppPerCategory (CategoryId, ApplicationId, SeqIndex)
+  VALUES (@categoryId, @newAppId, @newCategorySeqIndex)

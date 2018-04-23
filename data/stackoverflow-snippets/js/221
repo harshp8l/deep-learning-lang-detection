@@ -1,0 +1,26 @@
+// protractor conf.js
+onPrepare: function(){
+  var chai = require('chai'),
+      expect = chai.expect;
+
+  chai.use(require('chai-as-promised'));
+  global.expect = chai.expect;  
+}
+// add above code in `onPrepare` of protractor conf.js
+
+Then('the title should be {string}', function(expectedTitle) {
+
+  const browserTitle = browser.getTitle();
+
+  return expect(browserTitle).to.eventually.equal(expectedTitle);
+  // expect(A).to.eventually.xxx(B)
+  // Only when A is promise-like object, you can use `eventually`.
+
+  // Otherwise, you can't.
+  return browser.getTitle().then(function(title){
+     expect(title).to.equal(expectedTitle);
+     // title at here is not a promise-like object
+     // you can't use `eventually`
+  });
+
+});

@@ -1,0 +1,31 @@
+// Invoked by execute() method of this object
+    @Override
+    protected String doInBackground(Void... args) {
+
+        HttpURLConnection conn = null;
+        StringBuilder json = new StringBuilder();
+        try {
+            // Connect to the web service
+            URL url = new URL(SERVICE_URL);
+            conn = (HttpURLConnection) url.openConnection();
+            InputStreamReader in = new InputStreamReader(conn.getInputStream());
+
+            // Read the JSON data into the StringBuilder
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    json.append(line);
+                }
+        } catch (IOException e) {
+            Log.e(LOG_TAG, ""Error connecting to service"", e);
+            //throw new IOException(""Error connecting to service"", e); //uncaught
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+
+        return json.toString();
+    }

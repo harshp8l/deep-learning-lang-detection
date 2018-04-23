@@ -1,0 +1,23 @@
+>>> import numpy as np
+>>> 
+>>> example
+['2018-01-01T12:00:00+0000', '2018-01-01T16:37:45+0000', '2018-01-01T21:15:30+0000', '2018-01-02T01:53:15+0000', '2018-01-02T06:31:00+0000', '2018-01-02T11:08:45+0000']
+>>>
+# create numpy array, 'M8' stands for datetime64
+>>> A = np.array(example, dtype='M8')
+>>> A
+array(['2018-01-01T12:00:00', '2018-01-01T16:37:45',
+       '2018-01-01T21:15:30', '2018-01-02T01:53:15',
+       '2018-01-02T06:31:00', '2018-01-02T11:08:45'],
+      dtype='datetime64[s]')
+>>> 
+# we have to manually extract hours and minutes but it is easy:
+# convert to units 'h' (hour, discarding minutes and seconds) and 
+# 'D' (day, also discarding smaller units) and take the difference
+>>> hours = A.astype('M8[h]') - A.astype('M8[D]')
+# and similar for minutes
+>>> minutes = A.astype('M8[m]') - A.astype('M8[h]')
+>>> hours
+array([12, 16, 21,  1,  6, 11], dtype='timedelta64[h]')
+>>> minutes
+array([ 0, 37, 15, 53, 31,  8], dtype='timedelta64[m]')

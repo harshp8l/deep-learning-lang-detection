@@ -1,0 +1,25 @@
+let tup = [(1M, 2M); (2M, 3M); (3M, 3M); (4M, 5M); (5M, 6M); (7M, 6M); (8M, 9M); (10M, 9M)]
+
+let findGroupings lst =
+    let rec findGroup input previous acc =
+        match input with
+        | [] -> acc
+        | (a,b)::t -> 
+            match previous with
+            | [] -> if a >= b then
+                        findGroup t [] acc
+                    else
+                        findGroup t [b;a] acc
+            | h::_ -> if a > h && a < b then
+                        findGroup t (b::(a::previous)) acc
+                      elif a > h && a >=b then
+                        let full = List.rev (a::previous)
+                        findGroup t [] (full::acc)
+                      elif a >= b then
+                        findGroup t [] ((List.rev previous)::acc)
+                      elif a < h then
+                        findGroup t [b;a] (previous::acc)
+                      else // a = h and a < b
+                        findGroup t (b::previous) acc
+    findGroup lst [] []
+    |> List.rev

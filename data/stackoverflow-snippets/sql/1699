@@ -1,0 +1,17 @@
+SELECT C.*, 
+(SELECT 1 FROM user_followings D WHERE D.following_user_id=1 AND 
+  C.id=D.follower_user_id LIMIT 1) flwx_viewing_user,
+(SELECT 1 FROM user_followings E WHERE E.follower_user_id=1 AND  
+  C.id=E.following_user_id LIMIT 1) viewing_user_flwx
+FROM
+(SELECT A.id, A.name, A.email, 'following' relation 
+FROM users 
+WHERE EXIST (SELECT 1 
+             FROM user_followings B 
+             WHERE B.following_user_id=2)
+UNION ALL
+SELECT A.id, A.name, A.email, 'followers' relation 
+FROM users 
+WHERE EXIST (SELECT 1 
+             FROM user_followings B 
+             WHERE B.follower_user_id=2)) C;

@@ -1,0 +1,22 @@
+(ns my-project.core
+  (:require [clojure.string :as cs])
+  (:import java.util.zip.ZipInputStream)
+  (:gen-class))
+
+(defrecord HELPER [])
+
+(defn get-code-location []
+  (when-let [src (.getCodeSource (.getProtectionDomain HELPER))]
+    (.getLocation src)))
+
+(defn list-zip-contents [zip-location]
+  (with-open [zip-stream (ZipInputStream. (.openStream zip-location))]
+    (loop [dirs []]
+      (if-let [entry (.getNextEntry zip-stream)]
+        (recur (conj dirs (.getName entry)))
+        dirs))))
+
+(defn -main [& args]
+  (println (some->> (get-code-location)
+                    list-zip-contents
+                    (filter #(cs/starts-with? % ""a/"")))))

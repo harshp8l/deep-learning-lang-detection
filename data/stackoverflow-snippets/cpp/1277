@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <iterator>
+
+struct row_t {
+    int row1val, row2val;
+    double row3val;
+    friend std::istream& operator>>(std::istream&is, row_t& r) {
+#ifdef USE_GETLINE
+        std::string line;
+        if(std::getline(is, line) &&
+           std::istringstream(line) >> r.row1val >> r.row2val >> r.row3val) {
+            return is;
+        }
+        is.setstate(std::ios::failbit);
+        return is;
+#else
+        return is >> r.row1val >> r.row2val >> r.row3val;
+#endif
+    };
+};
+
+int main() {
+    std::vector<row_t> rows((std::istream_iterator<row_t>(std::cin)),
+                             std::istream_iterator<row_t>());
+
+
+    std::cout << rows[0].row1val << "" "" << rows[0].row2val << "" "" << rows[0].row3val << std::endl;
+    std::cout << rows.size() << ""\n"";
+    return 0;
+}

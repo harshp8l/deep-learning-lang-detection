@@ -1,0 +1,42 @@
+let isNextObject line = 
+    line = ""---""
+
+type State = {
+    fileIndex : int
+    filename: string
+    writer: System.IO.TextWriter
+    }
+
+let makeFilename index  = 
+    sprintf ""File%i"" index
+
+let closeFile (state:State) =
+    //state.writer.Close() // would use this in real code
+    state.writer.WriteLine(""=== Closing {0} ==="",state.filename)
+
+let createFile index =
+    let newFilename = makeFilename index 
+    let newWriter = System.Console.Out // dummy
+    newWriter.WriteLine(""=== Creating {0} ==="",newFilename)
+    // create new state with new writer 
+    {fileIndex=index + 1; writer = newWriter; filename=newFilename }
+
+let writeLine (state:State) line = 
+    if isNextObject line then
+        /// finish old file here    
+        closeFile state
+        /// create new file here and return updated state
+        createFile state.fileIndex
+    else
+        //write the line to the current file
+        state.writer.WriteLine(line)
+        // return the unchanged state
+        state
+
+let processLines (lines: string seq) =
+    //setup
+    let initialState = createFile 1
+    // process the file
+    let finalState = lines |> Seq.fold writeLine initialState
+    // tidy up
+    closeFile finalState

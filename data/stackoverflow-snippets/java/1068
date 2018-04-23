@@ -1,0 +1,77 @@
+public void actionPerformed(ActionEvent arg0) {
+                int answer=JOptionPane.showConfirmDialog(null, ""Do You Want To Create New Company ?"",""Confirm Dialog"",JOptionPane.YES_NO_OPTION);
+                switch(answer)
+                {
+                case JOptionPane.YES_OPTION:
+                    File file=new File(""Database"");
+                    file.mkdirs();
+                    JFileChooser fc = new JFileChooser(file);
+                    fc.setDialogTitle(""Enter Inventory Plus File Name"");
+                    fc.setMultiSelectionEnabled(false);
+                    fc.removeChoosableFileFilter(fc.getAcceptAllFileFilter());
+                    FileTypeFilter filefilter=new FileTypeFilter("".db"",""database"");
+                    fc.setFileFilter(filefilter);
+                    int result = fc.showSaveDialog(null);
+                    if (result == JFileChooser.APPROVE_OPTION) {
+                        File[] dircontent=file.listFiles();
+                        File fileName=fc.getSelectedFile();//Database\Second
+                        String filename=fileName.getName();//second,first
+                        String filepath=fileName.getParent();//database
+                        for(int i=0;i<dircontent.length;i++)
+                        {
+                            if(dircontent[i].getName().equals(filename+"".db""))
+                                    {
+                                String message=""File ""+filename+"".db""+"" already exist in\n""+filepath+""\nDo you want to Overwrite?\n"";
+                                int reply=JOptionPane.showConfirmDialog(null, message,""Warning"",JOptionPane.YES_NO_OPTION);
+                                if(reply==JOptionPane.YES_OPTION)
+                                {
+                                    try {
+                                        fileName.delete();
+                                        BufferedWriter writer=new BufferedWriter(new FileWriter(fileName+"".db""));
+                                        writer.close();
+                                        JOptionPane.showMessageDialog(null, ""File ""+filename+"".db""+"" is Overwritten Successfully in\n""+filepath);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                    }
+                            else
+                            {
+                                    try {
+                                        BufferedWriter writer=new BufferedWriter(new FileWriter(fileName+"".db""));
+                                        writer.close();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                            }
+                        }
+                    }
+                case JOptionPane.NO_OPTION:
+                }
+            }
+
+
+            public class FileTypeFilter extends FileFilter{
+
+        private final String Extension;
+        private final String Description;
+        @Override
+        public boolean accept(File file) {
+            if(file.isDirectory()) {
+            return true;
+            }
+            return file.getName().endsWith(Extension);
+        }
+
+        public FileTypeFilter(String extension, String description) {
+            super();
+            Extension = extension;
+            Description = description;
+        }
+
+        @Override
+        public String getDescription() {
+            return Description + String.format(""(*%s)"", Extension);
+        }
+
+    }

@@ -1,0 +1,72 @@
+#include ""Logger.h""
+#include ""ExceptionHandler.h""
+
+#include <sstream>
+#include <iostream>
+
+enum ReturnCode {
+    ReturnError = -1,
+    ReturnOkay = 0
+};
+
+// helper function
+void quitMessage() {
+    std::cout << ""\nPress any key and enter to quit.\n"";
+    std::cin.get();
+}
+
+// Example Class that uses the Logger & ExceptionHandler.
+class Foo {
+public:
+    Foo() = default;
+
+    void printFooUsingExceptionHandler() {
+        using namespace linx;
+        throw ExceptionHandler( __FUNCTION__ + std::string( "" using ExceptionHandler"" ) );
+        // Or can be used this way
+        // std::ostringstream stream;
+        // stream << __FUNCTION__ << "" using ExceptionHandler"";
+        // throw ExceptionHandler( stream );
+    }
+
+    void printFooNotUsingExceptionHandlerButUsingLogger() {
+        using namespace linx;
+        std::ostringstream stream;
+        stream << __FUNCTION__ << "" logging to logger, but not using ExceptionHandler"";
+        Logger::log( stream, Logger::TypeWarning ); // Can use TypeInfo, TypeWarning or TypeError pending on the use case.
+    }
+};
+
+int main() {
+    namespace lx = linx;
+    using namespace lx;
+
+    try {
+        Logger logger( ""logger.txt"" );
+
+        // last param is ommited as it is defaults to TypeInfo
+        Logger::log( ""This is basic info"" ); 
+        Logger::log( ""This is a warning"", Logger::TypeWarning );
+        Logger::log( ""This is an error"", Logger::TypeError );
+        Logger::log( ""Basic console message"", Logger::TypeConsole );    
+
+        // Example of a class using the ExceptionHandler & Logger classes
+        Foo f;
+        // call this first; log to message but don't throw excpetion
+        f.printFooNotUsingExceptionHandlerButUsingLogger();
+        // call this to throw exception
+        f.printFooUsingExceptionHandler();
+
+    } catch( ExceptionHandler& e  ) {
+        std::cout << ""Exception Thrown: "" << e.getMessage() << std::endl;
+        quitMessage();
+        return ReturnError;
+    } catch( ... ) {
+        std::cout << __FUNCTION__ << "" Caught Unknown Exception"" << std::endl;
+        quitMessage();
+        return ReturnError;
+    }
+
+    quitMessage();
+    return ReturnOkay;
+}

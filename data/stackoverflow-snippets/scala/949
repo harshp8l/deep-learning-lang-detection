@@ -1,0 +1,31 @@
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+val possibleFormats = List(
+  new SimpleDateFormat(""yyyy-MM-dd'T'HH:mm:ssX""),
+  new SimpleDateFormat(""yyyy-MM-dd'_'HH:mm""),
+  new SimpleDateFormat(""yyyyMMddHHmm"")
+)
+
+def robustParse(s: String): Date = {
+  for (f <- possibleFormats) {
+      try {
+          return f.parse(s)
+      } catch {
+        case e: ParseException => 
+          // simply ignore it, try next pattern
+      }
+  }
+  throw new IllegalArgumentException(
+    ""Could not parse "" + s + "" using any possible format""
+  )
+}
+
+for (example <- List(
+  ""2000-01-01T01:00:00UTC"",
+  ""2222-11-22T11:22:33"",
+  ""200001021859""
+)) {
+  println(robustParse(example));
+}

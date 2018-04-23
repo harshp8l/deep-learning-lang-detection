@@ -1,0 +1,33 @@
+import com.softwaremill.macwire._
+import play.api.BuiltInComponents
+import play.api.mvc.{EssentialAction, EssentialFilter}
+
+class Filter1 extends EssentialFilter {
+  override def apply(next: EssentialAction) = next
+}
+
+class Filter2 extends EssentialFilter {
+  override def apply(next: EssentialAction) = next
+}
+
+class Filter3 extends EssentialFilter {
+  override def apply(next: EssentialAction) = next
+}
+
+trait MyCommonComponents extends BuiltInComponents {
+
+  protected lazy val baseFilters: Seq[EssentialFilter] = Seq(
+    wire[Filter1],
+    wire[Filter2],
+  )
+
+  override def httpFilters = baseFilters
+}
+
+
+trait MyFooComponents extends MyCommonComponents {
+
+  protected lazy val fooFilters = baseFilters :+ wire[Filter3]
+
+  override def httpFilters = fooFilters
+}

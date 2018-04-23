@@ -1,0 +1,22 @@
+Create PROC dbo.usp_convertnumberstostring
+
+@stringvalue nvarchar(250)
+AS
+BEGIN
+
+
+Create table #stringsplit (numbers nvarchar(50),Letters varchar(1))
+
+insert into #stringsplit(numbers,Letters)
+SELECT Numbers = @stringvalue,CHAR(64 + value) as Letters
+
+ from string_split(@stringvalue,',')
+
+  select numbers,Letter = STUFF((Select DISTINCT ', ' + Letters
+  from #stringsplit b
+  where b.numbers = a.numbers 
+  FOR XML PATH('')),1,2,'')
+  from #stringsplit a
+  group by numbers
+  drop table #stringsplit
+  END

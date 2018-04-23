@@ -1,0 +1,14 @@
+select count(distinct case when cancelled_client_id is null and 
+                                 year(rum_first_date) = year(date) and 
+                                 rum_first_date <= rul.date
+                           then user_id 
+                           when cancelled_client_id is null and 
+                                year(coalesce(RUM_first_date, RUR_first_date)) = year(rul.date) and
+                                coalesce(rum_first_date, rur_first_date) <= RUL.date
+                           then user_id
+              end) as . . .
+from (select RUL.*,
+             min(date) over (partition by enrolled_client_id) as rur_date,
+             min(date) over (partition by managed_client_id) as rum_date
+      from RUL
+     ) RUL

@@ -1,0 +1,76 @@
+def ----- : Unit = println(""-"" * 40)
+
+{
+  var z = 10
+  for (i <- 1 to 3; x = i + 1; y = z - 1) {
+    // println(s""i = $i , x = $x , y = $y, z = $z"")
+    println(x)
+    println(y)
+    z -= 1
+  }
+}
+
+-----
+
+{
+  var z = 10
+  for {
+    (i, x) <- for (i <- 1 to 3) yield (i, i + 1)
+    y = z - 1
+  } {
+    println(x)
+    println(y)
+    z -= 1 
+  }
+}
+
+-----
+
+{
+  var z = 10
+  for {
+    ((i, x), y) <- for ((i, x) <- for (i <- 1 to 3) yield (i, i + 1)) yield ((i, x), z - 1)
+  } {
+    println(x)
+    println(y)
+    z -= 1 
+  }
+}
+
+-----
+
+{
+  var z = 10
+  for {
+    ((i, x), y) <- for ((i, x) <- (1 to 3).map(i => (i, i + 1))) yield ((i, x), z - 1)
+  } {
+    println(x)
+    println(y)
+    z -= 1
+  }
+}
+
+-----
+
+{
+  var z = 10
+  for {
+    ((i, x), y) <- (1 to 3).map(i => (i, i + 1)).map(ix => (ix, z - 1))
+  } {
+    println(x)
+    println(y)
+    z -= 1
+  }
+}
+
+-----
+
+{
+  var z = 10
+  (1 to 3).map(i => (i, i + 1)).map(ix => (ix, z - 1)).foreach {
+    case ((i, x), y) => 
+      println(x)
+      println(y)
+      z -= 1
+  }
+}

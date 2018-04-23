@@ -1,0 +1,26 @@
+var users = Seq(""user1"", ""user2"", ""user3"", ""user4"", ""user5"", ""user6"", ""user7"", ""user8"", ""user9"").toDF(""users"")
+var impressions = Seq(""a"", ""b"", ""c"").toDF(""impressions"").withColumn(""id"", monotonically_increasing_id())
+
+var cnt = impressions.count
+
+users=users.withColumn(""id"", monotonically_increasing_id())
+       .withColumn(""mod"", $""id"" mod cnt)
+       .join(impressions, $""mod""===impressions(""id""))
+       .drop(""mod"")
+
+users.show
+
+
++-----+---+-----------+---+
+|users| id|impressions| id| 
++-----+---+-----------+---+ 
+|user1|  0|          a| 0| 
+|user2|  1|          b| 1| 
+|user3|  2|          c| 2| 
+|user4|  3|          a| 0| 
+|user5|  4|          b| 1| 
+|user6|  5|          c| 2| 
+|user7|  6|          a| 0| 
+|user8|  7|          b| 1| 
+|user9|  8|          c| 2| 
++-----+---+-----------+---+ 

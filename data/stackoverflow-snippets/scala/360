@@ -1,0 +1,16 @@
+import org.apache.spark.sql.{Dataset, SparkSession}
+
+object CsvJsonMain {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder().appName(""CsvJsonExample"").master(""local"").getOrCreate()
+
+    import spark.sqlContext.implicits._
+    val csvData: Dataset[String] = spark.sparkContext.parallelize(List(
+      """"""
+        |""a"",""b"",""c"",""{""""x"""":""""xx"""",""""y"""":""""yy""""}""
+      """""".stripMargin)).toDS()
+
+    val frame = spark.read.option(""escape"", ""\"""").csv(csvData)
+    frame.show()
+  }
+}

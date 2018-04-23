@@ -1,0 +1,21 @@
+(declare primes)   ;; declare this up front so we can refer to it below
+
+(defn is-relatively-prime? [n candidates]
+  (if (= 0 (count candidates))
+    true
+    (if (zero? (rem n (first candidates)))
+      false
+      (is-relatively-prime? n (rest candidates)))))
+
+(defn get-next-prime [largest-prime-so-far]
+  (let [primes-so-far (concat (take-while #(not= largest-prime-so-far %) primes) [largest-prime-so-far])]
+    (loop [n (+ (last primes-so-far) 2)]
+      (if
+        (is-relatively-prime? n (rest primes-so-far))
+        n
+        (recur (+ n 2))))))
+
+(def primes
+  (lazy-cat '(2 3) (map get-next-prime (rest primes))))
+
+(time (let [p (doall (take 200 primes))]))

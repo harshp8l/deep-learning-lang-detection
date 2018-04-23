@@ -1,0 +1,29 @@
+startDownload() {
+   # only start another download if there are URLs left in
+   # in the array that haven't been downloaded yet
+   if [ ${ urls[ $fileno ] } ];
+       # start a curl download in the background and increment fileno
+       # so the next call downloads the next URL in the array
+       curl ... ${ urls[ $fileno ] } &
+       fileno=$((fileno+1))
+   fi
+}
+
+trap startDownload SIGCHLD
+
+# start at file zero and set up an array
+# of URLs to download
+fileno=0
+urls=...
+
+parallel=3
+
+# start the initial parallel downloads
+# when one ends, the SIGCHLD will cause
+# another one to be started if there are
+# remaining URLs in the array
+for (( i=0; i<$parallel; i++ )); do
+    startDownload
+done
+
+wait

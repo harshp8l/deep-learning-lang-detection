@@ -1,0 +1,26 @@
+  import scala.io.Source
+  import org.apache.hadoop.fs._
+  val sparkSession =   ...  // I created it to retrieve hadoop configuration, you can create your own Configuration.
+  val inputPath =   ...
+  val outputPath =   ...
+
+  val fs = FileSystem.get(sparkSession.sparkContext.hadoopConfiguration)
+  // read all files content to Array of Map[String,String]
+  val filesContent = fs.listStatus(new Path(inputPath)).filter(_.isFile).map(_.getPath).filter(_.getName.endsWith("".txt""))
+    .map(s => (s.getName, Source.fromInputStream(fs.open(s)).getLines()
+                    .map(_.split("":"").map(_.trim))
+                    .filter(_.length == 2)
+                    .map(p => (p.head, p.last)).toMap))
+  // create default Map with all possible keys
+  val listKeys = filesContent.flatMap(_._2.keys).distinct.map(s => (s, ""0"")).toMap
+  val csvContent = filesContent.map(s => (s._1, listKeys ++ s._2))
+    .map(s => (s._1, s._2.values.mkString("","")))
+    .map(s => s""${s._1},${s._2}"")
+    .mkString(""\n"")
+  val csvHeader = (""Filename"" +: listKeys.keys.toList).mkString("","")
+  val csv = csvHeader + ""\n"" + csvContent
+
+  new PrintWriter(fs.create(new Path(outputPath))){
+    write(csv)
+    close()
+  }

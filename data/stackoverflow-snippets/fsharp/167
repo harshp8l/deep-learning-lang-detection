@@ -1,0 +1,20 @@
+module Observable =
+    open System
+
+    // ('a -> 'b -> unit) -> 'a -> IObservable<'b>
+    let subscribeWeakly callback target source = 
+
+        let mutable sub:IDisposable = null
+        let mutable disposed = false
+        let wr = new WeakReference<_>(target)
+
+        let dispose() =
+            lock (sub) (fun () -> 
+                if not disposed then sub.Dispose(); disposed <- true)
+
+        let callback' x =
+            let isAlive, target = wr.TryGetTarget()
+            if isAlive then callback target x else dispose()
+
+        sub <- Observable.subscribe callback' source
+        sub

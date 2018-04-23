@@ -1,0 +1,10 @@
+let awaitTaskCancellable<'a> (task: Task<'a>) = 
+    Async.FromContinuations(fun (cont, econt, ccont) -> 
+        task.ContinueWith(fun (t:Task<'a>) -> 
+            match t with
+            | _ when t.IsFaulted  -> econt t.Exception
+            | _ when t.IsCanceled -> 
+                // note how this uses error continuation 
+                // instead of cancellation continuation
+                econt (new TaskCanceledException())
+            | _ -> cont t.Result) |> ignore)

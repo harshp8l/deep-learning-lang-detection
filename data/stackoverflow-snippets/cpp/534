@@ -1,0 +1,19 @@
+for (int k = kMax; k > kMin; k--)
+{
+    std::set<std::vector<int>>::iterator it = cliques[k].begin();
+    for(int s = 0; s < cliques[k].size(); ++s)
+    {
+        std::vector<int> clique = *it;
+        #pragma omp parallel for num_threads(max_threads)
+        for (int v = 0; v < clique.size(); ++v)
+        {
+            int& vertex = clique[v];
+            std::vector<int> new_clique;
+            std::copy_if(clique.begin(), clique.end(), std::back_inserter(new_clique), [vertex](const int& elem) { return elem != vertex; });
+            int kNew = k - 1;
+            #pragma omp critical
+            cliques[kNew].insert(new_clique);
+        }
+        it++;
+    }
+}

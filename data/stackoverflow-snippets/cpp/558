@@ -1,0 +1,37 @@
+#include <cmath>
+#include <QDebug>
+
+static float calc_angle(float x, float y){
+    float r = sqrt(x*x + y*y);
+    float angle = acos(x/r);
+    return  y<0 ? -angle : angle;
+}
+
+int main(int argc, char *argv[])
+{
+    std::vector<int> hits{0, 1, 2, 1, 0, 1, 2, 1, 0, 1};
+    std::vector<float> x{-8, -8, -8, -8, -8,  -4, -4, -4, -4, -4};
+    std::vector<float> y{-8, -4,  0,  4,  8,  -8, -4,  0,  4,  8};
+
+    Q_ASSERT(x.size() == y.size() && y.size() == hits.size());
+    std::vector<int> indexes(x.size());
+    std::iota(indexes.begin(), indexes.end(), 0);
+
+    std::sort(indexes.begin(), indexes.end(), [&](const int & i, const int & j) -> bool{
+        return calc_angle(x[i], y[i]) < calc_angle(x[j], y[i]);
+    });
+    QVector<float> plot_x, plot_y;
+    QVector<int> new_hits;
+    for(const int & index : indexes){
+        plot_x<<x[index];
+        plot_y<<y[index];
+        new_hits<<hits[index];
+    }
+
+    qDebug()<<indexes;
+    qDebug()<< plot_x;
+    qDebug()<<plot_y;
+    qDebug()<<new_hits;
+
+    return 0;//a.exec();
+}

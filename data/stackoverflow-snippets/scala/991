@@ -1,0 +1,31 @@
+val wordCountsWhite = sc.textFile(""/path/to/whitecat.txt"").
+  flatMap(_.split(""\\W+"")).
+  map((_, 1)).
+  reduceByKey(_ + _)
+
+wordCountsWhite.collect
+// res1: Array[(String, Int)] = Array(
+//   (is,1), (eating,1), (cat,1), (white,2), (The,1), (soup,1), (a,1)
+// )
+
+val wordCountsBlack = sc.textFile(""/path/to/blackcat.txt"").
+  flatMap(_.split(""\\W+"")).
+  map((_, 1)).
+  reduceByKey(_ + _)
+
+wordCountsBlack.collect
+// res2: Array[(String, Int)] = Array(
+//   (is,1), (eating,1), (cat,1), (white,1), (The,1), (a,1), (sandwich,1), (black,1)
+// )
+
+val similarityRDD = wordCountsWhite.leftOuterJoin(wordCountsBlack).map{
+  case (k: String, (c1: Int, c2: Option[Int])) => {
+    val counts = Seq(Some(c1), c2).flatten
+    (k, counts.min.toDouble / counts.max )
+  }
+}
+
+similarityRDD.collect
+// res4: Array[(String, Double)] = Array(
+//   (is,1.0), (eating,1.0), (cat,1.0), (white,0.5), (The,1.0), (soup,1.0), (a,1.0)
+// )

@@ -1,0 +1,25 @@
+namespace impl {
+
+template <typename T, std::size_t... Idx>
+struct pack_t {
+  T v;
+};
+
+template <std::size_t... Idx, typename... Ts>
+auto pack(std::index_sequence<Idx...>, Ts&&... vs) noexcept {
+  auto v = std::forward_as_tuple(std::forward<Ts>(vs)...);
+  return pack_t<decltype(v), Idx...>{std::move(v)};
+}
+
+template <typename T, std::size_t... Idx>
+std::ostream& operator<<(std::ostream& os, pack_t<T, Idx...> args) {
+  return ((os << std::get<Idx>(std::move(args.v))), ...);
+}
+
+}
+
+template <typename... Ts>
+auto pack(Ts&&... vs) noexcept {
+  return impl::pack(
+    std::index_sequence_for<Ts...>{}, std::forward<Ts>(vs)...);
+}

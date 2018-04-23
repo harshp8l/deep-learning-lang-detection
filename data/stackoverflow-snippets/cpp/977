@@ -1,0 +1,27 @@
+template<typename S, typename T>
+constexpr decltype(auto) pipeline(S&& source, T&& target)
+{
+    return [callables = std::tuple<S, T>(std::forward<S>(source),
+                                         std::forward<T>(target))]
+    (auto&&... args)
+    {
+        const auto&[source, target] = callables;
+
+        auto tplr = [](auto s, auto && ... as)
+        {
+           using source_return
+              = decltype(s(std::forward<decltype(as)>(as)...));
+            if constexpr ( is_tuple<source_return>::value )
+                return s(std::forward<decltype(as)>(as)...);
+            else if constexpr ( std::is_void_v<source_return> )
+            {
+                s(std::forward<decltype(as)>(as)...);
+                return std::make_tuple();
+            }
+            else
+                return std::make_tuple(s(std::forward<decltype(as)>(as)...));
+        }(source, std::forward<decltype(args)>(args)...);
+
+        std::apply(target, tplr);
+    };
+}

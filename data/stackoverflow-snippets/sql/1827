@@ -1,0 +1,31 @@
+SELECT COUNT(DISTINCT sur.`customer_id`) AS 'Survey Done'
+     ,SUM(CASE WHEN sn.operator_name LIKE '%Zong%' AND sn.`signal_strength` = 'No Signal' THEN 1 ELSE 0 END) AS 'Zong No Signal'
+     ,SUM(CASE WHEN sn.operator_name LIKE '%Mobilink%' AND sn.`signal_strength` = 'No Signal' THEN 1 ELSE 0 END) AS 'Mobilink No Signal'
+     ,SUM(CASE WHEN sn.operator_name LIKE '%Ufone%' AND sn.`signal_strength` = 'No Signal' THEN 1 ELSE 0 END) AS 'Ufone No Signal'
+     ,SUM(CASE WHEN sn.operator_name LIKE '%Telenor%' AND sn.`signal_strength` = 'No Signal' THEN 1 ELSE 0 END) AS 'Telenor No Signal'
+     ,SUM(CASE WHEN sur.`pole_type` LIKE '%Wall%' THEN 1 ELSE 0 END) AS 'Wall'
+     ,SUM(CASE WHEN sur.`pole_type` LIKE '%PC Pole%' THEN 1 ELSE 0 END) AS 'PC Pole'
+     ,SUM(CASE WHEN sur.`pole_type` LIKE '%Structure Pole%' THEN 1 ELSE 0 END) AS 'Structure pole'
+     ,SUM(CASE WHEN sur.`pole_type` LIKE '%Spon pole%' THEN 1 ELSE 0 END) AS 'Spon pole'
+     ,sd.`sub_div_code` AS 'SD Code',  
+     sd.`name` AS 'SD Name', 
+     sd.`circle_name` AS 'Circle Name', 
+     sd.`division_name` AS 'Division Name'
+ FROM `survey` sur 
+ INNER JOIN `survey_hesco_subdivision` sd ON sur.`sub_division` = 
+ sd.`sub_div_code`
+ INNER JOIN `survey_networks` sn ON sur.`id` = sn.`survey_id`
+ WHERE sur.`customer_id` IN 
+ ('37010185878',
+'37010718785',
+'37010718759',
+'37010357911',
+'37010673539',
+'37010673796',
+'37010672166',
+'37010672162')
+ GROUP BY 
+     sd.`sub_div_code`, 
+     sd.`name`,
+     sd.`circle_name`, 
+     sd.`division_name`

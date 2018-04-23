@@ -1,0 +1,10 @@
+SELECT tablespace_name
+     ,MAX(CASE WHEN report_month = TRUNC(ADD_MONTHS(SYSDATE,-1),'MONTH') THEN max_total_used END) AS ""Last Month""
+     ,MAX(CASE WHEN report_month = TRUNC(SYSDATE,'MONTH') THEN max_total_used END) AS ""This Month""
+  FROM (
+    select TABLESPACE_NAME, max(TOTAL_USED) AS max_total_used, TRUNC(report_DATE, 'month') AS report_month
+      from CAPACITY_MON.TABLESPACE_GROWTH_HIST 
+     where instance = 'MOSA801M'
+     group by TABLESPACE_NAME, TRUNC(report_date, 'MONTH')
+) GROUP BY tablespace_name
+ ORDER BY tablespace_name;

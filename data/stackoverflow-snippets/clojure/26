@@ -1,0 +1,23 @@
+(defun my-eval (code env &aux (frame (frame env)))
+  (flet ((ev (exp) (my-eval exp env)))
+    (typecase code
+      (symbol (value (resolve code frame)))
+      (atom code)
+      (cons
+       (destructuring-bind (head . tail) code
+         (case head
+           (list (mapcar #'ev tail))
+           (let (destructuring-bind ((var val) expr) tail
+                  (my-eval expr
+                           (make-env :frame (make-frame :bindings `((,var . ,(ev val)))
+                                                        :parent frame)))))
+           (thunk (make-fn :name nil
+                           :parameters nil
+                           :code (first tail)
+                           :closed (frame-bindings frame)))
+           (apply (my-apply (ev (first tail))
+                            (ev (second tail))
+                            env))
+           (t (my-apply (resolve head (frame env))
+                        (mapcar #'ev tail)
+                        env))))))))

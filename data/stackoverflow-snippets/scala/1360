@@ -1,0 +1,20 @@
+import shapeless._
+trait Default[T] {
+  def get: T
+}
+
+object Default {
+  def apply[T](implicit ev: Default[T]): Default[T] = ev
+  private def make[T](t: T): Default[T] = new Default[T] {
+    def get: T = t
+  }
+  implicit val int: Default[Int] = make(1)
+  implicit val string: Default[String] = make(""some string"")
+  implicit hnil: Default[HNil] = make(HNil)
+  implicit hlist[H, T <: HList](implicit hEv: Default[H], tEv: Default[T]): Default[H :: T] = new Default[H :: T] {
+    def make: H :: T = hEv.get :: tEv.ger
+  }
+  implicit gen[CC, R](implicit gen: Generic.Aux[CC, R], rEv: Default[R]): Default[CC] = {
+    gen.from(rEv.get)
+  }
+}

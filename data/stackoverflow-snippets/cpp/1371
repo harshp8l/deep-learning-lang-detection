@@ -1,0 +1,61 @@
+#include <stdlib.h>
+#include <stdio.h>
+
+struct Account {
+    char holder_name[100];
+    char holder_password[100];
+    double current_sum;
+};
+
+int save_to_file(struct Account * account);
+struct Account * load_from_file(char *holder_name);
+
+int main(){
+   struct Account account = { ""BEN"", ""password"", 200.0 }; 
+   save_to_file(&account);
+   load_from_file(""BEN"");
+   return 0;
+}
+
+int save_to_file(struct Account * account){
+   const char * cstr = account->holder_name;
+   int size = sizeof(struct Account);
+
+   FILE * fp = fopen(cstr, ""wb"");
+   char * c;
+
+   c = (char *) account;
+
+   for(int i=0; i < size; i++)
+   {
+       putc(*c++, fp);
+   }   
+
+   return fclose(fp);
+}
+
+struct Account * load_from_file(char *holder_name)
+{
+   FILE * fp;
+   char *c;
+   int i;
+   int size = sizeof(struct Account);
+   struct Account * ptr = (struct Account *) malloc(sizeof(struct Account));
+
+   if ((fp = fopen(holder_name, ""rb"")) == NULL)
+   {
+       perror(""Error occured while opening file"");
+       return NULL;
+   }
+
+   c = (char *)ptr;
+
+   while ((i = getc(fp))!=EOF)
+   {
+       *c = i;
+       c++;
+   }
+
+   fclose(fp);
+   return ptr;
+}

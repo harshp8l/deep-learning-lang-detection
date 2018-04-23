@@ -1,0 +1,16 @@
+Import-Module ActiveDirectory
+$computers = Get-ADComputer -Filter * -Property * | Select-Object Name,OperatingSystem,OperatingSystemVersion,SamAccountName
+
+Foreach ($computer in $computers) 
+{
+    if ($computer.OperatingSystemVersion -like '10.0*')
+    {
+        $obj = New-Object psobject
+        $obj | Add-Member NoteProperty Name $computer.Name
+        $obj | Add-Member NoteProperty 'Operating System' $computer.OperatingSystem
+        $obj | Add-Member NoteProperty 'Operating System Version' $computer.OperatingSystemVersion
+        $obj | Add-Member NoteProperty 'SAMAccountName' $computer.samaccountname
+
+        $obj | Export-CSV C:\AllWindows1.csv -Append -NoTypeInformation -Encoding UTF8
+    }
+}

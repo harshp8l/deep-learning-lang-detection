@@ -1,0 +1,22 @@
+(defn peek! [tvec] (get tvec (dec (count tvec))))
+
+(let [in (clojure.string/split (slurp *in*) #""\s"")
+         tests (first in)
+         input-data (map #(Integer/parseInt %) (rest in))]
+
+    (loop [v (transient [])
+             m 0
+             d input-data]
+        (when (seq d)
+          (condp = (first d)
+            1 (let [snd (second d)
+                    max-now (max m snd)]
+                (recur (conj! v {:val snd :max-prev m}) max-now (drop 2 d)))
+
+            2 (let [popped (peek! v)
+                    max (if popped (:max-prev popped) 0)]
+                (recur (pop! v) max (rest d)))
+
+            3 (do
+                (println m)
+                (recur v m (rest d)))))))

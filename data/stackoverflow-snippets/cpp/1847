@@ -1,0 +1,35 @@
+            FD_ZERO(&tempRead);
+            FD_SET(socket, &tempRead);
+            select(0, &tempRead, NULL, NULL, NULL);
+
+            package_size = 0;
+            ioctlsocket(socket, FIONREAD, &package_size);
+            char * contBuf = new char[package_size];
+            dataRead = 0;
+            dr = recv(socket, contBuf, package_size, NULL);
+            if (dr == SOCKET_ERROR) { 
+                delete[] contBuf; 
+                return WSAGetLastError();
+            }
+            unsigned long long actualSize = decodeTotalFrameSize(contBuf);
+            if (package_size < actualSize) {
+                char * backBuffer = new char[package_size];
+                memcpy_s(backBuffer, package_size, contBuf, package_size);
+                delete[] contBuf;
+                contBuf = new char[actualSize];
+                memcpy_s(contBuf, actualSize, backBuffer, package_size);
+                delete[] backBuffer;
+                dataRead = package_size;
+                dr = 0;
+                while (dataRead < actualSize) {
+                    dr = recv(socket, contBuf + dataRead, actualSize - dataRead, NULL);
+                    if (dr == SOCKET_ERROR) {
+                        delete[] contBuf;
+                        return WSAGetLastError();
+                    }
+                    else if (dr == 0) break;
+                    dataRead += dr;
+                }
+                printf(""Read total frag of %u \n"", dataRead);
+
+            }

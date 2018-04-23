@@ -1,0 +1,57 @@
+trait Sensor[T] {
+  def value: T
+
+  def newValue(): Unit = {}
+}
+
+class MemorySensor[T] extends Sensor[T] {
+  var internalValue: T = null.asInstanceOf[T]
+
+  def setValue(newVal: T): Unit = {
+    internalValue = newVal
+    newValue()
+  }
+
+  def value: T = internalValue
+}
+
+//////////////////////////////////
+
+
+trait AbstractSubject[S <: AbstractSubject[S, O], O <: AbstractObserver[S, O]] {
+  this: S =>
+  def register(observer: O) = {
+    //we could use mutable collection here too
+    observers = observer :: observers
+  }
+
+  private var observers: List[O] = List[O]()
+
+  def notifyObservers() = {
+    observers.foreach(o => o.notifyObserver(this))
+  }
+
+}
+
+trait AbstractObserver[S <: AbstractSubject[S, O], O <: AbstractObserver[S, O]] {
+  def notifyObserver(subject: S)
+}
+
+//////////////////////////////////
+
+trait SensorSubject[T, S <: SensorSubject[T, S, O], O <: SensorObserver[T, S, O]] extends Sensor[T] with AbstractSubject[S, O] {
+  this: S =>
+}
+
+trait SensorObserver[T, S <: SensorSubject[T, S, O], O <: SensorObserver[T, S, O]] extends AbstractObserver[S, O]
+
+//////////////////////////////////
+
+class MemorySensorSubject[T] extends MemorySensor[T] with AbstractSubject[MemorySensorSubject[T], MemorySensorObserver[T]] {
+  override def setValue(newVal: T): Unit = {
+    super.setValue(newVal)
+    notifyObservers()
+  }
+}
+
+trait MemorySensorObserver[T] extends AbstractObserver[MemorySensorSubject[T], MemorySensorObserver[T]]

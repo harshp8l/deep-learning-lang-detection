@@ -1,0 +1,25 @@
+(ns replace-keywords
+  (:require [clojure.walk :refer [postwalk]]
+            [clojure.string :refer [join]]))
+
+(defn dash-keyword [k]
+  (when (keyword? k)
+    (->> k
+      str
+      (map (some-fn {\. \-} identity))
+       rest
+       join
+       keyword)))
+
+(dash-keyword :foo.bar/baz)
+;; => :foo-bar/baz
+
+
+(defonce nested [ {:my-dotted/namespace ""FOO""}
+                  {:my-nested/vec [ {:another-dotted/namespace ""BAR""
+                                     :and-another/one ""FIZ""} ]}])
+
+(postwalk (some-fn dash-keyword identity) nested)
+;; =>[{:my-dotted/namespace ""FOO""}
+;;    {:my-nested/vec [{:another-dotted/namespace ""BAR"", 
+;;                     :and-another/one ""FIZ""}]}]

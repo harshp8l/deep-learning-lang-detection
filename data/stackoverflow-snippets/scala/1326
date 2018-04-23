@@ -1,0 +1,58 @@
+import javax.net.ssl.SSLContext
+
+import akka.NotUsed
+import akka.actor.ActorSystem
+import akka.stream.TLSProtocol.NegotiateNewSession
+import akka.stream.scaladsl.{BidiFlow, Flow, Sink, Source, TLS, Tcp}
+import akka.stream.{ActorMaterializer, OverflowStrategy, TLSProtocol, TLSRole}
+import akka.util.ByteString
+
+object TlsClient {
+
+  // Flow needed for TLS as well as mapping the TLS engine's flow to ByteStrings
+  def tlsClientLayer = {
+
+    // Default SSL context supporting most protocols and ciphers. Embellish this as you need
+    // by constructing your own SSLContext and NegotiateNewSession instances.
+    val tls = TLS(SSLContext.getDefault, NegotiateNewSession.withDefaults, TLSRole.client)
+
+    // Maps the TLS stream to a ByteString
+    val tlsSupport = BidiFlow.fromFlows(
+      Flow[ByteString].map(TLSProtocol.SendBytes),
+      Flow[TLSProtocol.SslTlsInbound].collect {
+        case TLSProtocol.SessionBytes(_, sb) => ByteString.fromByteBuffer(sb.asByteBuffer)
+      })
+
+    tlsSupport.atop(tls)
+  }
+
+  // Very simple logger
+  def logging: BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] = {
+
+    // function that takes a string, prints it with some fixed prefix in front and returns the string again
+    def logger(prefix: String) = (chunk: ByteString) => {
+      println(prefix + chunk.utf8String)
+      chunk
+    }
+
+    val inputLogger = logger(""> "")
+    val outputLogger = logger(""< "")
+
+    // create BidiFlow with a separate logger function for each of both streams
+    BidiFlow.fromFunctions(outputLogger, inputLogger)
+  }
+
+  def main(args: Array[String]): Unit = {
+    implicit val system: ActorSystem = ActorSystem(""sip-client"")
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
+
+    val source = Source.actorRef(1000, OverflowStrategy.fail)
+    val connection = Tcp().outgoingConnection(""www.google.com"", 443)
+    val tlsFlow = tlsClientLayer.join(connection)
+    val srcActor = tlsFlow.join(logging).to(Sink.ignore).runWith(source)
+
+    // I show HTTP here but send/receive your protocol over this actor
+    // Should respond with a 302 (Found) and a small explanatory HTML message
+    srcActor ! ByteString(""GET / HTTP/1.1\r\nHost: www.google.com\r\n\r\n"")
+  }
+}

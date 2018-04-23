@@ -1,0 +1,47 @@
+import java.util.zip.GZIPInputStream
+import java.io._
+import java.nio.charset.StandardCharsets
+
+import scala.annotation.tailrec
+import scala.util.Try
+
+val bufferSize = 4096
+val pathToGzFile = ""/tmp/text.txt.gz""
+val pathToOutputFile = ""/tmp/text_without_first_line.txt""
+val charset = StandardCharsets.UTF_8
+
+val inStream = new FileInputStream(pathToGzFile)
+val outStream = new FileOutputStream(pathToOutputFile)
+
+try {
+  val inGzipStream = new GZIPInputStream(inStream)
+  val inReader = new InputStreamReader(inGzipStream, charset)
+  val outWriter = new OutputStreamWriter(outStream, charset)
+  val bufferedReader = new BufferedReader(inReader)
+
+  val closeables =  Array[Closeable](inGzipStream, inReader, 
+    outWriter, bufferedReader)
+  // Read first line, so copy method will not get this - it will be skipped
+  val firstLine = bufferedReader.readLine()
+  println(s""First line: $firstLine"")
+
+  @tailrec
+  def copy(in: Reader, out: Writer, buffer: Array[Char]): Unit = {
+    // Copy while it's not end of file
+    val readChars = in.read(buffer, 0, buffer.length)
+    if (readChars > 0) {
+      out.write(buffer, 0, readChars)
+      copy(in, out, buffer)
+    }
+  }
+
+  // Copy chars from bufferReader to outWriter using buffer
+  copy(bufferedReader, outWriter, Array.ofDim[Char](bufferSize))
+
+  // Close all closeabes
+  closeables.foreach(c => Try(c.close()))
+}
+finally {
+  Try(inStream.close())
+  Try(outStream.close())
+}

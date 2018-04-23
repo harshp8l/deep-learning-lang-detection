@@ -1,0 +1,42 @@
+private static ExecutorService executorService = Executors.newFixedThreadPool( Integer.valueOf( numberOfThreads ) );
+
+@POST
+@Path(""async"")
+@Consumes(MediaType.MULTIPART_FORM_DATA)
+public Response async( @FormDataParam(""file"") InputStream inputStream,
+        @FormDataParam(""file"") FormDataContentDisposition des ) throws Throwable {
+
+    String uniqueID = UUID.randomUUID().toString();
+    executorService.execute( new Runnable() {
+
+        @Override
+        public void run() {
+            try {
+               // do long performing action
+            } catch (Exception ex) {
+            }
+        }            
+
+   } );
+   return Response.accepted().location( getResultsURI( uniqueID ) ).build();
+}
+
+@GET
+@Path(""results/{uniqueID}"")
+@Produces(""application/zip"")
+public Response results( @PathParam(value = ""uniqueID "") String uniqueID ) {
+
+   // Check status of job
+   // If not finished...
+   if (notFinished) {
+   return Response.status( 202 ).location( getResultsURI( uniqueID ) )
+                .entity( status ).build();
+   }
+
+   return Response.ok( FileUtils.readFileToByteArray( zip.toFile() ) ).type( ""application/zip"" )
+            .header( ""Content-Disposition"", ""attachment; filename=\""filename.zip\"""" ).build();
+  }
+
+protected URI getResultsURI( String uniqueID ) throws URISyntaxException {
+    return new URI( Constants.WS_VERSION + ""/results/"" + uniqueID );
+}

@@ -1,0 +1,48 @@
+#include <boost/units/systems/si.hpp>
+using namespace boost::units;
+using SiTime = quantity<boost::units::si::time, double>;
+using SiLength = quantity<boost::units::si::length, double>;
+
+template <typename TIME, typename LENGTH> struct Kernel {
+    using time_t = TIME;
+    using length_t = LENGTH;
+};
+
+using KernelD  = Kernel<double, double>;
+using KernelSi = Kernel<SiTime, SiLength>;
+
+template <typename KERNEL> struct Foo {
+    typename KERNEL::length_t length;
+    typename KERNEL::time_t time;
+};
+
+using FooSi = Foo<KernelSi>;
+using FooD = Foo<KernelD>;
+
+template <typename KERNEL> struct Bar {
+    Foo<KERNEL> a;
+    Foo<KERNEL> b;
+};
+
+template <typename K2, typename K1>
+Foo<K2> kernel_cast(Foo<K1> const& foo) {
+    return { 
+        quantity_cast<typename K2::length_t>(foo.length),
+        quantity_cast<typename K2::time_t>(foo.time) 
+    };
+}
+
+template <typename K2, typename K1>
+Bar<K2> kernel_cast(Bar<K1> const& bar) {
+    return { kernel_cast<K2>(bar.a), kernel_cast<K2>(bar.b) };
+}
+
+using BarSi = Bar<KernelSi>;
+using BarD = Bar<KernelD>;
+
+int main() {
+    FooSi fooSi;
+    FooD fooD = kernel_cast<KernelD>(fooSi);
+    BarSi barSi;
+    BarD barD = kernel_cast<KernelD>(barSi);
+}

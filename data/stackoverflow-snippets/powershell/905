@@ -1,0 +1,20 @@
+$obj = $null # variable to store each output object temporarily
+Get-Content .\t.txt | ForEach-Object { # loop over input lines
+  if ($_ -match '^\s*(/vol.+?)\s+(.+? \(.+?\))\s+(\(.+?\))') {
+    # Create a custom object with all properties of interest,
+    # and store it in the $obj variable created above.
+    # What the regex's capture groups - (...) - captured is available in the
+    # the automatic $Matches variable via indices starting at 1.
+    $obj = [pscustomobject] @{
+      'Device Name' = $Matches[1]
+      'Total Space' = $Matches[2]
+      'Status' = $Matches[3]
+      'Occupied Size' = $null # filled below
+    }
+  } elseif ($_ -match '\bOccupied Size: (.*)') {
+    # Set the 'Occupied Size' property value...
+    $obj.'Occupied Size' = $Matches[1]
+    # ... and output the complete object.
+    $obj
+  }
+} | Export-Csv -NoTypeInformation out.csv

@@ -1,0 +1,42 @@
+/**
+ * @Assert\Callback(groups={""edit""})
+ */
+public function validateEdit(ExecutionContextInterface $context)
+{
+    $receipt = $this->getReceipt();
+    $total = 0;
+    $tickets = $receipt->getTickets();
+    foreach ($tickets as $value) {
+        $total += ($this->getId() !== $value->getId()) ? $value->getAmount() : $this->getAmount();
+    }
+    if (0 > $total) {
+        $context->buildViolation('Receipt total may not be < 0!')
+            ->atPath('amount')
+            ->addViolation();
+    }
+}
+
+/**
+ * @Assert\Callback(groups={""add""})
+ */
+public function validateAdd(ExecutionContextInterface $context)
+{
+    $total = $this->getRcptTotal();
+    if (0 > $total + $this->getAmount()) {
+        $context->buildViolation('Receipt total may not be < 0!')
+            ->atPath('amount')
+            ->addViolation();
+    }
+}
+
+private $rcptTotal;
+
+public function setRcptTotal($rcptTotal)
+{
+    $this->rcptTotal = $rcptTotal;
+}
+
+public function getRcptTotal()
+{
+    return $this->rcptTotal;
+}

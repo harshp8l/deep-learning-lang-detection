@@ -1,0 +1,45 @@
+@State(Scope.Thread)
+public static class StringInput {
+
+    private String[] letters = { ""q"", ""a"", ""z"", ""w"", ""s"", ""x"", ""e"", ""d"", ""c"", ""r"", ""f"", ""v"", ""t"", ""g"", ""b"",
+            ""y"", ""h"", ""n"", ""u"", ""j"", ""m"", ""i"", ""k"", ""o"", ""l"", ""p"" };
+
+    public String s = """";
+
+    public List<String> list;
+
+    @Param(value = { ""1000"", ""10000"", ""100000"" })
+    int next;
+
+    @TearDown(Level.Invocation)
+    public void tearDown() {
+        s = null;
+    }
+
+    @Setup(Level.Invocation)
+    public void setUp() {
+
+         list = ThreadLocalRandom.current()
+                .ints(next, 0, letters.length)
+                .mapToObj(x -> letters[x])
+                .map(x -> Character.toString((char) x.intValue()))
+                .collect(Collectors.toList());
+
+    }
+}
+
+
+@Fork(1)
+@Benchmark
+public List<String> testCollection(StringInput si){
+    Collections.sort(si.list, Comparator.naturalOrder());
+    return si.list;
+}
+
+@Fork(1)
+@Benchmark
+public List<String> testStream(StringInput si){
+    return si.list.stream()
+            .sorted(Comparator.naturalOrder())
+            .collect(Collectors.toList());
+}

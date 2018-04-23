@@ -1,0 +1,28 @@
+$allRDLs = (Get-ChildItem -Recurse -Path $DeployDirectory | 
+                Where-Object -FilterScript {$_.Extension -eq "".rdl""})
+$xml = New-Object System.Xml.XmlDocument
+$nsMngr = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+$nsMngr.AddNamespace(""rd"",""http://schemas.microsoft.com/SQLServer/reporting/reportdesigner"")
+$nsMngr.AddNamespace(""ns"",""http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition"")
+$allRDLs | % {
+               $FileName=$_.FullName;
+               $xml.Load($FileName);
+               $xml.SelectNodes(""//rd:ReportServerUrl"",$nsMngr) | 
+                  % {$_.InnerText=$srvURI};
+               $xml.SelectNodes(""//ns:SharedDataSetReference"",$nsMngr) | 
+                  % {
+                       $it = (""/"" + $_.Innertext);
+                       $ref=$it.SubString($it.LastIndexOf(""/"")+1);
+                       $ds = Get-SharedDataSet($ref);
+                       $_.InnerText=$ds.DataSetPath
+                       Write-Host (""DataSetPath: "" + $_.InnerText)
+                    };
+               $newContent = $xml.InnerXml;
+               Set-Content -Path $FileName -Value $newContent
+             }
+Write-Host ""paginated report files modified""
+
+Write-RsFolderContent -Recurse -ReportServerUri $srvURI -Path ($DeployDirectory + ""EventLog"") -RsFolder ($rootDir + ""/EventLog"") 
+Write-RsFolderContent -Recurse -ReportServerUri $srvURI -Path ($DeployDirectory + ""Public Reports"") -RsFolder ($rootDir + ""/Public Reports"") 
+Write-RsFolderContent -Recurse -ReportServerUri $srvURI -Path ($DeployDirectory + ""Report Audit"") -RsFolder ($rootDir + ""/Report Audit"")
+Write-Host ""paginated reports created""

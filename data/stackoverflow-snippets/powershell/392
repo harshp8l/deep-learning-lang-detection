@@ -1,0 +1,18 @@
+$comp = ""Computername""
+$OfficLice = ""C:\share\OfficLice.csv""
+
+$localtemp = cscript 'C:\Program Files (x86)\Microsoft Office\Office16\ospp.vbs' /dstatus $comp
+
+$filteredOutput = $localtemp | Where-Object {($_ -like ""License Name*"") -or ($_ -like ""Last 5*"")}
+
+$licenseInformation = @()
+
+for ($i = 0; $i -lt $filteredOutput.Count; $i = $i + 2) {
+    $combinedLicenseInformation = [PSCustomObject]@{
+      LicenseName = ($filteredOutput[$i] -split ' ')[4];
+      Last5Characters = ($filteredOutput[$i + 1] -split ' ')[7]
+    }
+    $licenseInformation += $combinedLicenseInformation
+}
+
+$licenseInformation | Export-Csv -Path $OfficLice -NoTypeInformation

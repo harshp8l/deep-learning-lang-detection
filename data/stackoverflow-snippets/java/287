@@ -1,0 +1,64 @@
+public abstract class BaseActivity extends AppCompatActivity implements 
+BottomNavigationView.OnNavigationItemSelectedListener{
+
+protected BottomNavigationView navigationView;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(getContentViewId());
+
+    navigationView = findViewById(R.id.navigation);
+    navigationView.setOnNavigationItemSelectedListener(this);
+    BottomNavigationViewHelper.disableShiftMode(navigationView);
+
+}
+
+@Override
+protected void onStart() {
+    super.onStart();
+    updateNavigationBarState();
+}
+
+@Override
+public void onPause() {
+    super.onPause();
+
+}
+
+@Override
+public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+    int itemId = item.getItemId();
+    if (itemId == R.id.menuBuilding) {
+        startActivity(new Intent(this, ActivityA.class));
+    } else if (itemId == R.id.menuChat) {
+        startActivity(new Intent(this, ActivityB.class));
+    } else if (itemId == R.id.menuProfile) {
+        startActivity(new Intent(this, ActivityC.class));
+    }
+    overridePendingTransition(0, 0);
+    finish();
+    return true;
+}
+
+private void updateNavigationBarState() {
+    int actionId = getNavigationMenuItemId();
+    selectBottomNavigationBarItem(actionId);
+}
+
+void selectBottomNavigationBarItem(int itemId) {
+    Menu menu = navigationView.getMenu();
+    for (int i = 0, size = menu.size(); i < size; i++) {
+        MenuItem item = menu.getItem(i);
+        boolean shouldBeChecked = item.getItemId() == itemId;
+        if (shouldBeChecked) {
+            item.setChecked(true);
+            break;
+        }
+    }
+}
+
+abstract int getContentViewId();
+
+abstract int getNavigationMenuItemId();
+}

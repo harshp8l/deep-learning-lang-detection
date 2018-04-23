@@ -1,0 +1,49 @@
+package main
+
+import (
+    ""fmt""
+    ""math/rand""
+    ""time""
+)
+
+func main() {
+    arr1 := []int8{1, 2, 3, 4, 5}
+    arr2 := []int8{6, 7, 8, 9, 10}
+
+    c1 := make(chan int8)
+    c2 := make(chan int8)
+
+    go func() {
+        for _, val := range arr1 {
+            time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
+            c1 <- val
+        }
+        close(c1)
+    }()
+    go func() {
+        for _, val := range arr2 {
+            time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
+            c2 <- val
+        }
+        close(c2)
+    }()
+
+    _c1 := true
+    _c2 := true
+    var res1, res2 int8
+
+    for _c1 == true || _c2 == true {
+        select {
+        case res1, _c1 = <-c1:
+            if _c1 == true {
+                fmt.Println(res1)
+            }
+        case res2, _c2 = <-c2:
+            if _c2 == true {
+                fmt.Println(res2)
+            }
+        }
+    }
+
+    fmt.Println(""Hello, test"")
+}

@@ -1,0 +1,25 @@
+user> (def q (java.util.concurrent.LinkedBlockingDeque.)) 
+#'user/q
+user> (defn accumulate
+        [summary input]
+        (let [{vowels true consonents false}
+              (group-by #(contains? (set ""aeiouAEIOU"") %) input)]
+          (-> summary
+            (update-in [:vowels] + (count vowels))
+            (update-in [:consonents] + (count consonents)))))
+#'user/accumulate
+user> (def worker
+           (future (loop [summary {:vowels 0 :consonents 0} in-string (.take q)]
+                         (if (not in-string)
+                             summary
+                           (recur (accumulate summary in-string)
+                                  (.take q))))))
+#'user/worker
+user> (.add q ""hello"")
+true
+user> (.add q ""goodbye"")
+true
+user> (.add q false)
+true
+user> @worker
+{:vowels 5, :consonents 7}

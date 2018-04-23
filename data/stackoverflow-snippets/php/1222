@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+use Jchook\AssertThrows\AssertThrows;
+use PHPUnit\Framework\TestCase;
+
+// These are just for illustration
+use MyNamespace\MyException;
+use MyNamespace\MyObject;
+
+final class MyTest extends TestCase
+{
+    use AssertThrows; // <--- adds the assertThrows method
+
+    public function testMyObject()
+    {
+        $obj = new MyObject();
+
+        // Test a basic exception is thrown
+        $this->assertThrows(MyException::class, function() use ($obj) {
+            $obj->doSomethingBad();
+        });
+
+        // Test custom aspects of a custom extension class
+        $this->assertThrows(MyException::class, 
+            function() use ($obj) {
+                $obj->doSomethingBad();
+            },
+            function($exception) {
+                $this->assertEquals('Expected value', $exception->getCustomThing());
+                $this->assertEquals(123, $exception->getCode());
+            }
+        );
+
+        // Test that a specific exception is NOT thrown
+        $this->assertNotThrows(MyException::class, function() use ($obj) {
+            $obj->doSomethingGood();
+        });
+    }
+}
+
+?>

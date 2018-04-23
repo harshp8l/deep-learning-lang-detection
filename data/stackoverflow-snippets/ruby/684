@@ -1,0 +1,20 @@
+require 'nokogiri'
+require 'open-uri'
+require 'active_record'
+
+ARGV[0] = 'https://www.nku.edu/academics/informatics.html'
+
+ARGV.each do |arg|
+  open(arg) do |f|
+    puts ""#{'#' * 25} \nConnection: '#{arg}'\n #{'#' * 25}""
+
+    %i[base_uri meta status charset content_encoding, content_type last_modified].each do |method|
+      puts ""#{method.to_s}: #{f.send(method)}"" if f.respond_to? method
+    end
+
+    puts ""base_url: #{/^(.*\.nku\.edu)\//.match(f.base_uri.to_s)[1]}""
+
+    anchors = Nokogiri::HTML(f).css('a').select { |anchor| anchor['href'] =~ /.*informatics/ }
+    puts anchors.map { |anchor| anchor['href'] }.uniq
+  end
+end

@@ -1,0 +1,20 @@
+       public static void main(String[] args) throws   InterruptedException {
+           JavaStreamingContext jssc = new JavaStreamingContext(getSparkConfiguration(), Durations.seconds(5));
+
+           JavaInputDStream<ConsumerRecord<String, LoggingEvent>> messages  =
+            KafkaUtils.createDirectStream(
+                    jssc,
+                    LocationStrategies.PreferConsistent(),
+                    ConsumerStrategies.<String, LoggingEvent>Subscribe(Arrays.asList(""some_topic""), getKafkaParams(""localhost:9092"", ""some_logging_group))
+            );
+
+           JavaDStream<LoggingEvent> loggingRecords = messages.map(
+            (Function<ConsumerRecord<String, LoggingEvent>, LoggingEvent>) message -> message.value()
+    );
+
+             CassandraStreamingJavaUtil.javaFunctions(loggingRecords).writerBuilder(""some_space"", ""some_table"",
+                  CassandraJavaUtil.mapToRow(LoggingEvent.class)).saveToCassandra();
+
+          jssc.start();
+          jssc.awaitTermination();
+}

@@ -1,0 +1,15 @@
+let buildGraph (nodes:Node<'a> list) (edges:Edge<'a> list) (g:Graph<'a>) = 
+    let nlist = 
+        nodes |> List.map (fun node ->
+             let adjlist = 
+                 edges |> List.filter(fun edge -> edge.Node1.Name = node.Name || edge.Node2.Name = node.Name)
+             {Item = node.Item; Name = node.Name; Adjacent = Some adjlist})
+    match g with 
+    | DictionaryGraph(_) -> 
+        let dict = new Dictionary<string,Node<'a>>()
+        List.iter(fun node -> dict.Add(node.Name,node)) nlist |> ignore
+        Dictionary_Graph(dict,edges)
+    | ConcurrentDictionaryGraph(_) -> 
+        let dict = new ConcurrentDictionary<string,Node<'a>>()
+        List.iter(fun node -> dict.AddOrUpdate(node.Name,node,(fun k v -> node)) |> ignore) nlist |> ignore
+        ConcurrentDictionaryGraph(dict,edges)

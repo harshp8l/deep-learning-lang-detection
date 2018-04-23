@@ -1,0 +1,47 @@
+case class Bar(s: String)
+
+trait PredicateArgumentContext[-T] {
+  type Result
+  def apply(f: Foo, p: Bar => Boolean, arg: T): Result
+}
+
+implicit val ApplyPredicateArgumentContext = new PredicateArgumentContext[Bar] {
+  type Result = Boolean
+  def apply(f: Foo, p: Bar => Boolean, arg: Bar): Boolean = p(arg)
+}
+
+sealed trait PredicateOperator
+
+object and extends PredicateOperator
+object or extends PredicateOperator
+
+implicit val OperatorPredicateArgumentContext = new PredicateArgumentContext[PredicateOperator] {
+  type Result = Foo
+  def apply(f: Foo, p: Bar => Boolean, arg: PredicateOperator): Foo = arg match {
+    case `and` => f.copy(predTransform = (p1 => b => p(b) && p1(b) ))
+    case `or` => f.copy(predTransform = (p1 => b => p(b) || p1(b) ))
+  }
+}
+
+case class Foo(predTransform: (Bar => Boolean) => (Bar => Boolean) = identity) {
+
+  def doX[A](a: A)(implicit ctx: PredicateArgumentContext[A]): ctx.Result = {
+    ctx.apply(this, predTransform(doXInternal _), a)
+  }
+  def doY[A](a: A)(implicit ctx: PredicateArgumentContext[A]): ctx.Result = {
+    ctx.apply(this, predTransform(doYInternal _), a)
+  }
+
+  def doXInternal(b: Bar): Boolean = {
+    b.s.size % 2 == 0
+  }
+
+  def doYInternal(b: Bar): Boolean = {
+    b.s.size > 0
+  }
+}
+
+val A = Foo()
+val B = new Bar(""asdf"")
+
+A doX and doY B // returns true

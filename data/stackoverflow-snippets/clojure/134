@@ -1,0 +1,22 @@
+(defn handler [request]
+  (let [result1 (promise)
+        result2 (promise)]
+    (client/get ""http://example.com/""
+                {:async? true}
+                (fn [response] (deliver result1 {:success true :body ""something""}))
+                (fn [exception] (deliver result1 {:success false :body ""error""})))
+    (client/get ""http://example.com/""
+                {:async? true}
+                (fn [response] (deliver result2 {:success true :body ""something""}))
+                (fn [exception] (deliver result2 {:success false :body ""error""})))
+    (cond
+      (and (:success @result1)
+           (:success @result2))
+      (response {:result1 (:body @result1)
+                 :result2 (:body @result2)})
+
+      (not (:success @result1))
+      (throw (ex-info ""fail1"" (:body @result1)))
+
+      (not (:success @result2))
+      (throw (ex-info ""fail2"" (:body @result2))))))

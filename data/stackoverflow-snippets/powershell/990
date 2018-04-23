@@ -1,0 +1,31 @@
+#Defines variables
+$url = ""mysite.com/ThreatsDataReport.csv""
+$output = ""$PWD\ThreatsDataReport.csv""
+$emailSMTPServer = ""smtp.mydomain.com""
+$emailFrom = ""reportingemail@domain.com""
+$emailRecipients = @(""Foo <foo@domain.com>""), ""Bar <bar@domain.com>"")
+$emailSubject = ""Cylance Reporting""
+
+(New-Object System.Net.WebClient).DownloadFile($url, $output)
+#Downloads the CSV from $url and saves it to $output
+
+#Sets HTML Head Information
+$a = ""<style>""
+$a = $a + ""BODY{background-color:peachpuff;}""
+$a = $a + ""TABLE{border-width: 1px;border-style: solid;border-color: black;border-collapse: collapse;}""
+$a = $a + ""TH{border-width: 1px;padding: 0px;border-style: solid;border-color: black;background-color:thistle}""
+$a = $a + ""TD{border-width: 1px;padding: 0px;border-style: solid;border-color: black;background-color:palegoldenrod}""
+$a = $a + ""</style>""
+
+
+
+
+$csv = Import-Csv $output | Select ""File Name"",DeviceName,""File Path"" | ConvertTo-Html -head $a -Body ""<H2>Cylance Weekly Report</H2>""
+#Imports the CSV saved to $output.
+#Selects File Name, Device Name, and File Path columns, then converts to HTML using the Head +Body Information
+$emailBody = ""$csv""
+
+#defines the body text of the email. Note that this has to be a string, $emailBody = $csv will not work on its own. 
+
+Send-MailMessage -From $emailFrom -To $emailRecipients -SmtpServer $emailSMTPServer -subject $emailSubject -Body $emailBody -BodyAsHtml
+#Sends the actual email 

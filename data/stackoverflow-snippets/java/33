@@ -1,0 +1,98 @@
+import java.util.*;
+
+public class Manager {
+
+    private Object lock = new Object();
+    private boolean running = true;
+    private LinkedList<Integer> intStorage = new LinkedList<Integer>();
+    private LinkedList<Integer> evens = new LinkedList<>();
+    private LinkedList<Integer> odds = new LinkedList<>();
+
+    public void intCollection() throws InterruptedException {
+
+        for (int i = 0; i <= 20; i++) {
+
+            synchronized(lock) {
+                intStorage.add(i);
+                System.out.println(""storage: "" + intStorage);
+            }
+            Thread.sleep(100);
+        }
+        running = false;
+    }
+
+    public void evens() throws InterruptedException {
+
+        while( running ) {
+            synchronized (lock) {
+                if(!intStorage.isEmpty()) {
+                    if (intStorage.get(0) % 2 == 0) {
+                        int j = intStorage.remove(0);
+                        evens.add(j);
+                    }
+                    System.out.println(""evens: "" + evens);
+                }
+            }
+            Thread.sleep(1);
+        }
+
+    }
+
+    public void odds() throws InterruptedException {
+
+        while( running ) {
+            synchronized (lock) {
+                if(!intStorage.isEmpty()) {
+                    if (intStorage.get(0) % 2 != 0) {
+                        int j = intStorage.remove(0);
+                        odds.add(j);
+                    }
+                    System.out.println(""odds: "" + odds);
+                }
+            }
+            Thread.sleep(1);
+        }
+
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+
+        //must be final to access
+        final Manager m = new Manager();
+
+        Thread t1 = new Thread(){
+            public void run() {
+                try {
+                    m.intCollection();
+                } catch (InterruptedException e) {
+                }
+            }
+        };
+
+        Thread t2 = new Thread(){
+            public void run() {
+                try {
+                    m.evens();
+                } catch (InterruptedException e) {
+                }
+            }
+        };
+        Thread t3 = new Thread(){
+            public void run() {
+                try {
+                    m.odds();
+                } catch (InterruptedException e) {
+                }
+            }
+        };
+
+        t1.start();
+        t2.start();
+        t3.start();
+
+        t1.join();
+        t2.join();
+        t3.join();
+
+    }
+}

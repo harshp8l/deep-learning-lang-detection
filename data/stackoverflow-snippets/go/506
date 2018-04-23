@@ -1,0 +1,21 @@
+# Fetch the tools
+GOPATH=$(go env GOPATH)
+go get github.com/golang/protobuf/proto
+go get github.com/golang/protobuf/protoc-gen-go
+
+# Create a directory to generate the files
+mkdir -p /tmp/protos/out
+cd /tmp/protos
+
+# Clone the TensorFlow sources to get the source .proto files
+git clone https://github.com/tensorflow/tensorflow ./src
+PATH=$PATH:${GOPATH}/bin
+
+# Generate Go source files from the .proto files.
+# Assuming protoc is installed.
+# See https://github.com/google/protobuf/releases
+protoc \
+  -I ./src \
+  --go_out ./out \
+  ./src/tensorflow/core/framework/*.proto ./src/tensorflow/core/example/*.proto
+rm -rf ./src

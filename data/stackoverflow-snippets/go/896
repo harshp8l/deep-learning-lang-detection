@@ -1,0 +1,44 @@
+package main
+
+import (
+    ""golang.org/x/crypto/ssh""
+    ""fmt""
+)
+
+func connectViaSsh(user, host string, password string) (*ssh.Client, *ssh.Session) {
+    config := &ssh.ClientConfig{
+        User: user,
+        Auth: []ssh.AuthMethod{
+            ssh.KeyboardInteractive(SshInteractive),
+        },
+        HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+    }
+
+    client, err := ssh.Dial(""tcp"", host, config)
+    fmt.Println(err)
+
+    session, err := client.NewSession()
+    fmt.Println(err)
+
+    return client, session
+}
+
+func SshInteractive(user, instruction string, questions []string, echos []bool) (answers []string, err error) {
+    answers = make([]string, len(questions))
+    for n, q := range questions {
+        answers[n] = ""your_password""
+    }
+
+    return answers, nil
+}
+
+func main() {
+    var b bytes.Buffer
+    client, session := connectViaSsh(""root"", ""host:22"", ""password"")
+
+    session.Stdout = &b
+    session.Run(""ls"")
+    fmt.Println(b.String())
+
+    client.Close()
+}

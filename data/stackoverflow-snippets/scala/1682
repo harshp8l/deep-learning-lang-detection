@@ -1,0 +1,14 @@
+implicit val imageRankListTypeMapper =
+  new AdvancedArrayJdbcType[ImageRank](""image_rank"",
+    str => utils.SimpleArrayUtils.fromString[ImageRank](s => {
+      val ImageRankRegex = ""ImageRank\\((.*),(\\d+)\\)"".r
+      s match {
+        case ImageRankRegex(imageUrl, thumbnailRank) =>
+          ImageRank(imageUrl, thumbnailRank.toInt)
+        case _ =>
+          println(s""$s is not ImageRank"")
+          ImageRank("""", 0)
+      }
+    })(str).orNull,
+    imageRanks => utils.SimpleArrayUtils.mkString[ImageRank](_.toString)(imageRanks)
+  ).to(_.toList)

@@ -1,0 +1,18 @@
+from boto3 import client
+conn = client('s3')
+
+top_level_folders = dict()
+
+for key in conn.list_objects(Bucket='kitsune-buildtest-production')['Contents']:
+
+    folder = key['Key'].split('/')[0]
+    print(""Key %s in folder %s. %d bytes"" % (key['Key'], folder, key['Size']))
+
+    if folder in top_level_folders:
+        top_level_folders[folder] += key['Size']
+    else:
+        top_level_folders[folder] = key['Size']
+
+
+for folder, size in top_level_folders.items():
+    print(""Folder: %s, size: %d"" % (folder, size))

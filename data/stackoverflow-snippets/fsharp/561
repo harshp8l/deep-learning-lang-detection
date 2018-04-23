@@ -1,0 +1,44 @@
+(*Types*)
+type UnitPrice = int
+type Qty = int
+
+type Special =
+    | ThreeForOneThirty
+    | TwoForFourtyFive
+
+type TotalPrice = { UnitPrice:int ; Qty:int }
+
+type Item =
+    | A of TotalPrice * Special
+    | B of TotalPrice * Special
+    | C of TotalPrice
+    | D of TotalPrice
+
+
+let items = [A ({UnitPrice=50; Qty=2} , ThreeForOneThirty)
+             B ({UnitPrice=30; Qty=1} , TwoForFourtyFive)
+             A ({UnitPrice=50; Qty=1} , ThreeForOneThirty)]
+
+let speciallyStupidTransformation = 
+    function 
+    | ThreeForOneThirty -> 34130
+    | TwoForFourtyFive -> 2445
+
+let stupidTransformation = 
+    function 
+    | A (t,s) -> ""A"" + (s |> speciallyStupidTransformation |> string) 
+    | B (t,s) -> ""B"" + (s |> speciallyStupidTransformation |> string)
+    | C (t) -> ""C""
+    | D(t) -> ""D""
+
+let someGrouping = items |> List.groupBy(stupidTransformation)
+
+val it : (string * Item list) list =
+
+
+[(""A34130"",
+    [A ({UnitPrice = 50;
+         Qty = 2;},ThreeForOneThirty); A ({UnitPrice = 50;
+                                           Qty = 1;},ThreeForOneThirty)]);
+   (""B2445"", [B ({UnitPrice = 30;
+                  Qty = 1;},TwoForFourtyFive)])]

@@ -1,0 +1,20 @@
+template<class T> 
+struct NullableReference
+{
+    constexpr NullableReference() : ptr_(nullptr) {}
+    constexpr NullableReference(T& ref) : ptr_(std::addressof(ref)) {}
+
+    constexpr auto operator*() const -> T& { assert(!empty()); return *ptr_; }
+    constexpr operator T&() const { assert(!empty()); return *ptr_; }
+
+    constexpr bool empty() const { return !ptr_; }
+
+    template<class Archive>
+    void serialize(Archive& ar, unsigned int version)
+    {
+        ar & ptr_;
+    }
+
+private:
+    T* ptr_;
+};

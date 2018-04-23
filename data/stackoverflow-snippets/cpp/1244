@@ -1,0 +1,15 @@
+template <typename Tuple, typename Seq> struct MapCombinatorImpl;
+
+template <typename Tuple, std::size_t ... Is>
+struct MapCombinatorImpl<Tuple, std::index_sequence<Is...>>
+{
+    constexpr static std::size_t size = std::tuple_size<Tuple>::value;
+    using type = std::variant<std::map<std::tuple_element_t<Is / size, Tuple>,
+                                       std::tuple_element_t<Is % size, Tuple>>...>;
+};
+
+template <typename ... Ts>
+using MapCombinator =
+    typename MapCombinatorImpl<std::tuple<Ts...>,
+                               std::make_index_sequence<sizeof...(Ts) * sizeof...(Ts)>
+                              >::type;

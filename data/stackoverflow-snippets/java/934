@@ -1,0 +1,14 @@
+public static CompletableFuture<Void> runAsync(Runnable r) {
+    CompletableFuture<Void> future = new CompletableFuture<>();
+    ForkJoinPool.commonPool().execute(
+        (Runnable&CompletableFuture.AsynchronousCompletionTask)() -> {
+            if(!future.isDone()) try {
+                r.run();
+                future.complete(null);
+            }
+            catch(Throwable t) {
+                future.completeExceptionally(t);
+            }
+        });
+    return future;
+}

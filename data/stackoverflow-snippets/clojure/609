@@ -1,0 +1,43 @@
+(require '[clojure.core.async :as async])
+=> nil
+
+(def c (async/chan))
+=> #'user/c
+(def d (async/go-loop [] 
+         (when-let [v (async/<! c)] 
+           (println v) 
+           (recur))))
+=> #'user/d
+
+(async/>!! c :hi)
+=> true
+:hi        ; core.async go block is working
+
+(import java.lang.ref.WeakReference)
+=> java.lang.ref.WeakReference    ; hold a reference without preventing garbage collection
+(def e (WeakReference. c))
+=> #'user/e
+(def f (WeakReference. d))
+=> #'user/f
+
+(.get e)
+=> #object[...]
+(.get f)
+=> #object[...]
+
+(def c nil)
+=> #'user/c
+(def d nil)
+=> #'user/d
+(println ""We need to clear *1, *2 and *3 in the REPL."")
+We need to clear *1, *2 and *3 in the REPL.
+=> nil
+(println *1 *2 *3)
+nil #'user/d #'user/c
+=> nil
+(System/gc)
+=> nil
+(.get e)
+=> nil
+(.get f)
+=> nil

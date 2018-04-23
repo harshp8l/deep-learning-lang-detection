@@ -1,0 +1,21 @@
+with rdata as
+(
+      select row_number() over (order by fileId) rn, * from data
+), rcte as
+(
+  select 1 no, 1 gr, fileSize fileSizeSum , * 
+  from rdata where fileid = 1
+  union all
+  select case when fileSizeSum + d.fileSize > 10 or r.no = 10 then 1 else r.no + 1 end gr,
+         case when fileSizeSum + d.fileSize > 10 or r.no = 10 then r.gr + 1 else r.gr end gr,
+         case when fileSizeSum + d.fileSize > 10 or r.no = 10 then d.fileSize else d.fileSize + fileSizeSum  end fileSizeSum, 
+         d.*
+  from rcte r
+  join rdata d on r.rn + 1 = d.rn
+)
+select r.gr, 
+       min(fileId), 
+       max(fileId), 
+       max(fileSizeSum)
+from rcte r
+group by r.gr

@@ -1,0 +1,44 @@
+(ns hqlserver.core
+(:use [org.httpkit.dbcp :only [use-database! close-database! insert-   record update-values query delete-rows]]
+    [org.httpkit.server]
+    [hqlserver.s300.login :only [login]])
+(:require [clojure.data.json :as json]
+        [hqlserver.s300.site :refer [site-index site-update]]
+        [clojure.string :as str]))
+
+(defn get-site [data]
+ (if data
+   (let [data (json/read-str data :key-fn keyword)]
+     (-> data :site))))
+
+(defn get-controller [data]
+  (if data
+    (let [data (json/read-str data :key-fn keyword)]
+      (-> data :controller))))
+
+(defn get-function [data]
+  (if data
+    (let [data (json/read-str data :key-fn keyword)]
+      (-> data :function))))
+
+(defn caller [data]
+ (let [site (get-site data)]
+   (let [controller (get-controller data)]
+     (let [function (get-function data)]
+       (cond
+         (and (= site ""s300"")(= controller ""login"")(= function ""login"")) (login data)
+         (and (= site ""s300"")(= controller ""site"")(= function ""site-index"")) (site-index data)
+         (and (= site ""s300"")(= controller ""site"")(= function ""site-update"")) (site-update data)
+         :else (json/write-str {:error ""No records found!""}))))))
+
+(defn async-handler [ring-request]
+  (with-channel ring-request channel
+    (if (websocket? channel)
+      (on-receive channel (fn [data]
+                        (send! channel (caller data))))
+      (send! channel {:status 200
+                  :headers {""Content-Type"" ""text/plain""}
+                  :body    ""Long polling?""}))))
+
+(defn -main [& args]
+ (run-server async-handler {:port 9090}));

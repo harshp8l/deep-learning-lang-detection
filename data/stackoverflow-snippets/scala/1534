@@ -1,0 +1,34 @@
+val dfR = Seq(
+  (1, 100L),
+  (2, 200L),
+  (3, 300L)
+).toDF(""key"", ""val"")
+
+val dfL = Seq(
+  (1, ""a""),
+  (2, ""b""),
+  (3, ""c""),
+  (4, ""d""),
+  (5, ""e""),
+  (6, ""f"")
+).toDF(""key"", ""val"")
+
+val joined = dfL.join(dfR, Seq(""key""), ""left"").
+  select(dfL(""key""), dfR(""val"")).
+  withColumn(
+    ""n"",
+    when(col(""val"").isNull, monotonically_increasing_id).
+      otherwise(col(""val""))
+  )
+
+joined.show
++---+----+-----------+
+|key| val|          n|
++---+----+-----------+
+|  1| 100|        100|
+|  2| 200|        200|
+|  3| 300|        300|
+|  4|null|25769803776|
+|  5|null|34359738368|
+|  6|null|42949672960|
++---+----+-----------+

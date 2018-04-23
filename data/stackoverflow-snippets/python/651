@@ -1,0 +1,21 @@
+from scipy.integrate import quad
+from scipy.interpolate import RectBivariateSpline
+from scipy.stats import multivariate_normal
+import numpy as np
+
+x, y = np.ogrid[-5:5:.1, -5:5:.1]
+img = multivariate_normal.pdf(np.dstack(np.broadcast_arrays(x, y)),
+                              cov=[[1, 0.7], [0.7, 1]])
+
+f = RectBivariateSpline(x.ravel(), y.ravel(), img)
+
+radius, centerx, centery = 3.0, 1.0, -1.5
+def integrand(rad):
+    return f(centerx+radius*np.cos(rad), centery+radius*np.sin(rad))
+
+def true_integrand(rad):
+    return multivariate_normal(cov=[[1, 0.7], [0.7, 1]]).pdf(
+        (centerx+radius*np.cos(rad), centery+radius*np.sin(rad)))
+
+print(quad(integrand, -np.pi, np.pi))
+print(quad(true_integrand, -np.pi, np.pi))

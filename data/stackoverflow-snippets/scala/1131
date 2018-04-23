@@ -1,0 +1,29 @@
+import Stream._
+
+Class.forName(""mySql"")
+
+def doQuery( url:String, user:String, password:String ): List[String] = {
+  val conn      = Try(DriverManager.getConnection(url, user, password))
+  val statement = conn.map( _.createStatement() )
+  val rs        = statement.map( _.executeQuery(""SQL"") )
+
+  toStream(rs,statement,conn).toList
+}
+
+private def toStream(rs:Try[ResultSet], s:Try[Statement], c:Try[Connection]) : Stream[String] = {
+  try {
+    val resultSet = rs.get // will throw an exception if any previous problems had occurred while opening the connection and parsing the sql
+
+    if ( resultSet.next() ) {
+      resultSet.getString(1) #:: toStream(rs,s,c)
+    } else {
+      close(rs,s,c)
+
+      Stream.empty
+    }
+  } catch {
+    case ex =>
+      close(rs,s,c)
+      throw ex
+  }
+}

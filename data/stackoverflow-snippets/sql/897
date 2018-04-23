@@ -1,0 +1,41 @@
+CREATE OR REPLACE FUNCTION count_element_3(str_array text[])
+RETURNS setof text
+AS
+$$
+DECLARE
+    unique_element_array text[];
+    cardinality_array int[];
+    retArray text[];
+BEGIN
+-- Find unique items first
+    unique_element_array := array(select distinct unnest(str_array));
+    FOR I IN array_lower(unique_element_array, 1)..array_upper(unique_element_array, 1) 
+    LOOP
+    cardinality_array[I] := (select cardinality(array_positions(str_array, unique_element_array[I])));
+    retArray[I] := concat(unique_element_array[I],':',cardinality_array[I]);
+    END LOOP;
+
+RETURN QUERY SELECT(retArray::text);
+END;
+$$
+LANGUAGE plpgsql 
+VOLATILE 
+RETURNS NULL ON NULL INPUT;
+
+with t1 as (SELECT
+  sArray,
+  c,
+  coalesce(array_length( array_positions(sArray, c), 1 ),0) AS count
+FROM ( VALUES
+  (ARRAY['a','b','c','a','a'], 'a'),
+  (ARRAY['a','b','c'], 'd')
+) AS t(sArray,c)
+)
+
+select sarray, count_element_3(sarray) from t1
+
+    sarray          count_element_3 
+    text[]          text
+-------------------------------------
+    ""{a,b,c,a,a}""   ""{c:1,a:3,b:1}""
+    ""{a,b,c}""       ""{c:1,a:1,b:1}""

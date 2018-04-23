@@ -1,0 +1,33 @@
+public void proceedWhenError() {
+   final ServiceResponse response = getServiceResponse();
+
+   final ServiceState state = response.getState();
+   final Exception exception = response.getException();
+
+   if (state != ServiceState.RUNNING) {
+      logger.debug(""The service is not running, but it's alright."", exception);
+   }
+   // do stuff
+}
+
+public void doNotProceedWhenError() {
+   final ServiceResponse response = getServiceResponse();
+
+   final ServiceState state = response.getState();
+   final Exception exception = response.getException();
+
+   if (state != ServiceState.RUNNING) {
+      throw new IllegalStateException(""The service is not running..."", exception);
+   }
+   // do stuff
+}
+
+private ServiceResponse getServiceResponse() {
+    try {
+        service.connect();
+        return ServiceResponse.of(ServiceState.RUNNING);
+    catch(Exception e) {
+        // or -> return ServiceResponse.of(e);
+        return new ServiceResponse(getStateFromException(e), e);
+    }
+}

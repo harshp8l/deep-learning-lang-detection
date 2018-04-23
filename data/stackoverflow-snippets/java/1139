@@ -1,0 +1,53 @@
+public class MyFileVisitor extends SimpleFileVisitor<Path> {
+
+    private Map<String, List<String>> contentMap = new HashMap<>();
+
+    public static void main(String[] args) throws Exception {
+        MyFileVisitor myVisitor = new MyFileVisitor();
+        myVisitor.collectAllJavaFilesInFileTree(Paths.get(""C:\\root\\dir""));
+        myVisitor.writeUsingFileWriter(Paths.get(""C:\\file\\to\\write.txt""));
+    }
+
+    public void collectAllJavaFilesInFileTree(Path root) throws IOException {
+        Files.walkFileTree(root, this);
+    }
+
+    @Override
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) throws IOException {
+        Objects.requireNonNull(file);
+        final String fileName = file.getFileName().toString();
+        if (fileName.toLowerCase().endsWith("".java"")) {
+            // project name will be null if path isn't at least 5 deep...
+            String projectName = null;
+            if (file.getNameCount() >= 5) {
+                projectName = file.getName(5).toString();
+            }
+
+            String key = projectName;
+            List<String> list = contentMap.get(key);
+            if (list == null) {
+                list = new ArrayList<String>();
+                contentMap.put(key, list);
+            }
+            list.add(fileName);
+        }
+        return FileVisitResult.CONTINUE;
+    }
+
+
+    public void writeUsingFileWriter(Path fileToWrite) {
+        try (Writer writer = Files.newBufferedWriter(fileToWrite)) {
+            contentMap.forEach((key, valueList) -> {
+                try {
+                    for (String value : valueList) {
+                        writer.write(key + "" "" + value + System.lineSeparator());
+                    }
+                } catch (IOException ex) {
+                    throw new UncheckedIOException(ex);
+                }
+            });
+        } catch (UncheckedIOException | IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+}

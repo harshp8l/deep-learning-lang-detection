@@ -1,0 +1,14 @@
+SELECT COUNT(a.[ApplicationID]) [AppCount], YEAR(a.[DateCreated]) [Year], MONTH(a.[DateCreated]) [Month]
+FROM [Application] a
+INNER JOIN [Vacancy] v ON v.VacancyID = a.VacancyID
+INNER JOIN Staff s ON s.StaffID = v.StaffID
+
+WHERE 
+v.[DateCreated] >= @DateFrom AND v.[DateCreated] <= @DateTo 
+AND (@OfficeID = 0 Or s.OfficeID = @OfficeID)
+AND ((@VacancyType = '' AND v.VacancyType IN (SELECT TypeID FROM VacancyType)) 
+  OR (v.VacancyType = @VacancyType)
+)
+
+GROUP BY YEAR(a.[DateCreated]), MONTH(a.[DateCreated])
+ORDER BY YEAR(a.[DateCreated]), MONTH(a.[DateCreated])

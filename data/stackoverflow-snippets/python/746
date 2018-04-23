@@ -1,0 +1,12 @@
+embedding_size = 50  # Set this accordingingly
+mfcc_input = Input(shape=(100, 64, embedding_size), dtype='float', name='mfcc_input')
+CNN_out = TimeDistributed(Conv1D(64, 16, activation='relu'))(mfcc_input)
+CNN_out = BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True)(CNN_out)
+CNN_out = TimeDistributed(MaxPooling1D(pool_size=(64-16+1), strides=None, padding='valid'))(CNN_out)
+
+# Directly feeding CNN_out to LSTM will also raise Error, since the 3rd dimension is 1, you need to purge it as
+CNN_out = Reshape((int(CNN_out.shape[1]), int(CNN_out.shape[3])))(CNN_out)
+
+LSTM_out = LSTM(64,return_sequences=True)(CNN_out)
+
+... (more code) ...

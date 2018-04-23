@@ -1,0 +1,33 @@
+ ;WITH cte_base AS(
+    SELECT
+        inv.refe       AS refe,
+        co.color       AS color,
+        inv.size       AS SIZE,
+        SUM(acu.total) AS 'Values',
+        bo.wareh       AS wareh
+FROM
+        inv_article inv
+    INNER JOIN
+        inv_colors  co
+            ON inv.color = co.color
+    INNER JOIN
+        inv_store   acu
+            ON inv.item = acu.item
+    INNER JOIN
+        inv_bods    bo
+            ON bo.wareh = acu.wareh
+WHERE
+        refers = 'julios'
+        AND acu.year = '2018'
+GROUP BY
+        inv.refe,
+        co.color,
+        inv.size,
+        bo.wareh
+HAVING
+        SUM(total) <> '0'
+    )
+    SELECT refe, color, [35],[36],[37],[38],[39],[40], wareh
+    FROM cte_base
+    PIVOT (SUM([Values]) 
+    FOR size IN ([35],[36],[37],[38],[39],[40])) AS p

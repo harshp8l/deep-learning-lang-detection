@@ -1,0 +1,39 @@
+create table sample (TestName varchar(100),Brand varchar(100), Line varchar(100), Model varchar(100), Time int, Value decimal(5,2))
+insert into sample values
+('IntelTest1','Intel','i7', '8700k',1, 0.20)
+,('IntelTest1','Intel','i7', '8700k',2, 0.35)
+,('IntelTest1','Intel','i7', '8700k',3, 0.89)
+,('AmdTest1','AMD','Ryzen 5', '1600',1, 0.12)
+,('AmdTest1','AMD','Ryzen 5', '1600',2, 0.34);
+
+select
+rownumber= row_number() over ( order by (select 1)), * 
+from
+(
+select [Time]=Null ,[IntelTest1]=[1],
+[Amdtest1]=[2]
+from
+(
+    select 
+     rownum=row_number() over(order by (select 1) ) , * 
+    from
+    (
+      select 
+         distinct 
+         TestName, 
+         Brand,
+         Line,
+         Model
+      from sample
+    )s
+)s
+unpivot
+( data for keys in (TestName, Brand, Line, Model))up
+pivot
+( max(data) for rownum in ([1],[2]))p
+union all
+select Time,[IntelTest1]=Cast([IntelTest1] as varchar(max)),[AMDTest1]=cast([AMDTest1] as varchar(max)) from
+(select  TestName,Time, Value  from sample)s
+pivot
+(max(value) for TestName in ([IntelTest1],[AMDTest1]))p
+)t

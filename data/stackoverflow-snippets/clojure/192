@@ -1,0 +1,35 @@
+(dotest
+  (with-forest (new-forest)
+    (let [xml-str         ""<top>
+                              <group>
+                                  <group>
+                                      <item>
+                                          <number>1</number>
+                                      </item>
+                                      <item>
+                                          <number>2</number>
+                                      </item>
+                                      <item>
+                                          <number>3</number>
+                                      </item>
+                                  </group>
+                                  <item>
+                                      <number>0</number>
+                                  </item>
+                              </group>
+                          </top>""
+
+          enlive-tree     (->> xml-str
+                            java.io.StringReader.
+                            en-html/xml-resource
+                            only)
+          root-hid        (add-tree-enlive enlive-tree)
+
+          ; Removing whitespace nodes is optional; just done to keep things neat
+          blank-leaf-hid? (fn fn-blank-leaf-hid?  ; whitespace pred fn
+                            [hid]
+                            (let [node (hid->node hid)]
+                              (and (contains-key? node :value)
+                                (ts/whitespace? (grab :value node)))))
+          blank-leaf-hids (keep-if blank-leaf-hid? (all-leaf-hids)) ; find whitespace nodes
+          >>              (apply remove-hid blank-leaf-hids) ; delete whitespace nodes found

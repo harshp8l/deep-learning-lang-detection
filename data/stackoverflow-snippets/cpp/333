@@ -1,0 +1,27 @@
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+
+extern ""C"" int my_c_function(int **double_pointer, int rows, int cols) {
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            printf(""%d "", double_pointer[i][j]);
+        }
+        printf(""\n"");
+    }
+}
+
+
+int main() {
+    std::vector<std::vector<int>> ImagePixels{{1, 2, 3}, {4, 5, 6}};
+
+    // transform a vector of vectors into a vector of pointers
+    std::vector<int*> ptrs(ImagePixels.size());
+    std::transform(begin(ImagePixels), end(ImagePixels), begin(ptrs),
+        [](std::vector<int> &inner_vec) {
+            return inner_vec.data();
+        });
+
+    my_c_function(ptrs.data(), ImagePixels.size(), ImagePixels[0].size());
+}

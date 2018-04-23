@@ -1,0 +1,18 @@
+connected = set()
+
+def collect_websocket(func):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        global connected
+        connected.add(websocket._get_current_object())
+        try:
+            return await func(*args, **kwargs)
+        finally:
+            connected.remove(websocket._get_current_object())
+    return wrapper                                                                                                                                                                                                            
+
+
+@app.websocket('/ws')                                                                                                                                                                                       
+@collect_websocket
+async def ws():
+    ...

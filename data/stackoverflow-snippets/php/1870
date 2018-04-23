@@ -1,0 +1,65 @@
+function scoreHalfDoughnutImage()
+{   
+    $score = 70;
+    $maxScore = 100;
+    $color = '#FC950C';
+    $imagePath = ""doughnutContent2Image_"".$score."".jpg"";
+
+    // Create Image From Existing File
+    $im = imagecreatetruecolor(550, 340);// Create a 550x340 image
+    //imagealphablending($img,true);
+
+    $backgroundColor = imagecolorallocatealpha($im, 255, 255, 255, 127);//blending colors
+    imagefill($im, 0, 0, $backgroundColor);//creating white background
+    // Switch antialiasing on for one image
+    $white = imagecolorallocate($im, 255,255,255);
+    $black = imagecolorallocate($im, 0, 0, 0);
+    // for making transparent bg of white bg
+    imagecolortransparent($im, $white);
+
+    // Allocate A Color For The Text
+    $orange = imagecolorallocate($im, 252, 149, 12);
+    $dark_blue = imagecolorallocate($im, 30, 65, 71);
+    imagesetthickness($im, 4);
+
+    //creation of thick arc
+    $thickness = 40;
+    for ($i = $thickness; $i > 0; $i--) {
+        imagearc($im, 275, 273, (180 - $i)*3, (180 - $i)*3,  180, 0, $dark_blue);
+        imagearc($im, 275, 273, (180 - $i)*3, (180 - $i)*3, 180, 180+($score*1.8), $orange);
+    }
+//imageantialias($im, true);
+    imagesetthickness($im, 1);
+    $text='NA';
+    // Setup the title on the center circle
+    if($score>=0)
+        $text=$score;
+
+    // Set Path to Font File
+    $font_path = 'lib/reports/MotivationEvaluation/font/arial.ttf';
+    // Print Text On Image
+    $textWidth = imagettfbbox(40, 0, $font_path, $text);
+    $x = 235;
+    if($textWidth[2] < 84)
+    {
+        $x = 250;
+    }
+    if($text!=='NA')
+    {
+        imagettftext($im, 45, 0, $x, 240, $dark_blue, $font_path, $text);
+    }
+    else
+    {
+        imagettftext($im, 35, 0, $x, 240, $dark_blue, $font_path, $text);
+    }
+    // Print Text On x-axis n y-axis
+    imagettftext($im, 32, 0, 25, 315, $dark_blue, $font_path, 0);
+    imagettftext($im, 32, 0, 25+450, 315, $dark_blue, $font_path, 100);
+    //imagealphablending($im, true); //not needed as we created the image 
+with alpha
+    imagesavealpha($im, true);
+    // Send Image to Browser
+    imagejpeg($im,$imagePath);
+    imagedestroy($im);
+    return $imagePath;
+}

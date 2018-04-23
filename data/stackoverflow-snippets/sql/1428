@@ -1,0 +1,41 @@
+declare @T table (dt datetime, action varchar(10));
+insert into @T values 
+       ('1/11/18 5:24 PM',  'Action 1')
+     , ('1/11/18 5:32 PM',  'Action 2')
+     , ('1/17/18 4:41 PM',  'Action 3')
+     , ('1/17/18 4:41 PM',  'Action 2')
+     , ('1/17/18 4:44 PM ', 'Action 3')
+     , ('1/18/18 11:12 AM', 'Action 4')
+     , ('1/18/18 11:12 AM', 'Action 3')
+     , ('1/18/18 11:13 AM', 'Action 4')
+     , ('1/25/18 2:44 PM',  'Action 5');
+
+select * from @t order by action, dt desc
+
+select tt.action, tt.dt, tt.leaddt, DATEDIFF(day, tt.leaddt, tt.dt) as diff 
+  from ( select t.* 
+              , ROW_NUMBER() over (partition by t.action order by t.dt desc) as rn 
+              , lead(t.dt)   over (partition by t.action order by t.dt desc) as leaddt 
+           from @T t 
+       ) tt
+where tt.rn = 1 
+  and tt.leaddt is not null 
+order by tt.action
+
+dt                      action
+----------------------- ----------
+2018-01-11 17:24:00.000 Action 1
+2018-01-17 16:41:00.000 Action 2
+2018-01-11 17:32:00.000 Action 2
+2018-01-18 11:12:00.000 Action 3
+2018-01-17 16:44:00.000 Action 3
+2018-01-17 16:41:00.000 Action 3
+2018-01-18 11:13:00.000 Action 4
+2018-01-18 11:12:00.000 Action 4
+2018-01-25 14:44:00.000 Action 5
+
+action     dt                      leaddt                  diff
+---------- ----------------------- ----------------------- -----------
+Action 2   2018-01-17 16:41:00.000 2018-01-11 17:32:00.000 6
+Action 3   2018-01-18 11:12:00.000 2018-01-17 16:44:00.000 1
+Action 4   2018-01-18 11:13:00.000 2018-01-18 11:12:00.000 0

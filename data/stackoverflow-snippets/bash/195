@@ -1,0 +1,37 @@
+#!/bin/bash
+
+isrunsuccess() {
+  case $(jobs) in
+    *Running*)   echo "">>> running"" ;;
+    *Done*)      echo "">>> done"" ;;
+    *Exit\ 127*) echo "">>> not found"" ;;
+    *Exit\ 126*) echo "">>> not executable"" ;;
+    *Exit*)      echo "">>> done nonzero exitstatus"" ;;
+  esac
+}
+
+{ sleep 1 ; echo sleep1 ; } &
+sleep 0
+isrunsuccess
+wait
+
+echo nosleep &
+sleep 0
+isrunsuccess
+wait
+
+echo exit1
+false &
+sleep 0
+isrunsuccess
+wait
+
+notexisting &
+sleep 0
+isrunsuccess
+wait
+
+./existingbutnotexecutable &
+sleep 0
+isrunsuccess
+wait

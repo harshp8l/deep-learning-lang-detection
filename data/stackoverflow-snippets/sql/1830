@@ -1,0 +1,41 @@
+SELECT
+
+    current_schema() AS ""schema"",
+    current_catalog AS ""database"",
+    ""pg_constraint"".conrelid::regclass::text AS ""primary_table_name"",
+    ""pg_constraint"".confrelid::regclass::text AS ""foreign_table_name"",
+
+    (
+        string_to_array(
+            (
+                string_to_array(
+                    pg_get_constraintdef(""pg_constraint"".oid),
+                    '('
+                )
+            )[2],
+            ')'
+        )
+    )[1] AS ""foreign_column_name"",
+
+    ""pg_constraint"".conindid::regclass::text AS ""constraint_name"",
+
+    TRIM((
+        string_to_array(
+            pg_get_constraintdef(""pg_constraint"".oid),
+            '('
+        )
+    )[1]) AS ""constraint_type"",
+
+    pg_get_constraintdef(""pg_constraint"".oid) AS ""constraint_definition""
+
+FROM pg_constraint AS ""pg_constraint""
+
+JOIN pg_namespace AS ""pg_namespace"" ON ""pg_namespace"".oid = ""pg_constraint"".connamespace
+
+WHERE
+    --fkey and pkey constraints
+    ""pg_constraint"".contype IN ( 'f', 'p' )
+    AND
+    ""pg_namespace"".nspname = current_schema()
+    AND
+    ""pg_constraint"".conrelid::regclass::text IN ('whatever_table_name')

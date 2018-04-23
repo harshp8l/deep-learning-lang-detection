@@ -1,0 +1,34 @@
+#include <iostream>
+
+template <typename>
+struct bar1
+ { template <typename ... Args> bar1 (Args && ...) { } };
+
+template <typename>
+struct bar2
+ { template <typename ... Args> bar2 (Args && ...) { } };
+
+template <typename>
+struct foo;
+
+template <typename T>
+struct foo<bar1<T>>
+ {
+   template <typename ... Args>
+   static bar1<T> func (Args && ... as)
+    { return { std::forward<Args>(as)... }; }
+ };
+
+template <typename T>
+struct foo<bar2<T>>
+ {
+   template <typename ... Args>
+   static bar2<T> func (Args && ... as)
+    { return { std::forward<Args>(as)... }; }
+ };
+
+int main()
+ {
+   foo<bar1<int>>::func(1, ""two"", 3.0);
+   foo<bar2<long>>::func(4.0f, ""five"", 6L);
+ }

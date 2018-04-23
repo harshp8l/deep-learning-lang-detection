@@ -1,0 +1,11 @@
+select 
+       top (1) with ties t.Id, 
+              (case when (select top 1 [Flag Indicator] from table
+                             where id = c.id and date = c.MAXDATE) <> 'No' 
+                    then date end) as Date
+from table t inner join (
+        select id, max(date) MAXDATE from table group by id
+) c on c.id = t.id
+order by row_number() over(partition by t.Id 
+                               order by case when [Flag Indicator] = 'Yes' 
+                                             then 0 else 1 end)

@@ -1,0 +1,23 @@
+{-# LANGUAGE GADTs, DataKinds, KindSignatures #-}
+data Nat = Z | S Nat
+
+-- This is a GADT; n is a phantom type
+data Tree23 (n::Nat) a where
+  Elem :: a -> Tree23 Z a
+  Node2 :: !Int -> Tree23 n a -> 
+             Tree23 n a -> Tree23 (S n) a
+  Node3 :: !Int -> Tree23 n a -> Tree23 n a ->
+             Tree23 n a -> Tree23 (S n) a
+
+-- n is again a phantom type
+data Digit (n::Nat) a
+  = One (Tree23 n a)
+  | Two (Tree23 n a) (Tree23 n a)
+  | Three (Tree23 n a) (Tree23 n a) (Tree23 n a)
+  | Four (Tree23 n a) (Tree23 n a) (Tree23 n a) (Tree23 n a)
+
+-- n is still a phantom type
+data FingerTree (n::Nat) a
+     = Empty
+     | Single a
+     | Deep !Int (Digit n a) (FingerTree (S n) a) (Digit n a)

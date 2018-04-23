@@ -1,0 +1,21 @@
+main:                                   # @main
+        push    rbp
+        mov     rbp, rsp
+        mov     dword ptr [rbp - 4], 0        # Default return value of 0
+        mov     dword ptr [rbp - 8], 3
+        cmp     dword ptr [rbp - 8], 3        # Is a > 3
+        jle     .LBB0_2
+        mov     dword ptr [rbp - 4], 5678     # Set return value to 5678
+        jmp     .LBB0_5                       # Go to common exit point .LBB0_5
+.LBB0_2:
+        cmp     dword ptr [rbp - 8], 3        # Is a == 3?
+        jne     .LBB0_4
+        mov     dword ptr [rbp - 4], 42       # Set return value to 42
+        jmp     .LBB0_5                       # Go to common exit point .LBB0_5
+.LBB0_4:
+        jmp     .LBB0_5                       # Extraneous unoptimized jump artifact 
+# This is common exit point of all the returns from `main`
+.LBB0_5:
+        mov     eax, dword ptr [rbp - 4]      # Use return value from memory
+        pop     rbp
+        ret

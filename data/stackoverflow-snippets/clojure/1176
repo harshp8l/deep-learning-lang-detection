@@ -1,0 +1,12 @@
+(def w (vector))        ; create Var named w and bind it to an empty vector
+(dotimes [x 9]          ; repeat 9 times (keeping iteration number in x):
+ (future                ;  execute in other thread:
+  (def w                ;   replace root binding of w with
+    (conj w             ;    a new vector with all elements from previous (w)
+          x))))         ;     with added an element indicating current iteration (x) 
+
+w                       ; get a value of Var's root binding (identified by symbol w)
+
+; => [0 2 3 6 8 7 4 5]  ; 1 is missing !!!
+                        ; second thread overlapped with another thread
+                        ; during read-conjoin-update and the other thread ""won""

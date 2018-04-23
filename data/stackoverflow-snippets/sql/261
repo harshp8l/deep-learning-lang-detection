@@ -1,0 +1,36 @@
+WITH ta_period AS
+(
+        SELECT
+            PERIOD(immunization_date - INTERVAL '10' DAY, immunization_date) AS periodbucket,
+            ROW_NUMBER() OVER (PARTITION BY animal ORDER BY immunization_date) AS animal_row,
+            table_a.animal,
+            table_a.immunization_date
+        FROM table_a
+)
+,cal_buckets AS
+(
+
+    SELECT calendar_dateFROM Sys_Calendar.""CALENDAR"" cal
+    WHERE calendar_date >= (SELECT MIN(immunization_date) FROM table_a)
+        AND calendar_date <= (SELECT MAX(immunization_date) FROM table_a)
+)
+SELECT
+    TA.animal,
+    TA.immunization_date,
+    cal_buckets.bucket,
+    DENSE_RANK() OVER (PARTITION BY ta.animal ORDER BY ta_normal.periodbucket, cal_buckets.bucket ) AS ten_day_bucket
+FROM
+    (
+        SELECT NORMALIZE    
+            ta_period.animal,   
+            ta_period.periodbucket P_INTERSECT ta_period.periodbucket AS periodbucket
+        FROM ta_period LEFT OUTER JOIN ta_period ta_period2 
+            ON ta_period.periodbucket CONTAINS ta_period2.immunization_date
+                AND ta_period.animal = ta_period2.animal
+                AND ta_period.animal_row <> ta_period2.animal_row   
+    ) ta_normal
+    INNER JOIN ta_period ta ON
+        ta_normal.animal = ta.animal
+        AND ta_normal.periodbucket P_INTERSECT ta.periodbucket IS NOT NULL
+    INNER JOIN cal_buckets ON
+        ta.immunization_date = cal_buckets.calendar_date;

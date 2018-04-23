@@ -1,0 +1,127 @@
+class Response_model extends CI_Model {
+
+    private $response = array();
+
+    /**
+     * Adds parameters to output
+     * 
+     * @param mixed $ka String key or array
+     * @param type $value Value if using string
+     * @return $this
+     */
+    public function add($ka, $value = null) {
+        if (is_string($ka)) {
+            $this->response = array_merge($this->response, array($ka => $value));
+        } elseif (is_array($ka)) {
+            $this->response = array_merge($this->response, $ka);
+        }
+        return $this;
+    }
+
+    /**
+     * Status: success
+     * 
+     * @param type $msg
+     * @return $this
+     */
+    public function success($msg = null) {
+
+        $this->response = array('status' => 'success', 'msg' => $msg);
+        return $this;
+    }
+
+    /**
+     * Status: error
+     * 
+     * @param type $msg
+     * @return $this
+     */
+    public function error($msg = null) {
+
+        $this->response = array('status' => 'error', 'msg' => $msg);
+        return $this;
+    }
+
+    /**
+     * Gets form_validation errors
+     * 
+     * @return $this
+     */
+    public function form_errors() {
+        $this->load->library('form_validation');
+        $errors = array();
+        foreach ($this->form_validation->error_array() as $field_name => $error) {
+            $errors[] = array('id' => $field_name, 'msg' => $error);
+        }
+        $this->response = array('status' => 'error', 'form_errors' => $errors);
+        return $this;
+    }
+
+    /**
+     * Straight output, no status or msg
+     * 
+     * @param mixed $output
+     * @return $this
+     */
+    public function output($output) {
+        $this->response = $output;
+        return $this;
+    }
+
+    /**
+     * Renders JSON response
+     * e.g. {""status"":""error"",""msg"":""some_error"",""some_value"":""some_key""}
+     * with the appropriate headers
+     * 
+     * @param boolean $exit TRUE (default) exits()
+     * @param string|array $json_params e.g. array(JSON_NUMERIC_CHECK, JSON_HEX_TAG)
+     * @return void
+     */
+    public function json($exit = true, $json_params = null) {
+        $this->output->set_content_type('application/json');
+        if (is_null($json_params)) {
+            $this->output->set_output(json_encode($this->response));
+        } else {
+            if (is_array($json_params)) {
+                $params = implode(' | ', $json_params);
+            } else {
+                $params = $json_params;
+            }
+            $this->output->set_output(json_encode($this->response, $params));
+        }
+        $this->output->_display();
+        if ($exit) {
+            exit;
+        }
+    }
+
+    /**
+     * Renders javascript output
+     * 
+     * @param boolean $exit TRUE (default) exits()
+     */
+    public function js($exit = true) {
+        $this->output->set_content_type('application/javascript');
+        $this->output->set_output($this->response);
+        $this->output->_display();
+        if ($exit) {
+            exit;
+        }
+    }
+
+    /**
+     * Renders HTML response
+     * 
+     * @param boolean $exit TRUE (default) exits()
+     * @return void
+     */
+    public function html($exit = true) {
+        $this->output->set_content_type('html');
+        $this->output->set_output($this->response);
+        $this->output->_display();
+        if ($exit) {
+            exit;
+        }
+    }
+
+}

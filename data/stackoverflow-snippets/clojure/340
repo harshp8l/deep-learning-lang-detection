@@ -1,0 +1,14 @@
+(ns lexer.core)
+
+(defn- standardize [thing]
+  (assert (string? thing) (str thing "" should be a string""))
+  (clojure.string/lower-case thing))
+
+(defmacro case-insensitive-case [expr & pairs+default?]
+  (let [pairs (partition 2 pairs+default?)
+        convert (fn [[const form]]
+                  (list (standardize const) form))
+        most-of-it `(case (standardize ~expr) ~@(mapcat convert pairs))]
+    (if (-> pairs+default? count even?)
+      most-of-it
+      (concat most-of-it [(last pairs+default?)]))))

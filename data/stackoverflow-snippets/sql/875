@@ -1,0 +1,77 @@
+declare @example as table (
+    exampleid int identity(1,1) not null primary key clustered
+,   StartDate date not null
+,   TermDate  date null
+);
+
+insert into @example (StartDate, TermDate)
+select '1/1/2016',  '1/1/2018' union all
+select '4/3/2017',  '1/10/2018' union all
+select '9/3/2016',  '2/4/2018' union all
+select '5/9/2017',  '11/21/2017' union all
+select '9/18/2016', '11/15/2017' union all
+select '12/12/2015', '2/8/2018' union all
+select '6/18/2016', '12/20/2017' union all
+select '7/26/2015', '11/4/2017' union all
+select '1/7/2015',  NULL union all
+select '10/2/2013', '10/21/2013' union all
+select '10/14/2013',    '12/12/2017' union all
+select '10/11/2013',    '11/3/2017' union all
+select '6/30/2015', '1/12/2018' union all
+select '2/17/2016', NULL union all
+select '8/12/2015', '11/26/2017' union all
+select '12/2/2015', '11/15/2017' union all
+select '3/30/2016', '11/30/2017' union all
+select '6/18/2016', '11/9/2017' union all
+select '4/3/2017',  '2/12/2018' union all
+select '3/26/2017', '1/15/2018' union all
+select '1/27/2017', NULL union all
+select '7/29/2016', '1/10/2018';
+
+  --| This is an adaption of Aaron Bertrand's work (time dim table)
+  --| this will control the start date
+
+  declare @date datetime = '2013-10-01';
+
+   ;with cte as (
+             select 1 ID
+               , @date date_
+           union all
+
+          select ID + 1
+               , dateadd(day, 1, date_)
+            from cte
+                  )
+            , cte2 as (
+          select top 1000 ID
+               , cast(date_ as date) date_
+               , 0 Running
+               , iif(datepart(weekday, date_) in(1,7), 0,1) isWeekday
+               , datepart(weekday, date_) DayOfWeek
+               , datename(weekday, date_)  DayOfWeekName
+               , month(date_) Month
+               , datename(month, date_) MonthName
+               , datepart(quarter, date_) Quarter
+            from cte 
+          --option (maxrecursion 1000)
+                    )
+        , cte3 as (
+        select a.id 
+             , Date_
+             , b.StartDate
+             , iif(b.StartDate is not null, 1, 0) Add_
+             , iif(c.TermDate is not null, -1, 0) Remove_
+          from cte2 a
+          left join @example b
+            on a.date_ = b.StartDate
+          left join @example c
+            on a.date_ = c.TermDate
+         -- option (maxrecursion 1000)
+                    )
+
+        select date_
+             --, Add_
+             --, Remove_
+             , sum((add_ + remove_)) over (order by date_ rows unbounded preceding) CurrentCount
+             from cte3
+            option (maxrecursion 1000)

@@ -1,0 +1,21 @@
+WITH T1
+     AS (SELECT *,
+                MAX(d2) OVER (ORDER BY d1) AS max_d2_so_far
+         FROM   @T),
+     T2
+     AS (SELECT *,
+                CASE
+                  WHEN d1 <= DATEADD(DAY, 1, LAG(max_d2_so_far) OVER (ORDER BY d1))
+                    THEN 0
+                  ELSE 1
+                END AS range_start
+         FROM   T1),
+     T3
+     AS (SELECT *,
+                SUM(range_start) OVER (ORDER BY d1) AS range_group
+         FROM   T2)
+SELECT range_group,
+       MIN(d1) AS d1,
+       MAX(d2) AS d2
+FROM   T3
+GROUP  BY range_group 

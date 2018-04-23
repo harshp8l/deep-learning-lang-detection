@@ -1,0 +1,63 @@
+void CopyImageBitsWithAlphaRGBA(
+  unsigned char *dest,
+  const unsigned char *src, int w, int stride, int h,
+  unsigned char minred, unsigned char mingre, unsigned char minblu,
+  unsigned char maxred, unsigned char maxgre, unsigned char maxblu)
+{
+  char low = 0x80; // -128
+  char high = 0x7f; // 127
+  char mnr = *(char*)(&minred) - low;
+  char mng = *(char*)(&mingre) - low;
+  char mnb = *(char*)(&minblu) - low;
+  int32_t lowest = mnr | (mng << 8) | (mnb << 16) | (low << 24);
+
+  char mxr = *(char*)(&maxred) - low;
+  char mxg = *(char*)(&maxgre) - low;
+  char mxb = *(char*)(&maxblu) - low;
+  int32_t highest = mxr | (mxg << 8) | (mxb << 16) | (high << 24);
+
+  // SSE
+  int step = 4;
+  int sse_width = (w / step)*step;
+
+  for (int y = 0; y < h; ++y)
+  {
+    for (int x = 0; x < w; x += step)
+    {
+      if (x == sse_width)
+      {
+        x = w - step;
+      }
+
+      int ptr_offset = y * stride + x;
+      const unsigned char* src_ptr = src + ptr_offset;
+      unsigned char* dst_ptr = dest + ptr_offset;
+
+      __m128i loaded = _mm_loadu_si128((__m128i*)src_ptr);
+
+      // subtract 128 from every 8-bit int
+      __m128i subtracted = _mm_sub_epi8(loaded, _mm_set1_epi8(low));
+
+      // greater than top limit? 
+      __m128i masks_hi = _mm_cmpgt_epi8(subtracted, _mm_set1_epi32(highest));
+
+     // lower that bottom limit?
+     __m128i masks_lo = _mm_cmplt_epi8(subtracted, _mm_set1_epi32(lowest));
+
+     // perform OR operation on both masks
+     __m128i combined = _mm_or_si128(masks_hi, masks_lo);
+
+     // are 32-bit integers equal to zero?
+     __m128i eqzer = _mm_cmpeq_epi32(combined, _mm_setzero_si128());
+
+     __m128i shifted = _mm_slli_epi32(eqzer, 24);
+
+    // EDIT: fixed a bug:
+     __m128 alpha_unmasked = _mm_and_si128(loaded, _mm_set1_epi32(0x00ffffff));
+
+     __m128i combined = _mm_or_si128(alpha_unmasked, shifted);
+
+     _mm_storeu_si128((__m128i*)dst_ptr, combined);
+    }
+  }
+}

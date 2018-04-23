@@ -1,0 +1,28 @@
+    (ns hue-web-app.core
+    (:require   [ring.middleware.defaults :refer [wrap-defaults api-        defaults site-defaults]]
+                [ring.util.response :as response]        ;;from ring
+                [compojure.core :refer :all]
+                [compojure.route :as route]            
+                [noir.util.middleware :as middleware]
+                [noir.session :as session]]  ;;noir for redirect to work
+
+    (defroutes hue-app-routes
+      (GET ""/"" [] (session/put! :origin ""/"")
+                  (io/file ""resources/testsite.html""))
+      (GET ""/turn-off"" [] (turn-group-off 3 user) 
+                          (response/redirect (session/get! :origin ""/"")))
+      (GET ""/turn-on"" [] (turn-group-on 3 user)
+                         (response/redirect (session/get! :origin ""/""))))
+
+    ;;STARTING THE SERVER
+    ;;--------------------------------------------------------------        ------------
+    (defn siteparams
+      []
+      (run-jetty (-> #'hue-app-routes
+                     wrap-reload
+                     wrap-restful-format
+                     wrap-params
+                     session/wrap-noir-session
+                     )
+                 {:port 5003
+                  :join? false}))

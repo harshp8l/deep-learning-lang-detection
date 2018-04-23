@@ -1,0 +1,34 @@
+(defn q-find-having-all-vs 
+  [n-vs]
+  (let [v-syms (for [i (range n-vs)]
+                 (symbol (str ""?v"" i)))]
+    {:find '[[?e ...]]
+     :in (into '[$ ?a] v-syms)
+     :where 
+     (for [?v v-syms]
+       ['?e '?a ?v])}))
+
+;; examples    
+(q-find-having-all-vs 1)
+=> {:find [[?e ...]], 
+    :in [$ ?a ?v0],
+    :where 
+    ([?e ?a ?v0])}
+(q-find-having-all-vs 2)
+=> {:find [[?e ...]],
+    :in [$ ?a ?v0 ?v1], 
+    :where
+    ([?e ?a ?v0] 
+     [?e ?a ?v1])}
+(q-find-having-all-vs 3)
+=> {:find [[?e ...]], 
+    :in [$ ?a ?v0 ?v1 ?v2], 
+    :where 
+    ([?e ?a ?v0] 
+     [?e ?a ?v1]
+     [?e ?a ?v2])}
+
+
+;; executing the query: note that we're passing the attribute and values!
+(apply d/q (q-find-having-all-vs (count groups))
+  db :entry/group groups)

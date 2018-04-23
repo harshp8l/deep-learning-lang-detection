@@ -1,0 +1,9 @@
+import org.apache.spark.sql.types.{StructType, StructField, StringType, IntegerType}
+val mainSchema = StructType(Seq(StructField(""name"", StringType, false), 
+StructField(""value"", IntegerType, false)))
+val mainDf = spark.read.schema(mainSchema).csv(""/tmp/b.txt"")
+val lookupSchema = StructType(Seq(StructField(""class_name"", StringType, false), StructField(""min_value"", IntegerType, false), 
+StructField(""max_value"", IntegerType, false)))
+val lookupDf = spark.read.schema(lookupSchema).csv(""/tmp/a.txt"")
+val result = mainDf.join(lookupDf, $""value"" <= $""max_value"" && $""value"" > $""min_value"")
+result.show()

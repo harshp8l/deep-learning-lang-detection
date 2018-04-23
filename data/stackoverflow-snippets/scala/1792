@@ -1,0 +1,15 @@
+val spark1 = org.apache.spark.sql.SparkSession
+      .builder()
+      .master(""local"")
+      .config(""spark.cassandra.connection.host"", ""CASSANDRA_HOST"")
+      .config(""spark.cassandra.auth.username"", ""CASSANDRA_USERNAME"")            
+      .config(""spark.cassandra.auth.password"", ""CASSANDRA_PASSWORD"")
+      .appName(""Spark SQL basic example"")
+      .getOrCreate()
+
+val dfprev = df.filter(""Category = 'Prevention'"" ).select(col(""Year"").as(""yearAdded""),col(""Measure"").as(""Recording""))
+
+dfprev .write
+  .format(""org.apache.spark.sql.cassandra"")
+  .options(Map(""table"" -> ""map"", ""keyspace"" -> ""tdata""))
+  .save()

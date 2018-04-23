@@ -1,0 +1,15 @@
+select *
+from (
+  SELECT users.id, 
+         CASE 
+            WHEN users.closed_at IS NOT NULL THEN 'closed'
+            WHEN COUNT(exams.id) FILTER(users.closed_at IS NOT NULL OR requests.finished_at IS NOT NULL) = COUNT(exams.id)
+              THEN 'completed'
+            WHEN COUNT(exams.id) FILTER(users.closed_at IS NOT NULL OR requests.finished_at IS NOT NULL) = 0
+              then 'not-completed'
+            ELSE 'in-progress' 
+         END AS user_status
+  FROM users --<<< Seems to be missing in your query
+     LEFT JOIN exams ON exams.user_id = users.id
+) t
+where user_status in ('closed', 'not-completed');

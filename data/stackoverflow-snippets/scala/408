@@ -1,0 +1,17 @@
+def parseHistoricPriceJSON(rawJson: String, fromcurrency: Currency, toCurrencies: List[Currency]): Either[String, PricedAsset] = {
+import argonaut._, Argonaut._
+import monocle.macros.syntax.lens._
+val parsed: Either[String, Json] = Parse.parse(rawJson)
+val myTocurrs = Currency(""XRP"") :: toCurrencies
+
+parsed.right.map(outer => {
+  val cursor = outer.cursor
+  val ps = for {
+    toC <- myTocurrs
+    prices <- cursor.downField(fromcurrency.sym)
+    price <- prices.downField(toC.sym)
+    thep <- price.focus.number
+  } yield (toC, thep.toDouble.get)
+
+  PricedAsset(fromcurrency, ps)
+})

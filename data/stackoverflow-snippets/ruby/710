@@ -1,0 +1,82 @@
+class Detalles2s
+    attr_accessor :cproducto, :cantidadunidades, :desproducto, :precio,
+                  :precioneto, :tcaja, :tunidad
+
+    def analyze
+        File.foreach('ojo.txt') do | line |
+            line = line.chomp # remove CrLf (\r\n)
+            puts ""processing line #{line} ...""
+
+            case
+            when line.start_with?('LIN')
+                @cproducto = line[8..-2]
+                puts ""@cproducto=#{@cproducto}""
+            when line.start_with?('IMD')
+                @desproducto = line[8..-1]
+            when line.start_with?('QTY 21')                      
+                @cantidadpedida = line[-5..-4]              
+                caja   = line[-3..-1]
+                pedido = '?????????????????????'
+                @tcaja = unitOfMeasure(pedido)
+            when line.start_with?('QTY129')
+                @cantidadunidades = line[-6..-4]                               
+                @tunidad = 'Unidades Simples'
+            when line.start_with?('MOA203') # not ('MOA 203')                
+                @precio = 'Precio neto'
+                @precioneto = line[7..-1] # not [-10..-1]
+            when line.start_with?('MOA 23')                 
+                @tcargo = 'Cargo'
+                @valorcargo = line[-10..-1]
+            when line.start_with?('MOA 204')                
+                @tdescu = 'Descuento'
+                @valordescu = line[-10..-1]
+            when line.start_with?('PRIAAA')
+                pedido = line[-3..-1]
+                @valorcd = line[-16..-8]                            
+                @tcaja2  = unitOfMeasure(pedido)
+            when (line.start_with?('ALCA') and (line.include?('DE1') or line.include?('DE2')))
+                @cdescuento = 'DESCUENTO'              
+            when line.start_with?('ALCC') && (line.include?('CA1') || line.include?('CA1'))            
+                @ccargo = 'CARGO'         
+            when line.start_with?('PCD')
+                if line[5] == '1'
+                then
+                    porcentaje   = line[-6..-1] # not used !!!!!!!!!!!!!!!
+                    @porecentaje = 'porcentaje de descuento'
+                else
+                    @porecentaje = 'porcentaje del cargo'
+                end  
+            when line.start_with?('MOA 86')
+                clave   = line[0..2]              
+                importe = line[-9..-1]               
+            when line.start_with?('CNT')                             
+                @items2 = line[-2..-1]
+            else
+                puts 'starts with something else'
+            end
+        end # foreach
+    end # analyze
+
+    def unitOfMeasure(p_pedido)
+        case p_pedido
+        when 'CS'  then 'cajas'
+        when 'CSC' then 'cajas de carton'
+        when 'SIN' then 'Unidades Simples'
+        when 'KGM' then 'Kilogramos'
+        else
+            puts ""bad unit #{p_pedido}""
+            'undefined'
+        end
+    end
+end #class Detalles2s
+
+un_producto = Detalles2s.new
+un_producto.analyze
+p un_producto
+puts ""cproducto=#{un_producto.cproducto}""
+puts ""desproducto=#{un_producto.desproducto}""
+puts ""tcaja=#{un_producto.tcaja}""
+puts ""cantidadunidades=#{un_producto.cantidadunidades}""
+puts ""tunidad=#{un_producto.tunidad}""
+puts ""precio=#{un_producto.precio}""
+puts ""precioneto=#{un_producto.precioneto}""

@@ -1,0 +1,11 @@
+static float[][] bilToArray(Path dataFile, int nRows, int nCols) throws IOException {
+    try(ReadableByteChannel fch = Files.newByteChannel(dataFile, StandardOpenOption.READ)){
+        float[][] matrix = new float[nRows][nCols];
+        ByteBuffer bb = ByteBuffer.allocateDirect(Float.BYTES*nRows*nCols);
+        while(bb.hasRemaining()) if(fch.read(bb)<0) throw new EOFException();
+        bb.flip();
+        FloatBuffer fb = bb.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
+        for(float[] row: matrix) fb.get(row);
+        return matrix;
+    }
+}

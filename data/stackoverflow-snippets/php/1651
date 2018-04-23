@@ -1,0 +1,26 @@
+SELECT 
+    `product_pricing`.`wo_id`,
+    `product_pricing`.`currency` AS price2_currency,
+    `product_pricing`.`price` AS price2,
+    `product_pricing`.`formula_id`,
+    `product_pricing`.`vat_calculated` AS price2_vat_calculated,
+    `product_pricing`.`vat_id`,
+    `product_pricing`.`timestamp_valid`,
+    `product_price_formulas`.`formula_id`,
+    `product_price_formulas`.`formula` price2_formula
+FROM 
+`product_pricing`
+LEFT JOIN `product_price_formulas` ON `product_pricing`.`formula_id` = `product_price_formulas`.`formula_id`
+INNER JOIN 
+(
+    SELECT 
+        `product_pricing`.`wo_id`,
+        MAX(`timestamp_valid`) AS MaxDate
+    FROM `product_pricing`
+    WHERE 
+        `product_pricing`.`timestamp_valid` <= UTC_TIMESTAMP
+    GROUP BY 
+        `product_pricing`.`wo_id`
+)as temp ON temp.wo_id = `product_pricing`.`wo_id` AND temp.MaxDate = `product_pricing`.`timestamp_valid`
+WHERE  
+    `product_pricing`.`wo_id` IN ('015724', '028791', '015712', '015715', '015717', '039750', '028791')

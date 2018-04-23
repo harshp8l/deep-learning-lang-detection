@@ -1,0 +1,21 @@
+// wrap a timeout channel in a generic interface channel
+func makeDefaultTimeoutChan() <-chan interface{} {
+  channel := make(chan interface{})
+  go func() {
+    <-time.After(30 * time.Second)
+    channel <- struct{}{}
+  }()
+  return channel
+}
+
+// usage
+func main() {
+  resultChannel := doOtherThingReturningAsync()
+  cancel := makeDefaultTimeoutChan()
+  select {
+    case <-cancel:
+      fmt.Println(""cancelled!"")
+    case results := <-resultChannel:
+      fmt.Printf(""got result: %#v\n"", results)
+  }
+}

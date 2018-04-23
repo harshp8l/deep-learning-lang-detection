@@ -1,0 +1,27 @@
+Http()
+.cachedHostConnectionPool[Unit](uri.format(p, id))
+.collect {
+  case (Success(HttpResponse(StatusCodes.OK, _, entity, _)), _) =>
+    val initialRes = entity.dataBytes
+      .via(JsonFraming.objectScanner(Int.MaxValue))
+      .map(bStr => ChunkStreamPart(bStr.utf8String))
+    Some(initialRes)
+
+  case (Success(resp @ HttpResponse(code, _, _, _)), _) =>
+    log.error(""Request to test job failed, response code: "" + code)
+    // Discard the flow to avoid backpressure
+    resp.discardEntityBytes()
+    None
+}
+.collect {
+  case Some(initialRes) => initialRes
+}
+.map { initialRes =>
+  (HttpRequest(
+     method = HttpMethods.POST,
+     uri = ""googl.cm/flow"",
+     entity = HttpEntity.Chunked(ContentTypes.`application/json`, initialRes)
+   ),
+   ())
+}
+.via(Http().superPool[Unit]())

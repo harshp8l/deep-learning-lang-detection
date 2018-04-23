@@ -1,0 +1,72 @@
+#include <iostream>
+
+class Node
+{
+    friend class NodeList; // NodeList, and no one else, can now see the private
+                           // members of Node
+public:
+    // Node must be given a value and it not given a next, it's automatically NULL
+    // this makes it almost impossible to not point link at something useful,
+    // eliminating the most common of the trivial linked list bugs
+    Node(int value, Node * link = nullptr);
+    ~Node(); //if it doesn't do anything. Get rid of it. See the Rule of Zero
+private:
+    //next pointer
+    Node * next;
+    int data;
+};
+
+class NodeList
+{
+public:
+    NodeList();
+    ~NodeList();
+    //this should delete the whole list
+    void delList(Node * head);
+
+private:
+    //head
+    Node * head;
+};
+
+Node::Node(int value, Node * link) : next(link), data(value)
+{
+    // test code
+    std::cout << ""Node data = "" << data << "" next = "" << next << '\n';
+}
+
+Node::~Node()
+{
+    // test code
+    std::cout << ""~Node data = "" << data << '\n';
+}
+
+
+NodeList::NodeList()
+{
+    // test code to give delList something to delete
+    head = new Node(1,new Node(2,new Node(3)));
+}
+NodeList::~NodeList()
+{
+    delList(head);
+}
+
+
+//this is the nodestructkindathing
+void NodeList::delList(Node * head) // watch out! Parameter head shadows member head!
+{
+    // Warning: This function is recursive and a potential stack-killer if given a 
+    // long list. Prefer iteration here unless given a reason to do otherwise 
+    // and guarantees on maximum list length
+    if (!head)
+        return;
+
+    delList(head->next);
+    delete head;
+}
+
+int main()
+{
+    NodeList test;
+}

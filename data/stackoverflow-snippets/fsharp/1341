@@ -1,0 +1,40 @@
+open System
+
+type T = 
+    | MemberId of int
+    | MemberGuid of Guid
+
+// Shadow constructors
+let MemberId  x = if x > 0 then Some (MemberId x) else None
+let MemberGuid x = Some (MemberGuid x)
+
+let a = MemberId 1
+let b = MemberGuid (Guid.NewGuid())
+let c = MemberId -1
+
+// but you can still pattern match
+let printValue = function
+| Some (MemberId   x) -> sprintf ""case 1, value is %A"" x
+| Some (MemberGuid x) -> sprintf ""case 2, value is %A"" x
+| None                -> ""No value""
+
+let ra = printValue a  // ""case 1, value is 1""
+let rb = printValue b  // ""case 2, value is 67b36c20-2...""
+let rc = printValue c  // ""No value""
+
+// and if you want to use an overloaded constructor
+type T with
+    static member Create id   = MemberId id
+    static member Create guid = MemberGuid guid
+
+let d = T.Create 1
+let e = T.Create (Guid.NewGuid())
+
+// or using the inline trick
+type Create = Create with
+    static member ($) (Create, id  ) = MemberId id
+    static member ($) (Create, guid) = MemberGuid guid
+let inline create x : T option = Create $ x
+
+let d' = create 1
+let e' = create (Guid.NewGuid())

@@ -1,0 +1,17 @@
+function Connect-SPO ([string] $Username, [string]$Password, [string]$Url) {
+
+    $Context = New-Object Microsoft.SharePoint.Client.ClientContext($Url)
+    $Context.Credentials = New-Object Microsoft.SharePoint.Client.SharePointOnlineCredentials($Username, $(ConvertTo-SecureString -AsPlainText $Password -Force))
+    $Context.ExecuteQuery()
+
+    $AuthenticationCookie = $Context.Credentials.GetAuthenticationCookie($Url, $true)
+    $WebSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+    $WebSession.Credentials = $Context.Credentials
+    $WebSession.Cookies.SetCookies($Url, $AuthenticationCookie)
+
+    $FormsDigest = $Context.GetFormDigestDirect()
+    $WebSession.Headers['X-RequestDigest'] = $FormsDigest.DigestValue
+
+    $Context.Dispose()
+    return $WebSession
+}

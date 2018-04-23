@@ -1,0 +1,29 @@
+(ns pipeline
+  (:require [clojure.core.async :as ca :refer [>! <!]]
+            [clojure.string :as s]))
+
+(defn upverse [from to]
+  (ca/pipeline-blocking 4
+                        to
+                        (map (comp s/upper-case
+                                   s/reverse))
+                        from))
+(defn produce [ch xs]
+  (doseq [word xs]
+    (ca/go (>! ch word))))
+
+(defn consume [ch]
+  (ca/go-loop []
+              (when-let [word (<! ch)]
+                (println ""your word is:"" word)
+                (recur))))
+
+(defn start-engine []
+  (let [[from to] [(ca/chan) (ca/chan)]]
+    (upverse to from)
+    (consume from)
+    {:stop (fn []
+             (ca/close! to)
+             (ca/close! from)
+             (println ""engine is stopped""))
+     :process (partial produce to)}))

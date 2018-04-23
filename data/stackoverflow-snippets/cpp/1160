@@ -1,0 +1,47 @@
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <iostream>
+
+namespace ba = boost::asio;
+
+struct Test {
+    ba::io_service& m_io_service;
+    ba::ip::tcp::socket m_pipe { m_io_service };
+    char m_buf[4];
+
+    Test(ba::io_service& io) : m_io_service(io) {
+        m_pipe.connect({{}, 6767});
+        read_loop();
+    }
+
+    void push(size_t len) {
+        std::cout << __func__ << std::endl;
+
+        m_io_service.post(
+            boost::bind(&Test::handle_message, this, std::string(m_buf, len)));
+    }
+
+    void read_loop() {
+        using namespace ba::placeholders;
+        ba::async_read(m_pipe,
+                ba::buffer(m_buf),
+                ba::transfer_all(),
+                boost::bind(&Test::on_received, this, error, bytes_transferred));
+    }
+
+    void on_received(boost::system::error_code ec, size_t len) {
+        if (len) push(len);
+        if (!ec) read_loop();
+    }
+
+    void handle_message(std::string const& data) {
+        std::cout << ""Handling '"" << data << ""'\n"";
+    }
+};
+
+int main() {
+    ba::io_service io;
+    Test t(io);
+
+    io.run();
+}

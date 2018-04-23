@@ -1,0 +1,47 @@
+package com.test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class ArrayPrint {
+
+    @SuppressWarnings(""resource"")
+    public static void main(String args[]) {
+
+        int[][] x = { { 1, 2 }, { 3, 4, 5 }, { 6, 7 } };
+
+        Stream<List<Integer>> inputs = null;
+
+        for (int[] set : x) {
+            List<Integer> list = new ArrayList<Integer>();
+            Collections.addAll(list, Arrays.stream(set).boxed().toArray(Integer[]::new));
+            if (inputs == null) {
+                inputs = Stream.of(list);
+            } else {
+                inputs = Stream.concat(inputs, Stream.of(list));
+            }
+        }
+
+        Stream<List<List<Integer>>> listified = inputs.filter(Objects::nonNull).filter(input -> !input.isEmpty())
+                .map(l -> l.stream().map(o -> new ArrayList<>(Arrays.asList(o))).collect(Collectors.toList()));
+
+        List<List<Integer>> combinations = listified.reduce((input1, input2) -> {
+            List<List<Integer>> merged = new ArrayList<>();
+            input1.forEach(permutation1 -> input2.forEach(permutation2 -> {
+                List<Integer> combination = new ArrayList<>();
+                combination.addAll(permutation1);
+                combination.addAll(permutation2);
+                merged.add(combination);
+            }));
+            return merged;
+        }).orElse(null);
+
+        combinations.forEach(System.out::println);
+    }
+
+}

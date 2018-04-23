@@ -1,0 +1,39 @@
+package main
+
+import (
+    ""crypto/aes""
+    ""crypto/cipher""
+    ""encoding/hex""
+    ""fmt""
+
+)
+
+func main() {
+
+    encKey := ""c38036f65157cb6db0e8fd855aa28ada074be71917d1c8eedc2ae4d85e3c9da6""
+    iv := ""79b67e539e7fcaefa7abf167de5c06ed""
+    cipherText := ""c02eccfc514a0b7fae830586dd56e0fcebb81fc49f41fa6dedf099c3645793bef7ec7075eca30063f9c0ef395d5ee2d44e4f3490114280abb7cf86d6eb525e2ec9bd2b781388986480f8b3df95f7b10e""
+
+    encKeyDecoded, err := hex.DecodeString(encKey)
+    if err != nil {
+        panic(err)
+    }
+    cipherTextDecoded, err := hex.DecodeString(cipherText)
+    if err != nil {
+        panic(err)
+    }
+    ivDecoded, err := hex.DecodeString(iv)
+    if err != nil {
+        panic(err)
+    }
+    block, err := aes.NewCipher([]byte(encKeyDecoded))
+    if err != nil {
+        panic(err)
+    }
+
+    mode := cipher.NewCBCDecrypter(block, []byte(ivDecoded))
+
+    mode.CryptBlocks([]byte(cipherTextDecoded), []byte(cipherTextDecoded))
+
+    fmt.Println(string(cipherTextDecoded))
+}

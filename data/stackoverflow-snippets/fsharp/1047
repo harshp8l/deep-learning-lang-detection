@@ -1,0 +1,16 @@
+module Seq = 
+    let chunkBy f src = 
+        seq { 
+            let chunk = ResizeArray()
+            let mutable key = Unchecked.defaultof<_>
+            for x in src do
+                let newKey = f x
+                if (chunk.Count <> 0) && (newKey <> key) then 
+                    yield chunk.ToArray()
+                    chunk.Clear()
+                key <- newKey
+                chunk.Add(x)
+        }
+
+// returns 2 arrays, each with 1000 elements
+points |> Seq.chunkBy (fun pt -> pt.y) |> Seq.take 2

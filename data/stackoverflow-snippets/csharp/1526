@@ -1,0 +1,30 @@
+P = 10000103
+PP = 20000208 # pisano(P)
+
+# Compute (a*b) in the ring Z_p[x]/(x^2-x-1).
+# Here a and b are polynomials of the form a[0]+a[1]x
+# and b[0]+b[1]x.
+def pmul(a, b, p):
+    return (a[0] * b[0] + a[1] * b[1]) % p, (a[0] * b[1] + a[1] * b[0] + a[1] * b[1]) % p
+
+# Generic exponentiation by squaring.
+def exp(a, n, one, mul, p):
+    r = one
+    while n:
+        if n & 1: r = mul(r, a, p)
+        a = mul(a, a, p)
+        n >>= 1
+    return r
+
+# Compute Fib(n) mod p. Uses:
+# x^n = (Fib(n-1) mod p) + x*(Fib(n) mod p)
+# in the ring Z_p[x]/(x^2-x-1).
+def fibmod(n, p):
+    return exp((0, 1), n, (1, 0), pmul, p)[1]
+
+# Compute Fib(n^m) mod P
+def fibpow(n, m):
+    power = exp(n, m, 1, (lambda x, y, p: x*y % p), PP)
+    return fibmod(power, P)
+
+print fibpow(4, 7)

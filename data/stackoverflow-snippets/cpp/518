@@ -1,0 +1,35 @@
+class SlotProxy : public QObject
+{
+  Q_OBJECT
+
+signals:
+  void triggered();
+
+public:
+  explicit SlotProxy( QObject *parent = nullptr );
+  void trigger();
+
+private:
+  void onTimeout();
+
+private:
+  QPointer<QTimer> _timer;
+};
+
+SlotProxy::SlotProxy( QObject *parent = nullptr )
+  : _timer{ new QTimer{ this } }
+{
+  _timer->setInterval( 0 );
+  _timer->setSingleShot( true );
+  connect( _timer, &QTimer::timeout, this, &SlotProxy::onTimeout );
+}
+
+void SlotProxy::trigger()
+{
+  _timer->start( 0 ); // May be not zero;
+}
+
+void SlotProxy::onTimeout()
+{
+  emit triggered();
+}

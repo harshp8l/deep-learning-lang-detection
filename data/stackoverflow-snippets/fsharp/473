@@ -1,0 +1,30 @@
+open ZeroMQ
+open System
+
+let ctx = new ZContext()
+
+let sub1 = new ZSocket(ctx, ZSocketType.SUB)
+sub1.SubscribeAll()
+sub1.Connect(""tcp://localhost:3001"")
+
+let sub2 = new ZSocket(ctx, ZSocketType.SUB)
+sub2.SubscribeAll()
+sub2.Connect(""tcp://localhost:3002"")
+
+let timeout = TimeSpan.FromMilliseconds(10.) |> Nullable
+let sockets = [|sub1; sub2|]
+let pollItems = [|ZPollItem.CreateReceiver(); ZPollItem.CreateReceiver()|]
+
+let mutable error = null
+let mutable msg = null 
+
+while true do
+
+    if ZPollItems.PollIn(sockets, pollItems, &msg, &error, timeout) then 
+        if msg.[0] <> null then
+            () // work
+
+        if msg.[1] <> null then
+            () // work
+
+    ()

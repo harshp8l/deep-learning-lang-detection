@@ -1,0 +1,42 @@
+#include <map>
+#include <iostream>
+#include <chrono>
+
+struct BigInt {
+    unsigned long long n;
+    BigInt() : n(0) {}
+    BigInt(long long _n) : n(_n) {}
+    unsigned long long get() const { return n; }
+    bool operator==(long long other) const { return n == other; }
+    bool operator<(const BigInt &b) const { return get() < b.get(); }
+    BigInt operator+(const BigInt other) const { return BigInt(n + other.get()); }
+    BigInt operator-(const BigInt other) const { return BigInt(n - other.get()); }
+    BigInt operator*(const BigInt other) const { return BigInt(n * other.get()); }
+};
+
+BigInt bitcon(int n)
+{
+static std::map<BigInt, BigInt> fiboMap;
+BigInt bigN(n);
+if (bigN == 1) return BigInt(100);
+if (bigN == 2) return BigInt(200);
+if (bigN == 3) return BigInt(300);
+std::map<BigInt, BigInt>::iterator it = fiboMap.find(bigN);
+if (it != fiboMap.end())
+    return it->second;
+else
+    return fiboMap[bigN] = (BigInt(n) * (bitcon(n-1) + bitcon(n-2) - bitcon(n-3)));
+}
+
+int main()
+{
+    using namespace std::chrono;
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    for(int i = 1; i < 100; ++i) {
+        std::cout <<i<<""->""<<bitcon(i).get()<<"" "";
+    }
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+    std::cout <<std::endl<<duration<<std::endl;
+    return 0;
+}

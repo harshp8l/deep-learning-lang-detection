@@ -1,0 +1,27 @@
+val addStuffDf = Seq(
+  (""A"", ""2018-03-22"", 5),
+  (""A"", ""2018-03-24"", 1),
+  (""B"", ""2018-03-24"", 3)
+).toDF(""user"", ""dt"", ""count"")
+
+val removedStuffDf = Seq(
+  (""C"", ""2018-03-25"", 10),
+  (""A"", ""2018-03-24"", 5),
+  (""B"", ""2018-03-25"", 1)
+).toDF(""user"", ""dt"", ""count"")
+
+val df1 = addStuffDf.withColumnRenamed(""count"", ""added"")
+val df2 = removedStuffDf.withColumnRenamed(""count"", ""removed"")
+
+df1.as('d1).join(df2.as('d2), Seq(""user"", ""dt""), ""full_outer"").
+  na.fill(0).
+  show
+// +----+----------+-----+-------+
+// |user|        dt|added|removed|
+// +----+----------+-----+-------+
+// |   C|2018-03-25|    0|     10|
+// |   B|2018-03-25|    0|      1|
+// |   B|2018-03-24|    3|      0|
+// |   A|2018-03-22|    5|      0|
+// |   A|2018-03-24|    1|      5|
+// +----+----------+-----+-------+

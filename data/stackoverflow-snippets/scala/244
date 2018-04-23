@@ -1,0 +1,23 @@
+private val pools =
+  // start with a range from 1 to numThreads, which you can essentially
+  // consider a Seq(1, 2, 3, ..., numThreads)
+  ( 1 to numThreads )
+      // now, for each value in that range, pass it to this function and store
+      // the results in another sequence. The function ignores the input value
+      // (which is what the _ means before the arrow) and returns a
+      // new ArrayBlockingQueue[Runnable]. After this step, we will have
+      // a Seq[ArrayBlockingQueue[Runnable]], with a number of elements
+      // equal to numThreads
+      .map( _ => new ArrayBlockingQueue[Runnable]( queuesSize, true ) )
+      // Again, for each of these ArrayBlockingQueues, pass it to this
+      // new function (captured in the q argument) and create a new Seq
+      // of the results. In this case, it is a Seq[ThreadPoolExecutor]
+      // where each of the ThreadPoolExecutor objects has been through the
+      // initialization code below
+      .map( q => new ThreadPoolExecutor( 1, 1, 1, DAYS, q,
+                              new BasicThreadFactory.Builder()
+                                  .namingPattern( ""indexer-%d"" )
+                                  .build(),
+                              ( task, executor ) =>
+                                  if( !executor.isShutdown )
+                                    executor.getQueue.put( task ) ) )

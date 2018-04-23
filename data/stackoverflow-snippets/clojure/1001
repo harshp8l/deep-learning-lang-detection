@@ -1,0 +1,19 @@
+(def data {#{""systems theory"" ""internet""} [1 2 3]
+           #{""systems theory"" ""biology""} [4 5]
+           #{""systems theory""} [6 7 8] })
+
+(def cats (->> data
+               (map (fn [[cats val]]
+                      (->> cats
+                           (map (juxt identity #(hash-map (disj cats %) val)))
+                           (into {}))))
+               (apply merge)))
+
+(get cats ""internet"")
+;=> {#{""systems theory""} [1 2 3]}
+
+(get cats ""biology"")
+;=> {#{""systems theory""} [4 5]}
+
+(get cats ""systems theory"")
+;=> {#{""biology""} [4 5]}

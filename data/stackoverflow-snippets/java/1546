@@ -1,0 +1,94 @@
+package org.kicktipp.ketama;
+
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.zip.CRC32;
+
+public class NginxKetamaConsistentHash
+{
+    private final int                       KETAMA_POINTS   = 160;
+    private final SortedMap<Long, String>   circle          = new TreeMap<>();
+
+    public NginxKetamaConsistentHash ( List<String> nodes )
+    {
+        for (String node : nodes)
+        {
+            addNode(node);
+        }
+    }
+
+    public String get ( String key )
+    {
+        if (circle.isEmpty())
+        {
+            return null;
+        }
+        long hash = getCrc32(key);
+        if (!circle.containsKey(hash))
+        {
+            SortedMap<Long, String> tailMap = circle.tailMap(hash);
+            hash = tailMap.isEmpty() ? circle.firstKey() : tailMap.firstKey();
+        }
+        return circle.get(hash);
+    }
+
+    private void addNode ( String node )
+    {
+        String server = node;
+        String port = """";
+        if (node.contains("":""))
+        {
+            String[] split = node.split("":"", 2);
+            server = split[0];
+            port = split[1];
+        }
+        byte[] prevHash = new byte[4];
+        for (int i = 0; i < KETAMA_POINTS; i++)
+        {
+            CRC32 hash = getBaseHash(server, port);
+            hash.update(prevHash);
+            long value = hash.getValue();
+            circle.put(value, node);
+            prevHash = getPrevHash(value);
+        }
+    }
+
+    private byte[] getPrevHash ( long value )
+    {
+        byte[] array = Arrays.copyOfRange(longToBytes(value), 4, 8);
+        for (int i = 0; i < array.length / 2; i++)
+        {
+            byte temp = array[i];
+            array[i] = array[array.length - i - 1];
+            array[array.length - i - 1] = temp;
+        }
+        return array;
+    }
+
+    private CRC32 getBaseHash ( String server, String port )
+    {
+        CRC32 baseHash = new CRC32();
+        baseHash.update(server.getBytes(StandardCharsets.US_ASCII));
+        baseHash.update(""\0"".getBytes(StandardCharsets.US_ASCII));
+        baseHash.update(port.getBytes(StandardCharsets.US_ASCII));
+        return baseHash;
+    }
+
+    private byte[] longToBytes ( long x )
+    {
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(x);
+        return buffer.array();
+    }
+
+    private long getCrc32 ( final String k )
+    {
+        CRC32 hash = new CRC32();
+        hash.update(k.getBytes());
+        return hash.getValue();
+    }
+}

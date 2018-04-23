@@ -1,0 +1,28 @@
+SELECT count(*)
+FROM 
+(
+    select 
+        min(visit.date_of_visit) first_date,  patient_id, count(*) as patientId
+    FROM
+        visit
+    WHERE
+        month(visit.date_of_visit)=3 
+        AND 
+        year(visit.date_of_visit)=2018
+        AND
+        visit.visit_status='Active'
+    GROUP BY  patient_id
+) as vid
+INNER JOIN  visit b ON
+      B.patient_id    =   vid.patient_id AND
+      B.date_of_visit =   vid.first_date and
+      month(B.date_of_visit)=3         AND 
+      year(B.date_of_visit)=2018       AND
+      B.visit_reason='Active'
+
+INNER JOIN consultation ON 
+    consultation.visit_id   =   B.visit_id
+
+INNER JOIN diagnosis ON 
+    diagnosis.diagnosis_id  =   consultation.diagnosis_id AND
+    diagnosis.diagnosis_name LIKE '%Cardio%'

@@ -1,0 +1,30 @@
+import _winreg
+import usb
+
+REG_PATH = r""SYSTEM\CurrentControlSet\Control\StorageDevicePolicies""
+
+# Equivalent of the _IO('U', 20) constant in the linux kernel.
+USBDEVFS_RESET = ord('U') << (4 * 2) | 20
+
+def set_reg(name, value):
+        try:
+                _winreg.CreateKey(_winreg.HKEY_LOCAL_MACHINE, REG_PATH)
+                print ""1""
+                registry_key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, REG_PATH,0, _winreg.KEY_SET_VALUE)
+                _winreg.SetValueEx(registry_key, name, 0, _winreg.REG_DWORD, value)
+                _winreg.CloseKey(registry_key)
+                return True
+        except:
+                ""oops""
+
+
+name = ""WriteProtect""
+value = 1 # 1 is read only 0 is also writable
+
+x = set_reg(name,value) # make the usb read only or writable
+print x
+
+
+#reseting the usb device
+my_device = usb.core.find()
+my_device.reset() # reset the usb to apply the affect

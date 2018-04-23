@@ -1,0 +1,23 @@
+import java.io.ByteArrayInputStream
+
+import com.sksamuel.avro4s.{AvroInputStream, FromRecord, SchemaFor, ToRecord}
+import org.apache.flink.api.common.serialization.DeserializationSchema
+import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.api.java.typeutils.TypeExtractor
+
+import scala.reflect.ClassTag
+import scala.reflect._
+
+class FidesGenericAvroDeserializer[T: ClassTag](implicit schema: SchemaFor[T], toRecord: ToRecord[T], fromRecord: FromRecord[T])
+  extends DeserializationSchema[T] {
+
+  override def isEndOfStream(nextElement: T): Boolean = false
+
+  override def deserialize(message: Array[Byte]): T = {
+    AvroInputStream.binary[T](new ByteArrayInputStream(message)).iterator.toSeq.head
+  }
+
+  override def getProducedType: TypeInformation[T] =
+    TypeExtractor.getForClass(classTag[T].runtimeClass).asInstanceOf[TypeInformation[T]]
+
+}

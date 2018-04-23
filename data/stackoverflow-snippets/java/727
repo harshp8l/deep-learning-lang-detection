@@ -1,0 +1,263 @@
+import java.io.IOException;
+import java.text.DateFormatSymbols;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class DateUtils {
+
+    static String MONTH="""";
+    static String dateRegEx="""";
+    static Pattern DatePattern; 
+    static HashMap<String, Integer> monthMap = new HashMap<String, Integer>();
+    static {
+        initializeMonthName();
+        dateRegEx=""(?i)(\\d{1,4}|""+MONTH+"")[-|/|.|\\s+]?(\\d{1,2}|""+MONTH+"")[-|/|.|,]?[\\s+]?(\\d{1,4}|""+MONTH+"")[\\s+|\\t|T]?(\\d{0,2}):?(\\d{0,2}):?(\\d{0,2})[.|,]?[\\s]?(\\d{0,3})?([+|-])?(\\d{0,2})[:]?(\\d{0,2})[\\s+]?([A|P]M)?"";
+        DatePattern = Pattern.compile(dateRegEx);
+    }
+
+    private static void initializeMonthName() {
+        String[] monthName=getMonthString(true);
+        for(int i=0;i<12;i++){
+            monthMap.put(monthName[i].toLowerCase(), Integer.valueOf(i+1));
+        }
+
+        monthName=getMonthString(false);
+        for(int i=0;i<12;i++){
+            monthMap.put(monthName[i].toLowerCase(), Integer.valueOf(i+1));
+        }
+
+        Iterator<String> it = monthMap.keySet().iterator();
+        while(it.hasNext()){
+            String month=it.next();
+            if(MONTH.isEmpty()){
+                MONTH=month;
+            }else{
+                MONTH=MONTH + ""|"" + month;
+            }
+        }
+    }
+
+    public static boolean isInteger(Object object) {
+        if(object instanceof Integer) {
+            return true;
+        } else {
+            try{
+                Integer.parseInt(object.toString());
+            }catch(Exception e) {
+                return false;
+            }           
+        } 
+        return true;
+    }
+
+    public static String[] getMonthString(boolean isShort) {
+        DateFormatSymbols dfs = new DateFormatSymbols();
+        if (isShort) {
+         return dfs.getShortMonths();
+        } else {
+            return dfs.getMonths();
+        }
+    }
+
+    public static int getMonthMap(String value) {
+
+        if(monthMap.get(value)==null){
+            return 0;
+        }
+        return monthMap.get(value).intValue();      
+    }
+
+    public static long parseDate(String value){
+
+        Matcher matcher = DatePattern.matcher(value);
+        int Year=0, Month=0, Day=0; 
+        boolean isYearFound=false;
+        boolean isMonthFound=false;
+        boolean isDayFound=false;
+        if(matcher.find()) {            
+            for(int i=1;i<matcher.groupCount();i++){
+                String data=matcher.group(i)==null?"""":matcher.group(i); 
+                if(data.equalsIgnoreCase(""null"")){
+                    data="""";
+                }
+                //System.out.println(String.valueOf(i) + "": "" + data);
+                switch(i){
+                case 1:
+                    if(!data.isEmpty()){
+                        if(isInteger(data)){
+                            Integer YMD = Integer.valueOf(data);
+                            if(YMD==0){
+                                return 0;
+                            }
+                            if(YMD>31){
+                                Year = YMD.intValue();
+                                isYearFound = true;
+                            }else if(YMD>12){
+                                Day = YMD.intValue();
+                                isDayFound = true;
+                            }else {
+                                Month=YMD.intValue();
+                                isMonthFound=true;
+                            }
+                        }else {
+                            Month = getMonthMap(data.toLowerCase());
+                            if(Month==0){
+                                return 0;
+                            }
+                            isMonthFound=true;
+                        }
+                    }else {
+                        return 0;
+                    }
+                    break;
+                case 2:
+                    if(!data.isEmpty()){
+                        if(isInteger(data)){                            
+                            Integer YMD = Integer.valueOf(data);
+                            if(YMD==0){
+                                return 0;
+                            }
+
+                            if(YMD>31){
+                                if(isYearFound) {
+                                    return 0;
+                                }
+                                Year = YMD.intValue();
+                                isYearFound = true;
+                            }else if(YMD>12){
+                                if(isDayFound) {                                    
+                                    return 0;
+                                }
+                                Day = YMD.intValue();
+                                isDayFound = true;
+                            }else {                             
+                                if(isMonthFound){
+                                    Day=YMD.intValue();
+                                    isDayFound=true;
+                                }else{
+                                    Month=YMD.intValue();
+                                    isMonthFound=true;
+                                }
+                            }
+                        }else {
+                            if(isMonthFound){
+                                Day=Month;
+                                isDayFound=true;
+                            }
+                            Month = getMonthMap(data.toLowerCase());
+                            if(Month==0){
+                                return 0;
+                            }
+
+                            isMonthFound=true;
+                        }
+                    }else {
+                        return 0;
+                    }
+                    break;
+                case 3:
+                    if(!data.isEmpty()){
+                        if(isInteger(data)){
+
+                            Integer YMD = Integer.valueOf(data);
+                            if(YMD==0){
+                                return 0;
+                            }
+                            if(YMD>31){
+                                if(isYearFound) {
+                                    return 0;
+                                }
+                                Year = YMD.intValue();
+                                isYearFound = true;
+                            }else if(YMD>12){
+                                if(isDayFound) {
+                                    return 0;
+                                }
+                                Day = YMD.intValue();
+                                isDayFound = true;
+                            }else {
+                                if(isMonthFound){
+                                    Day=YMD.intValue();
+                                    isDayFound=true;                                    
+                                }else {
+                                    Month = YMD.intValue();
+                                    isMonthFound=true;
+                                }
+
+                            }
+                        }else {
+                            if(isMonthFound){
+                                Day=Month;
+                                isDayFound=true;
+                            }
+                            Month = getMonthMap(data.toLowerCase());
+                            if(Month==0){
+                                return 0;
+                            }
+                            isMonthFound=true;
+                        }
+                    }else {
+                        return 0;
+                    }
+                    break;
+                case 4:
+                //hour
+                    break;
+                case 5:
+                //minutes
+                    break;
+                case 6:
+                //second
+                    break;
+                case 7:
+                //millisecond
+                    break;
+                case 8:
+                //time zone +/-
+                    break;
+                case 9:
+                //time zone hour
+                    break;
+                case 10:
+                // time zone minute
+                    break;
+                case 11:
+                //AM/PM
+                    break;
+                }
+
+            }           
+        }
+
+        Calendar c = Calendar.getInstance();
+        c.set(Year, Month-1, Day, 0, 0); 
+        return c.getTime().getTime();
+    }
+
+
+    public static void main(String[] argv) throws IOException {
+
+        long d= DateUtils.parseDate(""16 July 2012"");
+        Date dt = new Date(d);
+        SimpleDateFormat df2 = new SimpleDateFormat(""d MMMM yyyy"");
+        String dateText = df2.format(dt);
+        System.out.println(dateText);
+
+        d= DateUtils.parseDate(""March 20 2012"");
+        dt = new Date(d);
+        dateText = df2.format(dt);
+        System.out.println(dateText);        
+
+        d= DateUtils.parseDate(""2012 March 20"");
+        dt = new Date(d);
+        dateText = df2.format(dt);
+        System.out.println(dateText);  
+    }
+
+}

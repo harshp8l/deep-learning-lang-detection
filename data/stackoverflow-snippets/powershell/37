@@ -1,0 +1,14 @@
+Get-ChildItem -Path ""C:\Users\richm\Desktop\TextFiles"" -File -Recurse |
+    Select-String -Pattern ""expiry-epoch (\d+)"" |
+        ForEach-Object {$threshold = [Math]::Round((Get-Date ((Get-Date).AddDays(30)).ToUniversalTime() -UFormat %s))} {
+            $certEpochTime = $_.Matches.Groups[1].Value
+            $certExpiryTime = (Get-Date ""1/1/1970"").AddSeconds($certEpochTime)
+
+            New-Object -TypeName PsCustomObject|
+                Add-Member -MemberType NoteProperty -Name ExpiresSoon -Value ($certEpochTime -le $threshold)  -PassThru |                
+                Add-Member -MemberType NoteProperty -Name DaysUntilExpiry -Value ([Math]::Round(($certExpiryTime - (Get-Date)).TotalDays, 2))  -PassThru |                
+                Add-Member -MemberType NoteProperty -Name CertExpiryTime -Value $certExpiryTime  -PassThru |
+                Add-Member -MemberType NoteProperty -Name CertEpochTime -Value $certEpochTime -PassThru |
+                Add-Member -MemberType NoteProperty -Name FilePath -Value $_.FileName -PassThru |
+                Add-Member -MemberType NoteProperty -Name LineNumber -Value $_.LineNumber -PassThru
+        } | Sort-Object DaysUntilExpiry | Format-Table -AutoSize

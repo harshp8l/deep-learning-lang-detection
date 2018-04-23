@@ -1,0 +1,28 @@
+with rcte as (
+    select
+        *, New_BranchID_New = BranchID_New, step = 1, DateCreated_New = DateCreated
+        , New_BranchID_New_Path = cast(concat(BranchID_New, '/') as varchar(2000))
+    from 
+        #Temp
+    union all
+    select
+        a.ID, a.BranchID_New, a.BranchID_Old, a.DateCreated, b.BranchID_New, step + 1
+        , b.DateCreated, cast(concat(a.New_BranchID_New_Path, b.BranchID_New, '/') as varchar(2000))
+    from
+        rcte a
+        join #Temp b on a.New_BranchID_New = b.BranchID_Old 
+                        and b.BranchID_New <> b.BranchID_Old 
+                        and a.DateCreated_New < b.DateCreated
+)
+
+select
+    ID, BranchID_New, BranchID_Old, DateCreated, New_BranchID_New, New_BranchID_New_Path
+from (
+    select
+        ID, BranchID_New, BranchID_Old, DateCreated, New_BranchID_New, New_BranchID_New_Path
+        , rn = row_number() over (partition by ID, BranchID_New, BranchID_Old, DateCreated order by step desc)
+    from 
+        rcte
+) t
+where
+    rn = 1

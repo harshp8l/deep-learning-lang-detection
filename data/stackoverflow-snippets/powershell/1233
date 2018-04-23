@@ -1,0 +1,24 @@
+Function Search-SortedArray ([String[]]$SortedArray, [String]$Find, [Switch]$CaseSensitive) {
+    $l = 0; $r = $SortedArray.Count - 1
+    While ($l -le $r) {
+        $m = [int](($l + $r) / 2)
+        Switch ([String]::Compare($find, $SortedArray[$m], !$CaseSensitive)) {
+            -1  {$r = $m - 1}
+            1   {$l = $m + 1}
+            Default {Return $m}
+        }
+    }
+}; Set-Alias Search Search-SortedArray
+
+
+$afile |
+    ? {(Search $bfile $_) -eq $Null} |
+    Set-Content lines_ONLY_in_A.txt
+
+$bfile |
+    ? {(Search $afile $_) -eq $Null} |
+    Set-Content lines_ONLY_in_B.txt
+
+$afile |
+    ? {(Search $bfile $_) -ne $Null} |
+    Set-Content lines_in_BOTH_A_and_B.txt

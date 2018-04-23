@@ -1,0 +1,39 @@
+    package main
+
+    import (
+        ""log""
+        ""time""
+    )
+
+    func main() {
+
+        //make the channel
+        strChan := make(chan string)
+
+        //launch a goroutine to listen on the channel
+        go func(strChan chan string) {
+
+            //loop waiting for input on channel
+            for {
+                select {
+                case myString := <-strChan:
+                    // code to be run when a string is recieved here
+
+                    // switch on actual contents of the string
+                    switch myString {
+                    case ""I'm the expected string"":
+                        log.Println(""got expected string"")
+                    default:
+                        log.Println(""not the string I'm looking for"")
+                    }
+                }
+            }
+        }(strChan)
+
+        //sleep for a bit then send a string on the channel
+        time.Sleep(time.Second * 2)
+        strChan <- ""I'm the expected string""
+
+        //wait again, gives channel response a chance to happen  
+        time.Sleep(time.Second * 2)
+}

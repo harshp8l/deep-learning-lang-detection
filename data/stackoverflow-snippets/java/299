@@ -1,0 +1,59 @@
+    private static PrintWriter mBufferOut;
+    public static Socket clientSocket;
+             public class socketconnection extends AsyncTask<String, Void, String> {
+                Context mcontext;
+                String SERVER_IP;
+                int SocketServerPORT;
+                String connectionmessage;
+
+                public socketconnection(String message, String ipaddress, String port, Socket client,Context m_context) {
+                    connectionmessage = message;
+                    SERVER_IP = ipaddress;
+                    SocketServerPORT = Integer.parseInt(port);
+                    clientSocket = client;
+                    mcontext = m_context;
+                }
+
+
+                @Override
+                protected String doInBackground(String... String) {
+                    String response = null;
+                    try{
+                        clientSocket = new Socket();
+                        clientSocket.connect(new InetSocketAddress(SERVER_IP, SocketServerPORT),10000);
+                        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                        mBufferOut = new PrintWriter(clientSocket.getOutputStream(), true);
+                        mBufferOut.write(connectionmessage);
+                        mBufferOut.flush();
+                        StringBuffer buffer = new StringBuffer();
+                        while (true) {
+                            socketstatus = false;
+                            int ch = in.read();
+                            if ((ch < 0) || (ch == '`')) {
+                                String serverResponse = buffer.toString();
+                                Log.d(""serverResponse"","" "" +serverResponse);
+                                if (serverResponse.equalsIgnoreCase("""") || serverResponse == null || serverResponse.isEmpty()){    
+                              //do your stuff
+                                    break;
+                                }else {
+                                    // do your stuff with the response you recieve
+                                    buffer.delete(0, buffer.length());
+
+                                }
+                            } else {
+                                buffer.append((char) ch);
+                            }
+                        }
+
+                    } catch(SocketTimeoutException s) {
+                        Log.d(""Socket_timed_out"","""" +s);
+                    }  catch (UnknownHostException e) {
+                        Log.d(""UnknownHostException"","""" +e.getLocalizedMessage());
+                    } catch(IOException e) {
+                        Log.d(""IOException"","""" +e);
+                    }catch (NullPointerException e){
+                        Log.d(""NullPointerException"","""" +e);
+                    }
+                    return null;
+                }
+    }

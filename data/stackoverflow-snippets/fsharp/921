@@ -1,0 +1,30 @@
+let rec fol f a = function
+      | []    -> a
+      | x::xs -> fol f (f a x) xs;;
+
+let rec folB f xs a =
+      match xs with
+      | []    -> a
+      | y::ys -> f y (folB f ys a);;
+
+let compareThemFor n =
+    let testList = List.replicate n [1;2;3]
+    let count = ref 0
+
+    let myCons x xs =
+        incr count
+        x :: xs
+
+    let myApp ys =
+        List.foldBack myCons ys
+
+    let mergelist = fol myApp []
+    mergelist testList |> ignore
+    let countA = !count
+
+    count := 0
+    let mergelist2 xs = folB myApp xs []
+    mergelist2 testList |> ignore
+    let countB = !count
+
+    (countA, countB)

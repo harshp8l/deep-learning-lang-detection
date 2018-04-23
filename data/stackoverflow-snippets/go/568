@@ -1,0 +1,40 @@
+// dummyLog could be used to log some information using a human readable timestamp and the benefits of `fmt.Sprintf`
+func dummyLog(format string, a ...interface{}) (n int, err error) {
+    prefix := fmt.Sprintf(""[%v] "", time.Now())
+    message := fmt.Sprintf(format, a...)
+    return fmt.Printf(""%s%s\n"", prefix, message)
+}
+
+// newContext is providing a brand new context with a upper bound timeout
+func newContext(timeoutUpperBound time.Duration) (context.Context, context.CancelFunc) {
+    ctx, cancel := context.WithTimeout(context.Background(), timeoutUpperBound)
+    deadline, ok := ctx.Deadline()
+    dummyLog(""The context deadline is set to %s is it still valid? %v"", deadline, ok)
+    return ctx, cancel
+}
+
+// schedule could be used to schedule arbitrary functions with a recurring interval
+func schedule(f func(ctx context.Context), recurring time.Duration) chan struct{} {
+    ticker := time.NewTicker(recurring)
+    quit := make(chan struct{})
+    go func(inFunc func(ctx context.Context)) {
+        for {
+            select {
+            case <-ticker.C:
+                dummyLog(""Ticked in the scheduler"")
+                // simulate the ""killing"" of ""inFunc"" when it takes too long
+                go func(recurring time.Duration) {
+                    inCtx, cancel := newContext(recurring)
+                    defer cancel()
+                    inFunc(inCtx)
+                }(recurring)
+            case <-quit:
+                dummyLog(""Stopping the scheduler"")
+                ticker.Stop()
+                return
+            }
+        }
+    }(f)
+
+    return quit
+}

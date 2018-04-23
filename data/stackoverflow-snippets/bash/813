@@ -1,0 +1,20 @@
+# Add following 4 lines:
+_passback() { while [ 1 -lt $# ]; do printf '%q=%q;' ""$1"" ""${!1}""; shift; done; return $1; }
+passback() { _passback ""$@"" ""$?""; }
+_capture() { { out=""$(""${@:2}"" 3<&-; ""$2_"" >&3)""; ret=$?; printf ""%q=%q;"" ""$1"" ""$out""; } 3>&1; echo ""(exit $ret)""; }
+capture() { eval ""$(_capture ""$@"")""; }
+
+e=2
+
+# Add following line, called ""Annotation""
+function test1_() { passback e; }
+function test1() {
+  e=4
+  echo ""hello""
+}
+
+# Change following line to:
+capture ret test1 
+
+echo ""$ret""
+echo ""$e""

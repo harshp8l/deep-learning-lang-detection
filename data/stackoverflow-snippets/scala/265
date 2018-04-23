@@ -1,0 +1,30 @@
+type Results = List[(Operation[X], X) forSome { type X }]
+trait Operation[Out] { 
+  type Result = Out
+  def apply(results: Results): Out
+}
+
+class SomeOp extends Operation[String] {
+   def apply(results: Results) = ""foo""
+}
+
+class OtherOp extends Operation[String] {
+   def apply(results: Results) = results
+     .collectFirst { case (_: SomeOp, x: String) => x } 
+     .getOrElse("""") + ""bar""
+}
+
+def applyAll(
+  ops: List[Operation[_]], 
+  results: Results = Nil
+): Results = ops match {
+  case Nil => results.reverse
+  case head :: tail => {
+    val newResult: (Operation[Y], Y) forSome { type Y } = head match {
+      case op: Operation[t] => (op -> op(results))
+    } 
+    applyAll(tail, newResult :: results)
+  }
+}
+
+println(applyAll(List(new SomeOp, new OtherOp)).last._2)

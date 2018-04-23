@@ -1,0 +1,26 @@
+import org.apache.spark.sql.DataFrame 
+import org.apache.spark.sql.functions._ 
+import org.apache.spark.sql.types._
+
+// Convenience function for turning JSON strings into DataFrames
+def jsonToDataFrame(json: String, schema: StructType = null): 
+DataFrame = {
+    val reader = spark.read
+    Option(schema).foreach(reader.schema)   
+    reader.json(sc.parallelize(Array(json))) 
+}
+
+// Using a struct
+val schema = new StructType().add(""a"", new StructType().add(""b"", IntegerType))
+
+// call the function passing the sample JSON data and the schema as parameter
+val json_df = jsonToDataFrame(""""""
+   {
+     ""a"": {
+        ""b"": 1
+     }
+   } """""", schema)
+
+// now you can access your json fields
+val b_value = json_df.select(""a.b"")
+b_value.show()

@@ -1,0 +1,21 @@
+select id, ref_month,
+       (value +
+        (case when lag(ref_month) over (partition by id order by ref_month) > date_add(ref_month, interval -4 month)
+              then lag(value, 1) over (partition by id order by ref_month)
+              else 0
+         end) +
+        (case when lag(ref_month, 2) over (partition by id order by ref_month) > date_add(ref_month, interval -4 month)
+              then lag(value, 2) over (partition by id order by ref_month)
+              else 0
+         end) +
+        (case when lag(ref_month, 3) over (partition by id order by ref_month) > date_add(ref_month, interval -4 month)
+              then lag(value, 3) over (partition by id order by ref_month)
+              else 0
+         end) +
+        (case when lag(ref_month, 4) over (partition by id order by ref_month) > date_add(ref_month, interval -4 month)
+              then lag(value, 4) over (partition by id order by ref_month)
+              else 0
+         end)
+       ) / 
+       least(5, date_diff(min(ref_month) over (partition by id), ref_month))
+from dummy_data;

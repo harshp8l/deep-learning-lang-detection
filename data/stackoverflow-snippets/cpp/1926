@@ -1,0 +1,36 @@
+INPUT createScanCodeEvent(WORD scancode, bool isDown)
+{
+    INPUT input = {};
+    input.type = INPUT_KEYBOARD;
+    input.ki.wVk = 0;
+    input.ki.wScan = scancode;
+    input.ki.dwFlags = (isDown ? 0 : KEYEVENTF_KEYUP) | KEYEVENTF_SCANCODE;
+    input.ki.time = 0;
+    input.ki.dwExtraInfo = 0;
+    return input;
+}
+
+int inject()
+{
+    std::vector<INPUT> keystroke;
+    const WORD SCANCODE_ALT = 0x38;
+    const WORD SCANCODE_NUMPAD_1 = 0x4f;
+    const WORD SCANCODE_NUMPAD_2 = 0x50;
+
+    keystroke.push_back(createScanCodeEvent(SCANCODE_ALT, true) );
+
+    keystroke.push_back(createScanCodeEvent(SCANCODE_NUMPAD_2, true));
+    keystroke.push_back(createScanCodeEvent(SCANCODE_NUMPAD_2, false));
+
+    keystroke.push_back(createScanCodeEvent(SCANCODE_NUMPAD_1, true));
+    keystroke.push_back(createScanCodeEvent(SCANCODE_NUMPAD_1, false));
+
+    keystroke.push_back(createScanCodeEvent(SCANCODE_NUMPAD_2, true));
+    keystroke.push_back(createScanCodeEvent(SCANCODE_NUMPAD_2, false));
+
+    keystroke.push_back(createScanCodeEvent(SCANCODE_ALT, false));
+
+    SendInput(keystroke.size(), keystroke.data(), sizeof(keystroke[0]));
+
+    return 0;
+}

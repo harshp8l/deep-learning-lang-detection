@@ -1,0 +1,19 @@
+def func_mask_vectorized(data, (x_0, y_0)):
+    # Leverage broadcasting with open meshes to create the squared distances/ids
+    m,n = data.shape
+    Y,X = np.ogrid[:m,:n]
+    ids = (X-x_0)**2 + (Y-y_0)**2
+
+    # Setup mask that will help us retrieve the unique ""compressed"" IDs
+    # (similar to what return_inverse does).
+    # This is done by setting 1s at ids places and then using that mask to 
+    # assign range covered array, in effect setting up the unique compress. IDs.
+    mask = np.zeros(ids.max()+1, dtype=bool)
+    mask[ids] = 1    
+    id_arr = mask.astype(int)
+    id_arr[mask] = np.arange(mask.sum())
+    r_out = id_arr[ids]
+
+    # Finally extract out the unique ones among the IDs & get their sqrt values
+    float_values_out = np.sqrt(np.flatnonzero(mask))
+    return float_values_out, r_out

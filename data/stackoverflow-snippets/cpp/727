@@ -1,0 +1,29 @@
+void IntervalMapEstimator::extract_relevant_points_multithread_with_localvector(std::vector<Point3D>&  relevant_points ,std::vector<Point3D>& pointcloud, doubleIE cell_min_angle_sensor_rot, doubleIE cell_max_angle_sensor_rot)
+{
+#pragma omp parallel num_threads(5)
+    {
+        std::vector<Point3D> local_relevant_points;
+
+        #pragma omp for
+            for(int i = 0; i < pointcloud.size(); i++) {
+
+                // Check whether the cell is between the 2nd and 3rd quadrant (--> e.g. -170 to 170°)
+                if (cell_min_angle_sensor_rot < 0 && cell_max_angle_sensor_rot >= 0 && abs(cell_min_angle_sensor_rot) > M_PI/2 && abs(cell_max_angle_sensor_rot) > M_PI/2) {
+                    // Point must be smaller than the minimum angle and bigger than the max angle (e.g. min-angle: -1.5 max-angle: 1.5 point angle bigger than 1.5 or smaller than -1.5)
+                    if (pointcloud[i].pol_sensor_rot.phi <= cell_min_angle_sensor_rot || pointcloud[i].pol_sensor_rot.phi >= cell_max_angle_sensor_rot ) {
+                        local_relevant_points.push_back(pointcloud[i]);
+                    }
+                } else {
+                     if (pointcloud[i].pol_sensor_rot.phi >= cell_min_angle_sensor_rot && pointcloud[i].pol_sensor_rot.phi <= cell_max_angle_sensor_rot ) {
+                         local_relevant_points.push_back(pointcloud[i]);
+                     }
+                }
+            }
+
+        #pragma omp critical
+            {
+                if(!local_relevant_points.empty())
+                    relevant_points.insert (relevant_points.end (),local_relevant_points.begin (),local_relevant_points.end ());
+            }
+    }
+}

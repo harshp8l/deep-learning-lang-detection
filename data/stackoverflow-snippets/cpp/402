@@ -1,0 +1,34 @@
+#include <Rcpp.h>
+#include <memory>
+#include <string>
+
+// Stuff to wrap:
+
+using PtrClass = std::unique_ptr<std::string>;
+
+PtrClass createClass() { return PtrClass{new std::string(""boo"")}; }
+
+// ---
+
+using ShPtrClass = std::shared_ptr<PtrClass::element_type>;
+
+class PtrClassOwner {
+public:
+    ShPtrClass shPtrClass;
+    PtrClassOwner(PtrClass ptr) : shPtrClass(ptr.release()) {}
+};
+
+PtrClassOwner createClassWrapper() { return PtrClassOwner{createClass()}; }
+
+std::string getString(PtrClassOwner const& ptr) {
+    return *(ptr.shPtrClass);
+}
+
+RCPP_EXPOSED_CLASS(PtrClassOwner);
+
+RCPP_MODULE(Class){
+    using namespace Rcpp;
+    class_<PtrClassOwner>(""PtrClass"");
+    function(""createClass"", &createClassWrapper, ""createClass method"");
+    function(""getString"", &getString, ""getString method"");
+}

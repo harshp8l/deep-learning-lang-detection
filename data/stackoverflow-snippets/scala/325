@@ -1,0 +1,25 @@
+trait HttpMockSupport {
+  this: MockFactory =>
+  val httpService = mock[HttpService]
+
+  def prettyPost[In, Out]: MockFunction4[String, In, Encoder[In], Decoder[Out], Future[Out]] = {
+    toMockFunction4(httpService.post[In, Out](_: String, _: In)(_: Encoder[In], _: Decoder[Out]))
+  }
+}
+
+class AClassThatNeedsHttpServiceMocking extends FreeSpec with Matchers with MockFactory with HttpMockSupport {
+
+  ""HttpService should post"" in {
+
+    val url = ""http://localhost/1""
+    val input = ""input""
+    implicit val encoder: Encoder[String] = new Encoder[String] {}
+    implicit val decoder: Decoder[String] = new Decoder[String] {}
+
+    prettyPost[String, String]
+      .expects(url, input, encoder, decoder)
+      .returns(Future.successful(""result""))
+
+    httpService.post(url, input)
+  }
+}

@@ -1,0 +1,19 @@
+let createSqlCommand cmd connection =
+  let sql = new SqlCommand(cmd.Query, connection)
+  sql.CommandTimeout <- cmd.Timeout
+  for name, par in cmd.Parameters do
+    let sqlTyp, value =
+      match par with
+      | Int n -> SqlDbType.Int, box n
+      | VarChar s -> SqlDbType.VarChar, box s
+      | Text s -> SqlDbType.Text, box s
+      | DateTime dt -> SqlDbType.DateTime, box dt
+    sql.Parameters.Add(name, sqlTyp).Value <- value
+  for name, par in cmd.OutParameters do
+    let sqlParameter =
+      match par with
+      | OutInt -> new SqlParameter(name, SqlDbType.Int)
+      | OutVarChar len -> new SqlParameter(name, SqlDbType.VarChar, len)
+    sqlParameter.Direction <- ParameterDirection.Output
+    sql.Parameters.Add sqlParameter |> ignore
+  sql

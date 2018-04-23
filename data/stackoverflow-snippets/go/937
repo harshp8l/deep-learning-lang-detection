@@ -1,0 +1,45 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+)
+
+type Obj struct {
+    Name string   `json:""name""`
+    Key2 []string `json:""key2""`
+}
+
+func (o *Obj) UnmarshalJSON(b []byte) error {
+    var name string
+    if err := json.Unmarshal(b, &name); err == nil {
+        *o = Obj{}
+        o.Name = name
+        return nil
+    }
+
+    type Obj2 Obj
+    var o2 Obj2
+    if err := json.Unmarshal(b, &o2); err != nil {
+        return err
+    }
+    *o = Obj(o2)
+    return nil
+}
+
+const payload = `[
+    {""name"": ""obj1"", ""key2"": [""a"", ""b""]},
+    ""obj2"",
+    {""name"": ""obj3""}
+]
+`
+
+func main() {
+    var objs []*Obj
+    if err := json.Unmarshal([]byte(payload), &objs); err != nil {
+        panic(err)
+    }
+    for _, obj := range objs {
+        fmt.Printf(""Name:%v, Key2:%v\n"", obj.Name, obj.Key2)
+    }
+}

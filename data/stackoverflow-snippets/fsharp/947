@@ -1,0 +1,62 @@
+namespace FileWatcher
+open System
+open System.Reflection
+open System.ComponentModel
+open System.Configuration.Install
+open System.ServiceProcess
+open System.IO
+open System.Configuration
+
+type FileWatcherService() =
+    inherit ServiceBase(ServiceName = ""FileWatcher"")
+
+    let createEvent = fun (args: FileSystemEventArgs) -> 
+                    printf ""%s has been %s\n"" args.FullPath (args.ChangeType.ToString().ToLower()) 
+                    |> ignore
+
+    override x.OnStart(args) =
+        let fsw = new FileSystemWatcher ()
+        fsw.Path                    <- ""C:\TEMP""
+        fsw.NotifyFilter            <- NotifyFilters.LastAccess ||| NotifyFilters.LastWrite ||| NotifyFilters.FileName ||| NotifyFilters.DirectoryName ||| NotifyFilters.CreationTime
+        fsw.Filter                  <- ""*.txt""
+        fsw.EnableRaisingEvents     <- true
+        fsw.IncludeSubdirectories   <- true
+        fsw.Created.Add(createEvent)
+
+    override x.OnStop() =
+        printf ""Stopping the FileWatcher service""
+
+[<RunInstaller(true)>]
+type public FSharpServiceInstaller() =
+    inherit Installer()
+    do 
+
+        // Specify properties of the hosting process
+        new ServiceProcessInstaller
+            (Account = ServiceAccount.LocalSystem)
+        |> base.Installers.Add |> ignore
+
+        // Specify properties of the service running inside the process
+        new ServiceInstaller
+            ( DisplayName = ""AAA FileWatcher Service"", 
+            ServiceName = ""AAAFileWatcherService"",
+            StartType = ServiceStartMode.Automatic )
+        |> base.Installers.Add |> ignore
+
+
+module Program =
+    [<EntryPoint>]
+    let main args =
+
+        printf ""starting the application...\n""
+
+
+        if Environment.UserInteractive then
+            let parameter = String.Concat(args);
+            match parameter with
+            | ""-i"" -> ManagedInstallerClass.InstallHelper [| Assembly.GetExecutingAssembly().Location |]
+            | ""-u"" -> ManagedInstallerClass.InstallHelper [| ""/u""; Assembly.GetExecutingAssembly().Location |]
+            | _ -> printf ""Not allowed!\n"" 
+        else 
+            ServiceBase.Run [| new FileWatcherService() :> ServiceBase |];
+        0

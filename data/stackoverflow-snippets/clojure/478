@@ -1,0 +1,79 @@
+commit 3e6564a72dc5e175fc65c9767364d05af34e4968
+Author: David Nolen <david.nolen@gmail.com>
+Date:   Mon Feb 17 14:46:10 2014 -0500
+
+    CLJS-760: break apart IAtom protocol into IReset & ISwap
+
+diff --git a/src/cljs/cljs/core.cljs b/src/cljs/cljs/core.cljs
+index 25858084..e4df4420 100644
+--- a/src/cljs/cljs/core.cljs
++++ b/src/cljs/cljs/core.cljs
+@@ -7061,9 +7061,12 @@ reduces them without incurring seq initialization""
+
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Reference Types ;;;;;;;;;;;;;;;;
+
+-(defprotocol IAtom
++(defprotocol IReset
+   (-reset! [o new-value]))
+
++(defprotocol ISwap
++  (-swap! [o f] [o f a] [o f a b] [o f a b xs]))
++
+ (deftype Atom [state meta validator watches]
+   IEquiv
+   (-equiv [o other] (identical? o other))
+@@ -7124,21 +7127,33 @@ reduces them without incurring seq initialization""
+         new-value))
+     (-reset! a new-value)))
+
++;; generic to all refs
++;; (but currently hard-coded to atom!)
++(defn deref
++  [o]
++  (-deref o))
++
+ (defn swap!
+   ""Atomically swaps the value of atom to be:
+   (apply f current-value-of-atom args). Note that f may be called
+   multiple times, and thus should be free of side effects.  Returns
+   the value that was swapped in.""
+   ([a f]
+-     (reset! a (f (.-state a))))
++     (if (instance? Atom a)
++       (reset! a (f (.-state a)))
++       (-swap! a (deref a))))
+   ([a f x]
+-     (reset! a (f (.-state a) x)))
++     (if (instance? Atom a)
++       (reset! a (f (.-state a) x))
++       (-swap! a (f (deref a) x))))
+   ([a f x y]
+-     (reset! a (f (.-state a) x y)))
+-  ([a f x y z]
+-     (reset! a (f (.-state a) x y z)))
+-  ([a f x y z & more]
+-     (reset! a (apply f (.-state a) x y z more))))
++     (if (instance? Atom a)
++       (reset! a (f (.-state a) x y))
++       (-swap! a (f (deref a) x y))))
++  ([a f x y & more]
++     (if (instance? Atom a)
++       (reset! a (apply f (.-state a) x y more))
++       (-swap! a (f (deref a) x y more)))))
+
+ (defn compare-and-set!
+   ""Atomically sets the value of atom to newval if and only if the
+@@ -7149,13 +7164,6 @@ reduces them without incurring seq initialization""
+     (do (reset! a newval) true)
+     false))
+
+-;; generic to all refs
+-;; (but currently hard-coded to atom!)
+-
+-(defn deref
+-  [o]
+-  (-deref o))
+-
+ (defn set-validator!
+   ""Sets the validator-fn for an atom. validator-fn must be nil or a
+   side-effect-free fn of one argument, which will be passed the intended

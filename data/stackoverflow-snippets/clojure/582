@@ -1,0 +1,18 @@
+(defn find-nested
+  ""Finds all values in a coll consisting of maps and vectors.
+
+  All values are returned in a tree structure:
+  i.e, in your problem it returns (20 25) if you call it with
+  (find-nested ['agg', 'agg1', 'some_nested_agg', 'keyWeWant2'] 
+  my-data).
+
+  Returns nil if not found.""
+  [ks c]
+  (let [k (first ks)]
+    (cond (nil? k)    c
+          (map? c)    (find-nested (rest ks) (get c k))
+          (vector? c) (if-let [e (-> c first (get k))]
+                        (if (string? e) e ; do not map over chars in str
+                            (map (partial find-nested (rest ks)) e))
+                        (find-nested ks (into [] (rest c)))) ; create vec again
+          :else       nil)))

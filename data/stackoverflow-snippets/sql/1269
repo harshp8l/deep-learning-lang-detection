@@ -1,0 +1,73 @@
+set nocount on;
+declare @S table (id int identity primary key, val varchar(20));
+insert into @S (val) values 
+       ('Karnataka')
+     , ('Tamil Nadu');
+select * from @S s order by s.val;  
+-- table variable does not have declared foreign key relationships
+declare @C table (id int identity primary key, val varchar(20), fkState int);
+insert into @C (val, fkState) values
+       ('Chennai', 1)
+     , ('Bengaluru', 1)
+     , ('Mysoe', 1)
+     , ('Lucknow', 2);
+select c.val as city, s.val  as state
+from @C c 
+join @S s
+  on s.id = c.fkState
+order by s.val, c.val;
+declare @L table (city varchar(20) not null, state varchar(20) not null, primary key (city, state));
+insert into @L values
+       ('Chennai', 'Karnataka')
+     , ('Barsel', 'Karnataka')
+     , ('South', 'Penn');
+insert into @S 
+select distinct l.state
+from @L l 
+where not exists ( select 1 
+                   from @S s 
+                   where s.val = l.state 
+                 ); 
+select * from @S s order by s.val; 
+insert into @C (val, fkState) 
+select city, s.id 
+from @L l 
+join @S s 
+  on s.val = l.state 
+where not exists ( select 1 
+                   from @C c 
+                   where c.val = l.city 
+                   and c.fkState = s.id
+                 );
+select c.val as city, s.val  as state 
+from @C c 
+join @S s
+  on s.id = c.fkState
+order by s.val, c.val;
+
+id          val
+----------- --------------------
+1           Karnataka
+2           Tamil Nadu
+
+city                 state
+-------------------- --------------------
+Bengaluru            Karnataka
+Chennai              Karnataka
+Mysoe                Karnataka
+Lucknow              Tamil Nadu
+
+id          val
+----------- --------------------
+1           Karnataka
+3           Penn
+2           Tamil Nadu
+
+city                 state
+-------------------- --------------------
+Barsel               Karnataka
+Bengaluru            Karnataka
+Chennai              Karnataka
+Mysoe                Karnataka
+South                Penn
+Lucknow              Tamil Nadu

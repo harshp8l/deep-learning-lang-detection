@@ -1,0 +1,66 @@
+import io.circe.syntax._
+import io.circe._
+import io.circe.generic.semiauto._
+import io.circe.jawn._
+
+object objs{
+  case class MachinePayload(
+    client    : String,
+    target    : String,
+    function  : String,
+    arg       : Arg
+  )
+  object MachinePayload{
+    implicit def jsonDecoder : Decoder[MachinePayload] = deriveDecoder
+    implicit def jsonEncoder : Encoder[MachinePayload] = deriveEncoder
+  }
+
+  case class Arg(
+    doer : String,
+    path : ArgPath
+  )
+  object Arg{
+    implicit def jsonDecoder : Decoder[Arg] = deriveDecoder
+    implicit def jsonEncoder : Encoder[Arg] = deriveEncoder
+  }
+
+  case class ArgPath(
+    application : String,
+    env         : String,
+    machines    : List[Machine]
+  )
+  object ArgPath{
+    implicit def jsonDecoder : Decoder[ArgPath] = deriveDecoder
+    implicit def jsonEncoder : Encoder[ArgPath] = deriveEncoder
+  }
+
+  case class Machine(
+    id       : Long,
+    name     : String,
+    function : String
+  )
+  object Machine{
+    implicit def jsonDecoder : Decoder[Machine] = deriveDecoder
+    implicit def jsonEncoder : Encoder[Machine] = deriveEncoder
+  }
+}
+
+import objs._
+
+val test = MachinePayload(
+  client = ""some-client"",
+  target = ""some-target"",
+  function = ""some-function"",
+  arg = Arg(
+    doer = ""machine"",
+    path = ArgPath(
+      application = ""some-application"",
+      env = ""some-env"",
+      machines = List(Machine(id = 1, name = ""A"", function = ""Do Something""), Machine(id = 2, name = ""B"", function = ""Do More""))
+    )
+  )
+)
+
+val strJson = test.asJson.spaces2
+
+parse(strJson).flatMap(_.as[MachinePayload])

@@ -1,0 +1,28 @@
+object TelemetryHub {
+    /** This is the message external sensors could use to stream the data in to the hub **/
+    case class FreshData(eventId: UUID, data: Int)
+    def props = Props(new TelemetryHub)
+}
+
+class TelemetryHub extends Actor {
+
+  type EventID = UUID
+
+  private var subscriptions =
+    mutable.Map.empty[EventID, Set[ActorRef]].withDefault(_ => Set())
+
+  override def receive = {
+    /** we can use the sender ref to add the requesting actor to the set of subscribers **/
+    case SubscribeTo(topic) => subscriptions(topic) = subscriptions(topic) + sender()
+
+    /** Now when the hub receives data, it can send a message to all subscribers
+     * of that particular topic
+     */
+    case FreshData(incomingDataTopicID, data) =>
+      subscriptions.find { case (topic, _) => topic == incomingDataTopicID } match {
+        case Some((_, subscribers)) => subscribers foreach { _ ! EventData(data) }
+        case None => println(""This topic was not yet subscribed to"")
+      }
+  }
+
+}

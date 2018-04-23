@@ -1,0 +1,31 @@
+cmake_minimum_required(VERSION 2.8)
+
+add_definitions(-std=c++11)
+
+find_package(PkgConfig REQUIRED)
+
+pkg_check_modules(POCKETSPHINX REQUIRED pocketsphinx)
+pkg_check_modules(SPHINXBASE REQUIRED sphinxbase)
+
+message(STATUS ""SPHINXBASE_LIBRARIES => "" ""${SPHINXBASE_LIBRARIES}"")
+message(STATUS ""POCKETSPHINX_LIBRARIES => "" ""${POCKETSPHINX_LIBRARIES}"")
+message(STATUS ""POCKETSPHINX_INCLUDE_DIRS => "" ""${POCKETSPHINX_INCLUDE_DIRS}"")
+message(STATUS ""SPHINXBASE_INCLUDE_DIRS => "" ""${SPHINXBASE_INCLUDE_DIRS}"")
+
+set(
+  your_pocketsphinx_app_src
+  your_pocketsphinx_app.cpp
+  ...
+)
+
+add_executable(your_pocketsphinx_app your_pocketsphinx_app.cpp)
+  set_property(TARGET your_pocketsphinx_app PROPERTY CXX_STANDARD 11)  
+  target_include_directories(your_pocketsphinx_app PUBLIC ${POCKETSPHINX_INCLUDE_DIRS})
+  target_include_directories(your_pocketsphinx_app PUBLIC ${SPHINXBASE_INCLUDE_DIRS})
+  target_compile_options(your_pocketsphinx_app PUBLIC ${POCKETSPHINX_CFLAGS_OTHER})
+  target_compile_options(your_pocketsphinx_app PUBLIC ${SPHINXBASE_CFLAGS_OTHER})
+  target_link_libraries(your_pocketsphinx_app ${SPHINXBASE_LIBRARIES})
+  target_link_libraries(your_pocketsphinx_app ${POCKETSPHINX_LIBRARIES})
+
+# Binary to be installed.
+install(TARGETS your_pocketsphinx_app DESTINATION bin)

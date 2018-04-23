@@ -1,0 +1,79 @@
+import numpy as np
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
+import xgboost as xgb
+max_float_digits = 4
+
+
+def rounded(val):
+    return '{:.{}f}'.format(val, max_float_digits)
+
+
+class HyperOptTuner(object):
+    """"""
+    Tune my parameters!
+    """"""
+    def __init__(self, dtrain, dvalid, early_stopping=200, max_evals=200):
+        self.counter = 0
+        self.dtrain = dtrain
+        self.dvalid = dvalid
+        self.early_stopping = early_stopping
+        self.max_evals = max_evals
+        self.tuned_params = None
+
+
+    def score(self, params):
+        self.counter += 1
+        # Edit params
+        print(""Iteration {}/{}"".format(self.counter, self.max_evals))
+        num_round = int(params['n_estimators'])
+        del params['n_estimators']
+
+        watchlist = [(self.dtrain, 'train'), (self.dvalid, 'eval')]
+        model = xgb.train(params, self.dtrain, num_round, evals=watchlist, early_stopping_rounds=self.early_stopping,
+                          verbose_eval=False)
+        n_epoach = model.best_ntree_limit
+        score = model.best_score
+        params['n_estimators'] = n_epoach
+        params = dict([(key, rounded(params[key]))
+                       if type(params[key]) == float
+                       else (key, params[key])
+                       for key in params])
+
+        print ""Trained with: ""
+        print params
+        print ""\tScore {0}\n"".format(score)
+        return {'loss': 1 - score, 'status': STATUS_OK, 'params': params}
+
+    def optimize(self, trials):
+        space = {
+            'n_estimators': 2000,  # hp.quniform('n_estimators', 10, 1000, 10),
+            'eta': hp.quniform('eta', 0.025, 0.3, 0.025),
+            'max_depth': hp.choice('max_depth', np.arange(1, 9, dtype=int)),
+            'min_child_weight': hp.choice('min_child_weight', np.arange(1, 10, dtype=int)),
+            'subsample': hp.quniform('subsample', 0.3, 1, 0.05),
+            'gamma': hp.quniform('gamma', 0.1, 20, 0.1),
+            'colsample_bytree': hp.quniform('colsample_bytree', 0.5, 1, 0.25),
+            'eval_metric': 'map',
+            'objective': 'rank:pairwise',
+            'silent': 1
+        }
+
+        fmin(self.score, space, algo=tpe.suggest, trials=trials, max_evals=self.max_evals),
+
+        min_loss = 1
+        min_params = {}
+        for trial in trials.trials:
+            tmp_loss, tmp_params = trial['result']['loss'], trial['result']['params']
+            if tmp_loss < min_loss:
+                min_loss, min_params = tmp_loss, tmp_params
+
+        print(""Winning params:"")
+        print(min_params)
+        print ""\tScore: {}"".format(1-min_loss)
+        self.tuned_params = min_params
+
+    def tune(self):
+        print ""Tuning...\n""
+        # Trials object where the history of search will be stored
+        trials = Trials()
+        self.optimize(trials)

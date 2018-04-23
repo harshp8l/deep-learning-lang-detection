@@ -1,0 +1,66 @@
+#include <stdexcept>
+
+class matrix
+{
+public:
+    matrix(int rows, int columns) :
+        mRows(rows), mColumns(columns), mP(NULL)
+    {
+        mP = new double[mRows * mColumns];
+        for (int i = 0; i < mRows * mColumns; i++)
+            mP[i] = 0.0;
+    }
+
+    matrix(const matrix& other) :
+        mRows(other.mRows), mColumns(other.mColumns), mP(NULL)
+    {
+        mP = new double[mRows * mColumns];
+        for (int i = 0; i < mRows * mColumns; i++)
+            mP[i] = other.mP[i];
+    }
+
+    ~matrix()
+    {
+        delete[] mP;
+    }
+
+    const double* operator[] (int row) const {
+        return &mP[row * mColumns];
+    }
+
+    double* operator[] (int row) {
+        return &mP[row * mColumns];
+    }
+
+    matrix& operator=(const matrix& other) {
+        if (this == &other) return *this;
+        if ((mRows != other.mRows) || (mColumns != other.mColumns)) throw std::invalid_argument( ""dimensions don't match"" );
+        for (int r = 0; r < mRows; r++) {
+            for (int c = 0; c < mColumns; c++) {
+                (*this)[r][c] = other[r][c];
+            }
+        }
+        return *this;
+    }
+
+    matrix& operator+=(const matrix& other) {
+        if ((mRows != other.mRows) || (mColumns != other.mColumns)) throw std::invalid_argument( ""dimensions don't match"" );
+        for (int r = 0; r < mRows; r++) {
+            for (int c = 0; c < mColumns; c++) {
+                (*this)[r][c] += other[r][c];
+            }
+        }
+        return *this;
+    }
+
+private:
+    int mRows;
+    int mColumns;
+    double *mP;
+};
+
+inline matrix operator+(matrix lhs, const matrix& rhs)
+{
+    lhs += rhs;
+    return lhs;
+}

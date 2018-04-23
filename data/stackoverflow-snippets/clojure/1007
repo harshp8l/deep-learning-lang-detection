@@ -1,0 +1,26 @@
+(defn remove-first [coll e]
+  (if-let [pos (and (seq coll) (.indexOf coll e))]
+      (vec (concat 
+            (subvec coll 0 pos) 
+            (subvec coll (inc pos))))
+      coll))
+
+(defn best [coll f]
+  (reduce f
+          (first coll)
+          (rest coll)))
+
+(defn select-sort 
+  ([coll] (select-sort coll min))
+  ([coll fmin]
+   (loop [sorted (transient []) c (vec coll)]
+     (if (seq c)
+       (let [n (best c fmin)]
+         (recur (conj! sorted n) (remove-first c n)))
+       (persistent! sorted)))))
+
+ => (select-sort [3 5 2])
+ => [2 3 5]
+
+ => (select-sort [3 5 2] max)
+ => [5 3 2]

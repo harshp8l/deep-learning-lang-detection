@@ -1,0 +1,115 @@
+// Con/Destructors
+DataReceiver::DataReceiver(QObject *parent) :
+    QObject(parent),
+    mTcpServer(new QTcpServer(this)),
+    mSourceAddress(""127.0.0.1""),
+    mSourcePort(51470),
+    mData(new QVector<float>)
+{
+    for( unsigned int i = 0; i < mDataSize; i++)
+        mData->append(.0);
+
+    connect(mTcpServer, SIGNAL(newConnection()), this, SLOT(onNewConnection()));
+
+    if(!mTcpServer->listen(QHostAddress(getSourceAddress()), getSourcePort()))
+        qDebug() << ""<DataReceiver> Server could not start. "";
+    else
+        qDebug() << ""<DataReceiver> Server started !"";
+}
+
+DataReceiver::DataReceiver(const QString &pSourceAddress,
+                      const unsigned int &pSourcePort,
+                      QObject *parent) :
+    QObject(parent),
+    mTcpServer(new QTcpServer(this)),
+    mSourceAddress(pSourceAddress),
+    mSourcePort(pSourcePort),
+    mData(new QVector<float>)
+{
+    for( unsigned int i = 0; i < mDataSize; i++)
+        mData->append(.0);
+
+    connect(mTcpServer, SIGNAL(newConnection()), this, SLOT(onNewConnection()));
+
+    if(!mTcpServer->listen(QHostAddress(getSourceAddress())), getSourcePort())
+        qDebug() << ""<DataReceiver> Server could not start. "";
+    else
+        qDebug() << ""<DataReceiver> Server started !"";
+
+}
+
+DataReceiver::~DataReceiver(){
+    delete mTcpServer;
+
+    delete mData;
+}
+
+// Getters
+QVector<float> *DataReceiver::getData(void) const{
+    return mData;
+}
+
+QTcpServer *DataReceiver::getTcpServer(void) const{
+    return mTcpServer;
+}
+
+QString DataReceiver::getSourceAddress(void) const{
+    return mSourceAddress;
+}
+
+unsigned int DataReceiver::getSourcePort(void) const{
+    return mSourcePort;
+}
+
+// Setters
+void DataReceiver::setData(const QVector<float> *pData){
+    // Not yet implemented
+    Q_UNUSED(pData);
+}
+
+void DataReceiver::setSourceAddress(const QString &pSourceAddress){
+    mSourceAddress = pSourceAddress;
+}
+
+void DataReceiver::setSourcePort(const unsigned int &pSourcePort){
+    mSourcePort = pSourcePort;
+}
+
+// Public Slots
+void DataReceiver::onConnect(){
+    qDebug() << ""QTcpSocket connected..."";
+}
+
+void DataReceiver::onDisconnect(){
+    qDebug() << ""QTcpSocket disconnected..."";
+    disconnect(mTcpSocket, SIGNAL(readyRead()), this, SLOT(onDataReceived()));
+    disconnect(mTcpSocket, SIGNAL(disconnected()), this, SLOT(onDisconnect()));
+}
+
+void DataReceiver::onBytesWritten(qint64 bytes){
+    qDebug() << bytes << "" bytes written to QTcpSocket..."";
+}
+
+void DataReceiver::onDataReceived(){
+    // Not yet implemented, code is for testing
+    qDebug() << ""onDataReceived called !"";
+
+    while(mTcpSocket->bytesAvailable()){
+        qInfo() << mTcpSocket->read(mTcpSocket->bytesAvailable());
+        qDebug() << mTcpSocket->readAll();
+    }
+}
+
+void DataReceiver::onNewConnection(){
+    qDebug() << ""onNewConnection called !"";
+    mTcpSocket = mTcpServer->nextPendingConnection();
+
+    connect(mTcpSocket, SIGNAL(readyRead()),    this, SLOT(onDataReceived()));
+    connect(mTcpSocket, SIGNAL(disconnected()), this, SLOT(onDisconnect()));
+}
+
+// Private Methods
+void DataReceiver::decodeData(const QByteArray &pMessage){
+    // Not yet implemented
+    Q_UNUSED(pMessage);
+}

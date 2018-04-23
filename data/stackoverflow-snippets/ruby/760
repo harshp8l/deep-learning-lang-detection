@@ -1,0 +1,43 @@
+require 'csv'
+require 'time'
+
+namespace :csv do
+  desc 'Upload CSV data into database'
+  task residences: :environment do
+    residences    = []
+    counter       = 0
+    csv_file      = ""#{Rails.root}/public/spreadsheets/unformatted-addresses.csv""
+    address_regex = /^(\d+[a-z]?)+\s+(\d+)+\s+(.+(?=\W))+\s+(.*)/i
+
+
+    CSV.foreach(csv_file, headers: true, header_converters: :symbol, converters: :all, skip_blanks: true, encoding: 'UTF-8') do |row|
+        address       = address_regex.match(row[:address])
+        unit          = address[1]
+        street_number = address[2]
+        street_name   = address[3]
+        street_type   = address[4]
+        pid           = row[:pid].strip
+        city          = row[:city].strip.downcase
+        date          = Date.parse(row[:sold_date])
+        sold_date     = date.strftime(""%m-%d-%Y"")
+        sold_price    = row[:sold_price].strip.delete('$ ,').to_i
+
+        puts ""#{address}, #{pid}, #{city}, #{sold_date}, #{sold_price}""
+
+        Residence.create(
+          pid:           pid,
+          city:          city,
+          unit:          unit,
+          street_number: street_number,
+          street_name:   street_name,
+          street_type:   street_type,
+          sold_date:     sold_date,
+          sold_price:    sold_price
+        )
+
+        counter += 1
+    end
+
+    puts ""Imported #{counter} rows.""
+  end
+end

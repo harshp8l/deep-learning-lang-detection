@@ -1,0 +1,76 @@
+using namespace std;
+
+class vector2D
+{
+protected:
+    bool equal(vector2D& param) { return this->X == param.X && this->Y == param.Y; }
+    vector2D absAlVal() { return vector2D(abs(X), abs(Y)); }
+
+public:
+    float X, Y;
+
+    vector2D(float x, float y) : X(x), Y(y) {};
+    vector2D() : X(0), Y(0) {};
+
+    vector2D operator+ (vector2D& param) { return vector2D(this->X+param.X,this->Y+param.Y); }
+    vector2D operator- (vector2D& param) { return vector2D(this->X - param.X, this->Y - param.Y); }
+    bool operator!=(vector2D& param) { return this->equal(param); }
+
+
+    vector2D getUnitVector()
+    {
+        return vector2D(this->X / this->getLength(), this->Y / this->getLength());
+    }
+    bool parallel(vector2D& param) { return (this->getUnitVector()).equal(param.getUnitVector()); }
+    bool colinear(vector2D& param) { return (this->getUnitVector().absAlVal()).equal(param.getUnitVector().absAlVal()); }
+
+    float dotproduct(vector2D vec)
+    {
+        return this->X * vec.X + this->Y * vec.Y;
+    }
+    vector2D dotproduct(float scalar)
+    {
+        return vector2D(this->X * scalar, this->Y * scalar);
+    }
+    float getLength(void)
+    {
+        return sqrt(pow(this->X, 2) + pow(this->Y, 2));
+    }
+
+};
+
+void main()
+{
+    // get coords from provided input
+    float x1x = 629434.24373957072, x1y = 5476196.7595944777, x2x = 629443.08914538298, x2y = 5476120.1852802411;
+    float width = 35;
+
+    // Build vectors
+    vector2D X1 = vector2D(x1x, x1y), X2 = vector2D(x2x, x2y), X3, X4, X2X3, X1X2=X2-X1;
+    // assum x-direction for X2X3 is positive, chosing 1
+    X2X3.X = 1;
+    // calculate y-direction using dot-product
+    X2X3.Y = X1X2.X*X2X3.X / (-1 * X1X2.Y);
+    //check if assumtion is correct:
+    cout << ""Evaluate wether vector has been build accordingly or not:"" << endl;
+    cout << ""Dotproduct of X1X2 * X2X3 should be 0 -> Result:"" << X1X2.dotproduct(X2X3) << endl;
+    // stretch X2X3 to width
+    X2X3=X2X3.getUnitVector().dotproduct(width);
+
+    // Create X3 and X4 by simple addition:
+    X3 = X2 + X2X3;
+    X4 = X1 + X2X3;
+
+    // print Points:
+    cout << ""Summary of Points X / Y coordinates:"" << endl;
+    cout << ""X1: "" << X1.X << ""/"" << X1.Y << endl;
+    cout << ""X2: "" << X2.X << ""/"" << X2.Y << endl;
+    cout << ""X3: "" << X3.X << ""/"" << X3.Y << endl;
+    cout << ""X4: "" << X4.X << ""/"" << X4.Y << endl;
+    // compare sides
+    cout << ""\n"" << ""Lenght of sides:"" << endl;
+    cout << ""X1X2: "" << (X2 - X1).getLength() << "" -> should be same length as X3X4"" << endl;
+    cout << ""X2X3: "" << (X3 - X2).getLength() << "" -> should be same length as X4X1 and with, which is:"" << width << endl;
+    cout << ""X3X4: "" << (X4 - X3).getLength() << "" -> should be same length as X1X2"" << endl;
+    cout << ""X4X1: "" << (X1 - X4).getLength() << "" -> should be same length as X2X3, which is:"" << width << endl;
+}

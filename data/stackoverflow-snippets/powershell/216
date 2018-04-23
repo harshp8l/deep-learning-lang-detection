@@ -1,0 +1,44 @@
+#Properties to update (BuiltIn)
+$propertyUpdates = @{
+    ""Company"" = ""Company""
+    ""Manager"" = ""Manager""
+}
+
+#Path to the documents to update:
+$path = ""C:\FilesToUpdate\*.docx""
+
+Write-Host -ForegroundColor Cyan ""Loading Application...""
+$app = New-Object -ComObject Word.Application
+$app.Visible = $false
+
+ForEach($file in (GCI $path|Select -Expand FullName))
+{
+    Write-Host -ForegroundColor Cyan ""Opening document: "" $file
+    $doc = $app.Documents.Open($file)
+    $binding = ""System.Reflection.BindingFlags"" -as [type]
+
+    Write-Host -ForegroundColor Cyan ""Updating document properties...""
+    ForEach($p in $propertyUpdates.GetEnumerator())
+    {
+        Try {
+            $props = $doc.BuiltInDocumentProperties
+            $prop = [System.__ComObject].InvokeMember(""Item"", $binding::GetProperty, $null, $props, $p.Name)
+            [System.__ComObject].InvokeMember(""Value"", $binding::SetProperty, $null, $prop, $p.Value)
+        }
+        Catch [system.exception] { 
+            write-host -ForegroundColor red ""Value not found for $p.Name""
+        }
+    }
+    $doc.Fields.Update() | Out-Null
+
+    Write-Host -ForegroundColor Cyan ""Saving document.""
+    $doc.Saved = $false
+    $doc.save()
+    $doc.close()
+}
+
+$app.quit()
+$app = $null
+[gc]::collect()
+[gc]::WaitForPendingFinalizers()
+Write-Host -ForegroundColor Green ""Done!""

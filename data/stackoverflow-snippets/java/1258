@@ -1,0 +1,41 @@
+if (args.length < 4) {
+        System.err.println(""Usage: Stream Car data <zkQuorum> <group> <topics> <numThreads>"");
+        System.exit(1);
+    }
+
+    SparkConf sparkConf = new SparkConf().setAppName(""stream cars data"");
+
+    final JavaSparkContext jSC = new JavaSparkContext(sparkConf);
+    // Creer le contexte avec une taille de batch de 2 secondes
+    JavaStreamingContext jssc = new JavaStreamingContext(jSC,new Duration(2000));
+
+    int numThreads = Integer.parseInt(args[3]);
+
+    Map<String, Integer> topicMap = new HashMap<>();
+    String[] topics = args[2].split("","");
+
+    for (String topic: topics) {
+        topicMap.put(topic, numThreads);
+    }
+
+
+
+    Set<String> topicsSet = new HashSet<>(Arrays.asList(topics));
+    Map<String, String> kafkaParams = new HashMap<>();
+    kafkaParams.put(""metadata.broker.list"", args[0]);
+    kafkaParams.put(""group.id"", args[1]);
+    kafkaParams.put(""zookeeper.connect"", args[0]);
+    kafkaParams.put(""fetch.message.max.bytes"", ""1100000000"");
+
+
+
+    JavaPairReceiverInputDStream<String, String> messages=KafkaUtils.createStream(jssc,
+            String.class,
+            String.class,
+            StringDecoder.class,
+            StringDecoder.class,
+            kafkaParams,
+            topicMap,MEMORY_ONLY() );
+
+
+    JavaDStream<String> data = messages.map(Tuple2::_2);

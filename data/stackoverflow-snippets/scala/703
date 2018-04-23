@@ -1,0 +1,33 @@
+import scala.collection.mutable.LinkedHashMap
+
+def aggregateDuplicatesWithOrder(
+    remainingRecords: List[(Key, Record)],
+    processedRecords: LinkedHashMap[Key, List[Record]]
+): LinkedHashMap[Key, List[Record]] =
+  remainingRecords match {
+
+    case (key, record) :: newRemainingRecords => {
+
+      processedRecords.get(key) match {
+        case Some(recordList :+ lastRecord) => {
+          record.amount = record.amount + lastRecord.amount
+          processedRecords.update(key, recordList :+ lastRecord :+ record)
+        }
+        case None => processedRecords(key) = List(record)
+      }
+
+      aggregateDuplicatesWithOrder(newRemainingRecords, processedRecords)
+    }
+
+    case Nil => processedRecords
+  }
+
+val result = aggregateDuplicatesWithOrder(
+  preparedRecords, LinkedHashMap[Key, List[Record]]()
+).values.flatMap {
+  case _ :: Nil => Nil
+  case records =>
+    records.zipWithIndex.map { case (rec, idx) =>
+      List(rec.id, rec.code, rec.year, rec.amount, idx + 1).mkString("","")
+    }
+}

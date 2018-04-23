@@ -1,0 +1,29 @@
+#include ""opencv/cv.h""
+#include <vector>
+#include <iostream>
+
+template<typename T>
+cv::Mat_<T> drop_rows(cv::Mat_<T> mat, const std::vector<int> &v) {
+    cv::Mat_<T> mat_new = cv::Mat_<T>::zeros(mat.rows - v.size(), mat.cols);
+    for (int i = 0, j = 0; i < mat.rows; i++) {
+        if (find(v.begin(), v.end(), i) != v.end())
+            continue;
+        else {
+            for (int w = 0; w < mat.cols; w++) {
+                mat_new(j, w) = mat(i, w);
+            }
+            j++;
+        }
+    }
+    return mat_new;
+}
+
+int main() {
+    cv::Mat_<uchar> mat = (cv::Mat_<uchar>(5, 4) << 5, 6, 0, 4, 0, 1, 9, 9, 100, 3, 5, 8, 200, 1, 2, 3, 4, 5, 6, 7);
+    auto result = drop_rows(mat, {2, 4});
+
+    std::cout << mat << std::endl;;
+    std::cout << result << std::endl;;
+
+    return 0;
+}

@@ -1,0 +1,118 @@
+#include <assert.h>
+
+// interface class
+class IFoo {
+public:
+    virtual int type() const = 0; // return an identifier for the template parameter
+    virtual bool functionA() = 0;
+};
+
+// This function returns a unique identifier for each supported T
+template <typename T> static int TypeT() { static_assert(""not specialized yet""); }
+template <> static int TypeT<bool>() { return 0; }
+template <> static int TypeT<double>() { return 1; }
+//template <> static int TypeT<...>() { ... }
+
+// templated class
+template <typename T> class FooT : public IFoo {
+public:
+    int type() const override { return TypeT<T>(); }
+
+    bool functionA() override { return true; }
+
+    // not in interface
+    bool functionB(T arg) { return arg == T(); }
+};
+
+// function to create an instance of FooT (could also be static function in FooT)
+static IFoo* CreateFooT(int type)
+{
+    switch (type)
+    {
+    case 0: return new FooT<bool>();
+    case 1: return new FooT<double>();
+    //case ...: return new FooT<...>();
+    default: return nullptr;
+    }
+}
+
+
+// Non-templated wrapper class
+class FooWrapper {
+private:
+    IFoo *pFoo;
+public:
+    FooWrapper(int type) : pFoo(CreateFooT(type)) { assert(pFoo != nullptr); }
+    ~FooWrapper() { delete pFoo; }
+
+    bool functionA() { return pFoo->functionA(); }
+
+    template <typename T> bool functionB(T arg)
+    {
+        if(pFoo->type() != TypeT<T>())
+        {
+            assert(pFoo->type() == TypeT<T>());
+            return false;
+        }
+        return static_cast<typename FooT<T>*>(pFoo)->functionB(arg);
+    }
+
+
+
+    // fun stuff:
+    // (const pendants omitted for readability)
+
+    bool changeType(int type)
+    {
+        delete pFoo;
+        pFoo = CreateFooT(type);
+        return pFoo != nullptr;
+    }
+
+    IFoo* Interface() { return pFoo; }
+
+    IFoo* operator->() { return pFoo; }
+
+    operator IFoo&() { return *pFoo; }
+
+    template <typename T> FooT<T> *InterfaceT()
+    {
+        if(pFoo->type() != TypeT<T>())
+        {
+            assert(pFoo->type() == TypeT<T>());
+            return nullptr;
+        }
+        return static_cast<typename FooT<T>*>(pFoo);
+    }
+};
+
+int main(int argc, char *argv[])
+{
+    FooWrapper w1(TypeT<bool>());
+    FooWrapper w2(TypeT<double>());
+
+    w1.functionA(); // ok
+    w2.functionA(); // ok
+
+    w1.functionB(true); // ok
+    w1.functionB(0.5); // runtime error!
+
+    w2.functionB(true); // runtime error!
+    w2.functionB(0.5); // ok
+
+
+    // fun stuff
+    w2.changeType(TypeT<bool>()); // older changes will be lost
+    w2.functionB(true); // -> now ok
+
+    w1.Interface()->functionA();
+    w1->functionA();
+
+    IFoo &iref = w1;
+    iref.functionA();
+
+    FooT<bool> *ref = w1.InterfaceT<bool>();
+    ref->functionB(true);
+
+    return 0;
+}

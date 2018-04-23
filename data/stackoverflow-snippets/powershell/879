@@ -1,0 +1,56 @@
+$SqlServer = '...'
+$SqlDatabase = '...'
+$OutputFilePath = '...'
+$SqlQuery = '...';
+
+$SqlConnectionString = 'Data Source={0};Initial Catalog={1};Integrated Security=SSPI' -f $SqlServer, $SqlDatabase;
+
+$StringBuilderBufferSize = 50MB;
+$StringBuilder = New-Object -TypeName System.Text.StringBuilder -ArgumentList ($StringBuilderBufferSize + 1MB);
+
+$Utf8NoBOM = New-Object -TypeName System.Text.UTF8Encoding -ArgumentList $false;
+$StreamWriter = New-Object -TypeName System.IO.StreamWriter -ArgumentList $OutputFilePath, $Utf8NoBOM;
+
+$CsvDelimiter = '""';
+$CsvDelimiterEscape = '""""';
+$CsvSeparator = ',';
+
+$SQLConnection = New-Object -TypeName System.Data.SqlClient.SqlConnection -ArgumentList $SqlConnectionString;
+$SqlCommand = $SQLConnection.CreateCommand();
+$SqlCommand.CommandText = $SqlQuery;
+
+$SQLConnection.Open();
+$SqlDataReader = $SqlCommand.ExecuteReader();
+
+for ($Field = 0; $Field -lt $SqlDataReader.FieldCount; $Field++) {
+    if ($Field -gt 0) { [void]$StringBuilder.Append($CsvSeparator); }
+    [void]$StringBuilder.Append($CsvDelimiter);
+    [void]$StringBuilder.Append($SqlDataReader.GetName($Field).Replace($CsvDelimiter, $CsvDelimiterEscape));
+    [void]$StringBuilder.Append($CsvDelimiter);
+}
+[void]$StringBuilder.AppendLine();
+
+while ($SqlDataReader.Read()) {
+    for ($Field = 0; $Field -lt $SqlDataReader.FieldCount; $Field++) {
+        if ($Field -gt 0) { [void]$StringBuilder.Append($CsvSeparator); }
+        [void]$StringBuilder.Append($CsvDelimiter);
+        [void]$StringBuilder.Append($SqlDataReader.GetValue($Field).ToString().Replace($CsvDelimiter, $CsvDelimiterEscape));
+        [void]$StringBuilder.Append($CsvDelimiter);
+    }
+    [void]$StringBuilder.AppendLine();
+
+    if ($StringBuilder.Length -ge $StringBuilderBufferSize) {
+        $StreamWriter.Write($StringBuilder.ToString());
+        [void]$StringBuilder.Clear();
+    }
+}
+
+$SqlDataReader.Close();
+$SqlDataReader.Dispose();
+
+$SQLConnection.Close();
+$SQLConnection.Dispose();
+
+$StreamWriter.Write($StringBuilder.ToString());
+$StreamWriter.Close();
+$StreamWriter.Dispose();

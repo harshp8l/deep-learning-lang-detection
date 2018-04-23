@@ -1,0 +1,23 @@
+from hashlib import md5
+
+cols = ['emp','rounds','vendor','date']
+
+def get_unique_id(x):
+    if len(x) > 1:
+        unique_string = ''.join(x.astype(str).values.flatten()).encode('utf8')
+        unique_hash = str(int(md5(unique_string).hexdigest(), 16))
+        return unique_hash
+
+# use groupby to get unique groupings, then compute group hash id
+grouped = df.groupby(cols).apply(get_unique_id).reset_index()
+
+# merge with original df
+df.merge(grouped, how=""left"", on=cols).rename(columns={0:'example'})
+
+   amount  date emp vendor  rounds                                  example
+0     4.9     1   a      x     5.0  204218359197769197011002751402112550616
+1     4.8     1   a      x     5.0  204218359197769197011002751402112550616
+2     1.0     2   a      y     1.0                                     None
+3     6.0     3   b      z     6.0   93359096665893457037712279020314596965
+4     5.6     3   b      z     6.0   93359096665893457037712279020314596965
+5     5.4     3   b      z     6.0   93359096665893457037712279020314596965

@@ -1,0 +1,31 @@
+def readFileAsIterator(fileName: String,
+                     encoding: Option[String] = Some(""IBM1098""),
+                     touchIterator: Boolean = false): Option[Iterator[String]] = {
+try {
+  val codecType = encoding.getOrElse(""IBM1098"")
+  implicit val codec = Codec(codecType)
+  codec.onCodingException {
+    case e: CharacterCodingException =>  {
+      throw new MalformedInputException(2)
+    }
+    case e: java.nio.charset.UnmappableCharacterException =>  {
+      throw new MalformedInputException(3)
+    }
+  }
+  if (!touchIterator) {
+    Some(scala.io.Source.fromFile(fileName)(codec).getLines())
+  } else {
+    val i = scala.io.Source.fromFile(fileName)(codec).getLines()
+    if (i.hasNext) {
+      Some(i)
+    } else {
+      None
+    }
+  }
+} catch {
+  case e: Exception => {
+    log.info(s""Handled exception in func"", e)
+    None
+  }
+}
+}

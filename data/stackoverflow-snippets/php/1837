@@ -1,0 +1,30 @@
+public function sendGoogleMessage($registatoin_ids, $data) {
+    try {
+        $key = SERVER_KEY ;
+        $Google = new \ZendService\Google\Gcm\Client ();
+        $Google->setApiKey ( $key );
+
+        $Message = new \ZendService\Google\Gcm\Message ();          
+        $Message->setData ( $data );
+
+        // up to 100 registration ids can be sent to at once
+        $Message->setRegistrationIds ( $registatoin_ids );
+        $Message->setDelayWhileIdle ( false );
+        $Message->setTimeToLive ( 600 );
+    } catch ( \Exception $e ) {
+        return false;
+    }
+    // Envio
+    try {
+        $Response = $Google->send ( $Message );
+    } catch ( RuntimeException $e ) {
+        echo $e->getMessage () . PHP_EOL;
+        exit ( 1 );
+    }
+
+    return array (
+            ""Successful"" => $Response->getSuccessCount (),
+            ""Failures"" => $Response->getFailureCount (),
+            ""Canonicals"" => $Response->getCanonicalCount () 
+    );
+}

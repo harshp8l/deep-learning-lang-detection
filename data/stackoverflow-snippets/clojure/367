@@ -1,0 +1,59 @@
+(ns tst.clj.core
+  (:use clj.core clojure.test tupelo.test)
+  (:require
+    [tupelo.core :as t]
+    [clojure.string :as str]
+    [clojure.pprint :refer [pprint]]
+    [clojure.java.io :as io]
+    [clojure.data.xml :as xml]
+    [clojure.walk :refer [postwalk]]
+  ))
+(t/refer-tupelo)
+
+(defn unlazy
+  [coll]
+  (let [unlazy-item (fn [item]
+                      (cond
+                        (sequential? item) (vec item)
+                        (map? item) (into {} item)
+                        :else item))
+        result    (postwalk unlazy-item coll) ]
+    result ))
+
+(defn file->xml [path]
+  (with-open [rdr (-> path io/resource io/reader) ]
+    (let [lazy-vals    (xml/parse rdr)
+          eager-vals   (unlazy lazy-vals) ]
+      eager-vals)))
+(pprint (file->xml ""books.xml""))
+
+{:tag :catalog,
+ :attrs {},
+ :content
+ [{:tag :book,
+   :attrs {:id ""bk101""},
+   :content
+   [{:tag :author, :attrs {}, :content [""Gambardella, Matthew""]}
+    {:tag :title, :attrs {}, :content [""XML Developer's Guide""]}
+    {:tag :genre, :attrs {}, :content [""Computer""]}
+    {:tag :price, :attrs {}, :content [""44.95""]}
+    {:tag :publish_date, :attrs {}, :content [""2000-10-01""]}
+    {:tag :description,
+     :attrs {},
+     :content
+     [""An in-depth look at creating applications\n      with XML.""]}]}
+  {:tag :book,
+   :attrs {:id ""bk102""},
+   :content
+   [{:tag :author, :attrs {}, :content [""Ralls, Kim""]}
+    {:tag :title, :attrs {}, :content [""Midnight Rain""]}
+    {:tag :genre, :attrs {}, :content [""Fantasy""]}
+    {:tag :price, :attrs {}, :content [""5.95""]}
+    {:tag :publish_date, :attrs {}, :content [""2000-12-16""]}
+    {:tag :description,
+     :attrs {},
+     :content
+     [""A former architect battles corporate zombies,\n      an evil sorceress, and her own childhood to become queen\n      of the world.""]}]}
+  {:tag :book,
+   :attrs {:id ""bk103""},
+   :content .....

@@ -1,0 +1,28 @@
+import os
+import psycopg2
+from psycopg2.extensions import AsIs
+
+query = """"""
+        CREATE TABLE %(table)s (
+            Date NOT NULL UNIQUE DATE PRIMARY KEY
+            col2 FLOAT NOT NULL
+            col3 FLOAT NOT NULL
+            col4 FLOAT NOT NULL
+            col5 FLOAT NOT NULL
+            col6 FLOAT NOT NULL
+            col7 INTEGER  NOT NULL)
+        """"""
+
+sec_files = os.listdir('file_dir')
+conn = psycopg2.connect('dbname=postgres user=postgres')
+
+with conn.cursor() as cursor:
+    for file in sec_files:
+        name = os.path.basename(file).split('.')[0]
+        cursor.execute(query, {'table': AsIs(name)})
+        print('Table created', name)
+
+        with open(os.path.abspath(file), 'r') as fin:
+            next(f)
+            cursor.copy_from(f, name, sep=',')
+            print('Data inserted into ', name, ' complete')

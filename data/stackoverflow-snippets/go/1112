@@ -1,0 +1,183 @@
+package main
+
+import (
+    ""fmt""
+    ""log""
+    ""net/http""
+    ""os""
+    ""strings""
+    ""sync""
+
+    ""golang.org/x/net/html""
+)
+
+func main() {
+
+    if len(os.Args) != 2 {
+        fmt.Println(""Usage: crawl [URL]."")
+    }
+
+    url := os.Args[1]
+    if !strings.HasPrefix(url, ""http://"") {
+        url = ""http://"" + url
+    }
+
+    wg := NewWorkGroup(1)
+    wg.Crawl(url)
+    for k, v := range wg.urlMap {
+        fmt.Printf(""%s: %d\n"", k, v)
+    }
+}
+
+// represents single link and its deph
+type Link struct {
+    url  string
+    deph uint32
+}
+
+// wraps all around to group
+type WorkGroup struct {
+    *sync.WaitGroup
+    maxDeph uint32
+    numW    int
+    pool    chan *Worker
+    linkQ   chan Link
+    urlMap  map[string]uint32
+}
+
+type Worker struct {
+    result chan []Link
+}
+
+func newWorker() *Worker {
+    return &Worker{
+        result: make(chan []Link),
+    }
+}
+
+func NewWorkGroup(maxDeph uint32) *WorkGroup {
+    numW := int(maxDeph)
+    if maxDeph > 10 {
+        numW = 10
+    }
+    return &WorkGroup{
+        WaitGroup: new(sync.WaitGroup),
+        maxDeph:   maxDeph,
+        numW:      numW,
+        pool:      make(chan *Worker, numW),
+        linkQ:     make(chan Link, 100),
+        urlMap:    make(map[string]uint32),
+    }
+}
+
+// dispatch workers -> filter visited -> send not visited to channel
+// pool + dispatcher keep order so workers go level by level
+func (wg *WorkGroup) spawnDispatcher() {
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        defer close(wg.linkQ)
+
+        for w := range wg.pool {
+            links := <-w.result
+            for i := 0; i < len(links); i++ {
+                if _, ok := wg.urlMap[links[i].url]; !ok {
+                    wg.urlMap[links[i].url] = links[i].deph
+
+                    // dont process links that reach max deph
+                    if links[i].deph < wg.maxDeph {
+                        select {
+                        case wg.linkQ <- links[i]:
+                            // goes well
+                            continue
+                        default:
+                            // channel is too short, protecting possible deadlock
+                        }
+                        // drop rest of links
+                        break
+                    }
+                }
+            }
+            // empty link channel + nothing in process = end
+            if len(wg.linkQ) == 0 && len(wg.pool) == 0 {
+                return
+            }
+        }
+    }()
+}
+
+//initialize goroutines and crawl url
+func (wg *WorkGroup) Crawl(url string) {
+    defer close(wg.pool)
+    wg.spawnCrawlers()
+    wg.spawnDispatcher()
+    wg.linkQ <- Link{url: url, deph: 0}
+    wg.Wait()
+}
+
+func (wg *WorkGroup) spawnCrawlers() {
+    // custom num of workers, used maxDeph
+    for i := 0; i < wg.numW; i++ {
+        wg.newCrawler()
+    }
+}
+
+func (wg *WorkGroup) newCrawler() {
+    wg.Add(1)
+    go func(w *Worker) {
+        defer wg.Done()
+        defer close(w.result)
+
+        for link := range wg.linkQ {
+            wg.pool <- w
+            w.result <- getExternalUrls(link)
+        }
+    }(newWorker())
+}
+
+// default sligtly modified crawl function
+func getExternalUrls(source Link) []Link {
+    resp, err := http.Get(source.url)
+    if err != nil {
+        log.Printf(""Can not reach the site. Error = %v\n"", err)
+        return nil
+    }
+
+    b := resp.Body
+    defer b.Close()
+
+    z := html.NewTokenizer(b)
+
+    links := []Link{}
+
+    for {
+        token := z.Next()
+
+        switch token {
+        case html.ErrorToken:
+            return links
+        case html.StartTagToken:
+            current := z.Token()
+            if current.Data != ""a"" {
+                continue
+            }
+            url, ok := getHrefTag(current)
+            if ok && strings.HasPrefix(url, ""http"") {
+                links = append(links, Link{url: url, deph: source.deph + 1})
+            }
+        }
+    }
+    return links
+}
+
+//default function
+func getHrefTag(token html.Token) (result string, ok bool) {
+    for _, a := range token.Attr {
+        if a.Key == ""href"" {
+            result = a.Val
+            ok = true
+            break
+        }
+    }
+    return
+}

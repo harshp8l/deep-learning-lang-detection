@@ -1,0 +1,31 @@
+context = Context()
+""""""        
+for        i in range( 10 ):
+    print( i ) # vvvvvvvvvvvvvvvvvvvv------------------- NEVER THIS WAY [us].....
+    out_socket = context.socket( REQ )
+    out_socket.connect( ""tcp://localhost:%s"" % ""5000"" )
+    message_content = ( ""hello"", 1 )
+    pass;            pickled_message = dumps( message_content )
+    out_socket.send( pickled_message, flags = NOBLOCK )
+""""""
+#-------------------------------------------------ZMQ-# <INSTANTIATION>
+out_socket = context.socket( zmq.REQ )                # .SET AN INSTANCE
+out_socket.setsockopt(       zmq.LINGER, 0 )          # .SET ALWAYS
+out_socket.setsockopt(       zmq.SNDHWM, ... )        # .SET AS NEEDED
+out_socket.setsockopt(       zmq.AFFINITY, ... )      # .SET AS NEEDED
+out_socket.setsockopt(       zmq.<_*-attributes_>,...)# .SET AS NEEDED
+#-------------------------------------------------ZMQ-# <INFRASTRUCTURE>
+out_socket.connect( ""tcp://localhost:%s"" % ""5000"" )   # .CONNECT()-async call
+
+for        i in range( 100 ):                         # py2.7: xrange( 100 ):
+    print( i )
+    # -------------------------------------------------------
+    #                  pass;                   message_content = ( ""hello"", 1 )
+    #                  pickled_message = dumps(message_content)
+    # out_socket.send( pickled_message, flags = NOBLOCK )
+    #-------------------------------------------------------- PYTHON-SIDE COSTS
+    out_socket.send(                     dumps( ( ""hello"", i ) ), zmq.DONTWAIT )
+print( ""finished the for()-loops"" )
+#-------------------------------------------------ZMQ-# <GRACEFUL TERMINATION>
+out_socket.close()
+context.term()

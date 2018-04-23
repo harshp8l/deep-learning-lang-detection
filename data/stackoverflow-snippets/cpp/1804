@@ -1,0 +1,41 @@
+#include <tuple>
+#include <functional>
+#include <iostream>
+#include <type_traits>
+
+template<typename data_type, typename Type1, typename Type2>
+class A
+{
+    template<typename T>
+    struct tag
+    {
+        operator T();
+    };
+
+public:
+    using a_type = std::tuple<Type1, Type2>;
+    using b_type = std::tuple<std::size_t,std::size_t>;
+
+    template<typename C, std::enable_if_t<std::is_invocable_v<C, tag<b_type>>>* = nullptr>
+    A(C&& initializer)
+    {
+        std::cout << ""size_t"" << std::endl;
+    }
+
+    template<typename C, std::enable_if_t<std::is_invocable_v<C, tag<a_type>>>* = nullptr>
+    A(C&& initializer)
+    {
+        std::cout << ""other"" << std::endl;
+    }
+};
+
+int main()
+{
+    auto c = A<double, long long, int>{
+        [](std::tuple<long long, int> p) -> double { return 1; }
+    };
+
+    auto c2 = A<double, long long, int>{
+        [](std::tuple<std::size_t, std::size_t>) -> double { return 2; }  
+    };
+}

@@ -1,0 +1,17 @@
+case class Interval (lower: Int, upper: Int) {    
+    def deflate () : List [Int] = {(lower to upper).toList}
+}
+
+def list2disjunctIntervals (li: List[Interval]) : List[Interval] = {
+  val united = (li.flatMap (_.deflate).distinct).sorted
+
+  def split (l: List [Int], sofar: List[Int]): List[List[Int]] = l match {
+    case Nil => List (sofar)
+    case h::t=> if (sofar.isEmpty) split (t, List (h)) else
+      if (h == sofar.head + 1) split (t, h :: sofar)
+      else sofar :: split (t, List (h))
+  }
+
+  val sublists = split (united, Nil)
+  sublists.map (l => Interval (l.last, l.head))
+}

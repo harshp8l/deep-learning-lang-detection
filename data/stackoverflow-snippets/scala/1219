@@ -1,0 +1,19 @@
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.{ArrayType,StringType,StructField,StructType}
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.Row
+
+//build a spark session
+val sparkSession = SparkSession.builder()
+  .appName(""myApp"")
+  .getOrCreate()
+
+val sc = sparkSession.sparkContext
+
+val myDfSchema = StructType(Seq(
+  StructField(""id"", StringType, true),
+  StructField(""group"", ArrayType(StructType(Array(
+    StructField(""label"", StringType, true),
+    StructField(""groupValue"", StringType, true)))), true)))
+
+val myDf = sparkSession.createDataFrame(sc.emptyRDD[Row], myDfSchema)

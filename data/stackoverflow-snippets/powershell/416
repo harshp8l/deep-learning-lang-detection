@@ -1,0 +1,54 @@
+$InputFile = 'C:\Temp\list.txt'
+$addresses = get-content $InputFile
+$reader = New-Object IO.StreamReader $InputFile
+$TotalIPs = 0
+
+while($reader.ReadLine() -ne $null){ $TotalIPs++ }
+write-Host $TotalIPs
+write-host    """"    
+write-Host ""Executing nslookup query for all ...""    
+
+While($true)
+{
+    foreach($address in $addresses) 
+    {
+        ## Progress bar
+        $i++
+
+        ## End progress bar
+        try 
+        {
+            [system.net.dns]::resolve($address) | Select HostName,AddressList
+        }
+        catch 
+        {
+            Write-host ""$address was not found. $_"" -ForegroundColor Green
+        }
+    }
+
+    write-host    """"            
+    write-Host ""Pinging each address...""
+    foreach($address in $addresses) {
+    ## Progress bar
+
+    $j++
+    $percentdone2 = (($j / $TotalIPs) * 100)
+    $percentdonerounded2 = ""{0:N0}"" -f $percentdone2
+
+    Write-Progress -Activity ""Performing pings"" -CurrentOperation ""Pinging IP: $address (IP $j of $TotalIPs)"" -Status ""$percentdonerounded2% complete"" -PercentComplete $percentdone2
+
+    ## End progress bar
+    if (test-Connection -ComputerName $address -Count 2 -Quiet ) 
+        {  
+            write-Host ""$address responded"" -ForegroundColor Green 
+        } 
+        else 
+        { 
+            Write-Warning ""$address does not respond to pings""              
+        }  
+    }
+    $j = 0
+
+    write-host    """"        
+    write-host ""Complete!""
+}

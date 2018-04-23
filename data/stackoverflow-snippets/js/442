@@ -1,0 +1,28 @@
+@EnableWebSecurity
+@Configuration
+public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    http
+        .httpBasic()
+    .and()
+        .cors().configurationSource(corsConfigurationSource())
+        .and()
+        .csrf().disable()
+    .authorizeRequests()
+        .antMatchers(HttpMethod.OPTIONS).permitAll() // allow CORS option calls 
+        .antMatchers(""/**"").permitAll();
+  }
+
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(Arrays.asList(""*""));
+    configuration.setAllowedMethods(Arrays.asList(""*""));
+    configuration.setAllowedHeaders(Arrays.asList(""*""));
+    configuration.setAllowCredentials(true);
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration(""/**"", configuration);
+    return source;
+  }
+}

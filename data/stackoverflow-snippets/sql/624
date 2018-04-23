@@ -1,0 +1,70 @@
+WITH Children AS
+(
+    SELECT e.EmpID, e.FirstName EmpName, er.FirstName RelName,
+            'Child' + CONVERT(NVARCHAR(2), ROW_NUMBER() OVER (PARTITION BY er.EmpID ORDER BY er.RelativeID)) AS 'Relation'
+    FROM Employee e
+    LEFT JOIN EmployeeRelatives er ON e.EmpID = er.EmpID
+    WHERE er.RelativeType IN ('Son', 'Daughter')
+),
+ChildInRow AS
+(
+    SELECT *
+    FROM Children
+    PIVOT
+    (
+      MAX(RelName)
+      FOR Relation in([Child1],[Child2],[Child3], [Child4], [Child5], [Child6], [Child7], [Child8])
+    ) AS p1
+),
+Friends AS
+(
+    SELECT e.EmpID, e.FirstName EmpName, er.FirstName RelName,
+            'Friend' + CONVERT(NVARCHAR(2), ROW_NUMBER() OVER (PARTITION BY er.EmpID ORDER BY er.RelativeID)) AS 'Relation'
+    FROM Employee e
+    LEFT JOIN EmployeeRelatives er ON e.EmpID = er.EmpID
+    WHERE er.RelativeType = 'Friend'
+),
+FriendsInRow AS
+(
+    SELECT *
+    FROM Friends
+    PIVOT
+    (
+      MAX(RelName)
+      FOR Relation in([Friend1],[Friend2],[Friend3])
+    ) AS p1
+),
+AllWife AS
+(
+    SELECT e.EmpID, e.FirstName EmpName, er.FirstName RelName, 'Wife' AS 'Relation',
+            ROW_NUMBER() OVER (PARTITION BY er.EmpID ORDER BY er.RelativeID) wife_row_num
+    FROM Employee e
+    LEFT JOIN EmployeeRelatives er ON e.EmpID = er.EmpID
+    WHERE er.RelativeType = 'Wife'
+),
+WifeInRow AS
+(
+    SELECT * FROM AllWife WHERE wife_row_num = 1
+),
+AllFather AS
+(
+    SELECT e.EmpID, e.FirstName EmpName, er.FirstName RelName, 'Father' AS 'Relation',
+            ROW_NUMBER() OVER (PARTITION BY er.EmpID ORDER BY er.RelativeID) father_row_num
+    FROM Employee e
+    LEFT JOIN EmployeeRelatives er ON e.EmpID = er.EmpID
+    WHERE er.RelativeType = 'Father'
+),
+FatherInRow AS
+(
+    SELECT * FROM AllFather WHERE father_row_num = 1
+)
+SELECT e.EmpID, e.FirstName,
+        ISNULL(Child1, '') Child1, ISNULL(Child2, '') Child2, ISNULL(Child3, '') Child3, ISNULL(Child4, '') Child4, ISNULL(Child5, '') Child5, ISNULL(Child6, '') Child6, ISNULL(Child7, '') Child7, ISNULL(Child8, '') Child8,
+        ISNULL(w.RelName, '') Wife,
+        ISNULL(Friend1, '') Friend1, ISNULL(Friend2, '') Friend2, ISNULL(Friend3, '') Friend3,
+        ISNULL(fa.RelName, '') Father
+FROM Employee e
+FULL OUTER JOIN ChildInRow c ON e.EmpID = c.EmpID
+FULL OUTER JOIN FriendsInRow f ON e.EmpID = f.EmpID
+FULL OUTER JOIN WifeInRow w ON e.EmpID = w.EmpID
+FULL OUTER JOIN FatherInRow fa ON e.EmpID = fa.EmpID

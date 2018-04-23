@@ -1,0 +1,23 @@
+void log(const QString &); // logging function
+QString demangle(QLatin1String); // demangler - see below
+template <typename T> T log(QLatin1String expr, T &&value) {
+  auto const type = demangle(std::typeid(value).name());
+  log(QStringLiteral(""expression \""%1\"" = (%2) type: %3"")
+      .arg(expr).arg(value).arg(type));
+  return std::forward(value);
+}
+
+#ifdef __GNUG__
+#include <cxxabi.h>
+#include <memory>
+QString demangle(QLatin1String name) {
+  int status;
+  std::unique_ptr<char, void(*)(void*)> res {
+    abi::__cxa_demangle(name.latin1(), NULL, NULL, &status),
+    std::free
+  };
+  return {(status==0) ? QLatin1String(res.get()) : name};
+}
+#else
+QString demangle(QLatin1String name) { return {name}; }
+#endif

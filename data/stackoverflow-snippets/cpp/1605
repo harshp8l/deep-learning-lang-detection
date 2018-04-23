@@ -1,0 +1,25 @@
+#include <iostream>
+#include <array>
+#include <type_traits>
+
+template <typename... N>
+struct what_failed {
+    what_failed(N... n) : arr{n...}, status{(... && n)} {
+        static_assert(std::conjunction_v<std::is_same<N, bool>...>, ""Only pass bools"");
+    }
+    std::array<bool, sizeof...(N)> arr;
+    bool status;
+    operator bool() { return status; }
+};
+
+int main() {
+    auto check = what_failed(2 == 5, 2 < 5, 2 > 5, 1 == 1);
+    if (check)
+        std::cout << ""Check: All true"";
+    else {
+        std::cout << ""Check: "";
+        for (auto c : check.arr)
+            std::cout << c << ' ';
+    }
+    return 0;
+}

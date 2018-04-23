@@ -1,0 +1,20 @@
+result = []
+for row in soup.select(""table tr""):
+    title_cell, data_cell = row('td')[:2]
+
+    for span in data_cell('span'):
+        if 'underline' in span.get('style', ''):
+            u = soup.new_tag(""u"")
+            u.string = span.get_text()
+            span.replace_with(u)
+        else:
+            # replacing the ""span"" element with its contents
+            span.unwrap()
+
+    # replacing the ""p"" element with its contents
+    data_cell.p.unwrap()
+
+    result.append({
+        ""title"": title_cell.get_text(strip=True),
+        ""test"": str(data_cell.encode_contents())
+    })

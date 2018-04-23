@@ -1,0 +1,28 @@
+class model extends scala.annotation.StaticAnnotation {
+
+  inline def apply(defn: Any): Any = meta {
+    defn match {
+      case cls@Defn.Class(_, _, _, Ctor.Primary(_, _, paramss), template) =>
+
+        def createToCSV(paramss: Seq[Seq[Term.Param]]): Defn.Def = {
+
+          val names: Seq[String] = paramss.flatten.map(param => param.name.syntax)
+          val fields = paramss.map(_.map(param => Term.Name(param.name.value)))
+
+          val nameLiterals: Seq[Lit.String] = names.map(n => q""$n"".asInstanceOf[Lit.String])
+
+          q""""""def toCSV =
+              CSVTools.toCSV(scala.collection.immutable.Seq(..$nameLiterals),
+                             scala.collection.immutable.Seq(scala.collection.immutable.Seq(...$fields)))""""""
+        }
+
+        val toCSVImpl = createToCSV(paramss)
+
+        val templateStats: Seq[Stat] = toCSVImpl +: template.stats.getOrElse(Nil)
+        cls.copy(templ = template.copy(stats = Some(templateStats)))
+      case _ =>
+        println(defn.structure)
+        abort(""@model must annotate a class."")
+    }
+  }
+}

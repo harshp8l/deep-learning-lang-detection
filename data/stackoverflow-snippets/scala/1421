@@ -1,0 +1,32 @@
+import org.scalatest.FlatSpec
+import org.scalatest.Matchers._
+
+class Test extends FlatSpec {
+  /* type filters */
+  import shapeless.{HList, Poly2}
+  import shapeless.labelled.KeyTag, shapeless.tag.Tagged
+
+  type FilterO[A, T] = Option[A] with KeyTag[Symbol with Tagged[T], Option[A]]
+
+  trait Ignore extends Poly2 {
+    implicit def default[A, L <: HList] = at[A, L]((_, l) => l)
+  }
+  trait Accept extends Poly2 {
+    implicit def default[A, L <: HList] = at[A, L](_ :: _)
+  }
+
+  object allOptions extends Ignore {
+    implicit def option[A, T, L <: HList] = at[FilterO[A, T], L](_ :: _)
+  }
+  object noOptions extends Accept {
+    implicit def option[A, T, L <: HList] = at[FilterO[A, T], L]((_, l) => l)
+  }
+
+  ""an extractor of some kind"" should ""get the (non)optional fields from a case class"" in {
+    case class A(i: Int, j: Option[Int], k: String)
+
+    val fne = FieldNameExtractor[A]
+    fne.extract(noOptions) shouldBe List(""i"", ""k"") // extractNonOptionalFieldNames
+    fne.extract(allOptions) shouldBe List(""j"")     // extractOptionalFieldNames
+  }
+}

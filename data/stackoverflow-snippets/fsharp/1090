@@ -1,0 +1,28 @@
+let countOccurance (word:string) list = 
+    let count = List.filter (fun x -> word.Equals(x)) list
+    (word, count.Length)
+
+let distinctWords = allWords |> Seq.distinct |> Seq.toList
+
+let print (tup:string*int) =
+    match tup with
+    | (a,b) -> printfn ""%A: %A"" a b
+
+let rec wordCloud distinct (all:string list) (acc:(string*int) list) =
+    match distinct with
+    | [] -> acc
+    | head :: tail -> 
+        let accumSoFar = acc @ [(countOccurance head all)]
+        wordCloud tail all accumSoFar
+
+let acc = []
+let cloud = (wordCloud distinctWords allWords acc)
+
+let rec printTup (tupList:(string*int) list) =
+    match tupList with
+    | [] -> 0
+    | head :: tail -> 
+        printfn ""%A"" head
+        printTup tail
+
+printTup cloud

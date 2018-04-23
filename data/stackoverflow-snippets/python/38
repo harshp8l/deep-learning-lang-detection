@@ -1,0 +1,119 @@
+class systems(object):
+
+    parent = None #global parent element, defaults to None well for simplicity
+
+    def __init__(self):
+        self.addrMASK = 0xf # address mask for that nibble
+        self.addr = 0x1 # default address of that element
+        self.devices = [] # list of instances of device 
+        self.data = {  #some arbitrary data
+            ""param1"":""param_val"",
+            ""param2"":""param_val"",
+            ""param3"":""param_val"",
+        }
+
+
+    def addSubSystem(self,sub_system): # connects elements to eachother
+
+        # checks for valiability
+        if not isinstance(sub_system,systems):
+            raise TypeError(""defined input is not a system type"") # to prevent passing an integer or something
+
+        # appends a device to system data 
+        self.devices.append(sub_system)
+
+        # search parent variables from sub device manager to system
+        obj = self
+        while 1:
+            if obj.parent is not None:
+                obj.parent.addrMASK<<=4 #bitshifts 4 bits
+                obj.parent.addr <<=4 #bitshifts 4 bits
+                obj = obj.parent
+            else:break
+
+        #self management , i am lazy guy so i added this part so i wouldn't have to reset addresses manualy
+        self.addrMASK <<=4 #bitshifts 4 bits
+        self.addr <<=4 #bitshifts 4 bits
+
+        # this element is added so the obj address is coresponding to place in list, this could be done more eloquently but i didn't know what are your limitations
+        if not self.devices:
+            self.devices[ len(self.devices)-1 ].addr +=1        
+        self.devices[ len(self.devices)-1 ].parent = self
+
+    # helpful for checking data ... gives the address of system
+    def __repr__(self):
+
+        return ""system at {0:X}, {1:0X}"".format(self.addr,self.addrMASK)
+
+    # extra helpful lists data as well
+    def __str__(self):
+        data = [ '{} : {}\n'.format(k,v) for k,v in self.data.items() ]
+        return "" "".join([ repr(self),'\n',*data ])
+
+    #checking for data, skips looping over sub systems
+    def __contains__(self,system_index):
+
+        return system_index-1 in range(len(self.data))
+
+    # applying parameter change  -- just an example
+    def apply(self,par_dict):
+        if not isinstance(par_dict,dict): 
+            raise TypeError(""parameter must be a dict type"")
+        if any( key in self.data.keys() for key in par_dict.keys() ):
+
+            for k,v in par_dict.items():
+                if k in self.data.keys():
+                    self.data[k]=v
+                else:pass
+
+        else:pass
+
+    # implementing parameters trough addresses
+    def implement(self,address,parameter_dictionary):
+
+        if address&self.addrMASK==self.addr:
+
+            if address-self.addr!=0:
+                item = (address-self.addr)>>4
+                self.devices[item-1].implement( address-self.addr,parameter_dictionary )
+            else:
+                self.apply(parameter_dictionary)
+
+
+
+
+
+
+a = systems()
+b = systems()
+a.addSubSystem(b)
+c = systems()
+b.addSubSystem(c)
+
+print('a')
+print(a)
+print('')
+
+print('b')
+print(b)
+print('')
+
+print('c')
+print(c)
+print('')
+
+a.implement(0x100,{""param1"":""a""})
+a.implement(0x110,{""param1"":""b""})
+a.implement(0x111,{""param1"":""c""})
+
+print('a')
+print(a)
+print('')
+
+print('b')
+print(b)
+print('')
+
+print('c')
+print(c)
+print('')

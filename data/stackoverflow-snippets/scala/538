@@ -1,0 +1,33 @@
+trait AuthorizationHandler {
+  ...
+}
+
+class ApplicationAuthorizationHandler extends AuthorizationHandler {
+  ...
+}
+
+trait AuthorizationCheck {
+
+  // just declaring that implementations needs to provide a 
+  def authorizationHandler: AuthorizationHandler 
+
+  object AuthenticatedAction extends ActionBuilder[RequestWithPrincipal] {
+    override def invokeBlock[A](request: Request[A], block: (RequestWithPrincipal[A]) => Future[Result]): Future[Result] = {
+      def unauthorizedAction = authorizationHandler.unauthorized(RequestWithOptionalPrincipal(None, request))
+      def authorizedAction(principal: Principal) = block(RequestWithPrincipal(principal, request))
+
+      authorizationHandler.principal(request).fold(unauthorizedAction)(authorizedAction)
+    }
+  }
+}
+
+// So, now this controller needs to provide a concrete implementation 
+// of ""authorizationHandler"" as declared by ""AuthorizationCheck"".
+// You can do it by injecting a ""AuthorizationHandler"" as a val with
+// name authorizationHandler.
+class MyController @Inject()(val authorizationHandler: AuthorizationHandler) extends Controller with AuthorizationCheck {
+
+   def myAction = AuthenticatedAction { implicit request =>
+     ...
+   }
+}

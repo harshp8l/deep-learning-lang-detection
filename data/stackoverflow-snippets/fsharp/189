@@ -1,0 +1,18 @@
+let pad totalWidth (value: obj) = 
+    let s = string value
+    if s.Length >= totalWidth then s
+    else (String.replicate (totalWidth - s.Length) "" "") + s
+
+let formatGrid (grid:_[,]) =
+    let n, m = grid.GetLength 0, grid.GetLength 1
+    let cellWidth = (n*m) |> string |> String.length
+    let firstColWidth = n |> string |> String.length
+
+    let frow str (rw: int []) = (Array.fold (fun s i -> s + (pad cellWidth i)) str rw) + ""\n""
+    let firstRow = frow (""\n"" + pad (firstColWidth+2) """") [|1..m|]
+    let folder str i = str + (frow ((pad firstColWidth (i+1)) + ""| "") grid.[i, 0..])
+
+    List.fold folder firstRow [0..(n-1)]
+
+let a2d = array2D [[1;2;3]; [4;5;6]]
+formatGrid a2d

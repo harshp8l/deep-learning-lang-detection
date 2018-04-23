@@ -1,0 +1,26 @@
+s = """""".children[0].children[9].children[0].children[0].handle = PCI:0000:01:00.0
+.children[0].children[9].children[0].children[0].description = Non-Volatile memory controller
+.children[0].children[9].children[0].children[0].product = Samsung Electronics Co Ltd
+.children[0].children[9].product = Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DMI2
+.children[2].product = PWS-406P-1R
+""""""
+
+import re
+
+Data = {'children': {'0': {'children': {'9': {'children': {'0': {'children': {'0': {'handle': 'value'}}}}}}}}}
+
+for line in s.splitlines():
+    l, value = re.split(r'\s*=\s*', line)
+    l = l[1:] # Remove first '.'
+    keys = re.split(r'[\[\].]+', l)
+    print(keys)
+
+    lookup = Data
+    for key in keys:
+        if key in lookup:
+            lookup = lookup[key]
+        else:
+            print(""Key {} not found"".format(key))
+            raise Exception(""Value not found for {}"".format(""."".join(keys)))
+
+    print(""Value found: "" + value)

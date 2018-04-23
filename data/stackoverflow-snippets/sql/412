@@ -1,0 +1,27 @@
+   with
+    rownumber(id, dateColumn, amt, rn)
+   as(
+    select i.id, dateColumn, sum(amt), ROW_NUMBER() OVER(Partition by i.id 
+    ORDER BY dateColumn) rn from tblinvoice i join 
+    tblAccount a on a.id = i.id
+    group by i.id, dateColumn
+   )select id, dateColumn, amt from rownumber where rn = 1
+
+
+--tlbaccount
+id
+1
+2
+3
+
+--tlbInvoice  --same id with same date. And same id with diff date.
+id  dateColumn  amt
+1   2018-04-14  10
+1   2018-04-14  20
+2   2018-04-14  20
+2   2018-03-14  20
+
+--actual O/P --sum amts of same ids with same date and min date from same id with diff date
+id  dateColumn  amt
+1   2018-04-14  30
+2   2018-03-14  20

@@ -1,0 +1,23 @@
+function format(n) {
+    const max_significant_digits = 15;
+    const max_precision = 2;
+    let digits_before_decimal_point;
+    if (n < 0) {
+        // Don't count minus sign.
+        digits_before_decimal_point = n.toFixed(0).length - 1;
+    } else {
+        digits_before_decimal_point = n.toFixed(0).length;
+    }
+    if (digits_before_decimal_point > max_significant_digits) {
+        throw new Error('No good representation for this number');
+    }
+    const available_significant_digits_for_precision =
+        Math.max(0, max_significant_digits - digits_before_decimal_point);
+    const effective_max_precision =
+        Math.min(max_precision, available_significant_digits_for_precision);
+    const with_trailing_zeroes = n.toFixed(effective_max_precision);
+    // I want to keep the string and change just matching part,
+    // so here .replace() is a proper method to use.
+    const withouth_trailing_zeroes = with_trailing_zeroes.replace(/\.?0*$/, '');
+    return withouth_trailing_zeroes;
+}

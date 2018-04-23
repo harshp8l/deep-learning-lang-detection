@@ -1,0 +1,14 @@
+val entries = inputDF.where('entry isNotNull)
+    .where('entry !== """")
+    .select(""MemberID"", ""entry"").distinct
+
+val df = inputDF.groupBy(""MemberID"")
+    .agg(collect_list(""EncounterID"") as ""encounterList"")
+    .join(entries, Seq(""MemberID""))
+df.show
++--------+-------------------------+-----+
+|MemberID|           encounterList |entry|
++--------+-------------------------+-----+
+|    pid1|       [enc2, enc1, enc3]|  bat|
+|    pid3|             [enc2, enc1]|  cat|
++--------+-------------------------+-----+

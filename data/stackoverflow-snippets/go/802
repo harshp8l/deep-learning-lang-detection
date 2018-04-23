@@ -1,0 +1,91 @@
+package main
+
+import (
+    ""fmt""
+    ""io""
+    ""os""
+    ""sync""
+    ""time""
+)
+
+const defaultChunkSize = 1 * 1024 * 1024
+
+// wg for uploads to complete
+var wg sync.WaitGroup
+
+// Lets have 4 workers
+var c = make(chan int, 4)
+
+func UploadFile(f *os.File) error {
+    // wait for all the uploads to complete before function exit
+    defer wg.Wait()
+
+    fi, err := f.Stat()
+    if err != nil {
+        return fmt.Errorf(""err: %s"", err)
+    }
+    size := fi.Size()
+    fmt.Printf(""file size: %v\n"", size)
+
+    total := int(size/defaultChunkSize + 1)
+    // Upload parts
+    for partno := 1; partno <= total; partno++ {
+
+        readChunk := func(offset int, buf []byte, partno int) (int, error) {
+            fmt.Println(""readChunk"", partno, offset)
+            n, err := f.ReadAt(buf, int64(offset))
+            if err != nil {
+                return n, err
+            }
+
+            return n, nil
+        }
+
+        // This will block if there are not enough worker slots available
+        c <- partno
+
+        // The actual worker.
+        go func(partno int) {
+            // wait for me to be done
+            wg.Add(1)
+            defer wg.Done()
+
+            buf := make([]byte, defaultChunkSize)
+
+            offset := (partno - 1) * defaultChunkSize
+            n, err := readChunk(offset, buf, partno)
+            if err != nil && err != io.EOF {
+                return
+            }
+
+            err = uploadPart(partno, buf[:n])
+            if err != nil {
+                fmt.Println(""Uploadpart failed:"", err)
+            }
+            <-c
+        }(partno)
+    }
+
+    return nil
+}
+
+func uploadPart(partno int, buf []byte) error {
+    fmt.Printf(""Uploading partno: %d, buflen=%d\n"", partno, len(buf))
+
+    // Actually do the upload.  Simulate long running task with a sleep
+    time.Sleep(time.Second)
+    return nil
+}
+
+func main() {
+    filename := ""/home/matthewh/Downloads/largefile.tar.gz""
+    fmt.Printf(""Opening file: %s\n"", filename)
+
+    f, err := os.Open(filename)
+    if err != nil {
+        panic(err)
+    }
+    defer f.Close()
+
+    UploadFile(f)
+}

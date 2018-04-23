@@ -1,0 +1,55 @@
+cls
+
+$FormatNameJob=""FFMPEG""
+$maxConcurrentJobs = 100
+$DirWithFile=""C:\temp""
+$DestFolder=""C:\temp2""
+$TraitmentDir=""C:\temp\traitment""
+$PathFFMpeg=""C:\Temp\ffmpeg\ffmpeg\bin\ffmpeg.exe""
+$HistoFolder=""C:\temp\histo""
+
+#create dir if dont exists
+New-Item -ItemType Directory -Path $TraitmentDir -Force | Out-Null
+New-Item -ItemType Directory -Path $DestFolder -Force | Out-Null
+New-Item -ItemType Directory -Path $HistoFolder -Force | Out-Null
+
+
+while ($true)
+{
+    ""Loop File""
+
+    $ListeFile=Get-ChildItem $DirWithFile -file -Filter ""*.avi""
+
+    if ($ListeFile.count -eq 0 )
+    {
+       Start-Sleep -Seconds 1
+       continue 
+    }
+
+    #loop file to trait
+    $ListeFile | %{
+
+        while ((get-job -State Running | where Name -eq $FormatNameJob ).Count -ge $maxConcurrentJobs)
+        {
+            Start-Sleep -Seconds 1
+            get-job -State Completed | where Name -eq $FormatNameJob | Remove-Job
+        }
+
+        ""traitment file : {0}"" -f $_.Name
+
+        #build newname and move item into traitment dir
+        $NewfileName=""{0:yyyyMMddHHmmssfffff}_{1}"" -f (get-date), $_.Name
+        $ItemTraitment=[io.path]::Combine($TraitmentDir, $NewfileName)
+        $mbNewItem  =""{0}.mov"" -f [io.path]::Combine($DestFolder, $_.BaseName)
+        Move-item $_.FullName -Destination $ItemTraitment
+
+        #build arguments and command
+        $mbArgs     = "" -loop 1 -i $ItemTraitment -shortest -c:v dnxhd -b:v 120M -s 1920x1080 -pix_fmt yuv422p -r 25 -c:a pcm_s16le -ar 48k -af loudnorm=I=-12 $mbNewItem""
+
+        $ScriptBlock=[scriptblock]::Create(""Start-Process $PathFFMpeg -ArgumentList $mbArgs -Wait"")
+
+        #add job
+        Start-Job -ScriptBlock $ScriptBlock -Name $FormatNameJob
+    }
+
+}

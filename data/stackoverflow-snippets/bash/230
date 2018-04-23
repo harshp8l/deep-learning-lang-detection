@@ -1,0 +1,19 @@
+#!/bin/bash
+
+## source and destination directories, file pattern
+#  (note: to change destdir, two arguments required
+#         to change patrn, three arguments required)
+srcdir=""${1:-/home/david/dev/src-c/tmp/debug/AAA}""
+destdir=""${2:-/home/david/dev/src-c/tmp/debug/BBB}""
+patrn=""${3:-*.mkv}""
+
+while read -r ffn; do               ## loop over each full-filename
+    nffn=""${ffn/$srcdir/$destdir}""  ## form new full-filename
+    ## create new directory, handle error if create fails
+    mkdir -p ""${nffn%/*}"" || { 
+        echo ""error: creating '${nffn%/*}'"" >&2
+        exit 1
+    }
+    mv ""$ffn"" ""$nffn""               ## move full-filename to new full-filename
+    touch ""$ffn""                    ## touch full-filename for zero original
+done < <(find ""$srcdir"" -name ""$patrn"")

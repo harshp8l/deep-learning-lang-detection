@@ -1,0 +1,41 @@
+DECLARE @DataSource TABLE
+(
+    [product] VARCHAR(18)
+   ,[date1] DATETIME
+   ,[date2] DATETIME
+   ,[days] DECIMAL(9,1)
+);
+
+INSERT INTO @DataSource ([product], [date1], [date2], [days])
+VALUES ('SL2536P2', '2018-04-30 21:00:00.000', '2018-05-02 21:00:00.000', 2.0)
+      ,('STACKOVERFLOW', '2018-05-04 21:00:00.000', '2018-05-08 21:00:00.000', 4.0);
+
+
+WITH DataSource AS
+(
+    SELECT [product]
+          ,CAST([date] AS DATE) AS [date]
+          ,[days]
+          ,ROW_NUMBER() OVER(PARTITION BY [product] ORDER BY [Date]) AS [DateID]
+    FROM @DataSource DS
+    CROSS APPLY
+    (
+        SELECT  TOP (DATEDIFF(DAY, [date1], [date2]) + 1)
+                Date = DATEADD(DAY, ROW_NUMBER() OVER(ORDER BY a.object_id) - 1, [date1])
+        FROM    sys.all_objects a
+                CROSS JOIN sys.all_objects b
+    ) Dates ([Date])
+)
+SELECT DS1.[product]
+      ,CONVERT(VARCHAR(19), CAST(DS1.[date] AS DATETIME), 120) AS [data1]
+      ,CONVERT(VARCHAR(11), CAST(DS2.[date] AS DATETIME), 120)+ '23:59:59' AS [data2]
+      ,CAST(DS1.[days] / COUNT(*) OVER (PARTITION BY DS1.[product]) AS DECIMAL(9,1)) AS [days]
+FROM DataSource DS1
+INNER JOIN DataSource DS2
+    ON DS1.[product] = DS2.[product]
+    AND 
+    (
+        (DS1.[DateID] = 1 AND DS1.[DateID] = DS2.[DateID])
+        OR
+        (DS1.[DateID] = DS2.[DateID] - 1 AND DS1.[DateID] <> 1)
+    );

@@ -1,0 +1,22 @@
+type HashingBinaryWriter private
+     (hasher   : System.Security.Cryptography.HashAlgorithm,
+      stream   : System.IO.Stream) =
+    inherit System.IO.BinaryWriter(stream)
+
+    new(hasher : System.Security.Cryptography.HashAlgorithm) = 
+        let unsupp() = raise(System.NotSupportedException())    
+        let hash_stream =
+            { new System.IO.Stream() with
+                member __.CanRead = false
+                member __.CanSeek = false
+                member __.CanWrite = true
+                member __.Length = unsupp()
+                member __.Position with get() = unsupp() and set(_) = unsupp()
+                member __.Seek(_,_) = unsupp()
+                member __.SetLength _ = unsupp()
+                member __.Read(_,_,_) = unsupp()
+                member __.Flush() = ()
+                member __.Write(buffer, offset, count) =
+                  hasher.TransformBlock(buffer, offset, count, null, 0) |> ignore
+            }  
+        new HashingBinaryWriter(hasher, hash_stream)

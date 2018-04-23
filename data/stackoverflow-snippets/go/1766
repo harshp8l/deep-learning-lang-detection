@@ -1,0 +1,22 @@
+rows, _ := db.Query(""SELECT * FROM coderyte"") 
+cols, _ := rows.Columns()
+store := []map[string]interface{}
+for rows.Next() {
+    columns := make([]interface{}, len(cols))
+    columnPointers := make([]interface{}, len(cols))
+    for i, _ := range columns {
+        columnPointers[i] = &columns[i]
+    }
+
+    if err := rows.Scan(columnPointers...); err != nil {
+        return err
+    }
+    m := make(map[string]interface{})
+    for i, colName := range cols {
+        val := columnPointers[i].(*interface{})
+        m[colName] = *val
+    }
+    store = append(store, m)        
+}
+js, _ := json.Marshal(store)
+fmt.Println(string(js))

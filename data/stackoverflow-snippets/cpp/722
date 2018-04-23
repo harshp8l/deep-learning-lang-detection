@@ -1,0 +1,21 @@
+void setFilteringFunctions()
+{
+    Thing::filteringOptions.emplace_back(&Thing::filterStrong);
+    Thing::filteringOptions.emplace_back(&Thing::filterWeak);
+
+    auto softStrong = std::bind(&Thing::softenFilter,
+                                std::placeholders::_1,
+                                &Thing::filterStrong,
+                                std::placeholders::_2
+                                );
+    auto softWeak = std::bind(&Thing::softenFilter,
+                              std::placeholders::_1,
+                              &Thing::filterWeak,
+                              std::placeholders::_2);
+
+    Thing::filteringOptions.emplace_back(&softStrong);
+    Thing::filteringOptions.emplace_back(&softWeak);
+    // or
+    Thing::filteringOptions.emplace_back([](Thing& instance, int param){ 
+        return instance.filterStrong(param + 2) });
+}

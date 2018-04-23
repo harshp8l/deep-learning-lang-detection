@@ -1,0 +1,39 @@
+#include <iostream>
+#include <functional>
+void f1(void) {
+    std::cout << ""f1"" << ""\n"";
+}
+
+void f2(void) {
+    std::cout << ""f2"" << ""\n"";
+}
+
+typedef void(*fPtr[3])(void); // simple ""[]"" gets the compile error
+
+class modeChanger {
+public:
+    modeChanger(std::function<void(void)>* funcArray);
+    void op();
+private:
+    std::function<void(void)> * _funcArray;
+};
+
+modeChanger::modeChanger(std::function<void(void)>* funcArray) {
+    _funcArray = funcArray;
+}
+
+void modeChanger::op() {
+    _funcArray[0]();
+    _funcArray[1](); // this line generates a runtime error! Just comment it to get all work
+}
+
+std::function<void(void)>  modeFuncArray[]  = { f1, f2, f2 };
+
+modeChanger *mode = new modeChanger(modeFuncArray);
+
+int main() {
+    modeFuncArray[1](); // Works fine
+
+    mode->op(); // generates a runtime error
+    return 0;
+}

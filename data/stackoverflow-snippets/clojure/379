@@ -1,0 +1,37 @@
+(defn transfer [from to amount]
+  (println :transfer-enter amount)
+  (alter
+    (.balance from) - amount)
+  (alter
+    (.balance from) + amount)
+  (println :transfer-exit  amount)
+)
+
+(defrecord Account [balance])
+
+(def account1 (Account. (ref 100)))
+(def account2 (Account. (ref 100)))
+(def trx-agent (agent 0))
+
+(defn -main [& args]
+  (println :main-enter )
+
+  (future
+    (dosync
+      (println :t2-enter)
+      (send-off trx-agent println ""agent: T2 transfer"")
+      (Thread/sleep 500)
+      (transfer account1 account2 20)
+      (println :t2-exit)
+    ))
+
+  (dosync
+    (println :t1-enter)
+    (send-off trx-agent println ""agent: T1 transfer"")
+    (transfer account1 account2 10)
+    (println :t1-exit))
+
+  (Thread/sleep 2000)
+  (shutdown-agents)
+  (println :main-exit )
+)

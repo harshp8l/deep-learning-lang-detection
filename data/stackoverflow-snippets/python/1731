@@ -1,0 +1,30 @@
+df = pd.DataFrame(
+    [['a1', 'b1', 'c1', '+'], ['a1', 'b1', 'c1', '+'], ['a1', 'b2', 'c2', '+'], ['a1', 'b2', 'c2', '-'], ['a1', 'b2', 'c2', '+']], 
+    columns=['col1', 'col2', 'col3', 'col4']
+)
+print(df)
+#   col1 col2 col3 col4
+# 0   a1   b1   c1    +
+# 1   a1   b1   c1    +
+# 2   a1   b2   c2    +
+# 3   a1   b2   c2    -
+# 4   a1   b2   c2    +
+
+def subtract_rows(df):
+    signed_row_count = df['col4'].replace({'+': 1, '-': -1}).sum()
+
+    if signed_row_count >= 0:
+       result = pd.DataFrame([df.iloc[0][['col1', 'col2', 'col3']].tolist() + ['+']] * signed_row_count, columns=df.columns)
+    else:
+        result = pd.DataFrame([df.iloc[0][['col1', 'col2', 'col3']].tolist() + ['-']] * abs(signed_row_count), columns=df.columns)
+
+    return result
+
+reduced_df = (df.groupby(['col1', 'col2', 'col3'])
+                .apply(subtract_rows)
+                .reset_index(drop=True))
+print(reduced_df)
+#   col1 col2 col3 col4
+# 0   a1   b1   c1    +
+# 1   a1   b1   c1    +
+# 2   a1   b2   c2    +

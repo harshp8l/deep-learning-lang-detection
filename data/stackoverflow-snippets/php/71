@@ -1,0 +1,49 @@
+$user = $_POST['username'];
+$pass = $_POST['password'];
+
+    <?php
+
+    include_once ""conexion.php"";
+
+     $user = $_POST['username'];
+     $pass = $_POST['password'];
+     if($_POST){
+       $class = new Class();
+        if( $class->login($user,$pass))
+          echo json_encode(array(message => 'CORRECTO'));
+        else
+         echo json_encode(array(message => 'ERROR'));
+     }
+
+    ?>
+
+// en your class when function
+    function Login($user,$pass) {
+            $success = false;           
+            try {
+                $con = new PDO( 'mysql:host=localhost;dbname=MY_DB_NAME', 'MY_USRNAME', 'MY_PSW' );
+                $sql = ""SELECT * FROM users WHERE username = "".$user."" AND password = "".$pass."" LIMIT 1"";
+
+                $stmt = $con->prepare( $sql );
+
+                $stmt->execute();
+
+                $valid = $stmt->fetchColumn();
+
+                if( $valid ) {
+                    $success = true;
+                    session_start();
+                    session_regenerate_id();
+                    $_SESSION['user'] = $_POST['username'];
+                    session_write_close();
+                    $success = true;
+                    exit();
+                }
+                $con = null;
+                return $success;
+            }
+            catch (PDOException $e) {
+                echo $e->getMessage();
+                return false;
+            }
+        }

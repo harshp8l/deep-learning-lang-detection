@@ -1,0 +1,19 @@
+#include <boost/process.hpp>
+#include <iostream>
+
+namespace bp = boost::process;
+
+int main() {
+    bp::opstream m_Write;
+    boost::filesystem::path program(""/usr/bin/gnuplot"");
+    bp::child m_Plot(program, bp::std_in = m_Write);
+
+    m_Write << ""set term png\n"";
+    m_Write << ""set output \""Out.png\""\n"";
+    m_Write << ""plot \""Data.txt\"" using 1:2 notitle\n"";
+    m_Write.flush();
+    m_Write.pipe().close();
+
+    m_Plot.wait();
+    std::cout << ""Done, exit code: "" << m_Plot.exit_code() << ""\n"";
+}

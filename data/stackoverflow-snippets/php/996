@@ -1,0 +1,31 @@
+public interface ApiService {
+    @FormUrlEncoded
+    @GET(""/lara/getprofile.php?id="")
+    Call<List<Profile>> getMyProfile(@Query(""id"") String id);
+}
+
+
+
+private void getProfile(final String id){
+  ApiService apiService = ApiClient.getClient().create(ApiService.class);
+    Call<List<Profile>> call = apiService.getMyProfile(id);
+    call.enqueue(new Callback<List<Profile>>() {
+        @Override
+        public void onResponse(Call<List<Profile>> call, Response<List<Profile>> response) {
+
+            progressDialog.dismiss();
+            List<Profile> p = response.body();
+            if(p!=null && p.size()>0){
+            pid.setText(p.get(0).getPid());
+            fname.setText(p.get(0).getFname());
+            lname.setText(p.get(0).getLname());
+            teamlead.setText(p.get(0).getTeamlead());}
+        }
+
+        @Override
+        public void onFailure(Call<List<Profile>> call, Throwable t) {
+            //progressDialog.dismiss();
+            Toast.makeText(ProfilePage.this, ""Failed to load."" + t, Toast.LENGTH_LONG).show();
+    }
+    });
+}

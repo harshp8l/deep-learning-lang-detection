@@ -1,0 +1,125 @@
+package main
+
+import (
+    ""bytes""
+    ""encoding/json""
+    ""fmt""
+    ""io/ioutil""
+    ""log""
+    ""net/http""
+    ""net/http/httputil""
+)
+
+type token struct {
+    Token string
+}
+
+type config struct {
+    Foo string
+}
+
+func main() {
+    token, err := getAuthToken()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    config, err := getConfig(""foo"", token)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    _ = config
+}
+
+func getAuthToken() (string, error) {
+    endpoint := ""foo""
+
+    body := struct {
+        UserName string `json:""username""`
+        Password string `json:""password""`
+    }{
+        UserName: ""foo"",
+        Password: ""bar"",
+    }
+    var token token
+
+    err := sendRequest(endpoint, body, &token)
+    if err != nil {
+        return """", err
+    }
+
+    return token.Token, nil
+}
+
+func getConfig(id string, token string) (*config, error) {
+    endpoint := ""foo""
+
+    body := struct {
+        ID string `json:""id""`
+    }{
+        ID: id,
+    }
+    var config config
+
+    err := sendRequest(endpoint, body, &config, header(""Content-Type"", ""application/json""))
+    if err != nil {
+        return nil, err
+    }
+
+    return &config, nil
+}
+
+type option func(*http.Request)
+func header(key, value string) func(*http.Request) {
+    return func(req *http.Request) {
+        req.Header.Add(key, value)
+    }
+}
+
+func sendRequest(endpoint string, body interface{}, result interface{}, options ...option) error {
+    jsnBytes, err := json.Marshal(body)
+    if err != nil {
+        return err
+
+    }
+
+    req, err := http.NewRequest(""POST"", endpoint, bytes.NewReader(jsnBytes))
+    if err != nil {
+        return fmt.Errorf(""Unable to create request. %v"", err)
+
+    }
+
+    req.Header.Add(""Content-Type"", ""application/json"")
+    for _, option := range options {
+        option(req)
+    }
+
+
+    dump, err := httputil.DumpRequest(req, true)
+    if err != nil {
+        return fmt.Errorf(""Could not dump request. "", err)
+    }
+
+    log.Println(""Request: "", string(dump))
+
+    client := http.Client{}
+    log.Println(""Initiating http request"")
+
+    resp, err := client.Do(req)
+    if err != nil {
+        return fmt.Errorf(""HTTP Error: %v"", err)
+    }
+    defer resp.Body.Close()
+
+    bytes, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return fmt.Errorf(""Error reading response body: %v"", err)
+    }
+
+    err = json.Unmarshal(bytes, result)
+    if err != nil {
+        return fmt.Errorf(""Could not unamrshal json. "", err)
+    }
+    return nil
+}

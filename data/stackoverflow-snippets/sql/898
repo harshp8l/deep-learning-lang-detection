@@ -1,0 +1,20 @@
+SELECT a.id_brg, a.nm_brg, a.jen_sat, a.nm_kat, a.stok, a.laku,
+       (a.stok - a.laku) as difference
+FROM (SELECT barang.id_brg, barang.nm_brg, jen_sat, nm_kat,
+             SUM(COALESCE(stok_brg.stok, 0 )) AS stok, 
+             COALESCE( laku, 0 ) AS laku
+      FROM barang JOIN
+           satuan
+           ON barang.id_sat = satuan.id_sat JOIN
+           kategori
+           ON barang.id_kat = kategori.id_kat LEFT JOIN
+           stok_brg
+           ON barang.id_brg = stok_brg.id_brg LEFT JOIN
+           (SELECT brg_laku.id_brg, SUM(COALESCE(brg_laku.dibeli, 0)) AS laku
+            FROM brg_laku
+            GROUP BY brg_laku.id_brg
+          ) brg_lak
+          ON barang.id_brg = brg_laku.id_brg
+     GROUP BY barang.id_brg
+    ) as a
+HAVING difference <= 3;

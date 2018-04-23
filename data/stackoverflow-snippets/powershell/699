@@ -1,0 +1,29 @@
+function ResolveIPs {
+    cls #clear console
+    $regex = [regex] ""\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}""
+    $table = @() 
+
+    foreach ($argument in $args){ 
+        if ($argument -match $regex){ 
+            $tempstr = $regex.Matches($argument) | %{ $_.value } 
+
+            foreach ($value in $tempstr){
+                $tablevalue = """" | select IP, Hostname 
+                try {
+                    $result = [Net.Dns]::GetHostByAddress($value).HostName
+
+                    $tablevalue.IP = $value 
+                    $tablevalue.Hostname = $result 
+                    $table = $table + $tablevalue 
+                }
+                catch [exception] { 
+                    $tablevalue.IP = $value 
+                    $tablevalue.Hostname = ""Error resolving IP address"" 
+                    $table = $table + $tablevalue
+                }
+            }  #endof foreach value
+        }#end of IF
+    }#endof foreach argument
+
+    $table #output of table with results
+}#end of function

@@ -1,0 +1,51 @@
+function Get-ResponseTime { 
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$CommonName
+        ,
+        [Parameter(Mandatory = $true)]
+        [string]$URL
+        , 
+        [Parameter(Mandatory = $true)]
+        [string]$Environment
+        , 
+        [Parameter(Mandatory = $false)]
+        [int]$Times = 5
+    )    
+    [System.Int64]$TotalResponseTime = 0 
+    [System.Diagnostics.Stopwatch]$stopwatch = New-Object 'System.Diagnostics.Stopwatch'
+    Write-Verbose ""Processing URL: $URL""
+    1..$times | foreach-object {
+        [System.Net.WebClient]$Request = New-Object 'System.Net.WebClient' 
+        $Request.UseDefaultCredentials = $true 
+        Write-Verboset ""Call $_ to URL: $URL""
+        $stopwatch.Restart()
+        $PageRequest = $Request.DownloadString($URL) 
+        $stopwatch.Stop()
+        $TimeTaken = $stopwatch.Elapsed.TotalMilliseconds 
+        $Request.Dispose() 
+        $TotalResponseTime += $TimeTaken 
+    } 
+
+    $AverageResponseTime = $TotalResponseTime / $Times 
+    Write-Verbose ""Request to $CommonName took $AverageResponseTime ms on average"" 
+
+    $details = @{            
+        Date             = get-date              
+        AverageResponseTime     = $AverageResponseTime              
+        #ResponseTime      = $Destination #this is not declared anywhere / don't know what this field's for
+        Environment = $environment
+    }                           
+    Write-Output (New-Object 'PSObject' -Property $details)
+    #do you really want a delay here?  Doesn't make much sense... may make sense to include a delay in the above loop; i.e. to stagger your tests?
+    #$random = Get-Random -minimum 1 -maximum 30
+    #Start-Sleep -s $random
+} 
+
+#PRODUCTION
+[PSObject[]]$results = @(
+    (Get-ResponseTime -commonname 'app homepage' -URL 'https://url1' -environment 'PRODUCTION' -Verbose)
+    ,(Get-ResponseTime -commonname 'department homepage' -URL 'https://url2' -environment 'PRODUCTION' -Verbose)
+)
+$results | Export-Csv -LiteralPath 'c:\so.csv' -NoTypeInformation

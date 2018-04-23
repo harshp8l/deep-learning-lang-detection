@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -o pipefail  # if any part of a pipeline fails, consider the entire command to fail
+
+file=$1          # input file
+prefix=$2        # destination prefix
+
+while IFS=, read -r sourcePath var1; do
+  var2=${var1//[[:space:]]/}
+  destinationPath=""$prefix$var2""
+  checksum1=
+  checksum2=
+
+  until [[ $checksum1 && $checksum2 && ""$checksum1"" = ""$checksum2"" ]]; do
+    # Upload data from specific path to DataLake.
+    az dls fs upload --account eanpdlstore2 --source-path ""$sourcePath"" --destination-path ""$datalakePath"" --overwrite || continue
+
+    #Download data from DataLake to local temp dir
+    az dls fs download --account eanpdlstore2 --destination-path ""$temp_path"" --source-path ""$datalakePath"" --overwrite || continue
+
+    #Tar the whole dir and calculate the sha1sum
+    checksum1=$(tar -czf sourceFolder.tar.gz ""$sourceFolderPath"" | sha1sum) || checksum1=
+    checksum2=$(tar -czf tempFolder.tar.gz ""$temp_path"" | sha1sum) || checksum2=
+  done </dev/null ## safety: stop anything here from consuming lines from the input file
+done <""$file""

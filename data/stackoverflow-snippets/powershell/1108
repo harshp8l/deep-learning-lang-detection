@@ -1,0 +1,17 @@
+## Collect hardware information, determine ports
+$Nics = @(
+    Get-NetAdapterHardwareInfo |
+        Select-Object -Property @('Name', 'InstanceID', 'InterfaceDescription', 'BusNumber', 'FunctionNumber')
+)
+
+## Rename logic
+For ($i = 0; $i -le $Nics.Count; $i++)
+{
+    $FunctionCount = (($Nics | Where-Object { $_.BusNumber -eq $i }).FunctionNumber | Measure-Object -Maximum).Maximum
+
+    For ($j = 0; $j -le $FunctionCount; $j++)
+    {
+        $Nic = $Nics | Where-Object { $_.BusNumber -eq $i -and $_.FunctionNumber -eq $j }
+        Rename-NetAdapter -Name $Nic.Name -NewName ""B$i Port$($j + 1)"" -PassThru -WhatIf
+    }
+}

@@ -1,0 +1,25 @@
+import mock
+from app import App
+from app import Base
+import unittest
+from StringIO import StringIO
+class TestApp(unittest.TestCase):
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_mock_instance_var(self, mocked_stdout):
+
+        base = Base()
+        app = App()
+
+        mock_base = mock.MagicMock(name='Base', spec=Base)
+        instance = mock_base.return_value
+        instance.attr.return_value = 'mmm'
+        base.attr = instance.attr.return_value
+        self.assertEqual(base.attr, 'mmm')
+
+        app.base = base
+
+        self.assertEqual(app.base.attr, 'mmm')
+        # the print stdout of show()
+        app.base.show()
+        self.assertEqual(mocked_stdout.getvalue(), 'mmm\n')

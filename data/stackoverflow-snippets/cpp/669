@@ -1,0 +1,35 @@
+QQueue<QFile*> reportQueue; //initialize the queue
+
+connect(ftp, &QFtp::listInfo, [this](const QUrlInfo &ftpUrlInfo) {
+        if (ftpUrlInfo.isFile()) {
+            reportQueue.append(new QFile(""local path"" + ""\\"" + ftpUrlInfo.name()));
+        }
+    });
+    connect(ftp, &QFtp::done, [this]() {
+        emit reportsDataFinished();
+    });
+    connect(ftp, &QFtp::commandFinished, [this]() {
+        if (ftp->currentCommand() == QFtp::List) {
+            proceedDownload();
+        } else if (ftp->currentCommand() == QFtp::Get) {
+            reportFile->close();
+            reportFile->deleteLater();
+            proceedDownload();
+        }
+    });
+
+    if (ftp->error() == QFtp::NotConnected) {
+        emit ftpReportError(ftp->error());
+    } else {
+        ftp->list(""ftp path to the dir"");
+    }
+
+void Test::proceedDownload()
+{
+    if (!reportQueue.isEmpty()) {
+        reportFile = reportQueue.dequeue();
+        reportFile->open(QIODevice::WriteOnly);
+        QFileInfo ftpFileInfo(reportFile->fileName());
+        ftp->get(""ftp path to file"" + ""/"" + ftpFileInfo.fileName(), reportFile, QFtp::Binary);
+    }
+}

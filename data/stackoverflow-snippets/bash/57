@@ -1,0 +1,25 @@
+TripWireLocalPassword=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w30 | head -n1)
+TripWireSitePassword=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w30 | head -n1)
+
+
+sudo echo ""postfix postfix/main_mailer_type select Internet Site"" | sudo debconf-set-selections
+sudo echo ""postfix postfix/mailname                     string `hostname`""                  | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/local-passphrase           password ${TripWireLocalPassword}""  | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/local-passphrase-again     password ${TripWireLocalPassword}""  | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/site-passphrase            password ${TripWireSitePassword}""   | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/site-passphrase-again      password ${TripWireSitePassword}""   | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/rebuild-config             boolean true""                       | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/use-localkey               boolean true""                       | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/change-in-default-policy   note""                               | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/email-report               note""                               | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/broken-passphrase          note""                               | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/use-sitekey                boolean true""                       | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/installed                  note""                               | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/site-passphrase-incorrect  boolean true""                       | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/upgrade                    boolean true""                       | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/rebuild-policy             boolean true""                       | sudo debconf-set-selections
+sudo echo ""tripwire tripwire/local-passphrase-incorrect boolean true""                       | sudo debconf-set-selections
+
+DEBIAN_FRONTEND=noninteractive apt-get install tripwire
+
+echo $TripWireLocalPassword | tripwire --init

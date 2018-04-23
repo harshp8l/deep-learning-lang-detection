@@ -1,0 +1,15 @@
+let groupConnected initId idTups =
+    let mergeGroups projectIds input =
+        (List.empty<SortedSet<_>>, input)
+        ||> List.fold (fun groups x ->
+            let ids = projectIds x
+            match groups |> List.tryFind (fun g -> g.Overlaps ids) with
+              | Some g -> g.UnionWith ids
+                          groups
+              | _      -> ids::groups)
+    idTups
+    |> mergeGroups (fun (a, b) -> SortedSet([| a; b |]))
+    |> mergeGroups id
+    |> List.sortBy (fun g -> g.Min)
+    |> Seq.mapi (fun i g -> initId + i, List.ofSeq g)
+    |> Map.ofSeq

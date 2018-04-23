@@ -1,0 +1,18 @@
+  //Define function to convert from GenericRecord to Row
+  def genericRecordToRow(record: GenericRecord, sqlType : SchemaConverters.SchemaType): Row = {
+    val objectArray = new Array[Any](record.asInstanceOf[GenericRecord].getSchema.getFields.size)
+    import scala.collection.JavaConversions._
+    for (field <- record.getSchema.getFields) {
+      objectArray(field.pos) = record.get(field.pos)
+    }
+
+    new GenericRowWithSchema(objectArray, sqlType.dataType.asInstanceOf[StructType])
+  }
+
+//Inside your stream foreachRDD
+val yourGenericRecordRDD = ... 
+val schema = new Schema.Parser().parse(...) // your schema
+val sqlType = SchemaConverters.toSqlType(new Schema.Parser().parse(strSchema))
+
+var rowRDD = yourGeneircRecordRDD.map(record => genericRecordToRow(record, sqlType))
+val df = sqlContext.createDataFrame(rowRDD , sqlType.dataType.asInstanceOf[StructType])

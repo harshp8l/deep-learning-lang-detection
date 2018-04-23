@@ -1,0 +1,38 @@
+filter MyCustomFilter{
+
+    $File = $_
+
+    $FileDate = $File.LastWriteTime
+    $Now = (Get-Date)
+    $FileAgeDays = ($Now - $FileDate).TotalDays
+
+    if (
+
+        # Keep files for at least 90 days
+        ( $FileAgeDays -lt 91 
+        ) -or
+
+        # Keep files from last day of the month this year
+        (  $FileDate.Year -eq $Now.Year -and
+           $FileDate.Month -ne $FileDate.AddDays(1).Month
+        ) -or
+
+        # Keep files from 31 Dec for up to 2 years
+        (   $FileAgeDays -lt ( 2 * 365 ) -and
+            $FileDate.Month -eq 12 -and 
+            $FileDate.Day -eq 31
+        )
+
+    ) { 
+
+        # File should be kept, so nothing is returned by the filter
+
+    } else { 
+
+        # File should be deleted, so pass the file down the pipeline
+        write-output $File
+
+    }
+
+
+}

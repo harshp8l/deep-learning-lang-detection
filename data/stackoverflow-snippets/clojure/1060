@@ -1,0 +1,32 @@
+(def items {:item_name_1 ""Great Deal""
+            :item_options_2 ""blah: 2""
+            :item_name_2 ""Awesome Deal"" 
+            :item_options_1 ""foo: 3"" 
+            :item_quantity_1 ""1""
+            :item_price_2 ""9.99"" 
+            :item_price_1 ""9.99""
+            :itemCount ""2""})
+
+(def item-keys [:item_name :item_options :item_price :item_quantity])
+
+(defn parse-items
+   [mixed-map]
+   (let [num-items (Integer/parseInt (:itemCount mixed-map))
+         all-item-numbers (range 1 (inc num-items))
+         mixed-map-key (fn [n k] (keyword (str (name k) ""_"" n)))
+         map-entry (fn [n k] 
+                     (when-let [v (mixed-map (mixed-map-key n k))] 
+                       [k v]))
+         map-entries (fn [n] (map #(map-entry n %) item-keys))]
+     (mapv #(into {} (map-entries %)) all-item-numbers)))
+
+(clojure.pprint/pprint (parse-items items))
+
+; => [{:item_name ""Great Deal"",
+; =>   :item_options ""foo: 3"",
+; =>   :item_price ""9.99"",
+; =>   :item_quantity ""1""}
+; =>  {:item_name ""Awesome Deal"",
+; =>   :item_options ""blah: 2"",
+; =>   :item_price ""9.99""}]
+; => nil

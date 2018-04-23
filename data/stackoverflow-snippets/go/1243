@@ -1,0 +1,41 @@
+package main
+
+import (
+    ""fmt""
+    ""time""
+
+    ""github.com/robfig/cron""
+)
+
+type MyScheduler struct {
+    At    time.Time
+    Every time.Duration
+}
+
+func (s *MyScheduler) Next(t time.Time) time.Time {
+    if t.After(s.At) {
+        return t.Add(s.Every)
+    }
+
+    return s.At
+}
+
+func main() {
+    c := cron.New()
+
+    //Execute every 2 seconds after a certain time (5 second from now)
+    now := time.Now()
+    at := now.Add(5 * time.Second) //In your case, this should be: Sep 1st, 2017
+    s := &MyScheduler{at, 2 * time.Second}
+
+    c.Schedule(s, cron.FuncJob(
+        func() {
+            cur := time.Now()
+            fmt.Printf(""  [%v] CRON job executed after %v\n"", cur, cur.Sub(now))
+        }))
+
+    fmt.Printf(""Now: %v\n"", now)
+    c.Start()
+    time.Sleep(10 * time.Second)
+    c.Stop()
+}

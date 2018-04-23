@@ -1,0 +1,18 @@
+private boolean validateChain(Certificate[] certChain)
+{
+    for (int i = 0; i < certChain.length-1; i++) {
+        X500Principal issuerDN =
+            ((X509Certificate)certChain[i]).getIssuerX500Principal();
+        X500Principal subjectDN =
+            ((X509Certificate)certChain[i+1]).getSubjectX500Principal();
+        if (!(issuerDN.equals(subjectDN)))
+            return false;
+    }
+
+
+    // Check for loops in the chain. If there are repeated certs,
+    // the Set of certs in the chain will contain fewer certs than
+    // the chain
+    Set<Certificate> set = new HashSet<>(Arrays.asList(certChain));
+    return set.size() == certChain.length;
+}

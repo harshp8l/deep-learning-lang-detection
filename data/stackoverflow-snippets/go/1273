@@ -1,0 +1,43 @@
+package concurrent_hashmap
+
+import (
+    ""hash/fnv""
+    ""sync""
+)
+
+type ConcurrentMap struct {
+    buckets     []*ThreadSafeMap
+    bucketCount uint32
+}
+
+type ThreadSafeMap struct {
+    mapLock sync.RWMutex
+    hashMap map[string]interface{}
+}
+
+func NewConcurrentMap(bucketSize uint32) *ConcurrentMap {
+    var threadSafeMapInstance *ThreadSafeMap
+    var bucketOfThreadSafeMap []*ThreadSafeMap
+
+    for i := 0; i <= int(bucketSize); i++ {
+        threadSafeMapInstance = &ThreadSafeMap{sync.RWMutex{}, make(map[string]interface{})}
+        bucketOfThreadSafeMap = append(bucketOfThreadSafeMap, threadSafeMapInstance)
+    }
+
+    return &ConcurrentMap{bucketOfThreadSafeMap, bucketSize}
+}
+
+func (cMap *ConcurrentMap) Put(key string, val interface{}) {
+    bucketIndex := hash(key) % cMap.bucketCount
+    bucket := cMap.buckets[bucketIndex]
+    bucket.mapLock.Lock()
+    bucket.hashMap[key] = val
+    bucket.mapLock.Unlock()
+}
+
+// Helper
+func hash(s string) uint32 {
+    h := fnv.New32a()
+    h.Write([]byte(s))
+    return h.Sum32()
+}

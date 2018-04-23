@@ -1,0 +1,30 @@
+str =<<_
+MAINT: Refactor something
+STRY-1: Added something
+MAINT: Refactoring something
+Add something
+STRY-3: Adding something
+STRY-1: Add something
+MAINT: Refactored something
+Refactor something
+STRY-4: Updating something
+STRY-9:   Update something
+STRY-2: Updated something
+_
+
+r = /
+    ^                      # Match beginning of line
+    (?:                    # Begin non-capture group
+      MAINT\:[ ]+Refactor  # Match string
+      |                    # or
+      STRY-\d+\:[ ]+       # match string
+      (?:Add|Update)       # match 'Add' or 'Update'
+    )                      # end non-capture group
+    [ ]+something          # match one or more spaces followed by 'something'
+    $                      # match end of line
+    /x                     # free-spacing regex definition modes
+
+str.scan(r)
+  #=> [""MAINT: Refactor something\n"",
+  #    ""STRY-1: Add something\n"",
+  #    ""STRY-9:   Update something\n""]

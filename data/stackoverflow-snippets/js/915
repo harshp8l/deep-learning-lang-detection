@@ -1,0 +1,36 @@
+const mySQL = require('mysql');
+
+function connectionn(hostName, userName, password){
+    return new Promise((resolve, reject) => {
+        const objConnection = mySQL.createConnection({ // *** Added declaration
+            host:hostName,
+            user:userName,
+            password:password
+        });    
+        objConnection.connect(function(err){
+            if(err) reject(err);
+            else resolve(objConnection);               // *** Resolve with that object, use `else`
+        }); 
+    });    
+}
+
+function queryy(objConnection, sql){                   // *** Pass in the connection to use
+    return new Promise((resolve, reject) => {
+        objConnection.query(sql, function(err,result,fields){
+            if(err) reject(err)
+            else resolve(result);                      // *** Use `else`
+        });
+    });
+}
+
+// *** Use it, be sure to end the connection when done, handle errors
+(async () => {
+    const objConnection = await connectionn(""localhost"", ""root"", ""admin""); 
+    try {
+        const result = await queryy(objConnection, ""Select * from Users"");
+        console.log(JSON.stringify(result));
+    }
+    finally {                                          // *** Note cleanup!
+        objConnection.end();
+    }
+})().catch(e => /*...handle error...*/);

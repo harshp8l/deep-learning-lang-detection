@@ -1,0 +1,44 @@
+function Test-IPv4InternetConnectivity
+{
+    # Returns $true if the computer is attached to a network that has connectivity to the
+    # Internet over IPv4
+    #
+    # Returns $false otherwise
+
+    # Get operating system  major and minor version
+    $strOSVersion = (Get-WmiObject -Query ""Select Version from Win32_OperatingSystem"").Version
+    $arrStrOSVersion = $strOSVersion.Split(""."")
+    $intOSMajorVersion = [UInt16]$arrStrOSVersion[0]
+    if ($arrStrOSVersion.Length -ge 2)
+    {
+        $intOSMinorVersion = [UInt16]$arrStrOSVersion[1]
+    } `
+    else
+    {
+        $intOSMinorVersion = [UInt16]0
+    }
+
+    # Determine if attached to IPv4 Internet
+    if (($intOSMajorVersion -gt 6) -or (($intOSMajorVersion -eq 6) -and ($intOSMinorVersion -gt 1)))
+    {
+        # Windows 8 / Windows Server 2012 or Newer
+        # First, get all Network Connection Profiles, and filter it down to only those that are domain networks
+        $IPV4ConnectivityInternet = [Microsoft.PowerShell.Cmdletization.GeneratedTypes.NetConnectionProfile.IPv4Connectivity]::Internet
+        $internetNetworks = Get-NetConnectionProfile | Where-Object {$_.IPv4Connectivity -eq $IPV4ConnectivityInternet}
+    } `
+    else
+    {
+        # Windows Vista, Windows Server 2008, Windows 7, or Windows Server 2008 R2
+        # (Untested on Windows XP / Windows Server 2003)
+        # Get-NetConnectionProfile is not available; need to access the Network List Manager COM object
+        # So, we use the Network List Manager COM object to get a list of all network connections
+        # Then we check each to see if it's connected to the IPv4 Internet
+        # The GetConnectivity() method returns an integer result that can be bitwise-enumerated
+        # to determine connectivity.
+        # See https://msdn.microsoft.com/en-us/library/windows/desktop/aa370795(v=vs.85).aspx
+
+        $internetNetworks = ([Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]""{DCB00C01-570F-4A9B-8D69-199FDBA5723B}""))).GetNetworkConnections() | `
+            ForEach-Object {$_.GetNetwork().GetConnectivity()} | Where-Object {($_ -band 64) -eq 64}
+    }
+    return ($internetNetworks -ne $null)
+}

@@ -1,0 +1,35 @@
+x <- sample(1:100)
+y <- sample(1:100)
+z <- sample(1:100)
+
+y[sample(1:100, 10)] <- 1 # create some ties
+
+all.equal(x[order(y, z)], c(arma_sort(x, y, z))) # check against R
+# [1] TRUE # Good
+
+microbenchmark(r = x[order(y, z)],
+               arma = arma_sort(x, y, z),
+               times = 1e4)
+
+Unit: microseconds
+ expr   min     lq     mean median     uq      max neval cld
+    r 44.50 46.360 48.01275 46.930 47.755  294.051 10000   b
+ arma 10.76 12.045 16.30033 13.015 13.715 5262.132 10000  a 
+
+x <- sample(1:1000)
+y <- sample(1:1000)
+z <- sample(1:1000)
+
+y[sample(1:100, 10)] <- 1 # create some ties
+
+all.equal(x[order(y, z)], c(arma_sort(x, y, z))) # check against R
+# [1] TRUE # Good
+
+microbenchmark(r = x[order(y, z)],
+               arma = arma_sort(x, y, z),
+               times = 1e4)
+
+Unit: microseconds
+ expr     min       lq     mean   median       uq      max neval cld
+    r 113.765 118.7950 125.7387 120.5075 122.4475 3373.696 10000   b
+ arma  82.690  91.3925 104.0755  95.2350  99.4325 6040.162 10000  a 

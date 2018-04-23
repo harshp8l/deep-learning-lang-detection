@@ -1,0 +1,25 @@
+type Async with
+    static member WithCancellation (token:CancellationToken) operation = 
+        async {
+            try
+                let task = Async.StartAsTask (operation, cancellationToken = token)
+                task.Wait ()
+                return Some task.Result
+            with 
+                | :? TaskCanceledException -> return None
+                | :? AggregateException -> return None
+        }
+
+    static member WithTimeout (timeout:int option) operation = 
+        match timeout with
+        | Some(time) -> 
+            async {
+                use tokenSource = new CancellationTokenSource (time)
+                return! operation |> Async.WithCancellation tokenSource.Token
+            }
+
+        | _ -> 
+            async { 
+                let! res = operation
+                return Some res
+            }

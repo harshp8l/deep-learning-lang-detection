@@ -1,0 +1,22 @@
+import numpy as np
+import scipy.integrate as si
+import numba
+from numba import cfunc
+from numba.types import intc, CPointer, float64
+from scipy import LowLevelCallable
+
+
+def jit_integrand_function(integrand_function):
+    jitted_function = numba.jit(integrand_function, nopython=True)
+
+    @cfunc(float64(intc, CPointer(float64)))
+    def wrapped(n, xx):
+        return jitted_function(xx[0], xx[1])
+    return LowLevelCallable(wrapped.ctypes)
+
+@jit_integrand_function
+def func(xe, xh):
+    return np.sin(2*np.pi*xe)*np.sin(2*np.pi*xh)
+
+print(si.nquad(func, [[0,1],[0,1]], full_output=True))
+>>>(-2.3958561404687756e-19, 7.002641250699693e-15, {'neval': 1323})

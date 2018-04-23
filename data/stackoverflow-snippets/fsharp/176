@@ -1,0 +1,26 @@
+open Option
+
+module A =
+    type NonZeroInteger =
+        private | NonZeroInteger of int
+
+        static member Create (v : int) : Option<NonZeroInteger> =
+            if v = 0 then
+                None
+            else
+                Some(NonZeroInteger(v))
+
+        member this.Get : int =
+            this |> fun (NonZeroInteger v) -> v
+
+        member this.Print =
+            this |> fun (NonZeroInteger v) -> printfn ""%i"" v
+
+
+printfn ""%A"" (A.NonZeroInteger(0)) // error FS1093: The union cases or fields of the type 'NonZeroInteger' are not accessible from this code location
+
+let wrong = A.NonZeroInteger.Create(0) // None
+let right = A.NonZeroInteger.Create(-1) // Some
+
+wrong |> Option.iter (fun x -> x.Print) // Doesn't print anything
+right |> Option.iter (fun x -> x.Print) // Prints -1

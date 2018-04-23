@@ -1,0 +1,19 @@
+from wrapt import ObjectProxy
+
+class DictWithDefaultsFunky(dict):
+    __slots__ = ['_factory']  # avoid using extra memory
+
+    def __init__(self, factory, *args, **kwargs):
+        self._factory = factory
+        super().__init__(*args, **kwargs)
+
+    def __missing__(self, key):
+        ret = self._factory()
+        dict_ = self
+
+        class AppendTrigger(ObjectProxy):
+            def append(self, val):
+                self.__wrapped__.append(val)
+                dict_[key] = ret
+
+        return AppendTrigger(ret)

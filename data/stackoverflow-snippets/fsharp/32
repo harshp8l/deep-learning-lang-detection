@@ -1,0 +1,54 @@
+type Error = {
+  code : int
+  message : string
+}
+
+/// Message type used by the agent - contains queueing
+/// of work items and notification of completion
+type ThrottlingAgentMessage =
+  | Completed 
+  | Enqueue of Async<unit>
+
+/// Represents an agent that runs operations in concurrently. When the number
+/// of concurrent operations exceeds 'limit', they are queued and processed later
+let throttlingAgent limit =
+  MailboxProcessor.Start(fun inbox ->
+    async {
+      // The agent body is not executing in parallel,
+      // so we can safely use mutable queue & counter
+      let queue = System.Collections.Generic.Queue<Async<unit>>()
+      let running = ref 0
+
+      while true do
+
+        // Enqueue new work items or decrement the counter
+        // of how many tasks are running in the background
+        let! msg = inbox.Receive()
+        match msg with
+        | Completed -> decr running
+        | Enqueue w -> queue.Enqueue(w)
+
+        // If we have less than limit & there is some work to
+        // do, then start the work in the background!
+        while running.Value < limit && queue.Count > 0 do
+          let work = queue.Dequeue()
+          incr running
+          do! // When the work completes, send 'Completed'
+              // back to the agent to free a slot
+              async {
+                do! work
+                inbox.Post(Completed)
+              }
+              |> Async.StartChild
+              |> Async.Ignore
+    })
+
+let requestAsync (url: string) : Async<Result<string, Error>> =
+    async {
+        Console.WriteLine (""Simulating request "" + url)
+        try
+            do! Async.Sleep(1000)
+            return Ok (url + "":body..."")
+        with :? WebException as e ->
+            return Error {code = 500; message = ""Internal Server Error"";}
+    }

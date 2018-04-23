@@ -1,0 +1,64 @@
+from flask import *
+import os
+from dbconnect import connection
+from flask import Flask, render_template, flash, request, url_for, redirect, session,Response
+from wtforms import Form, BooleanField, TextField, PasswordField, validators,SelectField
+from passlib.hash import sha256_crypt
+from MySQLdb import escape_string as thwart
+#from flask_sqlalchemy import SQLAlchemy 
+from flask_wtf import FlaskForm 
+from wtforms_sqlalchemy.fields import QuerySelectField
+from urllib.request import *
+from flask import json
+import gc 
+
+app = Flask(__name__)
+app.secret_key = 'my unobvious secret key'
+
+
+
+class runpageForm(Form):
+    customer = SelectField('Select your customer Name', choices=[], id='select_customer')
+    product = SelectField('Select your product Name', choices=[], id='select_product')
+
+@app.route('/runpage/', methods=['GET', 'POST'])
+def runpage():
+
+    try:
+      form = runpageForm()
+      if request.method == ""POST"" :
+            # loading values in SelectFields on page load
+
+            for row in fetch_customer('custdetail', 'customer'):
+                  customer = str(row[0])
+                  form.customer.choices += [(customer, customer )]   ;
+                  #value_customerqq = dict(form.customer.choices).get(form.customer.data)
+
+      return render_template(""runpage.html"", form=form)
+    except Exception as e:
+        error = ""Invalid credentialsw, try again.""
+        return(str(e))
+
+
+@app.route('/productChange/', methods=['GET', 'POST'])
+def productChange():
+    try:
+      form = runpageForm()
+      if request.method == ""GET"":
+               customer = request.args.get('customer')
+               print(customer)
+               c, conn = connection()
+               c.execute(""SELECT product FROM custdetail WHERE customer = %s"", [customer])
+               product = c.fetchall()
+               print(product)
+
+               data = [{""vals"": x[0]} for x in product]
+               print (""hello tript"")
+               print (data)
+               c.close()
+
+      return jsonify(data)
+
+    except Exception as e:
+        error = ""Invalid customer name, try again.""
+        return(str(e))

@@ -1,0 +1,119 @@
+USE [Test]
+GO
+
+/****** Object:  StoredProcedure [dbo].[sp_CheckInsPerUserReport]    Script Date: 24/03/2018 00:36:09 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+/*CREATE TYPE GUIDArray AS table(Item varchar(MAX))*/
+
+ALTER PROCEDURE [dbo].[sp_CheckInsPerUserReport]
+@UserIds as GUIDArray READONLY,
+@dateStart varchar(max),
+@dateEnd varchar(max),
+@SortColumn VARCHAR(50) = '',
+@SortOrder VARCHAR(50) = '',
+@PageNumber INT,
+@PageSize INT
+/*@SearchTerm VARCHAR(500),*/
+/*@SearchColumn VARCHAR(100)*/
+AS
+
+SET NOCOUNT ON;
+
+DECLARE @query as nvarchar(MAX)
+DECLARE @StartRow INT
+DECLARE @EndRow INT
+
+-- calculate the starting and ending of records
+SET @SortColumn = LOWER(ISNULL(@SortColumn, ''))
+SET @SortOrder = LOWER(ISNULL(@SortOrder, ''))
+SET @StartRow = (@PageNumber - 1) * @PageSize
+SET @EndRow = (@PageNumber * @PageSize)+1
+
+;WITH CTEResult AS (
+
+        SELECT ROW_NUMBER() OVER (ORDER BY
+            CASE WHEN (@SortColumn = 'username' AND @SortOrder='asc') THEN username END ASC,
+            CASE WHEN (@SortColumn = 'username' AND @SortOrder='desc') THEN username END DESC,
+
+            CASE WHEN (@SortColumn = 'email' AND @SortOrder='asc') THEN email END ASC,
+            CASE WHEN (@SortColumn = 'email' AND @SortOrder='desc') THEN email END DESC,
+
+            CASE WHEN (@SortColumn = 'softcheckins' AND @SortOrder='asc') THEN SoftCheckins END ASC,
+            CASE WHEN (@SortColumn = 'softcheckins' AND @SortOrder='desc') THEN SoftCheckins END DESC,
+
+            CASE WHEN (@SortColumn = 'totalcheckins' AND @SortOrder='asc') THEN TotalCheckins END ASC,
+            CASE WHEN (@SortColumn = 'totalcheckins' AND @SortOrder='desc') THEN TotalCheckins END DESC,
+
+            CASE WHEN (@SortColumn = 'hardcheckins' AND @SortOrder='asc') THEN HardCheckins END ASC,
+            CASE WHEN (@SortColumn = 'hardcheckins' AND @SortOrder='desc') THEN HardCheckins END DESC
+        ) AS RowNumber, username, email, Roles, Team , SoftCheckins, HardCheckins, TotalCheckins,
+        COUNT(*) OVER () AS TotalCount
+        FROM (
+            SELECT 
+            u.username, 
+            u.email,
+            /* Get the roles and concat into one string. */ 
+       (SELECT ( Stuff((SELECT ', ' + [name] 
+                        FROM   [aspnetroles] 
+                        WHERE  [id] IN (SELECT [roleid] 
+                                        FROM   [aspnetuserroles] 
+                                        WHERE  [userid] = u.id) 
+                        FOR xml path('')), 1, 2, '') )) AS Roles, 
+       /* Get the users team */ 
+       (SELECT [name] 
+        FROM   [teams] 
+        WHERE  [id] = u.team_id)                        AS Team, 
+       /* Get the soft checkin count */ 
+       (SELECT Count(*) 
+        FROM   [checkins] 
+        WHERE  [user_id] = u.id 
+               AND [inat] IS NOT NULL 
+               AND [outat] IS NOT NULL 
+               AND [inat] >= CAST('02/24/2018 00:53:52' AS datetime) 
+               AND [outat] < Dateadd(day, 1, CAST('03/24/2018 00:00:00' AS datetime))
+               AND ( [state] = 1 OR [state] = 3 )) AS SoftCheckins, 
+       /* Get the hard checkin count */ 
+       (SELECT Count(*) 
+        FROM   [checkins] 
+        WHERE  [user_id] = u.id 
+               AND [hardinat] IS NOT NULL 
+               AND [hardoutat] IS NOT NULL 
+               AND [hardinat] >= CAST('02/24/2018 00:53:52' AS datetime)
+               AND [hardoutat] < Dateadd(day, 1, CAST('03/24/2018 00:00:00' AS datetime)) 
+               AND [hardstate] = 3) AS HardCheckins, 
+       /* get all checkins for total */ 
+       (SELECT Count(*) 
+        FROM   [checkins] 
+        WHERE  [user_id] = u.id 
+               AND [inat] IS NOT NULL 
+               AND [outat] IS NOT NULL 
+               AND [inat] >= CAST('02/24/2018 00:53:52' AS datetime) 
+               AND [outat] < Dateadd(day, 1,CAST('03/24/2018 00:00:00' AS datetime)) 
+               AND ( [state] = 1 
+                      OR [state] = 3 )) 
+       + (SELECT Count(*) 
+          FROM   [checkins] 
+          WHERE  [user_id] = u.id 
+                 AND [hardinat] IS NOT NULL 
+                 AND [hardoutat] IS NOT NULL 
+                 AND [hardinat] >= CAST('02/24/2018 00:53:52' AS datetime)
+                 AND [hardoutat] < Dateadd(day, 1, CAST('03/24/2018 00:00:00' AS datetime)) 
+                 AND [hardstate] = 3) AS TotalCheckins 
+            FROM [aspnetusers] AS u 
+            WHERE  u.id IN (SELECT Item FROM @UserIds)
+        ) as d  
+) 
+
+SELECT RowNumber, TotalCount, username as UserName, email as Email, Roles as Role, Team, SoftCheckins, HardCheckins, TotalCheckins
+FROM CTEResult
+WHERE RowNumber > @StartRow AND RowNumber < @EndRow
+ORDER BY RowNumber
+
+
+GO

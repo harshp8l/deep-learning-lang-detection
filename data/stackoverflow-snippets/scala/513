@@ -1,0 +1,29 @@
+trait MyTypeClass[T] {
+  def accept(t: T): T
+}
+
+object TestExtractor { outer =>
+  def unapply(str: String)(implicit myTypeClass: MyTypeClass[String]): Option[String] =
+    if (!str.isEmpty)
+      Some(myTypeClass.accept(str))
+    else
+      None
+
+  class ExplicitTestExtractor(tc: MyTypeClass[String]) {
+    def unapply(t: String) = outer.unapply(t)(tc)
+  }
+
+  def apply(tc: MyTypeClass[String]): ExplicitTestExtractor = 
+    new ExplicitTestExtractor(tc)
+
+}
+
+implicit val myTypeClass:MyTypeClass[String] = new MyTypeClass[String] {
+  override def accept(t: String): String = t.toUpperCase
+}
+
+val `TestExtractor(myTypeClass)` = TestExtractor(myTypeClass)
+
+""hello"" match {
+  case `TestExtractor(myTypeClass)`(str) => println(str)
+}

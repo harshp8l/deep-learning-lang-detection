@@ -1,0 +1,27 @@
+from django.contrib.auth.backends import ModelBackend, UserModel
+
+
+class EmailBackend(ModelBackend):  # pylint: disable=too-few-public-methods
+    '''
+    Authentication backend class which authenticates the user against his
+    e-mail address instead of his username.
+    '''
+
+    def authenticate(self, username=None, password=None, **kwargs):  # pylint: disable=unused-argument
+        '''
+        Authenticate the user via his e-mail address.
+
+        :param str username: The username used to authenticate
+        :param str password: The password used to authenticate
+        :return: When successful, the User model is returned
+        :rtype: User model or None
+        '''
+        try:
+            user = UserModel.objects.get(email=username)
+        except UserModel.DoesNotExist:
+            return None
+        else:
+            if user.check_password(password) and self.user_can_authenticate(user):
+                return user
+
+        return None

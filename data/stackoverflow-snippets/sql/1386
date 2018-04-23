@@ -1,0 +1,45 @@
+USE [Reports]
+GO
+/****** Object:  StoredProcedure [dbo].[usp_updateNexStep]    Script Date: 3/26/2018 1:08:09 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:      <Author,,Name>
+-- Create date: <Create Date,,>
+-- Description: <Description,,>
+-- =============================================
+ALTER PROCEDURE [updateNexStep]
+    -- Add the parameters for the stored procedure here
+    @p1 DATETIME,           --follow up date
+    @p2 CHAR(2),            -- Next step code
+    @p3 VARCHAR(255),       -- comments
+    @p4 CHAR(2),            -- last EMCODE
+    @p5 SMALLINT,           -- user id of who made the change
+    @p6 INT                 -- Record to be updated
+AS
+BEGIN
+    -- SET NOCOUNT ON added to prevent extra result sets from
+    -- interfering with SELECT statements.
+    SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+    UPDATE table1
+    SET dFollowUp       = @p1, 
+        cNextStepCode   = @p2,
+        cComments       = @p3, 
+        cEmCode         = @p4, 
+        nUserId         = @p5, 
+        dUpDated        = GETDATE()
+    WHERE nIDNo = @p6;
+END
+IF (@@ROWCOUNT > 0 ) 
+    BEGIN
+        INSERT INTO table2 
+        (dcTicketNo ,cSystem, cNextStepCode, dFollowUp, cComments, cEmCode, nUserId, dUpDated)
+        (SELECT s.cTicketNo ,s.cSystem ,s.cNextStepCode, s.dFollowUp, s.cComments, s.cEmCode, s.nUserId, s.dUpDated 
+            FROM table3 AS s
+            WHERE  s.nIDNo = @p6);
+    END

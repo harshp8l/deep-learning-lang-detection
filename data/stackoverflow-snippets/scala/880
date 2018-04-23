@@ -1,0 +1,38 @@
+val df1 = Seq(
+  (560L, 630L),
+  (710L, 240L),
+  (610L, 240L)
+).toDF(""product_PK"", ""rec_product_PK"")
+
+val df2 = Seq(
+  (560L, 610L, 1),
+  (560L, 240L, 1),
+  (610L, 240L, 0)
+).toDF(""product_PK"", ""rec_product_PK"", ""rank"")
+
+import org.apache.spark.sql.Row
+
+val pkList = df1.collect.map{
+  case Row(pk1: Long, pk2: Long) => (pk1, pk2)
+}.toList
+// pkList: List[(Long, Long)] = List((560,630), (710,240), (610,240))
+
+def inPkList(pkList: List[(Long, Long)]) = udf(
+  (pk1: Long, pk2: Long) => pkList.contains( (pk1, pk2) )
+)
+
+val df2Filtered = df2.where( inPkList(pkList)($""product_PK"", $""rec_product_PK"") )
+// +----------+--------------+----+
+// |product_PK|rec_product_PK|rank|
+// +----------+--------------+----+
+// |       610|           240|   0|
+// +----------+--------------+----+
+
+df1.join(df2Filtered, Seq(""product_PK"", ""rec_product_PK""), ""left_outer"")
+// +----------+--------------+----+
+// |product_PK|rec_product_PK|rank|
+// +----------+--------------+----+
+// |       560|           630|null|
+// |       710|           240|null|
+// |       610|           240|   0|
+// +----------+--------------+----+

@@ -1,0 +1,59 @@
+case class RedirectingAction @Inject()(parser: BodyParsers.Default)(implicit val executionContext: ExecutionContext)
+  extends ActionBuilder[Request, AnyContent] {
+
+  def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] = {
+    block(request)
+  }
+}
+
+case class TokenExtractAction @Inject()(parser: BodyParsers.Default)(
+  implicit val executionContext: ExecutionContext)
+  extends ActionTransformer[Request, TokenExtractRequest] {
+
+  def transform[A](request: Request[A]): Future[TokenExtractRequest[A]] = Future.successful {
+    val token = request.headers.get(Conf.REST_AUTH_HEADER)
+    new TokenExtractRequest(token, Some(TokenTool.decodeToken(token.getOrElse(""invalid_token"")).plaintext), request)
+  }
+}
+
+case class UserIdExtractAction @Inject()(parser: BodyParsers.Default)(implicit val executionContext: ExecutionContext)
+  extends ActionTransformer[TokenExtractRequest, UserRequest] {
+
+  def transform[A](request: TokenExtractRequest[A]): Future[UserRequest[A]] = Future.successful {
+    new UserRequest(
+      userAuthRole = TokenTool.tokenGetRoleFromToken(request.token),
+      userId = TokenTool.tokenGetIdFromToken(request.token),
+      token = request.token,
+      plainTextToken = request.plainTextToken,
+      request = request
+    )
+  }
+}
+
+case class PermissionCheckActionIndividual @Inject()(authSystem: AuthSystem)(implicit val executionContext: ExecutionContext)
+    extends ActionFilter[UserRequest] {
+  implicit val timeout: akka.util.Timeout = 5.seconds
+
+  def filter[A](input: UserRequest[A]): Future[Option[Result]] = {
+    val token                = input.headers.get(Conf.REST_AUTH_HEADER).orElse(Some(""invalid token""))
+    val authorizer: ActorRef = authSystem.authorizer
+    // verify sig and check user validity
+    val res = authorizer ? CheckUserValidityFromToken(token)
+
+    res.flatMap {
+      case true =>
+        Future(None)
+      case false =>
+        Future(Some(Forbidden(""Not permitted"")))
+    }
+  }
+}
+
+
+class SecureActionProvider @Inject()(val authSystem: AuthSystem, val authService: AuthService)(implicit ec: ExecutionContext,
+  parser: BodyParsers.Default) {
+
+  def SecureAction: ActionBuilder[UserRequest, AnyContent] =
+    RedirectingAction(parser) andThen TokenExtractAction(parser) andThen UserIdExtractAction(parser) andThen PermissionCheckActionIndividual(
+      authSystem)
+}

@@ -1,0 +1,15 @@
+val ngram = udf((xs: Seq[String], n: Int) => 
+  (1 to n).map(i => xs.sliding(i).filter(_.size == i).map(_.mkString)).flatten)
+
+spark.udf.register(""ngram"", ngram)
+
+val ngramer =  new SQLTransformer().setStatement(
+  """"""SELECT *, ngram(tokens, 3) AS ngrams FROM __THIS__""""""
+)
+
+ngramer.transform(df).show(false)
+// +---+------------+----------------------------------+
+// |id |tokens      |ngrams                            |
+// +---+------------+----------------------------------+
+// |1  |[a, b, c, d]|[a, b, c, d, ab, bc, cd, abc, bcd]|
+// +---+------------+----------------------------------+

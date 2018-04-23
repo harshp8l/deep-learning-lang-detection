@@ -1,0 +1,21 @@
+import scalaz.\/
+import scalaz.syntax.either._
+
+sealed trait KnownException
+case class MissingData(message: String) extends KnownException
+
+// type alias used for readability
+type Result[A] = \/[KnownException, A]
+
+// retrieve a param, or a MissingData instance
+def getParam(param: Map[String, Int], key: String): Result[Int] = param.get(key) match {
+  case None => MissingData(s""no param for key $key"").left
+  case Some(v) => v.right
+}
+
+// example on how to combine multiple \/
+// using for-comprehension
+def computeAPlusB(param: Map[String, Int]): Result[Int] = for {
+  paramA <- getParam(param, ""a"")
+  paramB <- getParam(param, ""b"")
+} yield paramA + paramB

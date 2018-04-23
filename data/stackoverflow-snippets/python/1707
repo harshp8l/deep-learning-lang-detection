@@ -1,0 +1,67 @@
+from tkinter import *
+
+window = Tk()
+canvas = Canvas(window, width = 300, height = 300, bg ='white')
+canvas.focus_set()
+
+speedx = 0
+speedy = 0
+speed = 1
+
+# Make variable to store after call object
+after_obj = None
+
+x1=40
+y1=40
+
+oval=canvas.create_oval(x1-10,y1-10,x1+10,y1+10,width=2,fill='orange')
+
+def key_press(event):
+    global x1, y1
+    global speedx, speedy, speed
+    global after_obj
+    button = event.keysym
+    if button == 'Up':
+        speedx = 0
+        speedy = -speed
+    elif button == 'Down':
+        speedx = 0
+        speedy = speed
+    elif button == 'Right':
+        speedx = speed
+        speedy = 0
+    elif button == 'Left':
+        speedx = -speed
+        speedy = 0
+    # Only call move from here if there is no after scheduled
+    if after_obj is None:
+        move()
+
+def move():
+    global x1,y1
+    global oval
+    global speedx, speedy
+    global after_obj
+    x1 += speedx
+    y1 += speedy
+    canvas.delete(oval)
+    oval = canvas.create_oval(x1+10,y1-10,x1-10,y1+10,width=2,fill='orange')
+    # Save the after call object
+    after_obj = window.after(10, move)
+
+def key_release(event):
+    global speedx, speedy  
+    global after_obj
+    # When pressing multiple buttons at the same time you can get a key release without an after_obj, so check if it exists then cancel it
+    if after_obj:
+        window.after_cancel(after_obj)
+    # Reset after_obj to None so move can be called from key_press again
+    after_obj = None
+    speedx = 0
+    speedy = 0
+
+
+canvas.bind('<KeyPress>', key_press)
+canvas.bind(""<KeyRelease>"", key_release)
+canvas.pack(padx =5, pady =5)
+window.mainloop()

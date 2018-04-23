@@ -1,0 +1,25 @@
+static void Main(string[] args)
+{
+    var methods = typeof(TestClass).GetMethods()
+        .Where(mi => mi.GetCustomAttributes(true).OfType<MyAttribute>().Any()).ToArray();
+
+    var flags = BindingFlags.Default; // I did not see a difference with BindingFlags.OptionalParamBinding;
+
+    Type[][] cases = {
+        new Type[0],
+        new[] { typeof(string) },
+        new[] { typeof(string), typeof(int) },
+        new[] { typeof(string), typeof(int), typeof(bool) },
+        new[] { typeof(int), typeof(int), typeof(bool) }
+    };
+
+    foreach (var typeCase in cases)
+    {
+        string desc = ""("" + string.Join("","", typeCase.Select(t => t?.Name ?? ""<null>"")) + "")"";
+
+        var method = Type.DefaultBinder.SelectMethod(flags, methods, typeCase, null);
+
+        string result = method?.ToString() ?? ""No matching method found"";
+        Console.WriteLine($""{desc} -> {result}"");
+    }
+}

@@ -1,0 +1,19 @@
+(defn map-filler [filler f & colls]
+  (let [filler (vec filler)
+        colls (vec colls)
+        live-coll-map (->> colls
+                           (map-indexed vector)
+                           (filter (comp seq second))
+                           (into {}))
+        split (fn [lcm] (reduce
+                         (fn [[x xm] [i coll]]
+                           (let [[c & cs] coll]
+                             [(assoc x i c) (if cs (assoc xm i cs) xm)]))
+                         [filler {}]
+                         lcm))]
+    ((fn expostulate [lcm]
+       (lazy-seq
+        (when (seq lcm)
+          (let [[this thoses] (split lcm)]
+            (cons (apply f this) (expostulate thoses))))))
+     live-coll-map)))

@@ -1,0 +1,26 @@
+// set up example data
+case class Pers1 (name:String,age:Int)
+val d = Seq(Pers1(""Peter"",50), Pers1(""Paul"",60), Pers1(""Mary"",70))
+val df = spark.createDataFrame(d)
+
+// conditions logic - complex as you'd like
+// probably should use a Set instead of Sequence but I digress..
+val conditions:(String,Int)=>Seq[Int] =  { (name,age) => 
+    (if(age > 60) Seq(1) else Seq.empty) ++ 
+    (if(name.length <=4) Seq(2) else Seq.empty)  
+}
+// define UDF for spark
+import org.apache.spark.sql.functions.udf
+val conditionsUdf = udf(conditions)
+// explode() works just like flatmap
+val result  = df.withColumn(""condition"", 
+   explode(conditionsUdf(col(""name""), col(""age""))))
+result.show
+
++----+---+---------+
+|name|age|condition|
++----+---+---------+
+|Paul| 60|        2|
+|Mary| 70|        1|
+|Mary| 70|        2|
++----+---+---------+

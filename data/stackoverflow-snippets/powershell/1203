@@ -1,0 +1,27 @@
+# Download the file
+$apiurl = ""http://xxxxxxxxx:8080/fxxxxp/events_xxxx.xml""
+[xml]$ini = (New-Object System.Net.WebClient).DownloadString($apiurl)
+# Set arrays
+$nodename = $ini.events.event.name
+$statuscode = $ini.events.event.statuscode
+
+# Create $TableValues by looping through one array
+$TableValues = foreach ( $node in $nodename )
+{
+    [pscustomobject] @{
+        # The current node
+        POP = $node
+        # use the array method IndexOf
+        # This should return the position of the current node
+        # Then use that index to get the matching value of $statuscode
+        Status = $statuscode[$nodename.IndexOf($node)]
+    }    
+}
+
+# Add a custom value
+$TableValues += [pscustomobject] @{
+    POP = 'POP100'
+    Status = 100
+}
+
+$TableValues | Format-Table -AutoSize

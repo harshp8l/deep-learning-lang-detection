@@ -1,0 +1,38 @@
+#!/usr/bin/env ruby
+
+class MethodAccessibility
+
+  attr_reader :accessibles, :inaccessibles
+
+  def initialize
+    @accessibles = []
+    @inaccessibles = []
+    populate_data
+  end
+
+
+  def method_accessible?(object, method_name, *args)
+    begin
+      object.public_send(method_name, args)
+      true
+    rescue Exception => e
+      e.to_s != ""Error: This method cannot be used within the User Interface""
+    end
+  end
+
+  def add_to_appropriate_array(object, method_name, *args)
+    accessible = method_accessible?(object, method_name, args)
+    (accessible ? accessibles : inaccessibles) << method_name
+  end
+
+
+  def populate_data
+    object = # create the object on which to call the methods
+    add_to_appropriate_array(object, :method1, [:arg1, :arg2]) # for examples
+    add_to_appropriate_array(object, :method2, [])
+    # ...
+  end
+end
+
+ma = MethodAccessibility.new
+ma.accessibles # do something with this array, or the `inaccessibles` array

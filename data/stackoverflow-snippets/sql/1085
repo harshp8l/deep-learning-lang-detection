@@ -1,0 +1,21 @@
+SELECT main.*, @curRank := @curRank + 1 AS rank
+FROM (
+    SELECT users.userUid, posts.postUid, posts.points, posts.dateCreated 
+    FROM users 
+    INNER JOIN (select * from
+                posts p where datecreated = (select max(datecreated)
+                                             from posts where posts.userUid = p.userUid
+                                                        and posts.points = p.points)
+                ) posts ON users.userUid = posts.userUid 
+    INNER JOIN (
+        SELECT userUid, max(points) AS maxPoints 
+        FROM posts 
+        WHERE isLift = 1 AND verified = 1 AND activityUid = 'OP0iEbpmP36fkJdMTL2S' AND activityType = 'MAX_WEIGHT' 
+        GROUP BY userUid 
+        ORDER BY maxPoints DESC
+    ) AS maxPerUser ON users.userUid = maxPerUser.userUid AND posts.points = maxPerUser.maxPoints 
+    WHERE isLift = 1 AND verified= 1 AND activityUid = 'OP0iEbpmP36fkJdMTL2S' AND activityType = 'MAX_WEIGHT' 
+    ORDER BY maxPerUser.maxPoints DESC, posts.dateCreated DESC
+) AS main 
+JOIN (SELECT @curRank:= 0) r 
+ORDER BY rank ASC;

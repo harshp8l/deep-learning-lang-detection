@@ -1,0 +1,69 @@
+create or replace PROCEDURE TEST_PROC IS
+  Cursor c1 is
+    select SUM(Value_Tx) as sum_of_values,
+           ff.FORM_FIELD_ID
+      from value v
+      join submission_Value sv
+        on v.value_id = sv.value_id
+      join form_field ff
+        on sv.form_field_id = ff.form_field_id
+      where VALUE_TX NOT LIKE '%-%' AND
+            VALUE_TX NOT LIKE '%:%' AND
+            VALUE_TX NOT LIKE '%.%' and
+            ff.form_field_id in  (1,6)
+      group by  ff.form_field_id;
+
+  l_var            c1%ROWTYPE;
+  v_value_id       value.value_id%type;
+  v_calculation_id calculation.calculation_id%type;
+BEGIN
+  OPEN c1;
+  FETCH c1 into l_var;
+
+  IF NOT c1%NOTFOUND AND l_var.form_field_id = 6 THEN
+    insert into calculation
+      (calculation_id, Calculation_Arguments_Tx)
+    values
+      (null, 'SUM_NET_GEN');
+
+    LOOP
+      FETCH c1 into l_var;
+      EXIT WHEN c1%NOTFOUND;
+
+      insert into value
+        (value_id, value_tx, data_date, hr_utc, hr, hr_num, data_code)
+      values
+        (null, l_var.sum_of_values, l_var.data_date, 'UTC0', null, null, 'NA')
+      returning value_id into v_value_id;
+
+      insert into calculation_value
+        (calculation_value_id, calculation_id, value_id, form_field_id)
+      values 
+        (null, v_calculation_id, v_value_id, l_var.form_field_id);
+    END LOOP;
+  ELSIF NOT c1%NOTFOUND AND l_var.form_field_Id = 1 THEN
+    insert into calculation
+      (calculation_id,Calculation_Arguments_Tx)
+    values
+      (null, 'SUM_DEMAND')
+    returning calculation_id into v_calculation_id;
+
+    LOOP
+      FETCH c1 into l_var;
+      EXIT WHEN c1%NOTFOUND;
+
+      insert into value
+        (value_id,  value_tx, utc_offset, data_date, hr_utc, hr, hr_num, data_code)
+      values
+        (null,  l_var.sum_of_values, 0, l_var.data_date, 'UTC0', null, null, 'NA')
+      returning value_id into v_value_id;
+
+      insert into calculation_value
+        (calculation_value_id, calculation_id, value_id, form_field_id)
+      values
+        (null, v_calculation_id, v_value_id, l_var.form_field_id);
+    END LOOP;
+  END IF;
+
+  CLOSE c1;
+END TEST_PROC;

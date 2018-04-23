@@ -1,0 +1,26 @@
+from threading import Semaphore, Lock
+from multiprocessing import Pool
+
+def TaskManager(object):
+    def __init__(self, pool_size):
+        self.pool = Pool(processes=pool_size)
+        self.workers = Semaphore(pool_size)
+        # ensures the semaphore is not replaced while used
+        self.workers_mutex = Lock()  
+
+    def change_pool_size(self, new_size):
+        """"""Set the Pool to a new size.""""""
+        with self.workers_mutex:  
+            self.workers = Semaphore(new_size)
+
+    def new_task(self, task):
+        """"""Start a new task, blocks if queue is full.""""""
+        with self.workers_mutex:
+            self.workers.acquire()
+
+        self.pool.apply_async(big_task, args=[task], callback=self.task_done))
+
+    def task_done(self):
+        """"""Called once task is done, releases the queue is blocked.""""""
+        with self.workers_mutex:
+            self.workers.release()

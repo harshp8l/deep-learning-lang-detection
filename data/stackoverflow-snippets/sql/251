@@ -1,0 +1,22 @@
+with    dupe as
+        (
+        select  min(p1.ID) as OriginalID
+        ,       p2.ID as DupeID
+        from    Persons p1
+        join    Persons p2
+        on      p1.id < p2.id and
+                p1.FirstName = p2.FirstName and
+                p1.LastName = p2.LastName and
+                (
+                    p1.Address1 = p2.Address1 or
+                    p1.BDay = p2.BDay or
+                    p1.Email = p2.Email
+                )
+        group by
+                p2.ID
+        )
+update  p1
+set     DupeOfID = dupe.OriginalID
+from    Persons p1
+join    dupe
+on      dupe.DupeID = p1.ID

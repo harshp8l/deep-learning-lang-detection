@@ -1,0 +1,27 @@
+exportData.GroupBy(w => w, new ExportCompare(data)).Select(g =>
+{                
+    ExportData group = g.Key;
+    decimal mass = 0m;
+    var ids = new List<int>();
+    bool anyAb = false;
+    bool anyCd = false;
+    // only one loop
+    foreach (var item in g) {
+        mass += item.Mass;
+        ids.Add(item.Id);
+        anyAb = anyAb || item.StringProperty.Equals(""AB"");
+        anyCd = anyCd || item.StringProperty.Equals(""CD"");
+    }
+    group.Mass = mass;
+    if (ids.Count > 1) {
+        group.CombinedIds = string.Join(""-"", ids);
+    }
+    if (anyAb)
+        group.StringProperty = ""AB"";
+    else if (anyCd)
+        group.StringProperty = ""CD"";
+    else
+        group.StringProperty = ""EF"";
+
+    return group;
+}).ToList();

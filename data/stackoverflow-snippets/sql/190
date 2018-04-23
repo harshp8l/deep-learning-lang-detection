@@ -1,0 +1,50 @@
+CREATE EXTENSION IF NOT EXISTS ltree;
+
+CREATE TABLE tree_nodes (path LTREE, rank INT, sort_path LTREE);
+
+CREATE OR REPLACE FUNCTION calc_sort_path(tree_path LTREE, sibling_rank INT) RETURNS LTREE AS $$
+DECLARE
+  sort_ranks TEXT[];
+  sort_path LTREE;
+  ancestor RECORD;
+BEGIN
+  -- Default to the segment text (prepended with underscore).
+  -- If some ancestors are missing, this ensures the children will still sort together.
+  FOR iterator IN 1..NLEVEL(tree_path) LOOP
+    sort_ranks[iterator] := '_' || subpath(tree_path,iterator-1,1)::text;
+  END LOOP;
+  -- Format a sort rank path segment for each ancestor.
+  FOR ancestor IN
+    SELECT NLEVEL(tree_nodes.path) AS level, tree_nodes.rank FROM tree_nodes
+      WHERE tree_nodes.path @> tree_path AND tree_nodes.path != tree_path
+  LOOP
+    sort_ranks[ancestor.level] := LPAD(ancestor.rank::TEXT, 4, '0');
+  END LOOP;
+  -- Format a final sort rank path segment for this leaf node.
+  sort_ranks[NLEVEL(tree_path)] := LPAD(sibling_rank::TEXT, 4, '0');
+  -- Convert array to LTREE path.
+  SELECT string_agg(padded_rank, '.')::LTREE INTO sort_path FROM
+    (SELECT UNNEST(sort_ranks) AS padded_rank) path_ranks;
+
+  RETURN sort_path;
+END
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION update_sort_paths() RETURNS trigger AS $$
+DECLARE
+  has_changed BOOLEAN;
+BEGIN
+  has_changed := TG_OP = 'UPDATE' AND (OLD.path IS DISTINCT FROM NEW.path OR OLD.rank IS DISTINCT FROM NEW.rank);
+  IF (TG_OP = 'DELETE' OR has_changed) THEN
+    UPDATE tree_nodes SET sort_path = calc_sort_path(path, rank) WHERE OLD.path @> path;
+  END IF;
+  IF (TG_OP = 'INSERT' OR has_changed) THEN
+    UPDATE tree_nodes SET sort_path = calc_sort_path(path, rank) WHERE NEW.path @> path;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS on_rank_change ON tree_nodes;
+CREATE TRIGGER on_rank_change AFTER INSERT OR UPDATE OR DELETE ON tree_nodes
+    FOR EACH ROW EXECUTE PROCEDURE update_sort_paths();

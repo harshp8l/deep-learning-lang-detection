@@ -1,0 +1,28 @@
+object DataTypes extends App {
+
+  sealed trait StrFy[T] {
+    def stringify(value: T): String
+    def label: String
+  }
+
+  implicit object StrFyString extends StrFy[String] {
+    override def stringify(value: String): String = value
+    override def label: String = ""string""
+  }
+  implicit object StrFyInt extends StrFy[Int] {
+    override def stringify(value: Int): String = value.toString
+    override def label: String = ""integer""
+  }
+
+  def stringifyThings[T: StrFy](values: T*): String = {
+    val strFy = implicitly[StrFy[T]]
+    // Safe even on empty values
+    ""The "" + strFy.label + "" values are: "" + values.map(strFy.stringify).mkString("", "")
+  }
+
+  def printStringified(): Unit = {
+    println(stringifyThings(""foo"", ""bar"")) // should print: ""the string values are: foo, bar""
+    println(stringifyThings(1, 2, 3)) // should print: ""the integer values are: 1, 2, 3""
+  }
+  printStringified()
+}

@@ -1,0 +1,36 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from lmfit import Model
+
+x=np.array([0,1, 4, 6, 8, 9, 11, 13, 15, 18, 20, 27])
+data=np.array([0, 67, 208, 339, 460, 539, 599, 635, 659, 685, 701, 731])
+
+# This function now returns the model. The function arguments are 
+# named so that Model() will know what to name the Parameters.
+def BMP_Gompertz(x, bmpmax, rmax, xlambda):
+    return bmpmax *np.exp(-np.exp((rmax*np.exp(1)/bmpmax)*(xlambda-x)+1))
+
+# create a Model from the model function
+bmodel = Model(BMP_Gompertz)
+
+# create Parameters, giving initial values
+params = bmodel.make_params(bmpmax=300, rmax=25, xlambda=0.5)
+params['bmpmax'].min = 0
+params['rmax'].min = 0
+params['xlambda'].min = 0
+
+# do fit, print result
+result = bmodel.fit(data, params, x=x)
+print(result.fit_report())
+
+# plot results -- note that `best_fit` is already available
+plt.plot(x, data, 'bo')
+plt.plot(x, result.best_fit, 'r--')
+
+t=np.linspace(0.,100,10000)
+
+# use `result.eval()` to evaluate model given params and x
+plt.plot(t, bmodel.eval(result.params, x=t), 'k-')
+plt.xlabel('Days')
+plt.ylabel('BMP (NLbiogas/kg SV)')
+plt.show()

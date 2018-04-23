@@ -1,0 +1,26 @@
+/// Does a bounds check and raises an error if bounds check is not met
+let inline checkBounds f (g: 'b -> ^c) (tp: ^a) = 
+    let convertFrom = (^a: (static member name: string) ())
+    let convertTo = (^c: (static member name : string) ())
+    let value =  (^a: (member Value: 'b) tp)
+    if f value then
+        g value
+    else 
+        failwithf ""Cannot convert from %s to %s."" convertFrom convertTo
+
+type ConverterB =
+    struct 
+        val Value: byte
+        new v = { Value = v }
+    end
+    static member inline name with get() = ""converter-b""
+
+and ConverterA =
+    struct 
+        val Value: sbyte
+        new v = { Value = v }
+    end
+
+    static member inline name with get() = ""converter-a""
+    static member inline convert (x: ConverterA) : ConverterB = 
+        checkBounds ((>=) 0y) (byte >> ConverterB) x

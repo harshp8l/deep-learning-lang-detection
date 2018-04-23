@@ -1,0 +1,19 @@
+[<AutoOpen>]
+module CmdletExt
+
+open System.Diagnostics
+open System.Threading
+
+type PSCmdletStandalone() =
+    member x.RegisterTrace() =
+        let syncContext = SynchronizationContext.Current
+        Logging.subscribe (fun trace ->
+            async {
+                do! Async.SwitchToContext syncContext
+                let threadId = Thread.CurrentThread.ManagedThreadId
+                match trace.Level with
+                | TraceLevel.Warning -> printfn ""WARN (on %i): %s"" threadId trace.Text
+                | TraceLevel.Error -> printfn ""ERROR (on %i): %s"" threadId trace.Text
+                | _ -> printfn ""(on %i): %s"" threadId trace.Text
+            } |> Async.Start // or Async.StartImmediate
+        )

@@ -1,0 +1,20 @@
+SELECT m.month, m.meetings_attended, d.debt, b.bonus, 
+    m.meetings_attended * j.pay_per_meeting + b.amount - d.amount AS salary
+FROM (
+    SELECT MONTH(date) AS month, COUNT(*) AS meetings_attended
+    FROM meetings
+    WHERE employee_id = 1
+    GROUP BY month) AS m
+JOIN (
+    SELECT MONTH(date) AS month, COUNT(*) AS bonus, SUM(amount) AS amount
+    FROM bonuses
+    WHERE employee_id = 1
+    GROUP BY month) AS b ON m.month = b.month
+JOIN (
+    SELECT MONTH(date) AS month, COUNT(*) AS debt, SUM(amount) AS amount
+    FROM deductions
+    WHERE employee_id = 1
+    GROUP BY month) AS d ON m.month = d.month
+CROSS JOIN employees AS e
+JOIN jobs AS j ON j.id = e.job_id
+WHERE e.employee_id = 1

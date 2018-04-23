@@ -1,0 +1,31 @@
+$dataSource = ""DESKTOP-9CRH1HF\SQLEXPRESS""
+$user = ""sa""
+$pwd = ""Not4U2c@Al!""
+$database = ""Xperdyte""
+$connectionString = ""Server=$dataSource;uid=$user; pwd=$pwd;Database=$database;Integrated Security=False;""
+
+$query = ""SELECT * from dbo.v_SpecProd_Export""
+
+$connection = New-Object System.Data.SqlClient.SqlConnection
+$connection.ConnectionString = $connectionString
+
+$connection.Open()
+$command = $connection.CreateCommand()
+$command.CommandText = $query
+
+$result = $command.ExecuteReader()
+$table = new-object “System.Data.DataTable”
+$table.Load($result)
+$connection.Dispose()
+
+$colProductCodeSql = 6
+$colOtherColumnSql = 4
+
+$table | 
+    ForEach-Object {
+        $_[$colOtherColumnSql] = $SheetData[$_[$colProductCodeSql]]
+    } |
+    ConvertTo-Csv -NoTypeInformation -Delimiter ';' | 
+    Select-Object -Skip 1 |
+    ForEach-Object { $_ -replace '""', """" } |
+    Set-Content c:\temp\Xperdyte.csv

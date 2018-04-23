@@ -1,0 +1,36 @@
+vector <int> selectedEdgesIndicesLocal;
+
+    int edgeCount=0;
+    for(int i = 0; i < rows; ++i)
+        for(int j = 0; j < nVertex; ++j)
+            if (some condistions)
+            {
+                int index=...;
+                selectedEdgesIndicesLocal.push_back(index);
+                edgeCount++;
+            }
+
+    int NumEdgesToAdd;
+    MPI_Reduce(&edgeCount, &NumEdgesToAdd, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    int *edgeCountsInRoot;
+    if (my_rank == 0)edgeCountsInRoot = (int *)malloc(comm_size * sizeof(int));
+    MPI_Gather(&edgeCount, 1, MPI_INT, edgeCountsInRoot, 1, MPI_INT, 0,MPI_COMM_WORLD);
+
+    int *allSelectedIndicesEdges;
+    if (my_rank == 0)allSelectedIndicesEdges = (int *)malloc(NumEdgesToAdd * sizeof(int));
+
+    int * edgeCounts, *edgeDisp;
+
+    cout<<edgeCount<<endl;
+    if (my_rank==0) {
+        edgeCounts= (int *)malloc(comm_size * sizeof(int));
+        edgeDisp= (int *)malloc(comm_size * sizeof(int));
+        int edgeSum=0;
+        for(int i=0; i<comm_size; ++i) {
+            edgeCounts[i] = edgeCountsInRoot[i];
+            edgeDisp[i]=edgeSum;
+            edgeSum+=edgeCountsInRoot[i];
+        }
+    }
+    MPI_Gatherv(&selectedEdgesIndicesLocal.front(), edgeCount, MPI_INT, &allSelectedIndicesEdges[0], edgeCounts,edgeDisp, MPI_INT, 0, MPI_COMM_WORLD);

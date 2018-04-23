@@ -1,0 +1,31 @@
+import cats._, cats.data._, cats.implicits._
+
+type Memo = Map[(BigInt, BigInt), BigInt]
+
+private[this] def a_impl(m: BigInt, n: BigInt): State[Memo, BigInt] = {
+  if (m == 0) {
+    State.pure(n + 1)
+  } else {
+    for {
+      memoed <- State.inspect[Memo, Option[BigInt]](s => s.get((m, n)))
+      res <- memoed match {
+        case Some(x) => State.pure[Memo, BigInt](x)
+        case None => {
+          if (n == 0) for {
+            a <- a_impl(m - 1, 1)
+            _ <- State.modify[Memo](s => s + ((m, n) -> a))
+          } yield a
+          else for {
+            a <- a_impl(m, n - 1)
+            b <- a_impl(m - 1, a)
+            _ <- State.modify[Memo](s => s + ((m, n) -> b))
+          } yield b
+        }
+      }
+    } yield res
+  }
+}
+
+def a(m: BigInt, n: BigInt): BigInt = {
+  a_impl(m, n).runA(Map()).value
+}

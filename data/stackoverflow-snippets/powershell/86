@@ -1,0 +1,40 @@
+Function Build-FunctionStack 
+{
+    param([ref]$dict, [string]$FunctionName)
+
+    ($dict.Value).Add((Get-Item ""Function:${FunctionName}"").Name, (Get-Item ""Function:${FunctionName}"").Scriptblock)
+}
+
+Function MyFunctionA 
+{
+    param([string]$SomeValue)
+
+    Write-Host $SomeValue
+}
+
+Function MyFunctionB
+{
+    param([int]$Foo)
+
+    Write-Host $Foo
+}
+
+$functionStack = @{}
+
+Build-FunctionStack -dict ([ref]$functionStack) -FunctionName ""MyFunctionA""
+Build-FunctionStack -dict ([ref]$functionStack) -FunctionName ""MyFunctionB"" 
+
+Function ExecuteSomethingRemote
+{
+    $sb = {
+        param([Hashtable]$FunctionStack)
+
+        ([Scriptblock]::Create($functionStack[""MyFunctionA""])).Invoke(""Here goes my message"");
+        ([Scriptblock]::Create($functionStack[""MyFunctionB""])).Invoke(1234);
+
+    }
+
+    Invoke-Command -ComputerName SomeHost -ScriptBlock $sb -ArgumentList $functionStack
+}
+
+ExecuteSomethingRemote

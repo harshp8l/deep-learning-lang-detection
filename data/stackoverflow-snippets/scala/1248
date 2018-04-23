@@ -1,0 +1,35 @@
+object Example {
+
+  sealed trait Status
+  case object Student extends Status
+  case object Unemployed extends Status
+  case object Other extends Status
+
+  object PoorStudent {
+    def unapply(income: Int) = if (income <= 18000) Some(income) else None
+  }
+
+  object PoorUnemployed {
+    def unapply(income: Int) = if (income <= 7000) Some(income) else None
+  }
+
+  object IncomeScoreRange {
+    def unapply(score: Int, income: Double) =
+      if (((score < 100 || score > 150) && income <= 8500) || (income <= 10500 && (100 to 167 contains score)))
+        Some((score, income))
+      else
+        None
+  }
+
+  def compute(status: Option[Status], score: Option[Int], income: Option[Double]): String = {
+
+    (status, score, income).zipped
+      .collect {
+        case (Student, _, PoorStudent(_))                    => ""P""
+        case (Unemployed, _, PoorUnemployed(_))              => ""P""
+        case (Other, IncomeScoreRange(_, _))                 => ""P""
+      }
+      .headOption
+      .getOrElse(""F"")
+  }
+}

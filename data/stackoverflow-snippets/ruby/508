@@ -1,0 +1,27 @@
+module MailerPreviewOrderNumber
+  def set_order_number(order_number)
+    @order_number = order_number
+  end
+
+  def get_order_number
+    @order_number
+  end
+
+  def order_for_preview
+    order_number = get_order_number
+    order = Spree::Order.find_by(:number => order_number) if order_number.present?
+    order = yield if order.blank?
+    order
+  end
+
+end
+
+Rails::MailersController.class_eval do
+  before_action :save_order_number, only: [:preview]
+
+  def save_order_number
+    if @preview.present? && @preview.respond_to?(:set_order_number)
+      @preview.set_order_number(params[:order]) if params[:order].present?
+    end
+  end
+end

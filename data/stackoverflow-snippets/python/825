@@ -1,0 +1,88 @@
+from PyQt5.QtCore    import (QLineF, QPointF, QRectF, 
+                             pyqtSignal, QStandardPaths, Qt)
+from PyQt5.QtGui     import (QIcon, QBrush, QColor, QPainter, QPixmap)
+from PyQt5.QtWidgets import (QAction, QMainWindow, QApplication, 
+                             QGraphicsObject,
+                             QGraphicsView, QGraphicsScene, QGraphicsItem,
+                             QGridLayout, QVBoxLayout, QHBoxLayout, 
+                             QFileDialog, QLabel, QLineEdit, QPushButton)
+from PyQt5.QtOpenGL  import QGLFormat 
+
+class MyGraphicsView(QGraphicsView):
+    backgroundColor = QColor(28, 31, 34)     # Background color
+    def __init__(self):
+        super(MyGraphicsView, self).__init__()
+
+        self.resize(800, 600)
+        self.setBackgroundBrush(self.backgroundColor)
+        self.setCacheMode(self.CacheBackground)
+        self.setRenderHints(
+            QPainter.Antialiasing | QPainter.TextAntialiasing | QPainter.SmoothPixmapTransform)
+        if QGLFormat.hasOpenGL():
+            self.setRenderHint(QPainter.HighQualityAntialiasing)
+        self.setViewportUpdateMode(self.SmartViewportUpdate)
+        self._scene = QGraphicsScene(-400, -300, 800, 600, self)
+        self.setScene(self._scene)            
+        self._itemImage = None
+
+    def keyReleaseEvent(self, event):
+        """""" Button processing event """"""
+        self._scaleImage(event)
+        super(MyGraphicsView, self).keyReleaseEvent(event)
+
+    def closeEvent(self, event):
+        """""" Clear all items in the scene when the window is `closed` """"""
+        self._scene.clear()
+        self._itemImage = None
+        super(MyGraphicsView, self).closeEvent(event)
+
+    def _scaleImage(self, event):
+        """""" Image zoom operation """"""
+        if not self._itemImage:
+            return
+        scale = self._itemImage.scale()
+        if event.key() == Qt.Key_Right:             
+            # Enlarge Image -> Qt.Key_Right 
+            if scale >= 0.91:
+                return
+            self._itemImage.setScale(scale + 0.1)
+        elif event.key() == Qt.Key_Left:            
+            # Reduce image <- Qt.Key_Left
+            if scale <= 0.11:
+                return
+            self._itemImage.setScale(scale - 0.1)
+
+
+    def loadImage(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, 'Please select an image', 
+            QStandardPaths.writableLocation(QStandardPaths.DesktopLocation), 
+            'Image(*.jpg *.png)')
+        if not path:
+            return
+        if self._itemImage:
+            # Delete previous item
+            self._scene.removeItem(self._itemImage)
+            del self._itemImage
+        self._itemImage = self._scene.addPixmap(QPixmap(path))
+        self._itemImage.setFlag(QGraphicsItem.ItemIsMovable)
+        self._itemImage.setScale(0.1)         # Default load factor
+
+        size = self._itemImage.pixmap().size()
+        # Adjust the image in the middle
+        self._itemImage.setPos(
+            -size.width() * self._itemImage.scale() / 2,
+            -size.height() * self._itemImage.scale() / 2
+        )        
+
+
+if __name__ == '__main__':
+    import sys
+    app = QApplication(sys.argv)
+
+    w   = MyGraphicsView()
+    w.show()
+    ww = QPushButton('Select a file', clicked=w.loadImage)
+    ww.show()    
+
+    sys.exit(app.exec_())

@@ -1,0 +1,20 @@
+import squants.market.{ Currency, Money }
+import squants.market._
+
+ trait MoneyJsonProtocol extends DefaultJsonProtocol {
+
+  implicit object CurJsonFormat extends JsonFormat[Currency] {
+    def write(currency: Currency): JsValue = JsString(currency.code)
+    def read(value: JsValue): Currency = value match {
+      case JsString(currency) =>
+        defaultCurrencyMap.get(currency) match {
+          case Some(c) => c
+          case None => // throw an exception, for example
+        }
+      case _ => // throw another exception, for example
+    }
+  }
+
+  implicit def toJavaBigDecimal(b: math.BigDecimal): java.math.BigDecimal = b.underlying
+
+}

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+case $BASH_VERSION in
+  ''|[0-3].*) echo ""ERROR: Bash 4.0 or newer is required"" >&2; exit 1;;
+esac
+
+# read input filename from command line, default to ""/tmp/input.dat""
+input_file=${1:-/tmp/input.dat}
+
+declare -A vars=()
+
+while IFS= read -r line; do
+  [[ $line = ""#""* ]] && continue  # Skip comments in input
+  [[ $line = *=* ]]  || continue  # Skip lines not containing an ""=""
+  line=${line#'$'}                # strip leading ""$""
+  key=${line%%=*}                 # remove everything after first ""="" to get key
+  value=${line#*=}                # remove everything before first ""="" to get value
+  vars[$key]=$value               # add key/value pair to associative array
+done <""$input_file""
+
+# print the variables we read for debugging purposes
+declare -p vars >&2
+
+echo ""Operation is ${vars[action]}; location is ${vars[location]}"" >&2

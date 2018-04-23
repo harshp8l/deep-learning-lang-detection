@@ -1,0 +1,72 @@
+class Parser {
+  public:
+    Parser() {}
+    int getData() {
+      return data;
+    }
+  protected:
+    int data;
+};
+
+class USBParser : public Parser {
+  public:
+    USBParser() {}
+    bool parse(uint8_t *usbpacket) {
+      data = usbpacket[1]; // Do the actual parsing here
+      return true; // Return true if data is complete
+    }
+};
+
+class SerialParser : public Parser {
+  public:
+    SerialParser() {}
+    bool parse(uint8_t databyte) {
+      data = databyte; // Do the actual parsing here
+      return true; // Return true if data is complete
+    }
+};
+
+class Interface {
+  public:
+    Interface(Parser &parser) : parser(parser) {}
+    virtual bool read() = 0;
+    int getData() {
+      return parser.getData();
+    }
+  protected:
+    Parser &parser;
+};
+
+class USBInterface : public Interface {
+  public:
+    USBInterface(Parser &parser) : Interface(parser) {}
+    bool read() {
+      uint8_t usbpacket[4] = {0x00, 0x01, 0x02, 0x03}; // Read raw data from USB
+      return parser.parse(usbpacket);
+    }
+};
+
+class SerialInterface : public Interface {
+  public:
+    SerialInterface(Parser &parser) : Interface(parser) {}
+    bool read() {
+      uint8_t databyte = 0xFF; // Read raw data from serial port
+      return parser.parse(databyte);
+    }
+};
+
+int main() {
+  USBParser usbParse
+  USBInterface usb(usbParse);
+
+  SerialParse serialParse;
+  SerialInterface serial(serialParse);
+
+  // GenericParse parse;
+  // SerialInterface serial(parse);
+
+  if (usb.read())
+    println(usb.getData());
+  if (serial.read())
+    println(serial.getData());
+}

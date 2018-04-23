@@ -1,0 +1,15 @@
+MyFiles.clj:
+(ns user
+  (:gen-class :methods [#^{:static true} [readDir [String] Iterable]])
+  (:require [clojure.core.async :as async :refer :all 
+:exclude [map into reduce merge partition partition-by take]]))
+
+(defn -readDir [dir]
+  (def i nil)
+  (let [ch (read-dir dir)
+        it (reify java.util.Iterator
+             (hasNext [this] (alter-var-root #'i (fn [_] (<!! ch))) (not (nil? i)))
+             (next [this] i))
+        itab (reify Iterable
+               (iterator [this] it))]
+    itab))

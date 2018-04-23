@@ -1,0 +1,26 @@
+(require '[clojure.core.async :as a
+  :refer [>! <! >!! <!! alt! take! go-loop chan close! mult tap]])
+
+(def rand-int-chan (chan))
+(def control-chan (chan))
+(def control-chan-mult (mult control-chan))
+
+(defn create-worker
+  [put-chan control-chan worker-num]
+  (go-loop [put-chan put-chan]
+    (alt!
+      [[put-chan (rand-int 10)]]
+      ([_ _] (println (str ""Worker"" worker-num "" generated value.""))
+             (recur put-chan))
+
+      control-chan
+      ([new-chan] (recur new-chan)))))
+
+(defn create-workers
+  [n c cc]
+  (dotimes [n n]
+    (let [tap-chan (chan)]
+      (a/tap cc tap-chan)
+      (create-worker c tap-chan n))))
+
+(create-workers 5 rand-int-chan control-chan-mult)

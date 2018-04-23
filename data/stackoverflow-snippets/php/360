@@ -1,0 +1,30 @@
+<?php
+function encrypt_file($Ifilename, $Efilename){
+    $handle = fopen($Ifilename, 'rb');
+    $outHandle = fopen($Efilename, 'wb');
+    $bufferSize = 3 * 256;// 3 bytes of ASCII encodes to 4 bytes of base64
+    while(!feof($handle)){
+        $buffer = fread($handle, $bufferSize);
+        $ebuffer = base64_encode($buffer);
+        fwrite($outHandle, $ebuffer);
+    }
+    fclose($handle);
+    fclose($outHandle);
+}
+
+function decrypt_file($Ifilename, $Efilename){
+    $handle = fopen($Ifilename, 'rb');
+    $outHandle = fopen($Efilename, 'wb');
+    $bufferSize = 4 * 256; // 4 bytes of base64 decodes to 3 bytes of ASCII
+    while(!feof($handle)){
+        $buffer = fread($handle, $bufferSize);
+        $dbuffer = base64_decode($buffer);
+        fwrite($outHandle, $dbuffer);
+    }
+    fclose($handle);
+    fclose($outHandle);
+}
+
+encrypt_file('input.txt', 'out.bin');
+
+decrypt_file('out.bin', 'output.txt');

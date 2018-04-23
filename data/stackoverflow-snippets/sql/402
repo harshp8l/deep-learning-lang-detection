@@ -1,0 +1,35 @@
+DECLARE 
+    @Start     DATETIME    ,
+    @End       DATETIME    ,
+    @Offset    INT         
+SET @Offset    = 3
+SET @Start     = dateadd(day, datediff(day, 0, getdate()), -@Offset)
+SET @End       = dateadd(day, datediff(day, 0, getdate()), -@Offset)
+
+SELECT 
+    ProdOp = OpCode,
+    OpSUM  =  right(convert(varchar(9),(sum(datediff(second,StartTime,FinishTime)) / 3600 )),3) + ':' 
+             + right('0' + convert(varchar(2),(sum(datediff(second,StartTime,FinishTime)) / 60) % 60 ),2),
+    PCT    = cast(cast(SUM(datediff(second, StartTime, FinishTime)) * 100.0 / convert(decimal, t.total)as decimal(10,1)) as varchar(5)) + ' %'
+
+FROM 
+    MaintTimeLog
+    CROSS JOIN (SELECT SUM(datediff(second,StartTime,FinishTime)) as total FROM MaintTimeLog where EventDate >= @Start and EventDate <= @End  and ID = 57524  and OpCode <> 'll') t
+ where EventDate >= @Start and EventDate <= @End  and ID = 57524 and OpCode <> 'll'   
+GROUP BY
+    OpCode,
+    t.total
+
+
+ProdOp  OpSUM   PCT
+BB      0:20    4.2 %
+DF      1:15    15.7 %
+HF      0:10    2.1 %
+HR      0:25    5.2 %
+JT      0:14    2.9 %
+MM      0:27    5.6 %
+NW      0:39    8.1 %
+PE      0:21    4.4 %
+PX      0:45    9.4 %
+SP      2:52    35.9 %
+SS      0:31    6.5 %  

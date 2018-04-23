@@ -1,0 +1,30 @@
+(def empty-tile-map
+  {:piece-count 0
+   :pieces {}
+   :tiles (into [] (repeat 6 {}))})
+
+(defn set-tile
+  ""Sets the tile to the index reference to piece""
+  [arref indx value]
+  (assoc arref indx {:current value}))
+
+(defn string-to-board-reducer
+  ""Reduce function to create pieces and reference in tile""
+  [{:keys [piece-count tcount tiles] :as acc} x]
+  (let [ccnt   (inc piece-count)
+        nmap   (assoc acc :tcount (inc tcount))]
+    (if (> (int x) 48)
+      (assoc 
+        (assoc
+          (update-in nmap [:pieces] assoc ccnt {:type x})
+          :tiles (set-tile tiles tcount ccnt))
+        :piece-count ccnt)
+      nmap)
+    ))
+
+(defn string-to-board
+  [s]
+  ""Take serializated string and generate board""
+  (dissoc (reduce string-to-board-reducer 
+                  (assoc empty-tile-map :tcount 0) (seq s))
+          :tcount))

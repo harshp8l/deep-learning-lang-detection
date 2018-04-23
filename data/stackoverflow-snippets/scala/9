@@ -1,0 +1,15 @@
+import org.apache.spark.sql.functions._
+def shorteningUdf = udf((actualStr: String) => {
+  val arrayStr = actualStr.split(""\\*"")
+  val nextSubStrIndex = arrayStr.head.toInt
+  val listBuffer = new ListBuffer[String]
+  def recursiveFund(arrayStr2: List[String], index: Int, resultStrBuff: ListBuffer[String]): ListBuffer[String] = arrayStr2 match{
+    case head :: Nil => resultStrBuff += head.splitAt(index)._1
+    case head :: tail => {
+      val splitStr = head.splitAt(index)
+      recursiveFund(tail, splitStr._2.toInt, resultStrBuff += splitStr._1)
+    }
+    case _ => resultStrBuff
+  }
+  recursiveFund(arrayStr.tail.toList, nextSubStrIndex, listBuffer).mkString(""*"")
+})

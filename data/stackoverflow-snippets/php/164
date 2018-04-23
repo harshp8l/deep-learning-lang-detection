@@ -1,0 +1,29 @@
+require_once('../../function.php');
+
+try {
+    $database = new Connection();
+    $db = $database->openConnection();
+    $status = 0;
+
+    $sql = ""SELECT (SELECT COUNT(*) FROM contact WHERE status = :status) AS cnt_contact, (SELECT COUNT(*) FROM orrdr WHERE status = :status) AS cnt_orrdr"";
+    $qry = $db->prepare($sql);
+    $qry -> bindParam(':status', $status, PDO::PARAM_INT);
+    $qry -> execute();
+    $count_contact = $qry->fetchColumn(0);
+    $count_orrdr = $qry->fetchColumn(1);
+} catch (PDOException $e) {
+    echo ""There is some problem in connection: "" . $e->getMessage();
+}
+
+if ($cnt_contact >= 1 && $cnt_orrdr >= 1) {
+    echo ""2""; //both available.
+} elseif($cnt_contact >= 1 && $cnt_orrdr == 0) {
+    echo ""1""; //only contact available.
+} elseif ($cnt_orrdr >= 1 && $cnt_contact == 0) {
+    echo ""1""; //only orrdr available.
+} elseif ($cnt_orrdr == 0 && $cnt_contact == 0) (
+    echo ""0""; //nothing available.
+}
+
+//simpler solution instead of ""if"" above:
+//echo (($cnt_contact > 0 ? 1 : 0) + ($cnt_orrdr > 0 ? 1 : 0));

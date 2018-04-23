@@ -1,0 +1,60 @@
+import de.heikoseeberger.akkahttpjson4s.Json4sSupport
+import org.json4s._
+import org.json4s.JsonAST.JObject
+import sangria.marshalling.json4s.jackson._
+
+case class GQLRequest(query: String, operationName: Option[String], variables: JObject)
+
+trait SomeJsonSupport extends Json4sSupport {
+    implicit val serialization = jackson.Serialization
+    implicit val formats = DefaultFormats
+
+}
+
+trait GraphQLResource extends SomeJsonSupport{
+  implicit val timeout:Timeout
+  implicit val system:ActorSystem
+  import system.dispatcher
+
+  def graphqlRoute: Route =
+    (post & path(""graphql"")) {
+      entity(as[GQLRequest]) { requestJson =>
+        println(s""This is the requestJson = $requestJson"")
+        graphQLEndpoint(requestJson)
+      }
+    } ~
+      get {
+        println(s""This is working"")
+        getFromResource(""graphiql.html"")
+      }
+
+
+  def graphQLEndpoint(requestJson: GQLRequest): Route = {
+    val route = QueryParser.parse(requestJson.query) match {
+      case Success(query) =>
+        println(s""This is the query $query"")
+
+
+        val vars = requestJson.variables match {
+          case jObj:JObject => jObj
+          case _ => JObject(List.empty)
+        }
+
+        val futureJValue = Executor.execute(clientSchema,
+          query,
+          NclhGqlRequest(this),
+          operationName = requestJson.operationName,
+          variables = vars)
+
+        val futureTupleStatusCodeJValue = futureJValue.map(OK -> _).recover {
+          case error: QueryAnalysisError => BadRequest -> error.resolveError
+          case error: ErrorWithResolver => InternalServerError -> error.resolveError
+        }
+        complete(futureTupleStatusCodeJValue)
+
+      case Failure(error) =>
+        complete(BadRequest, error.getMessage)
+    }
+    route
+
+  }

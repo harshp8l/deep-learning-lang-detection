@@ -1,0 +1,60 @@
+#include ""worker.h""
+
+Worker::Worker(QObject *parent) : QObject(parent)
+{
+    m_port = 0;
+}
+
+void Worker::start(quint16 port)
+{
+    m_port = port;
+
+    connect(&m_server, &Server::error, [](const QString &error){
+        if (!error.isEmpty())
+            qDebug() << ""Error:"" << qPrintable(error);
+    });
+
+    connect(&m_server, &Server::listening, [](quint16 port){
+        qDebug() << ""Listening on port:"" << port;
+    });
+
+    connect(&m_server, &Server::connected, [](const PeerData &pd){
+        qDebug() << ""Connected to:"" << qPrintable(pd.host.toString());
+    });
+
+    connect(&m_server, &Server::disconnected, [](const PeerData &pd){
+        qDebug() << ""Disconnected from:"" << qPrintable(pd.host.toString());
+    });
+
+    connect(&m_server, &Server::readyRead, [&](const PeerData &pd){
+        QByteArray data = pd.data;
+
+        if (data.isEmpty())
+            return;
+
+        quint8 header = getValue<quint8>(data.mid(0, 1)); //Read the 1 byte header
+        data.remove(0, 1); //Remove the header from data
+
+        switch (header)
+        {
+        case Type::DataType1:
+        {
+            qDebug() << ""Data from"" << qPrintable(pd.host.toString())
+                     << ""DataType1"" << qPrintable(QString::asprintf(""%.2f"", getValue<double>(data)));
+            break;
+        }
+        case Type::DataType2:
+        {
+            qDebug() << ""Data from"" << qPrintable(pd.host.toString())
+                     << ""DataType2"" << qPrintable(QString::asprintf(""%.2f"", getValue<double>(data)));
+            break;
+        }
+        default:
+            break;
+        }
+
+        m_server.writeToHost(data, pd.descriptor);
+    });
+
+    m_server.listen(m_port);
+}

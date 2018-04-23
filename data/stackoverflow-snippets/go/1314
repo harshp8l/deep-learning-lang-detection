@@ -1,0 +1,31 @@
+type Item struct {
+    Value *int
+}
+
+
+func (i *Item) UnmarshalJSON(b []byte) error {
+    tmp := make(map[string]interface{})
+
+    err := json.Unmarshal(b, &tmp)
+    if err != nil {
+        return err
+    }
+
+    val, ok := tmp[""Value""]
+    if ok && val == nil {
+        return errors.New(""Value cannot be nil"")
+
+    }
+    if !ok {
+        return nil
+    }
+
+    f, ok := val.(float64)
+    if !ok {
+        return fmt.Errorf(""unexpected type %T for Value"", val)
+    }
+
+    n := int(f)
+    i.Value = &n
+    return nil
+}

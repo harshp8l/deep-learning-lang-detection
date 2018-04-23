@@ -1,0 +1,23 @@
+== Physical Plan ==
+*Project [cast(cast(order_month#104 as timestamp) - interval 1 years as date) AS period_start#1387, order_month#104 AS period_end#1388, rolling#1375L]
++- *Filter AtLeastNNulls(n, orders#55L)
+   +- Window [sum(orders#55L) windowspecdefinition(id#7, order_month#104 ASC NULLS FIRST, ROWS BETWEEN 12 PRECEDING AND CURRENT ROW) AS rolling#1375L], [id#7], [order_month#104 ASC NULLS FIRST]
+      +- *Sort [id#7 ASC NULLS FIRST, order_month#104 ASC NULLS FIRST], false, 0
+         +- Exchange hashpartitioning(id#7, 200)
+            +- *Project [id#7, order_month#104, orders#55L]
+               +- *BroadcastHashJoin [id#7, order_month#104], [id#181, order_month#49], LeftOuter, BuildRight
+                  :- BroadcastNestedLoopJoin BuildRight, Cross
+                  :  :- *HashAggregate(keys=[id#7], functions=[])
+                  :  :  +- Exchange hashpartitioning(id#7, 200)
+                  :  :     +- *HashAggregate(keys=[id#7], functions=[])
+                  :  :        +- *HashAggregate(keys=[id#7, trunc(order_date#14, month)#1394], functions=[])
+                  :  :           +- Exchange hashpartitioning(id#7, trunc(order_date#14, month)#1394, 200)
+                  :  :              +- *HashAggregate(keys=[id#7, trunc(order_date#14, month) AS trunc(order_date#14, month)#1394], functions=[])
+                  :  :                 +- LocalTableScan [id#7, order_date#14]
+                  :  +- BroadcastExchange IdentityBroadcastMode
+                  :     +- LocalTableScan [order_month#104]
+                  +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, string, true], input[1, date, true]))
+                     +- *HashAggregate(keys=[id#181, trunc(order_date#14, month)#1395], functions=[sum(cast(orders#183 as bigint))])
+                        +- Exchange hashpartitioning(id#181, trunc(order_date#14, month)#1395, 200)
+                           +- *HashAggregate(keys=[id#181, trunc(order_date#14, month) AS trunc(order_date#14, month)#1395], functions=[partial_sum(cast(orders#183 as bigint))])
+                              +- LocalTableScan [id#181, order_date#14, orders#183]

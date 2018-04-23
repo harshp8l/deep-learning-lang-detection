@@ -1,0 +1,17 @@
+(ns test.me
+    (:import [System.Net IPHostEntry Dns IPEndPoint EndPoint IPAddress]
+             [System.Net.Sockets Socket SocketType ProtocolType]))
+
+(set! *warn-on-reflection* true)
+
+(defn f []
+   (let [hostEntry (Dns/GetHostEntry (Dns/GetHostName))
+         endPoint (IPEndPoint. ^IPAddress (first (.AddressList hostEntry)) 11000)
+         sender (IPEndPoint. (IPAddress/IPv6Any) 0)
+         msg (byte-array 256)]       
+     (with-open [s (Socket. (.AddressFamily (.Address endPoint))
+                            SocketType/Dgram
+                            ProtocolType/Udp)]
+       (.Bind s endPoint)
+       (.ReceiveFrom s  msg (by-ref sender))
+       (println sender))))

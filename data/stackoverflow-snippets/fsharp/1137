@@ -1,0 +1,26 @@
+module ArrayFilter =
+    /// Converts a jagged array to a multidimensional one.
+    /// (if you need to).
+    let fromJagged dim1 dim2 (arr: 'a[][]) =
+        Array2D.init dim1 dim2 (fun x y -> arr.[x].[y])
+
+    /// Pick only the rows that match the indices.
+    let pickRows indices (dataArray:'a[,]) =
+        [| for idx in indices do
+               yield dataArray.[idx, *]    
+            |]                
+        |> fromJagged (Array.length indices) (Array2D.length2 dataArray)
+
+    /// the first line is your gatePar, 
+    /// the second converts the tuples into indices array.
+    let filterIndices lo hi (arr: 'a[]) =
+        Array.mapi (fun i x -> x > lo && x < hi, i) arr 
+        |> Array.choose (fun (keep, idx) ->
+            if keep then Some idx else None)  
+
+    let filterOnColumn c lo hi (dataArray:'a[,]) =
+        let indices =
+            dataArray.[*, c]
+            |> filterIndices lo hi
+
+        pickRows indices dataArray

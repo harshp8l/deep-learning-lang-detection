@@ -1,0 +1,17 @@
+public function home(Request $request) 
+{
+    $respondent = null;
+    $answers = null;
+    $yet_to_respond = null;
+    $no_response = null;
+
+    $surveys = Survey::where('user_id', Auth::user()->id)->orderBy('created_at','DESC')->first();
+    if($surveys){
+        $respondent = Invite::where('user_id', Auth::user()->id)->where('survey_id', $surveys->id)->count();
+        $answers = Invite::where('user_id', Auth::user()->id)->where('link_answered', 1)->where('survey_id', $surveys->id)->count();
+        $yet_to_respond = Invite::where('user_id', Auth::user()->id)->where('link_clicked', 1)->where('survey_id', $surveys->id)->count();
+        $no_response = Invite::where('user_id', Auth::user()->id)->where('link_clicked', 0)->where('survey_id', $surveys->id)->count();     
+    }
+
+    return view('home', compact('surveys','respondent','yet_to_respond','no_response','answers'));
+}

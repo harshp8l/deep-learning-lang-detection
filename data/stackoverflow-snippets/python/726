@@ -1,0 +1,40 @@
+from django.shortcuts import render
+from django.http import HttpResponse, JsonResponse
+from .models import Student
+import serial
+
+def check_tagid(request):
+    """"""Check if scanned tag id is already associated or not""""""
+    tagid = request.GET.get('tagid', None)
+    if Student.objects.filter(tag_id__iexact=tagid).exists():
+        data = {
+            'is_taken': Student.objects.filter(tag_id__iexact=tagid).exists(),
+            'student': Student.objects.get(tag_id=tagid).name
+        }
+    else:
+        data = {
+            'is_taken': Student.objects.filter(tag_id__iexact=tagid).exists(),
+        }
+    return JsonResponse(data)
+
+
+def scan_tag(request):
+    """"""Function to check if tag is scanned or not""""""
+    if request.is_ajax():
+        ## Init RFID reader
+        data = serial.Serial(
+                            port='/dev/ttyUSB1',
+                            baudrate = 9600,
+                            parity=serial.PARITY_NONE,
+                            stopbits=serial.STOPBITS_ONE,
+                            bytesize=serial.EIGHTBITS
+                            )
+
+        context = {'tagid': data.read(12).decode(""utf-8"")}
+        return JsonResponse(context) 
+    else:
+        return HttpResponse(""This route only handles AJAX requests"")
+
+
+def tag(request):
+    return render(request, 'students/tag.html', {})

@@ -1,0 +1,32 @@
+private int highlightSubsentence(String sentence, XWPFParagraph p, int i) {
+    //get the current run Style - here I might need to save the current style
+    XWPFRun currentRun = p.getRuns().get(i);
+    String currentRunText = currentRun.text();
+    int sentenceLength = sentence.length();
+    int sentenceBeginIndex = currentRunText.indexOf(sentence);
+    int addedRuns = 0;
+    p.removeRun(i);
+    //Create, if necessary, a run before the highlight part
+    if (sentenceBeginIndex > 0) {
+        XWPFRun before = p.insertNewRun(i);
+        before.setText(currentRunText.substring(0, sentenceBeginIndex));
+        //here I might need to re-introduce the style of the deleted run
+        addedRuns++;
+    }
+
+    // highlight the interesting part
+    XWPFRun sentenceRun = p.insertNewRun(i + addedRuns);
+    sentenceRun.setText(currentRunText.substring(sentenceBeginIndex, sentenceBeginIndex + sentenceLength));
+    currentStyle.copyStyle(sentenceRun);
+    CTShd cTShd = sentenceRun.getCTR().addNewRPr().addNewShd();
+    cTShd.setFill(""00FFFF"");
+
+    //Create, if necessary, a run after the highlight part
+    if (sentenceBeginIndex + sentenceLength != currentRunText.length()) {
+        XWPFRun after = p.insertNewRun(i + addedRuns + 1);
+        after.setText(currentRunText.substring(sentenceBeginIndex + sentenceLength));
+        //here I might need to re-introduce the style of the deleted run
+        addedRuns++;
+    }
+    return addedRuns;
+}

@@ -1,0 +1,27 @@
+import org.apache.commons.compress.archivers.sevenz.SevenZFile
+import scala.collection.JavaConverters._
+
+object CompressionTest extends App {
+
+  def loadCsvLinesFromZFile(compressedFile: String, fileName: String): Vector[String] = {
+    val zFile = new SevenZFile(new File(compressedFile))
+
+    zFile.getEntries.asScala.find { entry ⇒
+      // internally zFile keeps last file with call to getNextEntry
+      // it's a bit ugly in scala terms
+      zFile.getNextEntry
+      !entry.isDirectory && entry.getName == fileName
+    }.fold(Vector.empty[String]){ csv ⇒
+      val content = new Array[Byte](csv.getSize.toInt)
+      zFile.read(content, 0, content.length)
+      new String(content).split(""\n"").toVector
+    }
+  }
+
+  val allOutput = (loadCsvLinesFromZFile(""abc.7z"", ""part1.csv"") ++
+  loadCsvLinesFromZFile(""abc.7z"", ""part2.csv"") ++
+  loadCsvLinesFromZFile(""xyz.7z"", ""part3.csv"") ++
+  loadCsvLinesFromZFile(""xyz.7z"", ""part4.csv"")).mkString(""\n"")
+
+  println(allOutput)
+}

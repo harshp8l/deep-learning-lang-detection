@@ -1,0 +1,21 @@
+(def v [\a [\b [\c [\z]] [\d [\e \f]]]])
+(def g 
+  (z/zipper 
+    vector? ; a vector/pair is a branch
+    #(concat (second %)) ; might be a smarter way to get the childs
+    nil ; don't support edit
+    v))
+(loop [t (z/next g)] ; skip first
+  (if-not (z/end? t)
+    (do
+      (println {
+                :from (-> t z/up z/node first) ; parents are always vectors
+                :to (if (z/branch? t) (-> t z/node first) (z/node t))}) ; if vector, then first
+      (recur (z/next t)))))
+
+;;=> {:from a, :to b}
+;;=> {:from a, :to c}
+;;=> {:from c, :to z}
+;;=> {:from a, :to d}
+;;=> {:from d, :to e}
+;;=> {:from d, :to f}

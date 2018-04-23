@@ -1,0 +1,32 @@
+(defn contextual-eval [ctx expr]
+    (eval                                           
+        `(let [~@(mapcat (fn [[k v]] [k `'~v]) ctx)] 
+             ~expr)))
+(defmacro local-context []
+    (let [symbols (keys &env)]
+        (zipmap (map (fn [sym] `(quote ~sym)) symbols) symbols)))
+(defn readr [prompt exit-code]
+    (let [input (clojure.main/repl-read prompt exit-code)]
+        (if (= input ::tl)
+            exit-code
+             input)))
+;;make a break point
+(defmacro break []
+  `(clojure.main/repl
+    :prompt #(print ""debug=> "")
+    :read readr
+    :eval (partial contextual-eval (local-context))))
+
+
+Usage:
+
+(defn div [n d] (break) (int (/ n d)))
+(div 10 0)
+debug=> n
+10
+debug=> d
+0
+debug=> (local-context)
+{n 10, d 0}
+debug=> ::tl
+ArithmeticException Divide by zero  clojure.lang.Numbers.divide (Numbers.java:156)

@@ -1,0 +1,69 @@
+package com.incedo.pharma
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.SparkContext._
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.unix_timestamp
+import org.apache.spark.sql.functions.lag
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions.to_date
+import org.joda.time.LocalDate
+object appendPreRowGeneral4 {
+   def main(args: Array[String]){
+    val conf = new SparkConf().setAppName(""Excel-read-write"").setMaster(""local"")
+    val sc = new SparkContext(conf)
+    val sqlc = new org.apache.spark.sql.SQLContext(sc)
+    val ss = SparkSession.builder().master(""local"").appName(""Excel-read-write"").getOrCreate()
+    import ss.sqlContext.implicits._
+    val df1 = sqlc.read.format(""com.databricks.spark.csv"")
+             .option(""header"", ""true"")
+             .option(""inferSchema"", ""true"")
+             .load(""oldRecords2.csv"")
+    println(df1.show(false)+""df1 ---------"")
+    val df2 = df1.withColumn(""date"", to_date(unix_timestamp($""date"", ""MM/dd/yyyy"").cast(""timestamp"")))
+    println(""df2---""+df2.show(false))
+    val window1 = Window.partitionBy($""name"")
+    val df3 = df2.withColumn(""maxDate"", max($""date"").over(window1))
+    println(df3.show(false)+""df3 ---------"")
+    val df4 = df3.withColumn(""newdate1"", findDate($""date"", $""maxDate"")).drop(""date"")
+    println(""df4---""+df4.show(false))
+    val df5 = df4.withColumn(""date"", explode($""newdate1""))
+    println(""df5 -----""+df5.show(false))
+    val df6 = df5.drop(""maxDate"",""newdate1"")
+    println(""df6 -----""+df6.show(false))
+    val df7 = df6.alias(""a"").join(df2.alias(""b""),$""a.date"" === $""b.date"",""left_outer"")
+              .select($""a.name"",$""a.amount"",$""a.date"" , ($""b.name"").alias(""rt_name""),($""b.amount"").alias(""rt_amount""),($""b.date"").alias(""rt_date""))
+    println(""df7----""+df7.show(false))
+    val df8 = df7.filter(df7.col(""rt_date"").isNotNull).select($""name"", $""date"", $""amount"").distinct().orderBy($""name"", $""date"")
+    println(""df8----""+df8.show(false))
+    val df9 = df8.withColumn(""date"",from_unixtime(unix_timestamp($""date"", ""yyyy-mm-dd""), ""mm/dd/yyyy""))
+    println(""df9 ---""+df9.show(df9.count().toInt,false))
+    println(""total count --->""+df9.count())
+   }
+
+    val findDate = udf((first: String, last: String) => {
+      // to collect all the dates
+      val arrayDates = scala.collection.mutable.MutableList[LocalDate]()
+      var mindate = LocalDate.parse(first)
+      println(""mindate -----""+mindate)
+      val enddate = LocalDate.parse(last)
+      println(""enddate -----""+enddate)
+      println(""boolean ----""+mindate.isAfter(enddate))
+      while ( {
+        !mindate.isAfter(enddate)
+      }) {
+        arrayDates += mindate
+        println(""arrayDates --->""+arrayDates)
+        mindate = mindate.plusWeeks(1)
+        println(""mindate inside ---""+mindate)
+        //start.plusMonths(1)
+      }
+      arrayDates.map(_.toString())//arrayDates.map(_.toString(""MM/dd/yyyy""))
+  })
+  /**val convertDateUDF = udf((indate: String) => {
+    var ret = indate
+    s""${ret}""
+  })*/
+}

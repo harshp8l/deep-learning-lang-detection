@@ -1,0 +1,22 @@
+type JsonDotNetFormatter() as this =
+    inherit MediaTypeFormatter()
+    do this.SupportedMediaTypes.Add(new MediaTypeHeaderValue(""application/json""))
+    let settings = new JsonSerializerSettings(ReferenceLoopHandling = ReferenceLoopHandling.Ignore)
+    do settings.ContractResolver <- new CamelCasePropertyNamesContractResolver()
+    override __.CanReadType _ = true
+    override __.CanWriteType _ = true
+    override __.ReadFromStreamAsync(t, readStream, _, _) =
+        async {
+            use reader = new StreamReader(readStream)
+            let! text = reader.ReadToEndAsync() |> Async.AwaitTask
+            return JsonConvert.DeserializeObject(text, t)
+        } |> Async.StartAsTask
+    override __.WriteToStreamAsync(_, value, writeStream, _, _) =
+        async {
+            match box value with
+            | null -> value |> ignore
+            | _ ->
+                let text = JsonConvert.SerializeObject(value, settings)
+                use writer = new StreamWriter(writeStream)
+                do! writer.WriteAsync(text) |> Async.AwaitTask
+        } |> Async.StartAsTask :> Task

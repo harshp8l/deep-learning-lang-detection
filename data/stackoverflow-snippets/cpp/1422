@@ -1,0 +1,39 @@
+#include <future>
+#include <thread>
+#include <functional>
+#include <iostream>
+
+/// declarations
+void doSomething(std::shared_future<std::thread::id> future_master_thread);
+
+
+int main()  
+{
+    std::promise<std::thread::id> promise_master_thread;
+    auto shared_master_thread = promise_master_thread.get_future().share();
+    std::thread master {std::bind(doSomething, shared_master_thread)};
+    promise_master_thread.set_value(master.get_id());
+
+    std::thread slave {std::bind(doSomething, shared_master_thread)};
+
+   /// ...
+
+   /// join with threads
+   master.join();
+   slave.join();
+
+   std::cout << ""done"" << std::endl;
+}
+
+
+void doSomething(std::shared_future<std::thread::id> future_master_thread)
+{
+   if (std::this_thread::get_id() == future_master_thread.get())
+      std::cout << ""master thread ...""
+           << std::endl;
+   else
+      std::cout << ""NOT master thread ...""
+           << std::endl;
+
+   /// ...
+}

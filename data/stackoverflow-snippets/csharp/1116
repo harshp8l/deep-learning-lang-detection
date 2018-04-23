@@ -1,0 +1,62 @@
+public static List<string> RemoveCommonPrefixAndSuffix(List<string> sentences,
+    int minSeqenceLength = 2)
+{
+    if (sentences == null) return null;
+
+    if (sentences.Count < 2 ||
+        sentences.Any(s => s.Count(c => c == ' ') < minSeqenceLength - 1))
+    {
+        return sentences.ToList();
+    }
+
+    if (sentences.All(s => s == sentences[0]))
+    {
+        return sentences.Select(s => string.Empty).ToList();
+    }
+
+    var sentenceWords = sentences.Select(s => s.Split()).ToList();
+    var firstSentence = sentenceWords[0];
+    var length = sentenceWords.Min(s => s.Length);
+    var commonPrefix = new StringBuilder();
+    var commonSuffix = new StringBuilder();
+    var prefixDone = false;
+    var suffixDone = false;
+
+    for (var i = 0; i < length && !(prefixDone && suffixDone); i++)
+    {
+        if (!prefixDone && sentenceWords.All(s => s[i] == firstSentence[i]))
+        {
+            commonPrefix.Append(firstSentence[i] + "" "");
+        }
+        else
+        {
+            prefixDone = true;
+        }
+
+        if (!suffixDone && sentenceWords.All(s =>
+            s[s.Length - i - 1] == firstSentence[firstSentence.Length - i - 1]))
+        {
+            commonSuffix.Insert(0, firstSentence[firstSentence.Length - i - 1] + "" "");
+        }
+        else
+        {
+            suffixDone = true;
+        }
+    }
+
+    var prefix = commonPrefix.ToString().Count(c => c == ' ') >= minSeqenceLength - 1
+        ? commonPrefix.ToString()
+        : string.Empty;
+
+    var suffix = commonSuffix.ToString().Count(c => c == ' ') >= minSeqenceLength - 1
+        ? commonSuffix.ToString()
+        : string.Empty;
+
+    var commonLength = prefix.Length + suffix.Length;
+
+    return sentences
+        .Select(s => s.Length > commonLength
+            ? s.Substring(prefix.Length, s.Length - prefix.Length - suffix.Length)
+            : string.Empty)
+        .ToList();
+}

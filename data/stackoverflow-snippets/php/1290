@@ -1,0 +1,66 @@
+public function folder() {
+
+    $json = array();
+
+    $DIR_IMAGE = FCPATH . 'images/';
+
+    if ($this->input->get('directory')) {
+        $directory =  $this->input->get('directory') . '/';
+    } else {
+        $directory = 'catalog/';
+    }
+
+    if (!$json) {
+        $arrPathParts = explode('/', $directory);
+
+        if (count($arrPathParts) > 3) {
+            $json['error'] = 'You can not create a new folder here try back one level.';
+        }
+    }
+
+    if (!$json) {
+
+        $re = '/\W/'; // \W matches any non-word character (equal to [^a-zA-Z0-9_])
+
+        $str = $this->input->post('folder');
+
+        $is_correct_foldername = !preg_match($re, $str) ? true : false; 
+
+        if (!$is_correct_foldername) {
+            $json['error'] = 'You have some symbols or no spaces that are not allowed';
+        }
+    }
+
+    // Checks if any subfolders exists with same name. @todo clean paths
+
+    if (!$json) {
+
+        $root = $DIR_IMAGE . 'catalog/';
+
+        $iter = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($root, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST,
+            RecursiveIteratorIterator::CATCH_GET_CHILD // Ignore ""Permission denied""
+        );
+
+        $paths = array($root);
+
+        foreach ($iter as $path => $dir) {
+            if ($dir->isDir()) {
+                $paths[] = basename($path);
+            }
+        }
+
+        if (in_array($this->input->post('folder'), $paths)) {
+            $json['error'] = 'You have all ready created a folder called ' . $this->input->post('folder') . ' in one of your directories!';
+        }
+    }
+
+    if (!$json) {
+        mkdir($DIR_IMAGE . $directory . $this->input->post('folder'), 0777, true);
+        $json['success'] = 'Your folder is now created!';
+    }
+
+    $this->output->set_content_type('Content-Type: application/json');
+    $this->output->set_output(json_encode($json));        
+}

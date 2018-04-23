@@ -1,0 +1,16 @@
+(defn total-weight* [mobile]
+  (letfn
+    [(branch-weight-cps
+      [branch kont]
+      (let [structure (branch-structure branch)]
+        (if (mobile? (branch-structure branch))
+          (fn [] (traverse-mobile-cps structure kont))
+          (fn [] (kont structure)))))
+
+     (traverse-mobile-cps
+      [mobile kont]
+      (branch-weight-cps (left-branch mobile)
+                         (fn [left-weight]
+                           (branch-weight-cps (right-branch mobile)
+                                              (fn [right-weight] #(kont (+ left-weight right-weight)))))))]
+    (trampoline traverse-mobile-cps mobile identity)))

@@ -1,0 +1,33 @@
+namespace Foo
+open System.Windows
+open System.Windows.Controls
+open System.Windows.Controls.Primitives
+open System.Windows.Media
+
+module Register = 
+    // http://stackoverflow.com/a/14706890/1069200
+    type internal Marker = interface end
+
+    let ClickHandlerProperty = DependencyProperty.RegisterAttached(
+                                ""ClickHandler"", 
+                                typeof<RoutedEventHandler>, 
+                                typeof<Marker>.DeclaringType, 
+                                PropertyMetadata(null))
+
+    let SetClickHandler (element: UIElement, value : RoutedEventHandler) = 
+        element.SetValue(ClickHandlerProperty, value)
+
+    let GetClickHandler (element: UIElement) : RoutedEventHandler = 
+        element.GetValue(ClickHandlerProperty) :?> _
+
+    let private OnClick (sender : obj) args = 
+        let button = sender :?> UIElement
+        let handler = GetClickHandler button
+        if not (obj.ReferenceEquals(handler, null)) then
+            handler.Invoke(sender, args)
+
+    let private initialize =
+        EventManager.RegisterClassHandler(
+            typeof<FrameworkElement>, 
+            ButtonBase.ClickEvent, 
+            RoutedEventHandler(OnClick))

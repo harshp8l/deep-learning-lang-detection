@@ -1,0 +1,29 @@
+ SELECT GI.issueid
+    ,max(CASE 
+        WHEN GCD.customfieldname = 'Business Owner'
+            THEN GC1.fielddata
+        END) AS Business_Owner
+    ,max(CASE 
+        WHEN GCD.customfieldname = 'Client'
+            THEN GC1.fielddata
+        END) AS Client
+    ,max(CASE 
+        WHEN GCD.customfieldname = 'Cost Center'
+            THEN GC1.fielddata
+        END) AS Cost_Center
+    ,GI.closeddate AS Closed
+FROM dbo.gemini_issues GI
+INNER JOIN (
+    SELECT max(created) AS Created
+        ,fielddata
+        ,issueid
+        ,customfieldid
+    FROM gemini_customfielddata
+    GROUP BY fielddata
+        ,issueid
+        ,customfieldid
+    ) GC1 ON GI.issueid = GC1.issueid
+INNER JOIN dbo.gemini_customfielddefinitions GCD ON GC1.customfieldid = GCD.customfieldid AND GCD.customfieldname IN ('cost center', 'business owner', 'client')
+WHERE GI.projectid IN (193, 194, 195)
+group by GI.issueid
+ORDER BY GI.issueid

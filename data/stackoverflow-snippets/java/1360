@@ -1,0 +1,34 @@
+class RunnableBatch implements Runnable {
+
+    private boolean started = true;
+    private Queue<String> queue;
+    private int batchLimit;
+
+    public RunnableBatch(int batchLimit, Queue<String> queue) {
+        this.batchLimit = batchLimit;
+        this.queue = queue;
+    }
+
+    @Override
+    public void run() {
+        try (BatchInsert batch = new BatchInsert(batchLimit)) {
+            while (!queue.isEmpty() || started) {
+                String s = queue.poll();
+                if (s == null) {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+
+                    }
+                } else {
+                    String[] values = s.split("";"");
+                    batch.insert(values[0], values[1], values[2], values[3]);
+                }
+            }
+        }
+    }
+
+    public void stop() {
+        started = false;
+    }
+}

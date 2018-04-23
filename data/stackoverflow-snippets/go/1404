@@ -1,0 +1,35 @@
+package main
+
+import (
+    ""fmt""
+    ""log""
+    ""net/http""
+
+    ""github.com/gorilla/mux""
+)
+
+var router = mux.NewRouter()
+
+func main() {
+    router.Path(""/articles/{id:[0-9]+}"").Queries(""key"", ""{key}"").HandlerFunc(YourHandler).Name(""YourHandler"")
+    router.Path(""/articles/{id:[0-9]+}"").HandlerFunc(YourHandler)
+
+    if err := http.ListenAndServe("":9000"", router); err != nil {
+        log.Fatal(err)
+    }
+}
+
+func YourHandler(w http.ResponseWriter, r *http.Request) {
+    id := mux.Vars(r)[""id""]
+    key := r.FormValue(""key"")
+
+    u, err := router.Get(""YourHandler"").URL(""id"", id, ""key"", key)
+    if err != nil {
+        http.Error(w, err.Error(), 500)
+        return
+    }
+
+    // Output:
+    // /articles/10?key=[key]
+    w.Write([]byte(u.String()))
+}

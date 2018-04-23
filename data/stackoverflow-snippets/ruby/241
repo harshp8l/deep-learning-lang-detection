@@ -1,0 +1,19 @@
+task populate: :environment do
+  begin
+    Event.find_each do |event| # << this changed from .all.each to .find_each
+      eventname = event.eventname.gsub('UnderGround Presents ', '')
+      eventname = eventname.gsub('&', 'and')
+      tms = TM.where('product_name ILIKE ? AND valid_from = ? AND promotional_text ILIKE ?', ""#{eventname}%"", ""#{event.date.strftime('%Y-%m-%d')}"", ""#{event.eventvenuename}"")
+
+      # Option 1
+      tms.find_each do |tm|
+        tm.update(event_id: event.id)
+      end
+      # Option 2 (if you do not need to run validations/callbacks on the TM records)
+      tms.update_all(event_id: event.id)
+    end
+  rescue Faraday::TimeoutError
+    puts 'Connection failed'
+    next
+  end
+end

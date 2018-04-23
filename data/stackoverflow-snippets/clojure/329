@@ -1,0 +1,20 @@
+(defn generate-onstar-f
+  [event-kw]
+  (let [
+    event-str (name event-kw)
+    do-fn-sym (symbol (str ""do-"" event-str))
+    on-fn-sym (symbol (str ""on-"" event-str))
+    new-fn    (fn on-fn-sym []
+                (let [the-var (intern 'tst.clj.core do-fn-sym) ; get the var the symbol 'do-fn-sym' points to
+                      the-fn  (var-get the-var) ] ; get the fn the var is pointing to
+                  (the-fn))) ]
+    (intern 'tst.clj.core on-fn-sym new-fn) ; create a var 'on-fn-sym' pointing to 'new-fn'
+    (println ""Created"" on-fn-sym)))
+
+(println \newline ""*** generating functions ***"")
+(mapv generate-onstar-f [:foo :bar :baz]) ; creates and interns a functions:  my-foo, my-bar, my-baz
+
+(println \newline ""Calling automatically generated on-* functions"")
+(on-foo)
+(on-bar)
+(on-baz)

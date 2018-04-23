@@ -1,0 +1,32 @@
+function Invoke-Installer {
+    Param(
+        [Parameter(Mandatory=$true)]
+        [ValidateScript({Test-Path -LiteralPath $_})]
+        [string[]]$Path,
+
+        [Parameter(Manatory=$false)]
+        [string[]]$ArgumentList = @()
+    )
+
+    Begin {
+        Add-Type -Assembly System.IO.Compression.FileSystem
+    }
+
+    Process {
+        $Path | ForEach-Object {
+            $zip, $exe = $_ -split '(?<=\.zip)\\+', 2
+
+            if (-not $exe) { throw ""Invalid installer path: ${_}"" }
+
+            $tempdir = Join-Path $env:TEMP [IO.File]::GetFileName($zip)
+            [IO.Compression.ZipFile]::ExtractToDirectory($zip, $tempdir)
+
+            $installer = Join-Path $tempdir $exe
+            & $installer @ArgumentList
+
+            Remove-Item $tempdir -Recurse -Force
+        }
+    }
+}
+
+Invoke-Installer 'C:\myzip.zip\setup.exe' 'arg1', 'arg2', ...

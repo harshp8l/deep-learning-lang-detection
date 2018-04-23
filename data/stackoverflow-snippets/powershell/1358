@@ -1,0 +1,26 @@
+function Uninstall-Hotfix () {
+    Param(
+        [Parameter(Mandatory=$true)][array]$Patches
+    )
+
+    foreach($patch in $Patches){
+        $numKb = $null
+        if($patch -match ""\d{7}""){
+            [int]$numkb = $Matches[0]
+            Write-Host $numKb
+
+            Start-Process wusa.exe -ArgumentList ""/KB:$numKb /uninstall /quiet /norestart"" -Wait
+
+            if(Get-Hotfix -Id $numKb -ErrorAction SilentlyContinue){
+                Write-Host ""KB $KBs[$i] Fehlerhaft""
+            }
+            else{
+                Write-Host ""KB $KBs[$i] Erfolgreich deinstalliert""
+            }
+        }
+        else{
+            Write-Host ""KB is not valid""
+        }
+    }
+}
+Uninstall-Hotfix -Patches KB4041691,KB1234567

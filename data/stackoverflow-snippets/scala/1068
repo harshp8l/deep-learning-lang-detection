@@ -1,0 +1,23 @@
+def chars2Occurs(chars: Seq[Char]): Map[Char, Int] = {
+  chars.foldLeft(Map.empty[Char, Int]) {
+    case (map, ch) =>
+      val occurs = map.get(ch).getOrElse(0) + 1
+      map + ((ch -> occurs))
+  }
+}
+def getScrambleWords(words: Seq[String], letters: Array[Char]): Seq[String] = {
+  val etalon: Map[Char, Int] = chars2Occurs(letters)
+  val word2Occur: Seq[(String, Map[Char, Int])] = words.map { word =>
+    (word, chars2Occurs(word))
+  }
+  val result: Seq[String] = word2Occur.flatMap { case (word, map) =>
+    val isOk = map.forall { case (c, n) =>
+      etalon.get(c) match {
+        case Some(k) => k >= n
+        case None => false
+      }
+    }
+    if (isOk) Some(word) else None
+  }
+  result
+}

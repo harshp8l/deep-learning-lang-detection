@@ -1,0 +1,19 @@
+import Data.Array
+import Data.Ix
+
+memoPresent :: Int -> Int -> Int
+memoPresent r c = pArray ! (r, c)
+  where
+    bounds = ((0, 0), (r, c))
+
+    pArray = listArray bounds (map (uncurry present) (range bounds))
+
+    present 0 0 = 1
+    present _ 0 = 0
+    present 0 b = negate (pArray ! (0, b - 1))
+    present a b = fArray ! (a, b) + 2 * pArray ! (a, b - 1)
+
+    fArray = listArray bounds (map (uncurry future) (range bounds))
+
+    future 1 b = 2 * pArray ! (0, b)
+    future a b = 3 * pArray ! (a - 1, b - 1)

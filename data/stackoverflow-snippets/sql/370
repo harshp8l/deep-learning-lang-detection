@@ -1,0 +1,23 @@
+WITH your_table AS (SELECT 1 DAY, 10 CLIENT_ID FROM dual UNION ALL
+                    SELECT 1 DAY, 11 CLIENT_ID FROM dual UNION ALL
+                    SELECT 1 DAY, 12 CLIENT_ID FROM dual UNION ALL
+                    SELECT 2 DAY, 10 CLIENT_ID FROM dual UNION ALL
+                    SELECT 2 DAY, 11 CLIENT_ID FROM dual UNION ALL
+                    SELECT 3 DAY, 10 CLIENT_ID FROM dual UNION ALL
+                    SELECT 3 DAY, 11 CLIENT_ID FROM dual UNION ALL
+                    SELECT 3 DAY, 12 CLIENT_ID FROM dual UNION ALL
+                    SELECT 3 DAY, 13 CLIENT_ID FROM dual UNION ALL
+                    SELECT 4 DAY, 10 CLIENT_ID FROM dual)
+SELECT DISTINCT DAY,
+                COUNT(CASE WHEN rn = 1 THEN client_id END) OVER (ORDER BY DAY) num_distinct_client_ids
+FROM   (SELECT DAY,
+               client_id,
+               row_number() OVER (PARTITION BY client_id ORDER BY DAY) rn
+        FROM   your_table);
+
+       DAY NUM_DISTINCT_CLIENT_IDS
+---------- -----------------------
+         1                       3
+         2                       3
+         3                       4
+         4                       4

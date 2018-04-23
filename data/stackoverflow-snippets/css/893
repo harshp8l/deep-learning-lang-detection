@@ -1,0 +1,26 @@
+library(shiny)
+library(shinydashboard)
+ui <- dashboardPage(dashboardHeader(dropdownMenuOutput(""notificationMenu"")), 
+                    dashboardSidebar(sidebarMenu(id='sidebar',
+                                                 menuItem(""Page 1"", tabName = ""page1""),
+                                                 menuItem(""Page 2"", tabName = ""page2"")),
+                                     uiOutput('style_tag')),
+                    dashboardBody(
+                      tabItems(
+                        tabItem(tabName = ""page1"", h4(""Blue!"",style='color:white')),
+                        tabItem(tabName = ""page2"", h4('Red!'))
+                      ))
+)
+
+server <- function(input, output, session){
+
+  output$style_tag <- renderUI({
+    if(input$sidebar=='page1')
+      return(tags$head(tags$style(HTML('.content-wrapper {background-color:blue;}'))))
+
+    if(input$sidebar=='page2')
+      return(tags$head(tags$style(HTML('.content-wrapper {background-color:red;}'))))
+  })
+}
+
+shinyApp(ui = ui, server = server)

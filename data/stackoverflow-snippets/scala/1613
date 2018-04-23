@@ -1,0 +1,64 @@
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.common.EntityStreamingSupport
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.server.Directives
+import akka.stream.scaladsl.{Flow, Source}
+import akka.stream.{ActorMaterializer, ThrottleMode}
+import akka.util.ByteString
+import spray.json._
+
+import scala.concurrent.duration._
+import scala.io.StdIn
+
+object TestApp2 extends App {
+
+  implicit val system = ActorSystem(""MyAkkaSystem"")
+  implicit val materializer = ActorMaterializer()
+
+  implicit val executionContext = system.dispatcher
+
+  case class SomeData(name: String)
+
+  trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+    implicit val someFormat = jsonFormat1(SomeData)
+  }
+
+  val start = ByteString.empty
+  val sep = ByteString(""\n"")
+  val end = ByteString.empty
+
+  implicit val jsonStreamingSupport = EntityStreamingSupport
+    .json()
+    .withFramingRenderer(Flow[ByteString].intersperse(sep))
+
+  object MyJsonService extends Directives with JsonSupport {
+
+    def streamingJsonRoute =
+      path(""streaming-json"") {
+        get {
+          val sourceOfNumbers = Source(1 to 1000000)
+
+          val sourceOfDetailedMessages =
+            sourceOfNumbers
+              .map(num => SomeData(s""Hello $num""))
+              .throttle(elements = 5,
+                        per = 30 second,
+                        maximumBurst = 6,
+                        mode = ThrottleMode.Shaping)
+
+          complete(sourceOfDetailedMessages)
+        }
+      }
+  }
+
+  val bindingFuture =
+    Http().bindAndHandle(MyJsonService.streamingJsonRoute, ""localhost"", 9000)
+
+  println(s""Server online at http://localhost:9000/\nPress RETURN to stop..."")
+  StdIn.readLine() // let it run until user presses return
+  bindingFuture
+    .flatMap(_.unbind()) // trigger unbinding from the port
+    .onComplete(_ => system.terminate()) // and shutdown when done
+
+}

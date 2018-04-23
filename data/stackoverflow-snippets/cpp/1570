@@ -1,0 +1,50 @@
+#include <ilcplex/ilocplex.h>
+ILOSTLBEGIN
+
+int
+main (int argc, char **argv)
+{
+   IloEnv env;
+   IloNumVarArray x(env);
+
+   int numVars = 10000;
+   int numCons = 1000000;
+
+   if (argc == 3) {
+      stringstream nvars(argv[1]);
+      stringstream ncons(argv[2]);
+      nvars >> numVars;
+      ncons >> numCons;
+   }
+
+   // Set x variable
+   for(int i = 0; i <= numVars; i++) {
+      x.add(IloBoolVar(env));
+   }
+
+   // Set objective
+   IloModel model(env);
+   IloNumExpr objective(env);
+   objective += x[0];
+   model.add(IloMinimize(env, objective));
+
+   // Add constraints
+   IloRangeArray c(env);
+   for (int i = 0; i < numCons; i++) {
+      IloNumExpr some_expr(env);
+      for (int j = 0; j < numVars; j++) {
+         some_expr += x[j];
+      }
+      c.add(some_expr == 0.0);
+      some_expr.end();
+   }
+
+   model.add(c);
+
+   std::cout << ""Memory usage after creating constraints: ""
+             << env.getMemoryUsage() / (1024. * 1024.)
+             << "" MB"" << std::endl;
+
+   env.end();
+   return 0;
+}  // END main

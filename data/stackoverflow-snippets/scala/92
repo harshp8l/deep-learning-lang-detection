@@ -1,0 +1,40 @@
+import scala.util.Random
+
+def pi_random(N: Long): Double = {
+  val rng = new Random
+  val count = (0L until N * N)
+    .map { _ =>
+      val (x, y) = (rng.nextDouble(), rng.nextDouble())
+      if (x*x + y*y <= 1) 1 else 0
+    }
+    .sum
+  4 * count.toDouble / (N * N)
+}
+
+def pi_random_parallel(N: Long): Double = {
+  val rng = new Random
+  val count = (0L until N * N)
+    .par
+    .map { _ =>
+      val (x, y) = (rng.nextDouble(), rng.nextDouble())
+      if (x*x + y*y <= 1) 1 else 0
+    }
+    .sum
+  4 * count.toDouble / (N * N)
+}
+
+
+def pi_random_properly(n: Long): Double = {
+  val count = (0L until n).par.map { _ =>
+    val rng = ThreadLocalRandom.current
+    var sum = 0
+    var idx = 0
+    while (idx < n) {
+      val (x, y) = (rng.nextDouble(), rng.nextDouble())
+      if (x*x + y*y <= 1.0) sum += 1
+      idx += 1
+    }
+    sum
+  }.sum
+  4 * count.toDouble / (n * n)
+}

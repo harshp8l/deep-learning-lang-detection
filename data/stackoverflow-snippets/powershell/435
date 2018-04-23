@@ -1,0 +1,27 @@
+    $cred = Get-OurUserCredentials
+    $sess = New-PSSession -ComputerName $ServerA -Credential $cred -Authentication Negotiate
+
+    #ScriptBlock to copy file locally
+    $SB =
+    {
+        #Create variables on the remote machine avoid havin gto pass to scriptblock
+        $LogFile = ""D:\log\tomcat\access.20180227.log"" 
+        $TempDes = ""temporarylocationhere""
+
+        Copy-Item -Path $LogFile -Destination $Des
+    }
+
+    #optional scriptblock to clean up
+    $SB2 =
+    {
+        Remove-Item -Path $TempDes -force
+    }
+
+    #Run the copy file scriptblock
+    Invoke-Command -Session $sess -ScriptBlock $SB
+
+    #Copy file
+    Copy-Item -FromSession $sess $TempDes ""D:\logs\tomcat\"" -Force                           #""
+
+    #Run clean up scriptblock
+    Invoke-Command -Session $sess -ScriptBlock $SB2

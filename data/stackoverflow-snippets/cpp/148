@@ -1,0 +1,54 @@
+#include <QApplication>
+#include <QGraphicsProxyWidget>
+#include <QGraphicsView>
+#include <QLabel>
+#include <QTimer>
+
+class GraphicsProxyWidget: public QGraphicsProxyWidget{
+public:
+    using QGraphicsProxyWidget::QGraphicsProxyWidget;
+    QRectF boundingRect() const{
+        if(widget())
+            return QRectF(widget()->rect());
+        return QGraphicsProxyWidget::boundingRect();
+    }
+};
+
+class DiagramItem: public QGraphicsPolygonItem{
+    QLabel *label;
+    GraphicsProxyWidget *pMyProxy ;
+public:
+    explicit DiagramItem(QGraphicsItem *parent=nullptr):QGraphicsPolygonItem(parent) {
+        label = new QLabel;
+        pMyProxy = new GraphicsProxyWidget(this);
+        pMyProxy->setWidget(label);
+        label->setTextInteractionFlags(Qt::TextEditorInteraction);
+        label->setStyleSheet(""QLabel { background-color : red; color : blue; }"");
+        setText(QString(""I AM A SQARE DADADA""));
+        setBrush(Qt::green);
+    }
+    void setText(const QString & text){
+       label->setText(text);
+       label->adjustSize();
+       pMyProxy->setPos(boundingRect().center()-label->rect().center());
+    }
+};
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    QGraphicsView w;
+    QGraphicsScene *scene = new QGraphicsScene;
+    w.setScene(scene);
+    auto it = new DiagramItem;
+    QPolygonF myPolygon({QPointF(-120, -80), QPointF(-70, 80),
+                         QPointF(120, 80), QPointF(70, -80),
+                         QPointF(-120, -80)});
+    it->setPolygon(myPolygon);
+    scene->addItem(it);
+    QTimer::singleShot(1000, [it](){
+        it->setText(""some text"");
+    });
+    w.show();
+    return a.exec();
+}

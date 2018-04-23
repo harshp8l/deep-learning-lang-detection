@@ -1,0 +1,21 @@
+trait Evaluator[S, V] {
+  def vecConst(x: Double, y: Double): V
+  def vecAdd(v1: V, v2: V): V
+  def vecSub(v1: V, v2: V): V
+  def vecMul(v: V, s: S): V
+
+  def scalarConst(x: Double): S
+  def dotProduct(v1: V, v2: V): S
+
+  def eval(v: VecExpr): V = v match {
+    case VecConst(x, y) => vecConst(x, y)
+    case VecAdd(v1, v2) => vecAdd(eval(v1), eval(v2))
+    case VecSub(v1, v2) => vecSub(eval(v1), eval(v2))
+    case VecMul(v, s) => vecMul(eval(v), eval(s))
+  }
+
+  def eval(s: ScalarExpr): S = s match {
+    case ScalarConst(d: Double) => scalarConst(d)
+    case DotProduct(v1, v2) => dotProduct(eval(v1), eval(v2))
+  }
+}

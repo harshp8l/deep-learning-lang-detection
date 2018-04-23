@@ -1,0 +1,29 @@
+import scala.language.existentials
+
+trait Result
+
+type BOX = BatchableOp[X] forSome { type X <: BatchableOp[X] }
+
+trait BatchableOp[C <: BatchableOp[C]] {
+  def resolve(batch: Vector[C]): Vector[Result]
+
+  // not abstract, needed only once!
+  def collectSameClassInstances(batch: Vector[BOX]): Vector[C] = {
+    for (b <- batch if this.getClass.isAssignableFrom(b.getClass))
+    yield b.asInstanceOf[C]
+  }
+
+  // not abstract either, no additional hassle for subclasses!
+  def collectAndResolve(batch: Vector[BOX]): Vector[Result] = 
+    resolve(collectSameClassInstances(batch))
+}
+
+def execute(operations: Vector[BOX]): Vector[Result] = {
+
+  operations
+    .groupBy(_.getClass)
+    .toVector
+    .flatMap{ case (_, batch) =>
+      batch.head.collectAndResolve(batch)
+    }
+}

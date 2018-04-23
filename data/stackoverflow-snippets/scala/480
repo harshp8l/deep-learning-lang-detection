@@ -1,0 +1,30 @@
+class LazilyEvaluatedBigData(a: String) {
+  import scala.ref.SoftReference
+  private def uncachedGenerate: BigData = new BigData(128)
+
+  private var cachedBigData: Option[SoftReference[BigData]] = None
+  def generate: BigData = {
+    val resOpt = for {
+      softRef <- cachedBigData
+      bd <- softRef.get
+    } yield bd
+    if (resOpt.isEmpty) {
+      val res = uncachedGenerate
+      cachedBigData = Some(new SoftReference(res))
+      res
+    } else {
+      resOpt.get
+    }
+  }
+}
+
+class BigData(m: Int) {
+  val data = Array.ofDim[Byte](1000000 * m)
+  def process: Seq[Int] = List(1,2,3)
+}
+
+val seq1: Seq[LazilyEvaluatedBigData] = List.fill(100)(new LazilyEvaluatedBigData(""""))
+
+val results1 = seq1.flatMap(_.generate.process)
+
+println(""run to end without OOM"")

@@ -1,0 +1,13 @@
+ val route = pathPrefix(""auth"") {
+    path(""signIn"") {
+      post {
+        entity(as[LoginPassword]) { loginPassword =>
+          val token = signIn(loginPassword.login, loginPassword.password)
+          val response = token.map(_ match {
+            case Some(token) => prepareHttpResponse(StatusCodes.OK, token.asJson.toString)
+            case None => prepareHttpResponse(StatusCodes.Unauthorized, ""{reason: \""not found\"""")
+          })
+          complete(response)
+        }
+      }
+    }

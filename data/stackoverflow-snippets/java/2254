@@ -1,0 +1,55 @@
+public class PartialTest {
+
+    public interface ArgumentA { }
+    public interface ArgumentB { }
+    public interface ArgumentC { }
+
+    public static class CallToBeMocked {
+        public CallToBeMocked(ArgumentA a, ArgumentB b, ArgumentC c) {
+
+        }
+
+        public boolean isProxied(ArgumentA a) {
+            return true;
+        }
+
+        public int remoteCall(String ip, ArgumentA a, Object any) throws Exception {
+            return 0;
+        }
+    }
+
+    @Test
+    public void test() throws Exception {
+        ArgumentA mockArgumentA = createNiceMock(ArgumentA.class);
+        ArgumentB mockArgumentB = createNiceMock(ArgumentB.class);
+        ArgumentC mockArgumentC = createNiceMock(ArgumentC.class);
+
+        CallToBeMocked mockCallToBeMocked = createMockBuilder(CallToBeMocked.class)
+                .withConstructor(ArgumentA.class, ArgumentB.class, ArgumentC.class)
+                .withArgs(mockArgumentA, mockArgumentB, mockArgumentC)
+                .addMockedMethod(""isProxied"", ArgumentA.class)
+                .addMockedMethod(""remoteCall"", String.class, ArgumentA.class, Object.class)
+                .createMock();
+
+        expect(mockCallToBeMocked.isProxied(mockArgumentA)).andReturn(false);
+        expect(mockCallToBeMocked.remoteCall(""ip-address"", mockArgumentA, null)).andThrow(new Exception()).times(3);
+
+        replay(mockCallToBeMocked);
+
+        assertFalse(mockCallToBeMocked.isProxied(mockArgumentA));
+        try {
+            mockCallToBeMocked.remoteCall(""ip-address"", mockArgumentA, null);
+            fail(""Should throw"");
+        } catch (Exception e) { }
+        try {
+            mockCallToBeMocked.remoteCall(""ip-address"", mockArgumentA, null);
+            fail(""Should throw"");
+        } catch (Exception e) { }
+        try {
+            mockCallToBeMocked.remoteCall(""ip-address"", mockArgumentA, null);
+            fail(""Should throw"");
+        } catch (Exception e) { }
+
+        verify(mockCallToBeMocked);
+    }
+}

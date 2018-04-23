@@ -1,0 +1,14 @@
+(defn runge-kutta [evalg evalf dx]
+  (letfn [(step [[k1 psin  Xin xn]]
+                (let [k1 (evalg  xn psin)
+                      l1 (evalf  xn Xin)
+                      k2 (evalg (+ (* 0.5 dx) xn) (+ (* 0.5 l1) psin))
+                      l2 (evalf (+ (* 0.5 dx) xn) (+ (* 0.5 k1) Xin))
+                      k3 (evalg (+ (* 0.5 dx) xn) (+ (* 0.5 l2) psin))
+                      l3 (evalf (+ (* 0.5 dx) xn) (+ (* 0.5 k2) Xin))
+                      k4 (evalg (+ dx xn) (+ l3 psin))
+                      l4 (evalf (+ dx xn) (+ k3 Xin))
+                      Xinew (+ Xin (* (/ dx 6) (+ k1 k4 (* 2 k3) (* 2 k2))) )
+                      psinew (+ psin (* (/ dx 6) (+ l1 l4 (* 2 l2) (* 2 l3) )))]
+                  [k1 psinew Xinew (+ dx xn)]))]
+    (map first (iterate step [nil 0 1 dx]))))

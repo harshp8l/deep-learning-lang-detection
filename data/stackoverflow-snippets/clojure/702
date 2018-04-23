@@ -1,0 +1,21 @@
+(def type-annots (atom (hash-map)))
+
+(defn add-type-annot [fn-name ty]
+  (swap! type-annots #(conj % [fn-name ty])))
+
+(defmacro custom-annotation-macro [fn-name ty]
+  (add-type-annot fn-name ty)
+  nil)
+
+(defn split-fun-type [ty]
+  ;; You will need to write this one; 
+  ;; it should split [a :-> b :-> c] to [[a b] c]
+  ['[s/Str s/Int] 's/Str])
+
+(defmacro defn-typed [fn-name args & body]
+  (let [ty (get @type-annots fn-name)]
+    (if ty
+      (let [[arg-types ret-ty] (split-fun-type ty)
+            args-typed (apply vector (apply concat (map vector args arg-types)))]
+        `(s/defn ~fn-name :- ~ret-ty ~args-typed ~@body))
+      `(defn ~fn-name ~args ~@body))))

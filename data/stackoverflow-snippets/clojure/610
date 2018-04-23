@@ -1,0 +1,33 @@
+(set! *unchecked-math* :warn-on-boxed)
+
+(def ^long ^:const size 65536)
+
+(defn get-zero-complex-array []
+  {:re (double-array size)
+   :im (double-array size)})
+
+(defn multiply-complex-arrays [a b]
+  (let [a-re-array (doubles (get a :re))
+        a-im-array (doubles (get a :im))
+        b-re-array (doubles (get b :re))
+        b-im-array (doubles (get b :im))
+        res-re-array (double-array size)
+        res-im-array (double-array size)
+        s (long size)]
+    (loop [i 0]
+      (if (< i s)
+        (let [a-re (aget a-re-array i)
+              a-im (aget a-im-array i)
+              b-re (aget b-re-array i)
+              b-im (aget b-im-array i)]
+          (aset res-re-array i (- (* a-re b-re) (* a-im b-im)))
+          (aset res-im-array i (+ (* a-re b-im) (* b-re a-im)))
+          (recur (inc i)))
+        {:re res-re-array :im res-im-array}))))
+
+(defn compute []
+  (let [res (loop [i 0 a (get-zero-complex-array)]
+              (if (< i 30000)
+                (recur (inc i) (multiply-complex-arrays a a))
+                a))]
+    (aget (get res :re) 0)))

@@ -1,0 +1,13 @@
+$array= @() 
+$Files= Get-Content lock.txt
+foreach ($File in $Files)
+{
+        get-childitem -path Z:\lonmgb003_2 -Recurse | ?{$_.Name -like $File}
+        $obj = New-Object PSObject  
+        $Size = [Math]::Round((Get-ChildItem -Recurse $_.FullName | Measure-Object Length -Sum -ErrorAction SilentlyContinue).Sum / 1MB, 2) 
+        $obj | Add-Member -MemberType NoteProperty -Name ""Path"" $_.FullName 
+        $obj | Add-Member -MemberType NoteProperty -Name ""SizeinMB"" $Size 
+        $array +=$obj 
+ } 
+
+$array | select Path, SizeinMB

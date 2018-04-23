@@ -1,0 +1,21 @@
+//creating schema
+import org.apache.spark.sql.types._
+val schema = StructType(Array(
+  StructField(""col1"", StringType, true),
+  StructField(""col2"", StringType, true),
+  StructField(""col3"", StringType, true)
+))
+
+//reading text file and finding total lines
+val textFile = sc.textFile(""*.txt"")
+val total = textFile.count()
+
+//indexing lines for filtering the first and the last lines
+import org.apache.spark.sql.Row
+val rows = textFile.zipWithIndex()
+    .filter(x => x._2 != 0 && x._2 < total - 1)
+  .map(x => Row.fromSeq(x._1.split("";"").toSeq))   //converting the lines to Row of sequences
+
+//finally creating dataframe
+val df = sqlContext.createDataFrame(rows, schema)
+df.show(false)

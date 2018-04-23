@@ -1,0 +1,17 @@
+WITH tbl_majors AS (SELECT 76 person_id, 'Biology' major, to_date('01/08/2016', 'dd/mm/yyyy') effective_date, to_date('24/02/2017', 'dd/mm/yyyy') termination_date FROM dual UNION ALL
+                    SELECT 76 person_id, 'Accounting' major, to_date('25/02/2017', 'dd/mm/yyyy') effective_date, to_date('15/04/2017', 'dd/mm/yyyy') termination_date FROM dual UNION ALL
+                    SELECT 76 person_id, 'Math' major, to_date('16/04/2017', 'dd/mm/yyyy') effective_date, to_date('31/12/9999', 'dd/mm/yyyy') termination_date FROM dual UNION ALL
+                    SELECT 102 person_id, 'Physics' major, to_date('01/08/2016', 'dd/mm/yyyy') effective_date, to_date('21/07/2018', 'dd/mm/yyyy') termination_date FROM dual UNION ALL
+                    SELECT 58 person_id, 'Literature' major, to_date('01/08/2016', 'dd/mm/yyyy') effective_date, to_date('13/05/2017', 'dd/mm/yyyy') termination_date FROM dual UNION ALL
+                    SELECT 94 person_id, 'Art History' major, to_date('01/08/2016', 'dd/mm/yyyy') effective_date, to_date('30/08/2017', 'dd/mm/yyyy') termination_date FROM dual UNION ALL
+                    SELECT 94 person_id, 'Comp Sci' major, to_date('01/03/2018', 'dd/mm/yyyy') effective_date, to_date('31/12/9999', 'dd/mm/yyyy') termination_date FROM dual)
+SELECT person_id,
+       major,
+       effective_date,
+       termination_date,
+       CASE WHEN SUM(LEAST(to_date('31/12/2017', 'dd/mm/yyyy'), termination_date) + 1 - GREATEST(to_date('01/01/2017', 'dd/mm/yyyy'), effective_date)) OVER (PARTITION BY person_id)
+                   = to_date('31/12/2017', 'dd/mm/yyyy') + 1 - to_date('01/01/2017', 'dd/mm/yyyy')
+                 THEN 1
+            ELSE 0
+       END active_throughout_2017
+FROM   tbl_majors;

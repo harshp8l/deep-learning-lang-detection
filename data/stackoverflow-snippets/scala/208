@@ -1,0 +1,28 @@
+import java.text.SimpleDateFormat
+import java.util.{Calendar, Date, GregorianCalendar}
+import scala.util.{Failure, Success, Try}
+
+def recognizeTimeStamp(timeStamp: String): Int = {
+
+  val myCal = new GregorianCalendar();
+  timeStamp match {
+    case ""unknown"" => -1
+    case x if x.replaceAll(""\\d"", """") == """" => {
+      myCal.setTime(new Date(x.toLong))
+      myCal.get(Calendar.YEAR)
+    }
+
+    case x =>
+       val format = new SimpleDateFormat(""yyyy-MM-dd HH:mm:ss.S"")
+       Try(format.parse(x)) match {
+            case Success(t) => {
+                myCal.setTime(t)
+                myCal.get(Calendar.YEAR)
+            }
+            case Failure(_) => -1
+       }
+   }
+}
+
+recognizeTimeStamp(""2018-04-23 11:12:00.0"")
+recognizeTimeStamp(""1334946600000"")

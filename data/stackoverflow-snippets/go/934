@@ -1,0 +1,42 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+)
+
+type A struct {
+    Content string
+}
+
+type B struct {
+    Element  A
+    Children []B
+}
+
+// MarshalJSON implements json.Marshaler
+func (b B) MarshalJSON() ([]byte, error) {
+    return json.Marshal([]interface{}{
+        b.Element,
+        b.Children,
+    })
+}
+
+func main() {
+
+    root := B{
+        Element: A{Content: ""AAA""},
+        Children: []B{
+            B{
+                Element: A{Content: ""BBB""},
+                Children: []B{
+                    B{Element: A{Content: ""CCC""}, Children: []B{}},
+                    B{Element: A{Content: ""DDD""}, Children: []B{}},
+                },
+            },
+        },
+    }
+
+    content, _ := json.MarshalIndent(root, """", ""  "")
+    fmt.Printf(""%s\n"", content)
+}

@@ -1,0 +1,27 @@
+type DBReplicated struct {
+    DB *DBS `json:""db""`
+}
+
+type DBS struct {
+    URL      string            `json:""url""`
+    Port     string            `json:""port""`
+    Uname    string            `json:""uname""`
+    Pass     string            `json:""pass""`
+    Authdb   string            `json:""authdb""`
+    Replicas []map[string]*DBS `json:""replicas""`
+}
+
+func main() {
+    var dbs []*DBReplicated
+    if err := json.Unmarshal([]byte(src), &dbs); err != nil {
+        panic(err)
+    }
+
+    db := dbs[0].DB
+    fmt.Printf(""%+v\n"", db)
+    for _, dbs := range db.Replicas {
+        for name, replica := range dbs {
+            fmt.Printf(""%s: %+v\n"", name, replica)
+        }
+    }
+}

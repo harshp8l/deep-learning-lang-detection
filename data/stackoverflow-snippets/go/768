@@ -1,0 +1,42 @@
+// Splitting the path into keys
+keys := strings.Split(path, ""."")
+
+var value interface{} = map1
+for _, key := range keys {
+    if value, err = Get(key, value); err != nil {
+        break
+    }
+}
+if err == nil {
+    fmt.Println(""Value:"", value)
+} else {
+    fmt.Println(""Error:"", err)
+}
+
+
+func Get(key string, s interface{}) (v interface{}, err error) {
+    var (
+        i  int64
+        ok bool
+    )
+    switch s.(type) {
+    case map[string]interface{}:
+        if v, ok = s.(map[string]interface{})[key]; !ok {
+            err = fmt.Errorf(""Key not present. [Key:%s]"", key)
+        }
+    case []interface{}:
+        if i, err = strconv.ParseInt(key, 10, 64); err == nil {
+            array := s.([]interface{})
+            if int(i) < len(array) {
+                v = array[i]
+            } else {
+                err = fmt.Errorf(""Index out of bounds. [Index:%d] [Array:%v]"", i, array)
+            }
+        }
+    case Signature:
+        r := reflect.ValueOf(s)
+        v = reflect.Indirect(r).FieldByName(key)
+    }
+    //fmt.Println(""Value:"", v, "" Key:"", key, ""Error:"", err)
+    return v, err
+}

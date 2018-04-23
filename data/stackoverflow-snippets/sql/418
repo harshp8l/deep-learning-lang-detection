@@ -1,0 +1,50 @@
+DECLARE @IntervalMinutes int = 15;
+WITH
+    start_intervals AS (
+        SELECT DISTINCT
+              ID
+            , in_time
+        FROM dbo.my_table AS a
+        WHERE NOT EXISTS(
+            SELECT 1
+            FROM dbo.my_table AS b
+            WHERE
+                b.ID = a.ID
+                AND b.in_time < a.in_time
+                AND b.in_time > DATEADD(minute, -@IntervalMinutes, a.in_time)
+            )
+        )
+    , end_intervals AS (
+        SELECT
+              ID
+            , in_time
+        FROM dbo.my_table AS a
+        WHERE NOT EXISTS(
+            SELECT 1
+            FROM dbo.my_table AS b
+            WHERE
+                b.ID = a.ID
+                AND b.in_time > a.in_time
+                AND b.in_time < DATEADD(minute, @IntervalMinutes, a.in_time)
+            )
+    )
+    , intervals AS (
+        SELECT
+              ID
+            , start_intervals.in_time AS start_interval
+            , end_intervals.in_time AS end_interval
+        FROM start_intervals
+        CROSS APPLY(
+            SELECT TOP(1) in_time
+            FROM end_intervals 
+            WHERE
+                end_intervals.ID = start_intervals.ID
+                AND end_intervals.in_time >= start_intervals.in_time
+            ) AS end_intervals
+        )
+SELECT 
+      my_table.ID
+    , my_table.in_time
+    , ROW_NUMBER() OVER(PARTITION BY my_table.ID, intervals.start_interval ORDER BY(intervals.start_interval)) AS filter_row
+FROM dbo.my_table
+JOIN intervals ON my_table.in_time BETWEEN intervals.start_interval AND intervals.end_interval

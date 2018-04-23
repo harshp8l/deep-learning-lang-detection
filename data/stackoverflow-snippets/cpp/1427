@@ -1,0 +1,77 @@
+#ifndef ITERATOR_H
+#define ITERATOR_H
+#include <cstddef>
+#include <cstdint>
+#include <type_traits>
+#include <iterator>
+
+struct dummy_struct {
+  int hello = 1;
+  int world = 2;
+  dummy_struct() : hello{ 0 }, world{ 1 }{ }
+};
+
+template< class T >
+class iterable {
+  public:
+    template< bool Const = false >
+    class my_iterator {
+      public:
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = T;
+        using difference_type = std::ptrdiff_t;
+        /* deduce const qualifier from bool Const parameter */
+        using reference = typename std::conditional_t< Const, T const &, T & >;
+        using pointer = typename std::conditional_t< Const, T const *, T * >;
+
+      protected:
+        pointer i;
+
+      public:
+        my_iterator( T* _i ) : i{ reinterpret_cast< pointer >( _i ) } { }
+
+        /* SFINAE enables the const dereference operator or the non 
+           const variant
+           depending on bool Const parameter */          
+        template< bool _Const = Const >
+        std::enable_if_t< _Const, reference >
+        operator*() const {
+          std::cout << ""Const operator*: "";
+          return *i;
+        }
+
+        template< bool _Const = Const >
+        std::enable_if_t< !_Const, reference >
+        operator*() {
+          std::cout << ""Non-Const operator*: "";
+          return *i; 
+        }
+
+        my_iterator & operator++() {
+          ++i;
+          return *this;
+        }
+        bool operator!=( my_iterator const & _other ) const {
+          return i != _other.i;
+        }
+
+        bool operator==( my_iterator const & _other ) const {
+          return !( *this != _other );
+        }   
+    };  
+
+
+
+  private:
+    T* __begin;
+    T* __end; 
+  public:
+    explicit iterable( T* _begin, std::size_t _count ): __begin{ _begin }, __end{ _begin + _count } { std::cout << ""End: "" << __end << ""\n""; }
+
+    auto begin()  const { return my_iterator< false >{ __begin }; }
+    auto end()    const { return my_iterator< false >{ __end }; }
+
+    auto cbegin() const { return my_iterator< true >{ __begin }; }
+    auto cend()   const { return my_iterator< true >{ __end }; }
+};
+#endif

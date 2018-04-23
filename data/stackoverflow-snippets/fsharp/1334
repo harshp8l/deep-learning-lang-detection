@@ -1,0 +1,19 @@
+let scan z (source : seq<'T>) = 
+    seq { let zref : ('T list ref) = ref z
+          yield !zref
+          use ie = source.GetEnumerator() 
+          while ie.MoveNext() do
+              zref := ie.Current :: !zref 
+              yield !zref }
+
+let input = Seq.initInfinite (fun i -> sprintf ""x%i"" i)
+
+let createSeqCustom s =
+    s
+    |> scan []
+    |> Seq.skip 1
+
+> System.GC.Collect()
+> let l = input |> createSeq  |> Seq.take 2000 |> Seq.toArray
+
+Real: 00:00:00.007, CPU: 00:00:00.000, GC gen0: 0, gen1: 0, gen2: 0

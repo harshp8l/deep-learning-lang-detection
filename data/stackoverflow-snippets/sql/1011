@@ -1,0 +1,26 @@
+WITH cte_base AS (
+    SELECT CustomerCode, CustomerName,
+    CASE WHEN Typez = 'Breakfast' THEN Items ELSE NULL END AS 'BREAKFAST'
+    , CASE WHEN Typez = 'Lunch' THEN Items ELSE NULL END AS 'LUNCH'
+    FROM #Customer
+    )
+    SELECT distinct CustomerCode, CustomerName,
+    SUBSTRING(
+    (   
+        SELECT ','+BREAKFAST AS [text()]
+        FROM cte_base b1
+        WHERE b1.CustomerCode = b2.CustomerCode AND b1.CustomerName = b2.CustomerName
+        ORDER BY b1.BREAKFAST
+        FOR XML PATH('')
+        ), 2, 1000
+    ) [BREAKFAST], 
+    SUBSTRING(
+    (   
+        SELECT ','+LUNCH AS [text()]
+        FROM cte_base b1
+        WHERE b1.CustomerCode = b2.CustomerCode AND b1.CustomerName = b2.CustomerName
+        ORDER BY b1.LUNCH
+        FOR XML PATH('')
+        ), 2, 1000
+    ) [LUNCH]
+    FROM cte_base b2

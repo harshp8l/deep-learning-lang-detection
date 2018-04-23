@@ -1,0 +1,51 @@
+class userNameFetchTask extends AsyncTask<Void, Void, JSONObject> {
+            JSONObject object, jsonObject, json;
+            JSONArray jsonArray;
+            ArrayList<CreateGroupModel> lidList = new ArrayList<>();
+            String lid, name;
+
+            @Override
+            protected void onPreExecute() {
+                jsonObject = new JSONObject();
+                try {
+                    jsonObject.put(""lid"", sp.getString(""lid"", null));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                super.onPreExecute();
+            }
+
+            @Override
+            protected JSONObject doInBackground(Void... voids) {
+                object = new JSONObject();
+                CommonConnectionClass commonConnectionClass = new CommonConnectionClass();
+                object = commonConnectionClass.getConnection(""selectUserForGroup"", jsonObject);
+                return object;
+            }
+
+            @Override
+            protected void onPostExecute(JSONObject jsonObject) {
+                super.onPostExecute(jsonObject);
+                jsonArray = new JSONArray();
+                try {
+                    jsonArray = jsonObject.getJSONArray(""response"");
+                    for (int i = 0; i < jsonArray.length(); i++) {
+
+                        CreateGroupModel model = new CreateGroupModel();
+
+                        json = jsonArray.getJSONObject(i);
+                        model.setLid(json.getString(""relative_lid""));
+                        model.setName(json.getString(""name""));
+                        model.setEmail(json.getString(""email""));
+                        model.setImage(json.getString(""image""));
+
+                        lidList.add(model);
+                    }
+                    viewstudentsadapterForCreateGroup viewstudentsadapterForCreateGroup = new viewstudentsadapterForCreateGroup(getApplicationContext(), lidList, createGroup_Activity.this);
+                    listView.setAdapter(viewstudentsadapterForCreateGroup);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+    }

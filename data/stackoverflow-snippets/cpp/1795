@@ -1,0 +1,65 @@
+#include <boost/interprocess/allocators/allocator.hpp>
+
+namespace bip = boost::interprocess;
+
+class X {
+public:
+    template <typename SegmentManager>
+    static X* factory(int id, SegmentManager* sm) {
+        bip::allocator<X, SegmentManager> alloc{sm};
+        X* x = alloc.allocate(1).get();
+        new (x) X(id);
+        return x;
+    }
+    template <typename SegmentManager>
+    static void destroy(X *x, SegmentManager* sm) {
+        if (!x) return;
+
+        bip::allocator<X, SegmentManager> alloc{sm};
+        x->~X();
+        alloc.deallocate(x, 1);
+    }
+
+    int getId() const { return id; }
+
+private:
+    X(int id) : id(id) {}
+    ~X() = default;
+
+    int id;
+};
+
+#include <iostream>
+
+template <typename Segment>
+void run_test(Segment& segment) {
+    std::cout << ""Free: "" << segment.get_free_memory() << '\n';
+
+    auto sm = segment.get_segment_manager();
+
+    auto a = X::factory(42, sm);
+    auto b = X::factory(43, sm);
+    std::cout << ""Free: "" << segment.get_free_memory() << '\n';
+
+    X& aref = *a;
+
+    std::cout << ""a.id = "" << aref.getId() << ""\n"";
+    std::cout << ""b.id = "" << b->getId() << ""\n"";
+
+    X::destroy(a, sm);
+    X::destroy(b, sm);
+    std::cout << ""Free: "" << segment.get_free_memory() << '\n';
+}
+
+#include <boost/interprocess/managed_mapped_file.hpp>
+#include <boost/interprocess/managed_shared_memory.hpp>
+
+int main() {
+    bip::managed_mapped_file mmf(bip::open_or_create, ""test.bin"",       10240);
+    bip::managed_shared_memory msm(bip::open_or_create, ""MySharedMemory"", 10240);
+
+    std::cout << "" ------------- managed_mapped_file ---------------\n"";
+    run_test(mmf);
+    std::cout << "" ------------- managed_shared_memory -------------\n"";
+    run_test(msm);
+}

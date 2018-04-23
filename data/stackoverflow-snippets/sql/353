@@ -1,0 +1,19 @@
+ ;WITH EmployeeCTE AS (
+    SELECT EMPID,
+    DEPTID = 
+        STUFF((SELECT TOP(2)',' + CONVERT(varchar(10), DEPTID )
+               FROM EMPDEPT b 
+               WHERE b.EMPID = a.EMPID 
+               ORDER BY JDATE DESC
+              FOR XML PATH('')), 1, 1, '')
+    FROM EMPDEPT a
+    GROUP BY EMPID
+    )
+    SELECT
+    EMPID,
+    (SELECT Substring(DEPTID, 1, 
+    CASE WHEN  CHARINDEX(',', DEPTID ) = 0 then LEN(DEPTID) 
+    ELSE CHARINDEX(',', DEPTID) -1 END
+    )) as CurrentDept ,
+    (SELECT Substring(DEPTID, Charindex(',', DEPTID) + 1, LEN(DEPTID))) as PreviousDept
+    FROM EmployeeCTE

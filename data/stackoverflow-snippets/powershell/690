@@ -1,0 +1,38 @@
+#
+# Status des VM
+#
+Write-Output ""[$(get-date -Format T)] VM Status Start""
+$VmList = Get-AzureRmVm -Status
+if ($VmList) {
+    $VmProd = 0
+    foreach ($Vm in $VmList) {
+        if ($Vm.Tags.environment -like ""production"") {
+            $VmDetails = (Get-AzureRmVM -ResourceGroupName $vm.ResourceGroupName -Name $vm.Name)
+            $VmListTags = $VmDetails.Tags
+            $PowerState = $Vm.PowerState
+            $OsProfile = $VmDetails |Select-Object @{l = 'OsType'; e = {$_.StorageProfile.osDisk.osType}}
+            if ($PowerState -notcontains ""VM running"") {
+                if ($VmListTags -or $VmListTags.schedule -match ""`""$dayToday`"":"" -or $VmListTags.startmwtf -and $WorkingDays -contains $dayToday) {
+                    <# Write-Output ""match - $($Vm.Name) - $($VmListTags.startmwtf) - $($PowerState)"" #>
+                    $MyTrashStatus = New-Object PSObject
+                    $MyTrashStatus | Add-Member -type NoteProperty -name Environnement -Value $Vm.Tags.environment
+                    $MyTrashStatus | Add-Member -type NoteProperty -name ""RG Name"" -Value $vm.ResourceGroupName
+                    $MyTrashStatus | Add-Member -type NoteProperty -name Serveur -Value $Vm.Name
+                    $MyTrashStatus | Add-Member -type NoteProperty -name Systeme -Value $OsProfile.""OsType""
+                    $MyTrashStatus | Add-Member -type NoteProperty -name Status -Value $PowerState
+                    $vmsPowerState.Add($MyTrashStatus) | Out-Null
+                }
+            }
+            if ($OsProfile.""OsType"" -match ""Windows"") {$OsWin += 1} elseif ($OsProfile.""OsType"" -match ""Linux"") {$OsLin += 1}
+            $VmProd += 1
+        }
+    }
+}
+$VmStatusList = ""$VmProd VM IaaS ($OsWin Windows & $OsLin Linux)""
+if ($vmsPowerState.Count -ge 1) {
+    $vmsPowerStateReport = $vmsPowerState | ConvertTo-HTML -fragment
+}
+else {
+    $vmsPowerStateReport = ""`t`tToutes les machines sont en etat RUNNING.""
+}
+Write-Output ""[$(get-date -Format T)] VM Status End""

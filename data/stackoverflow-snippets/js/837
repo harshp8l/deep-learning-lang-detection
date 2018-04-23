@@ -1,0 +1,23 @@
+import { mergeMap } from 'rxjs/operators';
+import { of } from 'rxjs/observable/of';
+import { forkJoin } from 'rxjs/observable/forkJoin';
+
+const hasCompanion = this.rent.companion.id !== -1;
+const rent = this.rent;
+
+const saveClient$ = this.clientService.saveClientToDatabase(rent.client);
+const saveCompanion$ = hasCompanion ? this.clientService.saveCompanionToDatabase(rent.companion) : of(null);
+
+const saveRent$ = forkJoin([saveClient$, saveCompanion$]).pipe(mergeMap(([client, companion]: [any, any]) => {
+  return this.rentServices.saveRentToDatabase(companion ? {
+     ...rent,
+     clientID: client.clientID,
+     companion: companion.companionID
+   } : {
+     ...rent,
+     clientID: client.clientID,
+   })
+}));
+
+// single subscription and single manipulation of the internal state
+saveRent$.subscribe(rent => this.rent = rent);

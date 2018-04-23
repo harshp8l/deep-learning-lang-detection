@@ -1,0 +1,25 @@
+try{
+    $Query = ""INSERT INTO table (name, bio) VALUES ('aname', `abio`)"";
+    $stmt = $conn->prepare($Query);
+    $stmt->execute();
+    $last_id = $stmt->lastInsertId();
+}catch(PDOExeption $e){
+    if($e->getCode() != 23000){ //I think it's 23000
+       //rethrow other PDO errors
+        throw new PDOException(
+           $e->getMessage(),
+           $e->getCode(),
+           $e
+        );
+    } 
+
+    $Query = ""SELECT id FROM table WHERE name = 'aname'"";
+    $stmt = $conn->prepare($Query);
+    $stmt->execute();
+    //fetch the first column (id) from the first row, which if its unique there will be only one.
+    $last_id = $stmt->fetchColumn(0);
+}
+
+$Query = ""INSERT INTO table2 (tid, papers) VALUES ($last_id, '1') ON DUPLICATE KEY UPDATE papers = '2'"";
+$stmt = $conn->prepare($Query);
+$stmt->execute();

@@ -1,0 +1,33 @@
+#include <iostream>
+#include <set>
+#include <unordered_set>
+#include <type_traits>
+#include <functional>
+
+using std::cout;
+using std::endl;
+
+template <typename...> using void_t = void;
+
+template <typename, typename = void>
+struct is_hashable : std::false_type { };
+template <typename T>
+struct is_hashable<T, void_t<decltype(std::hash<T>{})>> : std::true_type { };
+
+template <typename T>
+using set = typename std::conditional<
+  is_hashable<T>::value, std::unordered_set<T>, std::set<T>
+>::type;
+
+template <typename T> void test() { cout << __PRETTY_FUNCTION__ << endl; }
+
+struct dummy_type { };
+
+int main(int argc, char* argv[]) {
+  cout << std::boolalpha;
+  cout << is_hashable<int>::value << endl;
+  cout << is_hashable<dummy_type>::value << endl;
+
+  test<set<int>>();
+  test<set<dummy_type>>();
+}

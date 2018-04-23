@@ -1,0 +1,24 @@
+import akka.stream._
+import akka.stream.scaladsl._
+import akka.actor.ActorSystem
+import scala.concurrent._
+
+object Main extends App {
+  implicit val system = ActorSystem(""TestApp"")
+  implicit val materializer = ActorMaterializer()
+  implicit val ec = system.dispatcher
+
+  val queue =
+    Source.queue(5, OverflowStrategy.backpressure)
+          .async
+          .mapAsync(8) { x: Int => Future(x) }
+          .to(Sink.foreach(y => println(s""Processed: $y"")))
+          .run()
+
+  Source(1 to 10)  
+    .mapAsync(1) { x =>
+      println(s""Offering: $x"")
+      queue.offer(x)
+    }
+    .runWith(Sink.ignore)
+}

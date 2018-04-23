@@ -1,0 +1,24 @@
+func main() {
+    dataChan := make(chan string)
+
+    ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+    defer cancel()
+
+    go func(ctx context.Context) {
+        for {
+            select {
+            case dataChan <- ""some data"":
+                time.Sleep(time.Second)
+            case <-ctx.Done():
+                fmt.Println(ctx.Err())
+                close(dataChan)
+                return
+            }
+        }
+    }(ctx)
+
+    for d := range dataChan {
+        fmt.Println(""Got:"", d)
+    }
+
+}

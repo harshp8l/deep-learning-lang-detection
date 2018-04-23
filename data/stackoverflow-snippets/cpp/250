@@ -1,0 +1,56 @@
+Polynomial(int n = 0, int p = 0)
+    : head(nullptr)
+{
+    if(n)
+    {
+        head = new PolyInfo(n, p);
+    }
+}
+
+static Polynomial operator+(Polynomial const& x, Polynomial const& y)
+{
+    PolyInfo* result;
+    PolyInfo* tmp = nullptr;
+    PolyInfo* ix = x.head;
+    PolyInfo* iy = y.head;
+    while(ix || iy)
+    {
+        if(ix && (!iy || ix->power > iy->power))
+        {
+            result = new PolyInfo(*ix);
+            ix = ix->link;
+        }
+        else if(iy && (!ix || iy->power > ix -> power))
+        {
+            result = new PolyInfo(*iy);
+            iy = iy->link;
+        }
+        else
+        {
+            int n = ix->number + iy->number;
+            ix = ix->link;
+            iy = iy->link;
+            if(n == 0)
+                // ignore this node!!!
+                continue;
+            result = new PolyInfo(n, ix->power);
+        }
+        result->link = tmp;
+        tmp = result;
+    }
+    // yet in  r e v e r s e  order!
+    result = nullptr;
+    while(tmp)
+    {
+        PolyInfo* next = tmp->link;
+        tmp->link = result;
+        result = tmp;
+        tmp = next;
+    }
+}
+
+Polynomial& operator+=(Polynomial const& other)
+{
+    *this = *this + other;
+    return *this;
+}

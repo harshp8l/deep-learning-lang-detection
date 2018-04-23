@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -x
+
+VAR1=$(df / | grep / | awk '{ print $5}' | sed 's/%//g')
+VAR2=$(df /dev/sda1 | grep /dev/sda1 | awk '{ print $5}' | sed 's/%//g')
+VAR3=$(df /dev/mapper/centos-var | grep /dev/mapper/centos-var | awk '{ print $5}' | sed 's/%//g')
+THRESHOLD=50
+TODAY=$(date)
+
+echo ""VAR1=$VAR1, THRESHOLD=$THRESHOLD""
+
+if [ ""$VAR1"" -gt ""$THRESHOLD"" ] ; then
+mail -s 'Disk Space Alert' sachin@zedo.com << EOF
+Date of $TODAY
+Your system partition remaining free space is critically low.
+/ partition used is $VAR1%
+/ usr partition used is $VAR2%
+/ var partition used is $VAR3%
+
+EOF
+
+fi

@@ -1,0 +1,41 @@
+void Main()
+{
+    // asynchronously produce a list from 1 to 10
+    Func<Task<List<int>>> sotw =
+        () => Task<List<int>>.Run(() => Enumerable.Range(1, 10).ToList());
+
+    // a stream of 5 to 15
+    var live = Observable.Range(5, 10);
+
+    // outputs 1 to 15
+    live.MergeSotwWithLive(sotw).Subscribe(Console.WriteLine);
+}
+
+// Define other methods and classes here
+public static class ObservableExtensions
+{
+    public static IObservable<TSource> MergeSotwWithLive<TSource>(
+        this IObservable<TSource> live,
+        Func<Task<List<TSource>>> sotwFactory)
+    {
+        return Observable.Create<TSource>(async o =>
+        {       
+            // Naïve indefinite caching, no error checking anywhere             
+            var liveReplay = new ReplaySubject<TSource>();
+            live.Subscribe(liveReplay);
+            // No error checking, no timeout, no cancellation support
+            var sotw = await sotwFactory();
+            foreach(var evt in sotw)
+            {
+                o.OnNext(evt);
+            }                               
+
+            // note naive disposal
+            // and extremely naive de-duping (it really needs to compare
+            // on some unique id)
+            // we are only supporting disposal once the sotw is sent            
+            return liveReplay.Where(evt => !sotw.Any(s => s.Equals(evt)))
+                    .Subscribe(o);                  
+        });
+    }
+}

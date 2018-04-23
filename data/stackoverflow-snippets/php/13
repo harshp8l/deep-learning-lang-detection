@@ -1,0 +1,25 @@
+$query = Books::find();
+$query->select([
+    'book_id,picture', 'book_name', 'author_name',
+    new Expression('MATCH (author_name) AGAINST (:author_name) + MATCH (book_name) AGAINST (:book_name) AS total', [
+        'author_name' => $this->author_name,
+        'book_name' => $this->book_name,
+    ]),
+]);
+
+if (!empty($this->author_name)) {
+    $query->andWhere(new Expression('MATCH (author_name) AGAINST (:author_name)', [
+        'author_name' => $this->author_name,
+    ]));
+}
+if (!empty($this->book_name)) {
+    $query->andWhere(new Expression('MATCH (book_name) AGAINST (:book_name)', [
+        'book_name' => $this->book_name,
+    ]));
+}
+$query->orderBy('total DESC')
+    ->limit(25);
+
+$dataProvider = new ActiveDataProvider([
+    'query' => $query,
+]);

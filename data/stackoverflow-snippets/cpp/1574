@@ -1,0 +1,30 @@
+// myclass.h - interface
+#include <QObject>
+#include <boost/intrusive/list.hpp>
+class MyClass : public QObject, private boost::intrusive::list_base_hook<> {
+  using list_t = boost::intrusive::list<MyClass>;
+  static list_t m_siblings;
+  friend list_t;
+  static QThread const *listThread() {
+    return m_siblings.empty() ? QThread::currentThread() : m_siblings.front().thread();
+  }
+protected:
+  bool event(QEvent * ev) override {
+    if (ev->type() == QEvent::ThreadChange)
+      Q_ASSERT(m_siblings.size() <= 1);
+    return QObject::event(ev);
+  }
+public:
+  MyClass(QObject *parent = {}) : QObject{parent} {
+    Q_ASSERT(listThread() == QThread::current_thread());
+    m_siblings.push_back(*this);
+    qDebug() << ""there are"" << m_siblings.size() << ""objects in existence"";
+  }
+  ~MyClass() override {
+    m_list.erase(m_siblings.iterator_to(*this));
+  }
+};
+
+// myclass.cpp - implementation
+#include ""myclass.h""
+boost::intrusive::list<MyClass> MyClass::m_siblings;

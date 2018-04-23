@@ -1,0 +1,14 @@
+#Import the CSV
+$CSV = Import-Csv $CSVPath
+#Capture all the unique paths
+$AllPaths = $CSV.Paths | Select -Unique
+#Make an empty hashtable
+$AllPathsSplit = @{}
+#Loop through paths, and add each to the hashtable as a key, with the path split on '\' and '_' as the value
+$AllPaths |%{$AllPathsSplit.Add($_,($_ -split '\\|_'))}
+
+#Loop through files
+ForEach($File in $CSV){
+    #Set the path by looking at each item in the hashtable and finding the one with the most matches to the file split on underscores
+    $File.Paths = $AllPaths|Sort {(Compare-Object ($File.Files -split '_') -DifferenceObject $AllPathsSplit[$_] -ExcludeDifferent -IncludeEqual -PassThru).Count} -Descending |Select -First 1
+}

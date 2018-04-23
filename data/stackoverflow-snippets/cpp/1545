@@ -1,0 +1,83 @@
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <cstring>
+#include <cctype>
+
+using namespace std;
+
+#define MAXC 1024   /* if you need constants, define them    */
+#define MAXL   32   /*    (don't skimp on buffer size)       */
+#define MAXW  256   /* max chars in buf, word len, no. words */
+
+#define SENTOUT ""TF4_1.txt""       /* sentence out filename   */
+#define STATOUT ""TF4_2.txt""       /* statistics out filename */
+
+typedef struct {       /* struct to associate word and count */
+    char word[MAXL];
+    int count;
+} wstat;
+
+int main (void) {
+
+    char buf[MAXC] = """",                /* buffer to hold line */
+        *p = buf;                       /* pointer to buffer */
+    const char *delim = "" ,./?!:();"";   /* strtok delimiters */
+    int wcount = 0;                     /* word count */
+    wstat wstats[MAXW] = {{"""", 0}};     /* word stats array */
+
+    /* prompt for input */
+    cout << ""enter sentence (words 16 char or less): "";
+    if (!(cin.get (buf, MAXC, '\n'))) { /* validate input */
+        cerr << ""error: invalid input or user canceled.\n"";
+        return 1;
+    }
+    cout << buf << ""\n"";                /* output to stdout (optional) */
+    ofstream f(SENTOUT, ios::trunc);    /* open TF4_1.txt for writing */
+    if (!f.is_open()) {                 /* validate file open for writing */
+        cerr << ""error: file open failed '"" << SENTOUT << ""'.\n"";
+        return 1;
+    }
+    f << buf << ""\n"";                   /* write sentence to TF4_1.txt */
+    f.close();                          /* close TF4_1.txt */
+
+    /* tokenize input */
+    for (p = strtok (p, delim); p; p = strtok (NULL, delim)) {
+        int seen = 0;                   /* flag if word already seen */
+        char lccopy[MAXL] = """",         /* array for lower-case copy */
+            *rp = p,                    /* read-pointer to token */
+            *wp = lccopy;               /* write-pointer for copy */
+        while (*rp)                     /* iterate over each char */
+            *wp++ = tolower(*rp++);     /* convert to lowercase */
+        *wp = 0;                        /* nul-terminate lccopy */
+        for (int i = 0; i < wcount; i++)    /* loop over stored words */
+            /* compare lccopy to stored words */
+            if (strcmp (lccopy, wstats[i].word) == 0) { /* already stored */
+                wstats[i].count++;      /* increment count for word */
+                seen = 1;               /* set seen flag */
+            }
+        if (!seen) {    /* if not already seen */
+            strcpy (wstats[wcount].word, lccopy);   /* copy to wstats */
+            wstats[wcount++].count++;   /* increment count for word */
+            if (wcount == MAXW) {       /* protect array bounds */
+                cerr << ""maximum words reached: "" << MAXW << ""\n"";
+                break;
+            }
+        }
+    }
+
+    f.open (STATOUT, ios::trunc);       /* open TF4_2.txt */
+    if (!f.is_open()) {                 /* validate file open for writing */
+        cerr << ""error: file open failed '"" << STATOUT << ""'.\n"";
+        return 1;
+    }
+    for (int i = 0; i < wcount; i++) {  /* loop over stored word stats */
+        /* output to stdout (optional) */
+        cout << "" "" << left << setw(16) << wstats[i].word << 
+                ""   "" << wstats[i].count << ""\n"";
+        /* output to TF4_2.txt */
+        f << "" "" << left << setw(16) << wstats[i].word << 
+            ""   "" << wstats[i].count << ""\n"";
+    }
+    f.close();                          /* close TF4_2.txt */
+}

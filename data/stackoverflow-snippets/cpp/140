@@ -1,0 +1,113 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <cstdint>
+
+#include <windows.h>
+// or, if you want to compile for non-Windows platforms, manually
+// define the relevant bitmap structures and constants, and make sure
+// the structures are aligned to 1-byte boundaries, such as with
+// #pragma pack, #pragma align, alignas(), etc, depending on compiler... 
+
+int main() {
+    std::ifstream cp(""clue.bmp"");
+    if (!cp.is_open()) {
+        //Error
+        std::cout << ""Failed to open the clue file\n"";
+        return 1;
+    }
+
+    uint8_t header[54];
+    if (!cp.read(reinterpret_cast<char*>(header), sizeof(header))) {
+        std::cout << ""Failed to read\n"";
+        return EXIT_FAILURE;
+    }
+
+    BITMAPFILEHEADER *bfh = reinterpret_cast<BITMAPFILEHEADER*>(header);
+    if ((bfh->bfType != 0x4D42) {
+        std::cout << ""clue file is not a BMP file\n"";
+        return EXIT_FAILURE;
+    }
+
+    BITMAPINFOHEADER *bih = reinterpret_cast<BITMAPINFOHEADER*>(bfh+1);
+    if (bih->biSize != sizeof(BITMAPINFOHEADER)) {
+        std::cout << ""clue file is not a supported BMP format\n"";
+        return EXIT_FAILURE;
+    }
+
+    if (bfh->bfOffBits != 54) {
+        std::cout << ""clue file is not a supported BMP format\n"";
+        return EXIT_FAILURE;
+    }
+
+    if (bih->biPlanes != 1) {
+        std::cout << ""clue file is not a supported BMP format\n"";
+        return EXIT_FAILURE;
+    }
+
+    if (bih->biBitCount != 24) {
+        std::cout << ""clue file is not a supported BMP format\n"";
+        return EXIT_FAILURE;
+    }
+
+    if (bih->biCompression != BI_RGB) {
+        std::cout << ""clue file is not a supported BMP format\n"";
+        return EXIT_FAILURE;
+    }
+
+    int32_t width = bih->biWidth;
+    int32_t height = bih->biHeight;
+
+    if (width <= 0 || height == 0) {
+        std::cout << ""clue file has no pixels\n"";
+        return EXIT_FAILURE;
+    }
+
+    if (height < 0) height *= -1;
+
+    uint64_t pixelCount = width * height;
+    std::cout << ""Number of pixels: "" << pixelCount << ""\n"";
+
+    uint32_t bytesPerLine = (((width * 24) + 31) & ~31) / 8;
+
+    std::vector<uint8_t> pixels(bytesPerLine * height);
+
+    if (!cp.read(reinterpret_cast<char*>(&pixels[0]), pixels.size())) { 
+        std::cout << ""Failed to read\n"";
+        return EXIT_FAILURE;
+    }
+
+    cp.close();
+
+    int32_t row;
+    RGBTRIPLE *pixel;
+
+    for (int32_t i = 0; i < height; ++i) {
+        row = (bih->biHeight > 0) ? (height - i - 1) : i;
+        pixel = reinterpret_cast<RGBTRIPLE*>(&pixels[row * bytesPerLine]);
+        for (int32_t j = 0; j < width; ++j) {
+            pixel[j]->rgbtBlue = 0;
+            pixel[j]->rgbtGreen = 0;
+        }
+    }
+
+    std::ofstream fp(""output.bmp"", std::ios_base::trunc);
+    if (!fp.is_open()) {
+        //Error
+        std::cerr << ""Failed to open the output file\n"";
+        return 1;
+    }
+
+    if (!fp.write(reinterpret_cast<char*>(header), sizeof(header))) {
+        std::cerr << ""Failed write for output\n"";
+        return EXIT_FAILURE;
+    }
+
+    if (!fp.write(reinterpret_cast<char*>(&pixels[0]), pixels.size())) {
+        std::cerr << ""Failed to write pixels\n"";
+        return EXIT_FAILURE;
+    }
+
+    return 0;
+}

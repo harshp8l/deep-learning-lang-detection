@@ -1,0 +1,97 @@
+#include <iostream>
+#include <cstring>
+
+
+class test_class {
+public:
+  // this deep copy a string into internal memory block
+  test_class(const char* str):
+    str_(nullptr)
+  {
+    // we need last one '\0' to be copyed
+    std::size_t len = std::strlen(str) + 1;
+    str_ = new char[len];
+    std::memcpy(str_, str, len);
+    std::cout << ""memory block is deep copied into new memory block"" << std::endl;
+  }
+
+  // copy constructor, makes a deep copy of a class
+  test_class(const test_class& c):
+    test_class( c.str_ )
+  {}
+
+  // copy assignment operator, makes a deep copy of a class
+  test_class& operator=(const test_class& rhs) {
+        test_class( rhs ).swap( *this );
+        return *this;
+  }
+
+  // move constructor, ejects content of an object to this object
+  test_class(test_class&& c) noexcept:
+    str_( c.str_ )
+  {
+    c.str_ = nullptr;
+  }
+
+  //move assignment operator, ejects rhs object into this
+  test_class& operator=(test_class&& rhs) {
+    test_class( static_cast<test_class&&>(rhs) ).swap( *this );
+    return *this;
+  }
+
+
+  // Swaps this object content
+  // with another object of the same class
+  inline void swap(test_class& other) {
+     char *tmp = other.str_;
+     other.str_ = str_;
+     str_ = tmp;
+  }
+
+  ~test_class() noexcept {
+    std::cout << ""Destructor is called"" << std::endl;
+    if(nullptr != str_) {
+        std::cout<< ""Memory block freed "" << std::endl;
+        delete [] str_;
+    }
+  }
+  // get() const - means, you are able to access this
+  // function, when your object is constant
+  // e.g. const test_class c(""hello""); c.get();
+  const char* get() const noexcept  {
+    return str_;
+  }
+private:
+    char *str_;
+};
+
+void copy_test(const test_class& const_ref)
+{
+    std::cout << ""Just obtain from address: "" << const_ref.get() << std::endl;
+    // deep copy
+    test_class deep_copy = const_ref;
+    std::cout << ""Copied :"" << deep_copy.get() << std::endl;
+}
+
+void move_test(test_class&& move_ref) noexcept
+{
+    std::cout << ""Just obtain from address: "" << move_ref.get() << std::endl;
+    test_class moved( static_cast<test_class&&>(move_ref) );
+    std::cout << ""Moved :"" << moved.get() << std::endl;
+}
+
+int main()
+{
+    {
+        test_class test(""Deep copying !"");
+        copy_test(test);
+    }
+    std::cout<< std::endl;
+
+    {
+        test_class test(""Moving !"");
+        move_test( static_cast<test_class&&>(test) );
+    }
+
+    return 0;
+}

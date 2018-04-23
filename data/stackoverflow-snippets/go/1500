@@ -1,0 +1,41 @@
+package main
+
+import (
+    ""fmt""
+    ""sync""
+    ""time""
+)
+
+func addCount(num int, counter chan<- int, wg *sync.WaitGroup) {
+    // clear one from the sync group
+    defer wg.Done()
+    // not needed, unless you wanted to slow down the output
+    time.Sleep(time.Second * 2)
+    counter <- num * 2
+}
+
+func main() {
+    // variable names don't have underscores in Go
+    intSlice := []int{2, 4}
+
+    counter := make(chan int)
+
+    var wg sync.WaitGroup
+
+    for _, item := range intSlice {
+        // add one to the sync group, to mark we should wait for one more
+        wg.Add(1)
+        go addCount(item, counter, &wg)
+    }
+
+    // by wrapping wait and close in a go routine I can start reading the channel before its done, I also don't need to know the size of the
+    // slice
+    go func() {
+        wg.Wait()
+        close(counter)
+    }()
+
+    for item := range counter {
+        fmt.Println(item)
+    }
+}

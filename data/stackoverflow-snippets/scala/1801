@@ -1,0 +1,24 @@
+implicit val actorSystem = ActorSystem()
+implicit val actorMaterializer = ActorMaterializer()
+val kafka = new ReactiveKafka()
+val consumerProperties = ConsumerProperties(
+  bootstrapServers = ""foo:9092"",
+  topic = ""my-topic"",
+  groupId = ""abhi"",
+  valueDeserializer = new StringDeserializer()
+)
+
+val source = Source.fromPublisher(kafka.consume(consumerProperties))
+val flow = Flow[ConsumerRecord[Array[Byte], String]].map(r => r.value())
+val sink = Sink.foreach[String](println)
+val graph = RunnableGraph.fromGraph(GraphDSL.create(sink) {implicit builder =>
+ s =>
+   import GraphDSL.Implicits._
+    source ~> flow ~> s.in
+   ClosedShape
+})
+val future = graph.run()
+future.onComplete{_ =>
+  actorSystem.terminate()
+}
+Await.result(actorSystem.whenTerminated, Duration.Inf)

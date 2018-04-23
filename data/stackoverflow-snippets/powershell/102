@@ -1,0 +1,13 @@
+Get-Childitem C:\users -Directory |
+    ForEach-Object {
+        $profilePath = $_.FullName
+
+        Get-AdUser -Filter {SamAccountName -eq $_.Name} |
+            ForEach-Object {
+                New-Object -TypeName PsCustomObject |
+                    Add-Member -MemberType NoteProperty -Name Name -Value $_.Name -PassThru |
+                    Add-Member -MemberType NoteProperty -Name ProfilePath -Value $profilePath -PassThru |
+                    Add-Member -MemberType NoteProperty -Name SID -Value $_.SID -PassThru
+        }
+
+    } | Format-Table Name,SID, profilePath -AutoSize

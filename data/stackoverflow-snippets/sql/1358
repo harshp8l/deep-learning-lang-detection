@@ -1,0 +1,57 @@
+select * 
+from @T t
+order by t.id;
+with cteRN as 
+( select t.*, ROW_NUMBER() over (order by t.id) as rn 
+  from @T t
+)
+, cte as 
+( select t.id, t.salary, t.salary as running, flag = 0, t.rn
+  from cteRN t
+  where t.rn = 1
+  union all 
+  select t.id, t.salary
+       , case when c.flag = 1 then t.salary + c.salary
+              else                 c.running + t.salary
+         end 
+       , case when t.salary > c.running / 2 then 1
+              else 0
+         end
+       , t.rn
+  from cte c 
+  join cteRN t
+    on t.rn = c.rn + 1
+)
+select t.id, t.salary, t.running 
+from cte t
+order by t.id;
+
+id          salary
+----------- -----------
+1           100
+2           40
+3           30
+4           40
+5           90
+6           160
+7           70
+8           40
+9           20
+10          10
+11          200
+12          50
+
+id          running     running
+----------- ----------- -----------
+1           100         100
+2           140         140
+3           170         170
+4           210         210
+5           300         300
+6           460         460
+7           230         230
+8           270         270
+9           290         290
+10          300         300
+11          500         500
+12          250         250

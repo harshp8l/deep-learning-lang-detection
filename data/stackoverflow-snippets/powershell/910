@@ -1,0 +1,25 @@
+function kml_to_kmz([string]$kmlPath){
+    [Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
+    $kmlInfo = Get-ChildItem -Path $kmlPath
+    $zipLocation = ($kmlInfo.Directory.FullName + '\' + $kmlInfo.Name.Remove($kmlInfo.Name.LastIndexOf('.')) + '.zip')
+    New-item $zipLocation
+    ((new-object -com shell.application).NameSpace($zipLocation)).CopyHere($kmlPath, 16)
+    $trigger = $false
+    while ($trigger -eq $false){
+        try{
+            $zip = [IO.Compression.ZipFile]::OpenRead($zipLocation)
+            If(($zip.Entries | %{$_.Name}) -contains $kmlInfo.Name){
+                $zip.Dispose();
+                $trigger = $true
+                break;
+            }
+
+        }catch{}
+        start-sleep -seconds 1
+        write-host ""."" -nonewline
+    }
+    [IO.Compression.ZipFile]::OpenRead($zipLocation).Dispose()
+    Rename-Item -Path $zipLocation -NewName $([System.IO.Path]::ChangeExtension($zipLocation, '.kmz'))
+}
+
+kml_to_kmz -kmlPath ""C:\Users\Default\Desktop\Test.kml""

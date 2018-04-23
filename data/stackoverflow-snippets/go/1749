@@ -1,0 +1,60 @@
+package mongo
+
+type Adapter struct {
+    session      *mgo.Session
+    databaseName string
+}
+
+func NewAdapter(session *mgo.Session, dbName string) *Adapter {
+    return &Adapter{session: session, databaseName: dbName}
+}
+
+type deviceStore struct {
+    *Adapter
+}
+
+func NewDeviceStore(adapter *Adapter) stores.DeviceStore {
+    return &deviceStore{adapter}
+}
+
+const devices = ""devices""
+
+func (s *deviceStore) FindByDevice(d string) (*models.Device, err) {
+    sess := s.session.copy()
+    defer sess.close()
+
+    var deviceID bson.ObjectId
+    if bson.IsObjectIdHex(d) {
+        deviceID = bson.ObjectIdHex(d)
+    }
+
+    var device models.Device
+    err := db.DB(s.databaseName).C(devices).FindId(deviceID).One(&device)
+    if err == mgo.ErrNotFound {
+        return nil, nil
+    }
+    return &device, err
+}
+
+type userStore struct {
+    *Adapter
+}
+
+const users = ""users""
+
+func NewUserStore(adapter *Adapter) stores.UserStore {
+    return &userStore{adapter}
+}
+
+func (s *userStore) GetUserByToken(token string) (*models.User, error) {
+    sess := s.session.copy()
+    defer sess.close()
+
+    var user models.User
+    err := db.DB(s.databaseName).C(users).Find(bson.M{""token"": token}).One(&user)
+    if err == mgo.ErrNotFound {
+        return nil, nil
+    }
+
+    return &user, err
+}

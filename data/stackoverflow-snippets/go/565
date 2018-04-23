@@ -1,0 +1,22 @@
+func main() {
+    t := template.New("""")
+
+    t = template.Must(t.Funcs(template.FuncMap{
+        ""GetOutput"": func(name string) (string, error) {
+            buf := &bytes.Buffer{}
+            err := t.ExecuteTemplate(buf, name, nil)
+            return buf.String(), err
+        },
+    }).Parse(src))
+
+    if err := t.ExecuteTemplate(os.Stdout, ""T2"", nil); err != nil {
+        panic(err)
+    }
+}
+
+const src = `
+{{define ""T1""}}{{ printf ""%s-%s"" ""complex"" ""stuff"" }}{{end}}
+{{define ""T2""}}
+    {{ $t1Out := (GetOutput ""T1"")}}
+    {{ printf ""%s-%s"" ""even-more"" $t1Out }}
+{{end}}`

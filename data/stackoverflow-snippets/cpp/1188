@@ -1,0 +1,7 @@
+// AVX2 core idea: wrapping-compare trick with saturation to achieve unsigned compare
+__m256i tmp = _mm256_sub_epi8(src, min_values);       // wraps to high unsigned if below min
+__m256i RGB_inrange = _mm256_subs_epu8(tmp, max_minus_min);  // unsigned saturation to 0 means in-range
+__m256i new_alpha = _mm256_cmpeq_epi32(RGB_inrange, _mm256_setzero_si256());
+
+// then blend the high byte of each element with RGB from the src vector
+__m256i alpha_replaced = _mm256_blendv_epi8(new_alpha, src, _mm256_set1_epi32(0x00FFFFFF));  // alpha from new_alpha, RGB from src

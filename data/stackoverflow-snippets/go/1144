@@ -1,0 +1,50 @@
+package main
+
+import (
+    ""encoding/csv""
+    ""io""
+    ""log""
+    ""net/http""
+    ""strings""
+
+    ""golang.org/x/text/encoding/unicode""
+)
+
+var url = ""http://storage.googleapis.com/play_public/supported_devices.csv""
+
+func main() {
+
+    resp, err := http.Get(url)
+    if err != nil {
+        return
+    }
+    defer resp.Body.Close()
+
+    dec := unicode.UTF16(unicode.LittleEndian, unicode.UseBOM).NewDecoder()
+    reader := dec.Reader(resp.Body)
+
+    r := csv.NewReader(reader)
+    r.LazyQuotes = true
+    r.FieldsPerRecord = -1
+    // skip header
+    r.Read()
+
+    m := make(map[string]string)
+    for {
+        record, err := r.Read()
+        if err == io.EOF {
+            break
+        }
+        if err != nil {
+            log.Println(err)
+            continue
+        }
+        if len(record) >= 4 {
+            m[strings.TrimSpace(record[3])] = strings.TrimSpace(record[1])
+            for k, v := range m {
+                log.Printf(""k=%s, v=%s\n"", k, v)
+            }
+            break
+        }
+    }
+}

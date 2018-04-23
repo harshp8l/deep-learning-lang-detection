@@ -1,0 +1,29 @@
+DECLARE @TBL TABLE(VAT varchar(10), Email1 varchar(50), Email2 varchar(50))
+INSERT INTO @TBL select '000','a@a.it','b@b.it'
+INSERT INTO @TBL  select '000','a@a.it',''
+INSERT INTO @TBL  select '000','a@a.it','c@c.it'
+INSERT INTO @TBL select '000','pizz@pizza.com','d@d.it'
+INSERT INTO @TBL select '001','slice@pizza.com','d@d.it'
+INSERT INTO @TBL select '001','pizz@pizza.com','q@q.it'
+INSERT INTO @TBL select '001','cheese@pizza.com','s@s.it'
+INSERT INTO @TBL select '001','slice@pizza.com','s@s.it'
+INSERT INTO @TBL select '001',NULL,'s@s.it'
+
+SELECT VAT, '' + REVERSE(STUFF(REVERSE(( select x.Email + ','
+FROM (
+    select VAT, Email1 as Email 
+    from @TBL T2 
+    WHERE T2.VAT = T1.VAT
+        AND ISNULL(Email1,'') > ''
+    GROUP BY VAT, EMAIL1
+    union 
+    select VAT, Email2 as Email 
+    from @TBL T3 
+    WHERE T3.VAT = T1.VAT
+        AND ISNULL(Email2,'') > ''
+    GROUP BY VAT, EMAIL2
+) x
+FOR XML PATH('')
+)), 1, 1, '' ) ) + '' as Email
+from @TBL T1
+GROUP by T1.VAT

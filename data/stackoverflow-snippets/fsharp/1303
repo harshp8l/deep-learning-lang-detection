@@ -1,0 +1,13 @@
+MATCH (:A{UId:someByteArray})--(b1:B)-[:C]-(b2:B)
+    MATCH p = (b1)-[:C*]->(b2)
+    WITH b1.someString as s1, b2.someString as s2, p, 
+        EXTRACT(c IN RELATIONSHIPS(p) | c.someValue) AS valuesAlias
+    WITH s1, s2, p, length(NODES(p)) as pLength, 
+        REDUCE(curVA=9999999999, va in valuesAlias |
+            CASE
+                WHEN va < curVA THEN va
+                ELSE curVA
+            END
+        ) AS minVA
+WITH s1, s2, MAX(minVA) as maxMinVA, MIN(pLength) AS minPL
+RETURN s1, s2, maxMinVA

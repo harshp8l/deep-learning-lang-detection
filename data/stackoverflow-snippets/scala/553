@@ -1,0 +1,22 @@
+import io.circe._, io.circe.parser._
+import io.circe.generic.semiauto._
+
+case class Node(id: String, attributes: Map[String,String])
+case class Root(nodes: List[Node])
+
+implicit val nodeDecoder: Decoder[Node] = deriveDecoder[Node]
+implicit val nodeEncoder: Encoder[Node] = deriveEncoder[Node]
+
+implicit val rootDecoder: Decoder[Root] = deriveDecoder[Root]
+implicit val rootEncoder: Encoder[Root] = deriveEncoder[Root]
+
+def myParse(jsonString: String) = {
+  val res = parse(jsonString) match {
+    case Right(json) => {
+      val cursor = json.hcursor
+      cursor.get[Root](""root"")
+    }
+    case _ => Left(""Wrong JSON!"") 
+  }
+  println(res)
+}

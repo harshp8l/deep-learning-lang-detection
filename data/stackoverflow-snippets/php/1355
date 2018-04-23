@@ -1,0 +1,160 @@
+use \Firebase\JWT\JWT;
+
+class BoxApi
+{
+    public $authorize_url = 'https://account.box.com/api/oauth2/authorize';
+    public $token_url = 'https://api.box.com/oauth2/token';
+    public $api_url = 'https://api.box.com/2.0';
+    public $upload_url = 'https://upload.box.com/api/2.0';
+    public $access_token;
+    public $filename;
+    public $passPhrase;
+    public $clientId;
+    public $clientSecret;
+    public $accessType;
+    public $accessTypeId;
+    public $publicKeyId;
+
+    public function __construct($filename, $passPhrase, $clientId, $clientSecret, $accessType = ""enterprise"", $accessTypeId, $publicKeyId)
+    {
+        $this->filename = $filename;
+        $this->passPhrase = $passPhrase;
+        $this->clientId = $clientId;
+        $this->clientSecret = $clientSecret;
+        $this->accessType = $accessType;
+        $this->accessTypeId = $accessTypeId;
+        $this->publicKeyId = $publicKeyId;
+        self::getAccessToken();
+    }
+
+    /* Get AccessToken by JWT*/
+
+    public function getAccessToken()
+    {
+        $private_key_file = $this->filename;
+        $fp = fopen ($private_key_file, ""r"");
+        if (!$fp)
+        {
+            die(""Unable to open file"");
+        }
+
+        $raw_key_data = fread ($fp, filesize ($private_key_file));
+        fclose ($fp);
+
+        $privateKey = openssl_get_privatekey($raw_key_data , $this->passPhrase);
+
+        define(""FIREBASE_PRIVATE_KEY"", $privateKey);
+        $token = array(
+            ""iss"" => $this->clientId,
+            ""aud"" => ""https://api.box.com/oauth2/token"",
+            ""jti"" => sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0x0fff) | 0x4000,
+                mt_rand(0, 0x3fff) | 0x8000,
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            ),
+            ""exp"" => time() + 30,
+            ""sub"" => $this->accessTypeId,
+            ""box_sub_type"" => $this->accessType
+        );
+
+        $jwt = JWT::encode($token, FIREBASE_PRIVATE_KEY, 'RS256', $this->publicKeyId);
+
+        $params = 'grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&client_id=' . $this->clientId . '&client_secret=' . $this->clientSecret . '&assertion=' . $jwt;
+        $token = json_decode(self::httpClient(""POST"", $this->token_url, $params), true);
+        print ""<pre>"";
+        print_r($token);
+        print ""</pre>"";
+        $this->access_token = $token[""access_token""];
+    }
+
+    /* Sets the required before biulding the query */
+
+    private function set_opts(array $opts)
+    {
+        if (!array_key_exists('access_token', $opts)) {
+            $opts['access_token'] = $this->access_token;
+        }
+        return $opts;
+    }
+
+    /* Builds the URL for the call */
+
+    private function build_url($api_func, array $opts = array(), $url = null)
+    {
+        print ""build uri"";
+        $opts = $this->set_opts($opts);
+        if (isset($url)) {
+            $base = $url . $api_func . '?';
+        } else {
+            $base = $this->api_url . $api_func . '?';
+        }
+        $query_string = http_build_query($opts);
+        $base = $base . $query_string;
+        return $base;
+    }
+
+    /* Uploads a file */
+
+    public function put_file($filename, $parent_id)
+    {
+        $file = defined('PHP_MAJOR_VERSION') && PHP_MAJOR_VERSION >= 5 ? new CurlFile(realpath($filename)) : '@/' . realpath($filename);
+        $url = $this->build_url('/files/content', array(), $this->upload_url);
+        $params = array('filename' => $file, 'name' => basename($filename), 'parent_id' => $parent_id, 'access_token' => $this->access_token);
+        return json_decode($this->httpClient(""post"", $url, $params), true);
+    }
+
+    /* Create a new folder */
+    public function create_folder($name, $parent_id)
+    {
+        $url = $this->build_url(""/folders"");
+        $params = array('name' => $name, 'parent' => array('id' => $parent_id));
+        return json_decode($this->httpClient(""post"", $url, json_encode($params)), true);
+    }
+
+    /* Modifies the folder details as per the api */
+    public function update_folder($folder, array $params)
+    {
+        $url = $this->build_url(""/folders/$folder"");
+        return json_decode($this->httpClient(""put"", $url, $params), true);
+    }
+
+    /* Shares a folder */
+    public function share_folder($folder, array $params)
+    {
+        $url = $this->build_url(""/folders/$folder"");
+        return json_decode($this->httpClient(""put"", $url, $params), true);
+    }
+
+    /* Shares a file */
+    public function share_file($file, array $params)
+    {
+        $url = $this->build_url(""/files/$file"");
+        return json_decode($this->httpClient(""put"", $url, $params), true);
+    }
+
+    /* Curl Api calls */
+    private static function httpClient($method, $url, $params = null)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        if (strcasecmp($method, ""POST"") == 0) {
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+        } elseif (strcasecmp($method, ""PUT"") == 0) {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
+        } elseif (strcasecmp($method, ""DELETE"") == 0) {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
+        }
+        $data = curl_exec($ch);
+        curl_close($ch);
+        return $data;
+    }
+}
+
+?>

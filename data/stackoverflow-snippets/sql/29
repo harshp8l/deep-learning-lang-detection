@@ -1,0 +1,16 @@
+WITH POsToReturn AS (
+SELECT S.PO_NUMBER   
+FROM   PDX_SAP_USER..VW_PO_SIZE S 
+JOIN   PDX_SAP_USER..VW_PO_ITEM I 
+ON     I.PO_NUMBER = S.PO_NUMBER 
+WHERE  I.PO_BALANCE_QUANTITY > 0
+GROUP BY S.PO_NUMBER
+HAVING COUNT(DISTINCT S.PO_REQ_DELIV_DATE) > 1
+AND COUNT(CASE WHEN I.DEL_INDICATOR = 'L' THEN 1 END) = 0
+)
+SELECT <your columns>
+FROM   POsToReturn P
+JOIN   PDX_SAP_USER..VW_PO_SIZE S
+ON     S.PO_NUMBER = P.PO_NUMBER
+...    <join the rest of the tables for the detail columns>
+--     leave out the entire group by!

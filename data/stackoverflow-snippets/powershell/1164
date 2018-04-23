@@ -1,0 +1,23 @@
+$Report = Read-Host -Prompt 'Filename'
+## Grabs the datestamp at the end
+$Date = Get-Date -Date $Report.Substring($Report.Length - 10)
+## Grabs last day of previous month
+$Limit = $Date.AddDays(-$Date.Day)
+## Grabs last day of two months ago, inaccuracy of one day
+$Start = $Limit.AddMonths(-1)
+
+Get-Content -Path $Database -TotalCount 1 | Set-Content -Path 'tempfile'
+Get-Content -Path $Database -Encoding 'UTF8' |
+    ## Checks that the entry has a valid date entry within limits
+    ForEach-Object {
+      ## For m/d/yy or d/m/yy variants, try
+      ## '\d{1,2}\/\d{1,2}\/\d{2,4}'
+      If ($_ -match '\d{4}-\d{2}-\d{2}')
+      {
+        [DateTime]$Date = $Matches[0]
+        If ($Date -gt $Start -and $Date -lt $Limit) { $_ }
+      }
+    } |
+    Add-Content -Path 'tempfile'
+
+$CSV = Import-Csv -Path 'tempfile' -Encoding 'UTF8'

@@ -1,0 +1,15 @@
+class BackendApiProvider @Inject constructor(
+        private val okHttpClient: OkHttpClient,
+        private val gson: Gson,
+        @BackendUrl private val serverPath: String
+) : Provider<BackendApi> {
+
+    override fun get() =
+            Retrofit.Builder()
+                    .addConverterFactory(GsonConverterFactory.create(gson))
+                    .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                    .client(okHttpClient)
+                    .baseUrl(serverPath)
+                    .build()
+                    .create(BackendApi::class.java)
+}

@@ -1,0 +1,22 @@
+let RefreshHubs _ =
+    let task = TaskBuilder(scheduler = TaskScheduler.Current)
+    task {
+        let addresses = 
+            RoleEnvironment.Roles.[""GPSTracker.Web""].Instances
+            |> Seq.map (fun instance ->
+                let endpoint = instance.InstanceEndpoints.[""InternalSignalR""]
+                sprintf ""http://%O"" endpoint.IPEndpoint
+            )
+            |> Seq.toList
+
+        let newHubs = addresses |> List.filter (not << hubs.ContainsKey)
+        let deadHubs = hubs.Keys |> Seq.filter (fun x -> 
+            not (List.exists ((=) x) addresses))
+
+        // remove dead hubs
+        deadHubs |> Seq.iter (hubs.Remove >> ignore)
+
+        // add new hubs
+        let! _ = Task.WhenAll [| for hub in newHubs -> AddHub hub |]
+        return ()
+    }

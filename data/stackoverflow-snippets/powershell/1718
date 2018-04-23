@@ -1,0 +1,15 @@
+#Removed all ""0x"" in textfile before running this script
+$strings = Get-Content "" C:\Temp\strings_without_0x.txt""
+foreach($s in $strings) {
+$repeats = $s.Remove(0, 2) -split '(?<=(.))(?!\1|$)'
+
+$groups = $repeats |Group-Object {$_[0]} -AsHashTable
+
+'0123456789ABCDEF'.ToCharArray() |%{
+    [pscustomobject]@{
+        String = ""$s""
+        Character = ""$_""
+        MaxLength = ""$($groups[$_] |Sort Length -Descending |Select -First 1)"".Length
+    }
+
+} | Sort Count -Descending | Export-Csv -Path ""C:\Temp\output.csv"" -NoTypeInformation -Append}

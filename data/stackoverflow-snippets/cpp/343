@@ -1,0 +1,18 @@
+case WM_ENDSESSION: {
+    sm_smActive = false;
+    sm_blockUserInput = false;
+    bool endsession = (bool) wParam;
+
+    // we receive the message for each toplevel window included internal hidden ones,
+    // but the aboutToQuit signal should be emitted only once.
+    QApplicationPrivate *qAppPriv = QApplicationPrivate::instance();
+    if (endsession && !qAppPriv->aboutToQuitEmitted) {
+        qAppPriv->aboutToQuitEmitted = true;
+        int index = QApplication::staticMetaObject.indexOfSignal(""aboutToQuit()"");
+        qApp->qt_metacall(QMetaObject::InvokeMetaMethod, index,0);
+        // since the process will be killed immediately quit() has no real effect
+        QApplication::quit();
+    }
+
+    RETURN(0);
+}

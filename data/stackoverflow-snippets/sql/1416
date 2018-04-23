@@ -1,0 +1,13 @@
+SELECT Millenials.TotalM AS MillenialTotal, NonMillenials.TotalM AS NonMillenialTotal, (Millenials.TotalM/(Millenials.TotalM+NonMillenials.TotalM)) AS MillenialPercent
+FROM (SELECT 
+    SUM(f.Quantity * f.Unit_Price) AS Total
+    FROM Order_Fact f 
+        INNER JOIN Item_Dimension i ON i.Item_key = f.Item_key
+        INNER JOIN Customer_Dimension c ON i.Customer_key = c.Customer_key
+    WHERE c.DOB BETWEEN '1984-01-01' and '2000-12-25') AS Millenials
+CROSS JOIN (SELECT 
+    SUM(f.Quantity * f.Unit_Price) AS Total
+    FROM Order_Fact f 
+        INNER JOIN Item_Dimension i ON i.Item_key = f.Item_key
+        INNER JOIN Customer_Dimension c ON i.Customer_key = c.Customer_key
+    WHERE c.DOB NOT BETWEEN '1984-01-01' and '2000-12-25') AS NonMillenials

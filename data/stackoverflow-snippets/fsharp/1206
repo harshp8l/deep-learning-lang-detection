@@ -1,0 +1,19 @@
+open System.Reflection
+let file = typeof<int list>.Assembly.Location 
+let asm = Assembly.ReflectionOnlyLoadFrom(file)
+let referenced = asm.GetReferencedAssemblies()
+
+for ref in referenced do
+    Assembly.ReflectionOnlyLoad(ref.FullName) |> ignore
+
+let types = asm.GetExportedTypes()
+
+let values = 
+    types 
+    |> Array.collect (fun t -> t.GetMembers())
+    |> Array.map (fun v -> sprintf ""%s: %s"" (v.ReflectedType.ToString()) (v.ToString()))
+    |> Array.sort
+    |> String.concat ""\r\n""
+
+// dump to a file or print to console
+printfn ""%s"" values

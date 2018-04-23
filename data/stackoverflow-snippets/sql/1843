@@ -1,0 +1,32 @@
+with recursive _rpath as (
+  select
+   0 as level,
+   id, parentid, name 
+  from path
+  where id = 5 -- this would be filled in later
+  union all
+  select
+   child.level + 1 as level,
+   parent.id, parent.parentid, parent.name
+  from _rpath child
+  join path parent on child.parentid = parent.id
+) , c AS (
+  select
+    rp, d, d.status
+   , ROW_NUMBER() OVER(PARTITION BY d.pathid ORDER BY d.creation DESC) AS rn
+  from data d
+  join _rpath rp
+  on rp.id = d.pathid
+  ), datapaths AS (
+  SELECT *
+  FROM c
+  WHERE rn =1
+    AND status != 'deleted'
+    )
+      select dp.rp, dp.d
+  from datapaths dp
+  left join datapaths dpNext
+  on (dpNext.rp).level < (dp.rp).level or
+    ((dpNext.rp).level = (dp.rp).level 
+    and (dpNext.d).creation > (dp.d).creation)
+  where (dpNext.d).id is null;

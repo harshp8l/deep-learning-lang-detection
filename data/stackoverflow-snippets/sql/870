@@ -1,0 +1,39 @@
+CREATE TABLE #t(cd VARCHAR(100))
+CREATE TABLE #cd (id INT, cd VARCHAR (1000))
+
+INSERT INTO #t SELECT 'c1'
+INSERT INTO #t SELECT 'c1,c2'
+INSERT INTO #t SELECT 'c1,c2,c3'
+
+INSERT INTO #cd SELECT 10, 'c1'
+INSERT INTO #cd SELECT 20, 'c2'
+INSERT INTO #cd SELECT 30, 'c3'
+
+
+; WITH X AS 
+(
+    SELECT 
+     C.id,P1.rn
+    FROM
+     (
+     SELECT *, row_number() over( order by (select 1)) rn,
+     cast('<X>'+replace(P.cd,',','</X><X>')+'</X>' as XML) AS xmlitems FROM #t P
+     )P1
+     CROSS APPLY
+     ( 
+     SELECT fdata.D.value('.','varchar(100)') AS splitdata 
+     FROM P1.xmlitems.nodes('X') AS fdata(D)) O
+     LEFT JOIN #cd C
+     ON C.cd=  LTRIM(RTRIM(O.splitdata ))
+    ) 
+
+SELECT 
+    rn,
+    id= STUFF((
+  SELECT ',' + cast(id as varchar(100)) FROM X AS x2 
+  WHERE x2.rn = x.rn
+  ORDER BY rn FOR XML PATH, 
+  TYPE).value(N'.[1]',N'varchar(max)'), 1, 1, '')
+  FROM 
+  X
+GROUP BY rn 

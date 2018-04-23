@@ -1,0 +1,237 @@
+    public void readfile(){
+
+    if (lineasarchivo.isEmpty() || lineasarchivo.size() == 0) {
+
+    } else {
+        lineasarchivo.clear();
+    }
+
+
+    Ask(Manifest.permission.WRITE_EXTERNAL_STORAGE, WRITE_EXST);
+
+
+    try {
+        BufferedReader reader = new BufferedReader(new FileReader(FullPathOpenedFile));
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            lineasarchivo.add(line);
+        }
+
+        for (int kx = 0; kx <= (lineasarchivo.size() - 1); kx++) {
+
+        }
+
+        //Buscar encabezado de archivo [TITLE] = TITLEHEADER
+
+        int postitleheader = 0;
+        int nodeheader = 0;
+        int pipeheader = 0;
+        int HLheader = 0;
+        int trouble = 0;
+
+        //Se busca la ubicación del header de título.
+        if (searchString(getResources().getString(R.string.TITLEHEADER), lineasarchivo).equals("""")) {
+            Toast.makeText(MainActivity.this, ""There is no Project Title defined. Verify file, there is more than one node's header."", Toast.LENGTH_SHORT).show();
+            trouble = trouble + 1;
+        } else {
+
+            if (Listado.repeticiones(lineasarchivo, getResources().getString(R.string.TITLEHEADER)) > 1) {
+                Toast.makeText(MainActivity.this, ""Verify file, there is more than one title defined."", Toast.LENGTH_SHORT).show();
+                trouble = trouble + 1;
+            } else {
+
+                postitleheader = Integer.parseInt(searchString(getResources().getString(R.string.TITLEHEADER), lineasarchivo));
+                trouble = trouble + 0;
+            }
+        }
+
+
+        //Se busca la ubicación del header de nodos.
+        if (Listado.repeticiones(lineasarchivo, getResources().getString(R.string.NODESHEADER0)) > 1) {
+
+            Toast.makeText(MainActivity.this, ""Verify file, there is more than one node's header."", Toast.LENGTH_SHORT).show();
+            trouble = trouble + 1;
+
+        } else {
+            if (searchString(getResources().getString(R.string.NODESHEADER0), lineasarchivo).equals("""")) {
+                Toast.makeText(MainActivity.this, ""Can't be located node list. Verify file."", Toast.LENGTH_SHORT).show();
+                trouble = trouble + 1;
+
+            } else {
+                nodeheader = Integer.parseInt(searchString(getResources().getString(R.string.NODESHEADER0), lineasarchivo));
+                trouble = trouble + 0;
+            }
+        }
+
+        //Se busca la ubicación del header de pipes.
+
+        if (Listado.repeticiones(lineasarchivo, getResources().getString(R.string.PIPESHEADER0)) > 1) {
+
+            Toast.makeText(MainActivity.this, ""Verify file, there is more than one pipes's header."", Toast.LENGTH_SHORT).show();
+            trouble = trouble + 1;
+
+        } else {
+            if (searchString(getResources().getString(R.string.PIPESHEADER0), lineasarchivo).equals("""")) {
+                Toast.makeText(MainActivity.this, ""Can't be located pipe list. Verify file."", Toast.LENGTH_SHORT).show();
+                trouble = trouble + 1;
+
+
+            } else {
+                pipeheader = Integer.parseInt(searchString(getResources().getString(R.string.PIPESHEADER0), lineasarchivo));
+                trouble = trouble + 0;
+            }
+        }
+
+
+        //Se busca la ubicación del header de headloss.
+        if (Listado.repeticiones(lineasarchivo, getResources().getString(R.string.HEADLOSSHEADER0)) > 1) {
+
+            Toast.makeText(MainActivity.this, ""Verify file, there is more than one pipes's header."", Toast.LENGTH_SHORT).show();
+            trouble = trouble + 1;
+
+        } else {
+            if (searchString(getResources().getString(R.string.HEADLOSSHEADER0), lineasarchivo).equals("""")) {
+                Toast.makeText(MainActivity.this, ""Can't be located pipe list. Verify file."", Toast.LENGTH_SHORT).show();
+                trouble = trouble + 1;
+
+            } else {
+                HLheader = Integer.parseInt(searchString(getResources().getString(R.string.HEADLOSSHEADER0), lineasarchivo));
+                TextView TextTit = (TextView) findViewById(R.id.ETProjectName);
+
+
+                trouble = trouble + 0;
+            }
+        }
+
+        int linestrouble = 0;
+
+        //Verificar que las líneas entre encabezados de nodes y pipes contengan texto. Si están vacías mandar un mensaje de error.
+
+
+        if (nodeheader != 0 && pipeheader != 0 && HLheader != 0) {
+
+            if (trouble == 0 && linestrouble == 0) {
+
+                //Verificar que las líneas entre encabezados de pipes y headloss contengan texto.
+                //Si están vacías mandar una alerta
+
+                /*
+                 * Debe haber ocho campos en las líneas de nodo
+                 * que son: Name, Xcoord, Ycoord, Zcoord, FU, P, Flux
+                 */
+
+                String lineadummy;
+
+                int Max55 = lineasarchivo.size();
+
+                ArrayList<String> NodeData = new ArrayList<>();
+
+                /**
+                 * Esta parte del código es para capturar la información de los nodos.
+                 *
+                 */
+
+                for (int contar44 = (nodeheader + 1); contar44 <= (pipeheader - 1); contar44++) {
+                    NodeData.clear();
+                    Node Nododummy = new Node();
+                    lineadummy = lineasarchivo.get(contar44);
+
+
+                    if (!lineadummy.isEmpty()) {
+
+                        if (lineadummy.substring(0, 2).equals("";;"") || lineadummy.equals("""")) {
+
+
+                        } else {
+                            NodeData.add(String.valueOf(contar44));
+
+                            String separator1 = ""\t"";
+                            String separator2 = "" "";
+                            String separator3 = "";"";
+                            int sep1, sep2, sep3, largo;
+
+                            String cadena1, linearecortada;
+
+
+                            linearecortada = lineadummy;
+                            int Noloop = 100;
+                            largo = linearecortada.length();
+                            do {
+
+                                if (linearecortada.isEmpty() || linearecortada.equals("""")) {
+                                    //NADA
+                                } else {
+                                    sep1 = linearecortada.indexOf(separator1);
+                                    if (sep1 != -1 || (sep1 == -1 && linearecortada.length() > 0)) {
+
+                                        if (sep1 == -1) {
+                                            NodeData.add(linearecortada);
+                                            largo = 0;
+                                        } else {
+                                            //Primero a la línea debo quitarle los datos que me interesan.
+                                            cadena1 = linearecortada.substring(0, sep1);
+                                            NodeData.add(cadena1);
+                                            //debo recortar la línea, quitarle la cadena 1.
+
+                                            linearecortada = linearecortada.substring(sep1, linearecortada.length());
+                                            //Ahora a la línea recortada debo quitarle el separador, las n veces que ocurra
+                                            //al inicio de la línea.
+
+
+                                            //REVISAR AQUÍ, HAY UN ERROR, VERIFICAR CONTRA EL ARCHIVO DE DATOS.
+                                            linearecortada = removeseparator(separator1, linearecortada);
+
+                                            largo = linearecortada.length();
+
+                                        }
+                                    } else {
+
+                                    }
+                                }
+                                Noloop = Noloop - 1;
+                            } while (largo > 0);
+
+                            if (NodeData.size() < 8) {
+                                String Errorx = ""There is an error in line "" + NodeData.get(0) + ""; incomplete information"";
+                                Listado.addError(Errorx);
+                                //Verificar datos en línea NodeData.get(0);
+                            } else {
+
+                                //Verificar que los campos de número sean parseables.
+                                boolean Xbool, Ybool, Zbool, FUbool, Pbool, Fluxbool;
+
+                                Xbool = doubleParseable(NodeData.get(2));
+                                Ybool = doubleParseable(NodeData.get(3));
+                                Zbool = doubleParseable(NodeData.get(4));
+                                FUbool = doubleParseable(NodeData.get(5));
+                                Pbool = doubleParseable(NodeData.get(6));
+                                Fluxbool = intParseable(NodeData.get(7));
+
+                                if (Xbool == true && Ybool == true && Zbool == true && FUbool == true &&
+                                        Pbool == true && Fluxbool == true) {
+
+
+                                    Nododummy.setNodeID(NodeData.get(1));
+                                    Nododummy.setXcoord(Double.parseDouble(NodeData.get(2)));
+                                    Nododummy.setYcoord(Double.parseDouble(NodeData.get(3)));
+                                    Nododummy.setZcoord(Double.parseDouble(NodeData.get(4)));
+                                    Nododummy.setUM_in(Double.parseDouble(NodeData.get(5)));
+                                    Nododummy.setPresion(Double.parseDouble(NodeData.get(6)));
+                                    Nododummy.setCF(Integer.parseInt(NodeData.get(7)));
+                                    Nododummy.setMueble(NodeData.get(8));
+
+
+                                    Listado.AddNodeToList(Nododummy);
+                                } else {
+                                    String Errorx = ""There is an error in line "" + NodeData.get(0) + ""; wrong numeric information"";
+                                    Listado.addError(Errorx);
+                                }
+                            }
+                        }
+                    } else {
+
+                        //NADA
+                    }
+
+                }

@@ -1,0 +1,54 @@
+Here the program solution is in Perl.
+
+Assume the given 4 digits number is abcd.
+
+Where 
+
+d is in unit position
+c is in 10th position
+b is in 100th position
+a is in 1000th position
+
+abcd * abcd = xxxxabcd. This is what condition placed in the question, where x can be any single digit unsigned integer.
+
+Last 4 digits are formed as given below
+1* (d*d) = Unit Position
+10 * (2*c*d) + overflow digit from unit position = 10th Position 
+100 * ( 2*b*d + c*c )  + overflow digit from 10th position = 100th Position
+1000 * ( 2*a*d + 2*b*c ) + overflow digit from 100th position = 1000th Position.
+
+if (d*d mod 10) equals d then d can end with 1,5,6 or 0. (eg. 1 * 1 = 1, 5 * 5 = 25, 6 * 6 = 36, 10 * 10 = 100)
+
+So any number ends with 2,3,4,7,8,9 cannot give the expected result. Hence we can eliminate those numbers. Hence 60% of the numbers need not be checked.
+
+
+
+
+#!perl
+for( $str = 1000; $str < 10000; $str++ )
+{
+    $temp = $str;
+    $d = $temp % 10;
+
+    if( $d == 1 || $d == 5 || $d == 6 || $d == 0 )
+    {
+
+        $a = int($temp / 1000);
+        $temp = $temp % 1000;
+
+        $b = int($temp / 100);
+        $temp = $temp % 100;
+
+        $c = int($temp / 10);
+
+        #This step can still be optimized 
+        $sum = ( $d*$d + 10 * (2 * $c * $d ) + 100* (2 * $b * $d + $c * $c) + 1000* (2 * ( $a * $d + $b * $c )) ) % 10000;
+
+        if( $sum == $str )
+        {
+            print ""\nAnswer is $str"";
+            print ""\nSquare of $str is "" . $str*$str;
+        }
+
+    }
+}

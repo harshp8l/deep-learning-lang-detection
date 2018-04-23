@@ -1,0 +1,16 @@
+    $categoryId = Mage::getModel('catalog/layer')->getCurrentCategory()->getId();
+    $currentCategory = Mage::getModel('catalog/category')->load($categoryId);
+    $productList = Mage::getModel('catalog/product')->getCollection()->addAttributeToSelect('*')->addCategoryFilter($currentCategory)->load();
+    $reviewList = array();
+    $storeId = Mage::app()->getStore()->getId();
+    foreach ($productList as $product) {
+        $summaryData = Mage::getModel('review/review_summary')->setStoreId($storeId)->load($product->getEntityID());
+        $reviewData[] = $summaryData['rating_summary'] / 20;
+    }
+    $nbReview = 0;
+    foreach ($reviewData as $review) {
+        if ($review != Null)
+            $nbReviews++;
+            $totalReviewIntoStar += $review;
+    }
+    return $AvgRating = $totalReviewIntoStar / $nbReviews;

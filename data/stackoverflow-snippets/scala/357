@@ -1,0 +1,33 @@
+trait PrettyPrinted[A] extends (A => String)
+
+object PrettyPrinted {
+  def apply[A](f: A => String): PrettyPrinted[A] = f(_)
+}
+
+trait Printable[A] {
+  implicit def printer: PrettyPrinted[A]
+}
+
+// implicit parameter name is important
+case class Person(name: String, age: Int)
+                 (implicit val printer: PrettyPrinted[Person])
+  extends Printable[Person]
+
+object Person {
+  implicit val printer: PrettyPrinted[Person] =
+    PrettyPrinted { p =>
+      s""Person[name = ${p.name}, age = ${p.age}]""
+    }
+}
+
+// works also with regular classes
+class Car(val name: String)
+         (implicit val printer: PrettyPrinted[Car])
+  extends Printable[Car]
+
+object Car {
+  implicit val printer: PrettyPrinted[Car] =
+    PrettyPrinted { c =>
+      s""Car[name = ${c.name}]""
+    }
+}

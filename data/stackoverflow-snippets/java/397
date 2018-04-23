@@ -1,0 +1,309 @@
+    //Class for polynomial linked list
+    import java.util.Scanner;
+
+    class Node
+{
+                public int numC;
+                public int numE;
+                public Node next;
+
+    //elementary constructor
+    public Node() 
+    {
+        numC = 0;
+        numE = 0;
+        next = null;
+    }
+
+    // constructor with two argument
+
+    public Node(int c, int e) 
+    {
+        numC = c;
+        numE = e;
+        next = null;
+    }
+
+    // primary constructor
+
+    public Node(int c, int e, Node n)
+    {
+        numC = c;
+        numE = e;
+        next = n;
+    }
+
+    // accessor method
+
+    public int getCo()
+    {
+        return numC;
+    }
+
+    public int getEx()
+    {
+        return numE;
+    }
+
+    // accessor method
+    public Node getNext()
+    {
+        return next;
+    }
+
+    // mutator method
+    public void setCof(int c)
+    {
+        numC = c;
+    }
+
+    public void setExp(int e)
+    {
+    numE = e;
+    }
+
+    // mutator method for next
+
+    public void setNext(Node nextNode) 
+    {
+        next = nextNode;
+    }
+} 
+    // end of class Node
+
+
+
+    class Polynomial
+    {
+        private Node front;
+        public Polynomial(){
+        front = null;
+    }
+
+    //read coefficient fx
+
+    public int readCoFx()
+    {
+        Scanner scan = new Scanner(System.in);
+        int coef = 0;
+
+        System.out.print(""Enter Coefficient or 0 to skip to next equation: "");
+        coef = scan.nextInt();
+        return coef;
+    }
+    //read coefficient gx
+
+    public int readCoGx()
+    {
+        Scanner scan = new Scanner(System.in);
+        int coef = 0;
+
+        System.out.print(""Enter Coefficient or 0 to end program: "");
+        coef = scan.nextInt();
+        return coef;
+    }
+    //read exponent
+
+    public int readEx()
+    {
+        Scanner scan = new Scanner(System.in);
+        int exp = 0;
+
+        System.out.print(""Enter Exponent: "");
+        exp = scan.nextInt();
+        return exp;
+    }
+
+    //insert Node
+
+    public void insert(int coef, int exp)
+    {
+        Node temp = new Node(coef, exp, null);
+        //insert temp to 1st if empty
+
+        if (front == null)
+        front = temp;
+
+        else
+            {
+                Node p = null;
+                Node q = front;
+
+             //insert in front if exponent is higher
+
+                if (temp.getEx() > q.getEx())
+                {
+                    temp.setNext(front);
+                    front = temp;
+                } 
+                else 
+                    {
+                        //insert at middle or end
+                        while (q != null && q.getEx() > temp.getEx())
+                        {
+
+                            p = q;
+                            q = q.getNext();
+                        }
+
+            p.setNext(temp);
+            temp.setNext(q);
+
+                    }
+            }
+    }
+    public void mulInsert(int coef, int exp)
+    {
+        //Node temp = new Node(coef, exp, null);
+        //insert temp to 1st if empty
+            System.out.println(""coef=""+coef+""exp=""+exp);
+
+            if (front == null)
+                    front = new Node(coef,exp,null);
+            else 
+            {
+
+                        Node p = null;
+                        Node q = front;
+            //insert in front if exponent is higher
+                    if (exp > q.getEx())
+                    {
+                            Node temp = new Node(coef,exp,null);
+                            temp.setNext(front);
+                            front = temp;
+                    }
+                    else 
+                    {   //insert at middle or end
+                                while (q != null && q.getEx() >= exp)
+                                {
+                                    if (q.getEx() == exp)
+                                    {
+                                        q.numC += coef;
+                                        q=q.getNext();
+                                        continue;
+                                    }
+                                    p = q;
+                                    q = q.getNext();
+                                }
+
+                        Node temp = new Node(coef,exp,null);
+                        p.setNext(temp);
+                        temp.setNext(q);
+
+                    }
+        }
+
+    }
+
+    //print function for the equations
+
+    public void print()
+    {
+        Node p = front;
+        while(p != null)
+        {
+            System.out.print(""(""+p.getCo()+ ""x"" + p.getEx()+"")"");
+            p = p.getNext();
+        }
+        System.out.println("""");
+    }
+
+
+    //function to add polynomials
+
+    public static Polynomial addPoly(Polynomial poly1, Polynomial poly2)
+    {
+        Polynomial tempPoly = new Polynomial();
+        //if poly1 exp is > poly 2 exp then power = poly 1 exp else power = poly 2 exp
+        int power = (poly1.front.getEx() > poly2.front.getEx()) ? poly1.front.getEx() : poly2.front.getEx();
+
+        while (power >=0)
+        {
+            Node n1 = poly1.front;
+            while (n1 != null)
+            {
+                if (n1.getEx() == power)
+                    break;
+                n1 = n1.getNext();
+            }
+
+            Node n2 = poly2.front;
+            while (n2 != null)
+            {
+                if (n2.getEx() == power)
+                    break;
+                n2 = n2.getNext();
+            }
+
+            if((n1 != null) && (n2 != null))
+                tempPoly.insert((n1.getCo() + n2.getCo()), n1.getEx());
+            else if (n1 != null)
+                tempPoly.insert(n1.getCo(), n1.getEx());
+            else if (n2 != null)
+                tempPoly.insert(n2.getCo(), n2.getEx());
+            power--;
+        }
+        return tempPoly;
+    }
+
+    public static Polynomial mulPoly(Polynomial poly1, Polynomial poly2){
+    Polynomial tempPoly = new Polynomial();
+
+    Node n1 = poly1.front;
+
+
+    while (n1 != null )
+    {
+        Node n2 = poly2.front;
+        while(n2 != null)
+        {
+                tempPoly.mulInsert((n1.getCo()*n2.getCo()),(n1.getEx() + n2.getEx()));
+            n2 = n2.getNext();
+        }
+        n1= n1.getNext();
+    }
+    return tempPoly;
+    }
+    }
+
+    //driver
+    public class PolyDrive {
+    public static void main(String [] args){
+    Polynomial poly1 = new Polynomial();
+    Polynomial poly2 = new Polynomial();
+    Polynomial poly3 = new Polynomial();
+    Polynomial poly4 = new Polynomial();
+    int co;
+    int ex;
+
+    do 
+    {
+        co = poly1.readCoFx();
+        if(co != 0)
+        {
+            ex = poly1.readEx();
+            poly1.insert(co, ex);
+        }
+        //poly1.print();
+    } 
+    while (co != 0);
+
+    do 
+    {
+        co = poly2.readCoGx();
+        if(co != 0)
+        {
+            ex = poly1.readEx();
+            poly2.insert(co, ex);
+        }
+        //poly2.print();
+    }
+    while (co != 0);
+    poly1.print();
+    poly2.print();
+    //poly3 = Polynomial.addPoly(poly1,poly2);
+    //poly3.print();
+    poly4 = Polynomial.mulPoly(poly1,poly2);
+    poly4.print();
+    }
+    }

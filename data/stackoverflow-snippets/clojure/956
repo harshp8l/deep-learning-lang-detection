@@ -1,0 +1,23 @@
+;; helper function
+(defn add-loc-to-url-as [url loc k as-k]
+  (if-let [v (k loc)]
+    (assoc-in url [:query as-k] v)
+    url))
+
+;; define function, that process options and extends URL
+(defn add-location [url options]
+  (if-let [location (:loc options)]
+    (if (string? location)
+      ;;; it expects string, for {:loc ""San Francisco""}
+      (assoc-in url [:query :location] location)
+      ;;; or map, for {:loc {:latitude 12.123, :longitude 34.33}}
+      (-> url
+          (add-loc-to-url-as location :latitude :lat)
+          (add-loc-to-url-as location :longitude :lng)))
+    url))
+
+;; now you can use it in your block
+;; ...
+the-url (-> (url ""http://example.com"" ""subscribe"")
+            (assoc-in [:query :param] ""a param"")
+            (add-location options))

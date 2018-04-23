@@ -1,0 +1,71 @@
+    $Config = @{
+    AllNodes = @(
+        @{ NodeName = 'localhost'; PSDscAllowPlainTextPassword = $True }
+    )
+}
+Configuration LocalAdmin
+{
+    Param([String[]]$Node='localhost',[PSCredential]$Cred)
+
+    Import-DscResource -ModuleName 'PSDscResources'
+    Node $Node
+    {
+        User 'LocalAdmin'
+        {
+            Username = 'Admin'
+            Description = 'DSC configuration test'
+            Ensure = 'Present'
+            FullName = 'Administrator Extraordinaire'
+            Password = $Cred
+            PasswordChangeRequired = $False
+            PasswordNeverExpires = $True
+        }
+        Group 'AddToAdmin'
+        {
+            GroupName = 'Administrators'
+            DependsOn = '[User]LocalAdmin'
+            Ensure = 'Present'
+            MembersToInclude = 'Admin'
+        }
+    }
+}
+Configuration DisableLocalAccounts
+{
+    Param([String[]]$Node='localhost')
+
+    Import-DscResource -ModuleName 'PSDscResources'
+    Node $Node
+    {
+        User 'Administrator'
+        {
+            Username = 'Administrator'
+            Disabled = $True
+        }
+        User 'Guest'
+        {
+            Username = 'Guest'
+            Disabled = $True
+        }
+        User 'DefaultAccount'
+        {
+            Username = 'DefaultAccount'
+            Disabled = $True
+        }
+    }
+}
+Configuration AllAccounts
+{
+    Param([String[]]$Node='localhost',[PSCredential]$Cred)
+    DisableLocalAccounts localAccount
+    {
+       Node = $Node
+    }
+    LocalAdmin localAdmin
+    {
+        Node = $Node
+        Cred = $Cred
+    }
+}
+Set-Location $env:UserProfile
+AllAccounts -Cred (Get-Credential -UserName 'Admin') -ConfigurationData $Config
+Start-DscConfiguration -ComputerName 'localhost' -Wait -Force -Verbose -Path '.\AllAccounts'

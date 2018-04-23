@@ -1,0 +1,19 @@
+declare @holding table (id int, col1 int, col2 int, col3 int, col4 int, col5 int, num_in_common int)
+declare @iterator int = 1
+declare @row1col1 int, @row1col2 int, @row1col3 int, @row1col4 int ,@row1col5 int
+while @iterator<=(select max(id) from #temp)
+begin
+if @iterator=1 
+select @row1col1=col1, @row1col2=col2, @row1col3=col3, @row1col4=col4 ,@row1col5=col5
+from #temp where id=@iterator
+else
+insert @holding
+select *, case when col1-@row1col1 = 0 then 1 else 0 end +
+          case when col2-@row1col2 = 0 then 1 else 0 end +
+          case when col3-@row1col3 = 0 then 1 else 0 end +
+          case when col4-@row1col4 = 0 then 1 else 0 end +
+          case when col5-@row1col5 = 0 then 1 else 0 end 
+from #temp where id=@iterator
+set @iterator=@iterator+1
+end
+select * from @holding 

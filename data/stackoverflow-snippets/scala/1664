@@ -1,0 +1,23 @@
+// import functions
+import org.apache.spark.sql.functions.{coalesce, lit}
+
+// we might not need groupBy, 
+// since after join, all the information will be in the same row
+// so instead of using aggregate function, we simply combine the related fields as a new column.
+val df = hist2.join(hist1, Seq(""article_id"", ""pos_id""), ""left"")
+  .select($""pos_id"", $""article_id"",
+    coalesce(hist2(""date""), hist1(""date"")).alias(""date""),
+    (coalesce(hist2(""qte""), lit(0)) + coalesce(hist1(""qte""), lit(0))).alias(""qte""),
+    (coalesce(hist2(""ca""), lit(0)) + coalesce(hist1(""ca""), lit(0))).alias(""ca""))
+  .orderBy(""pos_id"", ""article_id"")
+
+// df.show()
+|pos_id|article_id|      date| qte|  ca|
++------+----------+----------+----+----+
+|     1|         1|2000-01-08| 5.0| 7.0|
+|     2|         2|2000-01-08|29.4|24.0|
+|     3|         3|2000-01-08| 7.0| 2.4|
+|     4|         4|2000-01-08| 3.5| 1.2|
+|     5|         5|2000-01-08|14.5| 1.2|
+|     6|         6|2000-01-08| 2.0|1.25|
++------+----------+----------+----+----+

@@ -1,0 +1,18 @@
+data = {str(k): {'a': 10, 'b': 30} for k in range(10000)}
+
+def jp(data):
+    return pd.melt(pd.DataFrame.from_dict(data, orient='index').reset_index().rename(columns={'index': 'x'}),
+                   id_vars=['x'], value_vars=['a', 'b'], var_name='y', value_name='z')\
+             .sort_values(['x', 'y']).reset_index(drop=True)
+
+def jez(data):
+    df = pd.concat({k: pd.Series(v) for k, v in data.items()}).reset_index()
+    df.columns = list('xyz')
+    return df
+
+def jez1(data):
+    L = sorted([(k,k1,v1) for k,v in data.items() for k1,v1 in v.items()], key=lambda x: (x[0], x[1]))
+    df = pd.DataFrame(L, columns=list('xyz'))
+    return df
+
+assert (jez1(data).values == jez(data).values).all()

@@ -1,0 +1,43 @@
+import scalikejdbc._
+
+Class.forName(""org.h2.Driver"")
+ConnectionPool.singleton(""jdbc:h2:mem:hello"", ""user"", ""pass"")
+
+case class Meta(id: String)
+case class Poll(meta: Option[Meta] = None, value: String)
+
+implicit val metaBinders = Binders.of[Meta]
+  // For TypeBinder (f: Any => A)
+  {
+    case null => null
+    case str: String => Meta(str)
+    case v: Any => Meta(v.toString)
+  }
+  // For ParameterBinderFactory (A => (PreparedStatement, Int) => Unit)
+  { v =>
+    (ps, idx) =>
+    ps.setString(idx, v.id)
+  }
+
+object Poll extends SQLSyntaxSupport[Poll] {
+  override val nameConverters = Map(""^meta$"" -> ""id"")
+  def apply(rs: WrappedResultSet, rn: ResultName[Poll]) = autoConstruct(rs, rn)
+}
+
+implicit val session = AutoSession
+sql""""""
+create table poll (
+  id varchar(64),
+  value varchar(64) not null
+)
+"""""".execute.apply()
+
+sql""insert into poll (id, value) values ('meta-id-1', 'value-1')"".update.apply()
+sql""insert into poll (id, value) values (null, 'value-2')"".update.apply()
+
+val p = Poll.syntax(""p"")
+val polls = withSQL {
+  select.from(Poll as p)
+}.map(rs => Poll(rs, p.resultName)).list.apply()
+
+println(polls)

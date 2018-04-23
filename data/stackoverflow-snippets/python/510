@@ -1,0 +1,47 @@
+from sqlalchemy import * 
+from sqlalchemy.orm import * 
+from sqlalchemy.ext.declarative import declarative_base 
+from sqlalchemy.ext.orderinglist import ordering_list 
+Base = declarative_base() 
+
+
+class Test(Base): 
+    __tablename__ = 'test' 
+    id = Column(Integer, primary_key=True) 
+    questions = relationship( 
+        'Question', cascade='all,delete', backref='test', uselist=True, 
+        collection_class=ordering_list(""sequence"", count_from=1)) 
+
+
+class Question(Base): 
+    __tablename__ = 'question' 
+    testID = Column(Integer, ForeignKey('test.id', ondelete='CASCADE'), 
+                    primary_key=True) 
+    sequence = Column(Integer, primary_key=True) 
+    text = Column(String(500)) 
+
+e = create_engine(""sqlite://"", echo=True) 
+Base.metadata.create_all(e) 
+s = Session(e) 
+
+
+s.add_all([ 
+    Test( 
+        questions=[ 
+            Question(text=""t1q1""), 
+            Question(text=""t1q2""), 
+            Question(text=""t1q3""), 
+            Question(text=""t1q4""), 
+        ] 
+    ), 
+    Test( 
+        questions=[ 
+            Question(text=""t2q1""), 
+            Question(text=""t2q2""), 
+            Question(text=""t2q3""), 
+            Question(text=""t2q4""), 
+        ] 
+    ) 
+]) 
+
+s.commit() 

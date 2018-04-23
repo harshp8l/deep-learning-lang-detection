@@ -1,0 +1,24 @@
+    (require '[clojure.reflect :as r])   
+    (use '[clojure.pprint :only [print-table]])    
+
+    (import '[java.io File])
+    (def f (File. ""test.txt""))
+
+    ; access a public static field
+    (. File separator)
+    ; ""/""
+
+    (print-table 
+      (sort-by :name (:members (r/reflect  File))))
+
+    (.-path f)
+    ; java.lang.IllegalArgumentException: 
+    ; No matching field found: path for class java.io.File
+
+    (def field (.getDeclaredField File ""path""))
+    ; you need the below if the field is private
+    (.setAccessible field true)
+
+    ; get the value
+    (.get field f)
+    ; ""test.txt""

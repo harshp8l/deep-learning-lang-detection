@@ -1,0 +1,49 @@
+import numpy as np
+from numpy import random
+import scipy as sp
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as pl
+
+def exp1(t,a1,tau1):
+    #A1*exp(-t/t1)
+    val=0.
+    val=(a1*np.exp(-t/tau1))*np.heaviside(t,0)
+    return val
+
+def wrapper(t,*args):
+
+    global hold
+    global p0
+    wrapperName='exp1(t,'
+    for i in range(0, len(hold)):
+        if hold[i]:
+            wrapperName+=str(p0[i])
+        else:
+            if i%2==0:
+                wrapperName+='args['+str(i)+']'
+            else:
+                wrapperName+='args'+str(i)+']'
+        if i<len(hold):
+            wrapperName+=','
+    wrapperName+=')'
+
+    return eval(wrapperName)
+
+p0=np.array([1.5,500.])
+hold=np.array([0,1])
+p1=np.delete(p0,1)
+
+timepoints = np.arange(0.,2000.,20.)
+y=exp1(timepoints,1,1000)+np.random.normal(0, .1, size=len(timepoints))
+
+popt, pcov = curve_fit(exp1, timepoints, y, p0=p0)
+print 'unheld parameters:', popt, pcov
+
+popt, pcov = curve_fit(wrapper, timepoints, y, p0=p1)
+for i in range(0, len(hold)):
+    if hold[i]:
+        popt=np.insert(popt,i,p0[i])
+yfit=exp1(timepoints,popt[0],popt[1])
+pl.plot(timepoints,y,timepoints,yfit)
+pl.show()
+print 'hold parameters:', popt, pcov

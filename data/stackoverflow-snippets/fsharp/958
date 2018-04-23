@@ -1,0 +1,30 @@
+[<Measure>] type Gold
+[<Measure>] type Steel
+[<Measure>] type FrogLegs
+[<Measure>] type GameMoney
+
+type Recipe = { 
+                goldQty      : float<Gold>
+                steelQty     : float<Steel>
+                frogLegsQty  : int<FrogLegs>
+              }
+
+type Prices = {
+                goldPrice     : float<GameMoney/Gold>
+                steelPrice    : float<GameMoney/Steel>
+                frogLegsPrice : float<GameMoney/FrogLegs>
+              }
+
+let recipeCost prices recipe = 
+    prices.goldPrice      * recipe.goldQty         +
+    prices.steelPrice     * recipe.steelQty        +
+    // frog legs must be converted to float while preserving UoM
+    prices.frogLegsPrice  * (recipe.frogLegsQty |> float |> LanguagePrimitives.FloatWithMeasure)
+
+let currentPrices = {goldPrice = 100.0<GameMoney/Gold>; steelPrice = 50.0<GameMoney/Steel>; frogLegsPrice = 2.5<GameMoney/FrogLegs> }
+
+let currentCost = recipeCost currentPrices    
+
+let fancySwordRecipe = {goldQty = 25.4<Gold>; steelQty = 76.4<Steel>; frogLegsQty = 0<FrogLegs>}
+
+let fancySwordCost = currentCost fancySwordRecipe

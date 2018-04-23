@@ -1,0 +1,29 @@
+templateString := `{ 
+                    ""expiration"": ""2013-08-06T12:00:00.000Z"",
+                    ""conditions"": [
+                            {""bucket"": ""examplebucket""},
+                            [""starts-with"", ""{{- .Key -}}"", ""user/user1/""],
+                            {""acl"": ""public-read""},
+                            {""success_action_redirect"": ""http://acl6.s3.amazonaws.com/successful_upload.html""},
+                            [""starts-with"", ""{{- .ContentType -}}"", ""image/""],
+                            // Etc...
+                      ]
+                }`
+
+type TemplateInfo struct {
+    Key, ContentType string
+}
+
+myInfo := TemplateInfo{
+    Key:         ""mykey"",
+    ContentType: ""text/plain"",
+}
+
+t := template.Must(template.New(""awsfields"").Parse(templateString))
+
+var out bytes.Buffer
+if err := t.Execute(&out, myInfo); err != nil {
+    panic(err)
+}
+fmt.Println(out.String())
+fmt.Println(base64.StdEncoding.EncodeToString(out.Bytes()))

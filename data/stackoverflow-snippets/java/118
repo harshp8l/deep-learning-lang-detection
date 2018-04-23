@@ -1,0 +1,25 @@
+@RestController
+public class CustomErrorController implements ErrorController {
+
+    @Autowired
+    private ErrorAttributes errorAttributes;
+
+    private Map<String,Object> getErrorAttributes( HttpServletRequest request ) {
+        WebRequest webRequest = new ServletWebRequest(request);
+        boolean includeStacktrace = false;
+        return errorAttributes.getErrorAttributes(webRequest,includeStacktrace);
+    }
+
+    @GetMapping(value=""/error"", produces=""text/html"")
+    ModelAndView errorHtml(HttpServletRequest request) {
+        return new ModelAndView(""error.html"",getErrorAttributes(request));
+    }
+
+    @GetMapping(value=""/error"")
+    Map<String,Object> error(HttpServletRequest request) {
+        return getErrorAttributes(request);
+    }
+
+    @Override public String getErrorPath() { return ""/error""; }
+
+}

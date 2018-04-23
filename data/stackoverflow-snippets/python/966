@@ -1,0 +1,45 @@
+db.collection.aggregate(
+
+    // Pipeline
+    [
+        // Stage 1
+        {
+            $match: {
+                RECORD_DATA: {
+                    $elemMatch: {
+                        FIELD_TYPE: ""Primary""
+                    }
+                }
+            }
+        },
+
+        // Stage 2
+        {
+            $project: {
+                'RECORD_DATA': {
+                    $arrayElemAt: [{
+                        $filter: {
+                            input: '$RECORD_DATA',
+                            as: ""data"",
+                            cond: {
+                                $eq: [""$$data.FIELD_TYPE"", 'Primary']
+                            }
+                        }
+                    }, 0]
+                }
+
+            }
+        },
+
+        // Stage 3
+        {
+            $project: {
+                _id: 1,
+                DATA: '$RECORD_DATA.DATA'
+            }
+        }
+
+    ]
+
+
+);

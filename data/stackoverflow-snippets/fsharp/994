@@ -1,0 +1,57 @@
+open System
+open Alea.CUDA
+open Alea.CUDA.Utilities
+open NUnit.Framework
+
+[<ReflectedDefinition>]
+let squareKernel (outputs:deviceptr<float>) (inputs:deviceptr<float>) (n:int) =
+    let start = blockIdx.x * blockDim.x + threadIdx.x
+    let stride = gridDim.x * blockDim.x
+    let mutable i = start 
+    while i < n do
+        outputs.[i] <- inputs.[i] * inputs.[i]
+        i <- i + stride
+
+let squareGPUInplaceUpdate (worker:Worker) (lp:LaunchParam) (hData:float[]) (dData:DeviceMemory<float>) =
+    // instead of malloc a new device memory, you just reuse the device memory dData
+    // and scatter new data to it.
+    dData.Scatter(hData)
+    worker.Launch <@ squareKernel @> lp dData.Ptr dData.Ptr hData.Length
+    // actually, there should be a counterpart of data.Scatter(hData) like data.Gather(hData)
+    // but unfortunately, that is missing, but there is a workaround of using worker.Gather.
+    worker.Gather(dData.Ptr, hData)
+
+let squareGPUManyTimes (iters:int) =
+    let worker = Worker.Default
+
+    // actually during the many iters, you just malloc 2 host array (for data and expected value)
+    // and you malloc a device array. You keep reusing them, since they are big array.
+    // if you new the huge array very frequentely, GC is under pressure. and since GC works
+    // as a separate thread, so you will get System.OutOfMemoryException from time to time.
+    let hData = [|0.0..0.001..100000.0|]
+    let n = hData.Length
+    let expected = Array.zeroCreate n
+    use dData = worker.Malloc<float>(n)
+
+    let rng = Random()
+    let update () =
+        // in-place updating the data
+        for i = 0 to n - 1 do
+            hData.[i] <- rng.NextDouble()
+            expected.[i] <- hData.[i] * hData.[i]
+
+    let lp =
+        let blockSize = 256
+        let numSm = worker.Device.Attributes.MULTIPROCESSOR_COUNT
+        let gridSize = Math.Min(16 * numSm, divup n blockSize)
+        new LaunchParam(gridSize, blockSize)
+
+    for i = 1 to iters do
+        update()
+        squareGPUInplaceUpdate worker lp hData dData
+        Assert.AreEqual(expected, hData)
+        printfn ""iter %d passed..."" i
+
+[<Test>]
+let test() =
+    squareGPUManyTimes 5

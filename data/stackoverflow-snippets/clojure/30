@@ -1,0 +1,20 @@
+(require '[clojure.java.jdbc :as sql])
+
+
+(defn- db-do-cmd
+  [command]
+  (sql/db-do-commands @db-url command))
+
+
+(defn- create-update-phone-sql
+  [{:keys [fname lname dob phone]}]
+  (let [where-init (format ""UPDATE person SET phone = %s WHERE "" (escape-quote-and-null phone))
+        where-rest (apply str (interpose "" AND "" [(str ""person.dob"" (escape-quote-and-null-for-where dob))
+                                                  (str ""person.fname"" (escape-quote-and-null-for-where fname))
+                                                  (str ""person.lname"" (escape-quote-and-null-for-where lname))]))]
+    (str where-init where-rest)))
+
+
+(defn batch-update!
+  [coll]
+  (db-do-cmd (map create-update-phone-sql coll)))

@@ -1,0 +1,43 @@
+    <Mutation
+        mutation={CREATE_RESOLUTION}
+        update={(cache, {data: {createResolution}}) => {
+            const {resolutions} = cache.readQuery({query: GET_RESOLUTIONS_FOR_MUTATION_COMPONENT});
+            cache.writeQuery({
+                query: GET_RESOLUTIONS_FOR_MUTATION_COMPONENT,
+                data: {resolutions: resolutions.concat([createResolution])}
+            });
+        }}
+    >
+        {(createResolution, {data}) => (
+            <div>
+                <form
+                    onSubmit={e => {
+                        e.preventDefault();
+                        createResolution({
+                            variables: {
+                                name: input.value
+                            },
+                            optimisticResponse: {
+                                __typename: ""Mutation"",
+                                createResolution: {
+                                    __typename: ""Resolution"",
+                                    completed: false,
+                                    goals: [],
+                                    _id: ""012345"",
+                                    name: input.value
+                                }
+                            }
+                        });
+                        input.value = """";
+                    }}
+                >
+                    <input
+                        ref={node => {
+                            input = node;
+                        }}
+                    />
+                    <button type=""submit"">Submit</button>
+                </form>
+            </div>
+        )}
+    </Mutation>

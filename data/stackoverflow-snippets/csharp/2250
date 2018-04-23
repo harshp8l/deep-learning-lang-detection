@@ -1,0 +1,34 @@
+public static bool LocalSequenceEqual<TSource>(this IEnumerable<TSource> first, IEnumerable<TSource> second, IEqualityComparer<TSource> comparer = null) {
+    if (first is ICollection<TSource> fc && second is ICollection<TSource> sc)
+        if (fc.Count != sc.Count)
+            return false;
+
+    var cmp = comparer ?? EqualityComparer<TSource>.Default;
+
+    if (first is TSource[] fa && second is TSource[] sa) {
+        for (int j1 = 0; j1 < fa.Length; ++j1)
+            if (!cmp.Equals(fa[j1], sa[j1]))
+                return false;
+        return true;
+    }
+
+    if (first is List<TSource> fl && second is List<TSource> sl) {
+        for (int j1 = 0; j1 < fl.Count; ++j1) {
+            if (!cmp.Equals(fl[j1], sl[j1]))
+                return false;
+        }
+        return true;
+    }
+
+    using (var e1 = first.GetEnumerator()) {
+        using (var e2 = second.GetEnumerator()) {
+            while (e1.MoveNext()) {
+                if (!(e2.MoveNext() && cmp.Equals(e1.Current, e2.Current)))
+                    return false;
+            }
+            if (e2.MoveNext())
+                return false;
+        }
+    }
+    return true;
+}

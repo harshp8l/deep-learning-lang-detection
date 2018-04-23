@@ -1,0 +1,29 @@
+    CC = $(shell which go 2>/dev/null)
+    DOCKER = $(shell which docker 2>/dev/null)
+
+    ifeq ($(CC),)
+    $(error ""go is not in your system PATH"")
+    else
+    $(info ""go found"")
+    endif
+
+    ifeq ($(DOCKER),)
+    $(error ""docker not in your system path"")
+    else
+    $(info ""docker found"")
+    endif
+
+    .PHONY: clean generate tests docker all
+
+    all: clean generate tests hello docker
+
+    clean:
+        $(RM) hello rice-box.go cover.out
+    generate:
+        $(CC) generate
+    tests: generate
+        $(CC) test -coverprofile=cover.out
+    hello: tests
+        $(CC) build
+    docker: hello
+        $(DOCKER) build -t sosample/hello .

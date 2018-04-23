@@ -1,0 +1,27 @@
+#include <iniitguid.h>    // Seems to be uncluded before Windows.h for some reason...
+#include <windows.h>
+#include <powrprof.h>
+
+static const GUID GuidPwrVideoIf = GUID_VIDEO_SUBGROUP;
+static const GUID GuidPwrDimTimeout = GUID_VIDEO_DIM_TIMEOUT;
+static const GUID GuidPwrDimBrightness = GUID_DEVICE_POWER_POLICY_VIDEO_DIM_BRIGHTNESS;
+
+void setBacklightDimming(DWORD timeOut, DWORD dimmedBrightness)
+{
+    DWORD ret;
+    GUID *pGuidPwrActiveSheme;    
+
+    // Attach to the active power scheme
+    ret = PowerGetActiveScheme(NULL, &pGuidPwrActiveSheme);
+
+    // Set the timeout that will elapse before the display will dim
+    ret = PowerWriteDCValueIndex(NULL, pGuidPwrActiveSheme, &GuidPwrVideoIf, &GuidPwrDimTimeout, timeOut);
+
+    // Set the dimmed brightness level
+    PowerWriteDCValueIndex(NULL, pGuidPwrActiveSheme, &GuidPwrVideoIf, &GuidPwrDimBrightness, dimmedBrightness);
+
+    // Apply the new setings immediately
+    retVal = PowerSetActiveScheme(NULL, pGuidPwrActiveSheme);
+
+    // Go on with whatever you want to do...
+}

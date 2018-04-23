@@ -1,0 +1,27 @@
+# Sharpe ratio
+def pf_sharpe(weight, df):
+    ''' Function to calculate risk / reward ratio
+        based on a pandas dataframe with two return series
+    '''   
+    weights = [weight[0], 1-weight[0]]
+    # Calculate portfolio returns and volatility
+    pf_returns = (np.sum(df.mean() * weights) * 252)
+    pf_volatility = (np.sqrt(np.dot(np.asarray(weights).T, np.dot(df.cov() * 252, weights))))
+
+    # Calculate sharpe ratio
+    pf_sharpe = pf_returns / pf_volatility
+
+    return -pf_sharpe
+
+# initial guess
+x0 = [0.5]
+
+df_returns = returns(rows = 10, names = ['A1', 'A2'])
+
+# Optimization attempts
+
+out = minimize(pf_sharpe, x0, method='SLSQP', bounds=[(0, 1)], args=(df_returns,))
+
+optimal_weights = [out.x, 1-out.x]
+print(optimal_weights)
+print(-pf_sharpe(out.x, df_returns))

@@ -1,0 +1,22 @@
+val hostName = ""www.example.com""
+val portHttp = 8080
+val portHttps = 8443
+
+val route =
+  scheme(""http"") {
+    extract(_.request.uri) { uri =>
+      redirect( uri.withScheme(""https"").withAuthority(hostName, portHttps),
+        StatusCodes.MovedPermanently
+      )
+    }
+  } ~
+  pathSingleSlash {
+    get {
+      complete( HttpEntity( ContentTypes.`text/html(UTF-8)`,
+        ""Welcome to Akka-HTTP!""
+      ) )
+    }
+  }
+
+Http().bindAndHandle(route, hostName, portHttp)
+Http().bindAndHandle(route, hostName, portHttps, connectionContext = httpsContext)

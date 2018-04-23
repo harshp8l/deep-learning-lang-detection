@@ -1,0 +1,18 @@
+(defmacro explain-exprs
+  ""Produce string representations of the unevaluated expressions xs, concatenated
+  to arrows and string representations of the results of evaluating each
+  expression, including Exceptions should they arise.""
+  [& xs]
+  (into [] (map (fn [x]
+                  `(str ~(str x) "" ~~> ""
+                        (try ~x (catch Exception e# (str e#)))))
+                xs)))
+
+(clojure.pprint/pprint
+ (let [y 37]
+   (explain-exprs
+    (* 42 42)
+    (let [x 19] (* x y))
+    (let [y 19] (* y y))
+    (* y y)
+    (/ 6 0))))

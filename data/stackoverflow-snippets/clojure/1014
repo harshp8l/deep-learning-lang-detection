@@ -1,0 +1,24 @@
+      (^{PUT true
+             Path ""/{id}""
+             Produces [""application/json""]
+             Consumes [""application/json""]
+             ApiOperation {:value ""Update"" :notes """"}
+            }
+           method_name [this
+                           ^{PathParam ""id""} id
+                           body]
+           (require 'com.xx.x.xx.xx.xx-response)
+          (try+
+           (let [doc (json/read-json body)]
+             (if-let [valid-doc (validate doc)]
+                (->>
+                 (assoc valid-doc :modificationDate (Utilities/getCurrentDate))
+                 (couch/update-document dbs/xx-db)
+                 (core/ok-response))
+                ))
+
+           (catch java.io.IOException ex
+                    (log/error ""line num 197"")
+                 )
+                (catch java.lang.Exception ex
+                  (log/error ""line num 200""))))

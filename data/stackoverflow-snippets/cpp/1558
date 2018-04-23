@@ -1,0 +1,39 @@
+#include <boost/variant.hpp>
+#include <string>
+#include <vector>
+
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/member.hpp>
+
+namespace bmi = boost::multi_index;
+
+template <typename T>
+using StructFields = bmi::multi_index_container<T, bmi::indexed_by<
+        bmi::sequenced<>
+      , bmi::ordered_unique< bmi::member<T , std::string , &T::name> >
+  > >;
+
+struct Field {
+    std::string name;
+
+    struct Value : boost::variant<int, boost::recursive_wrapper<StructFields<Field> > > {
+        using base = boost::variant<int, boost::recursive_wrapper<StructFields<Field> > >;
+        using base::base;
+        using base::operator=;
+    };
+
+    Value value;
+};
+
+using FieldValue = Field::Value;
+
+int main()
+{
+    FieldValue  fv = 2;
+    StructFields<Field> sf;
+    sf.push_back(Field{""name"", 2});
+
+    fv = sf;
+}

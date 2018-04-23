@@ -1,0 +1,34 @@
+class Base
+ class << self
+   attr_accessor :delegate_my_method
+   def method_added(method_name)
+     if method_name.to_s == ""my_method"" && self.name != ""Base""
+       warn ""#{self.name}#my_method has been overwritten use delegate_my_method instead"" 
+     end
+   end
+ end
+ attr_accessor :foo       
+
+ def my_method
+   puts ""Before: #{foo}""
+    original_foo = foo
+    self.foo= 'CUSTOM FOO'
+    begin
+      method(self.class.delegate_my_method.to_s).()
+    rescue NameError, TypeError
+      warn ""(skipped) #{self.class} method delegation not defined
+    end
+    self.foo = original_foo
+    puts ""After: #{foo}""
+ end
+end
+
+class ChildA < Base
+  self.delegate_my_method = :delegation_method
+
+  def delegation_method
+    puts 'apple'
+    puts ""During: #{foo}""
+    puts 'aardvark'
+  end
+end 

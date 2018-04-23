@@ -1,0 +1,13 @@
+public function home(Request $request) 
+{
+     $surveys = Survey::where('user_id', Auth::user()->id)->orderBy('created_at','DESC')->first();
+     $invites = collect([]);
+     if($surveys){
+        $invites = Invite::where('user_id', \Auth::id())->get();
+     }
+     $respondent = $invites->where('survey_id', $surveys->id ?? 0)->count();
+     $answers = $invites->where('link_answered', 1)->where('survey_id', $surveys->id ?? 0)->count();
+     $yet_to_respond = $invites->where('link_clicked', 1)->where('survey_id', $surveys->id ?? 0)->count();
+     $no_response = $invites->where('link_clicked', 0)->where('survey_id', $surveys->id ?? 0)->count();
+     return view('home', compact('surveys','respondent','yet_to_respond','no_response','answers'));
+}

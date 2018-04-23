@@ -1,0 +1,26 @@
+DECLARE @name varchar(30)       
+DECLARE currentCursor  CURSOR for select Lastname from contact;
+OPEN  currentCursor
+FETCH NEXT FROM currentCursor INTO @name   
+
+WHILE @@FETCH_STATUS = 0 -- While the last fetch was successful
+BEGIN
+    DECLARE @Length int = 0;     
+    DECLARE @newName varchar(30) = '' -- reset new name
+    SELECT @Length = LEN(@name);  
+
+    WHILE @Length > 0
+    BEGIN
+        SET @newName = concat( @newName,  CHAR(CAST(27 * RAND() + 224 AS INT)) )
+        SET @Length = @Length -1;                                                           
+    END
+
+    UPDATE contact 
+    SET    LastName = @newName
+    WHERE  lastname = @name
+
+    -- Fetch the next row
+    FETCH NEXT FROM currentCursor INTO @name   
+END
+CLOSE currentCursor;
+DEALLOCATE currentCursor

@@ -1,0 +1,23 @@
+from utils import mongo_connect
+@celery_app.task
+def save_insight_task(account_location, uid, gid, locations_obj, aggregation):
+    # connect to mongodb
+    mongo_connect()
+    # do your db operations
+    try:
+        insights, reviews = google_service.store_location_resources(
+            gid, uid,
+            start_datetime, end_datetime,
+            account_location, aggregation
+        )
+    except StandardError as err:
+        from pprint import pprint
+        import traceback
+
+        pprint(err)
+        pprint(traceback.print_exc())
+
+    path = 'saved_locations/{}/accounts/{}'.format(gid, account_location)
+    location = [loc for loc in locations_obj if loc['name'] == 'accounts/' + account_location]
+    if len(location) > 0:
+        firebase_db.reference(path).update(location[0])

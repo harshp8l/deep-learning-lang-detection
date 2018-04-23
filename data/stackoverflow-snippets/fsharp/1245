@@ -1,0 +1,17 @@
+// Loop that keeps running forever until an exception happens
+let rec loop () = async {
+  do! Async.Sleep(1000)
+  printfn ""Working""
+  return! loop () }
+
+// Call the loop in a try .. finally block to run some cleanup code at the end
+let main () = async {
+  try 
+    do! loop () 
+  finally 
+    printfn ""That's it!"" }
+
+// Start the work in the background and create a cancellation token
+let cts = new System.Threading.CancellationTokenSource()
+Async.Start(main (), cts.Token)
+// To cancel it, just call: cts.Cancel()

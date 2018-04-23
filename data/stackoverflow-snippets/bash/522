@@ -1,0 +1,43 @@
+awk '#define function to add current FILENAME on the argument list
+     function reparse() {
+         ARGV[ARGC]=FILENAME
+         ARGC++
+     }
+     BEGIN{
+       FIELDWIDTHS=""8 8 16 8 8 12 4 6""
+       format=""%-8s%-8s%-16s%-8s%-8s%-12s%-4s%-6s%-4s\n""
+       start_record=1
+       buffer_size=3
+     }
+     # if new file, add it again to the argument list
+     (FNR==1) { reparse() }
+     # all odd numbered arguments/files are file2
+     (ARGIND%2 == 1) {
+         #this part executes only for file2
+
+         # at the start of file2, delete the buffer
+         # redefine the start_record
+         # check if we finished
+         if (FNR == 1)
+         { 
+             delete buffer
+             start_record = (ARGIND==1) ? 1 : start_record + buffer_size
+             if (last_record < start_record-1) exit
+         }
+
+         # check if this record needs to be read
+         if (FNR < start_record) { next }
+
+         # check if the buffer is full
+         if (FNR >= start_record + buffer_size ) { nextfile }
+
+         # compute buffer
+         key=$1$2$3$5; buffer[key]=$7; last_record=FNR
+         next
+     }
+
+     # everthing below this line is only working on file2
+     { key=$1$2$3$5}
+     (key in buffer) {
+            printf format,$1,$2,$3,$4,$5,$6,buffer[key],$8,$7
+     }' file2.txt file1.txt

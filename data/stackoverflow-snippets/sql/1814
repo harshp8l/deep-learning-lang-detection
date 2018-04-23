@@ -1,0 +1,32 @@
+#standardSQL
+WITH `project.dataset.table` AS (
+  SELECT 1 ID, 'submitted' EVENT, 10 VALUE, 1 SORT_KEY UNION ALL
+  SELECT 1, 'action', 20, 2 UNION ALL
+  SELECT 1, 'closed', 30, 3 UNION ALL
+  SELECT 1, 'action', 30, 4 UNION ALL
+  SELECT 2, 'submitted', 10, 1 UNION ALL 
+  SELECT 2, 'action', 10, 2 UNION ALL
+  SELECT 2, 'action', 10, 3 UNION ALL
+  SELECT 2, 'closed', 10, 4 UNION ALL
+  SELECT 2, 'action', 10, 5 UNION ALL
+  SELECT 3, 'action', 29, 1 UNION ALL
+  SELECT 3, 'submitted', 20, 2 UNION ALL
+  SELECT 3, 'action', 10, 3 UNION ALL
+  SELECT 3, 'closed', 10, 4 UNION ALL
+  SELECT 3, 'action', 10, 5 UNION ALL
+  SELECT 4, 'action', 10, 1 
+)
+SELECT id, SUM(VALUE) AS val
+FROM (
+  SELECT id, EVENT, VALUE, 
+    SUM(boundary) OVER(PARTITION BY ID ORDER BY SORT_KEY ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) grp
+  FROM (
+    SELECT *, 
+      COUNTIF(EVENT IN ('submitted', 'closed')) OVER(PARTITION BY ID, EVENT ORDER BY SORT_KEY) boundary
+    FROM `project.dataset.table` t
+  )
+)
+WHERE grp = 1
+OR (grp = 2 AND EVENT = 'closed')
+GROUP BY ID
+ORDER BY ID

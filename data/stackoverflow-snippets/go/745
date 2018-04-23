@@ -1,0 +1,50 @@
+package main
+
+import (
+    ""fmt""
+    ""log""
+    ""math/rand""
+    ""time""
+)
+
+func main() {
+    seed := time.Now().UnixNano() & 999999999
+    log.Print(""seed: "", seed)
+    r = rand.New(rand.NewSource(seed))
+    ordered := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19}
+
+    randomized := shufflePreventCollisionPeterSO(ordered)
+    log.Print(""Final Result"")
+    log.Print(""ordered: "", ordered)
+    log.Print(""random:  "", randomized)
+    if randomized == nil {
+        err := ""Shuffle Error!""
+        fmt.Print(err)
+        log.Fatal(err)
+    }
+}
+
+var r *rand.Rand
+
+func isNoCollision(a, b []int) bool {
+    if len(a) == len(b) {
+        for i, ai := range a {
+            if ai == b[i] {
+                return false
+            }
+        }
+        return true
+    }
+    return false
+}
+
+func shufflePreventCollisionPeterSO(ordered []int) []int {
+    const guard = 4 * 1024 // deterministic, finite time
+    for n := 1; n <= guard; n++ {
+        randomized := r.Perm(len(ordered))
+        if isNoCollision(ordered, randomized) {
+            return randomized
+        }
+    }
+    return nil
+}

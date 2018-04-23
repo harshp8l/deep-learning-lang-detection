@@ -1,0 +1,33 @@
+val first = vlist.map(_.select(""value""))
+first.map(_.show())
+var table = first
+for (i <- 0 to 3) {
+    table = table.map(_.withColumn(""vec_"" + i, $""value""(i)))
+}
+
+
+var inter = table.map(_.drop(""value""))
+inter.map(_.show())
+
+//var exprs = inter.map(_.columns.map(_ -> ""sum"").toMap)
+//inter.agg(exprs)
+
+**val tab = inter.map(_.groupBy().sum())
+tab.map(_.show())**
+
+
+first: Array[org.apache.spark.sql.DataFrame] = Array([value: array<double>], [value: array<double>])
+table: Array[org.apache.spark.sql.DataFrame] = Array([value: array<double>], [value: array<double>])
+inter: Array[org.apache.spark.sql.DataFrame] = Array([vec_0: double, vec_1: double ... 2 more fields], [vec_0: double, vec_1: double ... 2 more fields])
+tab: Array[org.apache.spark.sql.DataFrame] = Array([sum(vec_0): double, sum(vec_1): double ... 2 more fields], [sum(vec_0): double, sum(vec_1): double ... 2 more fields])
++------------------+------------------+------------------+------------------+
+|        sum(vec_0)|        sum(vec_1)|        sum(vec_2)|        sum(vec_3)|
++------------------+------------------+------------------+------------------+
+|2.5046410000000003|2.1487149999999997|1.0884870000000002|3.5877090000000003|
++------------------+------------------+------------------+------------------+
++------------------+------------------+----------+------------------+
+|        sum(vec_0)|        sum(vec_1)|sum(vec_2)|        sum(vec_3)|
++------------------+------------------+----------+------------------+
+|0.9558040000000001|0.9843780000000002|  0.545025|0.9979860000000002|
++------------------+------------------+----------+------------------+
+res325: Array[Unit] = Array((), ())

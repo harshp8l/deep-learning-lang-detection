@@ -1,0 +1,51 @@
+#nowarn ""3186""
+#r ""FsControl.dll""
+
+open FsControl.Operators
+
+// Example with Result 
+type public Result<'a,'b> = 
+    | Success of 'a 
+    | Error of 'b
+
+type public Result<'a,'b> with
+    static member Return v = Success v
+    static member Bind (v, f) = 
+        match v with
+        | Success s -> f s
+        | Error e -> Error e
+
+let rF a = if a > 0 then Success a else Error ""less than 0""
+let rG a = if a < 10 then Success a else Error ""greater than 9""
+
+let rFG = rF >=> rG
+// val rFG : (int -> Result<int,string>)
+
+rFG 0
+//val it : Result<int,string> = Error ""less than 0""
+rFG 1
+//val it : Result<int,string> = Success 1
+rFG 10
+//val it : Result<int,string> = Error ""greater than 9""
+rFG 9
+//val it : Result<int,string> = Success 9
+
+// So it works as expected for Result
+
+
+// Example with Option
+
+let oF a = if a > 0 then Some a else None
+// val oF : a:int -> int option
+
+let oG a = if a < 10 then Some a else None
+// val oG : a:int -> int option
+
+let oFG = oF >=> oG
+// val oFG : (int -> int option)
+
+oFG 0
+// val it : int option = None
+
+oFG 1
+// val it : int option = Some 1

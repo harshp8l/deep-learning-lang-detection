@@ -1,0 +1,52 @@
+import scala.collection.mutable.ListBuffer
+
+object example extends App {
+
+  case class Room(cant: Int, tipo: String) {
+    override def toString: String = "" "" + cant + """" + tipo
+  }
+
+  val tagAdults = "" adult(s) ""
+  val emptyAdult = Room(0, tagAdults)
+  val tagChildren = "" child(s) ""
+  val emptyChild = Room(0, tagChildren)
+
+  def perm(x: Room): Seq[List[Room]] = (1 to x.cant).map { i =>
+    val result = new ListBuffer[Room]()
+
+    var total = x.cant / i
+
+    while (total > 0) {
+      if ((result.map(_.cant).sum + i) <= x.cant) result += Room(i, x.tipo)
+      total -= 1
+    }
+
+    if (x.cant % i > 0) result += Room(x.cant % i, x.tipo)
+
+    result.toList
+  }
+
+  val adults = perm(Room(3, tagAdults))
+
+  val childrens = perm(Room(5, tagChildren))
+
+  val combinators = for {
+    x <- adults
+    y <- childrens.filter(_.length <= adults.map(_.length).max)
+  } yield x zipAll(y, emptyAdult, emptyChild)
+
+  val cleanAdultsBeginZero = combinators.filter(_.forall(_._1.cant > 0))
+
+
+  cleanAdultsBeginZero.sortBy(_.length).foreach { x =>
+    val tag = ""room(s)""
+
+    println(s""${x.length} $tag"")
+
+    x.groupBy { case (room1, room2) => room1.cant + room2.cant }.foreach { case (key, rooms) =>
+      println(rooms.length + "" "" + tag + "" of "" + key + "" people "" + rooms.head)
+    }
+
+    println()
+  }
+}

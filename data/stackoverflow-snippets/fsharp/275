@@ -1,0 +1,16 @@
+open System
+open System.IO
+open System.Threading
+open System.Threading.Tasks
+let filecopyasync (source, target) =
+    let task = Task.Run((fun () ->
+          printfn ""CopyThread: %d"" Thread.CurrentThread.ManagedThreadId; 
+          Thread.Sleep(10000);  
+          File.Copy(source, target, true); printfn ""copydone""))
+
+    printfn ""mainThread: %d"" Thread.CurrentThread.ManagedThreadId;
+    let result=Async.AwaitIAsyncResult task 
+    Thread.Sleep(3000)
+    printfn ""doing stuff""
+    Async.RunSynchronously result
+    printfn ""done""

@@ -1,0 +1,16 @@
+; Dr No is no match for James. He gives up trying to use guile...
+; Remove it using native Datomic.
+(spy :before (td/entity-map (live-db) [:person/name ""Dr No""]))
+(d/transact *conn*
+            [[:db/retract [:person/name ""Dr No""] :weapon/type :weapon/guile]])
+(is (= (spy :after (td/entity-map (live-db) [:person/name ""Dr No""])) ; LookupRef
+       {:person/name ""Dr No""
+        :location ""Caribbean""
+        :weapon/type #{:weapon/knife :weapon/gun}}))
+
+:before => {:person/name ""Dr No"",
+            :weapon/type #{:weapon/guile :weapon/knife :weapon/gun},
+            :location ""Caribbean""}
+:after  => {:person/name ""Dr No"",
+            :weapon/type #{:weapon/knife :weapon/gun},
+            :location ""Caribbean""}

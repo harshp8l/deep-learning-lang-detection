@@ -1,0 +1,18 @@
+select id,
+       max(case when seqnum = 1 then col end) as col1,
+       max(case when seqnum = 2 then col end) as col2,
+       max(case when seqnum = 3 then col end) as col3,
+       max(case when seqnum = 4 then col end) as col4,
+       max(case when seqnum = 5 then col end) as col5,
+       max(case when seqnum = 6 then col end) as col6
+from (select t.*, row_number() over (partition by id order by pos) as seqnum
+      from ((select id, col1 as col, 1 as pos from t) union all
+            (select id, col2 as col, 2 as pos from t) union all
+            (select id, col3 as col, 3 as pos from t) union all
+            (select id, col4 as col, 4 as pos from t) union all
+            (select id, col5 as col, 5 as pos from t) union all
+            (select id, col6 as col, 6 as pos from t) 
+           ) t
+      where col is not null
+     ) t
+group by id;

@@ -1,0 +1,12 @@
+__m128i bit_mask_SSSE3(unsigned int n){                   /* Create an __m128i vector with the n most significant bits set to 1   */
+    __m128i sat_const = _mm_set_epi8(247,239,231,223,   215,207,199,191,   183,175,167,159,   151,143,135,127);  /* Constant used in combination with saturating addition */
+    __m128i sub_const = _mm_set1_epi8(248);
+    __m128i pshub_lut = _mm_set_epi8(0,0,0,0,   0,0,0,0,   
+                          0b11111111, 0b11111110, 0b11111100, 0b11111000,
+                          0b11110000, 0b11100000, 0b11000000, 0b10000000);
+
+    __m128i shift_bc  = _mm_set1_epi8(n);                         /* Broadcast n to the 16 8-bit elements.                                */
+    __m128i shft_byte = _mm_adds_epu8(shift_bc,sat_const);        /* The constants sat_const and sub_const are selected such that         */
+    __m128i shuf_indx = _mm_sub_epi8(shft_byte,sub_const);        /* _mm_shuffle_epi8 can be used as a tiny lookup table                  */
+                return  _mm_shuffle_epi8(pshub_lut,shuf_indx);    /* which finds the right bit pattern at the right position.             */
+}

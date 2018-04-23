@@ -1,0 +1,26 @@
+foreach($Entry in $Importall)
+{
+   $expiry = Get-Date $i.'Certificate Expiration Date' 
+   $Entry | Add-Member -MemberType NoteProperty -Name Month -Value $expiry.Month
+   $Entry | Add-Member -MemberType NoteProperty -Name year -Value $expiry.Year
+
+
+    #cycle through array and search for matching cetificates
+    if(($Entry.Month -gt $nowm)){
+        if((($Entry.Month - $nowm) -le $Months) -and (($Entry.Year - $nowy) -eq '0')){
+            Write-Host 'Certificate ID:' $Entry.'Request ID' 'with Serial Number:' $Entry.'Serial Number' 'will expire in ' -NoNewline; Write-Host ($Entry.Month - $nowm) 'months!'-ForegroundColor Red            
+            Write-Host 'Email:' $Entry.'Issued Email Address'
+            Write-Host 'Please don`t forget to renew this certificate before expiration date: ' -NoNewline; Write-Host $Entry.'Certificate Expiration Date' -ForegroundColor Red ""`n""
+
+            $ToAddress = $Entry.'Issued Email Address'
+            $mailbody += '<p>'
+            $mailbody += 'Certificate ID: ' + $Entry.'Request ID' + ' with Serial Number: <span class=""crtsn"""">' + $Entry.'Serial Number' + '</span> will expire in <span class=""crtexp"">' + ($Entry.Month - $nowm) + ' months!</span>'+""<br />""
+            $mailbody += 'This certificate has Common Name: <span class=""crtcn"">' + $Entry.'Issued Common Name' + ""</span><br />""
+            $mailbody += $Entry.'Issued Email Address'
+            $mailbody += 'Please don`t forget to renew this certificate before expiration date: <span class=""crtexp"">' + $Entry.'Certificate Expiration Date'+""</span>""
+            $mailbody += '</p>'
+            $table += $Entry | Sort-Object 'Certificate Expiration Date' | Select-Object -Property 'Request ID','Serial Number','Requester Name','Certificate Expiration Date','Issued Common Name', 'Issued Email Address'
+            Write-Host $table
+        }
+    }
+}

@@ -1,0 +1,36 @@
+create trigger tr_check_qty
+ON orderdetails
+FOR UPDATE
+AS
+DECLARE @order_id int
+DECLARE @prod_id int
+select @order_id = orderid, @prod_id = productid
+FROM inserted
+IF(
+    select quantity
+    from orderdetails
+    where orderid = @order_id and productid = @prod_id
+)
+>= 
+(   
+    select UnitsInStock
+    from products
+    where productid = @prod_id
+)
+BEGIN
+ROLLBACK TRANSACTION
+PRINT 'Not enough units in stock.'
+END 
+GO
+
+/* Should prevent as units in stock are only '3' */
+UPDATE OrderDetails
+SET Quantity = 5
+WHERE OrderID = 10008
+  AND ProductID = 21
+
+/* Should allow as units in stock are '35' */
+UPDATE OrderDetails
+SET Quantity = 10
+WHERE OrderID = 10008
+  AND ProductID = 14

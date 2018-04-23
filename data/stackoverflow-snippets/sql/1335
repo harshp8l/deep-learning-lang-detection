@@ -1,0 +1,93 @@
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER PROCEDURE [dbo].[zsp_GetUsersAdministratorPanel]
+    (@StartRowIndex INT,
+     @MaxRows INT,
+     @OrderByField NVARCHAR(200),
+     @Asc BIT,
+     @SearchValue NVARCHAR(200) = NULL)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    declare @counter int = 0
+    DECLARE @UsersTable TABLE(UserId int,
+                              FirstName nvarchar(400),
+                              LastName nvarchar(400),
+                              Email nvarchar(200)
+                             )  
+
+    DECLARE @WhereQuery nvarchar(max)
+
+    SET @WhereQuery = ' WHERE '
+
+    IF LEN(@SearchValue) > 0
+        BEGIN
+                SET @WhereQuery = @WhereQuery +
+                  'FirstName like ''%' + @SearchValue + '%''  or '
+                + ' LastName like ''%' + @SearchValue + '%''  or '
+                + ' Email like ''%' + @SearchValue + '%'''
+        END
+    ELSE
+    BEGIN 
+    set @WhereQuery = ' '
+    END
+    DECLARE @OrderQuery nvarchar(max)
+
+    IF LEN(@OrderByField) > 0
+        BEGIN
+            IF @OrderByField = 'Email'
+                SET @OrderQuery = ' ORDER BY Email ' +
+                    CASE @Asc WHEN 1 
+                    THEN ' ASC ' ELSE ' DESC ' END
+            ELSE IF @OrderByField = 'FirstName'
+                SET @OrderQuery =
+                    ' ORDER BY FirstName ' +  
+                    CASE @Asc WHEN 1 
+                    THEN ' ASC ' ELSE ' DESC '  END
+            ELSE IF @OrderByField = 'LastName'  
+                SET @OrderQuery = ' ORDER BY LastName ' +  
+                    CASE @Asc WHEN 1 
+                    THEN ' ASC ' ELSE ' DESC '  END     
+
+        END 
+
+    DECLARE @Query  NVARCHAR(MAX)
+    SET @Query = 'select UserId, 
+                FirstName,
+                LastName,
+                Email,
+                @@ROWCOUNT as TotalRows
+            from 
+            (
+
+
+                SELECT  ROW_NUMBER() OVER ('+ @OrderQuery +')
+                    AS [ROW_NUMBER], 
+                        [t0].[UserId], [t0].[FirstName], 
+                        [t0].[LastName], 
+                        [t0].[Email]
+                        FROM [dbo].[Users] AS [t0]' +
+                        @WhereQuery +
+            ') AS [t1]' +
+                 + ' WHERE [ROW_NUMBER] BETWEEN 
+                    @StartRowIndex AND @MaxRows' + @OrderQuery
+
+    PRINT @Query
+
+    INSERT INTO @UsersTable EXEC sp_Executesql @Query,
+                    N'@OrderQuery nvarchar(max),
+                    @StartRowIndex int,@MaxRows int',
+                    @OrderQuery=@OrderQuery,
+                    @StartRowIndex = @StartRowIndex,
+                    @MaxRows = @MaxRows
+
+select @counter=@counter+@@rowcount
+select @counter
+
+    SELECT * FROM @UsersTable           
+
+    SET NOCOUNT OFF;
+END

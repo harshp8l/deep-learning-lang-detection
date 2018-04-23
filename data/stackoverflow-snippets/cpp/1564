@@ -1,0 +1,37 @@
+template <typename T>
+class node_base
+{
+public:
+    T member = sizeof(T);
+    node_base() {}
+
+    void do_the_thing(node_base& other) {
+        std::cout << other.member << std::endl;
+    }
+};
+
+template <typename ...Args>
+class node : public node_base<Args>...
+{
+public:
+    node() :node_base<Args>()...{}
+
+    template <class T>
+    void do_the_thing(node_base<T>& other) {
+        node_base<T>::do_the_thing(other);
+    }
+};
+
+int main()
+{
+    node<int> int_node;
+    node<double, int> double_node;
+
+    int_node.do_the_thing<int>(double_node);
+    double_node.do_the_thing(int_node);
+
+    double_node.do_the_thing<double>(double_node);
+    double_node.do_the_thing<int>(double_node);
+
+    return 0;
+}

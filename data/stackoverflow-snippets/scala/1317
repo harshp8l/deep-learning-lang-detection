@@ -1,0 +1,41 @@
+public static class SortFunction extends ProcessFunction<Event, Event> {
+  private ValueState<PriorityQueue<Event>> queueState = null;
+
+  @Override
+  public void open(Configuration config) {
+    ValueStateDescriptor<PriorityQueue<Event>> descriptor = new ValueStateDescriptor<>(
+        // state name
+        ""sorted-events"",
+        // type information of state
+        TypeInformation.of(new TypeHint<PriorityQueue<Event>>() {
+        }));
+    queueState = getRuntimeContext().getState(descriptor);
+  }
+
+  @Override
+  public void processElement(Event event, Context context, Collector<Event> out) throws Exception {
+    TimerService timerService = context.timerService();
+
+    if (context.timestamp() > timerService.currentWatermark()) {
+      PriorityQueue<Event> queue = queueState.value();
+      if (queue == null) {
+        queue = new PriorityQueue<>(10);
+      }
+      queue.add(event);
+      queueState.update(queue);
+      timerService.registerEventTimeTimer(event.timestamp);
+    }
+  }
+
+  @Override
+  public void onTimer(long timestamp, OnTimerContext context, Collector<Event> out) throws Exception {
+    PriorityQueue<Event> queue = queueState.value();
+    Long watermark = context.timerService().currentWatermark();
+    Event head = queue.peek();
+    while (head != null && head.timestamp <= watermark) {
+      out.collect(head);
+      queue.remove(head);
+      head = queue.peek();
+    }
+  }
+}

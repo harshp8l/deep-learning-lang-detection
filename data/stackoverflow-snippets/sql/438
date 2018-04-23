@@ -1,0 +1,52 @@
+Declare @S varchar(max) ='FriApr 13
+Light rain
+4°C
+1
+3°
+80%
+5-10 mm
+-
+16 km/h E
+1
+SatApr 14
+Mixed precipitation
+3°C
+-1
+-2°
+90%
+25-35 mm
+-
+26 km/h NE
+0
+SunApr 15
+Freezing rain
+2°C
+-4
+2°
+80%
+20-30 mm
+-
+37 km/h NE
+0
+'
+
+;with cte0 as (
+        Select RetSeq = Row_Number() over (Order By (Select null))
+              ,RetVal = LTrim(RTrim(B.i.value('(./text())[1]', 'varchar(max)')))
+        From  (Select x = Cast('<x>' + replace((Select replace(@S,char(13)+char(10),'§§Split§§') as [*] For XML Path('')),'§§Split§§','</x><x>')+'</x>' as xml).query('.')) as A 
+        Cross Apply x.nodes('x') AS B(i) ),
+      cte1 as ( Select *,Grp = max(case when right(RetSeq,1)='1' then RetSeq End) over (Order by RetSeq) from cte0 ),
+      cte2 as ( Select *,RN = Row_Number() over (Partition By Grp Order by RetSeq) From cte1 )
+Select [Date]    = max(case when RN=1  then RetVal end)
+      ,Condition = max(case when RN=2  then RetVal end)
+      ,H3        = max(case when RN=3  then RetVal end)
+      ,H4        = max(case when RN=4  then RetVal end)
+      ,H5        = max(case when RN=5  then RetVal end)
+      ,H6        = max(case when RN=6  then RetVal end)
+      ,H7        = max(case when RN=7  then RetVal end)
+      ,H8        = max(case when RN=8  then RetVal end)
+      ,H9        = max(case when RN=9  then RetVal end)
+      ,H10       = max(case when RN=10 then RetVal end)
+ From  cte2
+ Group By Grp
+ Having max(case when RN=1  then RetVal end) is not null

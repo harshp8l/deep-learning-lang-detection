@@ -1,0 +1,21 @@
+func writeSomething(data []byte, w *bufio.Writer) (err error) {
+  var pos, written int = 0
+
+  for pos != len(data) {
+    written, err = w.Write(data[pos:])
+    if err != nil {
+      if err == io.ErrShortWrite {
+        pos += written // Write was shot. Update pos and keep going
+        continue 
+      } else netErr, ok := err.(net.Error); ok && netErr.Temporary() {
+        continue // Temporary error, don't update pos so it will try writing again
+      } else {
+        break // Unrecoverable error, bail
+      }
+    } else {
+      pos += written
+    }
+  }
+
+  return nil
+}

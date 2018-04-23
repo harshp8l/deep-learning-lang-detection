@@ -1,0 +1,19 @@
+class CassandraRepository[I, M](...) extends Repository[I, M] {
+  // calls conditions and fromRow 
+  def getOneById(id: I): Option[M] = ...
+
+  // abstract methods which will be implemented differently depending on I and M
+  def conditions(id: I): List[Clause]
+  def fromRow(row: Row): M 
+}
+
+case class UserKey(bucketId: Int, email: String)
+
+object CassandraUserRepository extends CassandraRepository[UserKey, User](...) {
+  // note that here you don't use I and M, but concrete types
+  def conditions(id: UserKey) = List(
+    QueryBuilder.eq(""bucketId"", id.bucketId), 
+    QueryBuilder.eq(""email"", id.email)
+  )
+  def fromRow(row: Row): User = ...
+}

@@ -1,0 +1,63 @@
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import scipy.interpolate
+    import scipy.stats
+
+    def setGridLine(ax):
+        #http://jonathansoma.com/lede/data-studio/matplotlib/adding-grid-lines-to-a-matplotlib-chart/
+        ax.set_axisbelow(True)
+        ax.minorticks_on()
+        ax.grid(which='major', linestyle='-', linewidth=0.5, color='grey')
+        ax.grid(which='minor', linestyle=':', linewidth=0.5, color='#a6a6a6')
+        ax.tick_params(which='both', # Options for both major and minor ticks
+                        top=False, # turn off top ticks
+                        left=False, # turn off left ticks
+                        right=False,  # turn off right ticks
+                        bottom=False) # turn off bottom ticks
+
+    data1 = np.random.normal(0,1,1000000)
+    x=np.sort(data1)
+    y=np.arange(x.shape[0])/(x.shape[0]+1)
+
+    f2 = scipy.interpolate.interp1d(x, y,kind='linear')
+    x2 = np.linspace(x[0],x[-1],1001)
+    y2 = f2(x2)
+
+    y2b = np.diff(y2)/np.diff(x2)
+    x2b=(x2[1:]+x2[:-1])/2.
+
+    f3 = scipy.interpolate.interp1d(x, y,kind='cubic')
+    x3 = np.linspace(x[0],x[-1],1001)
+    y3 = f3(x3)
+
+    y3b = np.diff(y3)/np.diff(x3)
+    x3b=(x3[1:]+x3[:-1])/2.
+
+    bins=np.arange(-4,4,0.1)
+    bins_centers=0.5*(bins[1:]+bins[:-1])
+    cdf = scipy.stats.norm.cdf(bins_centers)
+    pdf = scipy.stats.norm.pdf(bins_centers)
+
+    plt.rcParams[""font.size""] = 18
+    fig, ax = plt.subplots(3,1,figsize=(10,16))
+    ax[0].set_title(""cdf"")
+    ax[0].plot(x,y,label=""data"")
+    ax[0].plot(x2,y2,label=""linear"")
+    ax[0].plot(x3,y3,label=""cubic"")
+    ax[0].plot(bins_centers,cdf,label=""ans"")
+
+    ax[1].set_title(""pdf:linear"")
+    ax[1].plot(x2b,y2b,label=""linear"")
+    ax[1].plot(bins_centers,pdf,label=""ans"")
+
+    ax[2].set_title(""pdf:cubic"")
+    ax[2].plot(x3b,y3b,label=""cubic"")
+    ax[2].plot(bins_centers,pdf,label=""ans"")
+
+    for idx in range(3):
+        ax[idx].legend()
+        setGridLine(ax[idx])
+
+    plt.show()
+    plt.clf()
+    plt.close()

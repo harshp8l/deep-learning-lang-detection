@@ -1,0 +1,46 @@
+template<class T, std::size_t N>
+struct vecarray : std::array<T,N> {
+  static_assert( std::is_arithmetic< T >::value );
+  using std::array<T,N>::array;
+  vecarray& operator+=( std::array<T,N> const& rhs )& {
+    for (auto& x:*this) {
+      x += rhs[ std::addressof(x)- this->data() ];
+    }
+    return *this;
+  }
+  vecarray& operator-=( std::array<T,N> const& rhs )& {
+    for (auto& x:*this) {
+      x -= rhs[ std::addressof(x)- this->data() ];
+    }
+    return *this;
+  }
+  vecarray& operator*=( std::array<T,N> const& rhs )& {
+    for (auto& x:*this) {
+      x *= rhs[ std::addressof(x)- this->data() ];
+    }
+    return *this;
+  }
+  vecarray& operator/=( std::array<T,N> const& rhs )& {
+    for (auto& x:*this) {
+      x /= rhs[ std::addressof(x)- this->data() ];
+    }
+    return *this;
+  }
+
+  friend vecarray operator+( vecarray lhs, std::array<T, N> const& rhs ) {
+    lhs += rhs;
+    return lhs;
+  }
+  friend vecarray operator-( vecarray lhs, std::array<T, N> const& rhs ) {
+    lhs -= rhs;
+    return lhs;
+  }
+  friend vecarray operator*( vecarray lhs, std::array<T, N> const& rhs ) {
+    lhs *= rhs;
+    return lhs;
+  }
+  friend vecarray operator/( vecarray lhs, std::array<T, N> const& rhs ) {
+    lhs /= rhs;
+    return lhs;
+  }
+};

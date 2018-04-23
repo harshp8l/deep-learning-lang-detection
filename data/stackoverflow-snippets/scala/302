@@ -1,0 +1,19 @@
+package com.example
+
+import com.google.inject.AbstractModule
+import com.google.inject.multibindings.Multibinder
+import org.reflections.Reflections
+
+
+class MyModule extends AbstractModule {
+  override def configure(): Unit = {
+    import scala.collection.JavaConverters._
+    val r = new Reflections(""com.example.builders"")
+    val subtypes = r.getSubTypesOf(classOf[Builder])
+
+    val executorBinder = Multibinder.newSetBinder(binder(), classOf[Builder])
+    subtypes.asScala.foreach {clazz =>
+      executorBinder.addBinding().to(clazz)
+    }
+  }
+}

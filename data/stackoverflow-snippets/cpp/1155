@@ -1,0 +1,46 @@
+QScriptValue ScriptListToScriptValue(QScriptEngine* engine, const ScriptList& list)
+{
+    QScriptValue obj = engine->newArray(list.size());
+    for ( int i = 0; i < list.size(); i++ ) {
+        obj.setProperty(i, MapToScriptValue(engine, list[i]));
+    }
+
+    return obj;
+}
+
+void ScriptListFromScriptValue(const QScriptValue &obj, ScriptList& list)
+{
+    list.clear();
+    QScriptValueIterator itr(obj);
+    while ( itr.hasNext() ) {
+        itr.next();
+        if ( itr.flags() & QScriptValue::SkipInEnumeration)
+            continue;
+        QMap<QString, QString> map;
+        MapFromScriptValue(itr.value(), map);
+        list.append(map);
+    }
+
+}
+
+QScriptValue MapToScriptValue(QScriptEngine *engine, const QMap<QString, QString>& map)
+{
+    QScriptValue obj = engine->newObject();
+    StringMap::const_iterator it(map.begin());
+    for (; it != map.end(); ++it)
+    {
+        obj.setProperty(it.key(), qScriptValueFromValue(engine,it.value()));
+    }
+    return obj;
+}
+
+
+void MapFromScriptValue(const QScriptValue &obj, QMap<QString, QString>& map)
+{
+    QScriptValueIterator itr(obj);
+    while(itr.hasNext())
+    {
+        itr.next();
+        map.operator [](itr.name().toUtf8()) = qscriptvalue_cast<ScriptMap::mapped_type>(itr.value());
+    }
+}

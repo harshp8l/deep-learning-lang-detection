@@ -1,0 +1,18 @@
+CREATE FUNCTION [dbo].[tvf-EAV](@XML xml)
+Returns Table 
+As
+Return (
+    with cteKey(k) as (
+         Select Top 1 xA.value('local-name(.)','varchar(100)') 
+          From  @XML.nodes('/row')       A(xR) 
+          Cross Apply A.xR.nodes('./@*') B(xA)
+    )    
+    Select Entity    = xR.value('@*[1]'        ,'varchar(100)')
+          ,Attribute = xA.value('local-name(.)','varchar(100)')
+          ,Value     = xA.value('.'            ,'varchar(max)') 
+     From  @XML.nodes('/row') A(xR)
+     Cross Apply A.xR.nodes('./@*') B(xA)
+     Where xA.value('local-name(.)','varchar(100)') Not In (Select k From cteKey)
+)
+-- Notes:  First Field in Query will be the Entity
+-- Select * From [dbo].[tvf-EAV]((Select MyEntity=GetUTCDate(),* From sys.dm_os_sys_info for XML RAW))

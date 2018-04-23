@@ -1,0 +1,55 @@
+type Lens<'r,'a> = getter:('r -> 'a) * setter:('a -> 'r -> 'r)
+
+let equipHelmet newHelm equipment =
+    { equipment with Helmet = Some newHelm }
+let getOldHelmet equipment = equipment.Helmet
+// Convention for lenses is to give them a name that ends with one underscore
+let Helmet_ = (getOldHelmet,equipHelmet)
+// Now Helmet_ has type Lens<CharacterProtection,Equipment>
+
+let equipGloves newGloves equipment =
+    { equipment with Hands = Some newGloves }
+let getOldGloves equipment = equipment.Hands
+let Gloves_ = (getOldGloves,equipGloves)
+// Gloves_ also has type Lens<CharacterProtection,Equipment>
+
+let equipBoots newBoots equipment =
+    { equipment with Boots = Some newBoots }
+let getOldBoots equipment = equipment.Boots
+let Boots_ = (getOldBoots,equipBoots)
+// Boots_ also has type Lens<CharacterProtection,Equipment>
+
+let equipWeapon newWeapon equipment =
+    { equipment with Weapon = Some newWeapon }
+let getOldWeapon equipment = equipment.Weapon
+let Weapon_ = (getOldWeapon,equipWeapon)
+// Weapon_ has a different type: Lens<Weaponry,Equipment>
+
+// And so on for getOldLoot1,equipLoot1, and so on
+
+let equipWithLens itemLens newItem equipment =
+    let oldItem = equipment |> itemLens.getter
+    let newEquipment = equipment |> itemLens.setter newItem
+    match oldItem with
+    | None -> (None,newEquipment)
+    | Some _ ->
+        if playerWantsToAutoEquip newItem then
+            (oldItem,newEquipment)
+        else
+            (newItem,equipment)
+
+let equipPurchasedProtection newItem (inventory,equipment) =
+    let lens =
+        match newItem with
+        | Protection Helmet -> Helmet_
+        | Protection Gloves -> Gloves_
+        | Protection Boots  -> Boots_
+        | Weapon -> Weapon_
+        | Consumable HealthPotion -> Loot1_
+        | Consumable ManaPotion   -> Loot2_
+    let itemForInventory,newEquipment = equipWithLens lens newItem equipment
+    match itemForInventory with
+    | None -> (inventory,newEquipment)
+    | Some item ->
+        let newInventory = inventory |> addToInventory item
+        (newInventory,newEquipment)

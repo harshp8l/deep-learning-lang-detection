@@ -1,0 +1,19 @@
+(defn Bron-Kerbosch
+  [r p x graph cliques]
+  (if (every? empty? [p x])
+    (conj cliques r)
+    (reduce (fn [[cliques p x] v]
+              (let [neigh (neighV graph v)]
+                [(conj cliques
+                       ;; do we need to propagate updates to p and x
+                       ;; from this call back up to this scope?
+                       (Bron-Kerbosch (conj r v)
+                                      (disj p neigh)
+                                      (disj x neigh)
+                                      graph
+                                      cliques))
+                 ;; here we pass on the new values for p and x
+                 (disj p v)
+                 (conj x v)]))
+            [cliques p x]
+            (range (count p)))))

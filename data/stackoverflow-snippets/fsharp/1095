@@ -1,0 +1,52 @@
+open FParsec
+
+type Value = 
+  | Integer of int
+  | String  of string
+
+type ValueParser = Parser<Value, unit>
+
+let parseIntValue : Parser<Value, unit> =
+  pint32 |>> Integer
+
+let parseStringValue : Parser<Value, unit> =
+  between
+    (skipChar '\'')
+    (skipChar '\'')
+    (manySatisfy (fun c -> c <> '\''))
+    <?> ""string""
+    |>> String
+
+let parseValueParser : Parser<ValueParser, unit> =
+  choice 
+    [
+      skipString ""int""  >>% parseIntValue
+      skipString ""str""  >>% parseStringValue
+    ]
+
+let parseValueParsers : Parser<ValueParser list, unit> =
+    sepBy1
+      parseValueParser
+      (skipChar ',')
+
+// Runs a list of parsers 'ps' separated by 'sep' parser
+let sepByList (ps : Parser<'T, unit> list) (sep : Parser<unit, unit>) : Parser<'T list, unit> =
+  let rec loop adjust ps =
+    match ps with
+    | []    -> preturn []
+    | h::t  ->
+      adjust h >>= fun v -> loop (fun pp -> sep >>. pp) t >>= fun vs -> preturn (v::vs)
+  loop id ps
+
+let parseLine : Parser<Value list, unit> =
+  parseValueParsers .>> skipChar ':' >>= (fun vps -> sepByList vps (skipChar ',')) .>> eof
+
+[<EntryPoint>]
+let main argv = 
+    let s = ""int,str,int:4,'hello',3""
+
+    let r = run parseLine s
+
+    printfn ""%A"" r
+
+    0

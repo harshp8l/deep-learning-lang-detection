@@ -1,0 +1,39 @@
+$JobHistory = invoke-command -ComputerName $ServerName -ScriptBlock { import-module BEMCLI; Get-BEJobHistory -FromStartTime (get-date).AddDays(-1) }
+
+$SqlCmd = New-Object System.Data.SqlClient.SqlCommand
+$SqlConnection = New-Object System.Data.SqlClient.SqlConnection
+$SqlConnection.ConnectionString = ""Server = $SQLServer; Database = $SQLDBName; Integrated Security = True;""
+$SqlCmd.Connection = $SqlConnection
+$SqlConnection.Open()
+
+for($i=0; $i -lt $JobHistory.Length; $i++){
+
+$SqlCmd.Parameters.Clear()
+
+$SqlCmd.Parameters.AddWithValue(""@Nr"", $JobHistory[$i].Nr)
+$SqlCmd.Parameters.AddWithValue(""@Name"",$JobHistory[$i].Name)
+$SqlCmd.Parameters.AddWithValue(""@ID"", $JobHistory[$i].ID)
+$SqlCmd.Parameters.AddWithValue(""@JobName"", $JobHistory[$i].JobName)
+$SqlCmd.Parameters.AddWithValue(""@JobStatus"", $JobHistory[$i].JobStatus)
+$SqlCmd.Parameters.AddWithValue(""@Job"", $JobHistory[$i].Job)
+$SqlCmd.Parameters.AddWithValue(""@JobId"", $JobHistory[$i].JobId)
+$SqlCmd.Parameters.AddWithValue(""@JobType"", $JobHistory[$i].JobType)
+$SqlCmd.Parameters.AddWithValue(""@StartTime"", $JobHistory[$i].StartTime)
+$SqlCmd.Parameters.AddWithValue(""@ElapsedTime"", $JobHistory[$i].ElapsedTime)
+$SqlCmd.Parameters.AddWithValue(""@EndTime"", $JobHistory[$i].EndTime)
+$SqlCmd.Parameters.AddWithValue(""@PercentComplete"", $JobHistory[$i].PercentComplete)
+$SqlCmd.Parameters.AddWithValue(""@BackupExecServerName"", $JobHistory[$i].BackupExecServerName)
+$SqlCmd.Parameters.AddWithValue(""@JobLogFilePath"", $JobHistory[$i].JobLogFilePath)
+$SqlCmd.Parameters.AddWithValue(""@DeduplicationRatio"", $JobHistory[$i].DeduplicationRatio)
+$SqlCmd.Parameters.AddWithValue(""@JobRateMBPerMinute"", $JobHistory[$i].JobRateMBPerMinute) 
+$SqlCmd.Parameters.AddWithValue(""@StorageName"", $JobHistory[$i].StorageName)
+$SqlCmd.Parameters.AddWithValue(""@TotalDataSizeBytes"", $JobHistory[$i].TotalDataSizeBytes)            
+$SqlCmd.Parameters.AddWithValue(""@ErrorCode"", $JobHistory[$i].ErrorCode)
+$SqlCmd.Parameters.AddWithValue(""@ErrorCategory"", $JobHistory[$i].ErrorCategory)
+$SqlCmd.Parameters.AddWithValue(""@ErrorCategoryType"", $JobHistory[$i].ErrorCategoryType)
+$SqlCmd.Parameters.AddWithValue(""@ErrorMessage"", $ValueForJobHistory[$i].ErrorMessage)
+$SqlQuery = ""Insert into JobHistory(Nr,Name,ID,JobName,JobStatus,Job,JobId,JobType,StartTime,ElapsedTime,EndTime,PercentComplete,BackupExecServerName,JobLogFilePath,DeduplicationRatio,JobRateMBPerMinute,StorageName,TotalDataSizeBytes,ErrorCode,ErrorCategory,ErrorCategoryType) Values(@Nr,@Name,@ID,@JobName,@JobStatus,@Job,@JobId,@JobType,@StartTime,@ElapsedTime,@EndTime,@PercentComplete,@BackupExecServerName,@JobLogFilePath,@DeduplicationRatio,@JobRateMBPerMinute,@StorageName,@TotalDataSizeBytes,@ErrorCode,@ErrorCategoryType,@ErrorCategory)""
+
+$SqlCmd.CommandText = $SqlQuery
+$SqlCmd.executenonquery()
+}

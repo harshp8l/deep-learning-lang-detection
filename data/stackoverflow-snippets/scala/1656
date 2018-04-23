@@ -1,0 +1,19 @@
+class ExternalAPIActor(apiClient: HttpClient) extends Actor with WaitingForExternalServiceReceive[InputEvent,OutputEvent] {
+        import ExternalAPIActor._
+
+        def receive: Receive = {
+            case msg @ CreateUser(data) =>
+                context.become(waitingForExternalServiceReceive(msg))
+                apiClient.post(data)
+                    .map(_ => UserCreatedInAPI())
+                    .pipeTo(self)
+        }
+}
+
+object ExternalAPIActor {
+    sealed trait InputEvent
+    sealed trait OutputEvent
+
+    final case class CreateUser(data: Map[String,Any]) extends InputEvent
+    final case class UserCreatedInAPI() extends OutputEvent
+}

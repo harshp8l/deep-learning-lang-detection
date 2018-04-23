@@ -1,0 +1,33 @@
+/// The resulting type, or DSL
+type MyData =
+    | IntValue of int
+    | FloatValue of float
+    | Error  // special case for all parse failures
+
+// Then, let's define individual parsers:
+let pMyInt =
+    pint32
+    |>> IntValue
+
+// this is an alternative version of float parser.
+// it ensures that the value has non-zero fractional part.
+// caveat: the naive approach would treat values like 42.0 as integer
+let pMyFloat =
+    pfloat
+    >>= (fun x -> if x % 1 = 0 then fail ""Not a float"" else preturn (FloatValue x))
+let pError =
+    // this parser must consume some input,
+    // otherwise combined with `many` it would hang in a dead loop
+    skipAnyChar
+    >>. preturn Error
+
+ // Now, the combined parser:
+let pCombined =
+    [ pMyFloat; pMyInt; pError ]    // note, future parsers will be added here;
+                                    // mind the order as float supersedes the int,
+                                    // and Error must be the last
+    |> List.map (fun p -> p .>> ws) // I'm too lazy to add whitespase skipping
+                                    // into each individual parser
+    |> List.map attempt             // each parser is optional
+    |> choice                       // on each iteration, one of the parsers must succeed
+    |> many                         // a loop

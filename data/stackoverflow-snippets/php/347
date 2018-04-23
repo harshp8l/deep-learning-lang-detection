@@ -1,0 +1,74 @@
+private class UploadFileTask : AsyncTask<Void, Void, Void>() {
+    override fun doInBackground(vararg params: Void): Void? {
+        var con: HttpURLConnection? = null
+        try {
+            Log.i(""POST"", ""Start POST"")
+            con = POST_URL.openConnection() as HttpURLConnection
+            con.connectTimeout = 30 * 1000
+            con.setRequestProperty(""Accept-Charset"", ""UTF-8"")
+            con.setRequestProperty(""ENCTYPE"", ""multipart/form-data"")
+            con.setRequestProperty(""Connection"", ""Keep-Alive"")
+            con.setRequestProperty(""Cache-Control"", ""no-cache"")
+            con.setRequestProperty(""Content-Type"", ""multipart/form-data; boundary=$boundary"")
+            con.requestMethod = ""POST""
+            con.instanceFollowRedirects = false
+            con.doInput = true
+            con.doOutput = true
+            val wavFile = File(wavPath)
+            Log.i(""POST"", ""exec post"")
+
+            con.connect()
+
+            try {
+                Log.i(""POST"", ""Now writing to stream..."")
+                val outputStream = DataOutputStream(con.outputStream)
+                outputStream.writeBytes(twoHyphens + boundary + lineEnd)
+                outputStream.writeBytes(""Content-Disposition: form-data; name=\""post\""; filename=\""${wavFile.name}\""$lineEnd"")
+                outputStream.writeBytes(""Content-Type: application/octet-stream$lineEnd"")
+                outputStream.writeBytes(""Content-Transfer-Encoding: binary$lineEnd"")
+                outputStream.writeBytes(lineEnd)
+                val inputStream = FileInputStream(wavFile)
+                inputStream.copyTo(outputStream)
+                outputStream.writeBytes(lineEnd)
+                outputStream.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd)
+                outputStream.flush()
+                outputStream.close()
+
+            } catch (e: Exception) {
+                Log.e(""POST"", ""Exception occurred!"")
+            }
+            val status = con.responseCode
+            Log.i(""STATUS"", Integer.toString(status))
+
+            when (status) {
+                HttpURLConnection.HTTP_OK -> {
+                    val inputStream = con.inputStream
+                    val reader = BufferedReader(InputStreamReader(inputStream))
+                    var httpSource = """"
+                    var str = reader.readLine()
+                    while (str != null) {
+                        httpSource += str
+                        str = reader.readLine()
+                    }
+                    Log.i(""HTTPSOURCE"", ""source:$httpSource"")
+                    inputStream.close()
+                }
+                HttpURLConnection.HTTP_UNAUTHORIZED -> {
+                    Log.e(""POST"", ""UNAUTHORIZED"")
+                }
+                else -> {
+                    Log.i(""POST"", ""CODE IS "" + Integer.toString(status))
+                }
+
+            }
+
+            con.disconnect()
+
+        } catch (e: InterruptedException) {
+            Log.e(""UPLOADER"", ""aborting."")
+        } finally {
+            con?.disconnect()
+        }
+        return null
+    }
+}

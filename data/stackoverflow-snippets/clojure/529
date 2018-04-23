@@ -1,0 +1,23 @@
+(ns example.core
+  (:require [cljs.core.async :refer [chan take! put! pipeline-async] 
+                             :as async]))
+
+(defn load-resources [urls on-resources]
+  (let [urls-ch (chan (count urls))
+        resources-ch (chan)]
+    ;; Create pipeline:
+    (pipeline-async 10 ;; have at most 10 requests in flight at
+                       ;; the same time, finetune as desired
+                    resources-ch 
+                    (fn [url done-ch]
+                      ;; Pseudo code:
+                      (request-resource 
+                       url
+                       (fn [loaded-resource]
+                         (put! done-ch loaded-resource))))
+                    urls-ch)
+    ;; Eagerly aggregate result until results-ch closes, then call back:
+    (take! (async/into [] resources-ch) on-resources)
+    ;; Start the party by putting all urls onto urls-ch 
+    ;; and then close it:
+    (async/onto-chan urls-ch urls)))

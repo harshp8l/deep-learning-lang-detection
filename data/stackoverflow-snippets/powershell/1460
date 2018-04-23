@@ -1,0 +1,17 @@
+import-csv ""C:\temp\test.csv"" | 
+    select *, @{N=""Date"";E={[DateTime]$_.Date}} -ExcludeProperty ""Date"" |
+               group devicename | 
+                %{
+                    if (($_.Group | where Date -le (Get-Date).AddDays(-30)).Count -eq 0)
+                    {
+                       $LastUpdate=$_.Group | sort Date, kb -Descending | select -First 1
+                        [pscustomobject]@{
+                        DeviceName=$LastUpdate.DeviceName
+                        DateLastUpdate=$LastUpdate.Date
+                        LastUpdate=$LastUpdate.Kb
+                        UpdateList=$_.Group.Kb -join ', '
+                        Group=$_.Group
+                        } 
+                    }
+
+                }

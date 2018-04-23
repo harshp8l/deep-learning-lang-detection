@@ -1,0 +1,35 @@
+import lxml
+from lxml import etree
+
+def text_content(elt):
+    return ' '.join([t.strip() for t in elt.itertext()])
+
+def extract_data(xmlfile):
+    item = None
+
+    for event, elt in etree.iterparse(xmlfile, events=['start', 'end']):
+        if elt.tag == 'member':
+            if event == 'start':
+                item = {}
+            else:
+                item['name'] = elt.attrib['name']
+                yield item
+                item = None
+
+        if item == None:
+            continue
+
+        if event == 'end':
+            if elt.tag in ('summary', 'returns'):
+                item[elt.tag] = text_content(elt)
+                continue
+
+            if elt.tag == 'param':
+                item['@' + elt.attrib['name']] = text_content(elt)
+                continue
+
+
+testfile = r'C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5.1\System.IO.xml'
+
+for item in extract_data(testfile):
+    print(item)

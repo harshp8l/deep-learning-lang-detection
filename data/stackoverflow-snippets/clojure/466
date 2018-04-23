@@ -1,0 +1,11 @@
+    (defmethod parsing/read :app/tables
+      [{:keys [state parser] :as env} k _]
+      (let [ts                (get @state k)
+            merge-table-data' (fn [{:keys [data-key] :as t}]
+                                (assoc t :table/data
+                                      (->> data-key
+                                           vector
+                                           (parser env)
+                                           vals
+                                           flatten)))]
+        {:value (map merge-table-data' ts)}))

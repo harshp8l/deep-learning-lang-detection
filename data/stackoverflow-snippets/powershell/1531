@@ -1,0 +1,26 @@
+function Measure-Latest {
+    BEGIN { 
+        $latest = $null 
+    }
+    PROCESS {
+        if (($_ -ne $null) -and (($latest -eq $null) -or ($_ -gt $latest))) {
+            $latest = $_ 
+        }
+    }
+    END {
+        $latest
+    }
+} 
+
+$Software = Get-WmiObject -Class win32_softwarefeature | Select Caption,LastUse
+$ComputerName = $env:COMPUTERNAME
+$LastRun = $(foreach ($item in $Software) {
+    $Name = $Item.Caption
+    $LastUsedString = $Item.Lastuse.Substring(0,8)
+    $LastUsed = [int]$LastUsedString
+    if ($Name -like 'Microsoft Office*' -or $Name -like 'Microsoft Outlook') { 
+        $LastUsed
+    }   
+}) | Measure-Latest
+
+""$ComputerName : $LastRun""

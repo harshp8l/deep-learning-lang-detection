@@ -1,0 +1,16 @@
+(ns your-app.threadpool
+  (:require [clojure.core.async.impl.protocols :as protocols]
+            [clojure.core.async.impl.concurrent :as conc]
+            [clojure.core.async.impl.exec.threadpool :as tp])
+  (:import java.util.concurrent.Executors))
+
+(defonce my-executor
+  (let [executor-svc (Executors/newFixedThreadPool
+                      1
+                      (conc/counted-thread-factory ""async-dispatch-%d"" true))]
+    (reify protocols/Executor
+       (protocols/exec [this r]
+         (.execute executor-svc ^Runnable r)))))
+
+(alter-var-root #'clojure.core.async.impl.dispatch/executor
+                (constantly (delay my-executor)))

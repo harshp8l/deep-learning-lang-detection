@@ -1,0 +1,32 @@
+(defmacro take-all! [c]
+  `(loop [acc# []]
+     (let [[v# ~c] (alts! [~c] :default nil)]
+       (if (not= ~c :default)
+         (recur (conj acc# v#))
+         acc#))))
+
+
+(defn eager-actor [f]
+  (let [msgbox (chan 1024)]
+    (go (loop [f f]
+          (let [first-msg (<! msgbox) ; do this so we park efficiently, and only
+                                      ; run when there are actually messages
+                msgs      (take-all! msgbox)
+                msgs      (concat [first-msg] msgs)]
+            (recur (f msgs)))))
+    msgbox))
+
+
+(let [a (eager-actor (fn f [ms]
+                       (Thread/sleep 1000) ; simulate work
+                       (println ""doing something with"" ms)
+                       f))]
+  (doseq [i (range 20)]
+    (Thread/sleep 300)
+    (put! a i)))
+;; =>
+;; doing something with (0)
+;; doing something with (1 2 3)
+;; doing something with (4 5 6)
+;; doing something with (7 8 9 10)
+;; doing something with (11 12 13)

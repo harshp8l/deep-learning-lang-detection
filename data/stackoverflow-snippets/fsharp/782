@@ -1,0 +1,58 @@
+open Microsoft.FSharp.Reflection
+
+type Health =
+    | Healed of int
+    | Damaged  of int
+    | Died 
+    | Revived 
+
+let GetUnionCaseInfo (x:'a) = 
+    match FSharpValue.GetUnionFields(x, typeof<'a>) with
+    | case, [||] -> (case.Name, null )
+    | case, value -> (case.Name, value.[0] )
+
+
+let health = Event<Health>()
+let pub    = health.Publish
+
+let only msg pub = pub |> Observable.choose (function
+    | x when x = msg -> Some(snd (GetUnionCaseInfo(x)))
+    | x when fst (GetUnionCaseInfo(x)) = fst (GetUnionCaseInfo(msg)) 
+                    -> Some(snd (GetUnionCaseInfo(x)))
+    | _              -> None
+)
+
+let healed  = pub |> only (Healed 0)
+let damaged = pub |> only (Damaged 0)
+let died    = pub |> only Died
+let revived = pub |> only Revived
+
+[<EntryPoint>]
+let main argv = 
+    let healing = Healed 50
+    let damage = Damaged 100
+    let die = Died
+    let revive = Revived
+
+    healed.Add (fun i ->
+            printfn ""We healed for %A."" i)
+
+    damaged.Add (fun i ->
+            printfn ""We took %A damage."" i)
+
+    died.Add (fun i ->
+            printfn ""We died."")
+
+    revived.Add (fun i ->
+            printfn ""We revived."")
+
+    health.Trigger(damage)
+    //We took 100 damage.
+    health.Trigger(die)
+    //We died.
+    health.Trigger(healing)
+    //We healed for 50.    
+    health.Trigger(revive)
+    //We revived.
+
+    0 // return an integer exit code

@@ -1,0 +1,16 @@
+#include <immintrin.h>
+#include <stdint.h>
+
+// n is the number of uint16_t dst elements
+// We access n*16 bool elements from src.
+void pack_bools(uint16_t *dst, const bool *src, size_t n)
+{
+     // you can later access dst with __m128i loads/stores
+
+    __m128i carry_to_highbit = _mm_set1_epi8(0x7F);
+    for (size_t i = 0 ; i < n ; i+=1) {
+        __m128i boolvec = _mm_loadu_si128( (__m128i*)&src[i*16] );
+        __m128i highbits = _mm_add_epi8(boolvec, carry_to_highbit);
+        dst[i] = _mm_movemask_epi8(highbits);
+    }
+}

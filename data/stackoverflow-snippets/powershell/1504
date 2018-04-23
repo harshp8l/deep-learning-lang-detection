@@ -1,0 +1,33 @@
+## Clear the Error variable incase the last server had an error ##
+if ($error)
+{
+    $error.clear()
+}
+
+## Attempt to do the WMI command ##
+try
+{
+    $DHCP = Get-WmiObject win32_service -ComputerName $server -erroraction stop | Where-Object {$_.Name -eq ""dhcp""}
+}
+Catch
+{
+    $errormsg = $_.Exception.Message
+}
+
+## If the WMI command errored then do this ##
+if ($error)
+{
+    [pscustomobject][ordered]@{
+    ServerName = $server
+    DHCP = $errormsg
+    }
+}
+
+## If the WMI command was successful do this ##
+Else
+{
+    [pscustomobject][ordered]@{
+    ServerName = $server
+    DHCP = $DHCP.State
+    }
+}

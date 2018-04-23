@@ -1,0 +1,35 @@
+SELECT *
+FROM
+  (
+    SELECT
+      pc.pn_partcar AS partnum,
+      pc.name_partcar AS descript,
+      pc.weight_partcar AS weight,
+      pc.cycletime_partcar AS cycletime,
+      pc.cavity_partcar AS cavity,
+      p.name_proses AS proses,
+      mm.material_name AS material,
+      pc.id_carfk,
+      da.qty
+    FROM partcar as pc
+    JOIN proses AS p ON p.id_proses = pc.id_prosesfk
+    JOIN material AS mm ON mm.material_id = p.material_idfk
+    JOIN detailassembly AS da ON da.partcar_idfk = pc.id_partcar
+
+    UNION ALL
+
+    SELECT
+      b.pn_barbell AS partnum,
+      b.type_barbell AS descript,
+      NULL, -- weight
+      wh.cycletime_wheel AS cycletime,
+      wh.cavity_wheel as cavity,
+      NULL, -- proses
+      NULL, -- material
+      b.id_carfk,
+      da.qty
+    FROM barbell AS b
+    JOIN wheel AS wh ON b.id_wheelfk = wh.id_wheel
+    JOIN detailassembly AS da ON da.barbell_idfk = b.id_barbell
+  ) q
+JOIN car AS c ON q.id_carfk = c.id_car

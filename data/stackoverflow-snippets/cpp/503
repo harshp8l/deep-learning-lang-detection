@@ -1,0 +1,42 @@
+#include <vector>
+#include <variant>
+#include <iostream>
+
+class X {
+    int id;
+};
+
+class A: public X {
+public:
+    void run() {
+        std::cout << ""run\n""; // just for demonstration purposes
+    }
+};
+
+class B: public X {
+public:
+    B(int lala) : lala(lala) {} // just for demonstration purposes
+    int lala;
+};
+
+int main() {
+    std::vector<std::variant<A, B>> types;
+
+    types.push_back(A()); // no more new!
+    types.push_back(B(123)); // no more new!
+
+    int var = 0;
+
+    for (auto&& type : types) {
+        std::visit([&](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, A>) {
+                arg.run();
+            } else {
+                var = arg.lala;
+            }
+        }, type);
+    }
+
+    std::cout << var << '\n'; // just for demonstration purposes
+}

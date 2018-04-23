@@ -1,0 +1,19 @@
+$table = Import-Csv ""Test.csv""
+
+# Get column names
+$columnNames = ($table | Select-Object -First 1).PSObject.Properties |
+  Select-Object -ExpandProperty Name
+
+# Iterate each row in the table
+foreach ( $row in $table ) {
+  $outputObject = New-Object PSObject
+  foreach ( $columnName in $columnNames ) {
+    if ( $columnName -eq ""Username"" ) {
+      $outputObject | Add-Member NoteProperty ""Username"" ($row.Username.Split('\')[1])
+    }
+    else {
+      $outputObject | Add-Member NoteProperty $columnName $row.$columnName
+    }
+  }
+  $outputObject
+}

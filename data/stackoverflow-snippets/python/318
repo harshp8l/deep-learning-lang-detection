@@ -1,0 +1,35 @@
+import numpy as np
+from neupy import layers, init
+import theano.tensor as T
+
+
+def norm(value, axis=None):
+    return T.sqrt(T.sum(T.square(value), axis=axis))
+
+
+class RBF(layers.BaseLayer):
+    def initialize(self):
+        super(RBF, self).initialize()
+
+        # It's more flexible when shape of the parameters
+        # denend on the input shape
+        self.add_parameter(
+            name='mean', shape=self.input_shape,
+            value=init.Constant(0.), trainable=True)
+
+        self.add_parameter(
+            name='std_dev', shape=self.input_shape,
+            value=init.Constant(1.), trainable=True)
+
+    def output(self, input_value):
+        K = input_value - self.mean
+        return T.exp(-norm(K, axis=0) / self.std_dev)
+
+
+network = layers.Input(1) > RBF()
+predict = network.compile()
+print(predict(np.random.random((10, 1))))
+
+network = layers.Input(4) > RBF()
+predict = network.compile()
+print(predict(np.random.random((10, 4))))

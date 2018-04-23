@@ -1,0 +1,22 @@
+#include <boost/interprocess/shared_memory_object.hpp>
+#include <boost/interprocess/mapped_region.hpp>
+#include <array>
+#include <atomic>
+
+using SharedBuffer = std::array<std::atomic_char, 65536>;
+static_assert(std::is_pod<SharedBuffer>{}, ""assumed POD""); // Warning: trait is not correct on some versions of MSVC
+
+namespace bip = boost::interprocess;
+
+int main() {
+    bip::shared_memory_object smo(bip::open_or_create, ""yoho"", bip::mode_t::read_write);
+    smo.truncate(sizeof(SharedBuffer));
+
+    bip::mapped_region region(smo, bip::mode_t::read_write, 0, 65536);
+    auto& buffer = *reinterpret_cast<SharedBuffer*>(region.get_address());
+
+    // do something with that buffer
+    std::fill(buffer.begin(), buffer.end(), 0); // start with all zeroes
+
+    // loop over it or something
+}

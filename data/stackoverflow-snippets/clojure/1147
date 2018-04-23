@@ -1,0 +1,72 @@
+keytool -genkeypair \
+        -keystore $SSL_DIR/$KS_NAME \
+        -keypass $PASSWORD \
+        -storepass $PASSWORD \
+        -keyalg RSA -keysize 2048 \
+        -alias root \
+        -ext bc:c \
+        -dname ""$ROOT_CN""
+
+echo ""CA Key""
+keytool -genkeypair \
+        -keystore $SSL_DIR/$KS_NAME \
+        -alias ca \
+        -ext bc:c \
+        -keypass $PASSWORD \
+        -keyalg RSA -keysize 2048 \
+        -storepass $PASSWORD \
+        -dname ""$CA_CN""
+
+echo ""Server Key""
+keytool -genkeypair \
+        -keystore $SSL_DIR/$KS_NAME \
+        -alias server \
+        -keypass $PASSWORD \
+        -storepass $PASSWORD \
+        -keyalg RSA -keysize 2048 \
+        -dname ""$SERVER_CN""
+
+echo ""Root Cert""
+keytool -keystore $SSL_DIR/$KS_NAME \
+        -storepass $PASSWORD \
+        -alias root \
+        -exportcert \
+        -rfc > $SSL_DIR/root.pem
+
+echo ""CA Cert""
+keytool -storepass $PASSWORD \
+        -keystore $SSL_DIR/$KS_NAME \
+        -certreq \
+        -alias ca | keytool -storepass $PASSWORD \
+                            -keystore $SSL_DIR/$KS_NAME \
+                            -gencert \
+                            -alias root \
+                            -ext BC=0 \
+                            -rfc > $SSL_DIR/ca.pem
+
+echo ""Import CA cert""
+keytool -keystore $SSL_DIR/$KS_NAME \
+        -storepass $PASSWORD \
+        -importcert \
+        -alias ca \
+        -file $SSL_DIR/ca.pem
+
+echo ""Server Cert""
+keytool -storepass $PASSWORD \
+        -keystore $SSL_DIR/$KS_NAME \
+        -certreq \
+        -alias server | keytool -storepass $PASSWORD \
+                                -keystore $SSL_DIR/$KS_NAME \
+                                -gencert \
+                                -alias ca \
+                                -rfc > $SSL_DIR/server.pem
+
+
+
+echo ""Import Server Cert""
+cat $SSL_DIR/root.pem $SSL_DIR/ca.pem $SSL_DIR/server.pem | \
+    keytool -keystore $SSL_DIR/$KS_NAME \
+            -storepass $PASSWORD \
+            -keypass $PASSWORD \
+            -importcert \
+            -alias server

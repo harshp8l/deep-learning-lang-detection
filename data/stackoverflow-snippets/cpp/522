@@ -1,0 +1,32 @@
+unsigned int global_counter = n;
+
+void fooRunner()
+{
+    for(;;)
+    {
+        {
+            std::lock_guard g(global_counter_mutex);
+            if(global_counter == 0)
+                break;
+            --global_counter;
+        }
+        foo();
+    }
+}
+
+void runThreads(unsigned int n, unsigned int k)
+{
+    global_counter = n;
+    std::vector<std::thread> threads(std::min(n, k - 1));
+    // k - 1: current thread can be reused, too...
+    // (provided it has no other tasks to perform)
+    for(auto& t : threads)
+    {
+        t = std::thread(&fooRunner);
+    }
+    fooRunner();
+    for(auto& t : threads)
+    {
+        t.join();
+    }
+}

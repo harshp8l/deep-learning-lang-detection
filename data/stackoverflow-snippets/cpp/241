@@ -1,0 +1,77 @@
+class imultitype_processing_component_manager
+{
+public:
+    virtual ~imultitype_processing_component_manager() = default;
+
+    virtual void v_add_manager(
+        const std::type_info& type,
+        std::unique_ptr<iprocessing_component_manager> manager) = 0;
+    virtual void v_forget_manager(
+        const std::type_info& type) = 0;
+    virtual icomponent* v_prepare(
+        const std::type_info& type) = 0;
+    virtual void recycle(icomponent* comp) = 0;
+};
+
+class multitype_processing_component_manager
+{
+public:
+    void v_add_manager(
+        const std::type_info& type,
+        std::unique_ptr<iprocessing_component_manager> manager)
+        override
+    {
+        // This would replace an existing manager.
+        // Could also choose to throw or do nothing if already exists...
+        m_managers[type] = std::move(manager);
+    }
+
+    template <class T>
+    void add_manager(std::unique_ptr<iprocessing_component_manager> manager
+                         = nullptr)
+    {
+        if (!manager)
+            manager = std::make_unique<type_processing_component_manager<T>>();
+        v_add_manager(typeid(T), std::move(manager));
+    }
+
+    void v_forget_manager(const std::type_info& type) override
+    {
+        m_managers.erase(type);
+    }
+
+    template <class T>
+    void forget_manager()
+    {
+        v_forget_manager(typeid(T));
+    }
+
+    icomponent* v_prepare(const std::type_info& type) override
+    {
+        // Throws if type unknown.
+        return m_managers.at(type)->prepare();
+    }
+
+    template <class T>
+    T* prepare()
+    {
+        return dynamic_cast<T*>(v_prepare(typeid(T)));
+    }
+
+    void recycle(icomponent* comp) const override
+    {
+        // Throws if type unknown.
+        m_managers.at(typeid(*comp))->recycle(comp);
+    }
+
+    template <typename F>
+    for_each_manager(F&& func) const
+    {
+        for (auto& pair : m_managers)
+            func(*pair.second);
+    }
+
+private:
+    std::unordered_map<std::type_index,
+        std::unique_ptr<iprocessing_component_manager>> m_managers;
+};

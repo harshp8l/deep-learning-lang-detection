@@ -1,0 +1,17 @@
+namespace detail {
+    template<class T, class... Ts>
+    using pair_list = std::tuple<std::map<T, Ts>...>;
+
+    template<class Tuple> struct huge_variant_impl;
+    template<class... Ts>
+    struct huge_variant_impl<std::tuple<Ts...>> {
+        using type = std::variant<Ts...>;
+    };
+}
+
+template<typename... Ts>
+struct huge_variant {
+    using type = typename detail::huge_variant_impl<
+        decltype(std::tuple_cat(std::declval<detail::pair_list<Ts, Ts...>>()...))
+        >::type;
+};

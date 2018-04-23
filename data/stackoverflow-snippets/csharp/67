@@ -1,0 +1,27 @@
+Regex reg = new Regex(@""^((?<D>\d{1,2}(\.\d+)?)(?<W>[SN])|(?<D>\d{2})(?<M>\d{2}(\.\d+)?)(?<W>[SN])|(?<D>\d{2})(?<M>\d{2})(?<S>\d{2}(\.\d+)?)(?<W>[SN])|(?<D>\d{1,3}(\.\d+)?)(?<W>[WE])|(?<D>\d{3})(?<M>\d{2}(\.\d+)?)(?<W>[WE])|(?<D>\d{3})(?<M>\d{2})(?<S>\d{2}(\.\d+)?)(?<W>[WE]))$"");
+
+private double DMS2Decimal(string dms)
+            {
+                double result = double.NaN;            
+
+                var match = reg.Match(dms);
+
+                if (match.Success)
+                {
+                    var degrees = double.Parse(""0"" + match.Groups[""D""]);
+                    var minutes = double.Parse(""0"" + match.Groups[""M""]);
+                    var seconds = double.Parse(""0"" + match.Groups[""S""]);
+                    var direction = match.Groups[""W""].ToString();
+                    var dec = (Math.Abs(degrees) + minutes / 60d + seconds / 3600d) * (direction == ""S"" || direction == ""W"" ? -1 : 1);
+                    var absDec = Math.Abs(dec);
+
+                    if ((((direction == ""W"" || direction == ""E"") && degrees <= 180 & absDec <= 180) || (degrees <= 90 && absDec <= 90)) && minutes < 60 && seconds < 60)
+                    {
+                        result = dec;
+                    }
+
+                }
+
+                return result;
+
+            }

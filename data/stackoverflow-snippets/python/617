@@ -1,0 +1,19 @@
+# Uncomment this to read the file... remember to change your variable names too
+# with open('input_filename', 'r') as file:
+#    file_text = file.read()
+
+sample_text = 'PU-3410,7784;PD-3373,-2281;PU16705,7978;PD16435,5325;'
+
+coordinates = sample_text.split(';') # Splits the overall text into smaller easier chunks
+
+with open('output_filename', 'a+') as output_file: # Create file handler for output file
+    for c in coordinates:
+        if c[:2] == 'PU': # Checks the value of the first two characters, and if it is PU, use Z1000
+            g_code = 'Z1000'
+        else: # Use Z0 otherwise 
+            g_code = 'Z0'
+        c = c[2:] # chop off either PU or PD
+        tokens = c.split(',') # Get the numbers
+        if len(tokens) < 2: # if something isn't formatted right, exit.
+            break
+        output_file.write(""G01 X{0} Y{1} {2}\n"".format(tokens[0], tokens[1], g_code))

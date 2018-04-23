@@ -1,0 +1,17 @@
+#include <cstdio>
+#include <iostream>
+
+#include <unistd.h>
+
+int main() {
+  auto actual_stdout = fdopen(dup(fileno(stdout)), ""w"");
+  std::printf(""This will be printed to console.\n"");
+  if(std::freopen(""log.txt"", ""w"", stdout)) {
+      std::printf(""This will be redirected to log.txt.\n"");
+      std::cout << ""This will also be redirected.\n"";
+      std::fclose(stdout);
+  }
+
+  // Note: using fprintf. C++ streams will still not work.
+  std::fprintf(actual_stdout, ""This will be printed into the console, too.\n"");
+}

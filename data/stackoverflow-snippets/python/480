@@ -1,0 +1,15 @@
+if new['PercentDiff'].empty:
+    return 0
+else:
+    new.loc[new['PercentDiff'] < 0, 'Category'] = 'Less than 0%'
+    new.loc[new['PercentDiff'] == 0, 'Category'] = 'Exact match'
+    new.loc[new['PercentDiff'] < 0.01, 'Category'] = 'Less than 1%'
+    new.loc[new['PercentDiff'] < 0.05, 'Category'] = 'Less than 5%'
+    new.loc[new['PercentDiff'] < 0.1, 'Category'] = 'Less than 10%'
+    new.loc[new['PercentDiff'] == 0, 'Category'] = 'Exact match'
+    new.loc[new['PercentDiff'] > 0.1, 'Category'] = 'Greater than 10%'
+    new['PercentDiff1'] = new['PercentDiff'].astype(int)
+
+    Output1 = new.groupby(['Category']).agg(lambda x: x.mad())
+    Output1 = Output1.replace(np.nan, '', regex=True)
+    SumMail = pd.value_counts(Output1['Category'].values)

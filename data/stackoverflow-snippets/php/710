@@ -1,0 +1,22 @@
+function unserialize_fetchError($original, &$unserialized, &$errorMsg) {
+    $unserialized = @unserialize($original);
+    $errorMsg = error_get_last()['message'];
+    return ( $unserialized !== false || $original == 'b:0;' );  // ""$original == serialize(false)"" is a good serialization even if deserialization actually returns false
+}
+
+function unserialize_checkAllLineEndings($original, &$unserialized, &$errorMsg, &$lineEndings) {
+    if ( unserialize_fetchError($original, $unserialized, $errorMsg) ) {
+        $lineEndings = 'unchanged';
+        return true;
+    } elseif ( unserialize_fetchError(str_replace(""\n"", ""\n\r"", $original), $unserialized, $errorMsg) ) {
+        $lineEndings = '\n to \n\r';
+        return true;
+    } elseif ( unserialize_fetchError(str_replace(""\n\r"", ""\n"", $original), $unserialized, $errorMsg) ) {
+        $lineEndings = '\n\r to \n';
+        return true;
+    } elseif ( unserialize_fetchError(str_replace(""\r\n"", ""\n"", $original), $unserialized, $errorMsg) ) {
+        $lineEndings = '\r\n to \n';
+        return true;
+    } //else
+    return false;
+}

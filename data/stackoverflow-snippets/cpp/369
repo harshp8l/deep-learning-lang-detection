@@ -1,0 +1,70 @@
+#include <istream>
+#include <iostream>
+#include <tuple>
+
+namespace detail {
+
+template<std::size_t... Is>
+struct seq { };
+
+template<std::size_t N, std::size_t... Is>
+struct gen_seq : gen_seq<N - 1, N - 1, Is...> { };
+
+template<std::size_t... Is>
+struct gen_seq<0, Is...> : seq<Is...> { };
+
+template<typename T, typename F, std::size_t... Is>
+void for_each(T&& t, F&& f, seq<Is...>)
+{
+    auto l = { (f(std::get<Is>(t)), 0)... };
+}
+
+template<typename... Ts, typename F>
+void tuple_for_each(std::tuple<Ts...>& t, F&& f)
+{
+    for_each(t, std::forward<F>(f), detail::gen_seq<sizeof...(Ts)>());
+}
+
+class deserializer {
+    deserializer(const deserializer&) = delete;
+    deserializer& operator=(const deserializer&) = delete;
+public:
+    constexpr deserializer(std::basic_istream<char>& is) noexcept:
+        is_(is)
+    {}
+    template<typename any_type>
+    void operator()(any_type& val) {
+        is_ >> val;
+    }
+private:
+    std::basic_istream<char>& is_;
+};
+
+} // namespace detail
+
+template<typename...__tl>
+std::basic_istream<char>& operator >> (std::basic_istream<char>& s, std::tuple<__tl...> &out)
+{
+    detail::tuple_for_each( out, detail::deserializer(s) );
+    return s;
+}
+
+
+int main(int argc, const char** argv)
+{
+    std::cout<< ""Please input a digit"" << std::endl;
+    std::tuple<int> int_only_tuple;
+    std::cin >> int_only_tuple;
+    std::cout<< ""A digit: "" << std::get<0>(int_only_tuple)  << std::endl;
+
+    std::cout<< ""Please input two strings"" << std::endl;
+
+    std::tuple<std::string, std::string> in;
+
+    std::cin >> in;
+
+    std::cout << ""First string: "" << std::get<0>(in) << std::endl;
+    std::cout<< ""Second string: "" << std::get<1>(in) << std::endl;
+
+    return 0;
+}

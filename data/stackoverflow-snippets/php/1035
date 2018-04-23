@@ -1,0 +1,21 @@
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+const bigquery = require('@google-cloud/bigquery');
+
+const config = functions.config();
+admin.initializeApp(config.firebase);
+const firestore = admin.firestore();
+
+const sanitizePrivateKey = (key) =>
+  key.replace(/\\n/g, '\n');
+
+/* firebase converts \n to \\n, we have to convert it back */
+if (config.credentials) {
+  config.credentials.private_key = sanitizePrivateKey(config.credentials.private_key);
+}
+
+const bigqueryClient = bigquery({
+  projectId: 'screencastify-staging',
+  // eslint-disable-next-line
+  credentials: config.credentials,
+});

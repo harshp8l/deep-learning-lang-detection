@@ -1,0 +1,17 @@
+(defn edit-animals [animals]
+  (letfn [(upd-with-input [animal field prompt]
+            (let [val (wait-for-string (str prompt (field animal) ""\n"") false)]
+              (if (clojure.string/blank? val)
+                animal
+                (assoc animal field val))))]
+    (let [index (dec (wait-for-int ""enter index"" 0 (count animals)))]          
+      (if (contains? animals index)
+        (update animals index
+                (fn [animal]
+                  (-> animal
+                      (upd-with-input :name ""Name: "")
+                      (upd-with-input :species ""Species: "")
+                      (upd-with-input :breed ""Breed: "")
+                      (upd-with-input :description ""Description: ""))))
+        (do (when (== -1 index) (display animals))
+            animals)))))

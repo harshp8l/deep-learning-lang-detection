@@ -1,0 +1,19 @@
+filter$:Subject<any> = new Subject();
+data:any;
+destroy$:Subject<void> = new Subject();
+
+ngOnInit() {
+    this.filter$.pipe(
+        takeUntil(destroy$), // stop and cleanup when component gone
+        debounceTime(400),
+        switchMap(filter => this.service.post(filter)) // switch one stream to another
+    ).subscribe(data => this.data = data)
+}
+
+onFilterReceived(value, type)
+{
+    let selections = this.filtersService.processByTypes(value, type);
+    this.filter$.next(selections);
+}
+
+ngOnDestroy() { this.destroy$.next() }

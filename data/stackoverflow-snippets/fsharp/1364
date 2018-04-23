@@ -1,0 +1,16 @@
+type ExPair<'x> =
+    abstract Apply : string * 'a -> 'x
+type ExPair =
+    abstract ForAll : ExPair<'x> -> 'x
+
+let pack p = { new ExPair with 
+                    member __.ForAll<'x>(e:ExPair<'x>) : 'x = e.Apply p }
+
+let myList = [pack (""integer"", 3)
+              pack (""float"", 3.0)
+              pack (""string"", ""string"")
+              pack (""tuple"", (3, ""integer""))]
+
+myList
+|> List.map (fun e ->
+    e.ForAll { new ExPair<string> with member __.Apply(s,x) = sprintf ""%s,%A"" s x })

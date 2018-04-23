@@ -1,0 +1,79 @@
+package main
+
+import (
+    ""bytes""
+    ""fmt""
+    ""log""
+    ""regexp""
+    ""sort""
+)
+
+var (
+    rlt = []byte(""@#lt#@"")
+    rgt = []byte(""@#gt#@"")
+    lt  = []byte(""&lt;"")
+    gt  = []byte(""&gt;"")
+)
+
+// used for sorting strings by length
+type ByLength []string
+
+func (s ByLength) Len() int {
+    return len(s)
+}
+func (s ByLength) Swap(i, j int) {
+    s[i], s[j] = s[j], s[i]
+}
+func (s ByLength) Less(i, j int) bool {
+    return len(s[i]) < len(s[j])
+}
+
+func main() {
+    s := `<Shop>
+    <ShopName>Fresh Fruit <Fruit Shop></ShopName>
+    <ShopName attr=""val1"">Fresh Fruit <Shop test></ShopName>
+</Shop>`
+
+    r1, err := regexp.Compile(""</([^<>]*)>"")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    names := []string{}
+    out := r1.ReplaceAllFunc([]byte(s), func(b []byte) []byte {
+        name := b[2 : len(b)-1]
+
+        // TODO: only append name if not already in list
+        names = append(names, string(name))
+
+        // probably optimizable
+        bytes := make([]byte, 0, len(name)+12)
+        bytes = append(bytes, rlt...)
+        bytes = append(bytes, name...)
+        bytes = append(bytes, rgt...)
+        return bytes
+    })
+
+    // sort names descending by length otherwise we risk replacing parts of names like with <Shop and <ShopName
+    sort.Sort(sort.Reverse(ByLength(names)))
+
+    for _, name := range names {
+        // replace only exact start tags
+        out = bytes.Replace(out, []byte(fmt.Sprintf(""<%s>"", name)), []byte(fmt.Sprintf(""@#lt#@%s@#gt#@"", name)), -1)
+
+        // replace start tags with attributes
+        r3, err := regexp.Compile(fmt.Sprintf(""<%s( [^<>=]+=\""[^<>]+)>"", name))
+        if err != nil {
+            // handle error
+        }
+        out = r3.ReplaceAll(out, []byte(fmt.Sprintf(""@#lt#@%s$1@#gt#@"", name)))
+    }
+
+    out = bytes.Replace(out, []byte{'<'}, lt, -1)
+    out = bytes.Replace(out, []byte{'>'}, gt, -1)
+
+    out = bytes.Replace(out, rlt, []byte{'<'}, -1)
+    out = bytes.Replace(out, rgt, []byte{'>'}, -1)
+
+    fmt.Println(string(out))
+}

@@ -1,0 +1,24 @@
+class Converter(provider: ServiceProvider) {
+  def convert(string: String): Int = provider.fromString(string)
+  def convert(int: Int): String = provider.toString(int)
+}
+
+// somewhere in ConverterSpec
+// it(""should convert between int and string"")
+val provider = new ServiceProvider {
+  override def toString(int: Int) = int.toString
+  override def fromString(string: String): Int = string.toInt
+}
+val converter = new Converter(provider)
+converter.convert(""42"") shouldBe 42
+converter.convert(1024) shouldBe ""1024""
+converter.convert(converter.convert(""42"")) shouldBe ""42""
+
+// it(""should propagate downstream exceptions"")
+val throwingProvider = new ServiceProvider {
+  override def toString(int: Int) = throw new RuntimeException(""123"")
+  override def fromString(string: String): Int = throw new RuntimeException(""456"")
+}
+val converter = new Converter(throwingProvider)
+a[RuntimeException] shouldBe thrownBy { converter.convert(42) }
+a[RuntimeException] shouldBe thrownBy { converter.convert(""1024"") }

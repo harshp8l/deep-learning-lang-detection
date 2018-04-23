@@ -1,0 +1,16 @@
+import static org.apache.spark.sql.functions.*;
+ //...
+    Column uniqTrue = col(""uniq"").equalTo(true);
+    Column uniqFalse = col(""uniq"").equalTo(false);
+
+    Column testModeFalse = col(""testMode"").equalTo(false);
+    Column testModeTrue = col(""testMode"").equalTo(true);
+
+    Dataset<Row> x = basicEventDataset
+            .groupBy(col(group_field))
+            .agg(
+                    sum(when((testModeTrue).and(uniqTrue), 1).otherwise(0)).as(""tt""),
+                    sum(when((testModeFalse).and(uniqTrue), 1).otherwise(0)).as(""ft""),
+                    sum(when((testModeTrue).and(uniqFalse), 1).otherwise(0)).as(""tf""),
+                    sum(when((testModeFalse).and(uniqFalse), 1).otherwise(0)).as(""ff"")
+            );

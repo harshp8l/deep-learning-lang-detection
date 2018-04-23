@@ -1,0 +1,23 @@
+//Remove add to cart button
+function remove_add_to_cart_button()
+{
+   global $product;
+   global $woocommerce;  
+
+   // start of the loop that fetches the cart items
+   foreach ( $woocommerce->cart->get_cart() as $cart_item_key => $values )
+   {
+       $_product = $values['data'];
+       $terms = get_the_terms( $_product->id, 'product_cat' ); // Get all assigned categories 
+       $_categoryslug='';       
+       foreach ($terms as $term) 
+       {
+           $_categoryslug[] = $term->slug;   // Get category slug to compare
+       }
+   }
+
+   // Check if cart item is added for one category then restrict all other categories product
+   if ( !has_term( $_categoryslug, 'product_cat', $product->id ) )
+       remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_add_to_cart', 30 );
+}
+  add_action('wp','remove_add_to_cart_button');

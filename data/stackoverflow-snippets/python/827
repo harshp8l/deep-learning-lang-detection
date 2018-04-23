@@ -1,0 +1,32 @@
+from simple_salesforce import Salesforce
+import pandas as pd
+import requests
+import io
+
+# login info must be a string in ""quotes"" 
+sf = Salesforce(username= # ""UserName""
+                ,password= # ""Password"" 
+                ,security_token= # ""Security Token"" (can be reset in your settings in salesforce and will be sent via email)
+                )
+
+sid=sf.session_id
+print (""get sid ""+ sf.session_id)
+
+
+#ReportID can be found when you open the report in the browser address bar as follows: https://instance.salesforce.com/[Alphanumeric ReportID]
+ReportID=  #Alphanumeric Report ID as string in ""quotes""
+
+response = requests.get(""https://instance.salesforce.com/""+ReportID+""?export=1&enc=UTF-8&xf=csv"",
+                  headers = sf.headers, cookies = {'sid' : sid})
+
+df=pd.read_csv(io.StringIO(response.text))
+df=df[:-5] #takes out the confidential information warning and copywrite info
+
+#if your first column is a number field instead of string (text) field you will need the next line(Delete the '#')
+#df=df.astype({""[first column name]"":'float'})
+
+
+writer = pd.ExcelWriter('Salesforce Output.xlsx') #this will write the file to the same folder where this program is kept
+df.to_excel(writer,index=False,header=True)
+
+writer.save()

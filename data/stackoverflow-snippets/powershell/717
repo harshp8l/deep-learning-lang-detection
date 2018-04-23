@@ -1,0 +1,32 @@
+$objExl = New-Object -ComObject Excel.Application
+$objExl.visible = $true
+$objExl.DisplayAlerts = $false
+$strPath = ""C:\Users\gurmansingh\Documents\a.csv""    #Enter the path of csv
+$objBook = $objExl.Workbooks.open($strPath)
+$objSheet = $objBook.Worksheets.item(1)
+$intRowCount = $objSheet.usedRange.Rows.Count
+for($i=1; $i -le $intRowCount; $i++)
+{
+    if($objSheet.Cells.Item($i,1).text -like """")
+    {
+        $startRow = $i
+        for($j=$i+1; $j -le $intRowCount; $j++)
+        {
+            if($objSheet.cells.Item($j,1).text -ne """" -or $j -eq $intRowCount)
+            {
+                $endRow = $j-1
+                if($j -eq $intRowCount)
+                {
+                    $endRow = $j
+                }
+                break
+            }
+        }
+        $str = ""A""+$startRow+"":A""+$endRow
+        $objSheet.Range($str).Rows.Group()
+        $i=$j
+    }
+}
+$objBook.SaveAs(""C:\Users\gurmansingh\Documents\b"",51)        #saving in a different format.
+$objBook.Close()
+$objExl.Quit()

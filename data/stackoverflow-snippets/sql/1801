@@ -1,0 +1,19 @@
+CREATE OR REPLACE VIEW view_group_descendants (id, name, descendant_group_id, descendant_group_name, descendant_flag) AS 
+WITH RECURSIVE q AS (SELECT id,
+                           NAME,
+                           ID DESCENDANT_GROUP_ID,
+                           NAME DESCENDANT_GROUP_NAME,
+                           PUBLIC_FLAG DESCENDANT_FLAG,
+                           PARENT_GROUP
+                FROM GROUPS
+                where PRIVATE_FLAG = 'N'
+                union all
+                SELECT m.ID,
+                        m.name,
+                        m.ID DESCENDANT_GROUP_ID,
+                        m.NAME DESCENDANT_GROUP_NAME,
+                        m.PUBLIC_FLAG DESCENDANT_FLAG,
+                        m.PARENT_GROUP
+                FROM GROUPS m
+                JOIN q ON q.PARENT_GROUP = m.ID)
+        SELECT ID, NAME, ID DESCENDANT_GROUP_ID, NAME DESCENDANT_GROUP_NAME, DESCENDANT_FLAG from q;

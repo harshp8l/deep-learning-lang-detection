@@ -1,0 +1,56 @@
+#include ""Mover.h""
+#include <algorithm>
+#include <cmath>
+
+
+Mover::Mover(std::initializer_list<Point> points, TimePoint duration)
+    : Mover(points.begin(), points.end(), duration)
+{
+}
+
+Point Mover::update(TimePoint delta)
+{
+    const auto comparison = [](float left, const PointData& right) {
+        return left < right.total;
+    };
+    m_elapsed = std::min(m_elapsed + delta, m_duration);
+    const float length = (static_cast<float>(m_elapsed.count()) / static_cast<float>(m_duration.count())) * m_length;
+    auto& data = *std::prev(std::upper_bound(m_distances.begin(), m_distances.end(), length, comparison));
+    const float percent = (length - data.total) / data.distance;
+    Point point(data.p1.x + percent * (data.p2.x - data.p1.x), data.p1.y + percent * (data.p2.y - data.p1.y));
+    return point;
+}
+
+bool Mover::isComplete() const
+{
+    return m_duration == m_elapsed;
+}
+
+void Mover::setDuration(TimePoint duration)
+{
+    m_duration = duration;
+}
+
+Mover::TimePoint Mover::getDuration() const
+{
+    return m_duration;
+}
+
+Mover::TimePoint Mover::getElapsed() const
+{
+    return  m_elapsed;
+}
+
+void Mover::updateLength()
+{
+    auto distance = [](float x1, float y1, float x2, float y2) -> float{
+        return std::sqrt(((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
+    };
+    float length = 0.f;
+    for (std::size_t index = 0; (index + 1) < m_points.size(); ++index) {
+        const float dist = distance(m_points[index].x, m_points[index].y, m_points[index + 1].x, m_points[index + 1].y);
+        m_distances.emplace_back(length, dist, m_points[index], m_points[index + 1]);
+        length += dist;
+    }
+    m_length = length;  
+}

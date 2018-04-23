@@ -1,0 +1,31 @@
+require 'fruity'
+require 'set'
+
+SET_OF_VOWELS = %w| a e i o u |.to_set
+
+def string_count(str)
+  str.count('aeiou')
+end
+
+def set_include?(str)
+  str.each_char.count { |c| SET_OF_VOWELS.include?(c) }
+end
+
+def use_hash(str)
+  h = str.each_char.with_object(Hash.new(0)) { |c,h| h[c] += 1 }
+  SET_OF_VOWELS.sum { |c| h[c] }
+end
+
+alpha = ('a'..'z').to_a
+
+[1_000, 10_000, 100_000, 1_000_000].each do |n|
+
+  puts ""\nString length = #{n}""     
+  str = Array.new(n) { alpha.sample }.join
+
+  compare(
+    string_count: -> { string_count(str) },
+    set_include?: -> { set_include?(str) },
+    use_hash:     -> { use_hash(str) }
+  )
+end    

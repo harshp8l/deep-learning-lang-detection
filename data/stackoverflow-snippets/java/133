@@ -1,0 +1,19 @@
+    try {
+        //wait for them all to shutdown
+        boolean timedout = false;
+        for(Future<?> future : futures) {
+            if( !timedout ) {
+                try {
+                    future.get(30, TimeUnit.SECONDS);
+                } catch (TimeoutException e) {
+                    timedout = true;
+                }
+            }
+
+            if(timedout) {
+                future.cancel(true);
+            }
+        }
+    } catch (InterruptedException | ExecutionException e) {
+        throw new IllegalStateException(""This should never happen"");
+    }

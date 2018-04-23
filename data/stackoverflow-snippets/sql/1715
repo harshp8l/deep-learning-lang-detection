@@ -1,0 +1,11 @@
+declare @T table (pk int identity primary key, varDt varchar(100));
+insert into @T (varDt) values ('Thursday March 15, 2018'), ('05-21-1995'), ('N/A'), ('####'), ('easter'), ('');
+declare @Tf table (pk int primary key, varDt varchar(100), needFix bit, dt datetime);
+insert into @Tf
+select t.pk, t.varDt 
+     , case when TRY_PARSE(t.varDt AS datetime USING 'en-US') is null then 1 else 0 end as needFix
+     , TRY_PARSE(t.varDt AS datetime USING 'en-US') as dt     
+from @T t;
+select * 
+from @Tf tf 
+order by needFix desc, pk;

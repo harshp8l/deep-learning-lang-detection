@@ -1,0 +1,23 @@
+  type Id = String
+  type Tag = String
+  type Measure = Double
+
+  val messages: RDD[String] = sc.textFile(""1.csv"").filter(_.head != 'm')
+  val data: RDD[(Tag, Id)] = messages.map(line => line.split("",""))
+    .map(pair => pair(1) -> pair(0))
+  val tagIds: RDD[(Tag, Set[Id])] = data.groupByKey()
+    .mapValues(_.toSet)
+    .persist(StorageLevel.MEMORY_AND_DISK)
+  val tagIds1TagIds2: RDD[((Tag, Set[Id]), (Tag, Set[Id]))] = tagIds.cartesian(tagIds).filter({
+    case ((t1,s1), (t2,s2)) => t1 < t2
+  })
+  val tagPairsWithMeasure: RDD[(Tag, Tag, Measure)] = tagIds1TagIds2.map({
+    case ((t1,l1), (t2,l2)) => (t1,t2, {
+      val numer = l1.intersect(l2).size
+      val denom = Math.sqrt(l1.size*l2.size)
+      numer.toDouble / denom
+    })
+  })
+  val lines: RDD[String] = tagPairsWithMeasure.map({
+    case (t1, t2, m) => s""$t1,$t2,$m""
+  })

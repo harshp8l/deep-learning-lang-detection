@@ -1,0 +1,28 @@
+trait H {
+    type A
+}
+
+case object Ha extends H {
+    override type A = Int
+}
+
+case object Hb extends H {
+  override type A = Long
+}
+
+trait Adder[T] {
+  def add(a: T, b: T): T
+}
+
+implicit object IntAdder extends Adder[Int] {
+  override def add(a: Int, b: Int): Int = a + b
+}
+
+implicit object LongAdder extends Adder[Long] {
+  override def add(a: Long, b: Long): Long = a + b
+}
+
+def addWithAdder(input: H)(a: input.A, b: input.A)(implicit ev: Adder[input.A]): input.A = ev.add(a, b)
+
+val x: Int = addWithAdder(Ha)(3, 4)
+val y: Long = addWithAdder(Hb)(3, 4)

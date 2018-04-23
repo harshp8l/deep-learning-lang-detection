@@ -1,0 +1,9 @@
+implicit def catsSyntaxTuple4Cartesian[F[_], A0, A1, A2, A3](t4: Tuple4[F[A0], F[A1], F[A2], F[A3]]): Tuple4CartesianOps[F, A0, A1, A2, A3] = new Tuple4CartesianOps(t4)
+
+
+private[syntax] final class Tuple4CartesianOps[F[_], A0, A1, A2, A3](t4: Tuple4[F[A0], F[A1], F[A2], F[A3]]) {
+  def map4[Z](f: (A0, A1, A2, A3) => Z)(implicit functor: Functor[F], cartesian: Cartesian[F]): F[Z] = Cartesian.map4(t4._1, t4._2, t4._3, t4._4)(f)
+  def contramap4[Z](f: Z => (A0, A1, A2, A3))(implicit contravariant: Contravariant[F], cartesian: Cartesian[F]): F[Z] = Cartesian.contramap4(t4._1, t4._2, t4._3, t4._4)(f)
+  def imap4[Z](f: (A0, A1, A2, A3) => Z)(g: Z => (A0, A1, A2, A3))(implicit invariant: Invariant[F], cartesian: Cartesian[F]): F[Z] = Cartesian.imap4(t4._1, t4._2, t4._3, t4._4)(f)(g)
+  def apWith[Z](f: F[(A0, A1, A2, A3) => Z])(implicit apply: Apply[F]): F[Z] = apply.ap4(f)(t4._1, t4._2, t4._3, t4._4)
+}

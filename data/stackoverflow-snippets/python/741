@@ -1,0 +1,16 @@
+from sqlalchemy.inspection import inspect
+from sqlalchemy import Column, ForeignKey, Integer, Table
+
+class ManyToManyMixin:
+    @classmethod
+    def __table_cls__(cls, *args, **kwargs):
+        return Table(
+            *args,
+            *[Column(
+                '{}_{}'.format(model.__name__.lower(), col.name),
+                col.type,
+                ForeignKey(col),
+                primary_key=True
+              ) for model in cls.models for col in inspect(model).primary_key]
+            **kwargs
+        )

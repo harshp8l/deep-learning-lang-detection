@@ -1,0 +1,21 @@
+class WeakDateEquivalencyStep : IEquivalencyStep {
+    public bool CanHandle(IEquivalencyValidationContext context, IEquivalencyAssertionOptions config) {
+        if (context.IsRoot)
+            return false;
+        // handles situations when subject is date
+        // but expectation is string
+        return context.Subject is DateTime && context.Expectation is string;
+    }
+
+    public bool Handle(IEquivalencyValidationContext context, IEquivalencyValidator parent, IEquivalencyAssertionOptions config) {
+        DateTime exp;
+        // we know that expection is string here
+        if (!DateTime.TryParse((string) context.Expectation, CultureInfo.InvariantCulture, DateTimeStyles.None, out exp)) {
+            // do something, your spec is invalid
+            throw new Exception($""Value {context.Expectation} does not represent valid date time"");
+        }
+
+        context.Subject.Should().Be(exp, context.Because, context.BecauseArgs);
+        return true;
+    }
+}

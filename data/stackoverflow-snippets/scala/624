@@ -1,0 +1,110 @@
+import akka.stream.alpakka.xml.scaladsl.XmlParsing
+import akka.stream.scaladsl._
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import akka.util.ByteString
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import akka.stream.alpakka.xml.{Characters, EndElement, ParseEvent, StartElement}
+
+import scala.collection.mutable
+
+case class Item(partNumber: String, productName: String)
+
+object Item {
+  def apply(path: mutable.Stack[String]): PartialFunction[ParseEvent, Any] = {
+    case elem @ StartElement(""Item"", _, _, _, _) =>
+      path.push(""Item"")
+      ItemBuilder.reset()
+      ItemBuilder.partNumber = elem.findAttribute(""PartNumber"").map(_.value).getOrElse("""")
+    case Characters(text) =>
+      path.top match {
+        case ""ProductName"" => ItemBuilder.productName = text
+        case _ => ()
+      }
+    case EndElement(""Item"") =>
+      path.pop()
+      ItemBuilder.build()
+  }
+}
+
+object ItemBuilder {
+  var partNumber = """"
+  var productName = """"
+
+  def build(): Item =
+    Item(
+      partNumber = partNumber,
+      productName = productName)
+
+  def reset(): Unit = {
+    partNumber = """"
+    productName = """"
+  }
+}
+
+object AlpakkaDemo extends App {
+
+  implicit val system = ActorSystem()
+  implicit val mat = ActorMaterializer()
+
+  val path: mutable.Stack[String] = new mutable.Stack[String]()
+
+  val xml =
+    """"""<PurchaseOrder PurchaseOrderNumber=""99503"" OrderDate=""1999-10-20"">
+      |<Address Type=""Shipping"">
+      |  <Name>Ellen Adams</Name>
+      |  <Street>123 Maple Street</Street>
+      |  <City>Mill Valley</City>
+      |  <State>CA</State>
+      |  <Zip>10999</Zip>
+      |  <Country>USA</Country>
+      |</Address>
+      |<DeliveryNotes>Please leave packages in shed by driveway.</DeliveryNotes>
+      |<Items>
+      |  <Item PartNumber=""872-AA"">
+      |    <ProductName>Lawnmower</ProductName>
+      |    <Quantity>1</Quantity>
+      |    <USPrice>148.95</USPrice>
+      |    <Comment>Confirm this is electric</Comment>
+      |  </Item>
+      |  <Item PartNumber=""926-AA"">
+      |    <ProductName>Baby Monitor</ProductName>
+      |    <Quantity>2</Quantity>
+      |    <USPrice>39.98</USPrice>
+      |    <ShipDate>1999-05-21</ShipDate>
+      |  </Item>
+      |</Items>
+      |</PurchaseOrder>"""""".stripMargin
+
+  val defaultElementHandler: PartialFunction[ParseEvent, Any] = {
+    case StartElement(localName, _, _, _, _) => path.push(localName)
+    case EndElement(localName) => path.pop()
+    case _ => ()
+  }
+
+  val handlersChain: PartialFunction[ParseEvent, Any] =
+    Item(path) orElse
+    defaultElementHandler
+
+  val source: Source[Item, akka.NotUsed] = Source.single(xml)
+    .map(ByteString(_))
+    .via(XmlParsing.parser)
+    .map(handlersChain)
+    .collect {
+      case item: Item => item
+    }.splitWhen(_ => true)  // also consider mapAsyncUnordered()
+    .map {
+      identity  // placeholder for any subsequent heavy Item processing
+    }
+    .concatSubstreams
+
+  val resultFuture: Future[Seq[Item]] = source.runWith(Sink.seq)
+
+  val result: Seq[Item] = Await.result(resultFuture, 5.seconds)
+
+  println(""items : "" + result)
+  println(""END"")
+  system.terminate()
+}

@@ -1,0 +1,46 @@
+param(
+[string]$currentEnv
+)
+
+[object]$paramObj=Get-Content ""d:\a\r1\a\DSPPortalJobs\WebJobs_scripts\WebJob_list.json"" |ConvertFrom-Json
+   $userName =$paramObj.$currentEnv.userName
+    $password =$paramObj.$currentEnv.password
+    $webAppName =$paramObj.$currentEnv.webAppName
+    $resourceGroup=$paramObj.$currentEnv.resourceGroup
+    [object[]]$webJobs=$paramObj.$currentEnv.webJobs
+$Apiversion=""2016-08-01""
+$webJobArr=New-Object System.Collections.ArrayList
+     foreach($wj in $webjobs)
+        {
+        $webJobArr.Add($wj.name)
+}
+$tryCount=4
+ $i = 1
+ while($i -lt $tryCount){
+ $errorsJobs=New-Object System.Collections.ArrayList
+ Start-Sleep -s 5
+ Write-Host ""starting $i try.......""
+ $i +=1
+
+  $continuejobs=Get-AzureRmResource -ResourceGroupName $resourceGroup -ResourceName $webAppName -ResourceType Microsoft.web/sites/ContinuousWebJobs -ApiVersion $Apiversion 
+foreach($webJob in $continuejobs)
+{
+if($webJobArr -contains $webJob.Properties.name){
+    if($webJob.Properties.status -ne ""Running""){
+        $errorsJobs.Add($webJob.Properties.name)
+    }
+}
+}
+if($errorsJobs.Count -gt 0){
+$result=$errorsJobs -join "";""
+Write-Host ""Some jobs are not Running: $result. Try to check again""
+}
+else{
+Write-Host ""All jobs are Running.""
+break
+}
+if(($i -eq $tryCount) -and ($errorsJobs.Count -gt 0)){
+Write-Error ""Some jobs are not Running: $result.""
+}
+
+ }

@@ -1,0 +1,51 @@
+template<class... Ts> struct types {};
+
+template<class Types, class T> struct is_in : public std::false_type {};
+template<class... Ts, class T>
+struct is_in<types<T, Ts...>, T> : public std::true_type {};
+template<class... Ts, class T0, class T>
+struct is_in<types<T0, Ts...>, T> : public is_in<types<Ts...>, T> {};
+
+template<class Derived, bool B, class T> struct func_provider {};
+template<class Derived, class T, class... Ts>
+struct func_collector
+    : public func_provider<Derived, is_in<Ts, T>::value, Ts>...
+{};
+
+
+// implement functions for int
+template<class Derived>
+struct func_provider<Derived, true, types<int>> {
+    void funcA1() {
+        auto self = static_cast<Derived*>(this);
+        // do something with self
+    }
+};
+
+// implement functions for double
+template<class Derived>
+struct func_provider<Derived, true, types<double>> { void funcA2() {} };
+
+// implement functions for both int and double
+template<class Derived>
+struct func_provider<Derived, true, types<int, double>> { void funcA1_2() {} };
+
+template<class T>
+struct foo : public func_collector<foo<T>, T,
+    // pull desired functions
+    types<int>, types<double>, types<int, double>>
+{
+    void common() {}
+};
+
+int main() {
+    foo<int> f;
+    foo<double> g;
+    f.common();
+    f.funcA1();
+    f.funcA1_2();
+    // f.funcA2(); // Error
+    g.funcA2();
+    g.funcA1_2();
+    // g.funcA1(); // Error
+}

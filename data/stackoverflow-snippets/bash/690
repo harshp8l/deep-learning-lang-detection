@@ -1,0 +1,34 @@
+BEGIN     { # setup file separator and sorting:
+            FS=OFS=""|"" 
+            PROCINFO[""sorted_in""]=""@ind_str_asc""
+          }
+
+# skip header lines
+FNR == 1  { next }
+
+# store first file
+(FNR==NR) { f1[$5]=$0
+            # skip processing of other rules and 
+            # read the next line from input
+            next
+          }
+
+# store second file
+          { f2[$5]=$0
+            if( ! ($5 in f1)) {
+                f1[$5] = """"
+            }
+          }
+
+# compare and print stored information
+END       { print""PrimaryKey"", ""Column"", ""File1Value"", ""File2Value"" 
+            for( k in f1) {
+                split( f1[k], arr1, ""|"")
+                split( f2[k], arr2, ""|"")
+                for( c = 1; c <= length( f1[ k ] ); c++ ) {
+                    if( arr1[c] != arr2[c] ) {
+                        print k, ""COL"" c, arr1[c], arr2[c] 
+                    }
+                }
+            }
+          }

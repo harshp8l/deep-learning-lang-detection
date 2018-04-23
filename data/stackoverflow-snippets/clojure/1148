@@ -1,0 +1,18 @@
+(require '[schema.core :as s])
+(require '[schema.coerce :as c])
+(require '[compojure.core :refer :all])
+(require '[ring.middleware.params :as rparams])
+
+(def data {:para1 s/Str :para2 s/Int s/Any s/Any})
+(def data-coercer (c/coercer data c/string-coercion-matcher ))
+
+(def get-uri
+  (GET ""/uri"" r
+        (let [{:keys [para1 para2]}  (data-coercer (:params r))]
+                 (pr-str {:k1 para1 :k2 (inc para2)}))))
+
+(def get-uri-wrapped
+  (let [keywordizer (fn [h]
+                      (fn [r]
+                        (h (update-in r [:params] #(clojure.walk/keywordize-keys %)))))]
+    (-> get-uri keywordizer rparams/wrap-params)))

@@ -1,0 +1,20 @@
+Add-Type -Path 'C:\Path\To\WinSCP\WinSCPnet.dll'
+
+# Midnight 5 days ago
+$DeletionDate = [System.DateTime]::Today.AddDays(-5)
+
+$SessionOptions = New-Object WinSCP.SessionOptions -Property @{ ... }
+
+$Session = New-Object WinSCP.Session
+$Session.Open($SessionOptions)
+
+$RemoteFiles = $Session.ListDirectory($RemotePath).Files | Where-Object { !$_.IsDirectory }
+
+# My other processes are here
+
+$RemoteFiles | 
+    Where-Object LastWriteTime -lt $DeletionDate |
+    ForEach-Object {
+        $RemoveFilesResult = $Session.RemoveFiles($_.FullName)
+        $RemoveFilesResult.Check()
+    }

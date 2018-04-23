@@ -1,0 +1,56 @@
+async function createImageSrc(url) {
+  const imageSRC = fetch();
+  return imageSRC;
+}
+
+class YourComponent extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      imagesWithSrc: null
+    };
+  }
+
+  componentDidMount(props) {
+    if (props.images) {
+      this.fetchImageSrc(props.images);
+    }
+  }
+
+  fetchImageSrc = (images) => {
+    const promises = images.map((img) => createImageSrc(img.downloadURL));
+    Promise.all(promises).then((...imageSRCs) => {
+      const newImages = images.map((img, idx) => { 
+        return {
+          ...img,
+          imageSRC: imageSRCs[idx]
+        };
+      });
+      this.setState({ imagesWithSrc: newImages });
+    });
+  }
+
+  render() {
+    const { imagesWithSrc } = this.state;
+    return (
+      <div className=""md-grid"">
+        { imagesWithSrc
+           ? imagesWithSrc.map((img, index) => (
+              <PinnedImage
+                key={index}
+                name={img.mediaName}
+                picture={img.downloadURL}
+                imageSRC={img.imageSRC}
+                onClick={this.downloadDoc.bind(
+                      this,
+                      img.downloadURL
+                    )}
+              />
+            ))
+        : null}
+      </div>
+    );
+  }
+}

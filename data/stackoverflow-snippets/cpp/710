@@ -1,0 +1,99 @@
+#include <cstddef>
+#include <memory>
+#include <vector>
+#include <tuple>
+#include <cassert>
+#include <type_traits>
+#include <utility>
+
+// recursion base
+template <class... Args>
+class buffer_clump {
+protected:
+    constexpr std::size_t buffer_size() const noexcept { return 0; }
+    constexpr std::tuple<> buffers(char*) const noexcept { return {}; }
+    constexpr void construct(char*) const noexcept { }
+    constexpr void destroy(const char*) const noexcept {}
+};
+
+template<class Head, class... Tail>
+class buffer_clump<Head, Tail...> : buffer_clump<Tail...> {
+    using tail = buffer_clump<Tail...>;
+    const std::size_t length;
+
+    constexpr std::size_t size() const noexcept
+    {
+        return sizeof(Head) * length + alignof(Head) - 1;
+    }
+
+    constexpr Head* align(char* buf) const noexcept
+    {
+        void* aligned = buf;
+        std::size_t space = size();
+        assert(std::align(
+            alignof(Head),
+            sizeof(Head) * length,
+            aligned,
+            space
+        ));
+        return (Head*)aligned;
+    }
+
+    constexpr char* next(char* buf) const noexcept
+    {
+        return buf + size();
+    }
+
+    static constexpr void
+    destroy_head(Head* head_ptr, std::size_t last)
+    noexcept(std::is_nothrow_destructible<Head>::value)
+    {
+        if constexpr (!std::is_trivially_destructible<Head>::value)
+            while (last--)
+                head_ptr[last].~Head();
+    }
+
+public:
+    template<class... Size_t>
+    constexpr buffer_clump(std::size_t length, Size_t... tail_lengths) noexcept
+    : tail(tail_lengths...), length(length) {}
+
+    constexpr std::size_t
+    buffer_size() const noexcept
+    {
+        return size() + tail::buffer_size();
+    }
+
+    constexpr auto
+    buffers(char* buf) const noexcept
+    {
+        return std::tuple_cat(
+            std::make_tuple(align(buf)), 
+            tail::buffers(next(buf))
+        );
+    }
+
+    void
+    construct(char* buf) const
+    noexcept(std::is_nothrow_default_constructible<Head, Tail...>::value)
+    {
+        Head* aligned = align(buf);
+        std::size_t i;
+        try {
+            for (i = 0; i < length; i++)
+                new (&aligned[i]) Head;
+            tail::construct(next(buf));
+        } catch (...) {
+            destroy_head(aligned, i);
+            throw;
+        }
+    }
+
+    constexpr void
+    destroy(char* buf) const
+    noexcept(std::is_nothrow_destructible<Head, Tail...>::value)
+    {
+        tail::destroy(next(buf));
+        destroy_head(align(buf), length);
+    }
+};

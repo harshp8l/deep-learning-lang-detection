@@ -1,0 +1,20 @@
+$File = (Get-Content -Path $FilePath) -as [System.Collections.ArrayList];
+$Offset = 5;
+$InsertStatement = 'INSERT INTO DBname (id1, id2, id3, long, lat, [name]) VALUES';
+
+$File.Count..0 | Where-Object {
+        ($_ % $Offset) -eq 0
+    } | ForEach-Object {
+        if ($_ -gt 0) {
+            $File[$_ - 1] = $File[$_ - 1].Trim().TrimEnd(',');
+        }
+        $File.Insert($_,$InsertStatement);
+    }
+
+while (($File[$File.Count - 1] -eq $InsertStatement) -or [System.String]::IsNullOrWhiteSpace($File[$File.Count - 1])) {
+    $File.Remove($File.Count - 1);
+}
+
+File[$File.Count - 1] = $File[$File.Count - 1].Trim().TrimEnd(',');
+
+Set-Content -Path $OutputFile -Value $File;

@@ -1,0 +1,28 @@
+public class Category {
+
+  @JsonView({ FlatView.class, HierarchicalView.class}) // both views
+  private Integer id;
+
+  @JsonView({ FlatView.class, HierarchicalView.class}) // both views
+  private String displayName;
+
+  @JsonView({ FlatView.class, HierarchicalView.class}) // both views
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = ""id"")
+  @JsonIdentityReference(alwaysAsId = true)
+  private Category parent;
+
+  @JsonView(FlatView.class) // flat view only!
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = ""id"")
+  @JsonIdentityReference(alwaysAsId = true)
+  private Set<Category> children;
+
+  @JsonView(HierarchicalView.class) // hierarchical view only!
+  // note that the name is not `getChildren`: this generates another JSON property. 
+  // Or use @JsonProperty to customize it.
+  public Set<Category> getChildrenAsTree() { 
+    return this.children;
+  }
+
+  // constructors, getters and setters
+}

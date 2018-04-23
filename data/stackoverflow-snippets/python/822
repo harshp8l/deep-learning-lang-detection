@@ -1,0 +1,15 @@
+# https://stackoverflow.com/a/45313353/ @Divakar
+def view1D(a, b): # a, b are arrays
+    a = np.ascontiguousarray(a)
+    b = np.ascontiguousarray(b)
+    void_dt = np.dtype((np.void, a.dtype.itemsize * a.shape[1]))
+    return a.view(void_dt).ravel(),  b.view(void_dt).ravel()
+
+# Trace back a 2D array back to given labels
+def labelrows(a2D, label_list):
+    # Reduce array and labels to 1D
+    a1D,b1D = view1D(a2D, label_list)
+
+    # Use searchsorted to trace back label indices
+    sidx = b1D.argsort()
+    return sidx[np.searchsorted(b1D, a1D, sorter=sidx)]

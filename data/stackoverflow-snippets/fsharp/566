@@ -1,0 +1,14 @@
+type SerializedLogger() = 
+   let letterProduced = new Event<string>()
+   let lettersEnded = new Event<unit>()
+   let agent = MailboxProcessor.Start(fun inbox -> 
+     let rec messageLoop (letters:Subject<string>) = async {
+       // Some code omitted
+       match msg with
+       | 8 -> lettersEnded.Trigger()
+       | x -> letterProduced.Trigger(sprintf ""hello %d"" x)
+       // ...
+
+member this.Log msg = agent.Post msg
+member this.LetterProduced = letterProduced.Publish
+member this.LettersEnded = lettersEnded.Publish

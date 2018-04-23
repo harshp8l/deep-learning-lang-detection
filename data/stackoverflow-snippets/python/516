@@ -1,0 +1,49 @@
+import sys
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QUrl, QTimer
+
+class Page(QWebEnginePage):
+    def __init__(self, parent):
+        QWebEnginePage.__init__(self, parent)
+        self.html = ''
+        self.loadFinished.connect(self._on_load_finished)
+
+    def _on_load_finished(self):
+        print('Load finished')
+        QTimer.singleShot(1000, self._after_loading)  # load finished does not mean rendered..may need to wait here
+        QTimer.singleShot(5000, self._exit)
+
+    def _after_loading(self):
+        print('_after_loading')
+        js = '''console.log('javascript...');
+        var images = document.querySelectorAll('#photo-container img');
+        console.log('images ' + images);
+        console.log('images ' + images.length);
+        for (var i = 0; i < images.length; i++)
+        {
+            var image = images[i];
+            console.log(image.src);
+        }        
+        var element = document.querySelector('body');
+        //console.log(element.innerHTML);  // If you uncomment this you'll see the the photo-container is still empty
+        '''
+        self.runJavaScript(js)
+        print('_after_loading...done')
+
+    def _exit(self):
+        print('_exit')
+        QApplication.instance().quit()
+
+    def javaScriptConsoleMessage(self, level: QWebEnginePage.JavaScriptConsoleMessageLevel, message: str, lineNumber: int, sourceID: str):
+        print(message)
+
+def main():
+    app = QApplication(sys.argv)
+    w = QWebEngineView()
+    w.setPage(Page(w))
+    w.load(QUrl('https://www.imdb.com/name/nm0005683/mediaviewer/rm2073384192'))
+    w.show()
+    app.exec_()
+
+if __name__ == '__main__': main()

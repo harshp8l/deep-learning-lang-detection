@@ -1,0 +1,41 @@
+drop procedure if exists tablecounts;
+delimiter $$
+CREATE  procedure `tablecounts`()
+
+begin
+
+declare  i int;
+declare   j int;
+declare   vtable varchar(100);
+declare done int default 0;
+declare cur cursor for select table_name from information_schema.tables where table_schema = 'sandbox'  and table_type = 'base table' and table_name <> 'check';
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+open cur;
+truncate table debug_table;
+cursorloop:loop
+    fetch cur into vtable;
+    if done = true then  
+        leave cursorloop;
+    end if;  
+    set @sql = (concat
+     (
+     'insert into debug_table(msg,msg2) '
+     'select ', char(39),vtable, char(39), ', case when cnt1 <> cnt2 then ', char(39),'duplicates exist',char(39),' else null end msg',
+     ' from (select (select count(*) from ', vtable, ') as cnt1, (select distinct(count(*)) from ', vtable, ') cnt2) s;'
+     )
+     );
+     #select @sql;
+
+    prepare sqlstmt from @sql;
+    execute sqlstmt;
+    deallocate prepare sqlstmt;
+
+end loop cursorloop;
+close cur;
+
+
+end $$
+
+delimiter ;
+
+call tablecounts();

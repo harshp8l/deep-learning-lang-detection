@@ -1,0 +1,26 @@
+public class RedirectInterceptor implements Interceptor {
+
+    private final Context context;
+
+    @Inject
+    public RedirectInterceptor(Activity context) {
+        this.context = context;
+    }
+
+    @Override
+    public Response intercept(Chain chain) throws IOException {
+        Request newRequest = chain.request().newBuilder()
+                .build();
+
+        Response response =  chain.proceed(newRequest);
+        Log.d(""MyApp"", ""Code : ""+response.code());
+        if (response.code() == 401){
+            Intent intent = new Intent(context, LoginActivity.class);
+            context.startActivity(intent);
+            ((Activity) context).finish();
+            return response;
+        }
+
+        return chain.proceed(newRequest);
+    }
+}

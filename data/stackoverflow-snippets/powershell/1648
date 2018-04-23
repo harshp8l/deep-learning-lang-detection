@@ -1,0 +1,24 @@
+$Computers = Import-Csv 'C:\Temp\computers.csv'
+
+$Computers | ForEach {
+
+    $computerSystem = Get-WmiObject Win32_ComputerSystem -ComputerName $_.Name
+    $computerOS = Get-WmiObject Win32_OperatingSystem -ComputerName $_.Name
+    $computerCPU = Get-WmiObject Win32_Processor -ComputerName $_.Name
+    $computerSN = Get-WmiObject Win32_bios -ComputerName $_.Name | Select-Object SerialNumber
+    $computerDisk = Get-WmiObject win32_logicaldisk -ComputerName $_.Name | Select-Object DeviceId, Size, FreeSpace
+
+    [PSCustomObject]@{
+        'PCName' = $computerSystem.Name    
+        'Model' = $computerSystem.Model   
+        'RAM' = ""{0:N2}"" -f ($computerSystem.TotalPhysicalMemory/1GB)    
+        'CPU' = $computerCPU.Name    
+        'OS' = $computerOS.caption   
+        'SN' = $computerSN.SerialNumber
+        'User' = $computerSystem.UserName 
+        'Disk' = $computerDisk.DeviceId  | Format-Table | Out-String
+        'Size' = $computerDisk.Size  | Format-Table | Out-String
+        'Free Space' = $computerDisk.FreeSpace  | Format-Table | Out-String
+    }
+
+} | Export-Csv 'C:\Temp\system-info.csv' -NoTypeInformation

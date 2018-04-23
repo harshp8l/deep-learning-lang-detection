@@ -1,0 +1,45 @@
+public class Test {
+
+    private static Path appPath = //your path
+
+    private static Map<String, List<String>> classes = new HashMap<>();
+    private static List<String> classesToDo = new ArrayList<>();
+
+    public static void main(String[] args) throws IOException {
+
+        classesToDo.add(""AnswerValueValidatorBase"");
+
+        while(classesToDo.size() > 0) {
+            String className = classesToDo.remove(0);
+            List<String> subclasses = getDirectSubclasses(className);
+            if(subclasses.size() > 0)
+                classes.put(className, subclasses);
+            classesToDo.addAll(subclasses);
+        }
+
+        System.out.println(classes);
+    }
+
+    private static List<String> getDirectSubclasses(String className) throws IOException {
+        List<String> subclasses = new ArrayList<>();
+        Files.walk(appPath)
+             .filter(p -> Files.isRegularFile(p) && p.toString().endsWith("".java""))
+             .forEach(path -> {
+                 try {
+                      List<String> lines = Files.readAllLines(path);
+                      Pattern pattern = Pattern.compile(""\\bextends ""+className+""\\b"");
+                      Matcher matcher = pattern.matcher(lines.stream().collect(Collectors.joining("" "")));
+                      boolean isChild = matcher.find();
+                      if(isChild) {
+                          String fileName = path.getFileName().toString();
+                          String clazzName = fileName.substring(0, fileName.lastIndexOf("".""));
+                          subclasses.add(clazzName);
+                      }
+                  } catch(IOException e) {
+                  //handle IOE
+                  }
+        });
+
+        return subclasses;
+    }
+}

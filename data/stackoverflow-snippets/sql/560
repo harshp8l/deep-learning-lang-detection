@@ -1,0 +1,32 @@
+declare @start date = '04-11-2018'
+declare @end date = '05-11-2018'
+declare @P_ID int = 1
+declare @USER_ID int = 11
+;with cte as(
+    select @start [date]
+    union all 
+    select dateadd(DAY, 1, [date]) from cte
+    where [date] < @end
+)
+--if MY_TABLE doesn't exist
+select @P_ID,
+       [date],
+       'NOT SENT',
+       cast(getdate() as date),
+       @USER_ID
+into MY_TABLE
+from cte
+--here you can specify days: 1 - Sunday, 2 - Monday, etc.
+where DATEPART(dw,[date]) in (2, 5)
+option (maxrecursion 0)
+
+--if MY_TABLE does exist
+--insert into MY_TABLE
+--select @P_ID,
+--       [date],
+--     'NOT SENT',
+--     cast(getdate() as date),
+--     @USER_ID
+--from cte
+--where DATEPART(dw,[date]) in (2, 5)
+--option (maxrecursion 0)

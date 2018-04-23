@@ -1,0 +1,47 @@
+package game.checkers;
+
+import java.awt.*;
+import java.lang.reflect.InvocationTargetException;
+import javax.swing.SwingUtilities;
+
+public class Application implements Runnable {
+  public static final String APP_NAME = ""Checkers Game"";
+
+  private GameFrame gameFrame;
+  private GameBoard checkerBoard;
+
+  @Override
+  public void run() {
+    initialize();
+
+    Checker redChecker = new Checker(50, Color.RED);
+    Checker greenChecker = new Checker(50, Color.GREEN);
+    Checker blueChecker = new Checker(50, Color.BLUE);
+
+    checkerBoard.placeChecker(redChecker, 1, 5);
+    checkerBoard.placeChecker(greenChecker, 2, 4);
+    checkerBoard.placeChecker(blueChecker, 3, 3);
+
+    redChecker.addMouseListener(new CheckerMouseListener(redChecker));
+    greenChecker.addMouseListener(new CheckerMouseListener(greenChecker));
+    blueChecker.addMouseListener(new CheckerMouseListener(blueChecker));
+  }
+
+  protected void initialize() {
+    gameFrame = new GameFrame(APP_NAME);
+    checkerBoard = new GameBoard(8, 8);
+
+    checkerBoard.setPreferredSize(new Dimension(400, 400));
+    gameFrame.setContentPane(checkerBoard);
+    gameFrame.pack();
+    gameFrame.setVisible(true);
+  }
+
+  public static void main(String[] args) {
+    try {
+      SwingUtilities.invokeAndWait(new Application());
+    } catch (InvocationTargetException | InterruptedException e) {
+      e.printStackTrace();
+    }
+  }
+}

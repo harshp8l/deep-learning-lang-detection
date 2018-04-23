@@ -1,0 +1,21 @@
+(ns tst.demo.core
+  (:use demo.core tupelo.core tupelo.test)
+  (:require
+    [clojure.string :as str]
+    [clojure.java.io :as io])
+  (:import [java.util.concurrent ArrayBlockingQueue Executors TimeUnit]) )
+
+(dotest
+  (let [N 100
+        puts-done (atom 0)
+        abq (ArrayBlockingQueue. (+ 3 N))
+        putter (fn []
+                 (.put abq 0)
+                 (swap! puts-done inc))]
+    (dotimes [_ N]
+      (future (putter)))
+    (Thread/sleep 1000)
+    (println (format ""N: %d   puts-done: %d"" N @puts-done))
+    (assert (= N @puts-done)
+            (format ""should have put in puts-done items; N = %d   puts-done = %d"" N @puts-done))
+    ))

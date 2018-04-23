@@ -1,0 +1,23 @@
+module Array2D =
+    let findIndex f (array:'a[,]) =
+        let xStart = array.GetLowerBound 0
+        let xEnd   = array.GetUpperBound 0
+        let yStart = array.GetLowerBound 1
+        let yEnd   = array.GetUpperBound 1
+        let rec iterate i j =
+            if   f array.[i,j] then Some (i, j)
+            elif j < yEnd      then iterate i (j+1)
+            elif i < xEnd      then iterate (i+1) yStart
+                               else None
+        iterate xStart yStart
+
+[<EntryPoint>]
+let main argv =
+    let testArray = Array2D.init 20 20 (fun _ _ -> 0)
+    testArray.[13,12] <- 1
+
+    match testArray |> Array2D.findIndex (fun x -> x = 1) with
+    | Some (x,y) -> printfn ""found at (%d,%d)"" x y
+    | None -> printfn ""not found""
+
+    0

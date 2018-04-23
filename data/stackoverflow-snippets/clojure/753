@@ -1,0 +1,13 @@
+(defn primes3 [max]
+  (let [enqueue (fn [sieve n factor]
+                  (let [m (+ n (+ factor factor))]
+                    (if (sieve m)
+                      (recur sieve m factor)
+                      (assoc sieve m factor))))
+        next-sieve (fn [sieve candidate]
+                     (if-let [factor (sieve candidate)]
+                       (-> sieve
+                         (dissoc candidate)
+                         (enqueue candidate factor))
+                       (enqueue sieve candidate candidate)))]
+    (cons 2 (vals (reduce next-sieve {} (range 3 max 2))))))

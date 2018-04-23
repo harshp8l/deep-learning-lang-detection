@@ -1,0 +1,19 @@
+(defn invert-many-to-one
+  ""returns a one-to-many mapping""
+  ([m] (invert-many-to-one #{} m))
+  ([to m]
+   (persistent!
+    (reduce (fn [m [k v]]
+              (assoc! m v (conj (get m v to) k)))
+            (transient {}) m))))
+
+(def many-to-one {:a 1 :b 1 :c 2})
+
+> (invert-many-to-one many-to-one)
+{1 #{:b :a}, 2 #{:c}} ; as expected
+
+> (invert-many-to-one [] many-to-one)
+{1 [:b :a], 2 [:c]} ; we can also use vectors
+
+> (invert-one-to-one many-to-one) ; what happens when we use the 'wrong' function?
+{1 :b, 2 :c} ; we have lost information

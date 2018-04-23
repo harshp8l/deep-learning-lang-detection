@@ -1,0 +1,24 @@
+import scala.concurrent.Future
+import scala.util.{Success, Failure}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
+object DangerousAndSlowService {
+    def queryNextNumber: Long = {
+        50
+    }
+}
+
+val number1F = Future { DangerousAndSlowService.queryNextNumber }
+
+number1F.onComplete({
+    case Success(value) => {
+        println(s""Got the callback, meaning = $value"")
+    }
+    case Failure(exception) => {
+        exception.printStackTrace
+    }
+})
+
+Await.result(number1F, 1.second)

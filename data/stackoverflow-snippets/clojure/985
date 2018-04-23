@@ -1,0 +1,25 @@
+(def Myschema {:a s/Int
+               :b {:c s/Str
+                   (s/optional-key :d) s/Bool
+                   (with-meta s/Any {:garbage true}) s/Any}
+               :e [{:f s/Inst}]
+               (with-meta s/Any {:garbage true}) s/Any})
+
+(defn garbage? [s]
+  (and (associative? s)
+       (:garbage (meta (:kspec s)))))
+
+(defn discard-garbage [schema]
+  (s/start-walker
+    (fn [s]
+      (let [walk (s/walker s)]
+        (fn [x]
+          (let [result (walk x)]
+            (if (garbage? s)
+              (do (println ""found garbage"" x)
+                  nil)
+              result)))))
+    schema))
+
+((discard-garbage Myschema) data)
+;=> :a 2, :b {:c ""hello""}, :e [{:f #inst ""2015-07-23T12:29:51.822-00:00""}]}

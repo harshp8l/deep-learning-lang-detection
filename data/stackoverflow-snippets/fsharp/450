@@ -1,0 +1,14 @@
+let firstAndRest predicate source =
+  source
+  |> Seq.fold (fun (lone, rest) item -> if Option.isNone lone && predicate item
+                                        then Some item, rest
+                                        else lone, seq { yield! rest; yield item })
+     (None, Seq.empty)
+
+// usage with example given
+let sequence = Seq.init 5 id
+
+let pickedMember, sequenceWithoutPickedMember = firstAndRest ((=) 2) sequence
+
+// pickedMember : Some 2
+// sequenceWithoutPickedMember : seq [0; 1; 3; 4]

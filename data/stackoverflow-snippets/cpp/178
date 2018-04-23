@@ -1,0 +1,26 @@
+#include <iostream>
+
+// returns a callable object without parameters
+template <typename ... Args>
+auto f1(Args&& ... args){
+    return capture_call([](auto&& ... args){
+        // args are perfect captured here
+        // print captured args via C++17 fold expression
+        (std::cout << ... << args) << '\n';
+    }, std::forward<Args>(args) ...);
+}
+
+// returns a callable object with two int parameters
+template <typename ... Args>
+auto f2(Args&& ... args){
+    return capture_call([](int param1, int param2, auto&& ... args){
+        // args are perfect captured here
+        std::cout << param1 << param2;
+        (std::cout << ... << args) << '\n';
+    }, std::forward<Args>(args) ...);
+}
+
+int main(){
+    f1(1, 2, 3)();     // Call lambda without arguments
+    f2(3, 4, 5)(1, 2); // Call lambda with 2 int arguments
+}

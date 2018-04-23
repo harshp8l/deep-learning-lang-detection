@@ -1,0 +1,18 @@
+class DynamicWrapper():
+    def wrap_it(self, concrete):
+        self.cco = concrete
+
+    def __getattr__(self, k):
+        def wrapper(*args, **kwargs):
+            print(f'DynamicWrapper calling {k} with args {args} {kwargs}')
+            return getattr(self.cco, k)(*args, **kwargs)
+
+        if hasattr(self.cco, k):
+            return wrapper
+        else:
+            raise AttributeError(f'No such field/method: {k}')
+
+cco = Concrete(5)
+dwcco = DynamicWrapper()
+dwcco.wrap_it(cco)
+dwcco.print_data()

@@ -1,0 +1,41 @@
+std::vector<std::string> num = {""A"", ""B"", ""C"", ""D"", ""O"", ""V""};
+std::vector<std::string> den = {""B"", ""O"", ""N"", ""A"", ""C""};
+
+// sort to compare equal_ranges
+std::sort(std::begin(num), std::end(num));
+std::sort(std::begin(den), std::end(den));
+
+decltype(std::equal_range(std::begin(num), std::end(num), """")) num_er{std::begin(num), std::begin(num)};
+decltype(std::equal_range(std::begin(den), std::end(den), """")) den_er{std::begin(den), std::begin(den)};
+
+while(num_er.second != std::end(num) && den_er.second != std::end(den))
+{
+    // next value to check (numerator or denominator?)
+    auto v = num_er.second;
+    if(*den_er.second < *v)
+        v = den_er.second;
+
+    // find the equal ranges
+    num_er = std::equal_range(num_er.second, std::end(num), *v);
+    den_er = std::equal_range(den_er.second, std::end(den), *v);
+
+    // count the number of this value for num and den
+    auto num_size = std::distance(num_er.first, num_er.second);
+    auto den_size = std::distance(den_er.first, den_er.second);
+
+    // erase from either num or den (or both)
+
+    if(num_size >= den_size)
+        num_er.second = num.erase(num_er.second - den_size, num_er.second);
+
+    if(den_size >= num_size)
+        den_er.second = den.erase(den_er.second - num_size, den_er.second);
+}
+
+for(auto const& s: num)
+    std::cout << s << ' ';
+std::cout << '\n';
+std::cout << ""-------------------"" << '\n';
+for(auto const& s: den)
+    std::cout << s << ' ';
+std::cout << '\n';

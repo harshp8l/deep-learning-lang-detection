@@ -1,0 +1,16 @@
+let filterAndCollect (pred : 'a -> 'b -> bool) (f : 'a -> 'b list) (m : 'a list) =
+    let f' a = [ for b in f a do if pred a b then yield b ]
+    List.collect f' m
+
+type FilteringListMonad(pred) =
+    member o.Bind(  (m:'a list), (f: 'a -> 'b list) ) = filterAndCollect pred f m
+    member o.Return(x) = [x]
+
+let filteredList = FilteringListMonad(fun x y -> x < y)
+
+let test2 =
+    filteredList {
+        let! x = [1 .. 10]
+        let! y = [2 .. 2 .. 20]
+        return (x,y)
+    }

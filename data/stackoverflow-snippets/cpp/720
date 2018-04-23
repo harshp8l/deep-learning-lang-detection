@@ -1,0 +1,104 @@
+#include <vector>
+#include <algorithm>
+#include <iterator>
+
+double f(int x) { return x*2; }
+
+template<class T> struct value_iter
+{
+    using value_type = T;
+    using difference_type = T;
+    using reference = T&;
+    using pointer = T*;
+    using iterator_category = std::forward_iterator_tag;
+
+    friend bool operator==(value_iter l, value_iter r)
+    {
+        return l.current == r.current;
+    }
+
+    friend bool operator!=(value_iter l, value_iter r)
+    {
+        return !(l == r);
+    }
+
+    T const& operator*() const& { return current; }
+    value_iter& operator++() { ++current; return *this; }
+
+    T current;
+};
+
+template<class T> struct every
+{
+    struct from_thing
+    {
+        T from;
+
+        struct to_thing
+        {
+            auto begin() const { return value_iter<T> { from };}
+            auto end() const { return value_iter<T> { to+1 };}
+            T from, to;
+        };
+
+        auto to(T x) { return to_thing { from, x }; }
+    };
+
+    static constexpr auto from(T start)
+    {
+        return from_thing { start };
+    }
+
+};
+
+template<class F>
+struct counted_function
+{
+    constexpr counted_function(F f, int start = 0, int step = 1) 
+    : f(f)
+    , counter(start)
+    , step(step) {}
+
+    decltype(auto) operator()() {
+        return f(counter++);
+    }
+
+    F f;
+    int counter;
+    int step;
+};
+
+template <class Container> struct generate
+{
+    generate(Container& c) : c(c) {}
+
+    template<class F>
+    struct invoking_thing
+    {
+
+        template<class Thing>
+        auto with(Thing thing)
+        {
+            using std::begin;
+            using std::end;
+            std::copy(begin(thing), end(thing), begin(c));
+            return c;
+        }
+
+        F f;
+        Container& c;
+    };
+
+    template<class F>
+    auto invoking(F f) { return invoking_thing<F>{f, c}; }
+
+    Container& c;
+};
+
+int main()
+{
+    constexpr int nmax = 100;
+    std::vector<double> vect2 (nmax);
+
+    generate(vect2).invoking(f).with(every<int>::from(0).to(nmax - 1));
+}

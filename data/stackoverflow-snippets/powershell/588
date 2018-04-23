@@ -1,0 +1,28 @@
+$p_out = 'success.txt'
+$p_err = 'error.txt'
+
+try
+{
+    [Environment]::CurrentDirectory = $PWD
+    $append = $false
+    $out = [System.IO.StreamWriter]::new($p_out, $append)
+    $err = [System.IO.StreamWriter]::new($p_err, $append)
+
+    .\longerr.exe 2000 4 2>&1 |
+        % {
+            if ($_ -is [System.Management.Automation.ErrorRecord]) {
+                # https://stackoverflow.com/a/33858097/2328341
+                if ($_.TargetObject -ne $null) {
+                    $err.WriteLine(); 
+                }
+                $err.Write($_.Exception.Message)
+            } else {
+                $out.WriteLine($_)
+            }
+        }
+}
+finally
+{
+    $out.Close()
+    $err.Close()
+}

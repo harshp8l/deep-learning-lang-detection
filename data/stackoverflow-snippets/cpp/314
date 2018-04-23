@@ -1,0 +1,96 @@
+#include <tuple>
+#include <memory>
+#include <utility>
+#include <iostream>
+
+namespace detail
+ {
+   template <typename Tuple, typename F, std::size_t ... Is>
+   constexpr void for_each_impl (Tuple && tuple, F && f,
+                                 std::index_sequence<Is...>) 
+    {
+      using swallow = int[];
+
+      (void)swallow { 1,
+         ((void)f(std::get<Is>(std::forward<Tuple>(tuple))), 0)... };
+    }
+ }
+
+template <typename Tuple, typename F>
+constexpr void for_each (Tuple && tuple, F && f) 
+ {
+   constexpr auto N 
+    { std::tuple_size<std::remove_reference_t<Tuple>>::value };
+
+   detail::for_each_impl(std::forward<Tuple>(tuple), std::forward<F>(f),
+                         std::make_index_sequence<N>{});
+ } 
+
+struct icomponent
+ {
+   virtual ~icomponent () = default;
+
+   virtual std::string id () = 0; 
+ };
+
+struct component_a : public icomponent
+ { virtual std::string id () override { return ""component a""; } };
+
+struct component_b : public icomponent
+ { virtual std::string id () override { return ""component b""; } };
+
+struct component_c : public icomponent
+ { virtual std::string id () override { return ""component c""; } };
+
+struct iprocessing_component_manager
+ {
+   virtual ~iprocessing_component_manager () = default;
+
+   virtual icomponent * prepare () = 0;
+ };
+
+template <typename T>
+struct type_processing_component_manager
+   : public iprocessing_component_manager
+ {
+   virtual ~type_processing_component_manager () = default;
+
+   virtual T* prepare () override
+    { return new T; }
+ };
+
+template <typename ... Ts>
+struct tuple_processing_component_manager
+   : public type_processing_component_manager<Ts>...
+ {
+   virtual ~tuple_processing_component_manager () = default;
+
+   template <typename T>
+   T * prepare ()
+    { return type_processing_component_manager<T>::prepare(); }
+ };
+
+template <typename ... Ts>
+void process ()
+ {
+   auto component_mgr
+    { std::make_unique<tuple_processing_component_manager<Ts...>>() };
+
+   std::tuple<Ts...> components;
+
+   for_each(components, [&](auto& comp)
+    {  
+      using component_t
+         = typename std::remove_reference<decltype(comp)>::type;
+
+      std::unique_ptr<component_t> x
+       { component_mgr->template prepare<component_t>() };
+
+      std::cout << x->id() << ""\n"";
+    });
+}
+
+int main ()
+ {
+   process<component_a, component_b, component_c>();
+ }

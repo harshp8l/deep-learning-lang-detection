@@ -1,0 +1,25 @@
+require 'win32ole'
+
+def sendemail(outlook, foldernumber, templatename,nameplaceholder,actualname,emailid)
+  mapi = outlook.GetNameSpace('MAPI')
+  drafts = mapi.GetDefaultFolder(foldernumber)
+  outlook = WIN32OLE.new('Outlook.Application')
+
+  # Iterate over messages in a folder:
+
+  drafts.Items.each do |message|
+
+    # Your code here...
+    if message.Subject =~ /test email/i
+      message1 = outlook.CreateItem(0)
+      message1.Subject=message.Subject
+      message1.Body=message.Body
+      message1.Body=message1.Body.gsub(nameplaceholder,actualname)
+      message1.To=emailid
+      message1.Save
+      message1.Send
+    end
+  end  
+end
+
+sendemail(outlook, 16, ""test email"",""<TBD>"",""Junkee"",""junkone2@dd.com"")

@@ -1,0 +1,26 @@
+import org.bson.codecs.DecoderContext
+import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
+import org.bson.codecs.configuration.CodecRegistry
+import org.bson.{BsonDocumentReader, BsonDocumentWrapper}
+import org.mongodb.scala.bson.codecs.{DEFAULT_CODEC_REGISTRY, Macros}
+import org.mongodb.scala.bson.collection.mutable.Document
+
+import scala.reflect.classTag
+
+case class Person(firstName: String, lastName: String)
+
+object MongoTest extends App {
+
+  val personCodecProvider = Macros.createCodecProvider[Person]()
+  val codecRegistry: CodecRegistry = fromRegistries(fromProviders(personCodecProvider), DEFAULT_CODEC_REGISTRY)
+
+  val document = Document(""firstName"" -> ""first"", ""lastName"" -> ""last"")
+  val bsonDocument = BsonDocumentWrapper.asBsonDocument(document, DEFAULT_CODEC_REGISTRY)
+
+  val bsonReader = new BsonDocumentReader(bsonDocument)
+  val decoderContext = DecoderContext.builder.build
+  val codec = codecRegistry.get(classTag[Person].runtimeClass)
+  val person: Person = codec.decode(bsonReader, decoderContext).asInstanceOf[Person]
+
+  println(s""person: $person"")
+}

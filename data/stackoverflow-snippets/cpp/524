@@ -1,0 +1,93 @@
+#include <iostream>
+
+using namespace std;
+
+class A
+{
+public:
+    A() {}
+    virtual ~A() {}
+    virtual void show() { cout << ""show A"" << endl;}
+};
+
+
+class B:A
+{
+public:
+    B() {}
+    virtual ~B() {}
+    virtual void show() { cout << ""show B"" << endl;}
+};
+
+class X
+{
+protected:
+    char m_i;
+public:
+    X () {  m_i = 'X';}
+    virtual void showing() { cout << ""showing "" << m_i   << endl;}
+};
+
+class Y:X
+{
+public:
+    Y() {  m_i = 'Y';}
+    virtual void showing() { cout << ""showing "" << m_i   << endl;}
+};
+
+class WrapperYB
+{
+public:
+    enum class Which { B, Y };
+
+public:
+    explicit WrapperYB (int n)
+        : which(Which(n))
+    {
+        switch (which)
+        {
+            case Which::B: ptr.b = new B; break;
+            case Which::Y: ptr.y = new Y; break;
+        }
+    }
+
+    ~WrapperYB ()
+    {
+        switch (which)
+        {
+            case Which::B: delete ptr.b; break;
+            case Which::Y: delete ptr.y; break;
+        }
+    }
+
+    WrapperYB (const WrapperYB&) = delete;
+    WrapperYB& operator = (const WrapperYB&) = delete;
+
+public:
+    void show()
+    {
+        switch (which)
+        {
+            case Which::B: ptr.b->show()   ; break;
+            case Which::Y: ptr.y->showing(); break;
+        }
+    }
+
+private:
+    Which which;
+    union {
+        Y* y;
+        B* b;
+    } ptr;
+};
+
+int main(){
+
+    WrapperYB objY(1);
+
+    objY.show(); // must call Y::showing
+
+    WrapperYB objB(0);
+
+    objB.show(); // must call B::show
+}

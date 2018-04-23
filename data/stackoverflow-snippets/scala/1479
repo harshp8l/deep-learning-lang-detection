@@ -1,0 +1,28 @@
+val rdd = sc.parallelize(Array(
+(""First"",500,9999999),
+(""Second"",100,499),
+(""Third"",0,99),
+(""Unknown"",-99999,0)
+))
+
+val dataArr = rdd.map{ case (className, min, max) => 
+                       (className, Range(min, max) )  }.collect
+// First Element will be the Class Name
+// Second will be the Range(min, max)
+// sc.broadcast(dataArr) here
+
+val getClassName = udf {(x: Int) => { 
+                  dataArr.map{ e => 
+                        if (e._2.contains(x) ) e._1.toString 
+                        else null.asInstanceOf[String] }
+                  .filter(_ != null )
+                  .apply(0) }}
+
+df.withColumn(""ClassName"", getClassName($""VALUE"") ).show
++----+-----+---------+
+|NAME|VALUE|ClassName|
++----+-----+---------+
+|Davi|  130|   Second|
+|Joel|   20|    Third|
+|Emma|  500|    First|
++----+-----+---------+

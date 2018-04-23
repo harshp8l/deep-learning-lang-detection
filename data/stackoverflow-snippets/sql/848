@@ -1,0 +1,45 @@
+ALTER PROCEDURE [dbo].[usp_Get_MessageType_And_Count] 
+       @table_name varchar(max)  
+AS
+
+BEGIN
+
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+SET NOCOUNT ON
+
+DECLARE @ActualTableName AS NVARCHAR(255),
+    @sql AS NVARCHAR(MAX)
+
+
+    SELECT @ActualTableName = t.TABLE_NAME
+    FROM INFORMATION_SCHEMA.TABLES t
+    INNER JOIN INFORMATION_SCHEMA.COLUMNS c
+        ON t.TABLE_NAME = c.TABLE_NAME
+    WHERE t.TABLE_NAME = @table_name
+        AND c.COLUMN_NAME = 'Message Type'
+
+IF (@ActualTableName IS NOT NULL)
+BEGIN
+
+   SELECT @sql =
+    'SELECT [MessageType],
+        COUNT([MessageType]) as CountValue
+    FROM
+    (
+     SELECT Split.a.value(''.'', ''VARCHAR(100)'') AS [MessageType]  
+     FROM  (SELECT CAST (''<M>'' + REPLACE([Message Type], '','', ''</M><M>'') + ''</M>'' AS XML) AS [MessageType]  
+            FROM ' + @ActualTableName + '
+            ) AS A 
+     CROSS APPLY [MessageType].nodes (''/M'') AS Split(a)) AS tab 
+     GROUP BY [MessageType]'
+
+   EXEC(@sql)  
+END
+
+ELSE
+BEGIN
+    SELECT 'Table/column does not exist' AS [Message]
+END
+
+
+END

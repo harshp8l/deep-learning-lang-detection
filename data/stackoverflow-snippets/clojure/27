@@ -1,0 +1,17 @@
+(defun my-apply (fn arguments env)
+  (assert (= (length arguments)
+             (length (fn-parameters fn)))
+          ()
+          ""Length mismatch when calling ~S with argsuments ~S""
+          fn
+          arguments)
+  (let ((code (fn-code fn)))
+    (typecase code
+      (function (apply code arguments))
+      (t (my-eval code
+                  (make-env :frame
+                            (make-frame :bindings (append (fn-closed fn)
+                                                          (mapcar #'cons
+                                                                  (fn-parameters fn)
+                                                                  arguments))
+                                        :parent (frame env))))))))

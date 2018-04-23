@@ -1,0 +1,47 @@
+;WITH CTE_ActualWorkBySchedule
+AS
+(
+    SELECT       A.EmpId
+                ,A.ActualWorkType 
+                ,A.StartTime AS AW_StartTime
+                ,A.EndTime AS AW_EndTime
+                ,S.ScheduleType
+                ,S.StartTime AS Schd_StartTime
+                ,S.EndTime AS Schd_EndTime
+                ,(
+                    CASE
+                        WHEN A.StartTime < S.StartTime THEN S.StartTime
+                        ELSE A.StartTime
+                    END
+                 ) AS AW_StartTimeClipped
+                ,(
+                    CASE
+                        WHEN A.EndTime > S.EndTime THEN S.EndTime
+                        ELSE A.EndTime
+                    END
+                 ) AS AW_EndTimeClipped
+    FROM        [dbo].[Actual_Work] A
+    INNER JOIN  [dbo].[Scheduled_Shifts] S ON S.EmpId = A.EmpId AND S.StartTime < A.EndTime AND S.EndTime > A.StartTime
+),
+AdherenceToScheduleDuration
+AS
+(
+    SELECT   WS.EmpId
+            ,WS.ActualWorkType
+            ,WS.AW_StartTime
+            ,WS.AW_EndTime
+            ,WS.ScheduleType
+            ,WS.Schd_StartTime
+            ,WS.Schd_EndTime
+            ,WS.AW_StartTimeClipped
+            ,WS.AW_EndTimeClipped
+            ,(
+                CASE
+                    WHEN WS.ActualWorkType = WS.ScheduleType THEN DATEDIFF(SECOND, AW_StartTimeClipped, AW_EndTimeClipped)
+                    ELSE 0
+                END
+             ) AS DurationWithinSchedule
+    FROM    CTE_ActualWorkBySchedule WS
+)
+SELECT  *
+FROM    AdherenceToScheduleDuration SD

@@ -1,0 +1,17 @@
+(require '[riemann.streams :refer :all])
+(def f (stream
+        (where (service ""system_log"")
+               (by :RefNo
+                   (smap
+                    (fn [events]
+                      (let [count-of-failures (count (filter #(= ""Failed"" (:Status %)) events))]
+                        (prn events)
+                        (assoc (first events)
+                               :status ""Failure""
+                               :metric  count-of-failures 
+                               :total-fail (>= count-of-failures 2))))
+
+                    #_(where (and (= (:status event) ""Failure"")
+                                  (:total-fail event)))
+                    prn)))))
+(f {:RefNo 4444 :service ""system_log"" :status ""Failed""})

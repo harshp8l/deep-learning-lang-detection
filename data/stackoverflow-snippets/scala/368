@@ -1,0 +1,26 @@
+//create all three dummy DFs
+val df1 = sc.parallelize(Seq((""w1"", 100), (""w2"", 200))).toDF(""word"", ""count1"")
+val df2 = sc.parallelize(Seq((""w1"", 12), (""w5"", 22))).toDF(""word"", ""count2"")
+val df3 = sc.parallelize(Seq((""w7"", 17), (""w2"", 28))).toDF(""word"", ""count3"")
+
+//store all DFs in a list
+val dfList: List[DataFrame] = List(df1, df2, df3)
+
+//apply reduce function to join them together
+val joinedDF = dfList.reduce((a, b) => a.join(b, Seq(""word""), ""fullouter""))
+
+joinedDF.show()
+//output
+//+----+------+------+------+
+//|word|count1|count2|count3|
+//+----+------+------+------+
+//|  w1|   100|    12|  null|
+//|  w2|   200|  null|    28|
+//|  w5|  null|    22|  null|
+//|  w7|  null|  null|    17|
+//+----+------+------+------+
+
+//To write to CSV file
+joinedDF.write
+  .option(""header"", ""true"")
+  .csv(""PATH_OF_CSV"")

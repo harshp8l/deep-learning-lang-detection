@@ -1,0 +1,51 @@
+// Enter the vertical FOV for the camera here
+var vFov = 270; // = 240;
+
+var material = new THREE.MeshBasicMaterial( { map: texture, side: THREE.BackSide } );
+var geometry = new THREE.SphereGeometry(0.5, 200, 200);
+
+function updateUVs()
+{
+    var maxY = Math.cos(Math.PI * (360 - vFov) / 180 / 2);
+    var faceVertexUvs = geometry.faceVertexUvs[0];
+    // The sphere consists of many FACES
+    for ( var i = 0; i < faceVertexUvs.length; i++ )
+    {
+        // For each face...
+        var uvs = faceVertexUvs[i];
+        var face = geometry.faces[i];
+        // A face is a triangle (three vertices)
+        for ( var j = 0; j < 3; j ++ )
+        {
+            // For each vertex...
+            // x, y, and z refer to the point on the sphere in 3d space where this vertex resides
+            var x = face.vertexNormals[j].x;
+            var y = face.vertexNormals[j].y;
+            var z = face.vertexNormals[j].z;
+
+            // Because our stereograph goes from 0 to 1 but our vertical field of view cuts off our Y early
+            var scaledY = (((y + 1) / (maxY + 1)) * 2) - 1;
+
+            // uvs[j].x, uvs[j].y refer to a point on the 2d texture
+            if (y < maxY)
+            {
+                var radius = Math.acos(1 - ((scaledY / 2) + 0.5)) / Math.PI;
+                var angle = Math.atan2(x, z);
+
+                uvs[j].x = (radius * Math.cos(angle)) + 0.5;
+                uvs[j].y = (radius * Math.sin(angle)) + 0.5;
+            } else {
+                uvs[j].x = 0;
+                uvs[j].y = 0;
+            }
+        }
+    }
+    // For whatever reason my UV mapping turned everything upside down
+    // Rather than fix my math, I just replaced ""minY"" with ""maxY"" and
+    // rotated the sphere 180 degrees
+    geometry.rotateZ(Math.PI);
+    geometry.uvsNeedUpdate = true;
+}
+updateUVs();
+
+var mesh = new THREE.Mesh( geometry, material );

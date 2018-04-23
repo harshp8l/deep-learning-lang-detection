@@ -1,0 +1,22 @@
+(require '[clojure.core.async :refer [<! <!! >! chan go]])
+
+(defn go-generate [ch]
+  (go (doseq [i (iterate inc 2)]
+        (>! ch i))))
+
+(defn go-filter [in out prime]
+  (go (while true
+        (let [i (<! in)]
+          (if-not (zero? (rem i prime))
+            (>! out i))))))
+
+(defn main []
+  (let [ch (chan)]
+    (go-generate ch)
+    (loop [i 10 ch ch]
+      (if (pos? i)
+        (let [prime (<!! ch)]
+          (println prime)
+          (let [ch1 (chan)]
+            (go-filter ch ch1 prime)
+            (recur (dec i) ch1)))))))

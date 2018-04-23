@@ -1,0 +1,15 @@
+type Casters() =
+  static member cast (v: string) = v :> obj
+  static member cast (v: float) = v :> obj
+  static member cast (v: int) = v :> obj
+  static member cast (v: string list) = v :> obj
+  static member cast (v: float list) = v :> obj
+  static member cast (v: int list) = v :> obj
+
+let inline cast (casters: ^c) (value: ^t) =
+    ( (^c or ^t) : (static member cast : ^t -> obj) value)
+
+let inline (==>) name value = name, (cast (Casters()) value)
+
+[""Name"" ==> ""Freddie""; ""Age"" ==> 50]  // OK
+[""What?"" ==> true]  // Error: ""bool"" is not an allowed type

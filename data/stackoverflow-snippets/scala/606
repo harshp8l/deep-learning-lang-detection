@@ -1,0 +1,15 @@
+  implicit val localDateTimeColumnType: BaseColumnType[LocalDateTime] = MappedColumnType.base[LocalDateTime, Timestamp](Timestamp.valueOf, _.toLocalDateTime)
+
+  case class MyEmail(sk: Int, subject: String, message: String,
+    createTS: LocalDateTime, updateTS: Option[LocalDateTime])
+
+  class MyEmailDB(tag: Tag) extends Table[MyEmail](tag, ""emails"") {
+
+    def sk = column[Int](""sk"", O.PrimaryKey, O.AutoInc)
+    def subject = column[String](""subject"")
+    def message = column[String](""message"")
+    def createTS = column[LocalDateTime](""create_ts"")
+    def updateTS = column[Option[LocalDateTime]](""update_ts"")
+
+    def * = (sk, subject, message, createTS, updateTS) <> ((MyEmail.apply _).tupled, MyEmail.unapply)
+  }

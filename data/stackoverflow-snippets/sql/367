@@ -1,0 +1,26 @@
+WITH bounds ( id, list, start_pos, end_pos, lvl ) AS (
+  SELECT ROWNUM,
+         cols,
+         1,
+         INSTR( cols, ',' ),
+         1
+  FROM   data
+UNION ALL
+  SELECT id,
+         list,
+         end_pos + 1,
+         INSTR( list, ',', end_pos + 1 ),
+         lvl + 1
+  FROM   bounds
+  WHERE  end_pos > 0
+)
+SELECT id,
+       SUBSTR(
+         list,
+         start_pos,
+         DECODE( end_pos, 0, LENGTH( list ) + 1, end_pos ) - start_pos
+       ) AS item,
+       lvl,
+       MAX( lvl ) OVER () AS num_columns
+FROM   bounds
+ORDER BY id, lvl

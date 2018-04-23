@@ -1,0 +1,38 @@
+use ReCaptcha\ReCaptcha;
+use ReCaptcha\RequestMethod;
+use ReCaptcha\RequestParameters;
+use ReCaptcha\RequestMethod\CurlPost;
+
+class NotSSLCurl extends CurlPost implements RequestMethod
+{
+    public function __construct()
+    {
+        $this->curl = curl_init(self::SITE_VERIFY_URL);
+        curl_setopt($this->curl, CURLINFO_HEADER_OUT, 0);
+        curl_setopt($this->curl, CURLOPT_HEADER, 0);
+        curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($this->curl, CURLOPT_BINARYTRANSFER,1);
+        curl_setopt($this->curl, CURLOPT_TIMEOUT, 9999);
+        curl_setopt($this->curl, CURLOPT_USERAGENT, 'Mozilla/5.0');
+        curl_setopt($this->curl, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($this->curl, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($this->curl, CURLOPT_POST , 1);
+        curl_setopt($this->curl, CURLOPT_HTTPHEADER , array('Content-Type: application/x-www-form-urlencoded'));
+    }
+
+    public function submit(RequestParameters $params)
+    {
+        curl_setopt($this->curl, CURLOPT_POSTFIELDS , $params->toQueryString());
+        return curl_exec($this->curl);
+    }
+
+    public function __destruct()
+    {
+        curl_close($this->curl);
+    }
+}
+
+// example validation:
+$recaptcha = new ReCaptcha('CLIENT_SECRECT', new NotSSLCurl());
+$resp      = $recaptcha->verify(@$_POST['g-recaptcha-response'],$_SERVER['REMOTE_ADDR']);
+var_dump($resp->isSuccess());

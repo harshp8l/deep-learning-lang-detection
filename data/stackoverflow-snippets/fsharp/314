@@ -1,0 +1,30 @@
+namespace potato
+module Main =
+
+open System
+open Gtk
+
+type Handler()=class
+    [<Builder.Object>]
+    [<DefaultValue(true)>]
+    val mutable window1 : Window
+end
+
+let OnDelete (args:DeleteEventArgs) =
+    Application.Quit()
+    args.RetVal <- true 
+
+[<EntryPoint>]
+let Main (args) = 
+    Application.Init()
+
+    let gxml =  new Builder(""GUI.xml"")
+    let handler = new Handler()
+    do gxml.Autoconnect(handler)
+
+    handler.window1.DeleteEvent
+    |> Event.add OnDelete
+
+    handler.window1.ShowAll()
+    Application.Run()
+    0

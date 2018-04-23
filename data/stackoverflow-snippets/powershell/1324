@@ -1,0 +1,37 @@
+# Load WinSCP .NET assembly
+Add-Type -Path ""WinSCPnet.dll""
+
+# Reading from configuration File
+$csv = Import-Csv ""Configuration.csv""
+$csv | ForEach-Object {
+    # Set up session options
+    $sessionOptions = New-Object WinSCP.SessionOptions -Property @{
+        Protocol = [WinSCP.Protocol]::Sftp
+        HostName = $_.HostName
+        UserName = $_.UserName
+        Password = $_.Password
+        SshHostKeyFingerprint = $_.HostKey
+    }
+
+    $session = New-Object WinSCP.Session
+
+    try
+    {
+        # Connect
+        $session.Open($sessionOptions)
+
+        # Download and append file
+        $transferOptions = New-Object WinSCP.TransferOptions
+        $transferOptions.OverwriteMode = [WinSCP.OverwriteMode]::Append
+
+        $session.GetFiles(
+            $_.ExistingFilePath, $_.LocalPath, $False, $transferOptions).Check()
+
+        # Move Files from Upload to Archive Folder
+        $session.MoveFile($_.ExistingFilePath, $_.NewFilePath)
+    }
+    finally
+    {
+        $session.Dispose()
+    }
+}

@@ -1,0 +1,27 @@
+def main(args: Array[String]){
+    val conf = new SparkConf().setAppName(""Excel-read-write"").setMaster(""local"")
+    val sc = new SparkContext(conf)
+    val sqlc = new org.apache.spark.sql.SQLContext(sc)
+    val ss = SparkSession.builder().master(""local"").appName(""Excel-read-write"").getOrCreate()
+    import ss.sqlContext.implicits._
+    var df1 = sqlc.read.format(""com.databricks.spark.csv"")
+             .option(""header"", ""true"")
+             .option(""inferSchema"", ""true"")
+             .load(""oldRecords.csv"")
+    df1.show(false)
+    println(""---- df1 row count ----""+df1.count())
+    if(df1.count()>0){
+      for (i <- 0 until (df1.count().toInt)-1) {
+        var df2 = df1.unionAll(df1)//.union(df1)//df3
+        //df2.show(false)
+        var w1 = org.apache.spark.sql.expressions.Window.orderBy(""date"")
+        var df3 = df2.withColumn(""previousAmount"",  lag(""amount"",1).over(w1)).withColumn(""newdate"", lag(""date"",1).over(w1))
+        // df3.show(false)
+        var df4 = df3.filter((df3.col(""newdate"").isNotNull))//(df3.col(""new_date"").isNotNull)
+        //df4.show(false)
+        var df5 = df4.select(""name"",""amount"",""newdate"").distinct() 
+        println(""-----------""+df5.show(false))
+        df1 = df5.withColumnRenamed(""newdate"", ""date"")
+      }
+    }
+}

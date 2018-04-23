@@ -1,0 +1,33 @@
+ # SET VARIABLES
+        $Serv = <Your Server>
+        $DB   = <Your DB>
+        $TSQL = ""SELECT * FROM TestTBL""
+
+
+# Target Results table from SQL
+    $MainResultsTable = (GetSQLData $Serv $DB $TSQL).Tables[0]
+
+#Get Column names
+    $Colnames = ($MainResultsTable.Rows | gm -MemberType NoteProperty,Property).Name
+
+
+# Loop through each row of data from SQL results
+    foreach($row in $MainResultsTable.Rows)
+    {
+        # Construct the TSQL update statement. Using an array to construct the multi column updates.
+            $TSQLUpdate = ""UPDATE TestTBL SET ""
+            $TSQLUpdateArr =@()
+            foreach($Col in $Colnames)
+            {
+                # We don't need to update the ID
+                    if($Col -ne 'ID')
+                    {
+                        $TSQLUpdateArr += ""$Col = $(EvaluateColumnData $row.$Col)`n"" 
+                    }
+            }
+            # join the columns with the corresponding end of TSQL where the target ID is specified
+                $TSQLUpdate += $($TSQLUpdateArr -join "","").ToString() + "" WHERE ID = $($row.ID);""
+
+            # Execute the update on SQL server
+             UpdateSQL $Serv $DB $TSQLUpdate
+    }

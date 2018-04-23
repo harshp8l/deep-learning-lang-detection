@@ -1,0 +1,140 @@
+#include <iostream>
+#include <list>
+#include <iterator>
+
+using namespace std;
+
+class Valid {};
+
+template<typename _Tp>
+struct myIteratorWrapper
+{
+
+  typedef myIteratorWrapper<_Tp>         _Self;
+  typedef _Tp               value_type;
+  typedef _Tp*                 pointer;
+  typedef _Tp&               reference;
+
+  typedef typename std::list<_Tp>::iterator listIterator;
+
+  listIterator it;
+  listIterator itEnd;
+
+  myIteratorWrapper(const listIterator& listIterArg) _GLIBCXX_NOEXCEPT
+    : it(listIterArg)
+  {}
+
+  myIteratorWrapper(const listIterator& itBegin,
+            const listIterator& itEnd) _GLIBCXX_NOEXCEPT
+    : it(itBegin), itEnd(itEnd)
+  {}
+
+  reference
+  operator*() const _GLIBCXX_NOEXCEPT
+  { return *it; }
+
+  pointer
+  operator->() const _GLIBCXX_NOEXCEPT
+  { return &(*it); }
+
+  /* Change logic of this method as you wish, but keep the signature */ 
+  _Self&
+  operator++() _GLIBCXX_NOEXCEPT
+  {
+    do
+    {
+      ++it;
+    }while (it != itEnd && !(*it)->valid());
+
+    return *this;
+  }
+
+  bool
+  operator==(const _Self& __x) const _GLIBCXX_NOEXCEPT
+  { return it == __x.it; }
+
+  bool
+  operator!=(const _Self& __x) const _GLIBCXX_NOEXCEPT
+  { return it != __x.it; }
+};
+
+template <typename T> class DeferredCleanupList
+{
+public:
+  DeferredCleanupList() {
+    (void)static_cast<Valid *>((T)0);
+  }
+  virtual ~DeferredCleanupList() {}
+
+  typedef myIteratorWrapper<T> iterator;
+
+  iterator begin() {
+    iterator it(container.begin(), container.end());
+    return it;
+  }
+
+  iterator next(iterator it) {       
+    return ++it;
+  }
+
+  iterator end() { return container.end(); }
+
+  size_t size() const { return container.size(); }
+
+  void add(T ptr) { container.push_front(ptr); }
+  void remove(T ptr) { ptr->invalidate(); }
+
+  // called occasionally
+  void delete_invalid() {
+    for (auto it = container.begin(); it != container.end(); ) {
+      auto ptr = *it;
+      if (ptr->valid())
+    ++it;
+      else {
+    delete ptr;
+    it = container.erase(it);
+      }
+    }
+  }
+
+private:
+  DeferredCleanupList(const DeferredCleanupList&);
+  DeferredCleanupList& operator=(const DeferredCleanupList&);
+
+  std::list<T> container;
+};
+
+class D : public Valid {
+  bool isValid;
+  std::string myName;
+public:
+
+  D(std::string myName, bool arg = false)
+    : myName(myName), isValid(arg) {}
+
+  bool valid() const
+  { return isValid; }
+
+  const std::string& whoAmI() const
+  { return myName; }
+};
+
+int main() {
+  D o1(""o1"", true);
+  D o2(""o2"");
+  D o3(""o3"", true);
+  D o4(""o4"");
+  D o5(""o5"", true);
+
+  DeferredCleanupList<D *> list;
+  list.add(&o1);
+  list.add(&o2);
+  list.add(&o3);
+  list.add(&o4);
+  list.add(&o5);
+
+  for (auto ptr : list)
+    {
+      std::cout << ptr->whoAmI() << std::endl;
+    }
+}

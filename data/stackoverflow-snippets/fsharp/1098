@@ -1,0 +1,18 @@
+type Entries = { Entries: List<string>}
+
+type Command = 
+    | ListEntries of Entries
+    | OtherCommand of string
+
+let stack() = 
+
+    let system = ActorSystem.Create ""MySystem""
+
+    let feedBrowser = spawn system ""feedBrowser"" <| fun mailbox -> 
+        let rec loop() = actor {
+            let! msg = mailbox.Receive()
+            match msg with 
+            | ListEntries { Entries = entries} -> printf ""%A"" entries
+            | OtherCommand s -> printf ""%s"" s
+            return! loop() }
+        loop()

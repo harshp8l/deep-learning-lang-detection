@@ -1,0 +1,43 @@
+Select
+    Row_NUmber() over(order by (select 1)) as id,
+    A.[Member ID],A.[Create Date]
+    ,STUFF((
+          SELECT ',' +  CAST([Answer] AS varchar)
+          FROM Table1 T
+          WHERE A.[Member ID]=T.[Member ID] and A.[Create Date]=T.[Create Date] 
+          FOR XML PATH('')), 1, 1, '') as [Answer] 
+         into #test
+FROM Table1 A
+Group by  A.[Member ID],A.[Create Date]
+DECLARE @pivot varchar(8000)
+DECLARE @select varchar(8000)
+SELECT 
+        @pivot=coalesce(@pivot+',','')+'[Answer'+cast(number+1 as varchar(10))+']'
+FROM 
+        master..spt_values where type='p' and 
+        number<=(SELECT max(len(Answer)-len(replace(Answer,',',''))) FROM #test)
+
+SELECT 
+    @select='
+        select p.*
+        from (
+        select 
+            id, [Member ID],[Create Date],substring(Answer, start+2, endPos-Start-2) as token,
+            ''Answer''+cast(row_number() over(partition by id order by start) as varchar(10)) as n
+        from (
+            select 
+                id, [Member ID],[Create Date], Answer, n as start, charindex('','',Answer,n+2) endPos
+                from (select number as n from master..spt_values where type=''p'') num
+                cross join 
+                (
+                    select 
+                        id,[Member ID],[Create Date], '','' + Answer +'','' as Answer 
+                    from 
+                        #test
+                ) m
+            where n < len(Answer)-1
+            and substring(Answer,n+1,1) = '','') as Answer
+        ) pvt
+        Pivot ( max(token)for n in ('+@pivot+'))p order by id'
+
+EXEC(@select)

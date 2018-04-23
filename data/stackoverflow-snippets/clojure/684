@@ -1,0 +1,14 @@
+(defn terminatable [input-ch terminate-ch]
+   (thread
+     (loop []
+       (let [[v ch] (alts!! [input-ch terminate-ch])]
+         (if (identical? ch input-ch)
+           (if (some? v)
+             (do (process-input v) (recur))
+             ;; else input-ch has closed -> don't call recur,
+             ;; thread terminates
+             )
+           ;; else we received sth. from terminate-ch,
+           ;; or terminate-ch has closed -> don't call recur,
+           ;; thread terminates
+           )))))

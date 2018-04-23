@@ -1,0 +1,11 @@
+select rep_id, r.onboarded_at, user_id, u.created_at, pi.applied_at,
+       (case when count(user_id) over (partition by rep_id order by convert_timezone('PST', coalesce(pi.applied_at, pi.created_id)) rows unbounded preceding) >= 5 then 'x'
+             when count(user_id) over (partition by rep_id order by convert_timezone('PST', coalesce(pi.applied_at, pi.created_id)) rows unbounded preceding) >= 3 then 'y'
+             when count(user_id) over (partition by rep_id order by convert_timezone('PST', coalesce(pi.applied_at, pi.created_id)) nulls unbounded preceding) >= 1 then 'z'
+             else null
+        end) status
+from users u left join
+     reps r
+     on r.id = u.advisor_id left join
+     info pi
+     on r.id = pi.g_id;

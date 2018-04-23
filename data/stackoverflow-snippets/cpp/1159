@@ -1,0 +1,56 @@
+#include <boost/asio.hpp>
+#include <boost/optional.hpp>
+#include <boost/bind.hpp>
+#include <thread>
+#include <iostream>
+
+namespace ba = boost::asio;
+
+struct Test {
+    ba::io_service m_io_service;
+    boost::optional<ba::io_service::work> m_work { m_io_service };
+    std::thread m_collectThread {[&] {m_io_service.run();}}; 
+    std::thread m_recognizeThread {[this]{pop();}};
+
+    ba::ip::tcp::socket m_pipe { m_io_service };
+    char m_buf[4];
+
+    Test() {
+        m_pipe.connect({{}, 6767});
+        push();
+    }
+
+    void push(boost::system::error_code ec = {}, size_t = 0)
+    {
+        std::cout << __func__ << "" "" << ec.message() << std::endl;
+
+        if (ec) return;
+
+        using namespace ba::placeholders;
+        ba::async_read(m_pipe,
+                ba::buffer(m_buf),
+                ba::transfer_all(),
+                boost::bind(&Test::push, this, error, bytes_transferred));
+    }
+
+    void pop()
+    {
+        while(true)
+        {
+            std::cout << __func__ << std::endl;
+            usleep(200);
+        }
+    }
+
+    ~Test() {
+        m_work.reset();
+        if (m_recognizeThread.joinable())
+            m_recognizeThread.join();
+        if (m_collectThread.joinable())
+            m_collectThread.join();
+    }
+};
+
+int main() {
+    Test t;
+}

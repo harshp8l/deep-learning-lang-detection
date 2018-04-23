@@ -1,0 +1,21 @@
+var tData struct {
+        Id    bson.ObjectId     `bson:""_id""`
+        Child [][]bson.ObjectId `bson:""child""`
+    }
+
+pipeline := []bson.M{
+        {""$unwind"": bson.M{
+            ""path"": ""$pr"",
+            ""preserveNullAndEmptyArrays"": true,
+        }},
+        {""$graphLookup"": bson.M{
+            ""from"":             ""tree"",
+            ""startWith"":        ""$fid"",
+            ""connectFromField"": ""fid"",
+            ""connectToField"":   ""pr._id"",
+            ""as"":               ""child"",
+        }},
+        {""$match"": bson.M{""fid"": id}},
+        {""$group"": bson.M{""_id"": id, ""child"": bson.M{""$addToSet"": ""$child.fid""}}},
+    }
+Connection.Session.DB(""cctv_storage"").C(""tree"").Pipe(pipeline).One(&tData)

@@ -1,0 +1,35 @@
+Public Sub RunQuery()
+    Dim A As Object
+    Dim rs As Object
+    Dim strSql As String
+    Dim strConnection As String
+    Set A = CreateObject(""ADODB.Connection"")
+    strConnection = ""Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\xxxxx\Documents\Northwind 2007.accdb""
+    strSql = ""SELECT * FROM Employees WHERE City = 'Redmond' OR City = 'Seattle'""
+    A.Open strConnection
+    Set rs = A.Execute(strSql)
+    arr = rs.GetRows
+
+    'now the array arr has the data queried
+    ' Write the field names
+    For intColIndex = 0 To rs.Fields.Count - 1
+        Range(""A1"").Offset(0, intColIndex).Value = rs.Fields(intColIndex).Name
+    Next
+
+    firstRow = LBound(arr, 1)
+    firstCol = LBound(arr, 2)
+    lastRow = UBound(arr, 1)
+    lastCol = UBound(arr, 2)
+
+    For i = firstRow To lastRow
+      For j = firstCol To lastCol
+        Range(""A2"").Offset(j, i).Value = arr(i, j)
+      Next j
+    Next i
+    ActiveSheet.Columns.AutoFit
+
+    rs.Close
+    Set rs = Nothing
+    A.Close
+    Set A = Nothing
+End Sub

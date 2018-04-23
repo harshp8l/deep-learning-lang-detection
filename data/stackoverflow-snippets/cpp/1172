@@ -1,0 +1,76 @@
+#include <thread>
+#include <iostream>
+#include <stdexcept>
+
+static std::exception_ptr _exceptionPtr = nullptr;
+
+struct WorkerThread
+{
+    std::thread thread;
+
+    void doSomething()
+    {
+        int seconds = 0;
+        bool shouldStop = false;
+
+        while (shouldStop == false)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            std::cout << ""time passed : "" << ++seconds << ""seconds"" << std::endl;
+
+            if (seconds == 10) // something bad happened 10 seconds later
+            {
+                try
+                {
+                    shouldStop = true;
+                    throw std::runtime_error(""something really bad happened"");
+                }
+                catch (const std::runtime_error &ex)
+                {
+                    _exceptionPtr = std::current_exception();
+                }
+            }
+        }
+    }
+
+    void run()
+    {
+        thread = std::thread([this] { doSomething(); });
+        thread.detach();
+    }
+};
+
+int main(int argc, char *argv[])
+{
+    WorkerThread workerThread;
+
+    workerThread.run();
+
+
+
+    for (;;)
+    {
+        // do A
+        // do B
+        // do C
+        // do ...
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::cout << ""waiting for thread..."" << std::endl;
+
+        if (_exceptionPtr)
+        {
+            try
+            {
+                std::rethrow_exception(_exceptionPtr);
+            }
+            catch (std::runtime_error &ex)
+            {
+                // terminates program if exception happens
+                std::cout << ""Program will now exit"" << std::endl;
+                exit(EXIT_FAILURE); // but program never executes till here
+            }
+        }
+    }
+
+    return 0;
+}

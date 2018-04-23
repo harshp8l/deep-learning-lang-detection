@@ -1,0 +1,38 @@
+import scala.util.{ Either, Left, Right }
+
+type ErrorMsg = ...
+type PreflightSuccess = ... // contains anything created in preflight that you need later
+type MoreCodeSuccess = ... // contains anything created in preflight or morecode that you need later
+
+def preflight(...): Either[ErrorMsg, PreFlightSuccess] = {
+  ... // preflight
+  if (preflight failed)
+    Left(errorMsg)
+  else
+    Right(...) // create a PreflightSuccess
+}
+
+def moreCode1(pfs: PreFlightSuccess): Either[ErrorMsg, MoreCodeSuccess] = {
+  ... // more code
+  if (something happened)
+    Left(anotherErrorMSG)
+  else
+    Right(...) // create a MoreCodeSuccess
+}
+
+def moreCode2(mcs: MoreCodeSuccess): Either[ErrorMsg, Any] = {
+  ... // more code, presumably never fails
+  Right(...)
+}
+
+override def receive = {
+  case blah =>
+    val pf = preflight(...)
+    val result = pf.map(morecode1).joinRight.map(moreCode2).joinRight // only calls morecode1 if preflight succeeded, and only calls morecode2 if preflight and morecode1 succeeded
+    result.fold(
+      { errorMsg => sender ! errorMsg },
+      ()
+    )
+  case foo => ...
+  case bar => ...
+}

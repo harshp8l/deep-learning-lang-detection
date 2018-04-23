@@ -1,0 +1,62 @@
+; In\   EAX = background color (ZRBG) 32bit (Z mean zero, always is zero)
+; In\   EDX = foreground color (RBGA) 32bit
+; Out\  EAX = new color
+; free registers (R10, RDI, RSI, RSP, RBP)
+abg2:
+    mov r15b, dl                ; av
+    movzx ecx, dl
+    not ecx                     ; faster than 255 - dl
+    mov r14b, cl                ; rem
+
+    shr edx, 8
+    and edx, 0x00FFFFFF
+    mov r12d, edx
+    mov r13d, eax               ; RBGA ---> ZRGB
+
+    ; s: eax
+    ; d: edx
+
+    ;=============================red = ((s >> 16) * rem + (d >> 16) * av) >> 8;
+    mov edx, r12d
+    shr edx, 0x10
+    movzx eax, r14b
+    imul edx, eax
+    mov ecx, r13d
+    shr ecx, 0x10
+    movzx eax, r15b
+    imul eax, ecx
+    lea eax, [eax + edx]                    ; faster than add eax, edx
+    shr eax, 0x8
+    mov r9b, al
+    shl r9d, 8
+
+    ;=============================green = (((s >> 8) & 0x0000ff) * rem + ((d >> 8) & 0x0000ff) * av) >> 8;
+    mov eax, r12d
+    shr eax, 0x8
+    movzx edx, al
+    movzx eax, r14b
+    imul edx, eax
+    mov eax, r13d
+    shr eax, 0x8
+    movzx ecx, al
+    movzx eax, r15b
+    imul eax, ecx
+    lea eax, [eax, + edx]                   ; faster than add eax, edx
+    shr eax, 0x8
+    mov r9b, al
+    shl r9d, 8
+
+    ;=============================blue = ((s & 0x0000ff) * rem + (d & 0x0000ff) * av) >> 8;
+    movzx edx, r12b
+    movzx eax, r14b
+    imul edx, eax
+    movzx ecx, r13b
+    movzx eax, r15b
+    imul eax, ecx
+    lea eax, [eax + edx]                ; faster than add eax, edx
+    shr eax, 0x8
+    mov r9b, al
+
+
+    mov eax, r9d
+    ret

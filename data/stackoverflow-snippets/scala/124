@@ -1,0 +1,53 @@
+import java.util.{Random, UUID}
+import com.fasterxml.uuid.impl.RandomBasedGenerator
+import com.fasterxml.uuid.{Generators, NoArgGenerator}
+import org.scalatest.{FunSuiteLike, Matchers}
+
+import scala.concurrent.duration.Deadline
+
+class GeneratorTest extends FunSuiteLike
+  with Matchers {
+
+  val nTimes = 10
+
+  // Let use Array instead of List - Array is faster!
+  // and use pure UUID generators
+  def generate(uuidGen: NoArgGenerator, number: Int): Seq[UUID] = {
+    Array.fill(number)(uuidGen.generate())
+  }
+
+  test(""Generators.randomBasedGenerator() without passed Random (secure one)"") {
+    // Slow generator
+    val uuidGen = Generators.randomBasedGenerator()
+    // Warm up JVM
+    benchGeneration(uuidGen, 3)
+
+    val startTime = Deadline.now
+    benchGeneration(uuidGen, nTimes)
+    val endTime = Deadline.now
+    val perItermTimeMs = (endTime - startTime).toMillis / nTimes.toDouble
+    println(s""Generators.randomBasedGenerator(). Per iteration: $perItermTimeMs ms"")
+  }
+
+  test(""Generators.randomBasedGenerator() with passing Random (not secure)"") {
+    // Fast generator
+    val uuidGen = Generators.randomBasedGenerator(new Random(System.currentTimeMillis()))
+    // Warm up JVM
+    benchGeneration(uuidGen, 3)    
+
+    val startTime = Deadline.now
+    benchGeneration(uuidGen, nTimes)
+    val endTime = Deadline.now
+    val perItermTimeMs = (endTime - startTime).toMillis / nTimes.toDouble
+    println(s""Generators.randomBasedGenerator() with passing Random Per iteration: $perItermTimeMs ms"")
+  }
+
+  private def benchGeneration(uuidGen: RandomBasedGenerator, nTimes: Int) = {
+    var r: Long = 0
+    for (i <- 1 to nTimes) {
+      val a = generate(uuidGen, 1000000)
+      r += a.length
+    }
+    println(r)
+  }
+}

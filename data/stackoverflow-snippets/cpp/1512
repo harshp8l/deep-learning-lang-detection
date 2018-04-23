@@ -1,0 +1,33 @@
+#include <utility>
+#include <iostream>
+#include <type_traits>
+
+template <char ... CS>
+struct text
+ {
+   static constexpr char c_str[] = {CS...};
+   static constexpr int size = sizeof...(CS);
+ };
+
+constexpr std::size_t strLen (char const * str, std::size_t len = 0U)
+ { return *str ? strLen(++str, ++len) : len; }
+
+template <char const *, typename>
+struct foo_helper;
+
+template <char const * Str, std::size_t ... Is>
+struct foo_helper<Str, std::index_sequence<Is...>>
+ { using type = text<Str[Is]...>; };
+
+
+template <char const * Str>
+struct foo : public foo_helper<Str, std::make_index_sequence<strLen(Str)>>
+ { };
+
+constexpr char abcVar[] = ""abc"";
+
+int main()
+ {
+   static_assert(std::is_same<foo<abcVar>::type,
+                              text<'a', 'b', 'c'>>{}, ""!"");
+ }

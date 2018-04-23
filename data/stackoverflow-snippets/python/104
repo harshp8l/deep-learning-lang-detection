@@ -1,0 +1,128 @@
+#    This file is part of DEAP.
+#
+#    DEAP is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Lesser General Public License as
+#    published by the Free Software Foundation, either version 3 of
+#    the License, or (at your option) any later version.
+#
+#    DEAP is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#    GNU Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public
+#    License along with DEAP. If not, see <http://www.gnu.org/licenses/>.
+
+import random
+
+import numpy as np
+
+from deap import algorithms
+from deap import base
+from deap import creator
+from deap import tools
+
+IND_INIT_SIZE = 5 # Calls to `individual` function
+MAX_ITEM = 100   # Max 100 fruit items in basket
+NBR_ITEMS = 50   # Start with 50 items in basket
+FRUIT_TYPES = 10 # Number of fruit types (apples, bananas, ...)
+
+# Generate a dictionary of random fruit prices.
+fruit_price = {i: random.randint(1, 5)  for i in range(FRUIT_TYPES)}
+
+# Create fruit items dictionary.  The key is item ID, and the 
+# value is a (weight, price) tuple.  Weight is always 1 here.
+items = {}
+# Create random items and store them in the items' dictionary.
+for i in range(NBR_ITEMS):
+    items[i] = (1, fruit_price[i])
+
+# Create fitness function and an individual (solution candidate)
+# A solution candidate in our case is a collection of fruit items.
+creator.create(""Fitness"", base.Fitness, weights=(-1.0, 1.0))
+creator.create(""Individual"", set, fitness=creator.Fitness)
+
+toolbox = base.Toolbox()
+
+# Randomly initialize the population (a set of candidate solutions)
+toolbox.register(""attr_item"", random.randrange, NBR_ITEMS)
+toolbox.register(""individual"", tools.initRepeat, creator.Individual, 
+toolbox.attr_item, IND_INIT_SIZE)
+
+
+def evalBasket(individual):
+    """"""Evaluate the value of the basket and
+    apply constraints penalty.
+    """"""
+    value = 0 # Total value of the basket
+    for item in individual:
+        value += items[item][1]
+
+    # Heavily penalize baskets with 100+ items
+    if len(individual) > MAX_ITEM:
+        return 10000, 0
+    return len(individual), value  # (items in basket, value of basket)
+
+
+def cxSet(ind1, ind2):
+    """"""Apply a crossover operation on input sets.
+    The first child is the intersection of the two sets,
+    the second child is the difference of the two sets.
+    This is one way to evolve new candidate solutions from
+    existing ones.  Think of it as parents mixing their genes
+    to produce a child.
+    """"""
+    temp = set(ind1)                # Used in order to keep type
+    ind1 &= ind2                    # Intersection (inplace)
+    ind2 ^= temp                    # Symmetric Difference (inplace)
+    return ind1, ind2
+
+
+def mutSet(individual):
+    """"""Mutation that pops or add an element.
+    In nature, gene mutations help offspring express new traits
+    not found in their ancestors.  That could be beneficial or 
+    harmful.  Survival of the fittest at play here.
+    """"""
+    if random.random() < 0.5:  # 50% chance of mutation
+        if len(individual) > 0:
+            individual.remove(random.choice(sorted(tuple(individual))))
+    else:
+        individual.add(random.randrange(NBR_ITEMS))
+    return individual,
+
+# Register evaluation, mating, mutation and selection functions
+# so the framework can use them to run the simulation.
+toolbox.register(""evaluate"", evalKnapsack)
+toolbox.register(""mate"", cxSet)
+toolbox.register(""mutate"", mutSet)
+toolbox.register(""select"", tools.selNSGA2)
+
+
+def main():
+    random.seed(64)
+    NGEN = 50
+    MU = 50
+    LAMBDA = 100
+    CXPB = 0.7
+    MUTPB = 0.2
+
+    pop = toolbox.population(n=MU)  # Initial population size
+    hof = tools.ParetoFront()    # Using Pareto front to rank fitness
+
+    # Keep track of population fitness stats which should 
+    # improve over generations (iterations).
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register(""avg"", numpy.mean, axis=0)
+    stats.register(""std"", numpy.std, axis=0)
+    stats.register(""min"", numpy.min, axis=0)
+    stats.register(""max"", numpy.max, axis=0)
+
+    algorithms.eaMuPlusLambda(pop, toolbox, MU,LAMBDA,\
+                              CXPB, MUTPB, NGEN, stats,\
+                              halloffame=hof)
+    return pop, stats, hof
+
+
+if __name__ == ""__main__"":
+    main()   

@@ -1,0 +1,11 @@
+awk 'FNR==1 {fc++; cc_f==fz_f=0; cc_c=fz_c=0}
+    /^# CC/ {cc_f=1; fz_f=0; next}
+    /^# FZ/ {cc_f=0; fz_f=1; next}
+    cc_f    {cc_c++; for(i=1;i<=NF;i++) cc[cc_c,i]+=$i}
+    fz_f    {fz_c++; for(i=1;i<=NF;i++) fz[fz_c,i]+=$i}
+    END {print ""CC averages""
+         for(i=1;i<=cc_c;i++)
+           for(j=1;j<=NF;j++) printf ""%.4f%s"", cc[i,j]/fc, (j==NF?ORS:OFS)
+         print ""FZ averages""
+         for(i=1;i<=fz_c;i++)
+           for(j=1;j<=NF;j++) printf ""%.4f%s"", fz[i,j]/fc, (j==NF?ORS:OFS)}' file{1..100}

@@ -1,0 +1,62 @@
+    Try this one :
+
+    <?php
+include 'conn.php';
+
+function getQuestion($conn) {
+
+$query = ""SELECT * FROM question "";
+$result = mysqli_query($conn, $query);
+
+if($result){
+    echo '<div class=""A4"">';
+    while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)){
+        $question_id = $row['question_id'];
+        $question_body = $row['question_body'];
+        $option_a = $row['option_a'];
+        $option_b = $row['option_b'];
+
+        echo '
+        <div class=""A4"">   
+        <h2 class=""qtitle"">'.$question_body.'</h2>
+        <form action=""Answer.php"" method=""post"">
+            <label for='.$question_body.'>Yes</label>
+            <input type=""radio"" name=""radioQuestions[]"" value=""'.$question_id.'-'.$option_a.'"">
+
+            <label for=""'.$question_body.'"">No</label>
+            <input type=""radio"" name=""radioQuestions[]"" value=""'.$question_id.'-'.$option_b.'"">
+
+            <input type=""hidden"" name=""submitted"" value=""submitted""><hr>';
+
+    }
+    echo'
+        <input type=""submit"" name=""Submit"" value=""Submit"">
+        </form>
+        </div>';
+}
+
+}
+
+?>
+
+<?php
+include 'conn.php';
+
+if(isset($_POST['submitted']) && !empty($_POST['submitted'])){
+     $questionAndOptions = $_POST['radioQuestions'];
+
+     foreach ($questionAndOptions as $questionAndOption) {
+        $arrQuestionAndOption =  explode(""-"", $questionAndOption);
+         echo $arrQuestionAndOption[0]; //question
+         echo $arrQuestionAndOption[1]; //option
+     }
+
+
+      echo 'succeed';
+}
+else{
+
+     echo 'no data';    
+}
+
+?>

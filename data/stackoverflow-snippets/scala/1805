@@ -1,0 +1,21 @@
+val spark = SparkSession.builder.getOrCreate()
+import spark.implicits._
+
+val df = Seq((1,""Canada"",""active""),(2,""Paris"",""active""),(3,""London"",""active""),(4,""Berlin"",""active""))
+  .toDF(""id"", ""location"", ""flag"")
+val df2 = Seq((1,""Canada""),(10,""Paris""),(4,""Berlin""),(3,""London""))
+  .toDF(""id"", ""location_new"") 
+
+val df3 = df.join(df2, Seq(""id""), ""outer"")
+  .filter($""location"".isNull or $""location_new"".isNull)
+  .withColumn(""location"", when($""location_new"".isNull, $""location"").otherwise($""location_new""))
+  .withColumn(""flag"", when($""location"" === $""location_new"", ""active"").otherwise(""inactive""))
+  .drop(""location_new"")
+
+> df3.show()
++---+--------+--------+
+| id|location|    flag|
++---+--------+--------+
+| 10|   Paris|  active|
+|  2|   Paris|inactive|
++---+--------+--------+

@@ -1,0 +1,28 @@
+import numpy as np
+from bokeh.io import show
+from bokeh.models import ColumnDataSource, HoverTool, CustomJS
+from bokeh.plotting import figure
+from bokeh.layouts import column
+
+source1 = ColumnDataSource(data={""freq"":np.random.uniform(2, 10, 10), ""amp"":np.random.uniform(-2, 2, 10)})
+source2 = ColumnDataSource(data={""x"":np.linspace(-5, 5, 200), ""y"":np.zeros(200)})
+
+fig1 = figure(plot_height=200)
+fig2 = figure(plot_height=200)
+circle = fig1.circle(""freq"", ""amp"", source=source1, size=10)
+line = fig2.line(""x"", ""y"", source=source2)
+
+def callback(source1=source1, source2=source2):
+    indices = cb_data.index[""1d""].indices
+    if len(indices) > 0:
+        i = indices[0]
+        f = source1.data.freq[i]
+        a = source1.data.amp[i]
+        for j in range(len(source2.data.x)):
+            source2.data.y[j] = a * Math.sin(f * source2.data.x[j])
+        source2.change.emit()
+
+hover = HoverTool(callback=CustomJS.from_py_func(callback))
+fig1.add_tools(hover)
+
+show(column(fig1, fig2))

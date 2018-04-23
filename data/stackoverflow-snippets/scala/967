@@ -1,0 +1,23 @@
+object TimeoutFuture {
+  def apply[A](system: ActorSystem, timeout: FiniteDuration)(block: => A): Future[A] = {
+    implicit val executionContext = system.dispatcher
+
+    val prom = Promise[A]
+
+    // timeout logic
+    system.scheduler.scheduleOnce(timeout) {
+      prom tryFailure new java.util.concurrent.TimeoutException
+    }
+
+    // business logic
+    Future {
+      try {
+        prom success block
+      } catch {
+        case t: Throwable => prom tryFailure t
+      }
+    }
+
+    prom.future
+  }
+}

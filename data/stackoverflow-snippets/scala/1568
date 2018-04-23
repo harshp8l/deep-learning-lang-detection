@@ -1,0 +1,14 @@
+val window = Window.partitionBy(""SERVICE_ID"").orderBy(""COUNTER"").rowsBetween(Window.currentRow, 1)
+val eventRangeDF = input.where($""FLAG"" === 1)
+  .withColumn(""RANGE_END"", max($""COUNTER"").over(window))
+  .withColumnRenamed(""COUNTER"", ""RANGE_START"")
+  .select(""SERVICE_ID"", ""EVENT_ID"", ""RANGE_START"", ""RANGE_END"")
+eventRangeDF.show(false)
+
+val result = input.where($""FLAG"" === 0).as(""i"").join(eventRangeDF.as(""e""),
+  expr(""e.SERVICE_ID=i.SERVICE_ID And i.COUNTER>e.RANGE_START and i.COUNTER<e.RANGE_END""))
+  .select($""i.SERVICE_ID"", $""i.COUNTER"", $""i.EVENT_ID"", $""i.FLAG"", $""e.EVENT_ID"".alias(""first_value""))
+  // include FLAG=1
+  .union(input.where($""FLAG"" === 1).select($""SERVICE_ID"", $""COUNTER"", $""EVENT_ID"", $""FLAG"", lit(0).alias(""first_value"")))
+
+result.sort(""COUNTER"").show(false)

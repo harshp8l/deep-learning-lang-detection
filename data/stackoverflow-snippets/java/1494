@@ -1,0 +1,33 @@
+public class MyClass {
+
+// Simulates havy work that takes 10 seconds
+private static int getValueOrTimeout() throws InterruptedException {
+    TimeUnit.SECONDS.sleep(10);
+    return 123;
+}
+
+
+public static void main(String... args) throws InterruptedException, ExecutionException {
+    Callable<Integer> task = () -> {
+        Integer val = null;
+        try {
+            val = getValueOrTimeout();
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(""task interrupted"", e);
+        }
+
+        return val;
+    };
+
+    ExecutorService executor = Executors.newFixedThreadPool(1);
+    Future<Integer> future = executor.submit(task);
+
+    System.out.println(""future done? "" + future.isDone());
+
+    try {
+        Integer result = future.get(3, TimeUnit.SECONDS);
+        System.out.print(""Value was computed and was : "" + result);
+    } catch (TimeoutException ex) {
+        System.out.println(""Not computed within 10 Seconds"");
+    }
+}

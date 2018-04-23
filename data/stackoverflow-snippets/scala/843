@@ -1,0 +1,52 @@
+import org.scalatest.FunSpec
+
+class SubstractDateSpec extends FunSpec {
+
+  val monthDays = Map(
+    1 -> 31,
+    2 -> 28,
+    3 -> 31,
+    4 -> 30,
+    5 -> 31,
+    6 -> 30,
+    7 -> 31,
+    8 -> 31,
+    9 -> 30,
+    10 -> 31,
+    11 -> 31,
+    12 -> 31
+  )
+
+  def formatIt(data: Int): String = {
+    if (data < 10) ""0"" + data
+    else data + """"
+  }
+
+  def format(date: String): String = {
+
+    val year = date.slice(0, 4)
+    val month = date.slice(4, 6)
+    val days = date.slice(6, 8)
+    val hours = date.takeRight(2).toInt
+
+    if (hours == 0 && days.toInt == 1) {
+      val newMonth = month.toInt - 1
+      val newDay = monthDays(newMonth)
+      year + formatIt(newMonth) + formatIt(newDay) + ""23""
+
+    } else if (hours == 0) {
+      year + month + formatIt(days.toInt - 1) + ""23""
+
+    } else {
+      year + month + days + formatIt(hours - 1)
+    }
+  }
+
+  it(""date"") {
+    assert(format(""2018013108"") == ""2018013107"")
+    assert(format(""2018101000"") == ""2018100923"")
+
+    assert(format(""2018020100"") == ""2018013123"")
+  }
+
+}

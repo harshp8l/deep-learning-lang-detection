@@ -1,0 +1,21 @@
+SELECT t.event_date,             
+case                                                                         
+  when TIME_TO_SEC(t.event_date) > inter.begin AND TIME_TO_SEC(t.event_date) < inter.end                           
+  then floor((TIME_TO_SEC(t.event_date) - inter.begin) / inter.width)           
+
+  when TIME_TO_SEC(t.event_date) <= inter.begin 
+  then 0  
+
+  when TIME_TO_SEC(t.event_date) >= inter.end 
+  then floor((inter.end - inter.begin) / inter.width)  
+
+  else null 
+
+end as full_interval_number       
+FROM table t,                     
+(select TIME_TO_SEC('09:00:00') as begin,  
+        TIME_TO_SEC('18:00:00') as end,    
+        TIME_TO_SEC('00:15:00') as width
+ ) inter 
+where TIME_TO_SEC(event_date) between TIME_TO_SEC('09:00:00') and TIME_TO_SEC('18:00:00')
+and not (TIME_TO_SEC(event_date) between TIME_TO_SEC('09:00:00') and TIME_TO_SEC('10:00:00'))

@@ -1,0 +1,52 @@
+#r @""packages\SQLProvider.0.0.9-alpha\lib\net40\FSharp.Data.SqlProvider.dll""
+
+open System
+open System.Linq
+open FSharp.Data.Sql
+
+[<Literal>]
+let cnStr = @""Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\temp\Database1.accdb;Persist Security Info=False;""
+
+type sql = SqlDataProvider<
+                ConnectionString = @""Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\temp\Database1.accdb;Persist Security Info=False;"",
+                DatabaseVendor = Common.DatabaseProviderTypes.MSACCESS>
+let ctx = sql.GetDataContext()
+
+// return some data
+ctx.``[Database1].[Table1]`` |> Seq.take 1
+
+// create a type to represent the data
+type Row = {P: string; In:System.DateTime; GG:double}
+
+// insert some more data P:string, In:datetime, Ex:datetime, B:string, GG:number
+// unfortunately SqlDataProvider doesn't support CRUD operations on MS Access...
+let saveARow (aRow: Row) =
+    let table1 = ctx.``[Database1].[Table1]``.Create()
+    table1.P <- aRow.P
+    table1.In <- aRow.In
+    table1.GG <- aRow.GG
+    ctx.SubmitUpdates()
+
+{P=""abc""; In=DateTime.Now; GG=200.}
+|> saveARow
+
+// try it the old fashioned way
+open System.Data
+open System.Data.OleDb
+
+#r @""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5.2\System.Transactions.dll""
+open System.Transactions
+
+let saveARow2(aRow: Row) =
+    let cn = new OleDbConnection(cnStr)
+    cn.Open()
+    let cmd = new OleDbCommand()
+    cmd.CommandType <- CommandType.Text
+    let insertCmd = sprintf ""insert into Table1 values ('%s', '%s', '%f')"" aRow.P (aRow.In.ToShortDateString()) aRow.GG
+    cmd.CommandText <- insertCmd
+    cmd.Connection <- cn
+    cmd.ExecuteNonQuery() |>ignore
+    cn.Close()
+
+{P=""abcd""; In=DateTime.Now; GG=200.}
+|> saveARow2

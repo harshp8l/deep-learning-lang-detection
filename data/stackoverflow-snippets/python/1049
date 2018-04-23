@@ -1,0 +1,82 @@
+""""""
+ave_crossing[i][j] is the cost of crossing from avenue i to avenue i+1 (or vice versa) on street j
+street_crossing[i][j] is the cost of crossing from street j to street j+1 (or vice versa) on avenue i
+""""""
+
+
+def initialize():
+    f = open(""test.txt"", ""r"")
+    streets = int(f.readline().strip())
+    aves = int(f.readline().strip())
+
+    ave_crossing = []
+    for x in range(streets + 1):
+        ave_crossing.append([int(x) for x in f.readline().strip().split("" "")])
+    ave_crossing = rotate(ave_crossing)
+
+    street_crossing = []
+    for y in range(aves + 1):
+        street_crossing.append([int(x)
+                                for x in f.readline().strip().split("" "")])
+    return ave_crossing, street_crossing    
+
+def printArray(arr):
+    for x in arr:
+        print(x)
+
+def rotate(arr):
+    return list(zip(*arr))
+
+def findPath(ave_crossing, street_crossing):
+    num_aves, num_streets = len(street_crossing), len(ave_crossing[0])
+    dynArray = [[(ave + street) for street in range(num_streets)]
+                for ave in range(num_aves)]
+    printArray(dynArray)
+    print(""------------"")
+
+    queue = [(ave, street) for ave in range(num_aves)
+             for street in range(num_streets)]
+
+    for ave, street in queue:
+        costs = []
+        # consider the cost of all ways of arriving at (ave, street)
+        if (street > 0):
+            # start at (ave, street-1) and go to (ave, street)
+            costs.append(dynArray[ave][street - 1] +
+                         street_crossing[ave][street - 1])
+        if (street < num_streets - 1):
+            # start at (ave, street+1) and go to (ave, street)
+            costs.append(dynArray[ave][street + 1] +
+                         street_crossing[ave][street])
+        if (ave > 0):
+            # start at (ave-1, street) and go to (ave, street)
+            costs.append(dynArray[ave - 1][street] +
+                         ave_crossing[ave - 1][street])
+        if (ave < num_aves - 1):
+            # start at (ave+1, street) and go to (ave, street)
+            costs.append(dynArray[ave + 1][street] + ave_crossing[ave][street])
+        min_cost = min(costs, default=0)
+        if (dynArray[ave][street] > min_cost):
+            dynArray[ave][street] = min_cost
+            # propagate the change in dynArray by recalculating dynArray
+            # at neighboring locations
+            neighbors = [(ave, street - 1), (ave, street + 1),
+                         (ave - 1, street), (ave + 1, street)]
+            neighbors = [(a, s) for a, s in neighbors if
+                         0 <= a < num_aves and 0 <= s < num_streets]
+            queue.extend(neighbors)
+
+            print('dynArray[{}][{}] = {}'.format(
+                ave, street, dynArray[ave][street]))
+    printArray(dynArray)
+    print(dynArray[-1][-1])
+
+if __name__ == ""__main__"":
+    ave_crossing, street_crossing = initialize()
+    print(""-----ave_crossing------"")
+    printArray(ave_crossing)
+    print(""-----street_crossing------"")
+    printArray(street_crossing)
+    print(""------------"")
+    print(len(street_crossing))
+    findPath(ave_crossing, street_crossing)

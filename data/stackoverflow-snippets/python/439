@@ -1,0 +1,38 @@
+import sys
+import pandas as pd
+
+import matplotlib
+matplotlib.use('Qt5Agg')
+from PyQt5 import QtCore, QtWidgets
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+
+class Widget(QtWidgets.QWidget):
+    def __init__(self, *args, **kwargs):
+        QtWidgets.QWidget.__init__(self, *args, **kwargs)
+        self.figure = Figure(figsize=(5, 4), dpi=100)
+        self.canvas = FigureCanvas(self.figure)
+        self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        button = QtWidgets.QPushButton(""random plot"")
+        button.clicked.connect(self.plot)
+
+        lay = QtWidgets.QVBoxLayout(self)
+        lay.addWidget(self.canvas)
+        lay.addWidget(button)
+        self.plot()
+
+    def plot(self):
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        d = {'nkill': [1, 2, 4, 5, 6], 'iyear': [3, 4, 5, 5, 5]}
+        df = pd.DataFrame(data=d)
+        ax.plot('nkill', 'iyear', data=df)
+        # ax.axis('off')
+        self.canvas.draw()
+
+if __name__ == '__main__':
+    app = QtWidgets.QApplication(sys.argv)
+    w = Widget()
+    w.show()
+    sys.exit(app.exec_())

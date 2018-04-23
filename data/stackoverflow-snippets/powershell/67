@@ -1,0 +1,44 @@
+function sendRequest()
+{
+# API Key
+$FDApiKey=""apikey""
+#################################################
+
+# Force TLS1.2 as Powershell defaults to TLS 1.0 and Freshdesk will fail 
+connections
+[Net.ServicePointManager]::SecurityProtocol = 
+[Net.SecurityProtocolType]::TLS12
+
+# Prep
+$pair = ""$($FDApiKey):$($FDApiKey)""
+$bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+$base64 = [System.Convert]::ToBase64String($bytes)
+$basicAuthValue = ""Basic $base64""
+$FDHeaders = @{ Authorization = $basicAuthValue }
+##################################################
+
+# The Doing part
+#$FDBaseEndpointSummary =  
+""https://clasd.freshdesk.com/helpdesk/api/v2/tickets""
+#$FDContactData = Invoke-RestMethod -uri $FDBaseEndpointSummary -Headers $FDHeaders -Method Post -ContentType application/json 
+
+$ticketArgs = @{
+  email = ""$(email.Text)""
+  subject = ""$(subject.Text)""
+  description = ""$(description.Text)""
+  status = '2'
+  type = ""$($request.Text)""
+  priority = '1'
+  } 
+ $json =   
+     @{email=""$(email.Text)"";description=""$(description.Text)""
+    ;subject=""$(subject.Text)"";status='2';priority='1';type=""$($request.Text)""}
+
+$jasonPayload = $json | convertto-json
+
+Invoke-WebRequest -uri 'https://clasd.freshdesk.com/api/v2/tickets' -Headers $FDHeaders -Method Post -Body $jsonPayload -ContentType application/json 
+
+#Invoke-WebRequest ""https://clasd.freshdesk.com/api/v2/tickets/"" -Headers $FDHeaders  -ContentType ""application/json"" -Method Post -Body ""{ 'description':""$(description.Text)"",'email':""$(email.Text)"",'subject':""$(subject.Text)"",'type':'$request.Text','priority':'1','status':'2' }"" 
+
+#Invoke-WebRequest -Headers $FDHeaders -ContentType ""application/json"" -Body ""{'description':""$(description.Text)"",'email':""$(email.Text)"",'subject':""$(subject.Text)"",'type':'$request.Text','priority':'1','status':'2' }"" -method Post 'https://clasd.freshdesk.com/api/v2/tickets/'
+}

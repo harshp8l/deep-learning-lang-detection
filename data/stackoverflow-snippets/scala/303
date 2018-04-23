@@ -1,0 +1,52 @@
+import scala.reflect.runtime.universe._
+
+trait Builder[T, K] {
+  def build(brick: T): K
+}
+
+abstract class TypeChecker[T: TypeTag] {
+  this: Builder[T, _] =>
+
+  def isDefinedAt[C: TypeTag](t: C) = {
+      typeOf[C] =:= typeOf[T]
+  }
+}
+
+class Foo
+class Baa
+class House
+
+// first builder implementation
+class StringBuilder
+  extends TypeChecker[Foo]
+    with Builder[Foo, String] {
+  override def build(brick: Foo) = {
+    println(""StringBuilder"")
+    """"
+  }
+}
+// second builder implementation
+class HouseBuilder
+  extends TypeChecker[Baa]
+    with Builder[Baa, House] {
+  override def build(brick: Baa) = {
+    println(""HouseBuilder"")
+    new House
+  }
+}
+
+// our set of builders
+val s: Set[Builder[_, _] with TypeChecker[_]] = Set(
+  new StringBuilder,
+  new HouseBuilder
+)
+
+
+// here we check and apply arrived brick on our set of builders
+def check[T: TypeTag](t: T) =
+  s.filter(_.isDefinedAt(t)).
+    foreach {b => b.asInstanceOf[Builder[T, _]].build(t)}
+
+
+check(new Foo)
+check(new Baa)

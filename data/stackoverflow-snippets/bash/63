@@ -1,0 +1,31 @@
+function num_range {
+   # Return a range of whole numbers from beginning value to ending value.
+   # >>> num_range start end
+   # start: Whole number to start with.
+   # end: Whole number to end with.
+   typeset s e v
+   s=${1}
+   e=${2}
+   if (( ${e} >= ${s} )); then
+      v=${s}
+      while (( ${v} <= ${e} )); do
+         echo ${v}
+         ((v=v+1))
+      done
+   elif (( ${e} < ${s} )); then
+      v=${s}
+      while (( ${v} >= ${e} )); do
+         echo ${v}
+         ((v=v-1))
+      done
+   fi
+}
+
+function test_num_range {
+   num_range 1 3 | egrep ""1|2|3"" | assert_lc 3
+   num_range 1 3 | head -1 | assert_eq 1
+   num_range -1 1 | head -1 | assert_eq ""-1""
+   num_range 3 1 | egrep ""1|2|3"" | assert_lc 3
+   num_range 3 1 | head -1 | assert_eq 3
+   num_range 1 -1 | tail -1 | assert_eq ""-1""
+}

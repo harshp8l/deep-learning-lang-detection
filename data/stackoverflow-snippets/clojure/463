@@ -1,0 +1,16 @@
+(def process-results (atom []))
+(defn create-process! [id]
+  ;; pretend creating the process takes a long time
+  (Thread/sleep (* 1000 (rand-int 3)))
+  (future
+    ;; running it takes longer, but happens on a new thread
+    (Thread/sleep (* 1000 (rand-int 10)))
+    (swap! process-results conj id)))
+
+(def processes-atom (atom {}))
+(defn cached-process [id]
+  (-> processes-atom
+      (swap! (fn [processes]
+               (update processes id #(or % (delay (create-process! id))))))
+      (get id)
+      (deref)))

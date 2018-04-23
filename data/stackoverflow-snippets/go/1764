@@ -1,0 +1,20 @@
+        // FormFile returns the first file for the provided form key.
+  1258  // FormFile calls ParseMultipartForm and ParseForm if necessary.
+  1259  func (r *Request) FormFile(key string) (multipart.File, *multipart.FileHeader, error) {
+  1260      if r.MultipartForm == multipartByReader {
+  1261          return nil, nil, errors.New(""http: multipart handled by MultipartReader"")
+  1262      }
+  1263      if r.MultipartForm == nil {
+  1264          err := r.ParseMultipartForm(defaultMaxMemory)
+  1265          if err != nil {
+  1266              return nil, nil, err
+  1267          }
+  1268      }
+  1269      if r.MultipartForm != nil && r.MultipartForm.File != nil {
+  1270          if fhs := r.MultipartForm.File[key]; len(fhs) > 0 {
+  1271              f, err := fhs[0].Open()
+  1272              return f, fhs[0], err
+  1273          }
+  1274      }
+  1275      return nil, nil, ErrMissingFile
+  1276  }

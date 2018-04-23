@@ -1,0 +1,37 @@
+/* More interesting iterative example */ {
+  def drawArray(arr: Array[Double], yRange: Range): Unit = {
+    val width = arr.size
+    val visibleHeight = 20
+    val canvas = Array.fill(visibleHeight, width)(' ')
+    for (i <- 0 until width) {
+      val y = arr(i)
+      val barHeight = (visibleHeight * (y - yRange.min) / yRange.size).toInt
+      if (barHeight > 0) {
+        for (j <- 0 until (barHeight min visibleHeight)) {
+          canvas(visibleHeight - j - 1)(i) = '#'
+        }
+      }
+    }
+    for (row <- canvas) println(row.mkString)
+  }
+
+  val initialArray = Array.tabulate(80){ x => 
+    val linearTerm = x * 1000 / 80
+    val parabolicTerm = x * (79 - x)
+    val sineTerm = math.sin(x / 80.0 * math.Pi * 4)
+    val randomTerm = math.random * 1000
+    linearTerm + (if (x != 0 && x != 79) {
+      parabolicTerm + sineTerm + randomTerm
+    } else 0.0)
+  }
+
+  var smoothed = initialArray
+  for (iter <- 0 until 10000) {
+    if (iter < 10 || (iter < 2000 && iter % 100 == 0) || iter % 1000 == 0) {
+      println(""iter "" + iter)
+      drawArray(smoothed, 0 to 3000)
+    }
+    smoothed = smoothArray(smoothed, 5)
+  }
+
+}

@@ -1,0 +1,91 @@
+template <class T>
+class otherA 
+{
+    T t;
+public:
+    otherA(T t) : t(t) {}
+
+    void WhoAmI() { cout << ""I'm OtherA"" << endl; }
+
+    T getValue() { return t; }
+};
+
+template <class T, class X>
+class otherE 
+{
+    T t;
+public:
+    otherE(T t) : t(t) {}
+
+    void WhoAmI() { cout << ""I'm OtherE"" << endl; }
+
+    T getValue() { return t; }
+};
+
+class SomeOther {
+public:
+    SomeOther() = delete;
+
+    template<class IntType = int>
+    static otherA<IntType>& getOtherA(IntType a, IntType b) 
+    {
+        static otherA<IntType> A(a);
+        return A;
+    }
+
+    template<class IntType = int, class X>
+    static otherE<IntType, X>& getOtherE(IntType a, double b, double c, X x)
+    {
+        static otherE<IntType, X> E(a);
+        return E;
+    }
+
+    template<template<typename, class...> class Other,
+        class Type,
+        class... OtherParams,
+        class... FuncParams>
+    static Other<Type, OtherParams...>& getOther(FuncParams... params)
+    {
+        return getOther<Type, OtherParams...>(params...);
+    }
+
+private:
+    /// Function Overloading
+
+    template<class T,
+        class... FuncParams>
+    static otherA<T>& getOther(FuncParams... params)
+    {
+        return getOtherA<T>(params...);
+    }
+
+    template<class T,
+        class X,
+        class... FuncParams>
+    static otherE<T, X>& getOther(FuncParams... params)
+    {
+        return getOtherE<T, X>(params...);
+    }
+};
+
+template<
+    class Type,
+    template<typename, class...> class Other,
+    class... OtherParams,
+    class... FuncParams>
+Type test(FuncParams... params) {
+    static Other<Type, OtherParams...>& other = SomeOther::getOther<Other, Type, OtherParams...>(params...);
+    other.WhoAmI();
+    return other.getValue();
+}
+
+class foo{};
+
+int main()
+{
+    int AValue = test<int, otherA>(1, 2);
+    cout << ""AValue: "" << AValue << endl;
+    int EValue = test<int, otherE, foo>(3, 2.1, 2.2, foo());
+    cout << ""EValue: "" << EValue << endl;
+    return 0;
+}

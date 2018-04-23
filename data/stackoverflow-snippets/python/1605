@@ -1,0 +1,32 @@
+import sys
+
+from PyQt5.QtCore import QEvent
+from PyQt5.QtWidgets import QMainWindow, QApplication
+
+import TeamInsight
+
+
+class MainWindow(QMainWindow, TeamInsight.Ui_MainWindow):
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
+        self.setupUi(self)
+        self.browserInput.viewport().installEventFilter(self)
+        self.browserInput.setText(""some text"")
+
+    def eventFilter(self, obj, event):
+        if obj is self.browserInput.viewport():
+            if event.type() == QEvent.MouseButtonRelease:
+                if self.browserInput.textCursor().hasSelection():
+                    start = self.browserInput.textCursor().selectionStart()
+                    end = self.browserInput.textCursor().selectionEnd()
+                    print(start, end)
+            elif event.type() == QEvent.MouseButtonPress:
+                print(""event mousePressEvent"")
+        return QMainWindow.eventFilter(self, obj, event)
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    w = MainWindow()
+    w.show()
+    sys.exit(app.exec_())

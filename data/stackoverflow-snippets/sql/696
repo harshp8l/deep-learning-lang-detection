@@ -1,0 +1,27 @@
+CREATE TABLE Power  (id int,  power int);
+CREATE TABLE demo (id integer primary key, name varchar(20), hint text);
+CREATE TABLE units (id, user_id, power_id, amount, group_id, x, y);
+
+SELECT   1 as spec2_HIDETHIS,  /* Spec 2 show the groupedrows first */
+         units.id    as units_ID,
+         units.amount*power.power AS total_power,
+         units.amount        AS total_amount,
+         units.group_id      as group_id
+FROM     units
+JOIN     power
+ON       units.power_id = power.id
+WHERE    units.group_id=0  /*  */
+AND      units.id != 1  /* Spec no 1 : exclud specific id */
+union 
+SELECT   0 as spec2_HIDETHIS,  /* Spec 2 show the groupedrows first */
+         min(units.id) as units_ID ,
+         units.amount*power.power AS total_power,
+         Sum(units.amount)        AS total_amount,
+         units.group_id           as group_id
+FROM     units
+JOIN     power
+ON       units.power_id = power.id
+where    units.group_id > 0
+AND      units.id != 1  /* Spec no 1 : exclud specific id */
+GROUP BY group_id
+ORDER BY spec2_HIDETHIS, group_id desc, total_power desc, total_amount desc, units_ID desc  

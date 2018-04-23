@@ -1,0 +1,33 @@
+class DevicesTable(tag: Tag) extends Table[Device](tag, ""DEVICES"") {
+
+    implicit val deviceUserConverter = MappedColumnType.base[Option[List[DeviceUser]], String](
+      deviceUsersOpt => {
+        deviceUsersOpt match {
+          case Some(users:List[DeviceUser]) =>val listOfId = users.map{
+            k => val res = deviceUserRepo.create(k)
+              Await.result(res, 10 seconds)
+          }
+            listOfId.mkString("","")
+          case None => """"
+        }
+      },
+      str =>{
+        val listOfIds = (str split "","" map Integer.parseInt).toList.filterNot(k => k.equals(""""))
+        if(listOfIds.nonEmpty){
+          val users = listOfIds.map{ k =>
+            val res = deviceUserRepo.findById(k)
+            Await.result(res, 10 seconds)
+          }
+          Some(users.flatten)
+        } else {
+          None
+        }
+      }
+    )
+
+    def id = column[Int](""ID"", O.PrimaryKey)
+
+    def deviceUser = column[Option[List[DeviceUser]]](""DEVICE_USERS"")
+
+    def * = (id, deviceUser).<>(Device.tupled, Device.unapply)
+  }

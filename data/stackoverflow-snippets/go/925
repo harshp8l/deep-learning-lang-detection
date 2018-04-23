@@ -1,0 +1,33 @@
+// this can be a package level global and you'll need
+// one for each table. Keep in mind that Go maps that
+// are only read from are safe for concurrent use.
+var validColNames = map[string]bool{
+     ""col1"": true,
+     ""col2"": true,
+     ""col3"": true,
+     // ...
+}
+
+// ...
+
+var colNames, values []string
+var phs string // placeholders for values
+
+for k, v := range formData {
+    // check that column is valid
+    if !validColNames[k] {
+        return ErrBadColName
+    }
+    colNames = append(colNames, k)
+    values = append(values, v)
+    phs += ""?,""
+}
+
+if len(phs) > 0 {
+    phs = phs[:len(phs)-1] // drop the last comma
+}
+phs = ""("" + phs + "")""
+
+colNamesString := ""("" + strings.Join(colNames, "","") + "")""
+query := ""insert into views "" + colNamesString + phs
+db.Query(query, values...)

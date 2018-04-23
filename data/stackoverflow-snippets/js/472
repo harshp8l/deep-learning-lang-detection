@@ -1,0 +1,31 @@
+    let result = await User.aggregate([
+      { ""$match"": {
+        ""_id"": { ""$ne"": user._id },
+        ""fk_hobbies._id"": { ""$in"": user_hobbies }
+      }},
+      { ""$addFields"": {
+        ""numHobbies"": {
+          ""$size"": {
+            ""$setIntersection"": [
+              ""$fk_hobbies._id"",
+              user_hobbies
+            ]
+          }
+        }
+      }},
+      { ""$sort"": { ""numHobbies"": -1 } }
+    ]);
+
+    // map each result after return
+    result = result.map(r => 
+      ({
+        ...r,
+        fk_hobbies: r.fk_hobbies.map(h =>
+          ({
+            ...h,
+            ...(( user_hobbies.map(i => i.toString() ).indexOf( h._id.toString() ) != -1 )
+                ? { ""shared"": true } : {} )
+          })
+        )
+      })
+    )

@@ -1,0 +1,60 @@
+(def some-blobs
+  [{:surfaces #{1}
+    :data 1}
+   {:surfaces #{1}
+    :data 2}])
+
+(def blob-to-merge
+  {:surfaces #{1}
+    :data 3})
+
+(def blob-to-conj
+  {:surfaces #{2}
+    :data 4})
+
+(def all-the-blobs (into some-blobs [blob-to-merge blob-to-conj]))
+
+(defn combine-blobs [b1 b2]
+  (let [s1 (b1 :surfaces)
+        s2 (b2 :surfaces)
+        s (first (clojure.set/intersection s1 s2))]
+    {:surfaces (disj (clojure.set/union s1 s2)
+                     s)
+     :data (mapv :data [b1 b2])})) ; Some arbitrary way to combine the data
+
+(defn share-surface? [b1 b2]
+  (not-empty (clojure.set/intersection
+               (b1 :surfaces)
+               (b2 :surfaces))))
+
+(defn add-blob [blob blobs]
+  (loop [acc []  ; An accumulator to store processed blobs
+         [b & bs] blobs] ; The blobs still to process, destructured into first and rest
+    (if b ; If there is another blob to process
+      (if (share-surface? b blob) ; If it shares a surface with the incoming blob
+        (into acc (conj bs (combine-blobs b blob))) ; Then combine blobs and return with the other processed and unprocessed blobs
+        (recur (conj acc b) ; Else return to `loop` adding the first blob to `acc`
+               bs))         ; and attempt to process the rest
+      (conj blobs blob)))) ; If there was no next blob to process then add the incoming blob to the original collection.
+
+(add-blob blob-to-merge some-blobs)
+; => [{:surfaces #{}, :data [1 3]}
+; =>  {:surfaces #{1}, :data 2}]
+
+(add-blob blob-to-conj some-blobs)
+; => [{:surfaces #{1}, :data 1}
+; =>  {:surfaces #{1}, :data 2}
+; =>  {:surfaces #{2}, :data 4}]
+
+(defn add-all-blobs
+  ""Add each new blob in turn to some existing blobs""
+  [existing-blobs [b & bs :as new-blobs]]
+  (if b ; If there is another blob to process
+    (recur (add-blob b existing-blobs) ; Then recurse with the blob added
+           bs)                         ; and process the rest
+    existing-blobs)) ; If there was no next blob to process then return the original collection
+
+(add-all-blobs [] all-the-blobs)
+; => [{:surfaces #{}, :data [1 2]}
+; =>  {:surfaces #{1}, :data 3}
+; =>  {:surfaces #{2}, :data 4}]

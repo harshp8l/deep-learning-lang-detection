@@ -1,0 +1,25 @@
+import numpy as np
+import requests
+
+def get_request(url):
+    session = FuturesSession()
+    return session.head(url, timeout=1)
+
+def get_status_code(r):
+    try:
+        return r.result().status_code
+    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
+        return 408 # Request Timeout
+
+ips = np.random.randint(0, 256, (1000, 4))
+df = pd.DataFrame({""url"": [""http://"" + ""."".join(map(str, ip)) for ip in ips]})
+df[""status_code""] = df[""url""].apply(get_request).apply(get_status_code)
+df.groupby('status_code')['url'].count().reset_index()
+#    status_code  url
+# 0          200    3
+# 1          302    2
+# 2          400    2
+# 3          401    1
+# 4          403    1
+# 5          404    1
+# 6          408  990

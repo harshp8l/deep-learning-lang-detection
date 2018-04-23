@@ -1,0 +1,30 @@
+object DataTypes extends App {
+
+  sealed trait StrFy {
+    def stringify: String
+  }
+
+  final case class StrFyString(s: String) extends StrFy {
+    def stringify = s
+  }
+
+  final case class StrFyInt(i: Int) extends StrFy {
+    def stringify = i.toString
+  }
+
+  def stringifyThings[T <: StrFy](values: T*): String = {
+    def label(value: T) = value match {
+      case _:StrFyString => ""string""
+      case _:StrFyInt => ""integer""
+      // cases that don't extend StrFy cause a compile error
+    }
+    // Will throw if values is empty
+    ""The "" + label(values.head) + "" values are: "" + values.map(_.stringify).mkString("", "")
+  }
+
+  def printStringified(): Unit = {
+    println(stringifyThings(StrFyString(""foo""), StrFyString(""bar""))) // should print: ""the string values are: foo, bar""
+    println(stringifyThings(StrFyInt(1), StrFyInt(2), StrFyInt(3))) // should print: ""the integer values are: 1, 2, 3""
+  }
+  printStringified()
+}

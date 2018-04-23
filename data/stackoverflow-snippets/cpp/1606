@@ -1,0 +1,83 @@
+% cat test2.c 
+ #include <stdio.h> 
+  #include <math.h> 
+  #include <stdlib.h> 
+  #include <assert.h> 
+  #include <openacc.h> 
+  #include<time.h> 
+  #include <string.h> 
+  #include <malloc.h> 
+ // #include <cuda_runtime_api.h> 
+
+  #define NX 2 
+  #define NY 2 
+  #define NZ 2 
+
+
+  int main(void) 
+  { 
+  int i, j, k; 
+
+  static double A[NX+1][NY+1][NZ+1]=2 ,B[NX+1][NY+1][NZ+1]=10.,C[NX+1]=10.,D[NY+1]=10.,E[NZ+1]=10.; 
+  FILE *file; 
+  file = fopen(""BB-and-A.csv"", ""w""); 
+  #pragma acc data copy(A,B,C,D,E) 
+  { 
+  #pragma acc kernels 
+  { 
+  for (i = 0; i <= NX; i++) C[i]=i; 
+  for (j =0; j <= NY ; j++) D[j]=j; 
+  for (k =0; k <= NZ ; k++) E[k]=k; 
+  } } 
+  for (i = 0; i <= NX; i++) { 
+  for (j =0; j <= NY ; j++) { 
+  for (k =0; k <= NZ ; k++) { 
+    fprintf(file,""%e, %e, %e \n"", C[i], D[j],E[k] ); 
+  } } } 
+
+  fclose(file); 
+  } 
+ % pgcc test2.c -ta=tesla:cc60 -Minfo=accel 
+ main: 
+      23, Generating copy(A[:][:][:],B[:][:][:],C[:],E[:],D[:]) 
+      27, Loop is parallelizable 
+          Accelerator kernel generated 
+          Generating Tesla code 
+          27, #pragma acc loop gang, vector(32) /* blockIdx.x threadIdx.x */ 
+      28, Loop is parallelizable 
+          Accelerator kernel generated 
+          Generating Tesla code 
+          28, #pragma acc loop gang, vector(32) /* blockIdx.x threadIdx.x */ 
+      29, Loop is parallelizable 
+          Accelerator kernel generated 
+          Generating Tesla code 
+          29, #pragma acc loop gang, vector(32) /* blockIdx.x threadIdx.x */ 
+ % a.out 
+ % cat BB-and-A.csv 
+ 0.000000e+00, 0.000000e+00, 0.000000e+00 
+ 0.000000e+00, 0.000000e+00, 1.000000e+00 
+ 0.000000e+00, 0.000000e+00, 2.000000e+00 
+ 0.000000e+00, 1.000000e+00, 0.000000e+00 
+ 0.000000e+00, 1.000000e+00, 1.000000e+00 
+ 0.000000e+00, 1.000000e+00, 2.000000e+00 
+ 0.000000e+00, 2.000000e+00, 0.000000e+00 
+ 0.000000e+00, 2.000000e+00, 1.000000e+00 
+ 0.000000e+00, 2.000000e+00, 2.000000e+00 
+ 1.000000e+00, 0.000000e+00, 0.000000e+00 
+ 1.000000e+00, 0.000000e+00, 1.000000e+00 
+ 1.000000e+00, 0.000000e+00, 2.000000e+00 
+ 1.000000e+00, 1.000000e+00, 0.000000e+00 
+ 1.000000e+00, 1.000000e+00, 1.000000e+00 
+ 1.000000e+00, 1.000000e+00, 2.000000e+00 
+ 1.000000e+00, 2.000000e+00, 0.000000e+00 
+ 1.000000e+00, 2.000000e+00, 1.000000e+00 
+ 1.000000e+00, 2.000000e+00, 2.000000e+00 
+ 2.000000e+00, 0.000000e+00, 0.000000e+00 
+ 2.000000e+00, 0.000000e+00, 1.000000e+00 
+ 2.000000e+00, 0.000000e+00, 2.000000e+00 
+ 2.000000e+00, 1.000000e+00, 0.000000e+00 
+ 2.000000e+00, 1.000000e+00, 1.000000e+00 
+ 2.000000e+00, 1.000000e+00, 2.000000e+00 
+ 2.000000e+00, 2.000000e+00, 0.000000e+00 
+ 2.000000e+00, 2.000000e+00, 1.000000e+00 
+ 2.000000e+00, 2.000000e+00, 2.000000e+00  

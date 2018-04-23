@@ -1,0 +1,40 @@
+// Parse valid JSON arrays as ""Data"" by assuming one of the following shapes:
+// 1: [int64, Speed, string(float64)]
+// 2: [Speed, string(float64)]
+func (d *Data) UnmarshalJSON(bs []byte) error {
+
+    // Ensure that the bytes contains a valid JSON array.
+    msgs := []json.RawMessage{}
+    err := json.Unmarshal(bs, &msgs)
+    if err != nil {
+        return err
+    }
+
+    // Parse the initial message as ""Timestamp"" int64, if necessary.
+    idx := 0
+    if len(msgs) == 3 {
+        ts, err := strconv.ParseInt(string(msgs[idx]), 10, 64)
+        if err != nil {
+            return err
+        }
+        d.Timestamp = &ts
+        idx++
+    }
+
+    // Parse the mandatory ""Speed"" struct per usual.
+    d.Speed = &Speed{}
+    err = json.Unmarshal(msgs[idx], &d.Speed)
+    idx++
+    if err != nil {
+        return err
+    }
+
+    // Parse the mandatory ""Balance"" item after trimming quotes.
+    balance, err := strconv.ParseFloat(string(msgs[idx][1:len(msgs[idx])-1]), 64)
+    if err != nil {
+        return err
+    }
+    d.Balance = &balance
+
+    return nil
+}

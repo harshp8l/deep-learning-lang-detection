@@ -1,0 +1,11 @@
+def getSales(sales: RDD[SaleItem], cars: RDD[(String, String)]): RDD[ReportItem] = {
+        val mappedSales = sales.keyBy(_.carId)
+        val mappedCars = cars.keyBy(_._1)
+        mappedSales.join(mappedCars)
+          .map({
+            case (_, (saleItem, car)) => ReportItem(saleItem.carId, car._2, saleItem.saleDate, saleItem.city, saleItem.price)
+          })
+          .map(reportItem => ((reportItem.carId, reportItem.saleDate), reportItem))
+          .reduceByKey((item1, item2) => if(item1.price > item2.price) item1 else item2) //item1 & item2 are of type: ReportItem
+          .values
+}

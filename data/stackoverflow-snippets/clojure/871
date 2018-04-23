@@ -1,0 +1,12 @@
+hello.core> (def wait-for-function-helper             
+              (memoize (fn [f args]
+                         (let [answer (promise)]
+                           (println ""waiting for function "" f "" with args"" args)
+                           (future (deliver answer (apply f args)))
+                           answer))))
+
+#'hello.core/wait-for-function-helper
+hello.core> (defn wait-for-function [& args]
+              (locking lock
+                (apply wait-for-function-helper args)))
+#'hello.core/wait-for-function

@@ -1,0 +1,44 @@
+package services
+
+import (
+    ""github.com/aws/aws-sdk-go/aws""
+    ""github.com/aws/aws-sdk-go/aws/session""
+    // ""github.com/aws/aws-sdk-go/service/apigateway""
+
+    ""partners.drinks.com/lib/models""
+    ""partners.drinks.com/lib/services/api_keys""
+)
+
+func sessionBuilder() *session.Session {
+    config := &aws.Config{
+        Region: aws.String(""us-west-2""),
+    }
+    session := session.Must(session.NewSession(config))
+    return session
+}
+
+func GetKeys() ([]*models.RetailerKey, error) {
+    keys, err := models.RetailerKeys()
+    if err != nil {
+        return nil, err
+    }
+    return keys, nil
+}
+
+func CreateKey(id int) (models.RetailerKey, error) {
+    apikeys := &api_keys.ApiKeyBuilder{}
+    base64Key := apikeys.GenUUID().GenKey().Base64
+
+    var key = models.RetailerKey{
+        RetailerID: id,
+        Key: base64Key,
+        Enabled: func(b bool)
+    }
+
+    if err := key.Create(); err != nil {
+        return models.RetailerKey{}, err
+    }
+    ...
+
+    return key, nil
+}

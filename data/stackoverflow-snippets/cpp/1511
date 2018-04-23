@@ -1,0 +1,44 @@
+// With if constexpr
+struct A
+{
+private:
+    // This function does the actual getter work, hiding the template details
+    // from the public interface, and allowing the use of auto as a return type
+    template<bool asConst>
+    auto get_do_work()
+    {
+        // Your getter logic etc.
+        // ...
+        // ...
+
+        if constexpr (asConst)
+        {
+            return examples.cbegin();
+
+            // Alternatively
+            // return static_cast<const A&>(*this).examples.begin();
+        }
+        else
+        {
+            return examples.begin();
+        }
+    }
+
+public:
+    std::vector<int> examples{ 0, 1, 2, 3, 4, 5 };
+
+    // Nothing special here, you'll get a regular iterator
+    auto get()
+    {
+        return get_do_work<false>();
+    }
+
+    // This will get a const iterator
+    auto get() const
+    {
+        // Force using the non-const to get a const version here
+        // Basically the inverse of Meyer's casting, except you get a
+        // const_iterator as a result, so no logical difference to users
+        return const_cast<A&>(*this).get_do_work<true>();
+    }
+};

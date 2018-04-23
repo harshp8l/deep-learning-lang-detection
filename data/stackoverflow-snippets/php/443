@@ -1,0 +1,58 @@
+$array = json_decode('[
+  { ""target"": ""random.text.cpu-pct-0"" },
+  { ""target"": ""random.text.cpu-pct-1"" },
+  { ""target"": ""random.text.cpu-pct-2""},
+  { ""target"": ""random.text.example-0"" },
+  { ""target"": ""random.text.example-1"" },
+  { ""target"": ""random.text.memory"" }
+]');
+
+function mySortFunction( $one, $two )
+{
+
+  $pattern = '/\.(?<label>cpu-pct|example|memory)(?:-(?<value>\d+))?/';
+  preg_match( $pattern, $one->target, $targetOne );
+  preg_match( $pattern, $two->target, $targetTwo );
+
+  // Both have CPU-PCT? then sort on CPU-PCT-VALUE
+  if( $targetOne['label'] === 'cpu-pct' and $targetTwo['label'] === 'cpu-pct' )
+  {
+    return strcmp( $targetOne['value'], $targetTwo['value'] );
+  }
+  // Both have MEMORY? they are the same
+  if( $targetOne['label'] === 'memory' and $targetTwo['label'] === 'memory' )
+  {
+    return 0;
+  }
+  // 1 has CPU but 2 has Memory, prefer CPU
+  if( $targetOne['label'] === 'cpu-pct' and $targetTwo['label'] === 'memory' )
+  {
+    return -1;
+  }
+  // 1 has MEMORY but 2 has CPI, prefer CPU
+  if( $targetOne['label'] === 'memory' and $targetTwo['label'] === 'cpu-pct' )
+  {
+    return 1;
+  }
+  // 1 is MEMORY or CPU, but 2 is Neither
+  if( $targetOne['label'] === 'cpu-pct' or $targetOne['label'] === 'memory' )
+  {
+    if( $targetTwo['label'] !== 'cpu-pct' and $targetTwo['label'] !== 'memory' )
+    {
+      return -1;
+    }
+  }
+  // 2 is MEMORY or CPU, but 1 is Neither
+  if( $targetTwo['label'] === 'cpu-pct' or $targetTwo['label'] === 'memory' )
+  {
+    if( $targetOne['label'] !== 'cpu-pct' and $targetOne['label'] !== 'memory' )
+    {
+      return 1;
+    }
+  }
+  // ETC
+  // ETC
+  // ETC
+}
+
+usort( $array, 'mySortFunction' );

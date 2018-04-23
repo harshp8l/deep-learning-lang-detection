@@ -1,0 +1,27 @@
+module A =
+    type ThingConfig = { url: string; token : string; } with
+        static member FromSettings (getSetting : (string -> string)) : ThingConfig =
+            printfn ""F#ish""
+            {
+                url = getSetting ""apiUrl"";
+                token = getSetting ""apiToken"";
+            }
+
+module B =
+    open A
+
+    type ThingConfig with
+        static member FromSettings (getSetting : System.Func<string,string>) : ThingConfig =
+            printfn ""C#ish""
+            {
+                url = getSetting.Invoke ""apiUrl"";
+                token = getSetting.Invoke ""apiToken"";
+            }
+
+open A
+open B
+
+let mySettingsAccessor = fun (x:string) -> x
+let mySettingsAccessorAsFunc = System.Func<_,_> (fun (x:string) -> x)
+let configA = ThingConfig.FromSettings mySettingsAccessor       // prints F#ish
+let configB = ThingConfig.FromSettings mySettingsAccessorAsFunc // prints C#ish

@@ -1,0 +1,79 @@
+  val df = Seq(
+    (""One"", 0, 5),
+    (""One"", 10, 15),
+    (""One"", 5, 8),
+    (""Two"", 10, 25),
+    (""Two"", 40, 45),
+    (""Three"", 30, 35)
+  ).toDF(""typ"", ""start"", ""end"")
+
+  type Gap = (Int, Int)
+  /** The `merge`-step of a variant of merge-sort
+    * that works directly on compressed sequences of integers,
+    * where instead of individual integers, the sequence is 
+    * represented by sorted, non-overlapping ranges of integers.
+    */
+  def mergeIntervals(as: List[Gap], bs: List[Gap]): List[Gap] = {
+    require(!as.isEmpty, ""as must be non-empty"")
+    require(!bs.isEmpty, ""bs must be non-empty"")
+    // assuming that `as` and `bs` both are either lists with a single
+    // interval, or sorted lists that arise as output of
+    // this method, recursively merges them into a single list of
+    // gaps, merging all overlapping gaps.
+    @annotation.tailrec
+    def mergeRec(
+      gaps: List[Gap],
+      gapStart: Int,
+      gapEndAccum: Int,
+      as: List[Gap],
+      bs: List[Gap]
+    ): List[Gap] = {
+      as match {
+        case Nil => {
+          bs match {
+            case Nil => (gapStart, gapEndAccum) :: gaps
+            case notEmpty => mergeRec(gaps, gapStart, gapEndAccum, bs, Nil)
+          }
+        }
+        case (a0, a1) :: at => {
+          if (a0 <= gapEndAccum) {
+            mergeRec(gaps, gapStart, gapEndAccum max a1, at, bs)
+          } else {
+            bs match {
+              case Nil => mergeRec((gapStart, gapEndAccum) :: gaps, a0, gapEndAccum max a1, at, bs)
+              case (b0, b1) :: bt => if (b0 <= gapEndAccum) {
+                mergeRec(gaps, gapStart, gapEndAccum max b1, as, bt)
+              } else {
+                if (a0 < b0) {
+                  mergeRec((gapStart, gapEndAccum) :: gaps, a0, a1, at, bs)
+                } else {
+                  mergeRec((gapStart, gapEndAccum) :: gaps, b0, b1, as, bt)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    val (a0, a1) :: at = as
+    val (b0, b1) :: bt = bs
+
+    val reverseRes = 
+      if (a0 < b0) 
+        mergeRec(Nil, a0, a1, at, bs)
+      else
+        mergeRec(Nil, b0, b1, as, bt)
+
+    reverseRes.reverse
+  }
+
+
+  val mergedIntervals = df.
+    as[(String, Int, Int)].
+    rdd.
+    map{case (t, s, e) => (t, List((s, e)))}.              // Convert start end to list with one interval
+    reduceByKey(mergeIntervals).                           // perform parallel compressed merge-sort
+    flatMap{ case (k, vs) => vs.map(v => (k, v._1, v._2))}.// explode resulting lists of merged intervals
+    toDF(""typ"", ""start"", ""end"")                            // convert back to DF
+
+  mergedIntervals.show()

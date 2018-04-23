@@ -1,0 +1,24 @@
+#include ""stdafx.h""
+#include <thread>
+#include <iostream>
+#include <atomic>
+#include <future>
+
+int main()
+{
+    std::atomic<bool> stop{ false };
+    std::future<void> sync;
+    std::packaged_task<void()> task([&stop]()
+    {
+        while (!stop) 
+        { 
+            std::cout << ""Running\n""; 
+        }
+    });
+    std::thread thread([&task]() {task();});
+    getchar();
+    stop = true;
+    task.get_future().get();
+    thread.join();
+    return 0;
+}

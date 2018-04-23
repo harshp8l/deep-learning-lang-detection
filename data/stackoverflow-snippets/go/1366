@@ -1,0 +1,18 @@
+    compressedData := buffout.Bytes()
+    //push block blob to azure
+    fmt.Println(""uploading: "",filestr)
+    blockID := base64.StdEncoding.EncodeToString([]byte(""00001""))
+    newblob := cnt.GetBlobReference(filestr)
+    err = newblob.CreateBlockBlobFromReader(bytes.NewReader(compressedData),nil)
+    check(err)
+    err = newblob.PutBlock(blockID, compressedData, nil)
+    check(err)
+    list, err := newblob.GetBlockList(storage.BlockListTypeUncommitted, nil)
+    check(err)
+    uncommittedBlocksList := make([]storage.Block, len(list.UncommittedBlocks))
+    for i := range list.UncommittedBlocks {
+        uncommittedBlocksList[i].ID = list.UncommittedBlocks[i].Name
+        uncommittedBlocksList[i].Status = storage.BlockStatusUncommitted
+    }
+    err = newblob.PutBlockList(uncommittedBlocksList, nil)
+    check(err)

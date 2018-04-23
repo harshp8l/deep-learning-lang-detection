@@ -1,0 +1,15 @@
+type DoubleGenomeMutation() = 
+    member this.Mutate = (this :> IMutation).MutateMethod
+    interface IMutation with
+        member this.MutateMethod(genome: Genome<'T>) = 
+            let randomIndex = 1 // MyRandom.Next(0, genome.list.Length)
+            printfn ""%d"" randomIndex
+            let newValue = failwith ""foo""
+
+            let (newGenomeList : List<'T>, _) = 
+                List.foldBack (fun elem acc -> 
+                match acc with
+                | (l, 0) -> (newValue::l, -1)
+                | (l, i) -> (elem::l, i-1)) (genome.GetValues()) ([], genome.GetValues().Length - randomIndex - 1)
+
+            new Genome<'T>(newGenomeList)

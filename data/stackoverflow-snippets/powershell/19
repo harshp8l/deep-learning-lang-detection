@@ -1,0 +1,40 @@
+function Get-QueryData 
+{
+[CmdletBinding()]
+param(
+    [string] $server
+)
+$QuerySelect = ""select * from dbo.Table""
+try
+{
+    $flag = $true
+    Invoke-Sqlcmd -ServerInstance $server `
+        -Database TheDatabase `
+        -Query $QuerySelect `
+        -QueryTimeout 20 `
+        -OutputSqlErrors $True `
+        -ConnectionTimeout 5 `
+        -ErrorAction Stop
+}
+catch
+{
+    $flag = $false
+    #to-do: log error with $_ which contains the error object
+    Write-Host ""An error occurred trying to get query info""
+    $errorMessage = $_.Exception.Message
+}
+finaly
+{
+    # log errors if flag false
+    if (!$flag){
+        ""[$(get-date)] - $errorMessage"" >> `
+            $(some target accessible path to a writable file)
+        #Stop the function and return an exit code of 1
+        Return 1            
+    } else {
+        #  remaining function inserts into central server
+        ""[$(get-date)] - Short Meaningful Success Message"" >> `
+            $(some target accessible path to a writable file)          
+    }
+}
+}

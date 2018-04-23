@@ -1,0 +1,29 @@
+type Option<'T> = {Name:string;Item:'T}
+
+type OptionBuilderUnion<'T> =
+    | OptionItems of Option<'T> list
+    | OptionItem of Option<'T>
+
+type OptionBuilder () =
+    member this.Yield (opt: Option<'t>) = OptionItem(opt)
+    member this.Yield (tup: string * 't) = OptionItem({Name=fst tup;Item=snd tup})
+    member this.Combine (f,g) = 
+        OptionItems(
+            match f,g with
+            | OptionItem(F), OptionItem(G) -> [F;G]
+            | OptionItems(F), OptionItem(G) -> G :: F
+            | OptionItem(F), OptionItems(G) -> F :: G
+            | OptionItems(F), OptionItems(G) -> F @ G
+        )
+    member this.Delay f = f()
+    member this.Run (f) = match f with |OptionItems items -> items |OptionItem item -> [item]
+
+let options = OptionBuilder()
+
+let opts = options {
+        yield (""a"",12)
+        yield (""b"",10)
+        yield {Name = ""k""; Item = 20}
+    }
+
+opts |> Dump

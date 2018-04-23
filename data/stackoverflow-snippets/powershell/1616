@@ -1,0 +1,28 @@
+Clear-Content c:\windows\System32\drivers\etc\hosts
+Set-Content -Path c:\windows\System32\drivers\etc\hosts -Value ""Hello, World""
+$targethost=""HOSTNAME""
+$dnsserver=""8.8.8.8""
+$pattern = '^*' + $targethost + '.*$'
+$file = ""$($env:SystemRoot)\System32\drivers\etc\hosts""
+$ip = Resolve-DnsName -Name $targethost -Type A -DnsOnly -Server $dnsserver
+$hosts = Get-Content -Path $file
+
+$hosts = $hosts | Foreach {
+  if ($_ -match $pattern) 
+  {
+      # Keep current line
+    $_
+
+  } 
+  else 
+  {
+   $ip.IpAddress + ""   HOSTNAME ""
+  }
+}
+
+#Uncomment this line to just view the output, no harm is done to the hosts file.
+$hosts
+
+
+# Uncomment this line to actually write the hosts file. Elevated privileges required.
+$hosts | Out-File $file -enc ASCII

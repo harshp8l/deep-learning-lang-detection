@@ -1,0 +1,22 @@
+import Control.Monad
+import Control.Monad.ST
+import Data.Array.Unboxed
+import Data.Array.MArray.Safe
+import Data.Array.ST.Safe
+
+foo :: Int -> UArray (Int,Int) Int
+foo size = runSTUArray $ do
+  dynamic <- newArray ((0,size-1),(0,size-1)) 0
+  writeArray dynamic (0,0) 1
+  forM_ [0..size-1] $ \a -> do
+    forM_ [a..size-1] $ \b -> do
+      v <- readArray dynamic (a,b)
+      if a == 0 then do
+        writeArray dynamic (a+1,b+1) (v*2)
+        writeArray dynamic (a, b+1) (v*(-1))
+      else do
+        v1 <- readArray dynamic (a+1,b+1)
+        writeArray dynamic (a+1,b+1) (v1 + v * 3)
+        v2 <- readArray dynamic (a,b+1)
+        writeArray dynamic (a,b+1) (v2 + v * 2)
+  return dynamic

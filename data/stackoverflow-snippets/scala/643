@@ -1,0 +1,22 @@
+sealed trait StreamInt {
+  def nth(n:Int):Int= this match {
+    case Cons(hd,tl)=> if (n==0) hd else tl().nth(n-1)
+    case Empty => throw new Exception(""out of bound!"")
+  }
+}
+case object Empty extends StreamInt
+case class Cons (hd: Int, tl: ()=>StreamInt) extends StreamInt
+
+object StreamInt{
+  def cons(hd:Int, tl: => StreamInt):StreamInt = {
+    val head=hd
+    lazy val tail=tl
+    Cons(head, ()=>tail)
+  }
+  def empty:StreamInt = Empty
+
+  def apply(as: Int*):StreamInt={
+    if (as.isEmpty) empty
+    else cons(as.head, apply(as.tail: _*))
+  }
+}

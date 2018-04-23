@@ -1,0 +1,21 @@
+DECLARE @Direction nvarchar(2), @i int;
+SET @Direction = N'!'; --Intentionally incorrect
+SET @i = 0;
+
+
+IF @Direction NOT IN (N'=',N'>',N'<',N'!=',N'>=',N'<=') BEGIN
+
+    DECLARE @Error nvarchar(500) = N'Direction parameter has an invalid value (''' + @Direction + N'''). Accepted values are =,<,>,!=,>= and <=.';         
+    RAISERROR(@Error, 11, -1);
+
+END ELSE BEGIN
+
+    DECLARE @SQL nvarchar(MAX);
+
+    SET @SQL = N'SELECT *' + NCHAR(10) +
+               N'FROM YourTable' + NCHAR(10) +
+               N'WHERE YourColumn ' + @Direction + N' @si';
+    PRINT @SQL; --This is your best friend
+    EXEC sp_executesql @SQL, N'@si int', @si = @i;
+
+END

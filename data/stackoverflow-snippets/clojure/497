@@ -1,0 +1,25 @@
+(defn my-spit-appender
+  ""Returns a simple `spit` file appender for Clojure.""
+  [& [{:keys [fname] :or {fname ""./timbre-spit.log""}}]]
+  {:enabled?   true
+   :async?     false
+   :min-level  nil
+   :rate-limit nil
+   :output-fn  :inherit
+   :fn
+   (fn self [data]
+     (let [{:keys [output_]} data]
+       (try
+
+        ;; SOME LOGIC HERE TO CHOOSE THE FILE TO OUTPUT TO ...             
+
+         (spit fname (str (force output_) ""\n"") :append true)
+         (catch java.io.IOException e
+           (if (:__spit-appender/retry? data)
+             (throw e) ; Unexpected error
+             (let [_    (have? enc/nblank-str? fname)
+                   file (java.io.File. ^String fname)
+                   dir  (.getParentFile (.getCanonicalFile file))]
+
+               (when-not (.exists dir) (.mkdirs dir))
+               (self (assoc data :__spit-appender/retry? true))))))))})

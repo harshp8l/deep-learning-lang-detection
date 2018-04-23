@@ -1,0 +1,31 @@
+  import scala.util.parsing.json.JSON
+  val string =
+  """"""{
+  |    ""ClientBase"": [
+  |        {
+  |          ""string#name"": ""robert"",
+  |          ""int#age"": 46,
+  |          ""string#country"": ""USA""
+  |        },
+  |        {
+  |          ""string#name"": ""tom"",
+  |          ""int#age"": 45,
+  |          ""string#country"": ""UK""
+  |        }
+  |    ]
+  |}
+"""""".stripMargin
+
+val start = """"""""{""ClientBase"":[{""""""
+val end = """"""}]}""""""
+val json = JSON.parseFull(string) match {
+      case Some(e) =>
+            val clientBase = e.asInstanceOf[Map[String,Any]]
+                 .getOrElse(""ClientBase"", List[Map[String,Any]]())
+            val list = clientBase.asInstanceOf[List[Map[String, Any]]]
+            val result = list.map(e=> e.+(""BLOCK_ID"" -> ""client_base""))
+            result.mkString(start, "","", end)
+      case None => string
+}
+print(json)
+//""{""ClientBase"":[{Map(string#name -> robert, int#age -> 46.0, string#country -> USA, BLOCK_ID -> client_base),Map(string#name -> tom, int#age -> 45.0, string#country -> UK, BLOCK_ID -> client_base)}]}

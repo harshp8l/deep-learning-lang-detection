@@ -1,0 +1,31 @@
+package main
+
+import (
+    ""fmt""
+    ""time""
+)
+
+func main() {
+
+    chClose := make(chan bool)
+    channel := make(chan string)
+
+    ListenToTable(""somestring"", channel, chClose)
+
+    time.Sleep(3 * time.Second)
+    chClose <- true
+    time.Sleep(1 * time.Second)
+}
+
+func ListenToTable(name string, ch chan string, chClose chan bool) {
+    go func(name string) {
+        for {
+            select {
+            case <-chClose:
+                fmt.Println(""QUIT GOROUTINE"")
+                return  // VERY IMPORTANT: not break!
+            default:
+            }
+        }
+    }(name)
+}

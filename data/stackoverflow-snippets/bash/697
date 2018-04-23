@@ -1,0 +1,131 @@
+#!/bin/bash
+# Copyright © 2017, Ceriel Jacobs <http://probackup.nl/>
+# Licence: GPL v3
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+$DATE='/usr/bin/date'
+$BTRFS='/usr/bin/btrfs'
+
+pushd ""$SNAPSHOT_DST/$HOST_SRC"" >/dev/null
+declare -a arrFiles
+arrFiles=(2[0-9][0-9][0-9]-[01][0-9]-[0-3][0-9]-[0-2][0-9][0-5][0-9][0-5][0-9]) # BASH glob is auto sorted low to high
+popd >/dev/null
+# echo ${arrFiles[*]}
+
+# Build epoch time array
+declare -ai arrSinceEpoch
+declare -i lastEpoch intTZ
+# Calculate time zone correction in seconds
+tmpTZ=$($DATE +%z) # f.e. +0100 -> +3600 seconds
+(( intTZ = (${tmpTZ::3} * 3600) + (${tmpTZ:3:2} * 60) ))
+unset tmpTZ
+
+for c in ${!arrFiles[@]}; do
+  # Replace dash between date and time by space
+  # Replace dashes between time segments by colons
+    # because:
+    # date --date='2017-12-17-235559' +%s 
+    # date: invalid date '2017-12-17-235559'
+    # date --date=""2017-12-17 23:55:59"" +%s
+    # 1513551359
+  i=${arrFiles[$c]}
+  strDateIn=""${i::10} ${i:11:2}:${i:13:2}:${i:15:2}""
+  #               -d --date   display time described by STRING, not 'now'
+  #                                              %s   seconds since 1970-01-01 00:00:00 UTC
+  strDateOut=$($DATE --date=""$strDateIn"" +'%F %T')
+  (( arrSinceEpoch[$c]=$($DATE --date=""$strDateIn"" +%s) + intTZ ))
+  # test sorting order
+  [[ -n $lastEpoch && $lastEpoch -gt ${arrSinceEpoch[$c]} ]] && Error ""Unexpected sorting order""
+  lastEpoch=arrSinceEpoch[$c]
+  # test date conversion
+  [[ $strDateIn == $strDateOut ]] || Error ""$strDateIn != $strDateOut""
+done
+
+if [[ $v='-v' ]]; then
+  # First = oldest
+  echo -n ""Oldest backup: ${arrFiles[0]}""
+  echo ""  (${arrSinceEpoch[0]})""
+  # Last = newest
+  echo -n ""Newest backup: ${arrFiles[-1]}""
+  echo ""  (${arrSinceEpoch[-1]})""
+fi
+
+declare -i intNewest intUpperLimit
+declare -ai arrToBeRemoved
+intNewest=${arrSinceEpoch[-1]}
+intUpperLimitMinusSeven=$((intNewest-86400)) #24*3600 seconds
+intUpperLimitMinusThirty=$((intNewest-2592000)) #30*86400 seconds
+
+# Retention Rules
+# - don't touch newest 24h versions
+# - from old to new, keep only 1st version per day until newest-24 hours is reached
+# - from old to new, keep oldest backup, and store versions that are at least 7 days newer as the previous
+#   until newest-30 days is reached
+
+# 1/2 Thinning to 1 version per day
+lastday=''
+for c in ${!arrFiles[@]}; do
+  if [[ ${arrSinceEpoch[$c]} -gt $intUpperLimitMinusSeven ]]; then
+    [[ $v='-v' ]] && echo ""<24h: ${arrFiles[$c]}, [$c]""
+    break # exit for loop because all (remaining) backups are made within 24 hours of the ""latest"" backup
+  elif [[ -n $lastday && $lastday == ${arrFiles[$c]::10} ]]; then
+     # duplicate day found -> add this snapshot to the to-be-removed array
+     [[ $v='-v' ]] && echo ""Remove snapshot: ${arrFiles[$c]}, [$c]""
+     arrToBeRemoved[$c]=1
+  fi
+  lastday=${arrFiles[$c]::10}
+done
+
+# 2/3 Thinning to 1 version per week
+# fulldate to day: 2017-12-21-164100 -> 1513541787 -> /86400 -> day# 17517
+# save snap when snap day >= last week snap day + 7 days
+# TODO: improve to allow some rounding: f.e. not delete #6 in 1,6,14,21
+declare -i idxLastSavedWeekSnap intLastSavedWeekSnapDay intTemp
+idxLastSavedWeekSnap=0
+intLastSavedWeekSnapDay=$((${arrSinceEpoch[0]}/86400)) # epoch seconds to day number
+
+for c in ${!arrFiles[@]}; do
+  if [[ ${arrSinceEpoch[$c]} -gt $intUpperLimitMinusThirty ]]; then
+    [[ $v='-v' ]] && echo ""<30d: ${arrFiles[$c]}, [$c]""
+    break # exit for loop because all (remaining) backups are made within 30 days of the ""latest"" backup
+  elif [[ $c = 0 ]]; then
+    continue # skip this snap, always keep 1st snapshot
+  elif [[ ${arrToBeRemoved[$c]} = 1 ]]; then
+    continue # skip this snap, already marked for deletion
+  else
+    intTemp=${arrSinceEpoch[$c]}/86400
+    if [[ $intTemp -ge $intLastSavedWeekSnapDay ]]; then
+      intLastSavedWeekSnapDay=$intTemp
+    else
+      arrToBeRemoved[$c]=1
+    fi
+  fi 
+done
+
+# print array count & indexes
+if [[ $v='-v' && -n ${!arrToBeRemoved[@]} ]]; then
+  echo -n ""To be removed (${#arrToBeRemoved[@]}): ""
+  printf '#%s ' ""${!arrToBeRemoved[@]}""
+  echo
+fi
+
+# 3/3 If there are items to-be-removed
+if [[ -n ${!arrToBeRemoved[@]} ]]; then
+  # delete corresponding snapshots
+  for c in ${!arrToBeRemoved[@]}; do
+    [[ $v='-v' ]] && echo -n ""btrfs subvolume delete $SNAPSHOT_DST/$HOST_SRC/${arrFiles[$c]};""
+    #$BTRFS subvolume delete $SNAPSHOT_DST/$HOST_SRC/${arrFiles[$c]}
+  done
+  [[ $v='-v' ]] && echo
+fi

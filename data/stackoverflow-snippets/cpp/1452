@@ -1,0 +1,17 @@
+cv::Mat img0 = cv::imread(""image0.png"", CV_IMREAD_GRAYSCALE);
+cv::Mat img1 = cv::imread(""image1.png"", CV_IMREAD_GRAYSCALE);
+
+cv::Mat images[2] = {img0, img1};  // you can also use vector or some other container
+
+int dims[3] = { 2, img0.rows, img0.cols }; // dimensions of new image  
+
+cv::Mat joined(3, dims, CV_8U); // same element type (CV_8U) as input images
+
+for(int i = 0; i < 2; ++i)
+{
+  uint8_t* ptr = &joined.at<uint8_t>(i, 0, 0); // pointer to first element of slice i
+
+  cv::Mat destination(img0.rows, img0.cols, CV_8U, (void*)ptr); // no data copy, see documentation
+
+  images[i].copyTo(destination);
+}

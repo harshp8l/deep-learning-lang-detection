@@ -1,0 +1,20 @@
+let parallelRanges =
+    let kinectSize = 1228800
+    let subSize = kinectSize / Environment.ProcessorCount
+    let iMax = kinectSize - 1
+    let steps = [| -1 .. subSize .. iMax |]
+    steps.[steps.Length - 1] <- iMax
+    steps |> Seq.pairwise |> Seq.toArray |> Array.map (fun (x, y) -> x + 1, y)
+
+let countDiffs (prevBytes:byte[]) (curBytes:_[]) =
+    let count (fromI, toI) =
+        let rec aux i acc =
+            if i > toI then acc
+            elif i % 4 <> 0 && prevBytes.[i] <> curBytes.[i] then 
+                aux (i + 1) (acc + 1)
+            else aux (i + 1) acc
+        aux fromI 0
+
+    parallelRanges
+    |> Array.Parallel.map count
+    |> Array.sum

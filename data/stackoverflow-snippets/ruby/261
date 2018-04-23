@@ -1,0 +1,27 @@
+# app/channels/application_cable/connection.rb
+module ApplicationCable
+  class Connection < ActionCable::Connection::Base
+
+    def connect
+      verify_user
+    end
+
+    private
+    def verify_user
+      reject_unauthorized_connection unless verified_user?
+    end
+
+    def verified_user?
+      cookie_key && User.find_by_persistence_token(token)
+    end
+
+    def token
+      cookie && cookie.include?('::') && cookie.split(""::"")[0]
+    end
+
+    def cookie
+     cookies['user_credentials']
+    end
+
+  end
+end

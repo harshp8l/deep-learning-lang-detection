@@ -1,0 +1,19 @@
+#include <type_traits>
+
+template<class T1, class T2>
+struct Foo {
+    template<class InnerT, class ... Args, class DummyType = T1>
+    typename std::enable_if<std::is_same<DummyType, T2>::value, void>::type
+    bar(InnerT param) {};
+
+    template<class InnerT, class ... Args, class DummyType = T1>
+    typename std::enable_if<!std::is_same<DummyType, T2>::value, void>::type
+    bar(InnerT param) {};
+};
+
+
+int main() {
+    Foo<int, int> f;
+    f.bar(3);                   // InnerT = int; Args = empty; DummyType = int.
+    f.bar<int, void, short>(4); // InnerT = int; Args = void, short; DummyType = int.
+}

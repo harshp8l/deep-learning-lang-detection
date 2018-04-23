@@ -1,0 +1,74 @@
+<?php
+
+/*
+ * Include this page in all PHP pages of the application.
+ *
+ * This page contains:
+ *  - The APP_ENV constant, used to decide in which environment this application runs.
+ *  - The functions for handling all the errors, or exceptions, raised by the application.
+ *  - The code for setting them as error/exception handlers.
+ *  - The code deciding if the errors should be displayed on the screen. The errors
+ *    display MUST be activated ONLY in the development stage of the application. When
+ *    the website goes live, ALL ERRORS must be written in a/the log file and NO ERRORS
+ *    should be displayed on screen, but only a general, user-friendly message, or a
+ *    custom error page.
+ */
+
+/*
+ * Decide in which environment this application runs. Possible values:
+ *  - 'prod' (app in production, e.g. live). The errors are not displayed, but only logged.
+ *  - 'dev' (app in development). The errors are displayed on screen and logged.
+ *  - 'test' (app in tests). Same as 'dev'.
+ *  - etc.
+ */
+define('APP_ENV', 'dev');
+
+// Activate the errors/exceptions logging.
+ini_set('log_errors', 1);
+
+// Set the error reporting level: report all errors.
+error_reporting(E_ALL);
+
+// Decide how to handle the errors/exceptions.
+if (APP_ENV === 'prod') { // App in production, e.g. live.
+    // DON'T display the errors/exceptions on the screen.
+    ini_set('display_errors', 0);
+
+    // Set the handler functions.
+    set_error_handler('errorHandler');
+    set_exception_handler('exceptionHandler');
+} else { // App in development, tests, etc.
+    // Display the errors/exceptions on the screen.
+    ini_set('display_errors', 1);
+}
+
+/**
+ * Error handler:
+ *  - Print a user-friendly message, or show a custom error page.
+ *  - Log the error.
+ *
+ * @link http://php.net/manual/en/function.set-error-handler.php set_error_handler.
+ * @param int $errno
+ * @param string $errstr
+ * @param string $errfile
+ * @param int $errline
+ */
+function errorHandler($errno, $errstr, $errfile, $errline) {
+    echo 'An error occurred during your request. Please try again, or contact us.';
+    error_log('Error ' . $errno . ' - ' . $errstr . ' in file ' . $errfile . ' on line ' . $errline);
+    exit();
+}
+
+/**
+ * Exception handler:
+ *  - Print a user-friendly message, or show a custom error page.
+ *  - Log the error.
+ *
+ * @link http://php.net/manual/en/function.set-exception-handler.php set_exception_handler.
+ * @param Exception $exception
+ */
+function exceptionHandler($exception) {
+    echo 'An error occurred during your request. Please try again, or contact us.';
+    error_log('Exception ' . $exception->getCode() . ' - ' . $exception->getMessage() . ' in file ' . $exception->getFile() . ' on line ' . $exception->getLine());
+    exit();
+}

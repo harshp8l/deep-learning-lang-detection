@@ -1,0 +1,19 @@
+template <typename...>
+struct paren_initable: std::false_type {};
+
+template <typename T, typename... Us>
+struct paren_initable<decltype((void)T(std::declval<Us>()...)), T, Us...>
+ : std::true_type {};
+
+template <typename T, typename... Us>
+inline constexpr bool paren_initable_v = paren_initable<void, T, Us...>::value;
+
+template <typename T, typename... Us>
+T emplace(Us&&... us) {
+  if constexpr (paren_initable_v<T, Us...>) {
+    return T(std::forward<Us>(us)...);
+  }
+  else {
+    return T{std::forward<Us>(us)...};
+  }
+}

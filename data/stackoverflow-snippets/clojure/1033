@@ -1,0 +1,25 @@
+(ns myapp.system
+  (:require [com.stuartsierra.component :as component]
+            ;; we'll talk about myapp.components later
+            [myapp.components :as app-components]))
+
+(defn system-map [config] ;; it's conventional to have a config map, but it's optional
+  (component/system-map
+    ;; construct all components + static config
+    {:db (app-components/map->Db (:db config))
+     :handler (app-components/map->AppHandler (:handler config))
+     :server (app-components/map->Server (:web-server config))}))
+
+(defn dependency-map
+  ;; list inter-dependencies in either:
+  ;;    {:key [:dependency1 :dependency2]} form or
+  ;;    {:key {:name-arg1 :dependency1
+  ;;           :name-arg2 :dependency2}} form
+  {:handler [:db]
+   :server {:app :handler})
+
+;; calling this creates our system
+(def create-system [& [config]]
+  (component/system-using
+    (system-map (or config {})
+    (dependency-map)))

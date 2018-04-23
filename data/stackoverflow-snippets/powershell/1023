@@ -1,0 +1,34 @@
+# Returns $true if current PS instance started with -NonInteractive parameter
+function Test-NonInteractive {
+  foreach ( $arg in [Environment]::GetCommandLineArgs() ) {
+    if ( $arg -like ""-noni*"" ) {
+      return $true
+    }
+  }
+  return $false
+}
+
+if ( -not (Test-NonInteractive) ) {
+  $scriptArgs = """"
+  $args | ForEach-Object {
+    if ( $scriptArgs -eq """" ) {
+      $scriptArgs = '""{0}""' -f $_
+    }
+    else {
+      $scriptArgs = ' ""{0}""' -f $_
+    }
+  }
+  $params = @{
+    ""FilePath"" = ""powershell.exe""
+    ""ArgumentList""  = @(
+      ""-ExecutionPolicy Bypass""
+      ""-NonInteractive""
+      ""-File """"{0}"""""" -f $MyInvocation.MyCommand.Path
+      $scriptArgs
+    )
+  }
+  Start-Process @params
+  return
+}
+
+# ...rest of script logic here...

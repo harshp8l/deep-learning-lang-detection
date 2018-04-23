@@ -1,0 +1,72 @@
+import akka.NotUsed
+import akka.actor.ActorSystem
+import akka.stream.scaladsl.Source
+import akka.stream.{ActorMaterializer, SourceShape}
+import akka.util.ByteString
+import com.company.config.AWS
+import org.log4s.getLogger
+
+case class S3StreamingServiceLike(awsConf: AWS, s3Client: S3ClientAlpakka)(
+    implicit sys: ActorSystem,
+    mat: ActorMaterializer)
+    extends S3StreamingService {
+
+  private implicit class ConcatSyntax[T, U](source: Source[T, U]) {
+    def ++[TT >: T, NotUsed](that: Source[SourceShape[TT], NotUsed]): Source[Any, U] = //scalastyle:ignore
+      source.concat(that)
+  }
+
+  private val logger = getLogger
+
+  private sealed trait ZipElement
+  private case class FileStart(name: String, index: Int, outOf: Int) extends ZipElement
+  private case class FileEnd(name: String, index: Int, outOf: Int)   extends ZipElement
+  private case class FilePayload(byteString: ByteString)             extends ZipElement
+  private case object EndZip                                         extends ZipElement
+
+  private def payloadSource(filename: String) =
+    s3Client.download(awsConf.s3BucketName, filename).map(FilePayload.apply)
+
+  private def fileNameToZipElements(filename: String,
+                                    index: Int,
+                                    outOf: Int): Source[ZipElement, NotUsed] =
+    Source.single(FileStart(filename, index, outOf)) ++
+      payloadSource(filename) ++
+      Source.single(FileEnd(filename, index, outOf))
+
+  def streamFilesAsZip(filenames: List[String])(forUser: String): Source[ByteString, NotUsed] = {
+
+    val zipBuffer = new ZipBuffer()
+
+    val zipElementSource: Source[ZipElement, NotUsed] =
+      Source(filenames.zipWithIndex).flatMapConcat {
+        case (filename, index) => fileNameToZipElements(filename, index + 1, filenames.length)
+      } ++ Source.single(EndZip)
+
+    zipElementSource
+      .map {
+        case FileStart(name, index, outOf) =>
+          logger.info(s""Zipping file #$index of $outOf with name $name for user $forUser"")
+          zipBuffer.startEntry(name)
+          None
+        case FilePayload(byteString) =>
+          if (byteString.length > zipBuffer.remaining()) {
+            throw new Exception(
+              s""Bytestring size exceeded buffer size ${byteString.length} > ${zipBuffer.remaining}"")
+          }
+          zipBuffer.write(byteString.toArray, byteString.length)
+          Some(zipBuffer.toByteString())
+        case FileEnd(name, index, outOf) =>
+          logger.info(s""Finished zipping file #$index of $outOf with $name for user $forUser"")
+          zipBuffer.endEntry()
+          Some(zipBuffer.toByteString())
+        case EndZip =>
+          zipBuffer.close()
+          Some(zipBuffer.toByteString())
+      }
+      .collect {
+        case Some(bytes) if bytes.length > 0 => bytes
+      }
+  }
+
+}

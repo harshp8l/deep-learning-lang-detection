@@ -1,0 +1,56 @@
+#!/bin/bash
+
+### Proxy settings
+# If there is a company proxy 
+
+PROXY=""my.proxy.local:8080""
+USER=""user""
+PASS='pass'
+
+### Find out the links to JRE and JDK 
+# To do so, got to the page http://www.oracle.com/technetwork/java/javase/downloads/
+
+BASE_URL=""technetwork/java/javase/downloads""
+
+# Put the whole page into a single string/line
+
+BASE_URL_OUTPUT=""$(curl -s -k -x ""http://${USER}:${PASS}@${PROXY}"" -L0 http://www.oracle.com/${BASE_URL}/)""
+
+# Define the environments to download 
+
+JAVA_ENVIRONMENTS=(""JRE"" ""JDK"") # ! yet ""SERVER-JRE""
+
+for JAVA_ENVIRONMENT in ""${JAVA_ENVIRONMENTS[@]}""
+do
+
+echo
+echo ""JAVA_ENVIRONMENT=""$JAVA_ENVIRONMENT
+echo
+
+for (( JAVA_BASE_VERSION = 8; JAVA_BASE_VERSION <= 9; JAVA_BASE_VERSION++ )) # ! yet 10 
+do
+
+echo ""JAVA_BASE_VERSION=""$JAVA_BASE_VERSION
+
+### ""Read the page""
+# and follow the links for the package interested in 
+
+DOWNLOAD_SITE=""$(echo $BASE_URL_OUTPUT | grep -m 1 -io ""${JAVA_ENVIRONMENT}[${JAVA_BASE_VERSION}*]-downloads-[0-9]*.html"" -- | tail -1)""
+echo ""DOWNLOAD_SITE=""$DOWNLOAD_SITE
+
+### Gather the necessary download links
+# To do so, following the link to the download site
+# reading and accept the license 
+# 
+# ... the greedy regular expression is to address the different syntax of the links
+# and already prepared for OR .gz files 
+
+DOWNLOAD_LINK_OUTPUT=""$(curl -s -k -x ""http://${USER}:${PASS}@${PROXY}"" -L -j -H ""Cookie: oraclelicense=accept-securebackup-cookie"" http://www.oracle.com/${BASE_URL}/${DOWNLOAD_SITE} |  grep -io ""filepath.*${JAVA_ENVIRONMENT}-[${JAVA_BASE_VERSION}].*linux[-_]x64[._].*\(rpm\)"" -- | cut -d '""' -f 3 | tail -1)""
+
+# and echo out the link
+
+echo ""DOWNLOAD_LINK_OUTPUT=""$DOWNLOAD_LINK_OUTPUT
+
+done
+
+done

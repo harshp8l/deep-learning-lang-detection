@@ -1,0 +1,38 @@
+package org.apache.hadoop.mapreduce.lib.input;
+// same imports as original
+
+// public class LineRecordReader extends RecordReader<LongWritable, Text> {
+public class FakeGzLineRecordReader extends RecordReader<LongWritable, Text> {
+
+// ...
+
+public FakeGzLineRecordReader(byte[] recordDelimiter) {
+  this.recordDelimiterBytes = recordDelimiter;
+}
+
+// ...
+
+// Here we remove all the stuff related to compressed files:
+public void initialize(InputSplit genericSplit,
+                       TaskAttemptContext context) throws IOException {
+  FileSplit split = (FileSplit) genericSplit;
+  Configuration job = context.getConfiguration();
+  this.maxLineLength = job.getInt(MAX_LINE_LENGTH, Integer.MAX_VALUE);
+  start = split.getStart();
+  end = start + split.getLength();
+  final Path file = split.getPath();
+
+  // open the file and seek to the start of the split
+  final FileSystem fs = file.getFileSystem(job);
+  fileIn = fs.open(file);
+
+  fileIn.seek(start);
+  in = new UncompressedSplitLineReader(
+      fileIn, job, this.recordDelimiterBytes, split.getLength());
+  filePosition = fileIn;
+
+  if (start != 0) {
+    start += in.readLine(new Text(), 0, maxBytesToConsume(start));
+  }
+  this.pos = start;
+}

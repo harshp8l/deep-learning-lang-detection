@@ -1,0 +1,22 @@
+// A is our annotation
+// B is our result type    
+// C is our case class with some fields annotated with A
+
+def empty: B = ???
+def concat(b1: B, b2: B): B = ???
+def func(a: A, nm: String): B = ???
+
+object Collector extends Poly2 {
+   implicit def some[K <: Symbol](implicit witness: Witness.Aux[K]) = 
+     at[B, (K, Some[A])] { case (b, (_, a)) => concat(b, func(a.get, witness.value.name)) }
+   implicit def none[K <: Symbol] = at[B, (K, None.type)] { case (b, _) => b }
+}
+
+def collect[HL <: HList, RL <: HList, KL <: HList, ZL <: HList](implicit 
+    iso: LabelledGeneric.Aux[C, HL]
+  , annot: Annotations.Aux[A, C, RL]
+  , keys: Keys.Aux[HL, KL]
+  , zip: Zip.Aux[KL :: RL :: HNil, ZL]
+  , leftFolder: LeftFolder.Aux[ZL, B, Collector.type, B]): B = {
+  zip(keys() :: annot() :: HNil).foldLeft(empty)(Collector)
+}

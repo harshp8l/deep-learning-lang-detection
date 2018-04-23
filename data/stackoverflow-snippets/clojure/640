@@ -1,0 +1,79 @@
+;; (c) 2016 Stefan Kamphausen
+;; Released under the Eclipse Public License 
+(def ^:const ^:private signing-algorithm ""HmacSHA1"")
+
+(defn- get-signing-key* [secret]
+  (SecretKeySpec. (.getBytes secret) signing-algorithm))
+(def ^:private get-signing-key (memoize get-signing-key*))
+
+(defn- get-mac* [signing-key]
+  (doto (Mac/getInstance signing-algorithm)
+    (.init signing-key)))
+(def ^:private get-mac (memoize get-mac*))
+
+(defn hmac [^String s signature secret]
+  (let [mac (get-mac (get-signing-key secret))]
+    ;; MUST use .doFinal which resets mac so that it can be
+    ;; reused!
+    (str ""sha1=""
+         (Hex/encodeHexString (.doFinal mac (.getBytes s))))))
+
+(defn- validate-string [^String s signature secret]
+  (let [calculated (hmac s signature secret)]
+    (= signature calculated)))
+
+;; Warn: Body-stream can only be slurped once. Possible
+;; conflict with other ring middleware
+(defn body-as-string [request]
+  (let [body (:body request)]
+    (if (string? body)
+      body
+      (slurp body))))
+
+(defn- valid-github? [secrets request]
+  (let [body (body-as-string request)
+        signature (get-in request [:headers ""x-hub-signature""])]
+    (log/debug ""Found signature"" signature)
+    (cond
+      ;; only care about post
+      (not (= :post (:request-method request)))
+      ""no-validation-not-a-post""
+
+      ;; No secrets defined, no need to validate
+      (not (seq secrets))
+      ""no-validation-no-secrets""
+
+      ;; we have no signature but secrets are defined -> fail
+      (and (not signature) (seq secrets))
+      false
+
+      ;; must validate this content
+      :else
+      (some (partial validate-string body signature) secrets))))
+
+(def default-invalid-response
+  {:status  400
+   :headers {""Content-Type"" ""text/plain""}
+   :body    ""Invalid X-Hub-Signature in request.""})
+
+(defn wrap-github-validation
+  {:arglists '([handler] [handler options])}
+  [handler & [{:keys [secret secrets invalid-response]
+               :or   {secret           nil
+                      secrets          nil
+                      invalid-response default-invalid-response}}]]
+  (let [secs (if secret [secret] secrets)]
+    (fn [request]
+      (if-let [v (valid-github? secs request)]
+        (do
+          (log/debug ""Request validation OK:"" v)
+          (handler (assoc request
+                          :validation {:valid true
+                                       :validation v}
+                          ;; update body which must be an
+                          ;; InputStream
+                          :body (io/input-stream (.getBytes body)))))
+
+        (do
+          (log/warn ""Request invalid! Returning"" invalid-response)
+invalid-response)))))

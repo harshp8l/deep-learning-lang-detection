@@ -1,0 +1,16 @@
+ids.csv => 91916, 91859, 91861, 91894, 92095, 92166, 91796 ...
+
+#!/bin/bash
+ids=$(< offer_ids.csv)
+saveIFS=$IFS
+IFS=',' array=($ids)               # split into an array using commas as the delimiter
+IFS=$saveIFS array=(${array[@]/%/,})   # add commas back to each element
+
+num=100                    # number of elements to process at a time
+
+for ((i=0; i<${#array[@]}; i+=$num)) do
+    list=${array[@]:$i:$num}
+    # an excess trailing comma is stripped off in the next line
+    echo ""list: "" $list
+    mysqldump -uroot -h host -p pw --opt --where=""offer_id IN (""${list%,}"")"" db offer_images >> offer_images.sql 
+done

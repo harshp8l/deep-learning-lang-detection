@@ -1,0 +1,32 @@
+from pyral import Rally
+
+SERVER = 'SERVER URL'
+USER = 'USER'
+PASSWORD = 'PASSWORD'
+WORKSPACE = 'WORKSPACE'
+TAG = 'TAG NAME'
+OWNER_EMAIL = 'bla@bla.com'
+
+rally = Rally(SERVER, USER, PASSWORD, workspace=WORKSPACE)
+
+target_project = rally.getProject()
+
+user_req = rally.get('User', fetch=True, query='EmailAddress = ""%s""' % (OWNER_EMAIL))
+user = user_req.next()
+
+tag_req = rally.get('Tag', fetch=True, query='Name = ""%s""' % (TAG))
+tag = tag_req.next()
+
+defect_info ={""Project"": target_project.ref,
+        ""Name"": ""Test Defect"",
+        ""Description"": ""Test Defect details"",
+        ""ScheduleState"": ""Defined"",
+        ""Owner"": user.ref,
+        ""TAGS"": [tag],
+        }
+
+try:
+    defect = rally.create('Defect', defect_info )
+    print (""Rally Defect Opened - {0} \n"").format(defect.FormattedID)
+except Exception, details:
+    sys.stderr.write('ERROR: %s \n' % details)

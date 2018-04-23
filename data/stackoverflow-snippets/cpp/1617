@@ -1,0 +1,32 @@
+// declare variables
+unsigned long long values[6];
+char script[1024];
+int row = 0;
+
+// create HDF5 file ""my_file.h5""
+HDFql::execute(""CREATE FILE my_file.h5"");
+
+// open HDF5 file ""my_file.h5""
+HDFql::execute(""USE FILE my_file.h5"");
+
+// create HDF5 dataset ""my_dataset"" of datatype unsigned long long (64 bit) of two dimensions (unlimited x 6)
+HDFql::execute(""CREATE CHUNKED(1, 6) DATASET my_dataset AS UNSIGNED BIGINT(UNLIMITED, 6)"");
+
+// register variable ""values"" for subsequent use (by HDFql)
+HDFql::variableRegister(values);
+
+// keep reading data (from hypothetical function ""read"") and store it in variable ""values"" until there is no more to read
+while(read(values))
+{
+    // prepare script that writes variable ""values"" into the last position of the first dimension of dataset ""my_dataset"" (thanks to a hyperslab selection)
+    sprintf(script, ""INSERT INTO my_dataset(%d:1:1:1) VALUES FROM MEMORY 0"", row++);
+
+    // execute script
+    HDFql::execute(script);
+
+    // extend first dimension of dataset ""my_dataset"" one unit
+    HDFql::execute(""ALTER DIMENSION my_dataset TO (+1)"");
+}
+
+// unregister variable ""values"" as it is no longer used/needed (by HDFql)
+HDFql::variableUnregister(values);

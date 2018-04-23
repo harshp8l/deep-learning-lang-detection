@@ -1,0 +1,68 @@
+#include <iostream>
+
+#include <vector>
+#include <functional>
+
+class Thing{
+    private:
+        int basicFilter;
+
+        typedef std::function<bool(int)> filteringFunction;
+
+        static std::vector<filteringFunction> filteringOptions;
+
+        bool filterStrong(int parameter) {return parameter > basicFilter*2;}
+        bool filterWeak(int parameter) {return parameter > basicFilter;}
+
+        bool softenFilter(filteringFunction f, int parameter){
+            if (!f(parameter))
+                return f(parameter + 2);
+            return true;
+        }
+
+        void setFilteringFunctions(void){
+            filteringFunction strong = std::bind(&Thing::filterStrong,
+                this, std::placeholders::_1);
+            filteringFunction weak = std::bind(&Thing::filterWeak,
+                this, std::placeholders::_1);
+
+            filteringFunction softStrong = std::bind(&Thing::softenFilter,
+                this, strong, std::placeholders::_1);
+            filteringFunction softWeak = std::bind(&Thing::softenFilter,
+                this, weak, std::placeholders::_1);
+
+            filteringOptions.emplace_back(softStrong);
+            filteringOptions.emplace_back(softWeak);
+        }
+
+    public:
+        Thing(int basicFilter) : basicFilter(basicFilter){
+            if (Thing::filteringOptions.empty())
+                setFilteringFunctions();
+        }
+
+        bool filterUsingRule(int parameter, int rule = 0){
+            return ((int)Thing::filteringOptions.size() > rule) &&
+                   filteringOptions[rule](parameter);
+        }
+
+};
+
+std::vector <Thing::filteringFunction> Thing::filteringOptions(0);
+
+void complexFilteringProcedure(Thing &aThing, int parameter, int rule){
+    // do a lot of things
+    std::cout << ""Filtering: "" << aThing.filterUsingRule(parameter, rule) << std::endl;
+    // and some more things
+}
+
+
+int main(void){
+    Thing myThing(5), otherThing(10);
+
+    complexFilteringProcedure(myThing, 7, 0); // uses strong rule
+    complexFilteringProcedure(otherThing, 7, 1); // uses weak rule
+
+    //complexFilteringProcedure(myThing, 7, 2); // how to use soft strong rule?
+    //complexFilteringProcedure(otherThing, 7, 3); // how to use soft weak rule?
+}

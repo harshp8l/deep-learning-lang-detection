@@ -1,0 +1,27 @@
+func Playlists(response http.ResponseWriter, request *http.Request) {
+    var rules []rule
+    if request.Method == http.MethodPost {
+        body, err := ioutil.ReadAll(request.Body)
+        if err != nil {
+            fmt.Println(err)
+        }
+
+        err = json.Unmarshal(body, &rules)
+        if err != nil {
+            fmt.Println(err)
+        }
+
+        var tracks []string
+        var userID string
+        for i := 0; i < len(rules); i++ {
+            rule := rules[i]
+            ruleTracks := PlaylistMatchValue(rule.User, rule.Match, rule.Value)
+            tracks = ruleTracks
+            userID = rule.User
+        }
+
+        updatePlaylist(userID, tracks)
+    }
+
+    rest.PostRequest(response, request, rules)
+}

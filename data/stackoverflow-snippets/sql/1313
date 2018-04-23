@@ -1,0 +1,13 @@
+select  sum(SO_SalesOrder.OrderTotal) Total, l.Name as [Store Name]
+From SO_SalesOrder 
+join BASE_Location l on SO_SalesOrder.LocationId = l.LocationId 
+where SO_SalesOrder.OrderDate >= '2018-02-01' and SO_SalesOrder.OrderDate <= '28-02-2018' 
+and exists (
+    select 0 x
+    From SO_SalesOrder_Line 
+    join BASE_Product on BASE_Product.ProdId = SO_SalesOrder_Line.ProdId
+    join BASE_Category on BASE_Category.CategoryId = BASE_Product.CategoryId
+    where BASE_Category.Name = '1MHNZ'
+    and SO_SalesOrder_Line.SalesOrderId = SO_SalesOrder.SalesOrderId
+)
+group by l.Name

@@ -1,0 +1,32 @@
+static int GetFirstDifferenceIndex(IList<string> strings)
+{
+    int firstDifferenceIndex = int.MaxValue;
+
+    for (int i = 1; i < strings.Count; i++)
+    {
+        var current = strings[i];
+        var prev = strings[i - 1];
+
+        // Index of first character that is different or that is a capital letter
+        // other than the first character of the sentence.
+        var firstDiffIndex = current
+            .Select((c, j) => new { CurrentChar = c, Index = j })
+            .FirstOrDefault(ci => ci.CurrentChar != prev[ci.Index]
+                            || (ci.Index != 0 && char.IsUpper(ci.CurrentChar)))
+            .Index;
+
+        // back track to the beginning or until the previous char is a space
+        while(firstDiffIndex > 0 && current[firstDiffIndex-1] != ' ')
+        {
+            firstDiffIndex--;
+        }
+
+        if(firstDiffIndex == 0) return 0;
+
+        if (firstDiffIndex < firstDifferenceIndex)
+        {
+            firstDifferenceIndex = firstDiffIndex;
+        }
+    }
+    return firstDifferenceIndex;
+}

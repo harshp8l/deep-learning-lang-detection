@@ -1,0 +1,25 @@
+    // Initialize
+
+    val conf = new                                                              
+    SparkConf().setAppName(""process_text_to_json"").setMaster(""local"")
+    val sc = new SparkContext(conf)
+    val sqlc = new org.apache.spark.sql.SQLContext(sc)    
+
+// Reading File iso-8859-1
+
+val delimiter = ""\307""
+val OTBInputDF = sqlc.read
+  .format(""com.databricks.spark.csv"")
+  .option(""header"", ""false"") // Use first line of all files as header
+  .option(""delimiter"", delimiter)
+  .option(""charset"",""iso-8859-1"")
+  .schema(StructType(OTBCleanFile))
+  .load(""cln.dat"")
+
+  // Convert to Json
+
+  val data = OTBInputDF.selectExpr(""varbl_1_txt as col1""  ,""varbl_1_txt as col2"",""varbl_1_txt as col3"",""varbl_1_txt as col4"",""varbl_1_txt col5"",""email as col6"")
+
+  val data2 = data.select(to_json(struct(col(""col1""),col(""col2""),col(""col3""),col(""col4""),col(""col5""))) as ""clientTag"",col(""col6""))
+  data2.show()
+  data2.printSchema()

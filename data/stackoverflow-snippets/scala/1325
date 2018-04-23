@@ -1,0 +1,26 @@
+// create some sample data:
+import org.apache.spark.mllib.linalg.{Vectors,Vector}
+case class myrow(topics:Vector)
+
+ val rdd = sc.parallelize(Array(myrow(Vectors.dense(0.1,0.2)),myrow(Vectors.dense(0.6,0.2))))
+val mydf = sqlContext.createDataFrame(rdd)
+mydf.show()
++----------+
+|    topics|
++----------+
+|[0.1, 0.2]|
+|[0.6, 0.2]|
++----------+
+
+// build the udf
+import org.apache.spark.sql.functions.udf
+val func = udf( (x:Vector) => x.toDense.values.toSeq.indices.maxBy(x.toDense.values) )
+
+
+mydf.withColumn(""max_idx"",func($""topics"")).show()
++----------+-------+
+|    topics|max_idx|
++----------+-------+
+|[0.1, 0.2]|      1|
+|[0.6, 0.2]|      0|
++----------+-------+

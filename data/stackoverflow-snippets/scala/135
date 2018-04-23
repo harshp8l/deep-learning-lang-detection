@@ -1,0 +1,16 @@
+override def transform(dataset: Dataset[_]): DataFrame = {
+  transformSchema(dataset.schema, logging = true)
+  val surrogates = surrogateDF.select($(inputCols).map(col): _*).head().toSeq
+
+
+  val newCols = $(inputCols).zip($(outputCols)).zip(surrogates).map {
+    case ((inputCol, outputCol), surrogate) =>
+      val inputType = dataset.schema(inputCol).dataType
+      val ic = col(inputCol)
+      when(ic.isNull, surrogate)
+        .when(ic === $(missingValue), surrogate)
+        .otherwise(ic)
+        .cast(inputType)
+  }
+  dataset.withColumns($(outputCols), newCols).toDF()
+}

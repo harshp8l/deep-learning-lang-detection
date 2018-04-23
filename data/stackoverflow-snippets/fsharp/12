@@ -1,0 +1,44 @@
+#r ""PresentationFramework""
+#r ""PresentationCore""
+#r ""WindowsBase""
+
+open System.Windows
+open System.Threading
+open System.Windows.Threading
+open System.Windows.Controls
+
+let ui =
+    let mk() =
+        let wh = new ManualResetEvent(false)
+        let application = ref null
+        let start() =
+            let app = Application()
+            application := app
+            ignore(wh.Set())
+            app.Run() |> ignore
+        let thread = Thread start
+        thread.IsBackground <- true
+        thread.SetApartmentState ApartmentState.STA
+        thread.Start()
+        ignore(wh.WaitOne())
+        !application, thread
+    lazy(mk())
+
+let spawn : ('a -> 'b) -> 'a -> 'b =
+    fun f x ->
+        let app, thread = ui.Force()
+        let f _ =
+            try
+                let f_x = f x
+                fun () -> f_x
+            with e ->
+                fun () -> raise e
+        let t = app.Dispatcher.Invoke(DispatcherPriority.Send, System.Func<_, _>(f), null)
+        (t :?> unit -> 'b)()
+
+let myWindow() =
+    let wnd = Window(Content = TextBox())
+    wnd.Show()
+    wnd
+
+spawn myWindow ()

@@ -1,0 +1,46 @@
+import common.Spark.sparkSession
+import java.util.regex.Pattern
+import util.control.Breaks._
+
+object playground extends App {
+
+  import org.apache.spark.sql.functions._
+
+  val pattern = ""135322,121200"" // Pattern you want to search for
+
+  // udf declaration
+  val coder: ((String, String) => Boolean) = (caseCol: String, pattern: String) =>
+    {
+      var result = true
+      val splitPattern = pattern.split("","")
+      val splitCaseCol = caseCol.split("","")
+      var foundAtIndex = -1
+
+      for (i <- 0 to splitPattern.length - 1) {
+        breakable {
+          for (j <- 0 to splitCaseCol.length - 1) {
+            if (j > foundAtIndex) {
+              println(splitCaseCol(j))
+              if (splitCaseCol(j) == splitPattern(i)) {
+                result = true
+                foundAtIndex = j
+                break
+              } else result = false
+            } else result = false
+          }
+        }
+      }
+      println(caseCol, result)
+      (result)
+    }
+
+  // registering the udf  
+  val udfFilter = udf(coder)
+
+  //reading the input file
+  val df = sparkSession.read.option(""delimiter"", ""\t"").option(""header"", ""true"").csv(""output.txt"")
+
+  //calling the function and aggregating
+  df.filter(udfFilter(col(""Case""), lit(pattern))).agg(lit(pattern), sum(""Freq"")).toDF(""pattern"",""sum"").show
+
+}

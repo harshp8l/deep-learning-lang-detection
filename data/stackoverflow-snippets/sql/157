@@ -1,0 +1,25 @@
+$start = new DateTime('2016-04-20');
+$end = new DateTime('2018-03-02');
+
+$smonth = (int)$start->format('Y')*12+(int)$start->format('n');
+$emonth = (int)$end->format('Y')*12+(int)$end->format('n');
+
+$firstmonth = min($smonth, $emonth);
+$lastmonth = max($smonth, $emonth);
+
+$months = array();
+$m_totals = array();
+
+for ($m = $firstmonth; $m <= $lastmonth; $m++) {
+    $year = intdiv($m, 12);
+    $thism = new DateTime(sprintf('%04d-%02d-01', $year, $m % 12));
+    $months[] = strtoupper($thism->format('M_Y'));
+    if ($m % 12 == 0) {
+        //      $m_totals[] = 'SUM(' . implode(',', $months) . ') AS SUM' . ($year - 1);
+        $m_totals[] = 'SUM(' . implode(') + SUM(', $months) . ') AS SUM' . ($year - 1);
+        $months = array();
+    }
+}
+if (count($months)) $m_totals[] = 'SUM(' . implode(') + SUM(', $months) . ') AS SUM' . $year;
+$m_total = implode(', ', $m_totals);
+echo ""$m_total\n"";

@@ -1,0 +1,19 @@
+select 
+    day, 
+    day_users, 
+    array_union_agg(day_users) over (order by day) as unique_users,
+    array_union_agg(day_users) over (order by day rows between 1 preceding and current row) as recent_users
+from (
+    select day, array_agg(username) as day_users
+    from my_table
+    group by day
+    order by day
+    ) s
+
+ day | day_users | unique_users | recent_users 
+-----+-----------+--------------+--------------
+   1 | {u1,u3}   | {u1,u3}      | {u1,u3}
+   2 | {u1,u2}   | {u1,u2,u3}   | {u1,u2,u3}
+   3 | {u1}      | {u1,u2,u3}   | {u1,u2}
+   4 | {u3}      | {u1,u2,u3}   | {u1,u3}
+(4 rows)

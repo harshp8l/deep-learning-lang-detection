@@ -1,0 +1,22 @@
+(defn xor
+  ([l1 l2]
+   (loop [l1 (set l1)
+          l2 (set l2)
+          xor '()]
+     (if (seq l1)
+       (let [e (first l1)]
+         (if (l2 e) ;; l2 is a set, test if e is in l2
+           (recur (rest l1) (disj l2 e) xor)
+           (recur (rest l1) l2 (conj xor e))))
+       (reduce conj xor l2)))) ;; when l1 is empty, add all element left in l2
+  ([l1 l2 & more]
+   (reduce xor (xor l1 l2) more)))
+
+user> (let [l1 '(1 1 2 3 4 5)
+            l2 '(3 4 5 5 6 7)
+            l3 '(1 10 11 13)
+            l4 '(1 2 11 6 6)]
+        (println (xor l1 l2 l3 l4)))
+
+(1 10 13 7)
+nil

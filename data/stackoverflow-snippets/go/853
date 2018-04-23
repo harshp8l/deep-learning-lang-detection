@@ -1,0 +1,214 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+    ""io/ioutil""
+    ""strconv""
+    ""strings""
+)
+
+// Function not implemented yet,
+// but there for completedness
+type Function struct {
+    Name      string
+    Arguments []interface{}
+    // A function can contain
+    // both expressions and
+    // statements
+    Code []Mixed
+}
+
+// Mixed can be either Statement
+// or Expression
+type Mixed struct {
+    isStatement  bool
+    isExpression bool
+    Value        interface{}
+}
+
+// Statement represents
+// statements. How a statement
+// is used is entirely up to
+// the interpreter.
+type Statement struct {
+    Name      string
+    Arguments []interface{}
+}
+
+// Since an Expression
+// is calculated beforehand,
+// store the value
+type Expression struct {
+    Name      string
+    Arguments []interface{}
+    Value     interface{}
+}
+
+// commands contains commands to
+// execute later.
+// It is of type Mixed because Mixed
+// can be of type Expression or Statement
+var commands = make([]*Mixed, 0)
+
+var availableStatements = []string{
+    ""print"",
+}
+var availableExpressions = []string{
+    ""+"",
+    ""-"",
+    ""*"",
+    ""/"",
+}
+
+// Compile takes in code, and returns JSON
+// bytes and an error if there was one
+func Compile(in string) ([]byte, error) {
+    // iterate through every line in the code
+    for _, line := range strings.Split(in, ""\n"") {
+        // Divide the line into sections
+        // for easier processing
+        tokens := strings.Split(line, "" "")
+        for _, a := range availableStatements {
+            for _, b := range availableExpressions {
+                if tokens[1] == b {
+                    // It is an expression, so
+                    // calculate the value of
+                    // the expression
+                    var val int
+                    num1, err := strconv.Atoi(tokens[0])
+                    if err != nil {
+                        return nil, err
+                    }
+                    num2, err := strconv.Atoi(tokens[1])
+                    if err != nil {
+                        return nil, err
+                    }
+                    args := []int{num1, num2}
+                    switch b {
+                    case ""+"":
+                        val = args[0] + args[1]
+                    case ""*"":
+                        val = args[0] * args[1]
+                    case ""-"":
+                        val = args[0] - args[1]
+                    case ""/"":
+                        val = args[0] / args[1]
+                    }
+                    cmd := &Mixed{
+                        isExpression: true,
+                        isStatement:  false,
+                        Value: &Expression{
+                            Name: b,
+                            // for some reason go doesn't
+                            // let me put args directly
+                            Arguments: []interface{}{args},
+                            Value:     val,
+                        }}
+                    fmt.Println(cmd.Value)
+                    commands = append(commands, cmd)
+                } else if tokens[0] == a {
+                    // argument is a statement, don't bother
+                    // to evaluate the value
+                    arguments := strings.Join(tokens[1:], "" "")
+                    cmd := &Mixed{
+                        isStatement:  true,
+                        isExpression: false,
+                        Value: &Statement{
+                            Name:      a,
+                            Arguments: []interface{}{arguments},
+                        }}
+                    fmt.Println(cmd.Value)
+                    commands = append(commands, cmd)
+                }
+            }
+        }
+    }
+    gen, err := json.Marshal(commands)
+    fmt.Println(commands)
+    // empty the commands
+    commands = make([]*Mixed, 0)
+    if err != nil {
+        return nil, err
+    }
+    return gen, nil
+}
+
+func Execute(input_file string) error {
+    // open input file
+    f, err := ioutil.ReadFile(input_file)
+    if err != nil {
+        return err
+    }
+    // unmarshal the JSON
+    var data []*Mixed
+    err = json.Unmarshal(f, data)
+    if err != nil {
+        return err
+    }
+    for _, v := range data {
+        var a *Expression
+        var b *Statement
+        // get absolute value of v
+        if v.isExpression {
+            a = v.Value.(*Expression)
+            b = nil
+        } else if v.isStatement {
+            b = v.Value.(*Statement)
+            a = nil
+        }
+        // since the expression is
+        // already calculated at compile-time,
+        // don't bother evaluating
+        if a != nil {
+            fmt.Println(a.Value)
+        }
+        if b != nil {
+            // on the other hand, evaluate
+            // statements since they're *not*
+            // evaluated at compile-time
+            switch b.Name {
+            case ""print"":
+                for _, n := range b.Arguments {
+                    fmt.Printf(""%v"", n)
+                }
+                fmt.Printf(""\n"")
+            }
+        }
+    }
+    return nil
+}
+
+func main() {
+    cases := []struct {
+        in  string
+        out string
+    }{
+        {
+            in:  ""print \""Hello World\"""",
+            out: ""[{\""Name\"":\""print\"",\""Arguments\"":[\""Hello World\""]}]"",
+        },
+        {
+            in:  ""print \""My name is Jack White\"""",
+            out: ""[{\""Name\"":\""print\"",\""Arguments\"":[\""My name is Jack White\""]}]"",
+        },
+    }
+    real_stuff, err := Compile(cases[0].in)
+    if err != nil {
+        fmt.Printf(""error: %s\n"", err)
+    }
+    fmt.Println(string(real_stuff))
+    if string(real_stuff) != cases[0].out {
+        fmt.Printf(""got %s, expected %s\n"", string(real_stuff), cases[0].out)
+        //t.Fail()
+    }
+    real_stuff, err = Compile(cases[1].in)
+    if err != nil {
+        fmt.Printf(""error: %s\n"", err)
+    }
+    fmt.Println(string(real_stuff))
+    if string(real_stuff) != cases[1].out {
+        fmt.Printf(""got %s, expected %s\n"", string(real_stuff), cases[1].out)
+        //t.Fail()
+    }
+}

@@ -1,0 +1,25 @@
+/*
+declare @xml xml = '
+<UnderwritingMessages>
+    <anyType type=""xsd:string"">1111</anyType>
+    <anyType type=""xsd:string"">1233</anyType>
+</UnderwritingMessages>
+'
+create table CompanyDetails(
+    UserId int,
+    XMLData xml
+)
+insert into CompanyDetails
+select 1,
+N'<UnderwritingMessages>
+    <anyType type=""xsd:string"">1111</anyType>
+    <anyType type=""xsd:string"">1233</anyType>
+</UnderwritingMessages>'
+*/
+
+select 
+    distinct P.UserId as 'UserId',
+    [data].value('(/UnderwritingMessages)[1]', 'nvarchar(max)') as ApprovalNumber,
+    [data].value('(/UnderwritingMessages/anyType)[1]', 'nvarchar(max)') as UnderWriterMessages 
+from CompanyDetails p
+CROSS APPLY XMLData.nodes('/') as root([data]) 

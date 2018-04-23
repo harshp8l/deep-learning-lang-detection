@@ -1,0 +1,27 @@
+let parseRangeElement (range: XElement) elmname = 
+    let e = range.Element(xname elmname)
+    if  e <> null then 
+        match IPAddress.TryParse(e.Value) with
+        | true, ip -> ip
+        | _ -> null
+    else null
+
+let extractAddr (doc:seq<XElement>) =
+    doc
+    |> Seq.map (fun rngelm -> 
+                    {
+                    ipStart = parseRangeElement rngelm ""start""
+                    ipEnd = parseRangeElement rngelm ""end"" 
+                    subnet = parseRangeElement rngelm ""subnet"" 
+                    mask = parseRangeElement rngelm ""gateway""
+                    })
+    |> List.ofSeq // if you really need list
+
+[<EntryPoint>]
+let main argv = 
+
+    let location = (loc (xml) ""test"").Descendants(xname ""range"") 
+                    |> extractAddr
+
+    Console.ReadLine() |> ignore
+    0 // return an integer exit code

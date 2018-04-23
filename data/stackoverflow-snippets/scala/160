@@ -1,0 +1,38 @@
+def getContentComponentUsageSearch: = Action.async { implicit req =>
+  req.body.asJson.map(_.validate[StepIds] match {
+    case JsSuccess(stepIds, _) => {
+
+      // Create list of futures
+      val listFuts: List[Future[ProcessTemplatesModel]] = (stepIds.s.map(s => {
+        processTemplateDTO.
+          getProcessStepTemplate(s.processStep_id).
+          flatMap{ stepTemplate => 
+            processTemplateDTO.
+              getProcessTemplate(stepTemplate.get.processTemplate_id.get).
+              map(_.get)
+          }
+      })).toList
+
+      // Sequence all the futures into a single future of list
+      val futList = Future.sequence(listFuts)
+
+      // Flat map this single future to the OK result
+      for {
+        listPTMs <- futList
+      } yield {
+        // Apparently some debug output? 
+        listPTMs foreach printl
+
+        Ok(Json.obj(""id"" -> """"))
+      }
+    }
+
+    case JsError(_) => {
+      println(""NOT VALID -------------------------------"")
+      Future.successful(BadRequest(""Process Template not create client""))
+    }
+
+    case _ => Future.successful(BadRequest(""Process Template create client""))
+
+  }).getOrElse(Future.successful(BadRequest(""Process Template create client"")))
+}

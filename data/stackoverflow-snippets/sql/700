@@ -1,0 +1,50 @@
+--exec sp_configure 'Show Advanced Options', 1
+--reconfigure 
+--exec sp_configure 'Ole Automation Procedures', 1
+--reconfigure
+
+declare @url varchar(2000) = 'http://www.bing.com'
+
+declare @hr int;
+declare @win int;
+
+begin try
+
+  EXEC @hr=sp_OACreate 'WinHttp.WinHttpRequest.5.1',@win OUT 
+  IF @hr <> 0 EXEC sp_OAGetErrorInfo @win 
+
+  EXEC @hr=sp_OAMethod @win, 'Open',NULL,'GET',@url,'false'
+  IF @hr <> 0 EXEC sp_OAGetErrorInfo @win 
+
+  EXEC @hr=sp_OAMethod @win,'Send'
+  IF @hr <> 0 EXEC sp_OAGetErrorInfo @win 
+
+  declare @status int
+  EXEC @hr=sp_OAGetProperty @win,'Status', @status out
+  IF @hr <> 0 EXEC sp_OAGetErrorInfo @win
+
+  if @status <> 200
+  begin;
+    declare @msg varchar(2000) = concat('web request failed ', @status);
+    throw 60000, @msg, 1;
+  end;
+
+  declare @response table(text nvarchar(max));
+
+  insert into @response(text)
+  EXEC @hr=sp_OAGetProperty @win,'ResponseText';
+  IF @hr <> 0 EXEC sp_OAGetErrorInfo @win;
+
+  select * from @response;
+
+  EXEC @hr=sp_OADestroy @win 
+  IF @hr <> 0 EXEC sp_OAGetErrorInfo @win;
+
+end try
+begin catch
+
+  EXEC @hr=sp_OADestroy @win 
+  IF @hr <> 0 EXEC sp_OAGetErrorInfo @win;
+  throw;
+
+end catch

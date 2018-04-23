@@ -1,0 +1,32 @@
+(ns ring-app.core
+  (:require [ring.adapter.jetty :as jetty]
+            [compojure.core :as compojure]
+            [ring.middleware.keyword-params :refer [wrap-keyword-params]]
+            [ring.middleware.json :refer [wrap-json-response wrap-json-body]]
+            [ring.util.http-response :as response]
+            [clojure.pprint :refer [pprint]]
+            [ring.middleware.reload :refer [wrap-reload]]))
+
+(defn json-get [request]
+  (response/ok 
+    {""task""  1 
+     ""success""  false  
+     ""files"" [{""type""  ""log"" ""sha256""  ""adef5c"" ""url""  ""s3://url""}]}))
+
+(defn json-post [request]
+  (let [bpdy (:body request)]
+    (prn bpdy)
+    (response/ok bpdy)))
+
+(compojure/defroutes handler_
+ (compojure/GET ""/get"" request json-get)
+ (compojure/POST ""/post"" request json-post))
+
+(defn wrap-nocache [handler]
+  (fn [request]
+    (-> request
+        handler
+        (assoc-in [:headers ""Pragma""] ""no-cache""))))
+
+(def handler 
+  (-> #'handler_ wrap-nocache wrap-reload wrap-json-response wrap-json-body ) )

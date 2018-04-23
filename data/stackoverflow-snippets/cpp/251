@@ -1,0 +1,27 @@
+template<class T, bool = is_trivially_destructible_v<T>>
+struct __optional_destruct_base {
+    union { char __null_state_; T __val_; };
+};
+
+template<class T>
+struct __optional_destruct_base<T, false> {
+    union { char __null_state_; T __val_; };
+    ~__optional_destruct_base() {
+        if (this->__engaged()) __val_.~T();
+    }
+};
+
+template<class T, bool = is_foo_v<T>>
+struct __optional_engaged_base : __optional_destruct_base <T>
+{
+    bool __engaged() const { puts(""foo""); return false; }
+};
+
+template<class T>
+struct __optional_engaged_base<T, false> : __optional_destruct_base<T>
+{
+    bool __engaged() const { puts(""bar""); return false; }
+};
+
+template<class T>
+class optional : private __optional_engaged_base<T> { ... };

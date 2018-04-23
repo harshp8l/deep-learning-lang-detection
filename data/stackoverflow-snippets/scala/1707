@@ -1,0 +1,18 @@
+println(
+  Array((1, Array(""one"", ""two"", ""three"", ""four"")), (2, Array(""one"", ""three"")))
+    .map(_._2)
+    .map(arr => {
+      val arr1 = new Array[Object](arr.length + 1)
+      Array.copy(arr, 0, arr1, 0, arr.length)
+      arr1(arr.length) = 1.asInstanceOf[Object]
+      arr1
+    })
+    .map(arrayToTuple)
+    .deep
+) 
+// Array((one,two,three,four,1), (one,three,1))
+
+def arrayToTuple[A <: Object](arr: Array[A]): Product = {
+  val clazz = Class.forName(""scala.Tuple"" + arr.length)
+  clazz.getConstructors.apply(0).newInstance(arr: _*).asInstanceOf[Product]
+}

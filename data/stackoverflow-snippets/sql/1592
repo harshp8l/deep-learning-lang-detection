@@ -1,0 +1,13 @@
+  select team_id,team_name, sum(points) num_points from (select *, case when host_goals>=guest_goals then hpest_team when 
+       guest_goals>host_goals then guest_team  end winner, case when 
+       host_goals<>guest_goals then 3 else 1 end points
+        from #matches a
+        union all 
+       select *, guest_team, 1 from #matches
+        where host_goals=guest_goals
+            union all
+        select 0, 0, 0 , 0, 0, team_id, 0 from #teams where team_id not in (select guest_team
+        from #matches) and team_id not in (select hpest_team from #matches)) a 
+        join #teams b on a.winner=b.team_id
+        group by team_id, team_name
+        order by num_points desc, team_id

@@ -1,0 +1,28 @@
+import string
+import numpy as np
+N = 1000
+a = list(string.ascii_lowercase)
+my_series = pd.Series(
+    [
+        np.random.choice(a, size=np.random.randint(1,10), replace=False) 
+        for _ in range(N)
+    ]
+)
+
+%%timeit
+lt = set()
+for l in my_series.tolist():
+    lt = lt.union(l)
+#1000 loops, best of 3: 1.66 ms per loop (OP)
+
+%%timeit
+lt = {x for x in chain.from_iterable(my_series)}
+#1000 loops, best of 3: 1.25 ms per loop (pault)
+
+%%timeit
+lt = set().union(*my_series)
+#1000 loops, best of 3: 1.16 ms per loop (cᴏʟᴅsᴘᴇᴇᴅ)
+
+%%timeit
+lt = set(chain.from_iterable(my_series))
+#1000 loops, best of 3: 1.17 ms per loop (jpp)

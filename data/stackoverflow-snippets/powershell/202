@@ -1,0 +1,17 @@
+$HKEY_LOCAL_MACHINE = 2147483650
+$GwmiArgs = @{
+    Class     = 'StdRegProv'
+    Namespace = 'Root\Default'
+    List      = $True
+}
+
+ForEach ($Computer in @(Get-Content -Path 'C:\Users\Rich_Ellis\Desktop\O365\O365Channels\computers.txt'))
+{
+    $GwmiArgs['ComputerName'] = $Computer
+    $Registry = Get-WmiObject @GwmiArgs
+    $Registry.GetStringValue(
+        $HKEY_LOCAL_MACHINE,
+        'SOFTWARE\Microsoft\Office\ClickToRun\Configuration',
+        'CDNBaseUrl'
+    ).sValue | Export-CSV -Path ""\\s00itstorage\OfficeChannel\$Computer-O365Channel03292018.csv""
+}

@@ -1,0 +1,34 @@
+sortDates.forEach(date => {
+  const dateMoment = moment(date, 'DD/MM/YYYY');
+  const bookingsOnDate = bookings.filter(b =>
+    dateMoment.isSame(b.bookingStart, 'day'),
+  );
+
+  const start = moment(dateMoment);
+  const end = moment(dateMoment);
+
+  for (let i = 0; i < 24; i++) {
+    start.hour(i);
+    start.minutes(0);
+    end.hour(i);
+    end.minutes(59);
+
+    const foundCount = bookingsOnDate.filter(b => {
+      const bookingMoment = moment(b.bookingStart);
+      return (
+        bookingMoment.isSameOrAfter(start) && bookingMoment.isSameOrBefore(end)
+      );
+    }).length;
+
+    if (foundCount > 0) {
+      groupedData.push({
+        date: dateMoment.format('YYYY-MM-DD'),
+        period: {
+          startTime: start.format('HH:mm:ss'),
+          endTime: end.format('HH:mm:ss'),
+          total: foundCount,
+        },
+      });
+    }
+  }
+});

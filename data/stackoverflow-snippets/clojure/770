@@ -1,0 +1,18 @@
+(defmacro my-macro
+  {:arglists '([bindings? strategy & body])}
+  [bindings-or-strategy & more-args]
+    (let [[bindings strategy body] (if (vector? bindings-or-strategy)
+                                     [bindings-or-strategy
+                                      (first more-args)
+                                      (rest more-args)]
+                                     [[] bindings-or-strategy more-args])]
+      `(let ~bindings
+         (println :strategy ~strategy)
+         ~@body)))
+
+user> (my-macro [a 1] {:aaa :bbb} a)
+:strategy {:aaa :bbb}
+1
+user> (my-macro {:aaa :bbb} 10)
+:strategy {:aaa :bbb}
+10

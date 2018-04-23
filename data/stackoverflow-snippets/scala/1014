@@ -1,0 +1,24 @@
+class MyObservableTestSpec extends WordSpec with Matchers {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
+  val testValue = 5
+
+  ""observables"" should {
+
+    ""be testable if created from futures"" in {
+      val futVal = Future.successful(testValue)
+      val observable = Observable.from(futVal)
+
+      val subscriber = TestSubscriber[Int]()
+      observable(subscriber)
+      subscriber.awaitTerminalEvent
+      // now after awaitTerminalEvent you can use various subscriber.assertXyz methods
+      subscriber.assertNoErrors
+      subscriber.assertValues(testValue)
+      // or you can use Matchers as 
+      subscriber.getOnNextEvents should contain(testValue)
+    }
+
+  }
+
+}

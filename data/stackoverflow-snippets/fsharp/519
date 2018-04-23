@@ -1,0 +1,30 @@
+type EndPoint =
+    | [<EndPoint ""/"">] Home
+    | [<EndPoint ""/about"">] About
+    | AnythingElse of string
+
+let Main =
+    Application.MultiPage (fun ctx endpoint ->
+        match endpoint with
+        | EndPoint.Home -> HomePage ctx
+        | EndPoint.About -> AboutPage ctx
+        | EndPoint.AnythingElse path -> Content.NotFound // or anything you want
+    )
+
+[<Website>]
+let MainWithFallback =
+    { Main with
+        Router = Router.New
+            (fun req ->
+                match Main.Router.Route req with
+                | Some ep -> Some ep
+                | None ->
+                    let path = req.Uri.AbsolutePath
+                    if path.StartsWith ""/Scripts/"" || path.StartsWith ""/Content/"" then
+                        None
+                    else
+                        Some (EndPoint.AnythingElse path))
+            (function
+                | EndPoint.AnythingElse path -> Some (System.Uri(path))
+                | a -> Main.Router.Link a)
+    }

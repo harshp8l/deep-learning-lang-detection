@@ -1,0 +1,14 @@
+class PaginationTestSpider(scrapy.Spider):
+    name = 'pagination'
+    start_urls = ['http://esencjablog.pl/page/58']
+
+    def parse(self, response):
+        # Find href from next page link
+        link = response.css('.post_more a.qbutton::attr(href)') 
+        if link:
+            # Extract href, in this case we can use first because you only need 1
+            href = link.extract_first()
+            # just in case the website use relative hrefs
+            url = response.urljoin(href)
+            # You may change the callback if you want to use a different method 
+            yield scrapy.Request(url, callback=self.parse) 

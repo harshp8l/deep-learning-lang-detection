@@ -1,0 +1,49 @@
+<?php
+
+require __DIR__ . '/file.php';
+
+//ensure the desired post key exists otherwise set a default value
+if (!array_key_exists('reviewiduser', $_POST)) {
+    $_POST['reviewiduser'] = '[]';
+}
+
+//ensure json decode returns as the desired data type
+$ReviewIDs = json_decode($_POST['reviewiduser']);
+if (!is_array($ReviewIDs)) {
+   $ReviewIDs = [];
+}
+
+//declare results for use with json_encode
+$results = [];
+
+//declare ReviewID as a variable for use with bind_param
+$ReviewID = null;
+
+//prepare the database query for multiple executions
+$sql2 = 'SELECT cat_name AS category, name, phone, comment, review_id AS reviewid FROM review WHERE review_id = ?';
+
+//create a statement for use with prepare
+$stmt2 = $con->stmt_init();
+$stmt2->prepare($sql2) or die($con->error);
+
+//bind ReviewID by reference so that it changes for each execute iteration
+$stmt2->bind_param('i', $ReviewID) or die ('MySQLi-stmt binding failed ' . $stmt2->error);
+
+//iterate over ReviewIDs
+foreach ($ReviewIDs as $ReviewID) {
+    //validate the value is of the desired type
+    if (!is_numeric($ReviewID)) {
+       continue;
+    }
+    $stmt2->execute() or die ('MySQLi-stmt execute failed ' . $stmt2->error);
+    $result2 = $stmt2->get_result() or die('MySQLi-smt get_result failed' . $smt2->error);
+
+    //ensure a result is retrieved from the database
+    if ($row = $result2->fetch_assoc()) {
+        $results[] = $row;
+    }
+}
+$stmt2->close();
+
+echo json_encode($results);
+exit;

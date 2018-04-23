@@ -1,0 +1,30 @@
+EmbeddedServers.add(EmbeddedServers.Identifiers.JETTY, new MyJettyFactory());
+
+static class MyJettyFactory implements EmbeddedServerFactory {
+
+      public EmbeddedServer create(Routes routeMatcher, StaticFilesConfiguration staticFilesConfiguration, boolean hasMultipleHandler) {
+          MatcherFilter matcherFilter = new MatcherFilter(routeMatcher, staticFilesConfiguration, false, hasMultipleHandler);
+          matcherFilter.init(null);
+
+          final Handler handler = new JettyHandler(matcherFilter);
+
+          return new EmbeddedJettyServer((maxThreads, minThreads, threadTimeoutMillis) -> {
+            final Server server = new Server();
+            server.setStopAtShutdown(true);
+            server.setStopTimeout(Duration.of(30, ChronoUnit.SECONDS).toMillis());
+            server.addBean(new ManagedObjects(new Managed() {
+                @Override
+                public void doStart() {
+
+                }
+
+                @Override
+                public void doStop() {
+                    System.out.println(""Good bye!"");
+                }
+            }));
+            return server;
+        }, handler);
+
+    }
+}

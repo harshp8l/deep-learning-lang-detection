@@ -1,0 +1,20 @@
+with cte_a as (select a.id as id_keep 
+    from table1 a 
+    inner join table1 b on a.cd=b.cd
+     and a.co='B' and b.co='BC') 
+,cte_b  as (select b.id as id_del 
+    from table1 a 
+    inner join table1 b on a.cd=b.cd
+    and a.co='B' and b.co='BC')
+select t1.id, 
+       t1.cd, 
+       t1.ct, 
+       case when cte_a.id_keep is null 
+            then t1.co 
+            else 'B-BC' end as co 
+from table1 t1
+left join cte_a 
+on t1.id=cte_a.id_keep
+left join cte_b
+on t1.id = cte_b.id_del
+where cte_b.id_del is null;

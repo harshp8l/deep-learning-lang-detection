@@ -1,0 +1,33 @@
+public static class HierarchyIterator implements Iterator<Class<?>> {
+    private Queue<Class<?>> remaining = new LinkedList<>();
+    private Set<Class<?>> visited = new LinkedHashSet<>();
+
+    public HierarchyIterator(Class<?> initial) {
+        append(initial);
+    }
+
+    private void append(Class<?> toAppend) {
+        if (toAppend != null && !visited.contains(toAppend)) {
+            remaining.add(toAppend);
+            visited.add(toAppend);
+        }
+    }
+
+    @Override
+    public boolean hasNext() {
+        return remaining.size() > 0;
+    }
+
+    @Override
+    public Class<?> next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        Class<?> polled = remaining.poll();
+        append(polled.getSuperclass());
+        for (Class<?> superInterface : polled.getInterfaces()) {
+            append(superInterface);
+        }
+        return polled;
+    }
+}

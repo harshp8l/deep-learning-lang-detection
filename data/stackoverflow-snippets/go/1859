@@ -1,0 +1,38 @@
+func main() {
+    ctx := context.Background()
+    b, err := ioutil.ReadFile(""client_secret.json"")
+    if err != nil {
+        log.Fatalf(""Unable to read client secret file: %v"", err)
+    }
+    // If modifying these scopes, delete your previously saved credentials
+    // at ~/.credentials/calendar-go-quickstart.json
+    config, err := google.ConfigFromJSON(b, calendar.CalendarScope)
+    if err != nil {
+        log.Fatalf(""Unable to parse client secret file to config: %v"", err)
+    }
+    client := getClient(ctx, config)
+    srv, err := calendar.New(client)
+    if err != nil {
+        log.Fatalf(""Unable to retrieve calendar Client %v"", err)
+    }
+
+    event := &calendar.Event{
+        Summary:     ""Sample event"",
+        Location:    ""Sample location"",
+        Description: ""This is a sample event."",
+        Start: &calendar.EventDateTime{
+            DateTime: ""2017-04-22T00:00:00+09:00"",
+            TimeZone: ""Asia/Tokyo"",
+        },
+        End: &calendar.EventDateTime{
+            DateTime: ""2017-04-22T01:00:00+09:00"",
+            TimeZone: ""Asia/Tokyo"",
+        },
+    }
+    calendarID := ""#####""
+    event, err = srv.Events.Insert(calendarID, event).Do()
+    if err != nil {
+        log.Fatalf(""Unable to create event. %v\n"", err)
+    }
+    fmt.Printf(""Event created: %s\n"", event.HtmlLink)
+}

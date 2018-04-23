@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import websocket
+import json
+
+def on_error(ws, error):
+    print(error)
+
+def on_close(ws):
+    print(""### closed ###"")
+    connection.close()
+
+def on_open(ws):
+    print(""ONOPEN"")
+    ws.send(json.dumps({'command':'subscribe','channel':'BTC_ETH'}))
+
+def on_message(ws, message):
+    message = json.loads(message)
+    print(message)
+
+websocket.enableTrace(True)
+ws = websocket.WebSocketApp(""wss://api2.poloniex.com/"",
+                              on_message = on_message,
+                              on_error = on_error,
+                              on_close = on_close)
+ws.on_open = on_open
+ws.run_forever()

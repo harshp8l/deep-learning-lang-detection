@@ -1,0 +1,14 @@
+(defn get-path [input output next-fns domain-pred]
+  (loop [visited #{}
+         curr (z/zipper identity
+                        #(map (fn [[k v]] [k (v (second %))])
+                              (next-fns (second %)))
+                        (constantly nil)
+                        [nil input])]
+    (let [curr-out (-> curr z/node second)]
+      (cond (z/end? curr) nil
+            (or (visited curr-out) (not (domain-pred curr-out)))
+              (recur (conj visited curr) (-> curr z/remove z/next))
+            (= output curr-out) (conj (z/path curr) (z/node curr))
+            :else (recur (conj visited curr-out)
+                         (z/next curr))))))

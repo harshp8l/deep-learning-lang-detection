@@ -1,0 +1,65 @@
+#include ""worker.h""
+
+Worker::Worker(QObject *parent) : QObject(parent)
+{
+    m_port = 0;
+
+    m_double_1 = 0;
+    m_double_2 = 0;
+
+    m_timer.setInterval(1000);
+}
+
+void Worker::start(quint16 port)
+{
+    m_port = port;
+
+    connect(&m_client, &Client::searchPeersFinished, []{
+        qDebug() << ""Search peers finished!"";
+    });
+
+    m_connection = connect(&m_client, &Client::peerFound, [&](const QHostAddress &peer_address){
+        disconnect(m_connection); //Disconnect signal, only first peer found will be handled!
+        m_client.connectToHost(QHostAddress(peer_address.toIPv4Address()).toString(), m_port);
+    });
+
+    connect(&m_client, &Client::error, [](const QString &error){
+        qDebug() << ""Error:"" << qPrintable(error);
+    });
+
+    connect(&m_client, &Client::connected, [&](const PeerData &pd){
+        qDebug() << ""Connected to:"" << qPrintable(pd.host.toString());
+        m_timer.start();
+    });
+
+    connect(&m_client, &Client::disconnected, [](const PeerData &pd){
+        qDebug() << ""Disconnected from:"" << qPrintable(pd.host.toString());
+    });
+
+    connect(&m_client, &Client::readyRead, [](const PeerData &pd){
+        qDebug() << ""Data from"" << qPrintable(pd.host.toString())
+                 << qPrintable(QString::asprintf(""%.2f"", getValue<double>(pd.data)));
+    });
+
+    connect(&m_timer, &QTimer::timeout, [&]{
+        m_double_1 += 0.5; //Just an example of data
+
+        QByteArray data1;
+        data1.append(getBytes<quint8>(Type::DataType1)); //Data 1 has Type 1, added as header
+        data1.append(getBytes<double>(m_double_1)); //The data itself
+
+        m_client.write(data1); //Write the data1 to the server
+
+        m_double_2 += 1.0; //Just an example of data
+
+        QByteArray data2;
+        data2.append(getBytes<quint8>(Type::DataType2)); //Data 2 has Type 2, added as header
+        data2.append(getBytes<double>(m_double_2)); //The data itself
+
+        m_client.write(data2); //Write the data2 to the server
+    });
+
+    qDebug() << ""Searching..."";
+
+    m_client.searchPeers(m_port); //Search for peers in range, if found, handle the first and connect to it!
+}

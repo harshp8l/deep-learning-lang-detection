@@ -1,0 +1,49 @@
+std::string getDomainSid()
+{
+   std::string domainsid;
+   DSROLE_PRIMARY_DOMAIN_INFO_BASIC* info = nullptr;
+
+   auto dw = DsRoleGetPrimaryDomainInformation(
+      nullptr,
+      DsRolePrimaryDomainInfoBasic,
+      (PBYTE *)&info);
+
+   if (dw != ERROR_SUCCESS || info->DomainNameDns == nullptr)
+   {
+      // TODO
+   }
+
+   std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+   auto domainName = myconv.to_bytes(info->DomainNameDns);
+
+   SID_NAME_USE eSidType;
+
+   DWORD cchDomainName = 0;
+   DWORD cbSid = 0;
+   if (!LookupAccountName(nullptr, domainName.data(), nullptr, &cbSid, nullptr, &cchDomainName, &eSidType))
+   {
+      std::vector<char> sid_buffer(cbSid);
+      std::string refDomainName(cchDomainName, 0);
+
+      if (LookupAccountName(nullptr, domainName.data(), &sid_buffer.front(), &cbSid, &refDomainName.front(), &cchDomainName, &eSidType))
+      {
+         LPTSTR sidstring;
+         if (ConvertSidToStringSid(reinterpret_cast<PSID>(sid_buffer.data()), &sidstring))
+         {
+            domainsid = sidstring;
+            LocalFree(sidstring);
+         }
+         else 
+         {
+            // TODO
+         }
+      }
+      else
+      {
+          // TODO
+      }
+   }
+
+   DsRoleFreeMemory(info);
+   return domainsid;
+}

@@ -1,0 +1,16 @@
+DECLARE @CalendarYear INT = 2000
+
+SELECT dim.DateKey, SUM(CASE WHEN con.MembershipID IS NOT NULL THEN 1 ELSE 0 END) AS MembershipCount
+FROM
+    DIM.[Date] dim
+        LEFT OUTER JOIN (
+            SELECT ValidFromDateKey, ValidToDateKey, MembershipID
+            FROM Memberships
+            WHERE
+                    ValidFromDateKey <= CONVERT(DATETIME, CONVERT(VARCHAR, @CalendarYear) + '1231')
+                AND ValidToDateKey   >= CONVERT(DATETIME, CONVERT(VARCHAR, @CalendarYear) + '0101')
+        ) con
+        ON dim.DateKey BETWEEN con.ValidFromDateKey AND con.ValidToDateKey
+WHERE dim.CalendarYear = @CalendarYear
+GROUP BY dim.DateKey
+ORDER BY dim.DateKey

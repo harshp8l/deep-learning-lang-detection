@@ -1,0 +1,56 @@
+function xmlNodeToPsCustomObject ($node){
+    $hash = @{}
+    foreach($attribute in $node.attributes){
+        $hash.$($attribute.name) = $attribute.Value
+    }
+    $childNodesList = ($node.childnodes | ?{$_ -ne $null}).LocalName
+    foreach($childnode in ($node.childnodes | ?{$_ -ne $null})){
+        if(($childNodesList | ?{$_ -eq $childnode.LocalName}).count -gt 1){
+            if(!($hash.$($childnode.LocalName))){
+                $hash.$($childnode.LocalName) += @()
+            }
+            if ($childnode.'#text' -ne $null) {
+                $hash.$($childnode.LocalName) += $childnode.'#text'
+            }
+            $hash.$($childnode.LocalName) += xmlNodeToPsCustomObject($childnode)
+        }else{
+            if ($childnode.'#text' -ne $null) {
+                $hash.$($childnode.LocalName) = $childnode.'#text'
+            }else{
+                $hash.$($childnode.LocalName) = xmlNodeToPsCustomObject($childnode)
+            }
+        }   
+    }
+    return $hash | ConvertTo-PsCustomObjectFromHashtable
+}
+
+function ConvertTo-PsCustomObjectFromHashtable { 
+    param ( 
+        [Parameter(  
+            Position = 0,   
+            Mandatory = $true,   
+            ValueFromPipeline = $true,  
+            ValueFromPipelineByPropertyName = $true  
+        )] [object[]]$hashtable 
+    ); 
+
+    begin { $i = 0; } 
+
+    process { 
+        foreach ($myHashtable in $hashtable) { 
+            if ($myHashtable.GetType().Name -eq 'hashtable') { 
+                $output = New-Object -TypeName PsObject; 
+                Add-Member -InputObject $output -MemberType ScriptMethod -Name AddNote -Value {  
+                    Add-Member -InputObject $this -MemberType NoteProperty -Name $args[0] -Value $args[1]; 
+                }; 
+                $myHashtable.Keys | Sort-Object | % {  
+                    $output.AddNote($_, $myHashtable.$_);  
+                } 
+                $output
+            } else { 
+                Write-Warning ""Index $i is not of type [hashtable]""; 
+            }
+            $i += 1;  
+        }
+    } 
+}

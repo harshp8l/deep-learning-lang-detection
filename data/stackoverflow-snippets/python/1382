@@ -1,0 +1,33 @@
+from collections import defaultdict
+import pandas as pd
+
+# input data
+df = pd.DataFrame([[1, 'Response Comments', 'they have been unresponsive'],
+                   [2, 'Customer Name', 'Brian'],
+                   .....
+
+                   [9, 'Recommended', 'yes']],
+                  columns=['RowNum', 'Column Name', 'Column Values'])
+
+# fill Key columns
+df['Key'] = df['Column Values'].shift(-1)
+df.loc[df['Column Name'] != 'Response Comments', 'Key'] = np.nan
+df['Key'] = df['Key'].ffill()
+
+# create defaultdict of dict
+d = defaultdict(dict)
+
+# iterate dataframe
+for row in df.itertuples():
+    d[row[4]].update({row[2]: row[3]})
+
+# defaultdict(dict,
+#             {'April': {'Customer Name': 'April',
+#               'Recommended': 'yes',
+#               'Response Comments': 'they have been responsive'},
+#              'Brian': {'Customer Name': 'Brian',
+#               'Recommended': 'no',
+#               'Response Comments': 'they have been unresponsive'},
+#              'John': {'Customer Name': 'John',
+#               'Recommended': 'yes',
+#               'Response Comments': 'they have been very responsive'}})

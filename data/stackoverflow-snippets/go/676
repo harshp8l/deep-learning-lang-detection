@@ -1,0 +1,64 @@
+package main
+
+import (
+    ""fmt""
+    ""log""
+
+    ""github.com/go-yaml/yaml""
+)
+
+type File struct {
+    TypeVersion string `yaml:""_type-version""`
+    Dependency []Dependency
+}
+
+type Dependency struct {
+    Name     string
+    Type     string
+    CWD      string
+    Install  []Install
+    Requires []Requires
+}
+
+type Install struct {
+    Name  string
+    Group string
+}
+
+type Requires struct {
+    Name string
+    Type string
+}
+
+var data = `
+_type-version: ""1.0.0""
+dependency:
+  - name: ui
+    type: runner
+    cwd: /ui
+    install:
+       - name: api
+         group: test
+    requires:
+      - name: db
+      - type: mongo
+      - name: rst
+      - name: test
+      - name: test2
+`
+
+func main() {
+    f := File{}
+
+    err := yaml.Unmarshal([]byte(data), &f)
+    if err != nil {
+        log.Fatalf(""error: %v"", err)
+    }
+    fmt.Printf(""--- t:\n%v\n\n"", f)
+
+    d, err := yaml.Marshal(&f)
+    if err != nil {
+        log.Fatalf(""error: %v"", err)
+    }
+    fmt.Printf(""--- t dump:\n%s\n\n"", string(d))
+}

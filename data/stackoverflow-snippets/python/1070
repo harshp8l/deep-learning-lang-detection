@@ -1,0 +1,40 @@
+# Python 2.7
+
+import apache_beam as beam
+FILE_IN = 'my_sample.csv'
+SEPARATOR = ';'
+
+# the collector target must be created outside the Do-Function to be globally available
+results = dict()
+
+# a custom Do-Function that collects the results
+class Collector(beam.DoFn):    
+    def process(self, element):
+        category, count = element
+        results[category] = count
+        return { category: count }
+
+
+# This runs the pipeline locally.
+with beam.Pipeline() as p:
+    counts = (p
+     | 'read file row-wise' >> beam.io.ReadFromText(FILE_IN, skip_header_lines=True)
+     | 'split row' >> beam.Map(lambda line: line.split(SEPARATOR))
+     | 'remove useless columns' >> beam.Map(lambda words: words[0:2])
+     | 'remove quotes' >> beam.Map(lambda words: [word.strip('\""') for word in words])
+     | 'convert from unicode' >> beam.Map(lambda words: [str(word) for word in words])
+     | 'convert to tuple' >> beam.Map(lambda words: tuple(words))
+     | 'remove duplicates' >> beam.RemoveDuplicates()
+     | 'extract category' >> beam.Map(lambda (product, category): category)
+     | 'create parent categories' >> beam.FlatMap(lambda cat: [cat[:i] for i in range(12,1,-2)])
+     | 'group and count by category' >> beam.combiners.Count.PerElement()
+     | 'filter by minimum count' >> beam.Filter(lambda count: count[1] >= MIN_COUNT)
+     | 'collect results' >> beam.ParDo(collector)
+    )
+
+result = p.run()
+result.wait_until_finish()
+
+# investigate the result; 
+# expected is a list of tuples each consisting of the category and its count
+print(results)

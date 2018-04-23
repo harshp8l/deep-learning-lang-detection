@@ -1,0 +1,40 @@
+(defn order2 [xs]
+  (let [rnd (java.util.Random.)
+        a1 (double-array xs)
+        a2 (long-array (alength a1))]
+    (dotimes [i (alength a2)]
+      (aset a2 i i))
+    (letfn [(quicksort [^long l ^long h]
+              (if (< l h)
+                (let [p (.invokePrim ^clojure.lang.IFn$LLL partition l h)]
+                  (quicksort l (dec p))
+                  (quicksort (inc p) h))))
+            (partition ^long [^long l ^long h]
+              (let [pidx (+ l (.nextInt rnd (- h l)))
+                    pivot (aget a1 pidx)]
+                (swap1 a1 pidx h)
+                (swap2 a2 pidx h)
+                (loop [i (dec l)
+                       j l]
+                  (if (< j h)
+                    (if (< (aget a1 j) pivot)
+                      (let [i (inc i)]
+                        (swap1 a1 i j)
+                        (swap2 a2 i j)
+                        (recur i (inc j)))
+                      (recur i (inc j)))
+                    (let [i (inc i)]
+                      (when (< (aget a1 h) (aget a1 i))
+                        (swap1 a1 i h)
+                        (swap2 a2 i h))
+                      i)))))
+            (swap1 [^doubles a ^long i ^long j]
+              (let [tmp (aget a i)]
+                (aset a i (aget a j))
+                (aset a j tmp)))
+            (swap2 [^longs a ^long i ^long j]
+              (let [tmp (aget a i)]
+                (aset a i (aget a j))
+                (aset a j tmp)))]
+      (quicksort 0 (dec (alength a1)))
+      (vec a2))))

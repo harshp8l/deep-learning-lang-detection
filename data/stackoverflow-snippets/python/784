@@ -1,0 +1,36 @@
+df = pd.DataFrame({'customer_id': ['abc','abc','xyz','xyz','xyz','xyz','thr','thr','abc','abc','urt','urt'],
+                   'transaction_id': ['A123','A123','B345','B345','C567','C567','D678','D678','E789','E789','D903','F865'], 
+                   'product_id': [255472, 251235, 253764,257344,221577,209809,223551,290678,908354,909238,436758,346577],
+                   'product_category': ['X','X','Y','Y','X','Y','Y','X','Y','Z','X','X']})
+
+g = df.groupby(['customer_id', 'transaction_id'])['product_category']\
+      .apply(lambda x: {i for i in x if i in ('X', 'Y')}).reset_index()
+
+g2 = g.groupby('customer_id')['product_category']\
+      .apply(list).apply(lambda x: ({'X'} in x) and ({'Y'} in x))
+
+print(g2)
+# customer_id
+# abc     True
+# thr    False
+# urt    False
+# xyz    False
+# Name: product_category, dtype: bool
+
+df['flag'] = df['customer_id'].isin(g2[g2].index)
+
+print(df)
+
+#    customer_id product_category  product_id transaction_id   flag
+# 0          abc                X      255472           A123   True
+# 1          abc                X      251235           A123   True
+# 2          xyz                Y      253764           B345  False
+# 3          xyz                Y      257344           B345  False
+# 4          xyz                X      221577           C567  False
+# 5          xyz                Y      209809           C567  False
+# 6          thr                Y      223551           D678  False
+# 7          thr                X      290678           D678  False
+# 8          abc                Y      908354           E789   True
+# 9          abc                Z      909238           E789   True
+# 10         urt                X      436758           D903  False
+# 11         urt                X      346577           F865  False

@@ -1,0 +1,14 @@
+  /**
+    * Util to run the main of a sub-module from within SBT
+    *
+    * @param cmd The cmd to run with the main class with args (if any)
+    * @param module The sub-module
+    */
+  def runModuleMain(cmd: String, module: Reference) = Def.task {
+    val log = streams.value.log
+    log.info(s""Running $cmd ..."")
+    val classPath = (fullClasspath in Runtime in module).value.files
+    val opt = ForkOptions(bootJars = classPath, outputStrategy = Some(LoggedOutput(log)))
+    val res = Fork.scala(config = opt, arguments = cmd.split(' '))
+    require(res == 0, s""$cmd exited with code $res"")
+  }

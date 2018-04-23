@@ -1,0 +1,16 @@
+type IModel<'value, 'target when 'target :> IModel<'value, 'target>> =
+    abstract value: 'value with get
+
+type IModelSimple<'value, 'target> =
+    inherit IModel<'value, IModelSimple<'value, 'target>>
+    abstract ReInitWith :  #IModel<_, _> -> 'target
+
+type Model<'value, 'target> =
+  { Model : IModelSimple<'value, Model<'value, 'target>> }
+
+let rec mkModelSimple<'value, 'target> vctor value =
+    { Model = 
+        { new IModelSimple<'value, Model<'value, 'target>> with
+              member this.value = value
+              member this.ReInitWith m = 
+                mkModelSimple<_, _> vctor this.value } }

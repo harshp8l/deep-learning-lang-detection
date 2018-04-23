@@ -1,0 +1,19 @@
+namespace Views
+
+open System.Windows
+
+type DialogCloser() =    
+    static let dialogResultProperty =
+        DependencyProperty.RegisterAttached(""DialogResult"", 
+            typeof<bool>, typeof<DialogCloser>, 
+                new PropertyMetadata(DialogCloser.DialogResultChanged))
+
+    static member SetDialogResult (a:DependencyObject) (value:string) = 
+        a.SetValue(dialogResultProperty, value)
+
+    static member DialogResultChanged 
+        (a:DependencyObject) (e:DependencyPropertyChangedEventArgs) =
+        match a with
+        | :? Window as window
+            -> window.DialogResult <- System.Nullable (e.NewValue :?> bool)
+        | _ -> failwith ""Not a Window""

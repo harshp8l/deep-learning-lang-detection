@@ -1,0 +1,47 @@
+cls #clear screen
+
+function Copy-Files {
+  Param(
+    [Parameter(Mandatory=$true)]
+    [string[]]
+    $Hostnames
+  )
+
+  foreach ($computer in $Hostnames) {
+    # Get .exe from source and place at destination workstation
+    $source2 = ""\\mainserver\program.exe""
+    $destination2 = ""\\$computer\c$\program.exe""           # place .exe on C:\ directory of worstation
+    Copy-Item -Recurse -Filter *.* -path $source2 -destination $destination2 -Force
+
+    # Get .bat from source and place at destination workstation
+    $source3 = ""\\fileserver\Install.ps1""
+    $destination3 = ""\\$computer\c$\Install.ps1""  # place .bat on C:\ directory of worstation
+    Copy-Item -Recurse -Filter *.* -path $source3 -destination $destination3 -Force
+  }
+}
+
+""These options must run in numbered order.""
+"" ""
+"" ""
+""1. Copy installer to remote computer(s).""
+""2. Remove application from remote computer(s).""
+""3. Install application from remote computer(s).""
+""4. Quit.""
+"" ""
+""Type number and press Enter."" 
+
+$listComputers = Get-Content ""C:\myscript\computers.txt""
+$UI = Read-Host -Prompt ' '
+
+If ($UI -eq 1) {
+    Copy-Files -Hostnames $listComputers
+}
+ELSEIF ($UI -eq 2) {
+    psexec @C:\myscript\computers.txt -c ""\\fileserver\Remove.bat""
+}
+ELSEIF ($UI -eq 3) {
+    psexec -s @C:\myscript\computers.txt cmd /c ""Powershell Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Bypass && PowerShell -noninteractive -file ""C:\Install.ps1""""
+}
+ELSEIF ($UI -eq 4) {
+    ""Good Bye""
+}

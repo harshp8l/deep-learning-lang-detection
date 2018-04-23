@@ -1,0 +1,23 @@
+protected function related($model)
+{
+    $query = Books::find();
+    $query->select('book_id,picture, book_name,author_name,(book_name+author_name) as total');
+
+     $author_names=  explode(' ',$model->author_name);
+     foreach($author_names as $author_name)
+     {
+      $query->orFilterwhere(['like','author_name' , $author_name]);
+     }
+
+     $book_names=explode(' ',$model->book_name);
+     foreach($book_names as $book_name)
+     {
+      $query->orFilterwhere(['like','book_name' , $book_name]);
+     }
+    ->orderBy('total')
+    ->limit(25);
+
+    $dataProvider = new ActiveDataProvider([
+        'query' => $query,
+    ]);
+}

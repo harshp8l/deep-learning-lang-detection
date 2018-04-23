@@ -1,0 +1,21 @@
+(defn- init-aux-maps [w v]
+  (let [sv (subvec v 0 w)
+        km (->> sv (map-indexed vector) (into (sorted-map)))
+        vm (->> sv frequencies (into (sorted-map)))]
+    [km vm]))
+
+(defn- update-aux-maps [[km vm] j x]
+  (let [[ai av] (first km)
+        km (-> km (dissoc ai) (assoc j x))
+        vm (if (= (vm av) 1) (dissoc vm av) (update vm av dec))
+        vm (if (nil? (get vm x)) (assoc vm x 1) (update vm x inc))]
+    [km vm]))
+
+(defn- get-minimum [[_ vm]] (ffirst vm))
+
+(defn sliding-minimum [w v]
+  (loop [i 0, j w, am (init-aux-maps w v), acc []]
+    (let [acc (conj acc (get-minimum am))]
+      (if (< j (count v))
+        (recur (inc i) (inc j) (update-aux-maps am j (v j)) acc)
+        acc))))

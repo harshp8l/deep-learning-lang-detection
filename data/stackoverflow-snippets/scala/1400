@@ -1,0 +1,24 @@
+implicit class StreamSyntax[F[_], A](s: Stream[F, A]) {
+    def foldAppend[S](init: S)(f: (S, A) => S)(next: S => Stream[F, A]): Stream[F, A] = {
+
+      def pullAll(s: Stream[F, A]): Pull[F, A, Option[(Chunk[A], Stream[F, A])]] = {
+        s.pull.unconsChunk.flatMap {
+          case Some((hd, tl)) =>
+            Pull.output(hd) *> pullAll(tl)
+          case None =>
+            Pull.pure(None)
+        }
+      }
+
+      def foldChunks(i: S, s: Stream[F, A]): Pull[F, A, Option[(Chunk[A], Stream[F, A])]] = {
+        s.pull.unconsChunk.flatMap {
+          case Some((hd, tl)) =>
+            val sum: S = hd.toVector.foldLeft(i)(f)
+            Pull.output(hd) *> foldChunks(sum, tl)
+          case None =>
+            pullAll(next(i))
+        }
+      }
+      foldChunks(init, s).stream
+    }
+  }

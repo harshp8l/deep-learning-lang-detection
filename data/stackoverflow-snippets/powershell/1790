@@ -1,0 +1,28 @@
+#You will only have to do this top section once, after that you will import the xml file created below to import the object
+#region Initial Import
+$ListOfNames = Get-Content C:\TEMP\test.txt
+
+$nameTracking = @()
+foreach($name in $ListOfNames)
+{
+    $trackingObj = New-Object -TypeName psobject
+    $trackingObj | Add-Member -MemberType NoteProperty -Name Name -Value $name
+    $trackingObj | Add-Member -MemberType NoteProperty -Name EmailSent -Value $false
+    $trackingObj | Add-Member -MemberType NoteProperty -Name DateSent -Value $null
+    $nameTracking += $trackingObj
+}
+#endregion
+
+#After the xml file is created the first time you will execute the following to import the names: 
+#$nameTracking = Import-Clixml -Path C:\temp\trackingSet.xml
+
+$Random = $nameTracking | where {$_.EmailSent -eq $false} | Get-Random
+
+# Send mail to $Random here, remember to access the name you'll have to use the property of $Random.Name
+Send-MailMessage <your parameters here>
+
+#Now set to the EmailSent/DateSent on the object
+($nameTracking | where {$_.name -eq $Random.Name}).EmailSent = $true
+($nameTracking | where {$_.name -eq $Random.Name}).DateSent = Get-Date
+
+$nameTracking | Export-Clixml -Path C:\temp\trackingSet.xml

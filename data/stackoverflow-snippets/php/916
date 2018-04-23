@@ -1,0 +1,20 @@
+public function boot()
+{
+    Validator::extend(
+        'older_than',
+        function ($attribute, $value, $parameters, $validator) {
+            $minAge = (!empty($parameters)) 
+                ? (int) $parameters[0] 
+                : 18;
+
+            return (new DateTime)->diff(new DateTime($value))->y >= $minAge;
+        }
+    );
+
+    Validator::replacer(
+        'older_than',
+        function ($message, $attribute, $rule, $parameters) {
+            return ""The age must be at least {$parameters[0]}"";
+        }
+    );
+}

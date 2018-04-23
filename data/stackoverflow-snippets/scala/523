@@ -1,0 +1,14 @@
+import org.json4s._
+import org.json4s.native.JsonMethods._
+import org.json4s.native.Serialization.{read, write}
+import org.json4s.native.Serialization
+
+sealed abstract class Person extends Product with Serializable
+case class Spouse(name: String, age: Int) extends Person
+case class Customer(name: String, age: Int, spouse: Spouse) extends Person
+
+val customer: Customer = Customer(""Joe"", 35, Spouse(""Marilyn"", 33))
+
+implicit val formats = Serialization.formats(NoTypeHints) + PersonSerializer
+val serialized = write(customer)    
+val parsedObj = Serialization.read[Person](serialized)

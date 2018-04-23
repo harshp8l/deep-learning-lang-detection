@@ -1,0 +1,67 @@
+package main
+
+import (
+    ""fmt""
+    _ ""net/http/pprof""
+    ""sync""
+    ""sync/atomic""
+    ""time""
+)
+
+func main() {
+    chana := make(chan int)
+    chanb := make(chan int)
+    var balanceSwitch int32
+
+    go func() {
+        for i := 0; i < 1000; i++ {
+            for atomic.LoadInt32(&balanceSwitch) != 0 {
+                fmt.Println(""Holding R1"")
+                time.Sleep(time.Nanosecond * 1)
+            }
+            chana <- 100 * i
+            fmt.Println(""R1: Sent i"", i)
+            atomic.StoreInt32(&balanceSwitch, 1)
+
+        }
+    }()
+
+    go func() {
+        for i := 0; i < 1000; i++ {
+
+            for atomic.LoadInt32(&balanceSwitch) != 1 {
+                fmt.Println(""Holding R2"")
+                time.Sleep(time.Nanosecond * 1)
+            }
+            chanb <- i
+            fmt.Println(""R2: Sent i"", i)
+            atomic.StoreInt32(&balanceSwitch, 0)
+
+        }
+    }()
+
+    time.Sleep(time.Microsecond * 300)
+
+    acount := 0
+    bcount := 0
+    wg := sync.WaitGroup{}
+    wg.Add(1)
+    go func() {
+        for {
+            select {
+            case <-chana:
+                acount++
+            case <-chanb:
+                bcount++
+            }
+            fmt.Println(""Acount Bcount"", acount, bcount)
+            if acount == 1000 || bcount == 1000 {
+                fmt.Println(""finish one acount, bcount"", acount, bcount)
+                break
+            }
+        }
+        wg.Done()
+    }()
+
+    wg.Wait()
+}

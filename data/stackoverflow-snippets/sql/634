@@ -1,0 +1,16 @@
+WITH cte1 AS
+(
+  -- I must specify TOP to use ORDER BY
+  SELECT TOP(50000) *
+    , ROW_NUMBER() OVER (ORDER BY ColumnUsedToOrder) AS RwNr
+  FROM TableToCopyTo
+  ORDER BY ColumnUsedToOrder
+), cte2 AS (
+  SELECT *
+    , ROW_NUMBER() OVER (ORDER BY (SELECT 1)) AS RwNr -- or order by a column you know makes sense; this way it'll order it the way the data ""sits"" in the table, but it's not guaranteed
+  FROM TableToCopyFrom
+)
+UPDATE cte1
+SET ColumnToCopyTo = ColumnToCopyFrom
+FROM cte1
+  INNER JOIN cte2 ON cte1.RwNr = cte2.RwNr;

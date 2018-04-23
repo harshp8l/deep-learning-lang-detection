@@ -1,0 +1,41 @@
+echo ""Starting script:ana  $(date +%Y.%m.%d\ %H:%M:%S)...""
+
+getfmts() {
+  if [ -f ""$1"" ] || [ -d ""$1"" ]; then
+    echo $(stat -c %Y $1)
+  else
+    echo 0
+  fi
+}
+
+for dir in ana hsy; do
+
+    echo ""Processing $dir""
+    dir_in=""/DWD_sorted/$dir""
+    dir_out=""${dir_in}_sent""
+
+    cd $dir_in
+
+    if [ ""$(ls -A .|grep bufr)"" ]; then
+      echo ""Processing files...""
+    else 
+      echo ""No files""
+      continue
+    fi
+
+    for f in *; do
+        ts=$(date +%s); tsf=$(getfmts $f)
+        if [ $((ts-tsf)) -gt 10 ]; then
+            echo ""Sending file $f to ftp...""
+            curl -T $f  ftp://smart:smart@SM/../../smart/edit/dwd/$dir
+            if [ $? -eq 0 ]; then
+                mv -f $f $dir_out/
+            else
+                echo ""There was an error when trying to upload file!""
+            fi
+        fi
+    done
+
+    echo ""Script finished: $(date +%Y.%m.%d\ %H:%M:%S)""
+
+done

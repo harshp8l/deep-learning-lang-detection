@@ -1,0 +1,38 @@
+def get_rgb(int_value):
+    blue  = int_value & 255
+    green = (int_value >> 8) & 255
+    red   = (int_value >> 16) & 255
+    return red, green, blue
+
+def get_int(rgb):
+    red = rgb[0]
+    green = rgb[1]
+    blue = rgb[2]
+    int_value = (red<<16) + (green<<8) + blue
+    return int_value
+
+def get_step(first_rgb, rgb_steps, step):
+    current_rgb = [
+        int(first_rgb[c] + ((step+1) * rgb_steps[c]))
+        for c in range(3)
+    ]
+    return get_int(current_rgb)
+
+first_color = int(input(""Input first color: ""), 16)
+second_color = int(input(""Input second color: ""), 16)
+generate = int(input(""Enter the number of colors I will make between the two input numbers""))
+
+first_rgb = get_rgb(first_color)
+second_rgb = get_rgb(second_color)
+
+rgb_steps = [(second_rgb[i] - first_rgb[i]) / (generate + 1)
+    for i in range(3)]
+
+gradient_color_list = [first_color] \
+    + list(map(
+        lambda step: get_step(first_rgb, rgb_steps, step),
+        range(generate)
+    )) + [second_color]
+
+
+print(""\n"".join([ hex(v) for v in gradient_color_list ]))

@@ -1,0 +1,12 @@
+[System.IO.Directory]::EnumerateFiles(""J:\"",""*"",""AllDirectories"")|out-file -Encoding ascii $outputfile
+foreach($line in select-string -Path $outputfile) {
+  # Some of the $line is the name of a hidden or system file
+  if ((Get-ItemProperty $line -ErrorAction SilentlyContinue).attributes -band [io.fileattributes]::Hidden) {continue}
+  if (-not $?) {continue}
+  # Is the file a system file?
+  if ((Get-ItemProperty $line -ErrorAction SilentlyContinue).attributes -band [io.fileattributes]::System) {continue}
+  if (-not $?) {continue}
+  #
+  # Do the work here...
+  #
+}

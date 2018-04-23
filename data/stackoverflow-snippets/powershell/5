@@ -1,0 +1,31 @@
+Add-Type -AssemblyName System.Speech
+
+$soundFilePath = ""Test.wav""
+
+# Save the Audio to a file
+[System.Speech.Synthesis.SpeechSynthesizer] $voice = $null
+Try {
+    $voice = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
+    $voice.SetOutputToWaveFile($soundFilePath)
+
+    $voice.Speak(""Male Voice"")
+    $voice.SelectVoice(""Microsoft Zira Desktop"")
+    $voice.Speak(""Female Voice"")
+} Finally {
+    # Make sure the wave file is closed
+    if ($voice) {
+        $voice.Dispose()
+    }
+}
+
+
+# Load the saved audio and play it back
+[System.Media.SoundPlayer] $player = $null
+Try {
+    $player = New-Object -TypeName System.Media.SoundPlayer($soundFilePath)
+    $player.PlaySync()
+} Finally {
+    if ($player) {
+        $player.Dispose()
+    }
+}

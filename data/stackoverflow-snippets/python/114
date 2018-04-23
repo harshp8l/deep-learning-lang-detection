@@ -1,0 +1,27 @@
+import keras
+from keras.models import *
+from keras.layers import *
+from keras import backend as K
+import tensorflow as tf
+
+def grad( y, x ):
+    return Lambda( lambda z: K.gradients( z[ 0 ], z[ 1 ] ), output_shape = [1] )( [ y, x ] )
+
+def network( i, d ):
+    m = Add()( [ i, d ] )
+    a = Lambda(lambda x: K.log( x ) )( m )
+    return a
+
+fixed_input = Input(tensor=tf.constant( [ 1.0 ] ) )
+double = Input(tensor=tf.constant( [ 2.0 ] ) )
+
+a = network( fixed_input, double )
+
+b = grad( a, fixed_input )
+c = grad( b, fixed_input )
+d = grad( c, fixed_input )
+e = grad( d, fixed_input )
+
+model = Model( inputs = [ fixed_input, double ], outputs = [ a, b, c, d, e ] )
+
+print( model.predict( x=None, steps = 1 ) )

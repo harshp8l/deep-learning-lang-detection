@@ -1,0 +1,31 @@
+from urllib.parse import urljoin
+
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
+
+url = 'https://open.nrw/suche'
+html = None
+
+browser = webdriver.Chrome()
+browser.get(url)
+delay = 3  # seconds
+
+try:
+    WebDriverWait(browser, delay).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, '.ckantitle a'))
+    )
+    html = browser.page_source
+except TimeoutException:
+    print('Loading took too much time!')
+finally:
+    browser.quit()
+
+if html:
+    soup = BeautifulSoup(html, 'lxml')
+    links = soup.select('.ckantitle a')
+    for link in links:
+        print(urljoin(url, link['href']))

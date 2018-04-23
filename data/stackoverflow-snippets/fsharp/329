@@ -1,0 +1,47 @@
+type Expr =
+    | Number  of int
+    | Sum     of Expr * Expr
+    | Product of Expr * Expr
+
+let rec eval =
+    function
+    | Number n       -> n
+    | Sum (l, r)     -> eval l + eval r
+    | Product (l, r) -> eval l * eval r
+
+let rec show =
+    function
+    | Number n       -> n.ToString()
+    | Sum (l, r)     -> ""("" + show l + "" + "" + show r + "")""
+    | Product (l, r) -> ""("" + show l + "" * "" + show r + "")""
+
+let (|CommonFactor|_|) =
+   function
+    | Sum (Product (a, b), Product (c, d)) when (a = c) -> Some <| Product (a, Sum (b, d))
+    | Sum (Product (a, b), Product (c, d)) when (a = d) -> Some <| Product (a, Sum (b, c))
+    | Sum (Product (a, b), Product (c, d)) when (b = c) -> Some <| Product (b, Sum (a, d))
+    | Sum (Product (a, b), Product (c, d)) when (b = d) -> Some <| Product (b, Sum (a, c))
+    | _ -> None
+
+let (|Operation|_|) simplify =
+   function
+    | Sum (l, r)     -> Some <| Sum (simplify l, simplify r)
+    | Product (l, r) -> Some <| Product (simplify l, simplify r)
+    | _ -> None
+
+let (|Constant|_|) =
+    function
+    | Number _ as n -> Some n
+    | _ -> None
+
+let rec simplify =
+    function
+    | CommonFactor exp -> simplify exp
+    | Operation simplify exp -> exp
+    | Constant exp -> exp
+    | _ -> failwith ""Oh teh noes!""
+
+let c = Sum (Product (Number 2, Number 3), Product (Number 2, Number 4))
+show c |> Dump
+eval c |> Dump
+show (simplify c) |> Dump

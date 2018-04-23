@@ -1,0 +1,22 @@
+func processFunction(e *ast.FuncDecl) {
+    // Save wrapper function name
+    f := e.Name.Name
+
+    for _, expression := range e.Body.List {
+        logrus.Printf(""Current stmt: %#v"", expression)
+
+        sx, ok := fnSelExpr(expression)
+        if !ok {
+            continue
+        }
+
+        var pkg string
+        if id, ok := sx.X.(*ast.Ident); ok {
+            pkg = id.Name
+        }
+        fn := sx.Sel.Name
+
+        fcall := fmt.Sprintf(""%s.%s"", pkg, fn)
+        logrus.Printf(""Yay. found my function call: "", fcall)
+    }
+}

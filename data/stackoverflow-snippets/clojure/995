@@ -1,0 +1,18 @@
+(let [gw (node ""grass wet"" [] (fn [& {:keys [sprinkler rain]}]
+                            (tf (cond (and sprinkler rain) 0.99
+                                      sprinkler 0.9
+                                      rain 0.8
+                                      :else 0.0))))
+
+  sk (node ""sprinkler"" [gw]
+           (fn [& {:keys [rain]}] (tf (if rain 0.01 0.4))))
+
+  rn (node ""rain"" [sk gw]
+           (constantly (tf 0.2)))]
+
+  (def dag {:nodes {:grass-wet gw :sprinkler sk :rain rn}
+        :joint (fn [g s r]
+                 (*
+                  (((:table gw) :sprinkler s :rain r) g)
+                  (((:table sk) :rain r) s)
+                  (((:table rn)) r)))}))

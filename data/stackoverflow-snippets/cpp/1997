@@ -1,0 +1,54 @@
+#ifndef POINT_H
+#define POINT_H
+
+#include <iostream>
+#include <tuple>     // std::tie
+
+const std::size_t NUM_POINTS { 10 };
+
+// Need class Point prototype for operator<< declaration
+template<class> class Point;     
+
+// Need operator<< declaration for class template Point's friend declaration 
+template<class T>
+std::ostream&  operator<<( std::ostream& out, const Point<T>& );
+
+// Class Declaration & Definition
+template<class T>
+class Point {
+public:
+    T _x;
+    T _y;
+    Point() : _x( 0 ), _( 0 ) {}
+    Point( T x, T y ) : _x( x ), _y( y ) {}
+    Point( T& x, T& y ) : _x( x ), _y( y ) {}
+    Point( T* x, T* y ) : _x( *x ), _y( *y ) {}
+
+    // friend prototype: notice the extra <> in this declaration
+    // It tells the compiler that this friend function will be a specialization of this class template
+    friend std::ostream& operator<< <>( std::ostream& out, const Point<T>& p );
+
+    // operator< for comparison
+    bool operator<( Point<T>& p ) {
+        // std::tie makes it real easy to compare a (set) of values.
+        return std::tie( _x, _y ) < std::tie( p._x, p._y );
+    }
+
+    // operator> for comparison
+    bool operator<( Point<T>& p ) {
+           return !(*this < p );
+    }
+
+    // operator== for comparison
+    bool operator==( Point<T>& p ) {
+        return (this->_x == p._x && this->y == p._y );
+    }                
+};
+
+// operator<< definition
+template<class T>
+std::ostream& operator<<( std::ostream& out, const Point<T>& p ) {
+    return out << ""("" << p._x << "","" << p._y << "")\n"";
+}
+
+#endif // !POINT_H

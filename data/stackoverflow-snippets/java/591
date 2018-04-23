@@ -1,0 +1,13 @@
+public static void main(String[] args) {
+    List<Integer> list = new SplittableRandom()
+        .ints(24, 0, 100)
+        .boxed().collect(Collectors.toList());
+
+    parallelEach(list, System.out::println);
+}
+
+static <T> void parallelEach(Collection<T> c, Consumer<T> action) {
+    Spliterator<T> s = c.spliterator();
+    long batchSize = s.estimateSize() / (ForkJoinPool.getCommonPoolParallelism() * 8);
+    new ParallelEach(null, s, action, batchSize).invoke(); // invoke the task
+}

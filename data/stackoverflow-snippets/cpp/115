@@ -1,0 +1,40 @@
+#include <iostream>
+#include <cppad/cppad.hpp>
+#include <cppad/example/cppad_eigen.hpp>
+#include <Eigen/Dense>
+
+template<typename T>
+using Vector = Eigen::Matrix<T, Eigen::Dynamic, 1>;
+
+int main() {
+
+    /* Types and sizes */
+    using ADdouble = CppAD::AD<double>;
+    const int rows = 5;
+    const int cols = 3;
+
+    /* Define the independent variable that we will be differentiating with respect to */
+    Vector<ADdouble> X = Vector<ADdouble>::Ones(cols);
+    CppAD::Independent(X);
+
+    /* Now define the function. The function is simply a matrix multiplication */
+    Eigen::Matrix<double, rows, cols> A = Eigen::Matrix<double, rows, cols>::Random();
+    Vector<ADdouble> Y = A.cast<ADdouble>() * X;
+    CppAD::ADFun<double> f(X, Y);
+
+    /* Now define the value of X that we want to evaluate the jacobian at */
+    Vector<double> x = Vector<double>::Random(cols);
+
+    /* Compute the jacobian and compare to the know value */
+    Vector<double> jac = f.Jacobian(x);
+
+    /* We are going to map the jacobian back to a matrix so that it is easier to visualize.
+     * Note that CppAD seems to use row major format, while Eigen defaults to
+     * column major */
+    Eigen::Map<Eigen::Matrix<double, rows, cols, Eigen::RowMajor>> Jac(jac.data());
+    std::cout << ""CppAD Jacobian: "" << std::endl << Jac << std::endl << std::endl;
+
+    /* Now compare to the know jacobian, which is simply ""A"" */
+    std::cout << ""Known Jacobian: "" << std::endl << A << std::endl << std::endl;
+    return 0;
+}

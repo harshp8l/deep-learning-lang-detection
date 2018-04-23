@@ -1,0 +1,30 @@
+import urllib
+
+def accessData(Id, Month):
+
+    url = ""https://www.wunderground.com/weatherstation/WXDailyHistory.asp?ID="" + str(Id) + ""&year=2017&month="" + str(Month) + ""&graphspan=month&format=1""
+    infile = urllib.urlopen(url)
+    readLineByLine = infile.readlines()
+    infile.close()
+
+    return readLineByLine
+
+with open('Path to File' + 'stations.csv', 'r') as f:
+
+    for line in f.readlines():
+
+        vals = line.split(',')
+
+        for j in range(1,13):
+
+            data = accessData(line, j)
+
+            filename = ""{}-0{}-2017.csv"".format(vals[0], j)
+
+            with open(filename, 'w') as myfile:
+
+                for i in range(2, len(data)):
+                    if data[i]!='<br>\n' and data[i]!='\n':
+                        myfile.write(data[i])
+
+            print(filename + ' - Completed')

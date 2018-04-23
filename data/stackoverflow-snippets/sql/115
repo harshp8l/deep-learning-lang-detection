@@ -1,0 +1,39 @@
+declare @Something table
+(   
+    Client_Name varchar(10)
+    , Product_Category varchar(10)
+    , Units_Sold int
+)
+
+insert @Something values
+('Client1', 'Product1',10)
+, ('Client1', 'Product2',20)
+, ('Client1', 'Product2',33)
+, ('Client1', 'Product3',30)
+, ('Client1', 'Product3',6 )
+, ('Client2', 'Product1',5 )
+, ('Client2', 'Product1',22)
+, ('Client2', 'Product2',15)
+, ('Client2', 'Product3',35);
+
+with Totals as
+(
+    select Client_Name
+        , Product_Category
+        , UnitsSold = SUM(Units_Sold)
+    from @Something
+    group by Client_Name
+        , Product_Category
+)
+, RowCounts as
+(
+    select *
+        , RowNum = ROW_NUMBER() over(partition by Product_Category order by UnitsSold desc)
+    from Totals
+)
+
+select rc.Client_Name
+    , rc.Product_Category
+    , rc.UnitsSold
+from RowCounts rc
+where rc.RowNum = 1

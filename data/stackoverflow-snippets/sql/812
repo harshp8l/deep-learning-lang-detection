@@ -1,0 +1,76 @@
+DROP TABLE IF EXISTS customer_order;
+CREATE TABLE IF NOT EXISTS `customer_order` (
+  `customer_order_id` int(11) NOT NULL PRIMARY KEY,
+  `user_id` int(11) DEFAULT NULL,
+  `restaurant_id` int(11) NOT NULL,
+  `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `preferred_delivery_time` datetime NOT NULL,
+  `full_name` varchar(300) NOT NULL,
+  `phone_number` varchar(14) NOT NULL,
+  `email_address` varchar(300) NOT NULL,
+  `address_street` varchar(300) DEFAULT NULL,
+  `address_number` varchar(8) DEFAULT NULL,
+  `address_zipcode` varchar(6) DEFAULT NULL,
+  `address_city` varchar(300) DEFAULT NULL,
+  `geolocation` VARCHAR(30) NOT NULL,
+  `is_paid` tinyint(4) NOT NULL,
+  `notes` text DEFAULT NULL,
+  `active` tinyint(4) NOT NULL DEFAULT '1',
+  FOREIGN KEY(user_id) REFERENCES user(user_id)
+  --FOREIGN KEY(restaurant_id) REFERENCES restaurant(restaurant_id)
+);
+DROP TABLE IF EXISTS customer;
+CREATE TABLE `customer` (
+  `user_id` int(11) NOT NULL PRIMARY KEY,
+  `preferred_address_street` varchar(300) NOT NULL,
+  `preferred_address_number` varchar(8) NOT NULL,
+  `preferred_address_zipcode` varchar(6) NOT NULL,
+  `preferred_address_city` varchar(300) NOT NULL,
+  `geolocation` VARCHAR(30) NOT NULL,
+  `discount_points_collected` int(11) NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES user(user_id)
+);
+DROP TABLE IF EXISTS user;
+CREATE TABLE IF NOT EXISTS user (
+    user_id INTEGER PRIMARY KEY,
+   user_name TEXT
+);
+DROP TRIGGER IF EXISTS update_delivery_address;
+CREATE TRIGGER IF NOT EXISTS update_delivery_address 
+    AFTER INSERT ON customer_order
+    WHEN new.address_street IS NULL 
+    BEGIN
+        UPDATE customer_order
+        SET (address_street, address_number, address_zipcode, address_city) =
+            (SELECT preferred_address_street,
+                 preferred_address_number,
+                preferred_address_zipcode,
+                        preferred_address_city
+                FROM customer
+            WHERE customer.user_id = customer_order.user_id
+        )
+        WHERE customer_order_id = new.customer_order_id;
+    END
+;
+INSERT INTO user (user_name) VALUES ('Fred'),('Bert'),('Harry'),('Tom');
+INSERT INTO customer (
+                user_id,
+                preferred_address_street,
+                preferred_address_number,
+                preferred_address_zipcode,
+                preferred_address_city,
+                geolocation,discount_points_collected)
+    VALUES (1,'Somerset Blvd','1','12345','Syndey','?????',100);
+INSERT INTO customer_order (
+                 customer_order_id,
+                 user_id,
+                 restaurant_id,
+                 preferred_delivery_time,
+                 full_name,
+                 phone_number,
+                 email_address,
+                 geolocation,
+                 is_paid,
+                 notes
+            )
+    VALUES(1,1,20,'21:30','Fred Bloggs','0000 000 000','Fred@Bloggs.com','x',0,'not to note');

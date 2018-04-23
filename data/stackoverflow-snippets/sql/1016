@@ -1,0 +1,75 @@
+-- Table Creation
+CREATE TABLE Tbl
+( CustomerCode    VARCHAR(50)
+, CustomerName    VARCHAR(50)
+, Type VARCHAR(50)
+,Items    VARCHAR(50)
+)
+
+insert into Tbl
+SELECT 'C0001','Thomas','BREAKFAST','Milk'
+union SELECT 'C0001','Thomas','BREAKFAST','Bread'
+union SELECT 'C0001','Thomas','BREAKFAST','Egg'
+union SELECT 'C0001','Thomas','LUNCH','Rice'
+union SELECT 'C0001','Thomas','LUNCH','Fish Curry'
+union SELECT 'C0001','Thomas','LUNCH','Lessy'
+union SELECT 'C0002','JOSEPH','BREAKFAST','Bread'
+union SELECT 'C0002','JOSEPH','BREAKFAST','Jam'
+union SELECT 'C0002','JOSEPH','BREAKFAST','Tea'
+union SELECT 'C0002','JOSEPH','Supper','Tea'
+union SELECT 'C0002','JOSEPH','Brunch','Roti'
+
+-- function creation
+GO
+CREATE  FUNCTION [dbo].[fn_GetItemsByType]
+(   
+    @CustomerCode VARCHAR(50)
+    ,@Type VARCHAR(50)
+)
+RETURNS @ItemType TABLE  ( Items VARCHAR(5000) )
+AS
+BEGIN
+
+        INSERT INTO @ItemType(Items)
+    SELECT  STUFF((SELECT distinct ',' + [Items]
+         FROM Tbl 
+         WHERE CustomerCode = @CustomerCode
+            AND Type=@Type
+            FOR XML PATH(''))
+        ,1,1,'') as  Items
+
+
+
+    RETURN 
+END
+
+GO
+
+-- fianl Query
+DECLARE @cols AS NVARCHAR(MAX),
+    @query  AS NVARCHAR(MAX)
+
+select @cols = STUFF((SELECT distinct ',' + QUOTENAME(Type) 
+                    from Tbl
+            FOR XML PATH(''), TYPE
+            ).value('.', 'NVARCHAR(MAX)') 
+        ,1,1,'')
+
+set @query = 'SELECT CustomerCode,CustomerName,' + @cols + '
+             from 
+             (
+                select  
+                    distinct CustomerCode
+                    ,CustomerName
+                    ,Type
+                    ,F.Items
+                    FROM Tbl T
+                    CROSS APPLY [fn_GetItemsByType] (T.CustomerCode,T.Type) F
+            ) x
+            pivot 
+            (
+                max(Items)
+                for Type in (' + @cols + ')
+            ) p '
+
+execute(@query) 

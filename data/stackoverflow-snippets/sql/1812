@@ -1,0 +1,28 @@
+SELECT a.* 
+  FROM my_table a 
+  JOIN 
+     ( SELECT x.sid
+            , x.cid
+            , MAX(price) price 
+         FROM my_table x 
+         JOIN 
+            ( SELECT sid
+                   , MIN(cid) cid 
+                FROM my_table 
+               GROUP 
+                  BY sid
+            ) y 
+           ON y.sid = x.sid 
+          AND y.cid = x.cid 
+        GROUP 
+           BY sid
+            , cid
+     ) b 
+    ON b.sid = a.sid 
+   AND b.cid = a.cid 
+   AND b.price = a.price;
++-----+-----+-----+-------+
+| pid | sid | cid | price |
++-----+-----+-----+-------+
+|  12 |   6 |   1 |    19 |
++-----+-----+-----+-------+

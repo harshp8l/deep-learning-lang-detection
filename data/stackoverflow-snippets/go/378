@@ -1,0 +1,92 @@
+    package main
+
+    import (
+        ""encoding/json""
+        ""fmt""
+        ""log""
+    )
+
+    type Icons struct {
+        URL    string
+        BySize map[string]string
+    }
+
+
+
+    type CatalogBank struct {
+        Advice   string `json:""advice""`
+        BankCode string `json:""bank_code""`
+        BankName string `json:""bank_name""`
+        BIC      string `json:""bic""`
+        Credentials []struct {
+            Label  string `json:""label""`
+            Masked bool   `json:""masked""`
+        } `json:""credentials""`
+        Icon     *Icons `json:""-,""`
+        Language []byte `json:""language""`
+    }
+
+    func (p *CatalogBank) Unmarshal(data []byte) error {
+
+
+        type Transient struct {
+            *CatalogBank
+            Icon []interface{} `json:""icon""`
+        }
+
+        var transient = &Transient{CatalogBank:p}
+        err := json.Unmarshal([]byte(data), transient)
+        if err != nil {
+            return err
+        }
+        p.Icon = &Icons{
+            BySize: make(map[string]string),
+        }
+
+        if len(transient.Icon) > 0 {
+            if url, ok := transient.Icon[0].(string); ok {
+                p.Icon.URL = url
+            }
+            if aMap, ok := transient.Icon[1].(map[string]interface{}); ok {
+                for k, v := range aMap {
+                    p.Icon.BySize[k] = v.(string)
+                }
+            }
+        }
+        return nil
+    }
+
+    func main() {
+
+        data := `
+            {
+            ""Advice"":""abc"",
+            ""icon"": [
+                    ""https://api.figo.me/assets/images/accounts/postbank.png"",
+                    {
+                      ""48x48"": ""https://api.figo.me/assets/images/accounts/postbank_48.png"",
+                      ""60x60"": ""https://api.figo.me/assets/images/accounts/postbank_60.png"",
+                      ""72x72"": ""https://api.figo.me/assets/images/accounts/postbank_72.png"",
+                      ""84x84"": ""https://api.figo.me/assets/images/accounts/postbank_84.png"",
+                      ""96x96"": ""https://api.figo.me/assets/images/accounts/postbank_96.png"",
+                      ""120x120"": ""https://api.figo.me/assets/images/accounts/postbank_120.png"",
+                      ""144x144"": ""https://api.figo.me/assets/images/accounts/postbank_144.png"",
+                      ""192x192"": ""https://api.figo.me/assets/images/accounts/postbank_192.png"",
+                      ""256x256"": ""https://api.figo.me/assets/images/accounts/postbank_256.png""
+                    }
+                  ]
+            }
+            `
+
+        bank := &CatalogBank{}
+        err := bank.Unmarshal([]byte(data))
+        if err != nil {
+            log.Fatal(err)
+        }
+        fmt.Printf(""advice: %v\n"", bank.Advice)
+
+        fmt.Printf(""icon: %v\n"", bank.Icon.URL)
+        for size, icon := range bank.Icon.BySize {
+            fmt.Printf(""%v =>  %v\n "",size, icon)
+        }
+    }

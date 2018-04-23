@@ -1,0 +1,48 @@
+#ifndef SERVER_H
+#define SERVER_H
+
+#include <QtCore>
+#include <QtNetwork>
+#include ""common.h""
+
+class Server : public QObject
+{
+    Q_OBJECT
+public:
+    explicit Server(QObject *parent = nullptr);
+    ~Server();
+
+signals:
+    void connected(PeerData);
+    void disconnected(PeerData);
+    void listening(quint16);
+    void readyRead(PeerData);
+    void error(QString);
+
+public slots:
+    void abort(qintptr descriptor);
+    void listen(quint16 port);
+    void stop();
+    void writeToHost(const QByteArray &data, qintptr descriptor);
+    int writeToAll(const QByteArray &data);
+
+private slots:
+    void newConnectionPrivate();
+    void UDPListen(quint16 port);
+    void UDPReadyRead();
+    void readyReadPrivate();
+    void disconnectedPrivate();
+    void removeSocket(QTcpSocket *socket);
+
+private:
+    QTcpServer *m_server;
+    QUdpSocket *m_udp_server;
+
+    QList<QTcpSocket*> m_socket_list;
+    QHash<qintptr, QTcpSocket*> m_socket_hash;
+    QHash<QTcpSocket*, qintptr> m_descriptor_hash;
+    QHash<QTcpSocket*, QByteArray> m_buffer_hash;
+    QHash<QTcpSocket*, qint32> m_size_hash;
+};
+
+#endif // SERVER_H

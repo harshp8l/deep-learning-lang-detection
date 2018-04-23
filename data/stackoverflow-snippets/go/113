@@ -1,0 +1,69 @@
+package main
+
+// https://stackoverflow.com/questions/39947716/how-to-access-inner-tags-token-in-golang
+
+import (
+    ""fmt""
+    ""strings""
+
+    ""golang.org/x/net/html""
+)
+
+func main() {
+
+    r := strings.NewReader(s)
+
+    z := html.NewTokenizer(r)
+
+    i := 0
+
+    for {
+        tt := z.Next()
+        switch tt {
+
+        case html.ErrorToken:
+            return
+
+        case html.StartTagToken:
+            t := z.Token()
+
+            switch t.Data {
+
+            case ""tr"":
+                i = 0
+
+            case ""td"":
+                if i == 1 {
+                    z.Next()
+                    t = z.Token()
+                    fmt.Println(t.Data)
+                }
+                i++
+            }
+        }
+    }
+}
+
+var s string = `
+<table>
+   <tr>
+         <td>XYZ</td>
+         <td>keep</td>
+         <td>XYZ</td> 
+   </tr>
+   <tr>
+         <td>XYZ</td>
+         <td>it</td>
+         <td>XYZ</td> 
+   </tr>
+   <tr>
+         <td>XYZ</td>
+         <td>simple</td>
+         <td>XYZ</td> 
+   </tr>
+   <tr>
+         <td>XYZ</td>
+         <td>sister</td>
+         <td>XYZ</td> 
+   </tr>
+</table>`

@@ -1,0 +1,30 @@
+import warnings
+
+def Deprecation(deprec):
+
+    class DeprecMeta(type):
+
+        def __call__(cls, *args, **kwargs):
+            new_kwargs = {k : v for k, v in kwargs.items() if k not in deprec}
+            for k in deprec:
+                if k in kwargs:
+                    warnings.warn(""{0}: Deprecated call with '{0}'. Use '{1}' instead"".format(
+                            cls.__name__, k, deprec[k]))
+                    if deprec[k] not in kwargs:
+                        new_kwargs[deprec[k]] = kwargs[k]
+                    else:
+                        raise TypeError('{} received both {} and {}'.format(
+                                cls.__name__, k, deprec[k]))
+
+            obj = cls.__new__(cls, *args, **new_kwargs)
+            obj.__init__(*args, **new_kwargs)
+            return obj
+
+    return DeprecMeta
+
+class MyClass(object, metaclass = Deprecation({'object_id': 'id_object'})):
+
+    def __init__(self, id_object):
+        self.id = id_object
+
+object2 = MyClass(object_id=1234)

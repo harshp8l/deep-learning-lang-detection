@@ -1,0 +1,26 @@
+open System
+open FsCheck
+open FsCheck.Gen
+open FsCheck.Prop
+
+/// Generates a random float [0..1.0]
+let rand = Gen.choose (0, Int32.MaxValue) |> Gen.map (fun x -> double x / (double Int32.MaxValue))
+
+/// Generates a random float in the given range (inclusive at both sides)
+let randRange a b = rand |> Gen.map (fun x -> a + (b - a) * x)
+
+let arraySizeCheck =
+    Prop.forAll
+        (Arb.fromGen <| gen {
+            // generate p1 and p2 such that 0 <= p1 <= p2 <= 1
+            let! p1 = randRange 0.0 1.0
+            let! p2 = randRange p1 1.0
+
+            // generate non-empty Seq<int>
+            let! xs = Gen.nonEmptyListOf Arb.generate<int> |> Gen.map Seq.ofList
+
+            return BloomFilter(p1, xs), BloomFilter(p2, xs)
+        })
+        (fun (bf1, bf2) -> bf2.BitArraySize < bf1.BitArraySize)
+
+Check.Quick arraySizeCheck

@@ -1,0 +1,23 @@
+$ awk -v seed=$RANDOM '                   # get some randomness from shell
+function cmp_randomize(i1, v1, i2, v2) {  # random for traversal function
+    return (2 - 4 * rand())               # from 12.2.1 Controlling Array Traversal
+}                                         # of Gnu awk docs
+BEGIN {
+    srand(seed)                           # use the seed, Luke
+    PROCINFO[""sorted_in""]=""cmp_randomize"" # use above defined function
+}
+/^[^>]/ {                                 # if starts with anything but >
+    split($0,a,"""")                        # split to hash a
+    for(i in a)                           # iterate a in random order
+        printf ""%s"", a[i]                 # output
+    print """"                              # newline
+    next                                  # next record
+}1' file                                  # output > starting records
+>line1
+CAB
+>line2
+DFE
+>line3
+GIH
+>line4
+LKJ

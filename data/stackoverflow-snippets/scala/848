@@ -1,0 +1,16 @@
+case class Book(name: String, i: Int, j: Int) {
+  def +(b: Book) = if(name == b.name) Book(name, i + b.i, j + b.j) else throw Exception
+}
+
+val rdd = sc.parallelize(Seq(
+   Book(""book1"", 20, 10), 
+   Book(""book2"",5,10), 
+   Book(""book1"",100,100)))
+
+val aggRdd = rdd.map(book => (book.name, book))
+   .reduceByKey(_+_) // reduce calling our defined `+` function
+   .map(_._2)        // we don't need the tuple anymore, just get the Books
+
+aggRdd.foreach(println)
+// Book(book1,120,110)
+// Book(book2,5,10)

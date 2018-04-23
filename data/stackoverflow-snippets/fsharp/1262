@@ -1,0 +1,25 @@
+[<AbstractClass>]
+type MyBase()  =
+    let letValue = ""let value""
+    abstract Method : unit -> string
+    default this.Method() = ""test""
+    member this.Method2() = ""Param2""
+
+type MyInherited(param : string) as this =
+    inherit MyBase()
+
+    // let localLetValue() = this.letValue      // fails.  let values are private members
+
+    do
+      //(fun () -> base.Param) () |> ignore     // Error: The 'base' keyword is used in an invalid way. Base calls cannot be used in closures. Consider using a private member to make base calls.  
+      (fun () -> this.Method) () |> ignore       // succeeds -- takes local
+      (fun () -> this.base_Method) () |> ignore  // succeeds -- takes base
+      (fun () -> this.Method2) () |> ignore      // succeeds -- takes base
+
+    override this.Method() = ""ABCdefHIJ""
+    member this.base_Method() = base.Method()
+
+    new() as this =
+      let a = base.Method()                     // succeeds
+      let b = this.Method()                     // succeeds
+      MyInherited(""some value"")

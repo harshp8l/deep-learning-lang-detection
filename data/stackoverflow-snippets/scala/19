@@ -1,0 +1,44 @@
+import java.util.Properties
+
+import org.apache.flink.streaming.api.scala._
+import net.manub.embeddedkafka.{EmbeddedKafka, EmbeddedKafkaConfig}
+import org.apache.flink.api.common.serialization.SimpleStringSchema
+import org.apache.flink.core.fs.FileSystem.WriteMode
+import org.apache.flink.streaming.connectors.kafka.{FlinkKafkaConsumer011, FlinkKafkaProducer011}
+import org.scalatest.{Matchers, WordSpec}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+class SimpleFlinkKafkaTest extends WordSpec with Matchers with EmbeddedKafka {
+
+    ""runs with embedded kafka on arbitrary available ports"" should {
+
+        val env = StreamExecutionEnvironment.getExecutionEnvironment
+
+        ""work"" in {
+            val userDefinedConfig = EmbeddedKafkaConfig(kafkaPort = 9092, zooKeeperPort = 2182)
+
+            val properties = new Properties()
+            properties.setProperty(""bootstrap.servers"", ""localhost:9092"")
+            properties.setProperty(""zookeeper.connect"", ""localhost:2182"")
+            properties.setProperty(""group.id"", ""test"")
+            properties.setProperty(""auto.offset.reset"", ""earliest"")
+
+            val kafkaConsumer = new FlinkKafkaConsumer011[String](""input"", new SimpleStringSchema(), properties)
+            val kafkaSink = new FlinkKafkaProducer011[String](""output"", new SimpleStringSchema(), properties)
+            val stream = env
+                .addSource(kafkaConsumer)
+                .map(_.toUpperCase)
+                .addSink(kafkaSink)
+
+            withRunningKafkaOnFoundPort(userDefinedConfig) { implicit actualConfig =>
+                createCustomTopic(""input"")
+                createCustomTopic(""output"")
+                Future{env.execute()}
+                publishStringMessageToKafka(""input"", ""Titi"")
+                consumeFirstStringMessageFrom(""output"") shouldEqual ""TITI""
+            }
+        }
+    }
+}

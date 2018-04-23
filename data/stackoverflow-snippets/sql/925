@@ -1,0 +1,28 @@
+CREATE TABLE #t1 (IDChild Int, IDParent Int);
+CREATE TABLE #t2 (RandoID NVARCHAR(10) , IDChild Int);
+CREATE TABLE #RandoName (RandoID NVARCHAR(10), RandoName VARCHAR(50));
+
+INSERT INTO #t1 VALUES (321, NULL), (123,321),(124,123),(116,124)
+INSERT INTO #t2 VALUES ('asdf', 123)
+INSERT INTO #RandoName VALUES ('asdf', 'something')
+
+SELECT ROW_NUMBER() OVER (ORDER BY (SELECT 100)) [RowNum], a.IDChild a, a.IDParent b, b.IDChild c INTO #t3 FROM #t1 a
+LEFT OUTER JOIN #t1 b ON b.IDParent = a.IDChild
+
+DECLARE @rownum INT;
+DECLARE cbcursor CURSOR for Select RowNum FROM #t3;
+OPEN cbcursor;
+Fetch Next from cbcursor into @rownum
+WHILE @@FETCH_STATUS = 0
+BEGIN
+       UPDATE #t3
+       SET c = (SELECT b from #t3 where RowNum = @rownum-1)
+       WHERE RowNum = @rownum
+Fetch Next from cbcursor into @rownum;
+END;
+Close cbcursor;
+Deallocate cbcursor;
+
+SELECT a,b,t2.RandoID, r.RandoName FROM #t3
+LEFT OUTER JOIN #t2 t2 on t2.IDChild = #t3.c OR t2.IDChild = #t3.b OR t2.IDChild = #t3.a
+LEFT OUTER JOIN #RandoName r on t2.RandoID = r.RandoID

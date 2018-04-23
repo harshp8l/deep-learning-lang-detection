@@ -1,0 +1,17 @@
+typedef Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor> DataArray;
+
+class Accumulator {
+public:
+    Accumulator(Eigen::Index initialCapacity=10000) : accumulated_data_(initialCapacity, 3), actual_rows_(0) {}
+    void add(DataArray &new_data) {
+        if(actual_rows_+new_data.rows() > accumulated_data_.rows())
+        { // TODO adapt memory-growing to your use case
+             accumulated_data_.conservativeResize(2*actual_rows_+new_data.rows(), 3);
+        }
+        accumulated_data_.midRows(actual_rows, new_data.rows()) = new_data;
+        actual_rows_+=new_data.rows();
+    }
+
+    DataArray accumulated_data_;
+    Eigen::Index actual_rows_;
+};

@@ -1,0 +1,55 @@
+import numpy as np
+import os
+from numpy.random import RandomState
+os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
+for platform in cl.get_platforms():
+    print(""Platform name:"", platform.name)
+
+platform = cl.get_platforms()
+platform = [x for x in platform if ""NVIDIA"" in x.name][0]
+device = platform.get_devices()
+#    ctx = cl.create_some_context()
+ctx = cl.Context(device)
+queue = cl.CommandQueue(ctx)
+mf = cl.mem_flags
+n = 2**3
+block_size = 2**2
+bs = block_size
+prng = RandomState(666666)
+a=prng.uniform(0,100000,(n,n)) + 2
+b = -a + 1
+a = a.astype(np.float32)
+b = b.astype(np.float32)
+kernelpath = ""./Stack_Overflow_pyopencl_question1.cl""
+with open(kernelpath, ""r"") as f:
+    kernel_txt = """".join(f.readlines())
+prg = cl.Program(ctx, kernel_txt.replace(""FLAG_gsize"", str(n)).replace(""FLAG_lsize"", str(bs))).build()
+a_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=a)
+b_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=b)
+
+def col1_0(a, b, device):
+
+    dest_buf = cl.Buffer(ctx, mf.READ_WRITE, a.nbytes )
+
+    wait = prg.col1_0(queue, a.shape, (bs,bs),np.int32(len(a)), a_buf, b_buf, dest_buf)
+    final = np.empty_like(a)
+    cl.enqueue_copy(queue, final , dest_buf, wait_for=[wait]).wait()
+
+    '''
+    a_buf.release()
+    b_buf.release()
+    '''
+    dest_buf.release()
+
+    return final
+
+res = col1_0(a, b, device)
+print(""RES\n"", res)
+base = res
+comp = np.zeros(base.shape)
+repetitions = 1000000
+for i in range(repetitions):
+    new = col1_0(a, b, device)
+    temp = np.isclose(new,base,atol=2.0e-03)
+    comp += temp
+print(comp)

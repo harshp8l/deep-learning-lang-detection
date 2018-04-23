@@ -1,0 +1,21 @@
+#include <vector>
+#include <regex>
+#include <tensorflow/core/framework/node_def.pb.h>
+
+std::vector<const tensorflow::NodeDef *> GetNodes(const tensorflow::GraphDef &graph, const std::regex &regex)
+{
+    std::vector<const tensorflow::NodeDef *> nodes;
+    for (const auto &node : graph.node())
+    {
+        if (std::regex_match(node.name(), regex))
+        {
+            nodes.push_back(&node);
+        }
+    }
+    std::sort(nodes.begin(), nodes.end(),
+              [](const tensorflow::NodeDef *lhs, const tensorflow::NodeDef *rhs)
+              {
+                  return lhs->name() < rhs->name();
+              });
+    return nodes;
+}

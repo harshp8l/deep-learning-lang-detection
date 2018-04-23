@@ -1,0 +1,25 @@
+declare @T table (pk int identity primary key, val int);
+insert into @T values ('1'), ('9'), ('9'), ('11'), ('2'), ('2'), ('3'), ('5'), ('7'), ('8');
+select tt.pk, tt.val 
+     , sum(ll) over (order by val, pk) as grp
+from  ( select * 
+             , case when lag(val,1) over (order by val, pk) is null 
+                      or val - lag(val,1) over (order by val, pk) <= 1 then 0 
+                    else 1 
+               end as ll
+          from @T t
+      ) tt
+order by val, pk;
+
+pk          val         grp
+----------- ----------- -----------
+1           1           0
+5           2           0
+6           2           0
+7           3           0
+8           5           1
+9           7           2
+10          8           2
+2           9           2
+3           9           2
+4           11          3

@@ -1,0 +1,20 @@
+class PatchContainerJson[T](implicit val rdst:Reads[T]) {
+
+  implicit val patchContainerReads = new Reads[PatchContainer[T]] {
+
+    override def reads(json: JsValue): JsResult[PatchContainer[T]] = {
+      json.validate[JsObject].map { obj =>
+        (obj \ ""patch"").asOpt[T].fold[PatchContainer[T]] {
+          if (obj.keys.contains(""patch"")) {
+            PatchContainer(Delete)
+          } else {
+            PatchContainer(Ignore)
+          }
+        } { v =>
+          PatchContainer(Update(v))
+        }
+      }
+    }
+  }
+
+}

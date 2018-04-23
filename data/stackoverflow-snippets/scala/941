@@ -1,0 +1,10 @@
+val string = typeOf[String].dealias
+val future = typeOf[scala.concurrent.Future[_]].typeConstructor
+val either = typeOf[scala.util.Either[_, _]].typeConstructor
+
+val respType = (for {
+  f <- Some(m.returnType.dealias) if f.typeConstructor == future // Future[_]
+  e <- f.typeArgs.headOption if e.typeConstructor == either // Future[Either[_,_]]
+  ea <- Some(e.typeArgs) if ea.head.dealias == string // Future[Either[String,_]]
+} yield ea(1))
+  .getOrElse(c.abort(c.enclosingPosition, s""Method ${m.name} in type ${m.owner} does not have required result type Future[Either[String, ?]]""))

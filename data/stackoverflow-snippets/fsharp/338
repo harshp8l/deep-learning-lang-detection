@@ -1,0 +1,37 @@
+// If using F# lower than 4.0, use this definition of groupBy
+module List =
+    let groupBy a b = Seq.groupBy a (List.toSeq b) |> Seq.map (fun (a, b) -> a, Seq.toList b) |> Seq.toList
+
+type A = class end // Dummy type
+type B = class end // Dummy type
+type C =
+    inherit B    
+    static member        ($) (_:C, _:A ) = fun keyFunction -> ()  // Dummy overload
+    static member        ($) (_:C, _:B ) = fun keyFunction -> ()  // Dummy overload
+    static member        ($) (_:B, aSeq) = fun keyFunction -> List.groupBy keyFunction aSeq // Ground case overload
+    static member inline ($) (_:C, aSeq) = fun keyFunction -> List.map (fun (b, c) -> b, (Unchecked.defaultof<C> $ c) keyFunction) aSeq    
+
+let inline recursiveGrouper keyFunction aSeq = (Unchecked.defaultof<C> $ aSeq) keyFunction
+
+// Test code
+type FruitRecord = {Fruit:string; Number:int; SourceFarm:string; Grade:float}
+
+let key1 fr = fr.Fruit
+
+let key2 fr = fr.SourceFarm
+
+let key3 fr =
+    match fr.Grade with
+    |f when f > 5.0 -> ""Very Good""
+    |f when f > 2.5 -> ""Not bad""
+    |_ -> ""Garbage""
+
+let fruitRecs = [
+    {Fruit = ""apple"" ; Number = 8; SourceFarm = ""F""; Grade = 5.5}
+    {Fruit = ""apple"" ; Number = 5; SourceFarm = ""F""; Grade = 4.5}
+    {Fruit = ""orange""; Number = 8; SourceFarm = ""F""; Grade = 5.5}
+    ]
+
+let group1 = recursiveGrouper key1 fruitRecs
+let group2 = recursiveGrouper key2 group1
+let group3 = recursiveGrouper key3 group2

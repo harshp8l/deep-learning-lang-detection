@@ -1,0 +1,18 @@
+(if
+  (and group-by-k order-k (not= order-k col-k))
+  (let [d-count (core/$ col-k 
+                        (core/$order :c 
+                                     :desc 
+                                     (core/$rollup :count :c [col-k] d2)))
+        d-index (core/dataset [:index col-k] 
+                              (map-indexed vector d-count))
+        d-join (core/$join [col-k col-k] d-index d3)]
+    (->> d-join
+         (core/$order (or order-group-k group-by-k)
+                      (or order-group-sign :asc))
+         (core/$order :index :asc)))
+  (let [d-new (if group-by-k 
+                (core/$order (or order-group-k group-by-k)
+                             (or order-group-sign :asc) d3)
+                d3)]
+    (core/$order (or order-k col-k) (or order-sign :desc) d-new)))

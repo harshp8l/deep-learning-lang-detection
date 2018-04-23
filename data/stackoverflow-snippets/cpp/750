@@ -1,0 +1,53 @@
+#include <unordered_map>
+#include <string>
+#include <exception>
+#include <functional>
+
+class wxfbIntegrationFrame
+{
+public:
+    wxfbIntegrationFrame()
+    {
+        _setters[""hours""] = [this](const wxString &data) { this->hours->SetValue(data); };
+        _setters[""flowrateon""] = [this](const wxString &data) { this->flowrateon->SetValue(data); };
+        ...
+
+        _getters[""hours""] = [this](int &data){ data = this->hours->GetValue();};
+
+
+    }
+
+    void SetWidgetValue(const wxString &widget, const wxString &data)
+    {
+        try
+        {
+            _setters.at(widget)(data);
+        }
+        catch (const std::out_of_range &err)
+        {
+            whatever you want to do
+        }
+
+    }
+
+    int GetWidgetValue(const wxString &widget)
+    {
+        int data;
+
+        try
+        {
+            _getters.at(widget)(data);
+
+            return data;
+        }
+        catch (const std::out_of_range &err)
+        {
+            whatever you want to do
+        }
+
+    }
+
+private:
+    std::unordered_map<std::string, std::function<void (const wxString &)> > _setters;
+    std::unordered_map<std::string, std::function<void (int &)> > _getters;
+}

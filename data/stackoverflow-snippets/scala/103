@@ -1,0 +1,59 @@
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
+
+case class ApiResult(size: Int, limit: Int, values: Seq[Entity])
+case class Entity(name: String, upstatus: String, details: EntityDetails)
+case class EntityDetails(key: String, server: String, owner: String, `type`: String, links: EntityLinks)
+case class EntityLinks(self: Seq[EntityLinkAddress])
+case class EntityLinkAddress(address: String)
+
+object Foo {
+  val mapper = new ObjectMapper() with ScalaObjectMapper
+  mapper.registerModule(DefaultScalaModule)
+
+  def test(): Unit = {
+    val json: String =
+      """"""
+        |{
+        |    ""size"": 20,
+        |    ""values"": [{
+        |            ""name"": ""mullock"",
+        |            ""upstatus"": ""Green"",
+        |            ""details"": {
+        |                ""key"": ""rupture farms"",
+        |                ""server"": ""mudos"",
+        |                ""owner"": ""magog_cartel"",
+        |                ""type"": ""NORMAL"",
+        |                ""links"": {
+        |                    ""self"": [{
+        |                        ""address"": ""https://mudos.com:port/access""
+        |                    }]
+        |                }
+        |            }
+        |        },
+        |        {
+        |            ""name"": ""tassadar"",
+        |            ""upstatus"": ""Orange"",
+        |            ""details"": {
+        |                ""key"": ""archon"",
+        |                ""server"": ""protoss"",
+        |                ""owner"": ""aspp67"",
+        |                ""type"": ""NORMAL"",
+        |                ""links"": {
+        |                    ""self"": [{
+        |                        ""address"": ""https://aiur.com:port/access""
+        |                    }]
+        |                }
+        |            }
+        |        }
+        |    ],
+        |    ""limit"": 100
+        |}
+        |"""""".stripMargin
+
+    val r = mapper.readValue[ApiResult](json)
+
+    println(r.values.find(_.name == ""tassadar""))
+  }
+}

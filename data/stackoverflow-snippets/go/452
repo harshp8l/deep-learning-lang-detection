@@ -1,0 +1,32 @@
+func (self *GoodsController) GoodsEditGet(w http.ResponseWriter, r *http.Request) {
+    err:=self.goodsEditGet(w,r)
+    if err!=nil { //Note 1
+        util.RedirectWithMessage(w, r, err.Error(), ""/system/inventory/goods"")
+    }
+}
+
+func (self *GoodsController) goodsEditGet(w http.ResponsWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    tmpID, ok := vars[""id""]
+    sess := session.Instance(w, r)
+
+    if !ok {
+        tpl.Error(""Invalid goods id"")
+    }
+
+    id, _ := strconv.ParseInt(tmpID, 10, 64)
+
+    goods, err := service.NewGoodsService(w, r).GetGoodsDetail(id)
+
+    if err != nil {
+        //This utility function will not stop the rest of the code being executed
+        return err //Note 2
+    }
+
+    goodsUom, err := service.NewGoodsService(w, r).GetGoodsUom(id)
+
+    if err != nil {
+        return err
+    }
+    return nil
+}

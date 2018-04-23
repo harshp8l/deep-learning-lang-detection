@@ -1,0 +1,68 @@
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.spark.streaming.kafka010._
+import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
+import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
+
+import scala.collection.mutable.ListBuffer
+import org.apache.spark.SparkConf
+import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.Seconds
+import org.apache.spark.sql.types.{StringType, StructType, TimestampType}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.count
+
+object SparkKafkaExample {
+
+  def main(args: Array[String]): Unit =
+  {
+
+  val brokers = ""broker1.com:9092,broker2.com:9092,"" +
+    ""broker3.com:9092,broker4.com:9092,broker5.com:9092""
+  // Create Spark Session
+  val spark = SparkSession
+    .builder()
+    .appName(""KafkaSparkDemo"")
+    .master(""local[*]"")
+    .getOrCreate()
+
+  import spark.implicits._
+
+  // Create Streaming Context and Kafka Direct Stream with provided settings and 10 seconds batches
+  val ssc = new StreamingContext(spark.sparkContext, Seconds(10))
+
+  var kafkaParams = Map(
+    ""bootstrap.servers"" -> brokers,
+    ""key.deserializer"" -> ""org.apache.kafka.common.serialization.StringDeserializer"",
+    ""value.deserializer"" -> ""org.apache.kafka.common.serialization.StringDeserializer"",
+    ""group.id"" -> ""test"",
+    ""security.protocol"" -> ""SASL_PLAINTEXT"",
+    ""sasl.kerberos.service.name"" -> ""kafka"",
+    ""auto.offset.reset"" -> ""earliest"")
+
+  val topics = Array(""sparkstreaming"")
+  val stream = KafkaUtils.createDirectStream[String, String](
+    ssc,
+    PreferConsistent,
+    Subscribe[String, String](topics, kafkaParams))
+
+  // Define a schema for JSON data
+  val schema = new StructType()
+    .add(""action"", StringType)
+    .add(""timestamp"", TimestampType)
+
+  // Process batches:
+  // Parse JSON and create Data Frame
+  // Execute computation on that Data Frame and print result
+  stream.foreachRDD { (rdd, time) =>
+    val data = rdd.map(record => record.value)
+    val json = spark.read.schema(schema).json(data)
+    val result = json.groupBy($""action"").agg(count(""*"").alias(""count""))
+    result.show
+  }
+
+  ssc.start
+  ssc.awaitTermination
+
+}
+}

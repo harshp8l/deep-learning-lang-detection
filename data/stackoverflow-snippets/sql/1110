@@ -1,0 +1,26 @@
+declare @t TABLE (id int,name varchar(10),count int,quantity int)
+
+insert @t(id,name,count,quantity) values( 1,'aaa',1,100)
+insert @t(id,name,count,quantity) values( 3,'bbb',3,200)
+insert @t(id,name,count,quantity) values( 2,'ccc',2,50)
+insert @t(id,name,count,quantity) values( 6,'ddd',1,300)
+insert @t(id,name,count,quantity) values( 5,'eee',5,20)
+
+--SELECT * FROM @t
+
+DECLARE @maxcount INT
+SET @maxcount = 10000;--if count exceed 2048
+;WITH CTE AS (
+                       SELECT 1 AS number
+                       UNION ALL
+                       SELECT number + 1
+                       FROM   CTE
+                       WHERE  number < @maxcount
+                   )
+
+SELECT t.id, t.name, c.number as [count], t.quantity
+FROM @t t
+CROSS APPLY
+(SELECT * FROM CTE where number between 1 and t.[count] )c
+ORDER BY t.id,c.number
+option (MAXRECURSION 0)-- if recursion exceed 100

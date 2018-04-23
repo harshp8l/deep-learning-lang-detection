@@ -1,0 +1,84 @@
+const fs = require('fs');
+//get the data and split by \n 
+//easier to run .each on it later
+var data = fs.readFileSync('user_file.txt','utf8').split(""\n"");
+
+//sort the data by timestamp
+data.sort(function(a,b){
+    var a=JSON.parse(a);
+    var b=JSON.parse(b);
+    return(a.timestamp-b.timestamp);});
+//make users an array you can use object but array is just easier for me
+var users=[];
+//duration in seconds
+const duration = 240;
+//minimum number of actions that will consider user a bot
+const minEntries = 10;
+//minimum number of same actions that will consider user a bot
+const minActions = 5;
+//check and return the duration of the entries
+function checkduration(user)
+{
+    var entries=user.entries.length;
+    return(user.entries[entries-1].timestamp-user.entries[0].timestamp);
+}
+//array of bots
+var bots=[];
+//go through each line
+data.forEach(function(log){
+    //parse the log to json
+    var jsonLog = JSON.parse(log);
+    //check if user exixts
+    if(typeof(users[jsonLog.user])=='undefined')
+    {
+        //create new user entry it is an object
+        //which will contain all logs for this user and the check whther its bot or not
+        //assume its not a bot
+        users[jsonLog.user]={entries:[jsonLog],bot:false};
+        return;
+    }
+    else if(users[jsonLog.user].bot==true)
+    {
+        //user is a bot, no need to check anymore
+        //return to go through next user
+        return;
+    }
+    //add on new entry
+    users[jsonLog.user].entries.push(jsonLog);
+
+    //discard entries longer than 4 mins ago
+    while(users[jsonLog.user].entries.length>1 && checkduration(users[jsonLog.user])>duration)
+    {
+        users[jsonLog.user].entries.shift();
+    }
+
+    //see if have enough entries to check for bot
+    if(users[jsonLog.user].entries.length==minEntries)
+    {
+        //has enough entries check for type of actions
+        var actions=[];
+        var maxActions=0;
+        //get number of actions of each type
+        users[jsonLog.user].entries.forEach(function(entry){
+            if(typeof(actions[entry.action])=='undefined')
+            {
+                actions[entry.action]=1;
+            }
+            else{
+                actions[entry.action]++;
+                if(maxActions<actions[entry.action])
+                {
+                    maxActions=actions[entry.action];
+                }
+            }
+        });
+        //if actions is more than min required set as bot
+        if(maxActions>=minActions)
+        {
+            users[jsonLog.user].bot=true;
+            //add to list of bots
+            bots.push(jsonLog.user);
+        }
+    }
+});
+console.log(bots);

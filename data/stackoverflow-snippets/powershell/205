@@ -1,0 +1,14 @@
+(
+    Get-MailboxFolderPermission -Identity ( 
+        ( $mbx=(Get-Mailbox 'a mailbox' | select-object Identity,PrimarySmtpAddress,Alias) ).PrimarySmtpAddress.ToString() + "":\"" +                 #""
+        (
+            (Get-MailboxFolderStatistics $mbx.Identity).Where{
+                $_.FolderType -eq 'Calendar'
+            }
+            |Select-Object -First 1
+        ).Name
+    )
+    | Select-Object @{Label='Identity';expression={$mbx.Alias}},FolderName,User,AccessRights
+).Where(
+    { $_.User.DisplayName -eq 'Test' }
+)

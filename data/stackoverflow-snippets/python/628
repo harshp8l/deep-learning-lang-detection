@@ -1,0 +1,27 @@
+from django.shortcuts import render, HttpResponse
+from django.views.generic.edit import CreateView
+from django.views.generic.list import ListView
+from .forms import ModelTwoForm
+from .models import ModelOne, ModelTwo
+
+class HomeView(ListView):
+    model = ModelTwo
+    template_name = 'myapp/base.html'
+
+class Create(CreateView):
+    form_class = ModelTwoForm
+    model = ModelTwo
+    template_name = 'myapp/create_form.html'
+    success_url = '/'
+
+def load_sample_file(request):
+    sample_file_id = request.GET.get('samplefile')
+    #print(sample_file_id)
+    if not sample_file_id:
+        return HttpResponse("""")
+    instance = ModelOne.objects.get(id=sample_file_id)
+    context = {
+        'link': instance.sample_input_file.path,
+        'name': instance.sample_input_file.name,
+    }
+    return render(request, 'myapp/sample_file_link.html', context)

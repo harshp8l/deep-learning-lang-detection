@@ -1,0 +1,25 @@
+val viewsPurchasesRddString = viewsPurchasesGrouped.map( row =>
+  Array(
+  row.getSeq[Long](1).toArray, 
+  row.getSeq[Long](2).toArray
+  )
+)
+
+val prefixSpan = new PrefixSpan()
+  .setMinSupport(0.001)
+  .setMaxPatternLength(2)
+
+val model = prefixSpan.run(viewsPurchasesRddString)
+
+case class FreqSequences(views: Long, purchases: Long, frequence: Long)
+
+val ps_frequences = model.freqSequences.filter(fs => fs.sequence.length > 1).map( fs =>
+    {   
+    val views = fs.sequence(0)(0)
+    val purchases = fs.sequence(1)(0)
+    val freq = fs.freq
+    FreqSequences(views, purchases, freq)
+    }
+)
+
+ps_frequences.toDF()

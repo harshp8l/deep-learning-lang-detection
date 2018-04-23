@@ -1,0 +1,91 @@
+package main
+
+import (
+    ""fmt""
+    ""sync""
+    ""time""
+)
+
+var mu sync.Mutex //To protect the stopped variable which will decide if a value is to be sent on the signalling channel
+var stopped bool
+
+func search(i int) int {
+    time.Sleep(1 * time.Millisecond)
+    return (i + 1)
+}
+
+// (or at least a very long time for high values of depth)
+func runSearch(depth int, ch chan int, stopSearch chan bool) {
+
+    for i := 1; i <= depth; i++ {
+        fmt.Printf(""Searching to depth %v\n"", i)
+        n := search(i)
+        select {
+        case <-stopSearch:
+            fmt.Println(""Timer over! Searched till "", i)
+            return
+        default:
+        }
+
+        ch <- n
+        fmt.Printf(""Sent depth %v result for processing\n"", i)
+    }
+
+    mu.Lock() //To avoid race condition with timer also being
+    //completed at the same time as execution of this code
+    if stopped == false {
+        stopped = true
+        stopSearch <- true
+        fmt.Println(""Search completed"")
+    }
+    mu.Unlock()
+
+}
+
+// consumes progressively better values until the channel is closed
+func awaitBestResult(ch chan int, doneProcessing chan bool) {
+    var best int
+
+    for result := range ch {
+        best = result
+    }
+    fmt.Println(""Best result "", best)
+    // do something with best result here
+
+    //and communicate to main when you are done processing the result
+    doneProcessing <- true
+
+}
+
+func main() {
+    doneProcessing := make(chan bool)
+    stopSearch := make(chan bool)
+
+    // timer := time.NewTimer(time.Millisecond * 2000)
+    timer := time.NewTimer(time.Millisecond * 12)
+
+    ch := make(chan int)
+
+    go runSearch(1000, ch, stopSearch)
+    go awaitBestResult(ch, doneProcessing)
+    select {
+    case <-timer.C:
+        //If at the same time runsearch is also completed and trying to send a value !
+        //So we hold a lock before sending value on the channel
+        mu.Lock()
+        if stopped == false {
+            stopped = true
+            stopSearch <- true
+            fmt.Println(""Timer expired"")
+        }
+        mu.Unlock()
+
+    case <-stopSearch:
+        fmt.Println(""runsearch goroutine completed"")
+    }
+    close(ch)
+
+    //Wait for your consumer to complete processing
+    <-doneProcessing
+    //Safe to exit now
+}

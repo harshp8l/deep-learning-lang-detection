@@ -1,0 +1,51 @@
+function Get-TokenInfo
+{
+  [Alias(""ti"")]
+  [OutputType([System.Management.Automation.PSToken[]])]
+  Param()
+  Process
+  {
+    $editor = $psise.CurrentFile.Editor;
+    $line = $editor.CaretLine;
+    $column = $editor.CaretColumn;
+    return [system.management.automation.psparser]::Tokenize($psISE.CurrentFile.Editor.Text, [ref]$null) |?{$_.StartLine -le $line -and $_.EndLine -ge $line -and $_.StartColumn -le $column -and $_.EndColumn -ge $column};
+ }
+}
+function GoTo-CommandImplementation
+{
+  [Alias(""gti"")]
+  Param()
+
+  Process
+  {
+    $commandInfo = ti |?{$_.Type -eq [System.Management.Automation.PSTokenType]::Command} | select -First 1;
+    if(!$commandInfo) 
+    {
+        Write-Host ""Is not a command"";
+    }
+    else
+    {
+        $commandName = $commandInfo.Content;
+        $command = Get-Command $commandName;
+        if($command -is [System.Management.Automation.AliasInfo])
+        {
+            $command = $command.ResolvedCommand;
+        }
+        if($command.CommandType -eq [System.Management.Automation.CommandTypes]::Function)
+        {
+            $functionInfo = [System.Management.Automation.FunctionInfo]$command;
+            $commandFile = $functionInfo.ScriptBlock.File;
+            $line = $functionInfo.ScriptBlock.StartPosition.StartLine;
+            $column = $functionInfo.ScriptBlock.StartPosition.StartColumn;
+            psedit $commandFile;
+            $psise.CurrentFile.Editor.Focus();
+            $psise.CurrentFile.Editor.SetCaretPosition($line, $column);
+        }
+        else
+        {
+            Write-Host ""Is not Function."";
+        }
+    }
+  }
+}
+$PowerPSISERoot.Submenus.Add(""GoTo Implementation"", {gti}, ""CTRL+Alt+SHIFT+B"");

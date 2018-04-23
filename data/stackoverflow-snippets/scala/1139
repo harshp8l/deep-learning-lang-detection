@@ -1,0 +1,19 @@
+def test() = {
+  import com.fasterxml.jackson.module.scala._
+  import com.fasterxml.jackson.module.scala.experimental._
+
+  val mapper = new ObjectMapper() with ScalaObjectMapper
+  mapper.registerModule(DefaultScalaModule)
+
+  // add our custom ItemDeserializer
+  val module = new SimpleModule
+  module.addDeserializer(classOf[Item], new ItemDeserializer)
+  mapper.registerModule(module)
+
+  mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
+  val string = ""[{\""foo\"": 1, \""bar\"": 2}, {\""foo\"": 3, \""bar\"": {\""baz\"": 4}}]""
+
+  val list = mapper.readValue[List[Item]](string)
+  println(list.mkString("", ""))
+}

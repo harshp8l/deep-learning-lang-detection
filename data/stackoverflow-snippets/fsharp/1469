@@ -1,0 +1,51 @@
+type MainForm =
+  inherit Form
+
+  val mutable g : Graphics // mutable means its not read-only
+  val mutable position : Point // position of the rectangle
+  val listOfSquares : ResizeArray
+  val listOfCircles : ResizeArray
+
+  new () as form = {g=null;position = new Point(0,0)} then
+     // double buffering
+     form.SetStyle (ControlStyles.UserPaint, true);
+     form.SetStyle (ControlStyles.DoubleBuffer, true);
+     form.SetStyle (ControlStyles.AllPaintingInWmPaint, true);
+     form.Width <- 900
+     form.Height <- 500
+     form.BackColor <- Color.White
+     form.Text <- ""2D Graphics Editor"";
+     listOfSquares <- ResizeArray()
+     listOfCircles <- ResizeArray()
+     let menu = new MenuStrip()
+
+     let file = new ToolStripDropDownButton(""File"") // Menu
+     ignore(menu.Items.Add(file))
+
+
+     let create = new ToolStripDropDownButton(""Create"")  // Menu
+     ignore(menu.Items.Add(create))
+
+     let square = create.DropDownItems.Add(""Square"")
+     let circle = create.DropDownItems.Add(""Circle"")
+     let newFile = file.DropDownItems.Add(""New file"")
+     let saveFile = file.DropDownItems.Add(""Save file"")
+     let openFile = file.DropDownItems.Add(""Open file"")
+     square.Click.Add(fun _ -> listOfSquares.Add(new square(5.0, 5.0)) |> ignore)
+     circle.Click.Add(fun _ -> listOfCircles.Add(new circle(10.0, 10.0)) |> ignore)
+     newFile.Click.Add(fun _ -> MessageBox.Show(""newFile"") |> ignore)
+     saveFile.Click.Add(fun _ -> MessageBox.Show(""saveFile"") |> ignore)
+     openFile.Click.Add(fun _ -> MessageBox.Show(""openFile"") |> ignore)
+     let dc c = (c :> Control)
+     form.Controls.AddRange([|dc menu|]);
+
+
+     // show the form
+     form.Show()
+
+     // override of paint event handler
+     override form.OnPaint e = 
+        let g = e.Graphics in
+        // draw objects in listOfSquares and listOfCircles
+
+     end  

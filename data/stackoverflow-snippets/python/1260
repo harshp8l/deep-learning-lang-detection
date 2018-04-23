@@ -1,0 +1,65 @@
+import os
+import Tkinter as tk
+import ttk
+import sys
+
+
+class main_window(tk.Tk):
+    def __init__(self, *args, **kwargs):
+        tk.Tk.__init__(self, *args, **kwargs)
+        self.title('Pilot Flight and Duty Tracker')
+        self.geometry('1000x700+250+50')
+        self.resizable(width = False, height = False)
+        self._frame = None
+        Login_Window = Login(self)
+
+        Users = [('Admin','AdminPassword')]
+
+    def switch_frame(self, frame_name):
+        new_frame = frame_name(self)
+        if self._frame is not None:
+            self._frame.destroy()
+        self._frame = new_frame
+        self._frame.pack()
+
+
+
+
+class Login(tk.Toplevel):
+    def __init__(self, master, *args, **kwargs):
+        tk.Toplevel.__init__(self, master, *args, **kwargs)
+        self.title('User Login')
+        self.resizable(width = False, height = False)
+        self.attributes('-topmost', True)
+        self.geometry('230x200+625+275')
+        self.title('User Login')
+        self.grab_set()
+        self.transient(master)
+        userlabel = tk.Label(self, text=""Employee ID:"", font='arial 10 bold')
+        userlabel.place(x=25, y=5)
+        self.user_entry = tk.Entry(self, relief='groove', width=25, font='arial 10', bd=1)
+        self.user_entry.place(x=25, y=30)
+        passwordlabel = tk.Label(self, text=""Password:"", font='arial 10 bold')
+        passwordlabel.place(x=25, y=70)
+        self.password_entry = tk.Entry(self, relief='groove', width=25, font='arial 10', show=""*"", bd=1)
+        self.password_entry.place(x=25, y=95)
+        self.warn = tk.Label(self, font='arial 10 bold')
+        self.warn.place(x=25, y=135)
+        button = tk.Button(self, text=""Login"", relief='groove', width=12, font='arial 15 bold', justify='center', command=self.login)
+        button.place(x=37, y=140)
+
+    def login(self):
+        self.username = self.user_entry.get()
+        self.pw = self.password_entry.get()
+        if (self.username, self.pw) in Users:
+            if (self.username, self.pw) == ('Admin', 'AdminPassword'):
+                '''LOAD FIRST TIME ADMIN LOGON???????'''
+                self.destroy()
+            else:
+                '''LOAD NORMAL USER or NORMAL ADMIN WINDOW'''
+        else:
+            self.warn.config(text=""Invalid Username or Password"", fg=""black"", bg='red')
+
+
+run = main_window()
+run.mainloop()

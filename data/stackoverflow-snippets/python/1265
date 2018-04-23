@@ -1,0 +1,34 @@
+from flask_restplus import fields
+
+element_object = api.model('Element_Object'{
+    'name': fields.String(),
+    'foo': fields.String()
+})
+
+class StringOrObjectElement(fields.Nested):
+    __schema_type__ = ['string','object']
+
+    def output(self, key, obj):
+        if isinstance(obj, str):
+            if key == 'name':
+                return obj
+            else:
+                return 'default_value'
+        return super().output(key, obj)
+
+    def schema(self):
+        schema_dict = super().schema()
+        schema_dict.pop('type')
+        nested_ref = schema_dict.pop('$ref')
+        schema_dict['oneOf'] = [
+            {
+                'type': 'string'
+            },
+            {
+                '$ref': nested_ref
+            }
+        ]
+        return schema_dict
+
+root_object = api.model('Root_Object', {
+    'my_attribute': fields.List(fields.StringOrObjectElement(element_object))

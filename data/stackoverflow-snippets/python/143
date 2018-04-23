@@ -1,0 +1,22 @@
+from collections import namedtuple
+
+import requests
+from bs4 import BeautifulSoup
+
+url = 'http://www.ispo-org.or.id/index.php?option=com_content&view=article&id=79:pengumumanpublik&catid=10&Itemid=233&showall=&limitstart=0&lang=en'
+
+data = []
+Record = namedtuple('Record', 'id company agency date pdf_link')
+
+r = requests.get(url)
+soup = BeautifulSoup(r.content, 'html.parser')
+rows = soup.select('table > tbody > tr')
+
+for row in rows[1:]:  # omit header row
+    cols = row.find_all('td')
+    fields = [td.text.strip() for td in cols if td.text.strip()]
+
+    if fields:  # if the row is not empty
+        pdf_link = row.find('a')['href']
+        record = Record(*fields, pdf_link)
+        data.append(record)

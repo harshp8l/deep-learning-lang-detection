@@ -1,0 +1,19 @@
+val computeTypeVal = udf { (vals: Seq[String]) =>
+  vals.groupBy(identity).values.toList.sortBy(-_.size).flatten match {
+    case a :: Nil => if (a == """") None else Some(a.toDouble) 
+    case a :: b :: tail if a == b => Some(a.toDouble - tail.map(_.toDouble).filterNot(_ == a.toDouble).sum)
+    case _ => Some(0.00) // or whatever else should be done for other cases
+  }
+}
+
+df1.groupBy($""KEY"").agg(collect_list($""TYPE_VAL"") as ""VALS"").select($""KEY"", computeTypeVal($""VALS"") as ""TYPE_VAL"").show()
+
++---+--------+
+|KEY|TYPE_VAL|
++---+--------+
+| 68|    23.0|
+|999|    null|
+| 99|     0.0|
+| 66|   100.0|
+| 67|     4.4|
++---+--------+

@@ -1,0 +1,27 @@
+# Initialize buffer
+$csvBuffer = @()
+
+Get-ChildItem *.csv | Foreach-Object {
+    $file = $_.BaseName
+    $content = Get-Content $_.FullName | Select-Object -Skip 3 | %{
+        ""$_,${file}"" 
+    }
+
+    # Populate buffer
+    $csvBuffer += $content
+
+    # Write buffer to disk if it contains 5000 lines or more
+    $csvBufferCount = $csvBuffer | Measure-Object | Select-Object -ExpandProperty Count
+    if( $csvBufferCount -ge 5000 )
+    {
+        $csvBuffer | Out-File -Path temp.csv -Encoding ASCII -Append
+        $csvBuffer = @()
+    }
+}
+
+# Important : empty the buffer remainder
+if( $csvBufferCount -gt 0 )
+{
+    $csvBuffer | Out-File -Path temp.csv -Encoding ASCII -Append
+    $csvBuffer = @()
+}

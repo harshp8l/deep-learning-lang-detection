@@ -1,0 +1,32 @@
+@annotation.implicitNotFound(""Base QueryUnit is not supported, you cannot mix SimpleQuery and ComplexQuery"")
+trait Handler[T] extends (T => Unit)
+
+object API {
+  implicit def baseQueryUnitIsNotSupported0: Handler[QueryUnit] = ???
+
+  implicit def baseQueryUnitIsNotSupported1: Handler[QueryUnit] = ???
+
+  implicit val simpleQWrongArg: Handler[SimpleQuery] = new Handler[SimpleQuery] {
+    override def apply(s: SimpleQuery): Unit = {}
+  }
+  implicit val complexQWrongArg: Handler[ComplexQuery] = new Handler[ComplexQuery] {
+    override def apply(s: ComplexQuery): Unit = {}
+  }
+}
+
+case class API[QU <: QueryUnit](query: Map[String, Seq[QU]])(
+  implicit handler: Handler[QU]) {
+  // Do something with handler for each input
+}
+
+// Usage
+
+import API._
+
+import scala.annotation.implicitNotFound
+API/*[SimpleQuery]*/(Map("""" -> Seq(SimpleQuery("""", """"))))
+
+API/*[ComplexQuery]*/(Map("""" -> Seq(ComplexQuery(Map.empty))))
+
+// Error:(56, 71) Base QueryUnit is not supported, you cannot mix SimpleQuery and ComplexQuery
+//API(Map(""s"" -> Seq(SimpleQuery("""", """")), ""c"" -> Seq(ComplexQuery(Map.empty))))

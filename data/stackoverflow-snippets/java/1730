@@ -1,0 +1,32 @@
+public class KeyRing {
+
+    public final List<Key> keys = new ArrayList<>();
+
+    public void addKey(Key key) {
+        keys.add(key);
+    }
+
+    public void removeKey(Key key) {
+        keys.remove(key);
+    }
+
+    public void unlock(Lock lock) throws UnlockFailedException {
+
+        for (Key key: keys) {
+            boolean unlockSucceeded = unlockWithKey(lock, key);
+            if (unlockSucceeded) return;
+        }
+
+        throw new UnlockFailedException(""Could not open lock "" + lock.getClass().getSimpleName() + "" with key ring"");
+    }
+
+    private boolean unlockWithKey(Lock lock, Key key) {
+        try {
+            lock.unlock(key);
+            return true;
+        }
+        catch (UnlockFailedException e) {
+            return false;
+        }
+    }
+}

@@ -1,0 +1,47 @@
+// add your event listener BEFORE sending
+xhr.addEventListener('load', processRequest, false);
+xhr.send();
+
+function processRequest() {
+  // no need to check readyState and status if you use the `load` event
+  fs.readFile(..., (err, data) => {
+    // handle error
+    if (err) {
+      console.log(err);
+      return;
+    }
+
+    const { articles = [] } = JSON.parse(xhr.responseText);
+    const file = JSON.parse(data);
+
+    for (const article of articles) {
+      const {
+        title,
+        description,
+        url,
+        urlToImage: urlImg,
+        publishedAt: time,
+        author,
+        source: { name }
+      } = article;
+
+      file.news.push({
+        title,
+        description,
+        url,
+        urlImg,
+        time,
+        sourceAndAuthor: `${author} (${name})`
+      });
+    }
+
+    const json = JSON.stringify(file);
+
+    fs.writeFile(..., (err) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+    });
+  });
+}

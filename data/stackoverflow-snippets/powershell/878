@@ -1,0 +1,47 @@
+$SqlServer = '...';
+$SqlDatabase = '...';
+$OutputFilePath = '...';
+$SqlQuery = '...';
+
+$SqlConnectionString = 'Data Source={0};Initial Catalog={1};Integrated Security=SSPI' -f $SqlServer, $SqlDatabase;
+
+$Utf8NoBOM = New-Object -TypeName System.Text.UTF8Encoding -ArgumentList $false;
+$StreamWriter = New-Object -TypeName System.IO.StreamWriter -ArgumentList $OutputFilePath, $Utf8NoBOM;
+
+$CsvDelimiter = '""';
+$CsvDelimiterEscape = '""""';
+$CsvSeparator = ',';
+
+$SQLConnection = New-Object -TypeName System.Data.SqlClient.SqlConnection -ArgumentList $SqlConnectionString;
+$SqlCommand = $SQLConnection.CreateCommand();
+$SqlCommand.CommandText = $SqlQuery;
+
+$SQLConnection.Open();
+$SqlDataReader = $SqlCommand.ExecuteReader();
+
+for ($Field = 0; $Field -lt $SqlDataReader.FieldCount; $Field++) {
+    if ($Field -gt 0) { $StreamWriter.Write($CsvSeparator); }
+    $StreamWriter.Write($CsvDelimiter);
+    $StreamWriter.Write($SqlDataReader.GetName($Field).Replace($CsvDelimiter, $CsvDelimiterEscape));
+    $StreamWriter.Write($CsvDelimiter);
+}
+$StreamWriter.WriteLine();
+
+while ($SqlDataReader.Read()) {
+    for ($Field = 0; $Field -lt $SqlDataReader.FieldCount; $Field++) {
+        if ($Field -gt 0) { $StreamWriter.Write($CsvSeparator); }
+        $StreamWriter.Write($CsvDelimiter);
+        $StreamWriter.Write($SqlDataReader.GetValue($Field).ToString().Replace($CsvDelimiter, $CsvDelimiterEscape));
+        $StreamWriter.Write($CsvDelimiter);
+    }
+    $StreamWriter.WriteLine();
+}
+
+$SqlDataReader.Close();
+$SqlDataReader.Dispose();
+
+$SQLConnection.Close();
+$SQLConnection.Dispose();
+
+$StreamWriter.Close();
+$StreamWriter.Dispose();

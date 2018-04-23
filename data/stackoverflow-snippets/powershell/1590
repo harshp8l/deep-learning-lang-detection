@@ -1,0 +1,30 @@
+$taskmgrPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\TaskManager'
+If (!(Test-Path $taskmgrPath))
+{
+    New-Item -Path $taskmgrPath -Force
+}
+$taskmgr = Get-Process Taskmgr -ErrorAction SilentlyContinue
+If ($taskmgr)
+{
+    #$taskmgr | Stop-Process -Force
+    $taskmgr | Wait-Process
+}
+$preferences = Get-ItemProperty -Path $taskmgrPath -Name Preferences -ErrorAction SilentlyContinue
+If (!($preferences))
+{
+    Start-Process -FilePath Taskmgr
+    $taskmgr = Get-Process Taskmgr -ErrorAction SilentlyContinue
+    If ($taskmgr)
+    {
+       #$taskmgr | Stop-Process -Force
+       $taskmgr | Wait-Process
+    }
+    $preferences = Get-ItemProperty -Path $taskmgrPath -Name Preferences -ErrorAction SilentlyContinue
+}
+$preferences.Preferences[28] = 0
+New-ItemProperty -Path $taskmgrPath -Name Preferences -Type Binary -Value $preferences.Preferences -Force
+If ($taskmgr)
+{
+   $taskmgr | Stop-Process -Force
+}
+Start-Process -FilePath Taskmgr          ## restart Task manager with modified properties

@@ -1,0 +1,28 @@
+package main
+
+import mgo ""gopkg.in/mgo.v2""
+
+const (
+    db   = ""so_hashed_idx""
+    coll = ""testcoll""
+)
+
+func main() {
+    var s *mgo.Session
+    var err error
+
+    if s, err = mgo.Dial(""127.0.0.1:27017""); err != nil {
+        panic(err)
+    }
+
+    // An index spec is nothing more than a fancy word for the keys
+    // or the key/value pairs handed over to the Key slice of the
+    // Index type.
+    idx := mgo.Index{
+        Key: []string{""$hashed:_id""},
+    }
+
+    if err := s.DB(db).C(coll).EnsureIndex(idx); err != nil {
+        panic(err)
+    }
+}

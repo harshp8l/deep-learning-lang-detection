@@ -1,0 +1,14 @@
+type TestPrivate(x:string)  =
+    let totallyPrivate = x 
+    member private __.PrivateX = x
+    member __.FromOther(other:TestPrivate) = 
+        __.PrivateX + ""-"" + other.Y + ""-"" + other.PrivateX + ""-"" + totallyPrivate
+    member __.Y = __.PrivateX
+
+let thisTest = TestPrivate(""this"")
+let otherTest = TestPrivate(""other"")
+
+thisTest.FromOther(otherTest) //val it : string = ""this-other-other-this""
+otherTest.FromOther(thisTest) //val it : string = ""other-this-this-other""
+thisTest.FromOther(thisTest) //val it : string = ""this-this-this-this""
+otherTest.FromOther(otherTest) //val it : string = ""other-other-other-other"" 

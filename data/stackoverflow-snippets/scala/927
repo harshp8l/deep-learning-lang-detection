@@ -1,0 +1,16 @@
+object Main extends App {
+  val ks = ""foo_keyspace""
+  val cluster = Cluster.builder().addContactPoints(""127.0.0.1"").build()
+
+  implicit val keyspace: KeySpace = KeySpace(ks)
+  implicit val session: Session   = cluster.connect(ks)
+
+  val res = for {
+    _ <- FooTable.create.ifNotExists.future
+    _ <- FooTable.insert.value(_.id, ""1"").value(_.name, Some(""data"")).future
+    row <- FooTable.select.where(_.id eqs ""1"").one
+  } yield row
+
+  val r = Await.result(res, 10.seconds)
+  println(s""Row: $r"")
+}

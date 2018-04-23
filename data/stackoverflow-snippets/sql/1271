@@ -1,0 +1,15 @@
+;with SourceFieldsToRows AS (
+    SELECT id, field, Value
+    FROM   #Source s UNPIVOT (Value FOR field IN (nameFull, salutation, nameFirst, nameLast, addressLine1, addressLine2, addressCity, addressState, addressZip, phone1full, phone2full, phone3full, phone4full, phone5full, email1)) u
+), TargetFieldsToRows AS (
+    SELECT u.pov_Prospect, field, Value
+    FROM   #Target t UNPIVOT (Value FOR field IN (pov_nameFull, pov_salutation, pov_nameFirst, pov_nameLast, pov_addressLine1, pov_addressLine2, pov_addressCity, pov_addressState, pov_addressZip, pov_phone1full, pov_phone2full, pov_phone3full, pov_phone4full, pov_phone5full, pov_email1)) u
+)
+SELECT  ISNULL(curr.id,prev.pov_Prospect) AS id,
+        ISNULL(curr.field,prev.field) AS field,
+        curr.value AS new_value,
+        prev.value AS old_value,
+        CASE WHEN curr.value <> prev.value OR curr.value IS NULL AND prev.value IS NOT NULL OR curr.value IS NOT NULL AND prev.value IS NULL THEN 'Yes' END Changed
+FROM SourceFieldsToRows curr 
+FULL OUTER  JOIN  TargetFieldsToRows prev 
+    ON curr.ID = prev.pov_Prospect AND 'pov_' + curr.field  =  prev.field

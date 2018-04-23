@@ -1,0 +1,53 @@
+#!/bin/bash
+
+[... other bash code here ...]
+
+SCRIPT='/path/to/script/to/run/remotely.sh'
+LOGIN='test'
+IP='your ip or hostname'
+LOCATION='/destination/path/to/script/to/run/remotely.sh'
+
+### start expect part here, you may add '-d' after 'expect' for debug
+
+/usr/bin/expect << EOD
+### set a 3 minute timeout
+set timeout 180
+### copy the script you wish to run on the remote machine
+spawn scp -o StrictHostKeyChecking=no -p $SCRIPT $LOGIN@$IP:$LOCATION
+expect {
+  timeout            { send_user ""\n# TIMED OUT. HOST NOT REACHABLE #\n""; exit 3 }
+  ""*assword: ""
+}
+send ""your_password\r""
+expect {
+  ""*assword: "" { send_user ""\n# Incorrect Password. Login Failed. #\n""; exit 4 }
+  ""100%"" { send_user ""\nFile copied\n"" }
+}
+
+### ssh to remote server to run script
+spawn ssh $LOGIN@$IP
+expect {
+  timeout        { send_user ""\n# TIMED OUT. SSH DAEMON or PORT 22 CLOSED #\n""; exit 6 }
+  ""*assword: ""
+}
+send ""your_password\r""
+expect {
+  timeout        { send_user ""\n# TIMED OUT. PROMPT NOT RECOGNISED! #\n""; exit 7 }
+### expect the prompt symbol
+  -re {[#>$] }
+## execute your script on the remote machine
+send ""$LOCATION\r""
+expect {
+  ""enter what you expect here"" { send_user ""\nRESULT: Message based on what you set the expect to read $IP\n"" }
+  -re {[#>$] }
+}
+
+[... other expect code here ... ]
+
+### exit remote ssh session
+send ""exit\r""
+### end of expect part of script 
+EOD
+### continue bash script here
+
+[... other bash code here ...]

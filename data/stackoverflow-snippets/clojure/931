@@ -1,0 +1,38 @@
+(defn task-processor
+  ""Takes an initial state value and number of tasks (fns). Puts tasks
+  on a work queue channel and then executes them in a go-loop, with
+  each task passed the current state. A task's return value is used as
+  input for next task. When all tasks are processed or queue has been
+  closed, places current result/state onto a result channel. To allow
+  nil values, result is wrapped in a map:
+
+  {:value state :complete? true/false}
+
+  This fn returns a map of {:queue queue-chan :result result-chan}""
+  [init & tasks]
+  (assert (pos? (count tasks)))
+  (let [queue  (chan)
+        result (chan)]
+    (async/onto-chan queue tasks)
+    (go-loop [state init, i 0]
+      (if-let [task (<! queue)]
+        (recur (task state) (inc i))
+        (do (prn ""task queue finished/terminated"")
+            (>! result {:value state :complete? (== i (count tasks))}))))
+    {:queue  queue
+     :result result}))
+
+(defn dummy-task [x] (prn :task x) (Thread/sleep 1000) (inc x))
+
+;; kick of tasks
+(def proc (apply task-processor 0 (repeat 100 dummy-task)))
+
+;; result handler
+(go
+  (let [res (<! (:result proc))]
+    (prn :final-result res)))
+
+;; to stop the queue after current task is complete
+;; in this example it might take up to an additional second
+;; for the terminated result to be delivered
+(close! (:queue proc))

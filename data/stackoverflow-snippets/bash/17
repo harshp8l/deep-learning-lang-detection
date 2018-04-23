@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+file=$1; shift                    # first input: filename
+grep_opts=( ""$@"" )                # remaining inputs: grep options
+
+dir=$(dirname -- ""$file"")         # extract directory name to use for offset storage
+basename=${file##*/}              # pick up file name w/o directory
+size_file=""$dir/.$basename.size""  # generate filename to use to store offset
+
+if [[ -s $size_file ]]; then      # ...if we already have a file with an offset...
+  old_size=$(<""$size_file"")       # ...read it from that file
+else
+  old_size=0                      # ...otherwise start at the front.
+fi
+
+new_size=$(stat --format=%s -- ""$file"") || exit  # Figure out current size
+
+if (( new_size < old_size )); then
+  old_size=0                          # file was truncated, so we can't trust old_size
+elif (( new_size == old_size )); then
+  exit 0                              # no new contents, so no point in trying to search
+fi
+
+# read starting at old_size and grep only that content
+dd iflag=skip_bytes skip=""$old_size"" if=""$file"" | grep ""${grep_opts[@]}""; grep_retval=$?
+
+# if the read failed, don't store an updated offset
+(( ${PIPESTATUS[0]} != 0 )) && exit 1
+
+# create a new tempfile to store offset in
+tempfile=$(mktemp -- ""${size_file}.XXXXXX"") || exit
+
+# write to that temporary file...
+printf '%s\n' ""$new_size"" > ""$tempfile"" || { rm -f ""$tempfile""; exit 1; }
+
+# ...and if that write succeeded, overwrite the last place where we serialized output.
+mv -- ""$tempfile"" ""$new_size"" || exit
+
+exit ""$grep_retval""

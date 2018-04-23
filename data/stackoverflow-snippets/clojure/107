@@ -1,0 +1,67 @@
+(ns tst.demo.core
+  (:use tupelo.core tupelo.test)
+  (:require [criterium.core :as crit]))
+
+(defmacro timing [& forms]
+; `(crit/quick-bench ~@forms)
+  `(time ~@forms)
+  )
+
+(def power 7)
+(def reps (Math/pow 10 power))
+
+(def data-vals (range reps))
+(def data-vec (vec data-vals))
+(def data-arr (long-array data-vals))
+
+; *** BEWARE of small errors causing reflection => 1000x slowdown ***
+(defn sum-arr-1 []
+  (areduce data-arr i accum 0
+    (+ accum (aget data-arr i)))) ;      =>  6300 ms (power 6)
+(defn sum-arr []
+  (let [data ^longs data-arr]
+    (areduce data i accum 0
+      (+ accum (aget data i))))) ;       =>     8 ms (power 6)
+
+(defn sum-sum-arr []
+  (let [data   ^longs data-arr
+        sum1   (areduce data i accum 0
+                 (+ accum (aget data i)))
+        sum2   (areduce data i accum 0
+                 (+ accum (aget data i)))
+        result (+ sum1 sum2)]
+    result))
+
+(defn sum-arr2 []
+  (let [data   ^longs data-arr
+        data2  (long-array (* 2 reps))
+        >>     (dotimes [i reps] (aset data2 i (aget data i)))
+        >>     (dotimes [i reps] (aset data2 (+ reps i) (aget data i)))
+        result (areduce data2 i accum 0
+                 (+ accum (aget data2 i)))]
+    result))
+
+
+(defn sum-vec      [] (reduce + data-vec))
+(defn into-sum-vec [] (reduce + (into data-vec data-vec)))
+
+(dotest
+  (is= (spyx (sum-vec))
+    (sum-arr))
+
+  (is= (spyx (into-sum-vec))
+    (sum-arr2)
+    (sum-sum-arr))
+
+  (newline) (println ""-----------------------------------------------------------------------------"")
+  (println ""ARRAY  power = "" power)
+  (timing (sum-arr))
+  (spyx (timing (sum-sum-arr)))
+  (spyx (timing (sum-arr2)))
+
+  (newline) (println ""-----------------------------------------------------------------------------"")
+  (println ""VECTOR  power = "" power)
+  (timing (sum-vec))
+  (timing (into-sum-vec))
+
+)

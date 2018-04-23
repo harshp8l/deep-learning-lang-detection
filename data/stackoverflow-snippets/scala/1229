@@ -1,0 +1,14 @@
+  def unmarshal: HttpResponse ⇒ JsValue =
+    response ⇒
+      if (response.status.isSuccess)
+        response.as[List[Robot]] match {
+          case Right(value) ⇒ value.toJson
+          case Left(error: MalformedContent) ⇒
+            response.as[JsObject] match {
+              case Right(value) ⇒ value.toJson
+              case Left(error)  => throw new PipelineException(error.toString)
+            }
+
+      case Left(error) ⇒ throw new PipelineException(error.toString)
+    }
+  else throw new UnsuccessfulResponseException(response.status)

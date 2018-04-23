@@ -1,0 +1,22 @@
+// Start of modifications here
+
+// Create an array of objects in this case tables to copy
+let tablesToCopy = 
+    sourceDatabase.Tables 
+    |> Seq.cast<Table> // Convert TableCollection to seq<Table> so can use Seq functions
+    |> Seq.filter (fun table -> [| ""DimTime""; ""DimCategory"" |] |> Seq.exists (fun tableName -> tableName = table.Name)) 
+    |> Seq.toArray // Materialise to an Array so it can be consumed by an ArrayList constructor and assigned to the ObjectList property
+
+let transferDatabase = 
+    Transfer(sourceDatabase, 
+        CopyAllObjects = false, // Set to false
+        CopyAllSchemas = true, 
+        CopyAllUserDefinedDataTypes = true, 
+        CopyAllTables = false, // Set to false
+        ObjectList = System.Collections.ArrayList(tablesToCopy), // Include a list of objects to copy - uses old style ArrayList
+        CopyData = true, 
+        CopyAllStoredProcedures = true,
+        DestinationServer = destServer.Name,
+        DestinationDatabase = destDatabase.Name)
+
+// End of modifications here

@@ -1,0 +1,72 @@
+package main
+
+import (
+  ""fmt""
+  ""reflect""
+)
+
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void prtText(char * const *txt, int len)
+{
+    int i = 0;
+
+    for ( i=0; i<len; i++ ) {
+        printf(""Text %d is: %s\n"", i, txt[i]);
+    }
+}
+
+static char**makeCharArray(int size) {
+        return calloc(sizeof(char*), size);
+}
+
+static void setArrayString(char **a, char *s, int n) {
+        a[n] = s;
+}
+
+static void freeCharArray(char **a, int size) {
+        int i;
+        for (i = 0; i < size; i++)
+                free(a[i]);
+        free(a);
+}
+
+*/
+import ""C""
+
+func main() {
+  s := []string{}
+
+  s = append(s, ""blah"")
+  s = append(s, ""hello"")
+  s = append(s, ""again"")
+
+  ns := []string{}
+
+  ns = append(ns, ""ns: ""+s[0])
+  ns = append(ns, ""ns: ""+s[1])
+  ns = append(ns, ""ns: ""+s[2])
+
+  fmt.Println(""type s:"", reflect.TypeOf(s))
+  fmt.Println(""type ns:"", reflect.TypeOf(ns))
+  fmt.Println(""s:"", s)
+  fmt.Println(""ns:"", ns)
+
+  sargs := C.makeCharArray(C.int(len(s)))
+  defer C.freeCharArray(sargs, C.int(len(s)))
+  for i, p := range s {
+    C.setArrayString(sargs, C.CString(p), C.int(i))
+  }
+
+  nsargs := C.makeCharArray(C.int(len(ns)))
+  defer C.freeCharArray(nsargs, C.int(len(ns)))
+  for i, p := range ns {
+    C.setArrayString(nsargs, C.CString(p), C.int(i))
+  }
+
+  C.prtText(sargs, C.int(len(s)))
+  C.prtText(nsargs, C.int(len(ns)))
+}

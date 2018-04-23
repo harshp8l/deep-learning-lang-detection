@@ -1,0 +1,25 @@
+CREATE TABLE Administration (Id_Administration int, Lib_Administration varchar(100))
+INSERT INTO Administration (Id_Administration, Lib_Administration) VALUES 
+ (1, 'adminstration1'), (2, 'adminstration2')
+
+CREATE TABLE Office(Id_Administration int, Id_Office int, Lib_Office varchar(100))
+INSERT INTO Office (Id_Administration, Id_Office, Lib_Office) VALUES
+ (1, 1, 'A1 Office 1'), (1, 2, 'A1 Office 2')
+,(2, 1, 'A2 Office 2'), (2, 2, 'A2 Office 2')
+
+CREATE TABLE Fax (Id_Fax int, Fax_Number char(7), Id_Administration int, Id_Office int)
+INSERT INTO Fax (Id_Fax, Fax_Number, Id_Administration, Id_Office) VALUES
+ (1, '0323232', 1, 1), (2, '0363636', 2, 1)
+,(3, '0373737', 2, 2)
+
+CREATE TABLE Telephone (Id_Phone int, Phone_Number char(7), Id_Administration int, Id_Office int)
+INSERT INTO Telephone (Id_Phone, Phone_Number, Id_Administration, Id_Office) VALUES
+ (1, '0313131', 1, 1)
+,(2, '0212121', 1, 2)
+,(3, '0353535', 2, 1)
+,(4, '0343434', 2, 2)
+
+SELECT A.Id_Administration, A.Lib_Administration, T.Phone_Number, COALESCE(F.Fax_Number, '') AS Fax_Number
+  FROM Administration A LEFT JOIN Office O ON A.Id_Administration = O.Id_Administration
+                         LEFT JOIN Fax F ON F.Id_Administration = A.Id_Administration AND F.Id_Office = O.Id_Office
+                         LEFT JOIN Telephone T ON T.Id_Administration = A.Id_Administration AND T.Id_Office = O.Id_Office

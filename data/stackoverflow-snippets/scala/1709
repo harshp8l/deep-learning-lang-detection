@@ -1,0 +1,38 @@
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
+import org.apache.spark.sql.types._
+
+class ModeUDAF extends UserDefinedAggregateFunction{
+
+  override def dataType: DataType = StringType
+
+  override def inputSchema: StructType = new StructType().add(""input"", StringType)
+
+  override def deterministic: Boolean = true
+
+  override def bufferSchema: StructType = new StructType().add(""mode"", MapType(StringType, LongType))
+
+  override def initialize(buffer: MutableAggregationBuffer): Unit = {
+    buffer(0) = Map.empty[Any, Long]
+  }
+
+  override def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
+    val buff0 = buffer.getMap[Any, Long](0)
+    val inp = input.get(0)
+    buffer(0) = buff0.updated(inp, buff0.getOrElse(inp, 0L) + 1L)
+  }
+
+  override def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {
+    val mp1 = buffer1.getMap[Any, Long](0)
+    val mp2 = buffer2.getMap[Any, Long](0)
+
+    buffer1(0) = mp1 ++ mp2.map { case (k, v) => k -> (v + mp1.getOrElse(k, 0L)) }
+  }
+
+  override def evaluate(buffer: Row): Any = {
+    lazy val st = buffer.getMap[Any, Long](0).toStream
+    val mode = st.foldLeft(st.head){case (e, s) => if (s._2 > e._2) s else e}
+    mode._1
+  }
+
+}

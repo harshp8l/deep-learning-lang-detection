@@ -1,0 +1,25 @@
+namespace {
+    inline void throwProcessingError(const string& filename, const string& what_arg) {
+        throw system_error(errno, system_category(), what_arg + "" "" + filename);
+    }
+}
+
+void process_file(const string& filename, function<void (ifstream &)> fn) {
+    errno = 0;
+    ifstream strm(filename);
+    if (!strm.is_open()) throwProcessingError(filename, ""Failed to open"");
+    fn(strm);
+    if (strm.bad()) throwProcessingError(filename, ""Failed while processing"");
+}
+
+void process_file_line_by_line(const string& filename, function<void (const string &)> fn)
+{
+    errno = 0;
+    ifstream strm(filename);
+    if (!strm.is_open()) throwProcessingError(filename, ""Failed to open"");
+    string line;
+    while (getline(strm, line)) {
+        fn(line);
+    }
+    if (strm.bad()) throwProcessingError(filename, ""Failed while processing"");
+}

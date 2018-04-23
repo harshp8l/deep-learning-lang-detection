@@ -1,0 +1,15 @@
+#pragma omp parallel
+{
+    // Each OpenMP thread has its own variable
+    SecByteBlock XY(static_cast<size_t>(blockSize * 256U));
+    SecByteBlock  V(static_cast<size_t>(blockSize * cost * 128U));
+
+    // 2: for i = 0 to p - 1 do
+    #pragma omp for
+    for (unsigned int i = 0; i < parallel; ++i)
+    {
+        // 3: B_i <-- MF(B_i, N)
+        const ptrdiff_t offset = static_cast<ptrdiff_t>(blockSize*i*128);
+        Smix(B+offset, static_cast<size_t>(blockSize), cost, V, XY);
+    }
+}

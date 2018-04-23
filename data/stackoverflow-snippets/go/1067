@@ -1,0 +1,30 @@
+type myFileType struct {
+    io.Reader
+    io.Closer
+}
+
+func OpenFile(name string) io.ReadCloser {
+
+    file, err := os.Open(name)
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    if strings.Contains(name, "".gz"") {
+
+        gzip, gerr := gzip.NewReader(file)
+        if gerr != nil {
+            log.Fatal(gerr)
+        }
+        return gzip
+
+    } else if strings.Contains(name, "".bz2"") {
+
+        bzip2 := bzip2.NewReader(file)
+        return myFileType{bzip2, file}
+
+    } else {
+        return file
+    }
+}

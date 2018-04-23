@@ -1,0 +1,44 @@
+type fetchState struct {
+    mu      sync.Mutex
+    fetched map[string]bool
+}
+
+func (f *fetchState) CheckAndMark(url string) bool {
+    defer f.mu.Unlock()
+
+    f.mu.Lock()
+    if f.fetched[url] {
+        return true
+    }
+    f.fetched[url] = true
+    return false
+}
+
+func mkFetchState() *fetchState {
+    f := &fetchState{}
+    f.fetched = make(map[string]bool)
+    return f
+}
+
+func CrawlConcurrentMutex(url string, fetcher Fetcher, f *fetchState) {
+    if f.CheckAndMark(url) {
+        return
+    }
+
+    body, urls, err := fetcher.Fetch(url)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    fmt.Printf(""found: %s %q\n"", url, body)
+    var done sync.WaitGroup
+    for _, u := range urls {
+        done.Add(1)
+        go func(u string) {
+            defer done.Done()
+            CrawlConcurrentMutex(u, fetcher, f)
+        }(u) // Without the u argument there is a race
+    }
+    done.Wait()
+    return
+}

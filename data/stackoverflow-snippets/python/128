@@ -1,0 +1,21 @@
+df2 = pd.DataFrame({'url':['/pool','/refrigerators','/refrigerators','/refrigerators','/joss-and-main','/furniture','/entertainment-centers-and-tv-stands'], 
+                    'word':['pool','refrigerator','fridge','cooler','joss and main','furniture','tv stand']})
+
+# groupby to list
+s = df2.groupby('url')['word'].apply(list)
+lst = s.values.tolist()
+
+# pad inner lists so they have same length
+maxlen = max(map(len, lst))
+lst = [i+['']*(maxlen-len(i)) for i in lst]
+
+# build split dataframe
+res = pd.DataFrame(lst, columns=['word'+str(i) for i in range(1,maxlen+1)], index=s.index)\
+        .reset_index()
+
+#                                     url          word1   word2   word3
+# 0  /entertainment-centers-and-tv-stands       tv stand                
+# 1                            /furniture      furniture                
+# 2                        /joss-and-main  joss and main                
+# 3                                 /pool           pool                
+# 4                        /refrigerators   refrigerator  fridge  cooler

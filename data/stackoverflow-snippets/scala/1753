@@ -1,0 +1,26 @@
+trait Morph[A, B] {
+  type AR
+  type BR
+  def apply(a: A)(f: AR => BR): B
+}
+
+object Morph {
+  type Aux[A, B, AR0, BR0] = Morph[A, B] {
+    type AR = AR0
+    type BR = BR0
+  }
+
+  implicit def genericMorph[A, B, AR0, BR0](
+    implicit genA: LabelledGeneric.Aux[A, AR0], genB: LabelledGeneric.Aux[B, BR0]
+  ): Aux[A, B, AR0, BR0] = new Morph[A, B] {
+    type AR = AR0
+    type BR = BR0
+    def apply(a: A)(f: AR => BR) = genB.from(f(genA.to(a)))
+  }
+
+  implicit class Syntax[A](a: A) {
+    def morphTo[B](implicit morph: Morph[A, B]) = new {
+      def using(f: morph.AR => morph.BR) = morph(a)(f)
+    }
+  }
+}

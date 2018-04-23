@@ -1,0 +1,19 @@
+type Result<'TSuccess, 'TError> = 
+  | Success of 'TSuccess 
+  | Error   of 'TError list
+  with 
+  member this.map (f : 'TSuccess -> 'T) =
+    match this with
+    | Success s -> Success (f s)
+    | Error   e -> Error e
+
+let inline (<!>) (f : ^A -> ^B) (t : ^T) : ^U =
+  let map' = (^T : (member map : (^A -> ^B) -> ^U) (t, f))
+  map'
+
+[<EntryPoint>]
+let main argv = 
+  let w = (fun x y -> x + y) <!> Success 3
+  let x = (fun x -> x 2) <!> w
+  printfn ""%A"" x // Prints ""Success 5""
+  0

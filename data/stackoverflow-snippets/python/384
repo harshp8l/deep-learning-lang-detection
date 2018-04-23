@@ -1,0 +1,20 @@
+_visitors = {}
+
+def visitor(arg_type):
+    ""A @visitor decorator""
+    def decorated(fn):
+        import inspect
+        stack = inspect.currentframe()
+        class_name = stack.f_back.f_code.co_name
+        full_name = fn.__module__ + '.' + class_name + '.' + fn.__name__
+        _visitors[(full_name, arg_type)] = fn
+
+        def _visitor_impl(self, arg, *rest, **kwargs):
+            full_name = fn.__module__ + '.' + self.__class__.__name__ + '.' + fn.__name__
+            assert (full_name, arg.__class__) in _visitors, ""Can't find visitor in {} for {}"".format(full_name, arg.__class__.__name__)
+            method = _visitors[(full_name, arg.__class__)]
+            return method(self, arg, *rest, **kwargs)
+
+        return _visitor_impl
+
+    return decorated

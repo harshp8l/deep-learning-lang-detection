@@ -1,0 +1,32 @@
+user> (def default-values {:A :default :B :default :C :default :D :default})
+#'user/default-values
+
+user> (def paths {:A {:B 5, :D 5, :E 7},
+            :B {:C 4},
+            :C {:D 8, :E 2},
+            :D {:C 8, :E 6},
+            :E {:B 3}})
+#'user/paths
+
+user> (keys paths)
+(:A :D :B :C :E)
+
+user> (vals paths)
+({:D 5, :B 5, :E 7} {:C 8, :E 6} {:C 4} {:D 8, :E 2} {:B 3})
+
+user> (map #(merge default-values %) (vals paths))
+({:A :default, :D 5, :B 5, :C :default, :E 7} 
+ {:A :default, :D :default, :B :default, :C 8, :E 6} 
+ {:A :default, :D :default, :B :default, :C 4}
+ {:A :default, :D 8, :B :default, :C :default, :E 2} 
+ {:A :default, :D :default, :B 3, :C :default})
+
+user> (clojure.pprint/pprint
+       (zipmap (keys paths) 
+               (map #(merge default-values %) 
+                    (vals paths))))
+{:E {:A :default, :D :default, :B 3, :C :default},
+ :C {:A :default, :D 8, :B :default, :C :default, :E 2},
+ :B {:A :default, :D :default, :B :default, :C 4},
+ :D {:A :default, :D :default, :B :default, :C 8, :E 6},
+ :A {:A :default, :D 5, :B 5, :C :default, :E 7}}

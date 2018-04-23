@@ -1,0 +1,35 @@
+open FsCheck.Xunit
+open Swensen.Unquote
+
+let isInitEvent = function InitEvent _ -> true | _ -> false
+let isRefEvent =  function RefEvent  _ -> true | _ -> false
+
+[<Property(MaxTest = 100000)>]
+let ``All InitEvents must come before all RefEvents`` () =
+    Prop.forAll (streamGen |> Arb.fromGen) <| fun s ->
+        test <@ s |> Seq.skipWhile isInitEvent |> Seq.forall isRefEvent @>
+
+[<Property(MaxTest = 100000)>]
+let ``All InitEvents strings must be unique`` () =
+    Prop.forAll (streamGen |> Arb.fromGen) <| fun s ->
+        let initEventStrings =
+            s |> Seq.choose (function InitEvent s -> Some s | _ -> None)
+        let distinctStrings = initEventStrings |> Seq.distinct
+
+        distinctStrings |> Seq.length =! (initEventStrings |> Seq.length)
+
+[<Property(MaxTest = 100000)>]
+let ``All RefEvent names must have an earlier corresponding InitEvent`` () =
+    Prop.forAll (streamGen |> Arb.fromGen) <| fun s ->
+        let initEventStrings =
+            s
+            |> Seq.choose (function InitEvent s -> Some s | _ -> None)
+            |> Seq.sort
+            |> Seq.toList
+        let refEventStrings =
+            s
+            |> Seq.choose (function RefEvent s -> Some s | _ -> None)
+            |> Seq.sort
+            |> Seq.toList
+
+        initEventStrings =! refEventStrings

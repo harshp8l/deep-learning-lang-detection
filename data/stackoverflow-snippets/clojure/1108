@@ -1,0 +1,14 @@
+(defn read-file [file]
+  (with-open[rdr (clojure.java.io/reader file)]
+    (let[lines (line-seq rdr)
+         num-fields (Long/valueOf (first lines))
+         fields (->> lines (drop 1) (take num-fields))
+         block-size (inc num-fields)
+         records (->> lines
+                      (drop block-size) 
+                      (partition block-size) 
+                      (map (partial zipmap fields)))]
+      (into #{} records))))
+
+;;Returns #{{""volume id"" ""Vol-2345"", ""Instance id"" ""Ins-123457"", ""Name"" ""My own instance 2""} 
+;;          {""volume id"" ""Vol-23456"", ""Instance id"" ""Ins-12345"", ""Name"" ""My own instance 1""}} 

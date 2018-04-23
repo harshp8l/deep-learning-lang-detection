@@ -1,0 +1,49 @@
+class MyBackgroundPlane extends THREE.Mesh{
+    constructor(){
+        super( 
+            new THREE.PlaneBufferGeometry(2,2,1,1), 
+            new THREE.ShaderMaterial({
+                uniforms:{
+                    uTexture: { value: null },
+                    uAspect: { value: 1 }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    uniform float uAspect;
+
+                    void main(){
+
+                        vUv = uv; //pass coordinates to screen
+                        vUv.x *= uAspect; //scale the coordinates
+
+                        gl_Position = vec4(position.xy, 1., 1.);
+
+                    }
+
+                `,
+
+                fragmentShader:`
+                    varying vec2 vUv;
+                    uniform sampler2D uTexture;
+
+                    void main(){
+
+                        gl_FragColor = texture2D( uTexture, vUv );
+                    }
+
+                `
+
+            })
+        )
+
+        this.frustumCulled = false
+    }
+
+    setAspect( aspect ){
+        this.material.uniforms.uAspect.value = aspect
+    }
+
+    setTexture( texture ){
+        this.material.uniforms.uTexture.value = texture
+    }
+}

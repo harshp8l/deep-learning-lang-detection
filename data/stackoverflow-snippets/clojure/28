@@ -1,0 +1,27 @@
+(ns tst.demo.core
+  (:use demo.core tupelo.core tupelo.test)
+  (:require [tupelo.array :as tar] ))
+
+(def data
+  [[1 1 1 3]
+   [2 2 2 3]
+   [3 2 1 1]
+   [4 3 3 4]])
+
+(dotest
+  (let [arr          (tar/rows->array data)
+        result-1     (-> arr
+                       (tar/elem-set 0 1 ""Joe"") ; can be in any order here
+                       (tar/elem-set 3 1 ""Martha"")
+                       (tar/elem-set 2 1 ""Fred"")
+                       (tar/elem-set 1 1 ""Fred""))
+
+        row-name-map {0 ""Joe""
+                      2 ""Fred""
+                      3 ""Martha""
+                      1 ""Fred""}
+        result-2     (reduce
+                       (fn [cum-arr [row-idx name]]
+                         (tar/elem-set cum-arr row-idx 1 name))
+                       arr
+                       row-name-map)

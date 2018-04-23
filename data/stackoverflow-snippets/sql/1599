@@ -1,0 +1,17 @@
+declare @cols_tagItems as nvarchar(max)
+     ,  @cols_tagItems_max as nvarchar(max)
+     ,  @query  as nvarchar(max)
+
+select @cols_tagItems = stuff((select distinct ', ' + TagItemID from #table for xml path(''), type ).value('.', 'nvarchar(max)') ,1,1,'')
+ select @cols_tagItems
+
+set @query = 'select TagTimestamp, ' + @cols_tagItems + '
+                  from 
+                    (
+                        select TagTimestamp, TagItemID, TagValue
+                        from #table 
+                    ) x
+                  pivot ( max(TagValue) for TagItemID in (' + @cols_tagItems + ') )p  
+              order by TagTimestamp'
+select @query
+execute sp_executesql @query;

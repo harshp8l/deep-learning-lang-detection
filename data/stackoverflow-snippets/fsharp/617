@@ -1,0 +1,36 @@
+open System.Reflection
+
+let (?) (o:obj) s : 'a =
+    let rec build ty args =
+        if Reflection.FSharpType.IsFunction ty then
+            let dom, rng = Reflection.FSharpType.GetFunctionElements ty
+            let mkArgs =
+                if dom = typeof<unit> then
+                    if Reflection.FSharpType.IsFunction rng then failwith ""Unit as non-final argument in curried definition?""
+                    fun _ -> args
+                else
+                    fun arg -> arg::args
+            Reflection.FSharpValue.MakeFunction(ty, fun o -> build rng (mkArgs o))
+        else
+            let rcvr,ty,flags =
+                match o with
+                | :? System.Type as ty -> null,ty,BindingFlags.Static
+                | _ -> o,o.GetType(),BindingFlags.Instance
+            let flags = flags ||| BindingFlags.Public
+            let meth =
+                if Reflection.FSharpType.IsFunction typeof<'a> then
+                    query {
+                        for m in ty.GetMethods(flags) do
+                        where (m.Name = s)
+                        where (m.GetParameters().Length = args.Length)
+                        exactlyOne
+                    }                    
+                else
+                    ty.GetProperty(s, flags).GetGetMethod()
+            meth.Invoke(rcvr, args |> List.toArray)
+
+    build typeof<'a> [] :?> 'a
+
+let Clipboard = System.Type.GetType(@""Windows.ApplicationModel.DataTransfer.Clipboard, Windows.ApplicationModel, Version=255.255.255.255, Culture=neutral, PublicKeyToken=null, ContentType=WindowsRuntime"")
+
+Clipboard?GetContent()?AvailableFormats |> Seq.iter (printfn ""%s"")

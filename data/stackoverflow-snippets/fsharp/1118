@@ -1,0 +1,32 @@
+#I ""../packages/FParsec.1.0.1/lib/net40-client""
+#r ""FParsec""
+#r ""FParsecCS""
+
+open FParsec
+open System.Numerics
+
+type Expr =
+  | Int of BigInteger
+  | Add of Expr * Expr
+  | Mul of Expr * Expr
+  | Pow of Expr * Expr
+
+let str s = pstring s >>. spaces
+let pInt : Parser<_, unit> = many1Satisfy isDigit |>> BigInteger.Parse .>> spaces
+let high = OperatorPrecedenceParser<Expr,unit,unit>()
+let low = OperatorPrecedenceParser<Expr,unit,unit>()
+let pHighExpr = high.ExpressionParser .>> spaces
+let pLowExpr = low.ExpressionParser .>> spaces
+
+high.TermParser <-
+  choice
+    [ pInt |>> Int
+      between (str ""("") (str "")"") pLowExpr ]
+
+low.TermParser <-
+  many1 pHighExpr |>> (function [f] -> f | fs -> List.reduce (fun f g -> Mul(f, g)) fs) .>> spaces
+
+low.AddOperator(InfixOperator(""+"", spaces, 10, Associativity.Left, fun f g -> Add(f, g)))
+high.AddOperator(InfixOperator(""^"", spaces, 20, Associativity.Right, fun f g -> Pow(f, g)))
+
+run (spaces >>. pLowExpr .>> eof) ""1 2 + 3 4 ^ 5 6""

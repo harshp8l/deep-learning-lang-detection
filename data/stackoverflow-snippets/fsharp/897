@@ -1,0 +1,74 @@
+type NewProductAttributeInfo = {
+    AttributeId : string;
+    AttributeCategoryId : string
+}
+
+
+let rec private returnVariant (curIdx: int) (listLength: int) 
+    (attList: (int * NewProductAttributeInfo * NewProductAttributeInfo) list) 
+    (curList: NewProductAttributeInfo list) =
+
+    match curList with
+    | x when x.Length = listLength -> curList
+    | x -> 
+        let attTup =
+            attList
+            |> List.filter (fun x' -> 
+                                let idx1,att1,att2' = x'
+                                idx1 >= curIdx && not(curList 
+                                                        |> List.exists (fun x'' -> 
+                                                                            x'' = att2'))
+                            )
+        let idx1,att1,att2 = attTup |> List.head
+        let newList = curList @ [att2]
+        returnVariant idx1 newList.Length attList newList
+
+
+let rec calculateVariants (attList: NewProductAttributeInfo list) 
+    (currentList: (int * NewProductAttributeInfo * NewProductAttributeInfo) list) =
+
+    // group attribute list by category id
+    let attGrouped = attList |> List.groupBy (fun x -> x.AttributeCategoryId)
+    let (firstGroupCatId,firstGroupDetails) = attGrouped.[0]
+
+
+
+
+    match currentList with
+    | [] ->
+        let rawVariants = [for nxt in 0 .. (attGrouped.Length - 1) do
+                            if nxt > 0
+                            then
+                                // begin iteration
+                                for d in firstGroupDetails do
+                                    let _,det = attGrouped.[nxt]
+                                    for det' in det do
+                                        yield (nxt, d, det')
+                        ]
+        calculateVariants attList rawVariants
+    | x ->
+        let groupLength = x |> List.groupBy (fun (idx,d0,nxtD) -> idx)
+                        |> List.length |> ((+)1)
+        let sortedGroup = x |> List.sortBy (fun (x,y,z) -> x)
+        if groupLength > 2
+        then // below is the block that generates the duplicates
+            [for att in sortedGroup do
+                for attCompare in sortedGroup do
+                    let idx1,att1,att2 = att
+                    let idx2,attC1,attC2 = attCompare
+                    if idx2 > idx1 && att2 <> attC2
+                    then
+                        let idString = 
+                            returnVariant idx2 groupLength x [att1; att2; attC2]
+                            |> List.map (fun nl -> nl.AttributeId)
+                        yield String.concat "","" idString
+            ]
+        else
+            [
+                for att in sortedGroup do
+                    let idx1,att1,att2 = att
+                    let idString = 
+                            returnVariant idx1 groupLength x [att1; att2]
+                            |> List.map (fun nl -> nl.AttributeId)
+                    yield String.concat "","" idString
+            ]

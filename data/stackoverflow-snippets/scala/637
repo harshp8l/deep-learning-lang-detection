@@ -1,0 +1,20 @@
+val config = new HikariConfig()
+config.setJdbcUrl(JdbcUrl)
+config.setUsername(Username)
+config.setPassword(Password)
+config.setMaximumPoolSize(databaseConnectionPoolSize)
+
+val DbTransactor: IO[HikariTransactor[IO]] =
+  IO.pure(HikariTransactor.apply[IO](new HikariDataSource(config)))
+
+sql""""""select DISTINCT gcpProject FROM JobStatus""""""
+     .query[String]
+     .stream
+     .take(5)
+     .compile.toList
+
+val prog = for {
+  xa <- transactor
+  result <- query.transact(xa)
+} yield result
+prog.unsafeRunSync()

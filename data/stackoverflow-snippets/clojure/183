@@ -1,0 +1,22 @@
+(defn empty-duplicates
+  ([]
+   (fn [rf]
+     (let [seen (volatile! #{})]
+       (fn
+         ([] (rf))
+         ([res] (rf res))
+         ([res x]
+          (if (contains? @seen x)
+            (rf res """")
+            (do (vswap! seen conj x)
+                (rf res x))))))))
+  ([coll]
+   (sequence (empty-duplicates) coll)))
+
+(comment
+
+  (def months [""Oct 2016"" ""Oct 2016"" ""Nov 2016"" ""Nov 2016"" ""Nov 2016"" ""Nov 2016""])
+
+  (into [] (empty-duplicates) months) ;=> [""Oct 2016"" """" ""Nov 2016"" """" """" """"]
+
+  )

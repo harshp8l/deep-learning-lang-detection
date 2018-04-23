@@ -1,0 +1,54 @@
+--Create automatic UPDATE and INSERT feedback triggers.
+declare
+    c_sql_template constant varchar2(32767) :=
+    q'[
+create or replace trigger #TABLE_NAME#_#UPD_or_INS#_trg for #UPDATE_OR_INSERT# on #TABLE_NAME# compound trigger
+
+--Purpose: Print a feedback message after updates and inserts.
+g_count number := 0;
+
+after each row is
+begin
+    g_count := g_count + 1;
+end after each row;
+
+after statement is
+begin
+    if print_feedback.g_print_output then
+        if g_count = 1 then
+            dbms_output.put_line('#Inserted_or_Updated# '||g_count||' row in #TABLE_NAME#');
+        else
+            dbms_output.put_line('#Inserted_or_Updated# '||g_count||' rows in #TABLE_NAME#');
+        end if;
+    end if;
+end after statement;
+
+end;
+    ]';
+    v_sql varchar2(32767);
+begin
+    --Loop through the relevant tables
+    for tables in
+    (
+        select table_name
+        from user_tables
+        where table_name in ('TABLE1', 'TABLE2')
+        order by table_name
+    ) loop
+        --Create and execute update trigger.
+        v_sql := replace(replace(replace(replace(c_sql_template
+            , '#TABLE_NAME#', tables.table_name)
+            , '#UPD_or_INS#', 'upd')
+            , '#UPDATE_OR_INSERT#', 'update')
+            , '#Inserted_or_Updated#', 'Updated');
+        execute immediate v_sql;
+        --Create and execute insert trigger.
+        v_sql := replace(replace(replace(replace(c_sql_template
+            , '#TABLE_NAME#', tables.table_name)
+            , '#UPD_or_INS#', 'ins')
+            , '#UPDATE_OR_INSERT#', 'insert')
+            , '#Inserted_or_Updated#', 'Inserted');
+        execute immediate v_sql;
+    end loop;
+end;
+/

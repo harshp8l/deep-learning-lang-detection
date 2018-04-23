@@ -1,0 +1,70 @@
+package main
+
+import (
+    ""bytes""
+    ""log""
+    ""os""
+    ""time""
+)
+
+var files = [2]string{
+    ""file1.txt"",
+    ""file2.txt"",
+}
+
+func main() {
+    c := time.Tick(1 * time.Second)
+    for range c {
+        str, err := readFiles()
+        if err != nil {
+            panic(err)
+        }
+
+        err = sendEmail(str)
+        if err != nil {
+            panic(err)
+        }
+    }
+}
+
+func readFile(fname string) ([]byte, error) {
+    file, err := os.Open(fname)
+    if err != nil {
+        return nil, err
+    }
+    defer file.Close()
+
+    fi, err := file.Stat()
+    if err != nil {
+        return nil, err
+    }
+
+    buf := make([]byte, 34)
+    n, err := file.ReadAt(buf, fi.Size()-int64(len(buf)))
+    if err != nil {
+        return nil, err
+    }
+
+    return buf[:n], nil
+}
+
+func readFiles() (string, error) {
+    buff := new(bytes.Buffer)
+
+    for _, fname := range files {
+        l, err := readFile(fname)
+        if err != nil {
+            return """", err
+        }
+        buff.Write(l)
+        // This prevents all logs to be in the same line.
+        buff.WriteString(""\n"")
+    }
+
+    return buff.String(), nil
+}
+
+func sendEmail(str string) error {
+    log.Printf(""\nMail Sent with:\n---\n%v\n---\n\n"", str)
+    return nil
+}

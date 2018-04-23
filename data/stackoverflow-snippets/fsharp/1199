@@ -1,0 +1,42 @@
+module DataGen = 
+
+open ContainerLibrary
+
+//can't really register this one because of the measure, would override all decimal generatos
+let volumeGenerator = 
+        Gen.choose (1, 16)
+        |> Gen.map(fun x -> (decimal x / 8.0M) * 1.0M<ContainerLibrary.oz>)
+
+let commonGenerator =
+    Gen.map2 (fun a b -> { Volume = a 
+                           Weight = b})
+                     (volumeGenerator) 
+                     (Arb.generate<decimal>)
+
+//in case you like applicative style, otherwise completely equivalent
+let commonGeneratorAlternative =
+    (fun a b -> { Volume = a; Weight = b}) <!> volumeGenerator <*> Arb.generate<decimal>
+
+let bowlGenerator = Gen.map Bowl commonGenerator
+let cupGenerator = Gen.map Cup commonGenerator
+
+let containerGenerator =
+    Gen.oneof [bowlGenerator; cupGenerator]
+
+type Generators =
+    static member Container() = containerGenerator |> Arb.fromGen
+
+module Tests =
+open FsCheck.Xunit
+open ContainerLibrary
+
+//use PropertyAttribute from FsCheck.Xunit
+//use the defined container generator - can also move this to module level
+//other ways to parametrize
+[<Property(Arbitrary=[|typeof<DataGen.Generators>|])>]
+//thanks to PropertyAttribute can now just take container as argument
+let ``01 : Containers must be no more than 20 oz`` (container:Container) =
+    match container with
+    | Cup common
+    | Bowl common -> common.Volume <= 20.0M<oz>
+    |> Prop.collect container //see the generated values in the output

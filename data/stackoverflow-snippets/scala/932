@@ -1,0 +1,19 @@
+def gpuRowToGpu(gpuRow: GpuRow): Gpu = {
+  Gpu(gpuRow.id, gpuRow.rackId, gpuRow.produced, Util.toDate(gpuRow.installedAt))
+}
+
+def getRacks(at: String) = Action.async { implicit request: Request[AnyContent] =>
+
+  rackRepository.get(Util.toTime(at)).flatMap { resultRack: Seq[RackRow] =>
+    val seqFutRack: Seq[Future[Rack]] = resultRack.map { r: RackRow =>
+      gpuRepository.getByRack(r.id).map { result: Seq[GpuRow] =>
+        val gpus = result.map(gpuRowToGpu) // Seq[Gpu]
+        Rack(r.id, r.produced, Util.toDate(r.currentHour), gpus)
+      } // Future[Rack]
+    }
+    val futSeqRack: Future[Seq[Rack]] = Future.sequence(seqFutRack)
+    futSeqRack.map(racks => Ok(Json.toJson(racks)).as(JSON))
+  }.recover {
+    ...
+  }
+}

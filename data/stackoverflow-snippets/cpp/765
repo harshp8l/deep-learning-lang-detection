@@ -1,0 +1,146 @@
+#include ""iostream""
+using namespace std;
+
+class fraction
+{
+private:
+    int      numerator;
+    int      denominator;
+
+public:
+    fraction(int n = 0, int d = 1);
+    friend fraction operator+(const fraction &f1, const fraction &f2);
+    friend fraction operator-(const fraction &f1, const fraction &f2);
+    friend fraction operator*(const fraction &f1, const fraction &f2);
+    friend fraction operator/(const fraction &f1, const fraction &f2);
+    friend ostream& operator<<(ostream& out, const fraction& f);
+    friend istream& operator>>(istream& in, fraction& f);
+};
+
+using namespace std;
+
+
+int gcd(int u, int v);
+
+fraction::fraction(int n, int d) : numerator(n), denominator(d)
+{
+    int     common = gcd(numerator, denominator);
+    numerator /= common;
+    denominator /= common;
+}
+
+fraction operator+(const fraction &f1, const fraction &f2)
+{
+    int     n = f1.numerator * f2.denominator + f2.numerator * f1.denominator;
+    int     d = f1.denominator * f2.denominator;
+
+    return fraction(n, d);
+}
+
+fraction operator-(const fraction &f1, const fraction &f2)
+{
+    int     n = f1.numerator * f2.denominator - f2.numerator * f1.denominator;
+    int     d = f1.denominator * f2.denominator;
+
+    return fraction(n, d);
+}
+
+fraction operator*(const fraction &f1, const fraction &f2)
+{
+    int     n = f1.numerator * f2.numerator;
+    int     d = f1.denominator * f2.denominator;
+
+    return fraction(n, d);
+}
+
+fraction operator/(const fraction &f1, const fraction &f2)
+{
+    int     n = f1.numerator * f2.denominator;
+    int     d = f1.denominator * f2.numerator;
+
+    return fraction(n, d);
+}
+
+ostream& operator<<(ostream& out, const fraction& f)
+{
+    out << f.numerator << ""/"" << f.denominator << endl;
+
+    return out;
+}
+
+
+
+istream& operator>>(istream& in, fraction& f)
+{
+    cout << ""Please enter the numerator: "";
+    cin >> f.numerator;
+    cout << ""Please enter the denominator: "";
+    cin >> f.denominator;
+
+    return in;
+}
+
+
+
+// Euclid's Algorithm for finding the greatest common divisor
+
+int gcd(int u, int v)
+{
+    u = (u < 0) ? -u : u;
+    v = (v < 0) ? -v : v;
+
+    while (u > 0)
+    {
+        if (u < v)
+        {
+            int t = u;  // swap u and v
+            u = v;
+            v = t;
+        }
+
+        u -= v;
+    }
+
+    return v;           // the GCD of u and v
+}
+
+int main()
+{
+    char        choice;
+    fraction    left;
+    fraction    right;
+
+    do
+    {
+        cout << ""A\tAdd\n"";
+        cout << ""S\tSub\n"";
+        cout << ""M\tMult\n"";
+        cout << ""D\tDiv\n"";
+        cout << ""E\tExit\n"";
+
+        cout << ""\nChoice?: "";
+
+        cin >> choice;
+        cin.ignore();
+
+        switch (choice)
+        {
+        case 'A':
+        case 'a':
+            cout << ""Adding"" << endl << ""enter the first operand: "";
+            cin >> left;
+            cout << ""enter the second operand: "";
+            cin >> right;
+            cout << left + right;
+            break;
+        case 'E' :
+        case 'e' :
+            break;
+        default:
+            cerr << ""Unrecognized choice: "" << choice << endl;
+            break;
+        }
+    } while (choice != 'e' && choice != 'E');
+
+    return 0;
+}

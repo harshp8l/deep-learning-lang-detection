@@ -1,0 +1,61 @@
+IF OBJECT_ID('tempdb..#Data') IS NOT NULL
+    DROP TABLE #Data
+
+CREATE TABLE #Data (
+    ArtifactID INT,
+    md5Hash VARCHAR(200),
+    Custodian INT)
+
+INSERT INTO #Data (
+    ArtifactID,
+    md5Hash,
+    Custodian)
+VALUES
+    (1098647, 'e6ae2fbc906c42b55d25f6d660f4913a', 1098624), 
+    (1098648, 'e6ae2fbc906c42b55d25f6d660f4913a', 1098717), 
+    (1098649, '9f0c88c40be3d01b6beed39b32dea3fb', 1098624), 
+    (1098650, '39446d6f0a5b29fef001c184797349b4', 1098624), 
+    (1098651, '35ec5012284256c97553b5342fd59530', 1098624), 
+    (1098652, '0914cd30b41460efaab7d6703444a5de', 1098624), 
+    (1098653, '929eefb170bc74ed3cfabae969a032ed', 1098624), 
+    (1098654, 'd8986a76130fde673bbf5f1f9fb82857', 1098624), 
+    (1098655, '6399df1a2ca3fde7021da25e4aa9e722', 1098624), 
+    (1098656, 'a19701c034af4094bc3da149d1e9b8d1', 1098624), 
+    (1098657, '8384d8e0562391ee02c731fc059b510c', 1098624), 
+    (1098658, '94800202b4473f8ce3dc08ddea4aff0c', 1098624), 
+    (1098659, '87388b9895c749147d5a19a8ccd9c865', 1098624)
+
+;WITH Artifacts AS
+(
+    SELECT DISTINCT
+        D.ArtifactID,
+        D.md5Hash
+    FROM
+        #Data AS D
+),
+Custodians AS
+(
+    SELECT DISTINCT
+        D.Custodian,
+        D.md5Hash
+    FROM
+        #Data AS D
+),
+RepeatedHash AS
+(
+    SELECT
+        T.md5Hash
+    FROM
+        Custodians AS T
+    GROUP BY
+        T.md5Hash
+    HAVING
+        COUNT(DISTINCT(T.Custodian)) > 1
+)
+SELECT
+    A.ArtifactID,
+    C.Custodian
+FROM
+    RepeatedHash AS R
+    INNER JOIN Custodians AS C ON R.md5Hash = C.md5Hash
+    INNER JOIN Artifacts AS A ON R.md5Hash = A.md5Hash

@@ -1,0 +1,26 @@
+[<DataContract>]
+type Rec1 =
+    {
+        [<DataMember>] mutable field1 : int
+        [<DataMember>] mutable field2 : string
+    }
+    static member empty = { field1 = 0; field2 = String.Empty }
+
+[<DataContract>]
+type Rec2 =
+    { 
+        [<DataMember>] mutable field3 : Rec1;
+        [<DataMember>] mutable field4 : int;
+    }
+    static member removeNulls (rec2 : Rec2) =
+        { rec2 with
+            field3 = if Object.ReferenceEquals(rec2.field3, null)
+                         then Rec1.empty
+                         else rec2.field3
+        }
+
+      :
+      :         
+
+let rec2 = deserialize<Rec2> json
+let rec2' = Rec2.removeNulls rec2

@@ -1,0 +1,38 @@
+template <class T>
+__global__ void version4(T *g_idata, T *g_odata, unsigned int N)
+{
+    extern __shared__ T sdata[];
+
+    unsigned int tid = threadIdx.x;                                 // --- Local thread index
+    unsigned int i = blockIdx.x * (blockDim.x * 2) + threadIdx.x;   // --- Global thread index - Fictitiously double the block dimension
+
+    // --- Performs the first level of reduction in registers when reading from global memory. 
+    T mySum = (i < N) ? g_idata[i] : 0;
+    if (i + blockDim.x < N) mySum += g_idata[i + blockDim.x];
+    sdata[tid] = mySum;
+
+    // --- Before going further, we have to make sure that all the shared memory loads have been completed
+    __syncthreads();
+
+    // --- Reduction in shared memory. Only half of the threads contribute to reduction.
+    for (unsigned int s = blockDim.x / 2; s > 32; s >>= 1)
+    {
+        if (tid < s) { sdata[tid] = mySum = mySum + sdata[tid + s]; }
+        // --- At the end of each iteration loop, we have to make sure that all memory operations have been completed
+        __syncthreads();
+    }
+
+    // --- Single warp reduction by loop unrolling. Assuming blockDim.x >64
+    if (tid < 32) {
+        sdata[tid] = mySum = mySum + sdata[tid + 32]; __syncthreads();
+        sdata[tid] = mySum = mySum + sdata[tid + 16]; __syncthreads();
+        sdata[tid] = mySum = mySum + sdata[tid + 8]; __syncthreads();
+        sdata[tid] = mySum = mySum + sdata[tid + 4]; __syncthreads();
+        sdata[tid] = mySum = mySum + sdata[tid + 2]; __syncthreads();
+        sdata[tid] = mySum = mySum + sdata[tid + 1]; __syncthreads();
+    }
+
+    // --- Write result for this block to global memory. At the end of the kernel, global memory will contain the results for the summations of
+    //     individual blocks
+    if (tid == 0) g_odata[blockIdx.x] = mySum;
+}

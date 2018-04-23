@@ -1,0 +1,21 @@
+WITH Splitted AS
+(
+    SELECT *
+         ,CAST('<x>' + REPLACE(YourStrangeString,',','</x><x>') + '</x>' AS XML) AS Fragment
+    FROM @mockupTable
+)
+,ToNumberedFragments AS
+(
+    SELECT ID
+          ,ROW_NUMBER() OVER(PARTITION BY ID ORDER BY (SELECT NULL)) AS FragmentNmbr
+          ,Frg.value('text()[1]','varchar(10)') AS Fragment
+          ,DefaultValue
+    FROM Splitted
+    OUTER APPLY Fragment.nodes('/x') AS A(Frg)
+)
+SELECT ID
+      ,FragmentNmbr
+      ,(FragmentNmbr-1)/3 AS FragmentGroup
+      ,Fragment
+      ,DefaultValue
+FROM ToNumberedFragments;

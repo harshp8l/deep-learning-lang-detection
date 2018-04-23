@@ -1,0 +1,17 @@
+type private ICalculator<'a> = abstract Calculate : 'a -> 'a
+
+type Calculator<'a, 'b when 'b:> IFilter<'a>> (aFilter: 'b, operation: 'a -> 'a) = 
+    member this.Calculate x = 
+        let y = x |> operation
+        aFilter.Filter y
+    interface ICalculator<'a> with
+        member this.Calculate x = this.Calculate x
+
+type TowerControl<'a> () = 
+    let mutable calculationStack = List.empty
+    member this.addCalculation (x: Calculator<'a, #IFilter<'a>> ) =
+        let newList = (x :> ICalculator<'a>)::calculationStack
+        calculationStack <- newList
+
+    member this.SequenceCalculations (v:'a) =
+        calculationStack |> List.fold (fun v c -> c.Calculate v) v

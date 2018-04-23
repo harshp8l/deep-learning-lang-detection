@@ -1,0 +1,25 @@
+DECLARE @Str NVARCHAR(MAX);
+DECLARE @Str2 NVARCHAR(MAX);
+SELECT @Str = STUFF(
+                   (
+                       SELECT DISTINCT
+                              ','+QUOTENAME(Namejob)
+                       FROM tablejob FOR XML PATH('')
+                   ), 1, 1, '');
+-- PRINT @Str
+SET @str2 = N'select ROW_NUMBER() over(order by idemp) as ID,Name2 as Name, '+@Str+' from (
+select b.idemp,Names as Name2,Names,namejob from tablecustomer a cross apply string_split(idjob,'','')
+left join tableemp b on a.idemp =b.idemp
+left join tablejob c on value = c.idjob 
+) z
+
+
+
+
+PIVOT 
+(count(names) for Namejob in ('+@Str+'
+)
+) as x';
+
+--PRINT @Str2;
+EXEC (@Str2);

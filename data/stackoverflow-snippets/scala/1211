@@ -1,0 +1,18 @@
+println(""Welcome to the Scala worksheet"")       //> Welcome to the Scala worksheet
+
+sealed trait Tree[T] {
+    def min(implicit ev : Ordering[T]) : T
+}
+
+case class Node[T](value : T, left : Tree[T], right : Tree[T]) extends Tree[T] {
+    def min(implicit ev : Ordering[T]) : T = ev.min(value, ev.min(left.min(ev), right.min(ev)))
+}
+
+case class Leaf[T](value : T) extends Tree[T] {
+    def min(implicit ev : Ordering[T]) : T = value
+}
+
+val tree = Node(17, Leaf(2), Node(4, Leaf(10), Leaf(8)))
+                                              //> tree  : testTree#626615.Node#1020777[Int#918] = Node(17,Leaf(2),Node(4,Leaf(
+                                              //| 10),Leaf(8)))
+tree.min                                  //> res0: Int#918 = 2

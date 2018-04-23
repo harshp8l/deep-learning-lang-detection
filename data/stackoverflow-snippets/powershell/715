@@ -1,0 +1,15 @@
+Get-ChildItem -Path 'S:\New folder' -Recurse | Where-Object {
+    -not $_.PSIsContainer -and
+    $_.Name -like ""b*""
+} | ForEach-Object {
+    # split content of each file into individual license information fragments
+    (Get-Content $_.FullName | Out-String) -split '(\r?\n){2,}' | Where-Object {
+        # filter for fragments that contain the string ""Microsoft Office"" and
+        # match the line beginning with ""CD Key: "" in those fragments
+        $_ -like '*Microsoft Office*' -and
+        $_ -match '(?m)(?<=^CD Key: ).*'
+    } | ForEach-Object {
+        # remove leading/trailing whitespace from the extracted key
+        $matches[0].Trim()
+    }
+} | Set-Content 'C:\output.txt'

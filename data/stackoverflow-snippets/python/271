@@ -1,0 +1,64 @@
+import numpy as np
+import matplotlib as mpl
+import matplotlib.mlab as mlab
+
+def draw_contour(ax):
+    delta = 0.025
+    x = np.arange(-3.0, 3.0, delta)
+    y = np.arange(-2.0, 2.0, delta)
+    X, Y = np.meshgrid(x, y)
+    Z1 = mlab.bivariate_normal(X, Y, 1.0, 1.0, 0.0, 0.0)
+    Z2 = mlab.bivariate_normal(X, Y, 1.5, 0.5, 1, 1)
+    # difference of Gaussians
+    Z = 10.0 * (Z2 - Z1)
+    C = ax.contour(X, Y, Z, colors='k')
+    return C
+
+# dfix is a hack to fix dashing size in copied lines. May need to adjust
+def copy_linecollection(x, axdst, dfix=1.5):
+    ls = [(ls[0], (ls[1][0]/dfix, ls[1][1]/dfix)) if ls[0] is not None else ls for ls in x.get_linestyles()]
+
+    axdst.add_collection(mpl.collections.LineCollection(
+        [p.vertices for p in x.get_paths()],
+        linewidths=x.get_linewidths(), 
+        colors=x.get_colors(),
+        linestyles=ls,
+    ))
+
+def copy_text(x, axdst):
+    axdst.text(
+        *x.get_position(), 
+        s=x.get_text(),
+        color=x.get_color(), 
+        verticalalignment=x.get_verticalalignment(), 
+        horizontalalignment=x.get_horizontalalignment(), 
+        fontproperties=x.get_fontproperties(), 
+        rotation=x.get_rotation(),
+        clip_box=axdst.get_position(),
+        clip_on=True
+    )
+
+def copy_ax(axsrc, axdst):
+    for c in axsrc.get_children():
+        if isinstance(c, mpl.collections.LineCollection):
+            copy_linecollection(c, axdst)
+
+        elif isinstance(c, mpl.text.Text) and c.get_text():
+            copy_text(c, axdst)
+
+subplots_kw = {
+    'sharex': True, 
+    'sharey': True, 
+    'figsize': (10,10),
+    'gridspec_kw': {
+        'hspace': 0,
+        'wspace': 0
+    }
+}
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, **subplots_kw)
+
+CS = draw_contour(ax1)
+ax1.clabel(CS, inline=1, fontsize=10)
+
+for ax in (ax2,ax3,ax4):
+    copy_ax(ax1, ax)

@@ -1,0 +1,32 @@
+(defonce ^:private counter (volatile! 0))
+
+(defn- next-int []
+  (vswap! counter inc))
+
+(defn- char-range
+  [a b]
+  (mapv char
+        (range (int a) (int b))))
+
+(defn- unique-id-gen
+  ""Generates a sequence of unique identifiers seeded with ids sequence""
+  [ids]
+  ;; Laziness ftw:
+  (apply concat
+         (iterate (fn [xs]
+                    (for [x xs
+                          y ids]
+                      (str x y)))
+                  (map str ids))))
+
+(def inf-ids-seq (unique-id-gen (concat (char-range \a \z)
+                                        (char-range \A \Z)
+                                        (char-range \0 \9)
+                                        [\_ \-])))
+
+(defn- new-class
+  ""Returns an unused new classname""
+  []
+  (nth inf-ids-seq (next-int)))
+
+(repeatedly 10 new-class)

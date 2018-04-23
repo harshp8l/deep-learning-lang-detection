@@ -1,0 +1,14 @@
+(def s ""<div><span id='greeting'>Hello</span> <span id='name'>Mr. Foo</span>!</div>"")
+(def root (z/xml-zip (xml/parse (java.io.ByteArrayInputStream. (.getBytes s)))))
+
+(defn replace-element [id replacement]
+  (visitor :pre [n s]
+    (if (= (:id (:attrs n)) id) {:node replacement})))
+
+user=> (pprint (:node (visit root nil [(replace-element ""name"" ""Mr. Smith"")])))
+{:tag :div,
+ :attrs nil,
+ :content
+ [{:tag :span, :attrs {:id ""greeting""}, :content [""Hello""]}
+  ""Mr. Smith""
+  ""!""]}

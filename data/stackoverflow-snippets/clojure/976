@@ -1,0 +1,26 @@
+(def ^:dynamic *path* nil)
+
+(defn sun [f]
+  (println ""sun setup"" *path*)
+  (binding [*path* ""sun""]
+    (f))
+  (println ""sun cleanup""))
+
+(defn rain [f]
+  (println ""rain setup"" *path*)
+  (binding [*path* ""rain""]
+    (f))
+  (println ""rain cleanup""))
+
+(defn juxt-fixtures [& fixtures]
+  (fn [f]
+    (->> ((apply juxt fixtures) f)
+         dorun)))
+
+(use-fixtures :once (juxt-fixtures sun rain))
+
+(deftest sometest1
+  (println ""sometest1"" *path*))
+
+(deftest sometest2
+  (println ""sometest2"" *path*))

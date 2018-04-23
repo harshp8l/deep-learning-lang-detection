@@ -1,0 +1,19 @@
+(require '[clojure.zip :as zip])
+
+(def in [-1 1 2 -1 3 0 -1 2 -1 4 0 3 0 0])
+(def out [[1 2 [3] [2 [4] 3]]])
+
+(defn deepen [steps]
+  (->> steps
+       (reduce (fn [loc step]
+                 (case step
+                   -1 (-> loc
+                          (zip/append-child [])
+                          (zip/down)
+                          (zip/rightmost))
+                   0 (zip/up loc)
+                   (zip/append-child loc step)))
+         (zip/vector-zip []))
+       (zip/root)))
+
+(assert (= (deepen in) out))

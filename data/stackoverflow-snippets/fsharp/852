@@ -1,0 +1,18 @@
+// units-aware wrapper for System.Numerics.Vector<'T>
+type PackedScalars<[<Measure>] 'm> = struct
+    val public Data: Vector<float>
+    new (d: Vector<float>) = {Data = d}
+    static member inline (*) (u: PackedScalars<'m1>, v: PackedScalars<'m2>) = u.Data * v.Data |> PackedScalars<'m1*'m2>
+end
+
+// unit-ware type, wrapping a raw array for easy stream processing
+type ScalarField<[<Measure>] 'm> = struct
+    val public Data: float[]
+    member self.Item with inline get i                = LanguagePrimitives.FloatWithMeasure<'m> self.Data.[i]
+                     and  inline set i (v: float<'m>) = self.Data.[i] <- (float v)
+    member self.Packed 
+           with inline get i                        = Vector<float>(self.Data, i) |> PackedScalars<'m>
+           and  inline set i (v: PackedScalars<'m>) = v.Data.CopyTo(self.Data, i)
+    new (d: float[]) = {Data = d}
+    new (count: int) = {Data = Array.zeroCreate count}
+end

@@ -1,0 +1,64 @@
+  object box {
+
+    trait Transform[-A, +B] {
+      def apply(in: A): B
+    }
+    object Transform {
+      def instance[A, B](f: A => B): Transform[A, B] = new Transform[A, B] {
+        override def apply(in: A): B = f(in)
+      }
+    }
+
+    implicit class TransformOps[T](w: T) {
+      def transform(implicit t: Transform[T, String]) = t(w)
+    }
+
+    trait ShadowedOperation {
+      type I
+      type O
+      def param: String
+      def otherParam: Int
+      def in: I
+      def out: O
+
+      implicit def operationToString(
+                                      implicit
+                                      iToString: Transform[I, String],
+                                      oToString: Transform[O, String]
+                                    ): Transform[ShadowedOperation.Aux[I, O], String] =
+        Transform.instance(in => s""${in.otherParam} - ${in.param} - ${iToString(in.in)} - ${oToString(in.out)}"")
+    }
+
+    object ShadowedOperation {
+      type Aux[I0, O0] = ShadowedOperation { type I = I0; type O = O0 }
+    }
+
+    case class Operation[I0, O0](
+                                  param: String,
+                                  otherParam: Int,
+                                  in: I0,
+                                  out: O0
+                                ) extends ShadowedOperation {type I = I0; type O = O0}
+
+
+    def fakeParseFromString[I, O](in: Operation[I, O]): ShadowedOperation.Aux[I, O] = in
+
+  }
+
+
+
+
+  def main(args: Array[String]): Unit = {
+    import box._
+
+    implicit val intToString: Transform[Int, String] = Transform.instance(_.toString)
+    implicit val stringToString: Transform[String, String] = Transform.instance(_.toString)
+
+    val op = Operation(""param"", 0, ""in!"", ""out!"")
+    val shadowedOperation = fakeParseFromString(op)
+    import op._
+    val opString = op.transform
+    val shadowedOpString = shadowedOperation.transform
+    println(opString)//0 - param - in! - out!
+    println(shadowedOpString)//0 - param - in! - out!
+  }

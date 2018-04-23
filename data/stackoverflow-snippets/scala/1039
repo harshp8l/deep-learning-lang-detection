@@ -1,0 +1,27 @@
+import scala.collection.breakOut
+import scala.collection.immutable.Map
+import scala.collection.JavaConverters._
+import com.sksamuel.avro4s._
+import org.apache.avro.Schema
+import org.apache.avro.Schema.Field
+
+object BaseMapAvroHelpers {
+  private val nameMap: Map[Base, String] = Map(First -> ""first"", Second -> ""second"")
+  private val revNameMap: Map[String, Base] = nameMap.toList.map(kv => (kv._2, kv._1)).toMap
+
+  implicit def toSchema[T: SchemaFor]: ToSchema[Map[Base, T]] = new ToSchema[Map[Base, T]] {
+    override val schema: Schema = Schema.createMap(implicitly[SchemaFor[T]].apply())
+  }
+
+  implicit def toValue[T: SchemaFor : ToValue]: ToValue[Map[Base, T]] = new ToValue[Map[Base, T]] {
+    override def apply(value: Map[Base, T]): java.util.Map[String, T] = value.map(kv => (nameMap(kv._1), kv._2)).asJava
+  }
+
+  implicit def fromValue[T: SchemaFor : FromValue]: FromValue[Map[Base, T]] = new FromValue[Map[Base, T]] {
+    override def apply(value: Any, field: Field): Map[Base, T] = {
+      val fromValueS = implicitly[FromValue[String]]
+      val fromValueT = implicitly[FromValue[T]]
+      value.asInstanceOf[java.util.Map[Any, Any]].asScala.map(kv => (revNameMap(fromValueS(kv._1)), fromValueT(kv._2)))(breakOut)
+    }
+  }
+}

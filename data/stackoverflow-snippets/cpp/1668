@@ -1,0 +1,48 @@
+#include <iostream>
+
+class StreamDelegate
+{
+public:
+    StreamDelegate(std::ostream& os) : stream(os) {}
+
+    ~StreamDelegate() {
+        //some delegated functionality
+        //exmpl:
+        stream << std::endl;
+    }
+
+    template <typename T>
+    StreamDelegate& operator<<(T&& val) {
+        stream << std::forward<T>(val);
+        return *this;
+    }
+    StreamDelegate& operator=(const StreamDelegate&) = delete;
+    StreamDelegate(const StreamDelegate&) = delete;
+
+private:
+    std::ostream& stream;
+};
+
+class Stream
+{
+public:
+    Stream(std::ostream& os) : stream(os) {}
+
+    template <typename T>
+    StreamDelegate operator<<(T&& val) {
+        stream << std::forward<T>(val);
+        return StreamDelegate(stream);
+    }
+
+private:
+    std::ostream& stream;
+};
+
+int main()
+{
+    Stream os(std::cout);
+    os << ""input1"" << "" input2"";
+    os << ""line2: input1"" << "" line2: input 2"";
+
+    std::cin.get();
+}

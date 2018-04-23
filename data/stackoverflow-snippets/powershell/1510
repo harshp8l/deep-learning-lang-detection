@@ -1,0 +1,42 @@
+$tenant = """"
+$clientId = """"
+$clientSecret = """"
+$subscriptionId = """"
+
+$body = @{
+    ""grant_type""=""client_credentials"";
+    ""client_id""=$clientId;
+    ""client_secret""=$clientSecret;
+    ""resource""=""https://management.azure.com/""
+}
+$resourceGroup=""shuiapp""
+$name=""shuifunction""
+
+$authInfo = Invoke-RestMethod -Uri ""https://login.microsoftonline.com/$tenant/oauth2/token"" -Body $body -Method Post -Headers @{""Content-Type""=""application/x-www-form-urlencoded""} 
+
+$publishData = Invoke-RestMethod -Uri ""https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.Web/sites/$name/publishxml?api-version=2016-08-01"" -Method Post -Headers @{""Authorization""=""Bearer $($authInfo.access_token)""}
+
+$userName = $publishData.publishData.publishProfile[0].userName
+$password = $publishData.publishData.publishProfile[0].userPWD
+
+$apiBaseUrl = ""https://$name.scm.azurewebsites.net/api""
+$siteBaseUrl = ""https://$name.azurewebsites.net""
+
+# For authenticating to Kudu
+$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes((""{0}:{1}"" -f $username,$password)))    
+
+# Call Kudu /api/functions/admin/token to get a JWT that can be used with the Functions Key API 
+$jwt = Invoke-RestMethod -Uri ""$apiBaseUrl/functions/admin/token"" -Headers @{Authorization=(""Basic {0}"" -f $base64AuthInfo)} -Method GET
+
+# Call Functions Key API to get the master key 
+$x = Invoke-RestMethod -Uri ""$siteBaseUrl/admin/host/systemkeys/_master"" -Headers @{Authorization=(""Bearer {0}"" -f $jwt)} -Method GET
+
+$masterKey = $x.value
+
+# create a custom function key
+$functionname=""HttpTriggerPowerShell1""
+$v=Invoke-RestMethod -Uri ""$siteBaseUrl/admin/functions/$functionname/keys/shui"" -Headers @{Authorization=(""Bearer {0}"" -f $jwt)} -Method POST
+$v.value 
+
+# get function key value
+$x = Invoke-RestMethod -Uri ""$siteBaseUrl/admin/functions/HttpTriggerPowerShell1/keys"" -Headers @{Authorization=(""Bearer {0}"" -f $jwt)} -Method GET

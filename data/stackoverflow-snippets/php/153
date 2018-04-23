@@ -1,0 +1,77 @@
+foreach ($student_due_fee as $key => $fee) {
+
+     foreach ($fee->fees as $fee_key => $fee_value) {
+
+        $results[] = array(
+
+              'group_name'      => $fee_value->name,
+              'group_id'        => $fee_value->fee_groups_id,
+              'parent_group_id' => $fee_value->parent_fee_groups_id,
+              'amount'          => $fee_value->total_amount,
+              'group_type'      => $fee_value->group_fee_type,
+              'group_amount'    => $fee_value->group_fee_amount
+
+          );
+
+     }
+ }
+
+
+ for($i = 0; $i < count($results); $i++){
+
+   for($j = 0; $j < count($results); $j++){
+
+     if($results[$i]['group_id'] == $results[$j]['parent_group_id']){
+
+           $results[$i]['amount'] += $results[$j]['amount'];
+           $results[$i]['group_type'] .=  ' ' . $results[$j]['group_type'];
+           $rowsToBeDeleted[] = $j;
+
+     }
+
+   }
+
+ }
+
+
+ foreach($rowsToBeDeleted as $key=>$value){
+
+ unset($results[$value]);
+
+ }
+
+
+echo 
+'<table>
+
+  <tr>
+
+    <th>Group Name</th>
+    <th>Group ID</th>
+    <th>Parent Group ID</th>
+    <th>Amount</th>
+    <th>Group Type</th>
+    <th>Group Amount</th>
+
+
+
+  </tr>';
+
+foreach($results as $key){
+
+  echo 
+    '<tr>
+
+      <td>' . $key['group_name'] . '</td>' .
+      '<td>' . $key['group_id'] . '</td>' .
+      '<td>' . $key['parent_group_id'] . '</td>' .
+      '<td>' . $key['amount'] . '</td>' .
+      '<td>' . $key['group_type'] . '</td>' .
+      '<td>' . $key['group_amount'] . '</td>' .
+
+  '</tr>';
+
+}
+
+echo 
+'</table>';

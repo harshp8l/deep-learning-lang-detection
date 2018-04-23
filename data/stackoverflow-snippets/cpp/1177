@@ -1,0 +1,50 @@
+#include <type_traits>
+
+struct AImpl
+{
+    void f1();
+    void f2() const;
+};
+
+template<typename T>
+struct is_const;
+
+template<typename R, typename T, typename... Args>
+struct is_const<R (T::*)(Args...) const> : std::true_type {};
+
+template<typename R, typename T, typename... Args>
+struct is_const<R (T::*)(Args...)> : std::false_type {};
+
+class A
+{
+    AImpl * p;
+
+    template<class T>
+    typename std::enable_if<!is_const<T>::value, AImpl &>::type get()
+    {
+        return *p;
+    }
+
+    template<class T>
+    typename std::enable_if<is_const<T>::value, const AImpl &>::type get() const
+    {
+        return *p;
+    }
+
+public:
+    #define GET(x) \
+        static_assert( \
+            is_const<decltype(&A::x)>::value == \
+            is_const<decltype(&AImpl::x)>::value, \
+            ""Interface does not mimic the implementation"" \
+        ); \
+        get<decltype(&AImpl::x)>()
+
+    void f1()       { GET(f1).f1(); } // OK
+    void f1() const { GET(f1).f1(); } // Error
+
+    void f2()       { GET(f2).f2(); } // Error
+    void f2() const { GET(f2).f2(); } // OK
+
+    #undef GET
+};

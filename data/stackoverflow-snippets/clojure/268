@@ -1,0 +1,16 @@
+(defn insert-between
+  ""Inserts elements between existing elements in a vector v. The inserted
+  elements are a result of applying the function f to the elements that precede
+  and succeed it, with the first and last elements of v remaining unaffected.""
+  [f [x & xs :as v]]
+  (->> (partition 2 1 v)
+       (mapcat (fn [[a b]] [(f a b) b]))
+       (cons x)
+       (into [])))
+
+(defn mean [& numbers]
+  (float (/ (apply + numbers) (count numbers))))
+
+(insert-between mean [1 10 15])    ; => [1 5.5 10 10 12.5 15]
+(insert-between + [1 10 15 20 25]) ; => [1 11 10 25 15 35 20 45 25]
+(insert-between mean [])           ; => [nil] :(

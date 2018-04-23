@@ -1,0 +1,7 @@
+$deletetime = [datetime]::today.adddays(-1).tostring('yyyyMMdd')
+$StorageAccountName = ""jasondisk3""
+$StorageAccountKey = ""m+kQwLuQZiI3LMoMTyAI8K40gkOD+ZaTxxxs8fAIHGPMTD/AG2j+TPHBpttq5hXRmTaQ==""
+$ContainerName = ""jasonvm"" 
+$Ctx = New-AzureStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+$a = Get-AzureStorageBlob -Container $ContainerName -Context $Ctx | select -ExpandProperty name -Unique
+foreach($c in $a){$d = $c.split('.')[0]; $e = $d +'*' ; $f = Get-AzureStorageBlob –Context $Ctx -Container $ContainerName -blob $e | Where-Object {$_.ICloudBlob.IsSnapshot -and $_.SnapshotTime -ne $null -and (($_.SnapshotTime.localdatetime).ToString('yyyyMMdd') -eq '20171110') }; $ff = $f[-1];foreach($qq in $f){if($qq -ne $ff){$qq.ICloudBlob.Delete()}} }

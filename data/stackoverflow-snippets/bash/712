@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# We define a variable with the path to the uploaded_videos.txt file
+uploaded_videos=/home/pi/Documents/uploaded_videos.txt
+
+# Will expand non-matching globs to nothing:
+shopt -s nullglob
+
+# cd into the directory, and exit if fails
+cd /home/pi/Documents || exit
+
+# Use the builtin pwd instead of echo ""$PWD""
+pwd
+
+for file in /media/pi/*/*.mp4; do
+    if ! grep -qFx ""$file"" ""$uploaded_videos""; then
+        # Define an array to contain the arguments to pass
+        args=(
+            --file=""$file""
+            --title=""$file""
+            --description=""show 2018""
+            --keywords=""2018,show, Winter,show 2018,""
+            --category=""28""
+            --privacyStatus=""private""
+            )
+        # call your script with the fields of the array as arguments
+        python yt_up.py ""${args[@]}""
+        echo ""$file uploaded to youtube via google developer api"" | logger
+        echo ""$file"" >> ""$uploaded_videos""
+    fi
+done

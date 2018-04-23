@@ -1,0 +1,33 @@
+SELECT Animal,
+   Min(Trim(Both ',' FROM Seq)), 
+   Min(Calendar_Date), 
+   Max(Calendar_Date) 
+FROM
+ (
+   SELECT Animal, Calendar_Date, Seq,
+      -- calculate groups of consecutive values
+      Sum(flag)
+      Over (PARTITION BY Animal
+            ORDER BY Calendar_Date
+            ROWS Unbounded Preceding) AS grp
+   FROM
+    (
+      SELECT Animal, Calendar_Date,
+         -- combine all columns into one
+         CASE WHEN SeqA = 1 THEN 'A' ELSE ',' END ||
+         CASE WHEN SeqB = 1 THEN 'B' ELSE ',' END ||
+         CASE WHEN SeqC = 1 THEN 'C' ELSE ',' END ||
+         CASE WHEN SeqD = 1 THEN 'D' ELSE ',' END ||
+         CASE WHEN SeqE = 1 THEN 'E' ELSE ',' END AS Seq,
+         -- check if current and previous row are different
+         CASE WHEN Min(Seq) -- or LAG in TD16.10
+              Over (PARTITION BY Animal
+                    ORDER BY Calendar_Date
+                    ROWS BETWEEN 1 Preceding AND 1 Preceding) = Seq
+              THEN 0
+              ELSE 1
+         END AS flag
+      FROM tab
+    ) AS dt
+ ) AS dt
+GROUP BY Animal, grp

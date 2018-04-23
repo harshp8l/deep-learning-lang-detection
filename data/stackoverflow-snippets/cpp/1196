@@ -1,0 +1,23 @@
+#include <array>
+#include <cstdint>
+
+template <typename T, std::size_t N>
+constexpr std::size_t countEqual (std::array<T, N> const & a1,
+                                  std::array<T, N> const & a2,
+                                  std::size_t pos = 0U,
+                                  std::size_t count = 0U)
+ {
+   return pos < N ? countEqual(a1, a2, pos+1U,
+                               a1[pos] == a2[pos] ? ++count : count)
+                  : count;
+ }
+
+int main (void)
+ {
+   constexpr std::array<std::uint8_t, 4> ARRAY_A {{0xDE, 0xAD, 0xBE, 0xEF}};
+   constexpr std::array<std::uint8_t, 4> ARRAY_B {{0xBA, 0xAD, 0xF0, 0x0D}};
+
+   constexpr auto val { countEqual(ARRAY_A, ARRAY_B) };
+
+   static_assert( val == 1U , ""!"" );
+ }

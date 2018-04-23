@@ -1,0 +1,52 @@
+template <class Pixel>
+struct ImageView : public ImageView<const Pixel>
+{
+    constexpr ImageView(Pixel * data) noexcept
+        : ImageView(data)
+    {}
+
+    constexpr Pixel * GetData() const noexcept
+    {
+        const Pixel * data = ImageView<const Pixel>::GetData();
+        return const_cast<Pixel*>(data);
+    }
+};
+
+template <class Pixel>
+struct ImageView<const Pixel>
+{
+    constexpr ImageView(const Pixel * data) noexcept
+        : m_data(data)
+    {}
+
+    constexpr const Pixel * GetData() const noexcept
+    {
+        return m_data;
+    }
+
+private:
+    const Pixel * m_data;
+};
+
+int main()
+{
+    int * data = nullptr;
+    const int * cdata = nullptr;
+
+    ImageView<int> img(data);
+    //ImageView<int> img1(cdata); // compile error
+    ImageView<const int> cimg(data);
+    ImageView<const int> cimg1(cdata);
+
+    auto img2 = img;
+    auto cimg2 = cimg;
+
+    ImageView<const int> cimg3(img);
+    ImageView<const int> cimg4 = static_cast<ImageView<const int>>(img);
+    ImageView<const int> cimg5 = img;
+
+    img.GetData();
+    cimg.GetData();
+
+    return 0;
+}

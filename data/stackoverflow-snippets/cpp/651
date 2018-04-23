@@ -1,0 +1,332 @@
+// Java class SignatureDecoder
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.Proxy;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.UnknownHostException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
+public class SignatureDecoder
+{
+    String cacheUrl = null;
+    String js = null;
+
+    public SignatureDecoder()
+    {
+    }
+
+    public String decode(String jsUrl, String rawSignature, Proxy proxy)
+    {
+        if (!loadJs(jsUrl, proxy))
+        {
+            return null;
+        }
+
+        // Get scramble function from script, e.g. "".signature=Aq(""
+        final String func = getSignFunction();
+        if (func == null)
+        {
+            return null;
+        }
+        final String fs[] = getFuncScript(func);
+        if (fs == null)
+        {
+            return null;
+        }
+        String var = null;
+        String vs = """";
+        final String ident = ""[$A-Za-z0-9_]+"";
+        final String varPat = ""("" + ident + "")\\."" + ident + ""\\([ ]*"" + fs[1];
+        final Pattern vpt = Pattern.compile(varPat);
+        final Matcher vmt = vpt.matcher(fs[0]);
+        if (vmt.find(0))
+        {
+            var = vmt.group(1);
+            vs = getVarDef(js, var);
+        }
+
+        final String extract = vs + ""\n"" + fs[0];
+
+        final ScriptEngineManager mgr = new ScriptEngineManager();
+        final ScriptEngine jsEngine = mgr.getEngineByName(""JavaScript"");
+        try
+        {
+            jsEngine.eval(extract);
+            final Invocable inv = (Invocable) jsEngine;
+            final String enc = (String) inv.invokeFunction(func, rawSignature);
+            return enc;
+        }
+        catch (final ScriptException ex)
+        {
+            ex.printStackTrace();
+        }
+        catch (final NoSuchMethodException x)
+        {
+            x.printStackTrace();
+        }
+        return rawSignature;
+    }
+
+    public String decode(String jsUrl, String rawSignature)
+    {
+        return decode(jsUrl, rawSignature, null);
+    }
+
+    protected boolean loadJs(String jsUrl, Proxy proxy)
+    {
+        if (cacheUrl == null || !cacheUrl.equals(jsUrl))
+        {
+            cacheUrl = null;
+            URL jsUrl1;
+            try
+            {
+                jsUrl1 = new URL(jsUrl);
+            }
+            catch (final MalformedURLException e1)
+            {
+                e1.printStackTrace();
+                return false;
+            }
+            try
+            {
+                BufferedReader in;
+                final StringBuffer buf = new StringBuffer();
+                final URLConnection conn = proxy == null ? jsUrl1.openConnection() : jsUrl1.openConnection(proxy);
+                final InputStream is = conn.getInputStream();
+                in = new BufferedReader(new InputStreamReader(is));
+                String inputLine;
+                while ((inputLine = in.readLine()) != null)
+                {
+                    buf.append(inputLine);
+                    buf.append('\n');
+                }
+                is.close();
+                this.js = buf.toString();
+                this.cacheUrl = jsUrl;
+            }
+            catch (final UnknownHostException e)
+            {
+                System.err.println(""Cannot access script at  "" + jsUrl);
+                return false;
+            }
+            catch (final IOException e)
+            {
+                System.err.println(""Error loading script from  "" + jsUrl);
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // var zq={ID:function(a,b){a.splice(0,b)},Bd:function(a){a.reverse()},Px:function(a,b){var c=a[0];a[0]=a[b%a.length];a[b]=c}};
+    protected String getBlock(String script, int pos1)
+    {
+        String res = null;
+
+        int pos = pos1;
+        boolean stop = false;
+        int brack = 0;
+        boolean containsBlock = false;
+
+        while (!stop)
+        {
+            final char ch = script.charAt(pos);
+            pos++;
+            switch (ch)
+            {
+                case '(':
+                    brack++;
+                    break;
+                case '{':
+                    brack++;
+                    break;
+                case '[':
+                    brack++;
+                    break;
+                case ')':
+                    brack--;
+                    break;
+                case ']':
+                    brack--;
+                    break;
+                case '}':
+                    brack--;
+                    break;
+                case ';':
+                    stop = brack == 0;
+                    break;
+                case '\n':
+                    stop = brack == 0;
+                    break;
+                default:
+                    ;
+            }
+            if (brack > 0)
+            {
+                containsBlock = true;
+            }
+            else
+            {
+                stop = containsBlock;
+            }
+        }
+        res = script.substring(pos1, pos);
+
+        return res;
+    }
+
+    protected String getVarDef(String script, String var)
+    {
+        String res = null;
+
+        final String varPat = ""var[ ]+"" + var.replace(""$"", ""\\$"") + ""[ ]*="";
+
+        final Pattern pt = Pattern.compile(varPat);
+        final Matcher mt = pt.matcher(script);
+        if (mt.find(0))
+        {
+            res = mt.group(0);
+            final int posBlock = mt.end(0);
+            final String block = getBlock(script, posBlock);
+            res = res + block;
+        }
+        return res;
+    }
+
+    protected String[] getFuncScript(String func)
+    {
+        String res[] = null;
+
+        final String funcDollar = func.replace(""$"", ""\\$"");
+
+        final String paramPat = ""[ ]*\\(([^\\)]+)\\)"";
+        String funcPat = ""function[ ]+"" + funcDollar + paramPat;
+
+        Pattern pt = Pattern.compile(funcPat);
+        Matcher mt = pt.matcher(js);
+        boolean ok = mt.find(0);
+        if (!ok)
+        {
+            funcPat = funcDollar + ""=function"" + paramPat;
+            pt = Pattern.compile(funcPat);
+            mt = pt.matcher(js);
+            ok = mt.find(0);
+        }
+        if (ok)
+        {
+            res = new String[2];
+            String scr = mt.group(0);
+            final String arg = mt.group(1);
+            final int posBlock = mt.end(0);
+            final String block = getBlock(js, posBlock);
+            scr = scr + block;
+            res[0] = scr;
+            res[1] = arg;
+        }
+        return res;
+    }
+
+    protected String getSignFunction()
+    {
+        if (js == null)
+        {
+            return null;
+        }
+
+        // Pattern 1
+        String func = null;
+        String funcPat = ""\\.signature=([^\\(]+)\\("";
+        Pattern pt = Pattern.compile(funcPat);
+        Matcher mt = pt.matcher(js);
+        if (mt.find(0))
+        {
+            func = mt.group(1);
+        }
+
+        // Pattern 2
+        if (func == null)
+        {
+            funcPat = ""\\(\\\""signature\\\"",([^\\(]+)\\("";
+        }
+        pt = Pattern.compile(funcPat);
+        mt = pt.matcher(js);
+        if (mt.find(0))
+        {
+            func = mt.group(1);
+        }
+
+        // Pattern 3
+        if (func == null)
+        {
+            final int pos = js.indexOf(""set(\""alr\"",\""yes\"")"");
+            if (pos >= 0)
+            {
+                int pos1 = pos;
+                while (pos1 > 0 && js.charAt(pos1) != '\n')
+                {
+                    pos1--;
+                }
+                int pos2 = pos;
+                while (pos2 < js.length() && js.charAt(pos2) != '\n')
+                {
+                    pos2++;
+                }
+                final String js1 = js.substring(pos1 + 1, pos2);
+                // d.set(""alr"",""yes"");c&&(b||(b=""signature""),d.set(b,WK(c)));return d};
+                final String ident = ""[a-zA-Z0-9]+"";
+                funcPat = ""("" + ident + "")\\.set\\(\\\""alr\\\"",\\\""yes\\\""\\);"";
+                pt = Pattern.compile(funcPat);
+                mt = pt.matcher(js1);
+                if (mt.find(0))
+                {
+                    final String obj = mt.group(1);
+                    final String funcPat2 = obj + ""\\.set\\(("" + ident + ""|\\\""signature\\\""),("" + ident + "")\\("" + ident + ""\\)\\)"";
+                    final Pattern pt2 = Pattern.compile(funcPat2);
+                    final Matcher mt2 = pt2.matcher(js1);
+                    func = null;
+                    if (mt2.find(0))
+                    {
+                        func = mt2.group(2);
+                    }
+                }
+            }
+        }
+        return func;
+    }
+
+    // Test
+    public static void main(String args[])
+    {
+        final String rawSignature = ""C98C987F29D5CC5C651A6FB867EFC316D09CDF015983.E7C61471A1569DEE963C2FB55B025B2FE63CD32929929"";
+        final String expRes = ""923DC36EF2B520B59BF2C369EED9651A17416C7E.38C510FDC90D613CFE768BF6A156C5CC5D92F785"";
+        final String jsUrl = ""http://s.ytimg.com/yts/jsbin/player-vflI0cIzU/de_DE/base.js"";
+
+        final String signature = new SignatureDecoder().decode(jsUrl, rawSignature);
+
+        System.out.println(""\nExpected:  "" + expRes);
+        System.out.println(""Evaluated: "" + signature);
+
+        System.out.print(""Test "");
+        if (signature != null && expRes.equals(signature))
+        {
+            System.out.println(""OK"");
+        }
+        else
+        {
+            System.out.println(""FAILED"");
+        }
+
+    }
+
+}

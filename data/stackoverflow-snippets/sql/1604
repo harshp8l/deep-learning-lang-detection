@@ -1,0 +1,27 @@
+select --pass2
+ id1, id2, id3,
+ case when lag(id2) over (order by id2, GroupId) = id2 then lag(GroupId) over (order by id2, GroupId) else GroupId end GroupId2
+ from
+ (
+ select        --pass1
+ id1, id2, id3,
+ case when 
+ lag(id1) over(order by id1, NVL(ID1,ID3)) =id1 then lag(NVL(ID1,ID3))  over(order by id1, NVL(ID1,ID3)) else NVL(ID1,ID3) end GroupId
+ from
+( --your dataset as in example
+ select 'A'  as id1, 1 as id2,  null   as id3 union all
+ select null as id1, 1 as id2, 'Alpha' as id3 union all
+ select null as id1, 2 as id2, 'Beta'  as id3 union all
+ select 'A'  as id1, 2 as id2,  null   as id3
+ )s
+ )s --pass1
+;
+
+
+OK
+id1     id2     id3     groupid2
+A       1       NULL    A
+NULL    1       Alpha   A
+A       2       NULL    A
+NULL    2       Beta    A
+Time taken: 106.944 seconds, Fetched: 4 row(s)

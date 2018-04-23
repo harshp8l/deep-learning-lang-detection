@@ -1,0 +1,29 @@
+Function CreateVeryLongPath([String]$Root,[Switch]$IsUNC,$FolderName = 'Dummy Folder',$iterations = 200) {
+    $Base = '\\?\'
+    if ($IsUNC) {$Base = '\\?\UNC\'}
+
+    $CurrentPath = $Base + $Root + $FolderName + '\'
+
+    For ($i=0;$i -le $iterations;$i++) {
+
+    New-Item -Path $CurrentPath -Force -ItemType Directory | Out-Null
+    $currentPath = $CurrentPath +  $FolderName + '\'
+    }
+}
+
+Function QueryVeryLongPath([String]$Root,[Switch]$IsUNC) {
+    $Base = '\\?\'
+    if ($IsUNC) {$Base = '\\?\UNC\';$Root = $Root.substring(2,$Root.Length -2)}
+
+    $BasePath = $Base + $Root
+    Get-ChildItem -LiteralPath $BasePath -Recurse | ft @{'n'='Length';'e'={$_.FullName.Length}},FullName
+}
+
+
+
+CreateVeryLongPath -Root 'C:\__tmp\' -FolderName 'This is a folder'
+QueryVeryLongPath -Root 'C:\__tmp\Dummy Folder11\' 
+
+#UNC - tested on a UNC share path 
+CreateVeryLongPath -Root '\\ServerName\ShareName\' -FolderName 'This is a folder' -IsUNC
+QueryVeryLongPath -Root '\\ServerName\ShareName\' -IsUNC

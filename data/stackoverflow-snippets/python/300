@@ -1,0 +1,17 @@
+from collections import defaultdict
+
+d = defaultdict(lambda: defaultdict(list))
+
+for idx, row in df.iterrows():
+    d[(row.Name, row.Desc, row.Group)][row.ConditionType].append(row.ConditionName)
+
+df['Conditions'] = df.set_index(['Name', 'Desc', 'Group']).index.map(d.get)
+
+df = df.loc[:, ['Name', 'Desc', 'Group', 'Conditions']]\
+       .drop_duplicates(subset=['Name', 'Desc', 'Group'])
+
+print(df)
+
+#    Name   Desc   Group                                    Conditions
+# 0  job1  desc1  group1  {'in': ['cond1', 'cond2'], 'out': ['cond1']}
+# 3  job2  desc2  group1           {'in': ['cond1', 'cond2', 'cond3']}

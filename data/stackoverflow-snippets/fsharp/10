@@ -1,0 +1,33 @@
+module rec Trampoline =
+    type Call<'a> =
+        abstract member Rebind<'b> : ('a -> Tram<'b>) -> Tram<'b>
+        abstract member Next : unit -> Tram<'a>
+    type Tram<'a> =
+        | Done of 'a
+        | Step of (unit -> Tram<'a>)
+        | Call of Call<'a>
+
+    type TramMonad() =
+        member this.Return(x) = Done(x)
+        member this.Bind(ma, f) =
+            match ma with
+                | Call(aCall) -> aCall.Rebind(f)
+                | _ -> call ma f
+    let tram = new TramMonad()
+
+    let rec call<'a, 'x>(mx : Tram<'x>) (f : 'x -> Tram<'a>) : Tram<'a> = Call {
+        new Call<'a> with
+            member this.Rebind<'b>(g : 'a -> Tram<'b>) : Tram<'b> =
+                call<'b, 'x> mx (fun x -> tram.Bind(f x, g) : Tram<'b>)
+            member this.Next() =
+                match mx with
+                    | Done(x) -> f x
+                    | Step(k) -> Step(fun () -> tram.Bind(k(), f))
+                    | Call(aCall) -> aCall.Rebind(f)
+    }
+
+    let rec runTram t =
+        match t with
+            | Done(x) -> x
+            | Step(k) -> runTram(k())
+            | Call(aCall) -> runTram(aCall.Next())

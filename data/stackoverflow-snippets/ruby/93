@@ -1,0 +1,44 @@
+def new
+  @location = Location.find(params[:location_id])
+  # Start reconciliation (without items)
+  @reconciliation = @location.reconciliations.new
+end
+
+def create
+  @location = Location.find(params[:location_id])
+  # Create an empty reconciliation (params do not include items)
+  @reconciliation = @location.reconciliations.new(reconciliation_params)
+
+  @inventory_items = @location.inventory_items
+
+  # Add items from location (this may require some changes depending on how you defined your models
+  # If it does not work, you can create all inventory items in a loop
+  # for each @inventory_items
+  @reconciliation.inventory_items = @inventory_items
+
+  if @reconciliation.save
+    #Start editing reconciliation, from first item
+    redirect_to edit_reconciliation_path(@reconciliation, item: 0)
+  else
+    redirect_to 'new'
+  end
+
+end
+
+def edit
+  @reconciliation = Reconciliation.find(params[:id])
+  @inventory_items = @reconciliation.inventory_items.order(:id)
+  @inventory_item = @inventory_items[params[:item]]
+  @item = params[:item].to_i + 1
+  @item = -1 if @inventory_items[@item].nil? # End condition.
+end
+
+def update
+  @reconciliation = Reconciliation.find(params[:id])
+  @reconciliation.update_attributes(reconciliation_params)
+  if params[:item] != -1
+    redirect_to edit_reconciliation_path(@reconciliation, item: item)
+  else
+    redirect_to root_path
+  end
+end

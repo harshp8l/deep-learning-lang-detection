@@ -1,0 +1,27 @@
+// Needed for calling color change macro
+#include <common\visualize\hkdebugdisplay.h>
+
+// You'll of course need any other headers for any other physics stuff 
+// you're doing in your file
+
+void SetColorForPhysicsDebugger( unsigned int Red, unsigned int Green,
+                                 unsigned int Blue, unsigned int Alpha, 
+                                 const hkpCollidable* pCollidable )
+{
+    // Havok takes an unsigned int (32-bit), allowing 8-bits for 
+    // each channel (alpha, red, green, and blue, in that
+    // order).
+
+    // Because we only need 8-bits from each of the 32-bit ints 
+    // passed into this function, we'll mask the first 24-bits.
+    Red &= 0x000000FF;
+    Green &= 0x000000FF;
+    Blue &= 0x000000FF;
+    Alpha &= 0x000000FF;
+
+    // Now we pack the four channels into a single int
+    const uint32_t color = (Alpha << 24) | (Red << 16) | (Green << 8) | Blue;
+
+    // We use the macro provided by Havok
+    HK_SET_OBJECT_COLOR( reinterpret_cast<hkulong>( pCollidable ), color );
+}

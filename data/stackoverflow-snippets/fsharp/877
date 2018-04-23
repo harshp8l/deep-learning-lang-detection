@@ -1,0 +1,22 @@
+#r @""../packages/FsCheck.2.1.0/lib/net45/FsCheck.dll""
+
+module FactRepository = let Names = [ ""A""; ""B"" ]
+
+module DataGen =
+
+    open FsCheck
+
+    type DataTypes = ABool | ADate | Name
+
+    let grabOne (gen:Gen<'a>) = gen.Sample(1, 10).Head
+    let oneFromList list = grabOne (FsCheck.Gen.elements list)
+
+    let generateName() = oneFromList FactRepository.Names
+    let generateABool() = (Gen.oneof [ gen { return true }; gen { return false } ]).Sample(1, 1)
+    let generateADate() = (Arb.generate<System.DateTime> |> Gen.sample 1 1).Head
+
+    let makeValue (data : DataTypes) =
+        match data with
+        | Name -> generateName()
+        | ABool -> generateABool().ToString()
+        | ADate -> generateADate().ToString()

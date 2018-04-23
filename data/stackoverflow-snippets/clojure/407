@@ -1,0 +1,15 @@
+(defn affected-entities
+  ""Given a Datomic connection, returns the set of entity ids that were affected
+  by the last transaction (in e position), excluding the entity representing the 
+  transaction itself.""
+  [conn]
+  (let [db (d/db conn)]
+    (->>
+      (d/q '[:find [?e ...] :in ?log ?t1 ?t2 :where
+             [(tx-ids ?log ?t1 ?t2) [?tx ...]] ;; binds the last tx 
+             [(tx-data ?log ?tx) [[?e]]]]
+        (d/log conn) (d/basis-t db) (d/next-t db))
+      ;; filtering out the transaction entity
+      (remove (fn [eid]
+                (->> eid d/part (d/ident db) (= :db.part/tx))))
+      set)))

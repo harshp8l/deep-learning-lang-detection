@@ -1,0 +1,21 @@
+type public Class1() =
+
+    let printThread (message) = 
+        printfn ""%s %A"" message Thread.CurrentThread.ManagedThreadId
+
+    let bar = 
+        printThread (""first bar"")
+        async { 
+            printThread (""first async"")
+            do! Async.Sleep(1000)
+            printThread ""last async""
+        }
+
+    member this.AsyncFoo() =  bar
+
+    /// Expose C#-friendly asynchronous method that returns Task
+    member this.FooAsync() = Async.StartAsTask(bar)
+    /// Expose C#-friendly asynchronous method that returns Task
+    /// and takes cancellation token to support cancellation...
+    member this.FooAsync(cancellationToken) = 
+      Async.StartAsTask(bar, ?cancellationToken=cancellationToken)

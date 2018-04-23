@@ -1,0 +1,35 @@
+# Does not handle inheritance, InitVar, ClassVar, or anything else
+# I'm forgetting.
+
+class POCMetaDict(dict):
+    def __setitem__(self, key, item):
+        # __setitem__ instead of __getitem__ because __getitem__ is
+        # easier to trigger by accident.
+        if key == 'kwonly_start':
+            self['__non_kwonly'] = len(self['__annotations__'])
+        super().__setitem__(key, item)
+
+class POCMeta(type):
+    @classmethod
+    def __prepare__(cls, name, bases, **kwargs):
+        return POCMetaDict()
+    def __new__(cls, name, bases, classdict, **kwargs):
+        classdict.pop('kwonly_start')
+        non_kwonly = classdict.pop('__non_kwonly')
+
+        newcls = super().__new__(cls, name, bases, classdict, **kwargs)
+        newcls = dataclass(newcls)
+
+        if non_kwonly is None:
+            return newcls
+
+        original_init = newcls.__init__
+
+        @functools.wraps(original_init)
+        def __init__(self, *args, **kwargs):
+            if len(args) > non_kwonly:
+                raise TypeError('Too many positional arguments')
+            return original_init(self, *args, **kwargs)
+
+        newcls.__init__ = __init__
+        return newcls

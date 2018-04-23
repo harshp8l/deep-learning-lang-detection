@@ -1,0 +1,34 @@
+open System
+open Newtonsoft.Json // 10.0.3
+open Newtonsoft.Json.Converters
+
+type ToStringJsonConverter () =
+    inherit JsonConverter()
+    override this.CanConvert objectType = true;
+
+    override this.WriteJson (writer: JsonWriter, value: obj, serializer: JsonSerializer): unit = 
+        writer.WriteValue(value.ToString())
+
+    override this.CanRead = false
+
+    override this.ReadJson (reader: JsonReader, objectType: Type, existingValue: obj, serializer: JsonSerializer) : obj =
+        raise (new NotImplementedException());
+
+[<JsonConverter(typeof<ToStringJsonConverter>)>]
+type HowLame =
+| PrettyLame
+| SuperLame
+
+type Lame = {
+    howLame: HowLame
+}
+
+[<EntryPoint>]
+let main argv =
+    let lame = { howLame = PrettyLame }
+    let ser = JsonConvert.SerializeObject(lame)
+
+    // {""howLame"":""PrettyLame""}
+    printfn ""%s"" ser
+
+    0 // return an integer exit code

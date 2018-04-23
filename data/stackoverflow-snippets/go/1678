@@ -1,0 +1,25 @@
+func TestHandlerFuncIntg(t *testing.T) {
+    if testing.Short() {
+        println(""skipping"")
+        t.Skip()
+     }
+
+    req, err := http.NewRequest(""GET"", ""/hello?param=value"", nil)
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    rr := httptest.NewRecorder()
+    someStructMockDeps := SomeStruct{someMockDependency{}}
+    handler :=   http.HandlerFunc(someStructMockDeps.HandleRequests)
+
+    handler.ServeHTTP(rr, req)
+
+    assert.Equal(t, http.StatusOK, rr.Code)
+    assert.Equal(t, ""This is my result"", rr.Body.String())
+}
+
+func (someMockDependency) SomeFunctionCalledFromHandler(...) SomeReturnStruct {
+    ...
+    return SomeReturnStruct{}
+}

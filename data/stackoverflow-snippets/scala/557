@@ -1,0 +1,48 @@
+import org.apache.spark.ml.Estimator
+import org.apache.spark.ml.Model
+import org.apache.spark.ml.param.Param
+import org.apache.spark.ml.param.ParamMap
+import org.apache.spark.ml.param.Params
+import org.apache.spark.ml.util.Identifiable
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.types.StructType
+
+trait DelegatingEstimatorModelParams extends Params {
+  final val selectedEstimator = new Param[Int](this, ""selectedEstimator"", ""The selected estimator"")
+}
+
+class DelegatingEstimator private (override val uid: String, delegates: Array[Estimator[_]]) extends Estimator[DelegatingEstimatorModel] with DelegatingEstimatorModelParams {
+  private def this(estimators: Array[Estimator[_]]) = this(Identifiable.randomUID(""delegating-estimator""), estimators)
+
+  def this(estimator1: Estimator[_], estimator2: Estimator[_], estimators: Estimator[_]*) = {
+    this((Seq(estimator1, estimator2) ++ estimators).toArray)
+  }
+
+  setDefault(selectedEstimator -> 0)
+
+  override def fit(dataset: Dataset[_]): DelegatingEstimatorModel = {
+    val estimator = delegates(getOrDefault(selectedEstimator))
+    val model = estimator.fit(dataset).asInstanceOf[Model[_]]
+    new DelegatingEstimatorModel(uid, model)
+  }
+
+  override def copy(extra: ParamMap): Estimator[DelegatingEstimatorModel] = {
+    val that = new DelegatingEstimator(uid, delegates)
+    copyValues(that, extra)
+  }
+
+  override def transformSchema(schema: StructType): StructType = {
+    // All delegates are assumed to perform the same schema transformation,
+    // so we can simply select the first one:
+    delegates(0).transformSchema(schema)
+  }
+}
+
+class DelegatingEstimatorModel(override val uid: String, val delegate: Model[_]) extends Model[DelegatingEstimatorModel] with DelegatingEstimatorModelParams {
+  def copy(extra: ParamMap): DelegatingEstimatorModel = new DelegatingEstimatorModel(uid, delegate.copy(extra).asInstanceOf[Model[_]])
+
+  def transform(dataset: Dataset[_]): DataFrame = delegate.transform(dataset)
+
+  def transformSchema(schema: StructType): StructType = delegate.transformSchema(schema)
+}

@@ -1,0 +1,43 @@
+import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.entity.ContentType
+import org.apache.http.entity.mime.MultipartEntityBuilder
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.util.EntityUtils
+
+val ref = UUID.randomUUID()
+val requestJobData =
+  s""""""
+{
+   ""reference"": ""$ref"",
+   ""operating_mode"": ""accurate"",
+   ""model"": { ""name"": ""por-bra"" },
+   ""channels"": {
+       ""firstChannelLabel"": {
+           ""result_format"": ""lattice"",
+           ""format"":""audio/x-wav"",
+            ""num_speakers"":2
+        }
+   }
+}
+  """"""
+
+val entity = MultipartEntityBuilder.create()
+entity.addTextBody(""json"", requestJobData, ContentType.APPLICATION_JSON)
+
+val path = Paths.get(audioPath)
+val fileName = path.getFileName().toString()
+val fileStream = new FileInputStream(audioPath)
+entity.addBinaryBody(""firstChannelLabel"", fileStream, ContentType.create(""audio/x-wav""), fileName)
+val client = HttpClients.createDefault()
+try {
+  val post = new HttpPost(baseUrl)
+  post.setEntity(entity.build())
+  val response = client.execute(post)
+}
+catch {
+  case e: Throwable =>
+    log.error(""erro ao agendar job: "" + e.toString())
+}
+finally {
+  client.close()
+}

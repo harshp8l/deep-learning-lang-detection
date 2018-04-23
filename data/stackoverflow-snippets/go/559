@@ -1,0 +1,26 @@
+func longHandler(w http.ResponseWriter, r *http.Request) {
+    flusher, ok := w.(http.Flusher)
+    if !ok {
+        http.Error(w, ""Server does not support Flusher!"",
+            http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set(""Content-Type"", ""text/event-stream"")
+    w.Header().Set(""Cache-Control"", ""no-cache"")
+    w.Header().Set(""Connection"", ""keep-alive"")
+
+    start := time.Now()
+    for rows, max := 0, 50*1000; rows < max; {
+        time.Sleep(time.Second) // Simulating work...
+        rows += 10 * 1000
+        fmt.Fprintf(w, ""Rows done: %d (%d%%), elapsed: %v\n"",
+            rows, rows*100/max, time.Since(start).Truncate(time.Millisecond))
+        flusher.Flush()
+    }
+}
+
+func main() {
+    http.HandleFunc(""/long"", longHandler)
+    panic(http.ListenAndServe(""localhost:8080"", nil))
+}

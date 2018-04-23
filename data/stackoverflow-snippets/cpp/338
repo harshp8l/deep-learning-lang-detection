@@ -1,0 +1,30 @@
+template <typename T, int size, typename Closure>
+T accumulate(T (&array)[size], T init, Closure closure) {
+    for (int i = 0; i < size; ++i) {
+        init = closure(init, array[i]);
+    }
+    return init;
+}
+
+int sum(int x, int y) { return x + y; }
+inline int sub_inline(int x, int y) { return x - y; }
+struct mul_functor {
+    int operator ()(int x, int y) const  { return x * y; }
+};
+extern int extern_operation(int x, int y);
+
+int accumulate_function(int (&array)[5]) {
+    return accumulate(array, 0, sum);
+}
+int accumulate_inline(int (&array)[5]) {
+    return accumulate(array, 0, sub_inline);
+}
+int accumulate_functor(int (&array)[5]) {
+    return accumulate(array, 1, mul_functor());
+}
+int accumulate_closure(int (&array)[5]) {
+    return accumulate(array, 0, [](int x, int y) { return x | y; });
+}
+int accumulate_exetern(int (&array)[5]) {
+    return accumulate(array, 0, extern_operation);
+}

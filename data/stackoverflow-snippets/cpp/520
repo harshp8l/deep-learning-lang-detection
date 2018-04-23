@@ -1,0 +1,26 @@
+#include <variant>
+#include <utility>
+#include <type_traits>
+
+class WrapperYB {
+public:
+    using variant_type = std::variant<Y, B>;
+
+    template <typename... Args,
+        std::enable_if_t<std::is_constructible_v<variant_type, Args...>>* = nullptr>
+    WrapperYB(Args&& ... args) : m_variant(std::forward<Args>(args)...) {}
+
+    variant_type& variant() noexcept { return m_variant; }
+    const variant_type& variant() const noexcept { return m_variant; }
+
+    void show()
+    { std::visit(ShowImpl{}, m_variant); }
+
+private:
+    struct ShowImpl {
+        void operator() (Y& y) const { y.showing(); }
+        void operator() (B& b) const { b.show(); }
+    };
+
+    variant_type m_variant;
+};

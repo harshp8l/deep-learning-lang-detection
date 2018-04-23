@@ -1,0 +1,20 @@
+tr = {}
+msgid = nil
+File.readlines(""origin.txt"").each do |line|
+  if (match = line[/^\s*msgid\s*""(.*)""\s*$/, 1])
+    msgid = match
+  elsif (match = line[/^\s*msgstr\s*""(.*)""\s*$/, 1])
+    tr[msgid] = match
+  end
+end
+
+lines = File.readlines(""end.txt"").map do |line|
+  if (match = line[/^\s*msgid\s*""(.*)""\s*$/, 1])
+    msgid = match
+  elsif (match = line[/^\s*msgstr\s*""(.*)""\s*$/, 1])
+    line[Regexp.last_match.begin(1), match.length] = tr[msgid]
+  end
+  line
+end
+
+File.write(""end.txt"", lines.join)

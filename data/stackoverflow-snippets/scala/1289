@@ -1,0 +1,17 @@
+import org.json4s.Formats
+import org.json4s.JsonAST.JValue
+import play.api.libs.json.{JsValue, Reads}
+
+trait jsonIface[JsValue, T] {
+  def turnJsonIntoClass(t: JsValue): T
+}
+
+object jsonIface {
+  implicit def json4sImpl[T](implicit formats: Formats, manifest: Manifest[T]): jsonIface[JValue, T] = new jsonIface[JValue, T] {
+    def turnJsonIntoClass(t: JValue): T = t.extract[T]
+  }
+
+  implicit def myPlayJsonImpl[T](implicit reads: Reads[T]): jsonIface[JsValue, T] = new jsonIface[JsValue, T] {
+    def turnJsonIntoClass(t: JsValue): T = t.as[T]
+  }
+}

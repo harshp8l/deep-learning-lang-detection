@@ -1,0 +1,26 @@
+CREATE FUNCTION dbo.ufnPreviousDay (@suppliedDate DATE)
+RETURNS @PreviousDates TABLE (PreviousDate DATE)
+AS
+BEGIN
+
+    INSERT INTO @PreviousDates (
+        PreviousDate)
+    SELECT
+        PreviousDate = DATEADD(DAY, -1, @suppliedDate)
+
+    IF DATEPART(WEEKDAY, DATEADD(DAY, @@DATEFIRST - 1, @suppliedDate)) = 1 -- If Monday
+    BEGIN
+
+        INSERT INTO @PreviousDates (
+            PreviousDate)
+        SELECT
+            PreviousDate = DATEADD(DAY, -2, @suppliedDate)
+        UNION ALL
+        SELECT
+            PreviousDate = DATEADD(DAY, -3, @suppliedDate)
+
+    END
+
+    RETURN
+
+END

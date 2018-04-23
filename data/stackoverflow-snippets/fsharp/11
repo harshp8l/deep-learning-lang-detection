@@ -1,0 +1,15 @@
+let eof (br : BinaryReader) = 
+  br.BaseStream.Position = br.BaseStream.Length  
+
+let readFileAsFloats filePath = 
+    seq{
+        use file = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use reader = new BinaryReader(file)
+        while (not (eof reader)) do
+            yield reader.ReadDouble()
+    }
+
+let readFilesAsFloats filePaths = 
+    filePaths |> Seq.collect readFileAsFloats
+
+let floats = readFilesAsFloats [""D:\\floatFile1.txt""; ""D:\\floatFile2.txt""]

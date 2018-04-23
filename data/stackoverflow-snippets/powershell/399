@@ -1,0 +1,67 @@
+Function Push-MSMQRemoteCommand
+{
+    Param(
+        [Parameter(Mandatory=$true)]
+        $targetMachine,
+        [Parameter(Mandatory=$true)]
+        $password,
+        [Parameter(Mandatory=$true)]
+        $queueName,
+        [Switch]$purge,
+        $user,
+        $message)
+    Begin
+    {
+        If(!$user){$user = ""$env:USERDOMAIN\$env:USERNAME""}
+        If($purge -and $message.Length -ne 0){Write-Error ""Choose to purge or add... not both"" -ErrorAction Stop}
+
+        $queuepath = ""$targetMachine\$queueName""
+        #build commands to push
+        If($purge)
+        {
+            $scriptblock = @""
+[void] [Reflection.Assembly]::LoadWithPartialName(""System.Messaging"")
+If ([System.Messaging.MessageQueue]::Exists('$queuePath')) {
+`$queue = new-object -TypeName System.Messaging.MessageQueue -ArgumentList $queuePath
+`$queue.Purge()
+}
+""@
+        }
+        ElseIf($message)
+        {
+            If($message.Length -eq 0){Write-Error ""No message provided to add message"" -ErrorAction Stop}
+            $scriptblock = @""
+[void] [Reflection.Assembly]::LoadWithPartialName(""System.Messaging"")
+`$queue = new-object System.Messaging.MessageQueue ""$queuepath""
+`$utf8 = new-object System.Text.UTF8Encoding
+
+`$msgBytes = `$utf8.GetBytes('$message')
+
+`$msgStream = new-object System.IO.MemoryStream
+`$msgStream.Write(`$msgBytes, 0, `$msgBytes.Length)
+
+`$msg = new-object System.Messaging.Message
+`$msg.BodyStream = `$msgStream
+`$msg.Label = ""RemoteQueueManagerPowershell""
+`$queue.Send(`$msg)
+""@
+        }
+
+        #Push Commands
+        Invoke-Command -ComputerName $targetMachine -ScriptBlock {
+            Param($user,$password,$scriptblock)
+            $scriptblock | Out-file -FilePath ""C:\temp\ManageQueue.ps1"" -Force
+            $action = New-ScheduledTaskAction -execute 'powershell.exe' -Argument '-File ""C:\temp\ManageQueue.ps1""'
+            #scheudling action to start 2 seconds from now
+            $trigger = New-ScheduledTaskTrigger -Once -At ((Get-Date)+(New-TimeSpan -Seconds 2))
+            Register-ScheduledTask -TaskName RemoteQueueManager `
+                               -Action $action `
+                               -Trigger $trigger `
+                               -User ""$user""`
+                               -Password $password
+            #Start-Sleep -Seconds 10
+            Unregister-ScheduledTask -TaskName RemoteQueueManager -Confirm:$false
+            Remove-Item -Path ""C:\temp\ManageQueue.ps1"" -Force
+        } -ArgumentList $user,$password,$scriptblock
+    }
+}

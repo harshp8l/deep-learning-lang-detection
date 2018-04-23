@@ -1,0 +1,37 @@
+WITH
+CTE
+AS
+(
+    SELECT
+        artists.artist_id
+        ,s.song_id
+    FROM
+        artists
+        INNER JOIN LATERAL
+        (
+            SELECT songs.song_id
+            FROM songs
+            WHERE
+                songs.artist_id = artists.artist_id
+                AND NOT EXISTS
+                (
+                    SELECT 1
+                    FROM listened
+                    WHERE
+                        listened.artist_id = songs.artist_id
+                        -- limit listened songs to one artist
+                        AND listened.song_id = songs.song_id
+                )
+            ORDER BY random()
+            -- shuffle only songs of one artist
+            LIMIT 1
+        ) AS s ON true
+    ORDER BY artists.score ASC
+    LIMIT 5 -- pick top N artists, N = 5
+)
+SELECT
+    artist_id
+    ,song_id
+FROM CTE
+ORDER BY random() -- shuffle top N artists
+LIMIT 1 -- pick one random artist out of top N

@@ -1,0 +1,16 @@
+type Async with
+    static member WithTimeout (timeout : int option) operation = 
+        match timeout with
+        | Some time  when time > 0 -> 
+            async { 
+                let! child = Async.StartChild (operation, time) 
+                try 
+                    let! result = child 
+                    return Some result
+                with :? TimeoutException -> return None 
+            }
+        | _ -> 
+            async { 
+                let! result = operation
+                return Some result
+            }

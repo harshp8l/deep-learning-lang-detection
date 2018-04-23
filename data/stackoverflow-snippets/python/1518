@@ -1,0 +1,27 @@
+class V(cerberus.Validator):
+  def validate(self, document, schema=None, update=False, normalize=True):
+    doc = None
+    wrapped = False
+    if schema is not None:
+      root_schema = schema.get('__root__', None)
+      wrapped = root_schema is not None
+      if wrapped:
+        doc = {'__root__': document}
+        schema = {'__root__': root_schema}
+    elif self.schema is not None:
+        root_schema = self.schema.get('__root__', None)
+        wrapped = root_schema is not None
+        if wrapped:
+            doc = {'__root__': document}
+            schema = {'__root__': root_schema}
+
+    doc = doc or document
+    result = super(V, self).validate(doc, schema, update, normalize)
+    if wrapped:
+      # Unwrap.
+      self.document = self.document['__root__']
+      for e in self._errors:
+        e.schema_path = tuple(e.schema_path[1:])
+        if len(e.document_path) > 1:
+          e.document_path = tuple(e.document_path[1:])
+    return result

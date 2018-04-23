@@ -1,0 +1,33 @@
+// Scanset acts as a filter when scanning strings.
+// The zero value of a Scanset will discard all non-whitespace characters.
+type Scanset struct {
+    ps        *string
+    delimFunc func(rune) bool
+}
+
+// Create a new Scanset to filter delimiter characters.
+// Once f(delimChar) returns false, scanning will end.
+// If s is nil, characters for which f(delimChar) returns true are discarded.
+// If f is nil, !unicode.IsSpace(delimChar) is used
+// (i.e. read until unicode.IsSpace(delimChar) returns true).
+func NewScanset(s *string, f func(r rune) bool) *Scanset {
+    return &Scanset{
+        ps:        s,
+        delimFunc: f,
+    }
+}
+
+// Scan implements the fmt.Scanner interface for the Scanset type.
+func (s *Scanset) Scan(state fmt.ScanState, verb rune) error {
+    if verb != 'v' && verb != 's' {
+        return errors.New(""scansets only work with %v and %s verbs"")
+    }
+    tok, err := state.Token(false, s.delimFunc)
+    if err != nil {
+        return err
+    }
+    if s.ps != nil {
+        *s.ps = string(tok)
+    }
+    return nil
+}

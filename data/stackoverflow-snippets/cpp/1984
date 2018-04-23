@@ -1,0 +1,35 @@
+#include ""Utility.h""
+
+#include <vector>
+#include <string>
+#include <algorithm>
+
+std::string Utility::trim( const std::string& str, 
+                          const std::string elementsToTrim ) {
+    std::basic_string<char>::size_type firstIndex = str.find_first_not_of( elementsToTrim );
+    if ( firstIndex == std::string::npos )
+        return std::string(); // Nothing Left    
+    std::basic_string<char>::size_type lastIndex = str.find_last_not_of( elementsToTrim );
+    return str.substr( firstIndex, lastIndex - firstIndex + 1 );
+}
+
+std::vector<std::string> Utility::splitString( const std::string& strStringToSplit, 
+                                               const std::string& strDelimiter, 
+                                               const bool keepEmpty ) {
+    std::vector<std::string> vResult;
+    if ( strDelimiter.empty() ) {
+        vResult.push_back( strStringToSplit );
+        return vResult;
+    }    
+    std::string::const_iterator itSubStrStart = strStringToSplit.begin(), itSubStrEnd;
+    while ( true ) {
+        itSubStrEnd = search( itSubStrStart, strStringToSplit.end(), strDelimiter.begin(), strDelimiter.end() );
+        std::string strTemp( itSubStrStart, itSubStrEnd );
+        if ( keepEmpty || !strTemp.empty() )
+            vResult.push_back( strTemp );
+        if ( itSubStrEnd == strStringToSplit.end() )
+            break;
+        itSubStrStart = itSubStrEnd + strDelimiter.size();
+    }    
+    return vResult;    
+}

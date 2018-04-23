@@ -1,0 +1,16 @@
+// These help with type inference
+let value (LazyBranch(v,_)) = v
+let children (LazyBranch(_,ts)) = ts.Value
+
+let numberedTree =
+    let rec number prev between = function
+    | [] -> []
+    | t::ts ->
+        let rec rest = number first (seq { yield! between; yield! children first }) ts
+        and first =
+            let between' = seq { yield! rest; yield! between }
+            LazyBranch(value prev + 1, lazy (children t |> number (defaultArg (Seq.tryLast between') first) (between' |> Seq.collect children)))
+        first::rest
+    fun t ->
+        let rec result = LazyBranch(0, lazy number result [] (children t))
+        result

@@ -1,0 +1,40 @@
+type ProbeInterface interface {
+     New()
+     Exec() bool
+     // whatever other methods are common to all probes
+}
+
+type Probe struct {
+    // whatever's in a probe
+}
+
+func (p *Probe) New() {
+    // init stuff
+}
+
+func (p *Probe) Exec() bool {
+    // exec stuff
+    return true
+}
+
+// Probe's methods and fields are promoted to ShellProbe according to the rules of embedding
+type ShellProbe struct {
+    Probe
+    // any specialized ShellProbe fields
+}
+
+// override Probe's Exec() method to have it do something ShellProbe specific.
+func (sp *ShellProbe) Exec() bool {
+    // do something ShellProbe-ish
+    return true
+}
+
+type LoadableProbe struct {
+    Name        string
+    P           ProbeInterface
+    Active      bool
+}
+
+func RegisterProbe(name string, probe ProbeInterface, state bool) {
+    LoadableProbes = append(LoadableProbes, LoadableProbe{name, probe, state})
+}

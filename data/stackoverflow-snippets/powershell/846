@@ -1,0 +1,17 @@
+ Write-host ""Deploying $env:Computer with $env:Databag data bag... ""
+ $secstr = ConvertTo-SecureString $env:Password -AsPlainText -Force 
+ $cred = new-object -typename System.Management.Automation.PSCredential -argumentlist $env:User, $secstr
+ $s = New-PSSession -ComputerName $env:Computer  -Credential $cred
+ $res = Invoke-Command -Session $s -ScriptBlock { try {chef-client} catch {exit 1}}
+ $lastsuccess = Invoke-Command -Session $s -ScriptBlock {$?}
+ Remove-PSSession $s
+ write-host "" --- ""
+ write-host $res
+ write-host "" --- ""
+ if($lastsuccess)
+ {
+  write-host ""chef deployment completed""
+  exit 0
+ }
+ write-host ""chef deployment had errors""
+ exit 1

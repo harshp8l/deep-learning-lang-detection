@@ -1,0 +1,43 @@
+@echo off
+
+::  *** Copy file including its CREATED date & MODIFIED date ***
+
+::  File : Drag-and-Drop
+    SET file=%1
+
+::  Destination Directory
+    SET dest=E:\
+
+::  ** Safety Checks **
+    ATTRIB -R -A -S -H  %file%
+
+::  ** Store PATH & NAME of file (WITHOUT quotation marks) **
+    FOR /F ""usebackq delims=="" %%A IN ('%file%') DO (
+      SET fpath=%%~dpA
+      SET fname=%%~nxA
+      SET  name=%%~nA
+      SET   ext=%%~xA
+    )
+
+    ::  *** POWERSHELL : File only ***
+
+    ::  ** Copy File **
+    COPY /V /Y  %file% ""%dest%""
+
+    ::  ** Location of PowerShell **
+    SET PowerShell=C:\WINDOWS\system32\WindowsPowerShell\v1.0\powershell.exe -NoProfile
+
+    ::  ** Set CREATED date of copy **
+    ::  NB: Will fail if MONTHS (MM) is identical to MINUTES (mm)
+    %PowerShell% -command ""(Get-Item -LiteralPath '%dest:'=''%\%fname:'=''%').CreationTime=(Get-Item -LiteralPath '%fpath:'=''%%fname:'=''%').CreationTime""
+
+    ::  ** Set MODIFIED date of copy **
+    ::  NB: Will fail if MONTHS (MM) is identical to MINUTES (mm)
+    %PowerShell% -command ""(Get-Item -LiteralPath '%dest:'=''%\%fname:'=''%').LastWriteTime=(Get-Item -LiteralPath '%fpath:'=''%%fname:'=''%').LastWriteTime""
+
+    ::  ** Set ACCESSED date of copy **
+    ::  NB: Will fail if MONTHS (MM) is identical to MINUTES (mm)
+    %PowerShell% -command ""(Get-Item -LiteralPath '%dest:'=''%\%fname:'=''%').LastAccessTime=(Get-Item -LiteralPath '%fpath:'=''%%fname:'=''%').LastAccessTime""
+
+    ::  Open Destination Directory
+    C:\Windows\Explorer.exe ""%dest%""

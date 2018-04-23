@@ -1,0 +1,24 @@
+; utility methods
+(defn to-base64 [bytes]
+  (String. (.encode (java.util.Base64/getEncoder) bytes)))
+
+; function to encrypt string formatted password
+(defn encrypt-password [string]
+  (let [ sha (java.security.MessageDigest/getInstance ""SHA"")]
+  (.update sha (.getBytes string))
+  (to-base64
+    (.digest sha))))
+
+; call this one time, to store the secret in encrypted form
+; this would be part of your jar file, but regular users cannot
+; (probably) decrypt this.
+(defn save-password [ secret-password ]
+  (spit
+    ""secret""
+    (encrypt-password secret-password)))
+
+; use this to validate this
+(defn validate-password [ input ]
+  (.equalsIgnoreCase
+    (String. (slurp ""secret""))
+    (String. (encrypt-password input))))

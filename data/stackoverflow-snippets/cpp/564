@@ -1,0 +1,26 @@
+#include <QObject>
+#include <list>
+
+using MyObject = QObject;
+using MyOtherObject = QObject;
+
+std::list<MyObject> makeObjects(MyOtherObject *other, QObject *parent = {}) {
+  std::list<MyObject> list;
+  for (int i = 0; i < 10; ++i) {
+    #if __cplusplus >= 201703L // C++17 allows more concise code
+    auto &obj = list.emplace_back(parent);
+    #else
+    auto &obj = (list.emplace_back(parent), list.back());
+    #endif
+    //...
+  }
+  return list;
+}
+
+int main() {
+  MyOtherObject other;
+  auto objects = makeObjects(&other, &other);
+  //...
+  objects.erase(objects.begin()); // the container manages lifetimes
+  //
+}

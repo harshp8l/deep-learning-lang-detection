@@ -1,0 +1,26 @@
+type XTuple1<'a>(a: 'a) =
+    member public this.fst = a
+    abstract member strContents: unit->string
+    default this.strContents() = this.fst.ToString()
+    override this.ToString() = ""("" + this.strContents() + "")""
+type XTuple2<'a, 'b>(a:'a, b:'b) =
+    inherit XTuple1<'a>(a)
+    member public this.snd = b
+    override this.strContents() = base.strContents() + "", "" + b.ToString()
+type XTuple3<'a, 'b, 'c>(a:'a, b:'b, c:'c) =
+    inherit XTuple2<'a, 'b>(a, b)
+    member public this.thrd = c
+    override this.strContents() = base.strContents() + "", "" + c.ToString()
+
+let inline xfst<'a> (xt:XTuple1<'a>) = xt.fst
+let inline xsnd<'a,'b> (xt:XTuple2<'a,'b>) = xt.snd
+let inline xthrd<'a,'b,'c> (xt:XTuple3<'a,'b,'c>) = xt.thrd
+
+[<EntryPoint>]
+let main argv = 
+    let t3 = XTuple3(1, 'a', ""word"")
+    let a = xfst t3 // strongly typed: a is an int
+    let b = xsnd t3
+    let c = xthrd t3
+    printfn ""%s"" (t3.ToString()) // -> ""(1, a, word)""
+    0 // return an integer exit code

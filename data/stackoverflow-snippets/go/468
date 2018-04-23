@@ -1,0 +1,31 @@
+func (l *Level) Add(path,Id,Text string) error {
+    if path=="""" {
+        l.Children = append(l.Children, Level{ Value: Value{Id,Text,l.Value.ID} })
+        return nil
+    }
+    x:=strings.SplitN(path,""."",2)
+    name,remain:=x[0],""""
+    if len(x)>1 {
+        remain = x[1]
+    }
+
+    for i:=range l.Children {
+        if l.Children[i].Value.ID == name {
+            return l.Children[i].Add(remain,Id,Text)
+        }
+    }
+    return errors.New(""Not found"")
+}
+
+func main() {
+    var root Level
+    err := json.Unmarshal([]byte(j), &root)
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(root)
+    fmt.Println(root.Children[0])
+    fmt.Println(root.Children[0].Children[0])
+    fmt.Println(root.Add(""2.3"",""4"",""xxx""))
+    fmt.Println(root)
+}

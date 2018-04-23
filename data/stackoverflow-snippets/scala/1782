@@ -1,0 +1,15 @@
+  def filterOutNullFields(jsonObject:JsObject) : JsObject =  {
+    jsonObject.fields.foldLeft(jsonObject)((jsonObjectAcc , tupleKeyValue) => {
+      if (tupleKeyValue._2.isInstanceOf[JsObject]) {
+        val innerJsonObject = filterOutNullFields(tupleKeyValue._2.as[JsObject])
+        jsonObjectAcc - tupleKeyValue._1 + (tupleKeyValue._1, innerJsonObject)
+      }
+      else {
+        if (tupleKeyValue._2.equals(JsNull)) {
+          jsonObjectAcc - tupleKeyValue._1
+        } else {
+          jsonObjectAcc
+        }
+      }
+    })
+  }

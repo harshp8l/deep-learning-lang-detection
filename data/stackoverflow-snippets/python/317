@@ -1,0 +1,22 @@
+from neupy import layers
+from neupy.utils import as_tuple
+import theano.tensor as T
+
+class Flatten(layers.BaseLayer):
+    """"""
+    Slight modification of the Reshape layer from the neupy library:
+    https://github.com/itdxer/neupy/blob/master/neupy/layers/reshape.py
+    """"""
+    @property 
+    def output_shape(self):
+        # Number of output feature depends on the input shape 
+        # When layer receives input with shape (10, 3, 4)
+        # than output will be (10, 12). First number 10 defines
+        # number of samples which you typically don't need to
+        # change during propagation
+        n_output_features = np.prod(self.input_shape)
+        return (n_output_features,)
+
+    def output(self, input_value):
+        n_samples = input_value.shape[0]
+        return T.reshape(input_value, as_tuple(n_samples, self.output_shape))

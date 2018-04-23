@@ -1,0 +1,23 @@
+describe(""master slave tests"") {
+   it(""slave should kill itself as soon as master is down"") {
+   val dummyActor = system.actorOf(Props.empty)
+   master = system.actorOf(Props(classOf[MasterActor], 
+                     TestProbe().ref, dummyActor), ""context-supervisor"")
+
+   slave = system.actorOf(
+       Props(classOf[SlaveActor], dummyActor, s""${master.path.address.toString}${master.path.toStringWithoutAddress}""))
+
+   val masterProbe = TestProbe()
+   masterProbe.watch(master)
+
+   val slaveProbe = TestProbe()
+   slaveProbe.watch(slave)
+
+   Thread.sleep(2000)
+   // NOTE: Simulating master DOWN
+   master ! akka.actor.PoisonPill
+   masterProbe.expectTerminated(master)
+
+   slaveProbe.expectTerminated(slave)
+ }
+}

@@ -1,0 +1,25 @@
+$pathtsv = ""\test.txt""
+$pathxlsx = ""\NBP ESP-152 REV F TEMPLATE.xlsx""
+
+$Excel = New-Object -ComObject ""Excel.Application""
+$Excel.Visible=$true 
+
+$Workbook = $Excel.Workbooks.Open($pathxlsx) # Open Template
+$TempWorkbook = $Excel.Workbooks.Opentext($pathtsv) # Open text file in excel
+
+$temp = $excel.Workbooks.Item(2)  #select workbook with text
+$temp = $temp.Worksheets.Item(1) #select text worksheet
+$CopyRange = $temp.Range(""A1:G8"") #set range
+$CopyRange.Copy()  #copy data
+
+$workbooksheet = $Workbook.Worksheets.Item(1)#sets doc to copy to
+$Workbooksheet.activate()
+$PasteRange = $workbooksheet.Range(""A3:J10"") #sets range
+$workbooksheet.Paste($PasteRange)#paste data
+
+#save and close the workbook
+$Workbook.Close($true)
+$Excel.Quit()
+while( [System.Runtime.Interopservices.Marshal]::ReleaseComObject($Excel)){}
+[gc]::collect()
+[gc]::WaitForPendingFinalizers()

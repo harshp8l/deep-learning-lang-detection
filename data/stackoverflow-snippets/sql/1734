@@ -1,0 +1,50 @@
+with cte(id, studentId, dateof , absenceReasonId)
+as
+(
+select a.* 
+from attendance a
+where exists (select 1 from attendance preva
+              where preva.studentID = a.studentID
+              and   datediff(day, preva.dateof, a.dateof)
+                    <= (case when datepart(dw, preva.dateof) >= 5
+                        then 8 - datepart(dw, preva.dateof)
+                        else 1 
+                        end)
+              and preva.dateof < a.dateof)
+and exists (select 1 from attendance nexta
+              where nexta.studentID = a.studentID
+              and   datediff(day, a.dateof, nexta.dateof)
+                    <= (case when datepart(dw, a.dateof) >= 5
+                        then 8 - datepart(dw, a.dateof)
+                        else 1 
+                        end)
+              and nexta.dateof > a.dateof))              
+
+select cte.*
+from cte
+union  -- use union to remove duplicates
+select preva.* 
+from
+attendance preva
+inner join
+cte
+on preva.studentID = cte.studentID
+and preva.dateof < cte.dateof
+and datediff(day, preva.dateof, cte.dateof)
+                    <= (case when datepart(dw, preva.dateof) >= 5
+                        then 8 - datepart(dw, preva.dateof)
+                        else 1 
+                        end) 
+union
+select nexta.*
+from attendance nexta
+inner join
+cte
+on nexta.studentID = cte.studentID
+and   datediff(day, cte.dateof, nexta.dateof)
+       <= (case when datepart(dw, cte.dateof) >= 5
+                then 8 - datepart(dw, cte.dateof)
+                else 1 
+            end)
+and nexta.dateof > cte.dateof  
+order by studentId, dateof 

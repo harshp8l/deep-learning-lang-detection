@@ -1,0 +1,38 @@
+def process
+  response = ServiceResponse.new(false, [])
+  project_path = import_project
+  if project_path.blank?
+    return
+  end
+
+  response.data << Step.new('import', true, ""Project imported"")
+  send_realtime_data(response)    
+  hr_config, hr_config_error = fetch_hr_config(project_path)
+  weighted_scores_config, ws_error = fetch_weighted_scores(project_path)
+  if hr_config.blank?
+    response.data << Step.new('.hr_config.yml', false, hr_config_error || ""Empty configuration file"")
+    return response
+  end
+
+  response.data << Step.new('.hr_config.yml', true, 'Configuration file found')
+  send_realtime_data(response)
+  if weighted_scores_config.blank? && ws_error.present?
+    response.data << Step.new('.hr_weighted_scores.yml', false, ws_error)
+    return response
+  end
+
+  response.data << Step.new('.hr_weighted_scores.yml', true, ""Weighted scoring config found"")
+  send_realtime_data(response)
+  configuration = ::X::FullStack::Configuration.new(
+    hr_config, {weighted_scores: weighted_scores_config}
+  )
+  unless configuration.valid?
+    response.data << Step.new('validate_configuration', false, ""Configuration validation failed"", configuration.validations.as_json)
+    return response
+  end
+
+  response.data << Step.new('validate_configuration', false, ""Configuration validated successfully"", configuration.validations.as_json)
+  send_realtime_data(response)
+
+  #....
+end

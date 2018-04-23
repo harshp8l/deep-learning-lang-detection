@@ -1,0 +1,49 @@
+func createOrder(w http.ResponseWriter, r *http.Request) (orderID int) {
+
+    // Begin.
+    tx, err := db.Begin()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Db query.
+    sqlQuery := `INSERT INTO ORDER_CUSTOMER
+        (CUSTOMER_ID)
+        VALUES ($1)
+        RETURNING ID`
+
+    // Prepare.
+    stmt, err := tx.Prepare(sqlQuery)
+    if err != nil {
+        log.Fatal(err)
+        return
+    }
+
+    // Defer Close.
+    defer stmt.Close()
+
+    customerEmail := validateSession(r)
+    ID := getIDFromCustomer(customerEmail)
+    order := order{}
+    order.CustomerID = ID
+
+    // Exec.
+    var orderID int // Or whatever type you are using
+    err := stmt.QueryRow(order.CustomerID).Scan(&orderID)
+
+    // Rollback.
+    if err != nil {
+        //if something goes wrong set the orderID to 0 as in your original code
+        orderID = 0
+        tx.Rollback()
+        e := errors.New(err.Error())
+        msg.Warning = e.Error()
+        tpl.ExecuteTemplate(w, ""menu.gohtml"", msg)
+        return
+    }
+
+    // Commit.
+    tx.Commit()
+
+    return orderID
+} // createOrder

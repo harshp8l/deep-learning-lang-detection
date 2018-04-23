@@ -1,0 +1,21 @@
+SELECT 
+            CASE 
+                WHEN (SELECT    COUNT(COL1) 
+                      FROM      FACT_ACTIVITY fa2 
+                      WHERE     fa2.FACT_ACTIVITY_ID = fa.FACT_ACTIVITY_ID 
+                      GROUP BY  FACT_ACTIVITY.COL2) > 1
+                    THEN (SELECT COUNT(COL3) FROM FACT_ACTIVITY) 
+
+                WHEN (SELECT    COUNT(COL1) 
+                      FROM      FACT_ACTIVITY fa2 WHERE fa2.FACT_ACTIVITY_ID = fa.FACT_ACTIVITY_ID
+                      GROUP BY  FACT_ACTIVITY.COL2)=1
+                        THEN (SELECT COUNT(COL4) FROM FACT_ACTTIVITY)
+                END AS GiveMeAnAlias
+            ,EXTRACT(year from fa.INC_START_DATETIME) AS YearOFF
+            ,COUNT(fa.COL2) AS OffCount 
+FROM        FACT_ACTIVITY fa 
+            INNER JOIN DIM_OFF_TYPE do ON fa.OFF_TYPE_ID = do.OFF_TYPE_ID
+WHERE       fa.OFF_TYPE_ID IN (24001) 
+                AND YEAR(fa.INC_START_DATETIME) IN (2016,2017)
+GROUP BY    do.OFF_TYPE_DESCR,
+            YEAR(fa.INC_START_DATETIME)

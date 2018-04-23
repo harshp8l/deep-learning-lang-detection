@@ -1,0 +1,21 @@
+template <typename ... Fs>
+struct AnyOf
+{
+public:
+    AnyOf(Fs... fs) : fs(fs...) {};
+
+    template <typename ...Ts>
+    decltype(auto) operator()(Ts&&... args) const
+    {
+        return call(std::index_sequence_for<Fs...>(), std::forward<Ts>(args)...);
+    }
+
+private:
+    template <std::size_t ...Is, typename ...Ts>
+    decltype(auto) call(std::index_sequence<Is...>, Ts&&... args) const
+    {
+        return (... || std::get<Is>(fs)(args...));
+    }
+private:
+    std::tuple<Fs...> fs;
+};

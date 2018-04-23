@@ -1,0 +1,42 @@
+class AutoHidingMenuBar : public QMenuBar {
+    Q_OBJECT
+
+public:
+    AutoHidingMenuBar() : QMenuBar() {
+        setMaximumHeight(0);
+        connect(qApp, &QApplication::focusChanged, this, &AutoHidingMenuBar::focusChanged);
+    }
+
+private slots:
+    void focusChanged(QWidget *from, QWidget *to) {
+        bool inFocus = hasFocus() || isAncestorOf(focus) || hasFocusedChild();
+        if (inFocus && maximumHeight() == 0) {
+            auto action = activeAction();
+            setMaximumHeight(100);
+            if (action) {
+                // XXX This is a bit of a hack. We could do
+                //   QCoreApplication::processEvents();
+                //   setActiveAction(action);
+                // with almost the same effect, but then we *open* the first menu on single alt press...
+                auto evt = new QMouseEvent(QEvent::MouseMove, actionGeometry(action).center(), Qt::NoButton, Qt::NoButton, Qt::NoModifier);
+                QCoreApplication::postEvent(this, evt);
+            }
+        } else if (!inFocus && maximumHeight() != 0)) {
+            setMaximumHeight(0);
+        }
+    }
+
+private:
+    bool hasFocusedChild() {
+        QObjectList queue{children()};
+        while (!queue.empty()) {
+            auto child = queue.takeFirst();
+            auto widget = dynamic_cast<QWidget *>(child);
+            if (widget && widget->hasFocus())
+                return true;
+
+            queue.append(child->children());
+        }
+        return false;
+    }
+};

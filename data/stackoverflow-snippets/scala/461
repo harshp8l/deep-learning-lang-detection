@@ -1,0 +1,42 @@
+import scala.concurrent.Future
+import cats.~>
+import cats.data.ReaderT
+import cats.free.Free
+
+object FreeMonads {
+  sealed trait Op[A]
+
+  object Op {
+    final case class Get[T](name: String) extends Op[T]
+    type OpF[A] = Free[Op, A]
+    def get[T](name: String): OpF[T] = Free.liftF[Op, T](Get[T](name))
+  }
+
+  trait Resource
+  trait Format[A]
+  trait Definition[A]
+
+  trait Client {
+    def get[O <: Resource](name: String)
+      (implicit f: Format[O], d: Definition[O]): Future[O]
+  }
+
+  type Result[A] = ReaderT[
+    Future,
+    (Format[A with Resource], Definition[A with Resource]),
+    A,
+  ]
+
+  class FutureOp(client: Client) extends (Op ~> Result) {
+    def apply[A](fa: Op[A]): Result[A] =
+      fa match {
+        case Op.Get(name: String) =>
+          ReaderT {
+            case (format, definition) =>
+              // The `Future[A]` type ascription makes Intellij IDEA's type
+              // checker accept the code.
+              client.get(name)(format, definition): Future[A]
+          }
+      }
+  }
+}

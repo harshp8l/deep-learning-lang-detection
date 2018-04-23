@@ -1,0 +1,15 @@
+try(Realm r = Realm.getDefaultInstance()) {
+    r.executeTransaction((realm) -> {
+        RealmQuery<SKUItem> query = realm.where(SKUItem.class);
+        int i = 0;
+        for (SKUItem id : skuItems) {
+            if (i++ > 0) {
+                query = query.or();
+            }
+            query = query.equalTo(""sku_number"", id.getSku_number());
+        }
+        query.findAll().deleteAllFromRealm();
+        realm.insertOrUpdate(new Memo(String.valueOf(UUID.randomUUID()),
+                false, System.currentTimeMillis(), skuItems));
+    });
+}

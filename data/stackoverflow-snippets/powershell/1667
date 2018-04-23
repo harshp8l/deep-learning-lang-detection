@@ -1,0 +1,20 @@
+$url = ""https://someserver/trans=""
+$transactions = '1','2','3','4' #There are 4 transactions
+$nodes = 'node1','node2','node3','node4','node5','node6' #There are 10 nodes
+
+Remove-Item ATM.csv -Force
+
+# So far so good
+# Below is what I'd use as a function in bash. No sure what/how to do in PS:
+#OUTPUT:
+foreach($transaction in $transactions)
+{
+    foreach($node in $nodes)
+    {
+    ""$transaction;$node"" |out-file -Append ATM.csv
+    curl -v -k -u user@pass $url$transaction$node | findstr ""<value>"" | out-file -Append ATM.csv
+    (Get-Content ATM.csv) -replace ""<value>"","" "" | Out-File -Append ATM.csv
+    (Get-Content ATM.csv) -replace ""</value>"","" "" | Out-File -Append ATM.csv
+    (Get-Content ATM.csv) -replace "" "","""" | Out-File -Append ATM.csv
+    }
+}

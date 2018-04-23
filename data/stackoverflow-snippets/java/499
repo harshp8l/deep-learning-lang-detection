@@ -1,0 +1,35 @@
+Tree<TreeMenuItem> tree = new Tree<>();
+TreeData<TreeMenuItem> treeData = new TreeData<>();
+
+
+//This is for items that have no child.                
+TreeMenuItem dashboardItem = new TreeMenuItem(DashboardViewType.DASHBOARD);
+dashboardItem.setIcon(VaadinIcons.HOME_O);
+dashboardItem.setStateful(DashboardViewType.DASHBOARD.isStateful());
+dashboardItem.setViewName(DashboardViewType.DASHBOARD.getViewName());
+treeData.addItem(null, dashboardItem);
+
+for (DashboardViewType type : DashboardViewType.values()) {
+   TreeMenuItem menuItem = new TreeMenuItem(type);
+   menuItem.setIcon(VaadinIcons.HOME_O);
+   menuItem.setViewName(type.getViewName());
+   menuItem.setStateful(false);
+   treeData.addItem(null, menuItem);
+   getSubMenuItems(type).forEach(subView -> {
+       TreeMenuItem subItem = new TreeMenuItem(subView);
+       subItem.setViewName(subView.getViewName().substring(0, 1).toUpperCase()
+                                        + subView.getViewName().substring(1));
+       subItem.setIcon(subView.getIcon());
+       subItem.setStateful(subView.isStateful());
+       subItem.setView(subView);
+       subItem.setViewClass(subView.getViewClass());
+       treeData.addItem(menuItem, subItem);
+    }); 
+    }
+ }
+tree.setDataProvider(new TreeDataProvider<>(treeData));
+tree.setItemIconGenerator(TreeMenuItem::getIcon);
+tree.setItemCaptionGenerator(TreeMenuItem::getViewName);
+tree.addItemClickListener((Tree.ItemClick<TreeMenuItem> event) -> {
+            DashboardEventBus.register(event.getItem().getView());           UI.getCurrent().getNavigator().navigateTo(event.getItem().getViewName());
+        });

@@ -1,0 +1,40 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+)
+
+type Base struct {
+    Type  string      `json:""$type""`
+    selfP interface{} // this will store a pointer to the actual sub struct
+}
+
+func (b *Base) SetSelfP(p interface{}) {
+    b.selfP = p
+}
+
+func (b *Base) GetJSON() ([]byte, error) {
+    return json.Marshal(b.selfP)
+}
+
+func (b *Base) SetType(typeStr string) {
+    b.Type = typeStr
+}
+
+type Auth struct {
+    Base
+    Username string
+    Password string
+}
+
+func main() {
+    a := &Auth{
+        Username: ""Test"",
+        Password: ""test"",
+    }
+    a.SetSelfP(a) // this line does the trick
+    a.SetType(""testtype"")
+    j, _ := a.GetJSON()
+    fmt.Println(string(j))
+}

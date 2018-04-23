@@ -1,0 +1,8 @@
+  val DF = Seq(
+    (""123"", ""|1|2"",""3|3|4"" ),
+    (""124"", ""|3|2"",""|3|4"" )
+  ).toDF(""id"", ""complete1"", ""complete2"")
+    .select($""id"", split($""complete1"", ""\\|"").as(""complete1""), split($""complete2"", ""\\|"").as(""complete2""))
+    .withColumn(""complete1"", explode($""complete1""))
+    .withColumn(""complete2"", explode($""complete2""))
+    .groupBy($""id"").agg(min($""complete1"".cast(IntegerType)).as(""complete1""), min($""complete2"".cast(IntegerType)).as(""complete2""))

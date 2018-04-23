@@ -1,0 +1,23 @@
+#include <cstddef>
+#include <vector>
+...
+DWORD SomeObj::Encrypt(string * To_Enc) {
+    std::vector<std::string::value_type> vecBuffer(To_Enc->length() * 3, 0);  // use the maximum value that could be output, possibly some multiple of the length of 'To_Enc'
+    std::size_t nIndex = 0; 
+    for (auto it = To_Enc->cbegin(); it != To_End->cend(); ++it)
+    {
+        vecBuffer[nIndex++] = *it;
+    }
+    DWORD text_len = (To_Enc->length());
+    if (!CryptEncrypt(this->hKey,
+        NULL,  // hHash = no hash
+        1,  // Final
+        0,     // dwFlags
+       reinterpret_cast<PBYTE>(&vecBuffer[0]), //*pbData
+       &text_len,  //*pdwDataLen
+       vecBuffer.size())) {      //dwBufLen
+       return SERVER_ERROR;
+    }
+    To_Enc->assign(&vecBuffer[0], text_len);  // assumes 'text_len' is returned with the new length of the buffer
+    return SERVER_SUCCESS;
+}

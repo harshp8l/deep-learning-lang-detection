@@ -1,0 +1,14 @@
+$svcUrl = 'http://the-host-name/ReportServer/reportservice2010.asmx'
+$svc = New-WebServiceProxy -Class 'RS' -Namespace 'RS' -Uri $svcUrl -UseDefaultCredential
+$reports = $svc.ListChildren(""/"", $true) | Where-Object { $_.TypeName -eq ""Report"" }
+
+$KeepExecutionSnapshots = $false
+$ScheduleDefinitionOrReference = New-Object RS.ScheduleDefinitionOrReference
+
+foreach ($report in $reports) {
+    $svc.GetItemHistoryOptions($report.Path, 
+        [ref]$KeepExecutionSnapshots, 
+        [ref]$ScheduleDefinitionOrReference)
+    $report.Path
+    $ScheduleDefinitionOrReference
+}

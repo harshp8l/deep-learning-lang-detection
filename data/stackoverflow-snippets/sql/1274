@@ -1,0 +1,19 @@
+SELECT
+    `c`.`country`,
+    SUM(CASE WHEN event = 'views'  THEN `count` ELSE 0 END) AS `views`,
+    SUM(CASE WHEN event = 'plays'  THEN `count` ELSE 0 END) AS `plays`,
+    SUM(CASE WHEN event = 'clicks' THEN `count` ELSE 0 END) AS `clicks`
+FROM
+    `eem_events` `a`
+INNER JOIN(
+    SELECT    `country`
+    FROM      `eem_events` `b`
+    GROUP BY  `country`
+    ORDER BY   SUM(`count`) DESC
+    LIMIT 5
+) AS `c`
+  ON `a`.`country` = `c`.`country`
+WHERE
+    `date` > DATE_SUB(NOW(), INTERVAL 7 DAY)
+GROUP BY
+    `c`.`country`

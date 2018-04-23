@@ -1,0 +1,35 @@
+$ cat make-m2t.sh 
+#!/bin/bash
+
+t=morse-table.txt                     # morse table
+s=m2t                                 # sed script
+
+s1='                                  # s1 = pre-processing
+s:\s+:  :g                            # space-gap to TWO space-chars
+s:^: :                                # add a space at line beginning
+s:$: :                                # add a space at line end
+s:/: \n :g                            # change all slash to "" \n ""
+'
+s2='                                  # s2 = morse-table to sed-script
+s:\s+: :g                             # space-gap to space-char
+s:##.*$::                             # remove all comments
+s:^ *::                               # remove all leading spaces
+s: *$::                               # remove all trailing spaces
+/^[^ ] [\.-]+$/!d                     # ignore all invalid lines
+s:\.:\\.:g                            # add back-slash for dot (escape for dot)
+s:^\\\. :\. :                         # but not for the char-dot
+s:^\\ :\\\\ :                         # add b-slash for b-slash (escape for b-slash)
+s:^\/ :\\\/ :                         # add b-slash for slash (escape for slash)
+s:^([^ ]+) +([^ ]+).*$:s/ \2 / \1 /g: # morse-map to sed-subsitution
+'
+s3='                                  # s3 = post-processing
+s: ::g                                # remove all spaces
+s:\n: :g                              # convert \n to space
+'
+                                      # now, make the sed script
+echo '#!/usr/bin/sed -Ef'      >""$s""  # shebang
+sed -E 's:\s*#.*$::' <<<""$s1"" >>""$s""  # remove comments from s1
+sed -E ""$s2"" ""$t""             >>""$s""  # convert morse to chars
+sed -E 's:\s*#.*$::' <<<""$s3"" >>""$s""  # remove comments from s3
+sed -i -E '/^\s*$/d'            ""$s""  # remove all blank lines
+chmod +x                        ""$s""  # make it executable

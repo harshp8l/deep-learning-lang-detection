@@ -1,0 +1,49 @@
+[CmdletBinding(SupportsShouldProcess = $true)]
+param (
+    $Source = ""D:\SDM\Fltctrl\Msglog\ANZ\"",
+    $Destination = ""D:\SDM\Fltctrl\MsgBackup\"",
+    $Log = ""c:\support\scripts\CommsLogArchiveDMLog.txt""
+)
+
+function Log ( [String] $Message ) {
+    Write-Verbose -Message $Message
+    if ( $Log )
+    {
+        ""$(Get-Date -Format yyyyMMdd-HHmmss): $Message"" | Add-Content $Log
+    }
+}
+
+# Generate .zip filename
+$ArchiveFilePath = Join-Path -Path $Destination -ChildPath ""$(Get-Date -Format yyyyMMdd-HHmmss)_Comms.zip""
+Log -Message ""Destination archive filepath: $ArchiveFilePath""
+
+# Compress files
+try
+{
+    Compress-Archive -Path $Source -DestinationPath $ArchiveFilePath -CompressionLevel Optimal
+}
+catch
+{
+    Log -Message ""An error occurred creating archive: $($_.ToSTring()) Terminating script.""
+    throw $_
+}
+
+# Remove source files
+try
+{
+    Get-ChildItem -Path $Source -Recurse -force `
+    | Where-Object -Property PSIsContainer -EQ -Value $false `
+    | ForEach-Object `
+        -Begin { Log -Message ""Removing file(s) from $Source""; $Count = 1 } `
+        -Process {
+            Log -Message ""Removing item: $($_.FullName)""
+            $_ | Remove-Item -Force
+            $Count ++
+        } `
+        -End { Log -Message ""Removed $Count file(s) from $Source"" }
+}
+catch
+{
+    Log -Message ""An error occurred removing files: $($_.ToSTring()) Terminating script""
+    throw $_
+}

@@ -1,0 +1,18 @@
+(defn only-those-actors? [db movie actors]
+  (->> (datoms db :eavt movie :film/cast) seq
+    (every? (fn [[_ _ actor]]
+                (contains? actors actor)))
+    ))
+
+(defn find-movies-with-exact-cast [db actors-names]
+  (let [actors (set (d/q '[:find [?actor ...] :in $ [?name ...] ?only-those-actors :where
+                           [?actor :actor/name ?name]]
+                      db actors-names))
+        query {:find '[[?movie ...]]
+               :in '[$ ?actors ?db]
+               :where
+               (concat
+                 (for [actor actors]
+                   ['?movie :film/cast actor])
+                 [['(only-those-actors? ?db ?movie ?actors)]])}]
+    (d/q query db actors db only-those-actors?)))

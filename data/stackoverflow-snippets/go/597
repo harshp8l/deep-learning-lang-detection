@@ -1,0 +1,69 @@
+package main
+
+import (
+    ""html/template""
+    ""os""
+)
+
+// here is your template
+const tplString = `
+<!DOCTYPE html>
+<html lang=""en"">
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <meta http-equiv=""X-UA-Compatible"" content=""ie=edge"">
+  <title>{{.Title}}</title>
+</head>
+<body>
+{{range .Dummies}}
+<div>Square of {{.Number}} is {{.Square}}</div>
+{{end}}
+</body>
+</html>
+`
+
+var (
+    tpl *template.Template
+    err error
+)
+
+// the dummydata you talked about
+type DummyData struct {
+    Number int
+    Square int
+}
+
+//some PageData just with dummies and a title
+type PageData struct {
+    Title   string
+    Dummies []*DummyData
+}
+
+//here you would be using your sql queries
+func createSomeDummies(amount int) []*DummyData {
+    dummies := make([]*DummyData, amount)
+    for i := 0; i < amount; i++ {
+        dd := new(DummyData)
+        dd.Number = i
+        dd.Square = i * i
+        dummies[i] = dd
+    }
+    return dummies
+}
+
+func main() {
+    pd := new(PageData)
+    pd.Title = ""Hello Dummies""
+    pd.Dummies = createSomeDummies(10)
+
+    tpl = template.New(""index"")
+    tpl, err = tpl.Parse(tplString)
+    if err != nil {
+        panic(err)
+    }
+    err = tpl.Execute(os.Stdout, pd)
+    if err != nil {
+        panic(err)
+    }
+}

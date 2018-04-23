@@ -1,0 +1,29 @@
+require 'rugged'
+require 'digest'
+
+def patch_id(patch)
+  # This is not a real implementation; replace it with a real one.
+  Digest::SHA1.hexdigest(patch.each_line.reject { |l| l =~ /^(diff|index|---|\+\+\+|@@)/ }.join)
+end
+
+def walk_revisions(repo, from, to)
+  revisions = {}
+  walker = Rugged::Walker.new(repo)
+  walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
+  walker.push(to)
+  walker.hide(from)
+  walker.each do |c|
+    diff = c.parents[0].diff(c)
+    revisions[patch_id(diff.patch)] = c.oid
+  end
+  revisions
+end
+
+repo = Rugged::Repository.new(ARGV[0])
+a, b, c = ARGV[1..3].map { |r| repo.rev_parse(r) }
+first = walk_revisions(repo, b, a)
+second = walk_revisions(repo, c, b)
+second.each do |id, rev|
+  char = first.include?(id) ? '-' : '+'
+  puts ""#{char} #{rev}""
+end

@@ -1,0 +1,35 @@
+with open(""/root/nix_bsd_mac_inventory-master/Unique.txt"") as fp:
+    for line in fp:
+        line = line.rstrip()
+        if line in ips:
+            print('{}: Ip is Already Tried: '.format(line))
+            continue  # Continue means it will skip to the next password
+        passwords = ['password1', 'password2', 'password3']
+        for password in passwords:
+            f3 = open(""/root/nix_bsd_mac_inventory-master/inventory.cfg"",
+                      ""w"")
+            print ""Processing Ip: "" + line
+            f3.write(""[device42_access]"" + ""\n"" +
+                     ""base_url = https://1.8.0.3"" + ""\n"" +
+                     ""username = uname"" + ""\n"" +
+                     ""secret = abcd"" + ""\n"" +
+                     ""[discover]"" + ""\n"" +
+                     ""cpu= true"" + ""\n"" +
+                     ""hardware = true"" + ""\n"" +
+                     ""memory = true"" + ""\n"" +
+                     ""[access]"" + ""\n"" +
+                     ""credentials = username:"" + password + ""\n""  # Fixed typo here
+            f3.close()
+            p = subprocess.Popen([""./d42_linux_autodisc_v620""],
+                                 stdout=subprocess.PIPE)
+            p1 = str(p.communicate())
+            if '1 devices were successfully added/updated' in p1:
+                print('Sucessfull Completed Ip: ' + line)
+                f6 = open(""/root/nix_bsd_mac_inventory-master/SucessfullIp.txt"", ""a"")
+                f6.write(""\n"" + line)
+                f6.close()
+                break  # If successful it breaks, so don't need an else
+            print ""Password %s Unsuccessfull"" % password
+        else:
+            # This happens when there are no more passwords to attempt
+            print ""No passwords were successful""

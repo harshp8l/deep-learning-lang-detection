@@ -1,0 +1,28 @@
+(defn group-recur [ks coll]
+  (let [split-map (fn [m]
+                    (->> m
+                         (into [])
+                         (map (partial apply hash-map))))
+        dissoc-non-map (fn [m k]
+                         (let [l (drop-last k)]
+                           (if-not (map? (get-in m k))
+                             (if (empty? l)
+                               (dissoc m (last k))
+                               (update-in m l dissoc (last k)))
+                             m)))
+        updater (fn [r k v]
+                  (let [s (split-map k)]
+                    (-> r
+                        (dissoc-non-map (drop-last s))
+                        (assoc-in s v))))]
+  (loop [k ks
+         h []
+         r {}]
+    (if (not-empty k)
+      (let [all (conj h (first k))
+            grouped (dissoc (group-by #(select-keys % all) coll) {})]
+        (->> grouped
+             (reduce-kv updater r)
+             (recur (rest k)
+                    all)))
+      r))))

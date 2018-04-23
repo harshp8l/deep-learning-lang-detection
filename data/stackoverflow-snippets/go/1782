@@ -1,0 +1,79 @@
+package main
+
+import (
+    ""encoding/json""
+    ""log""
+)
+
+const (
+    inputJSON = `{
+  ""id"": 10,
+  ""result"": [
+    {
+      ""bundled"": true,
+      ""type"": ""RM-J1100""
+    },
+    [
+      {
+        ""name"": ""PowerOff"",
+        ""value"": ""AAAAAQAAAAEAAAAvAw==""
+      },
+      {
+        ""name"": ""Input"",
+        ""value"": ""AAAAAQAAAAEAAAAlAw==""
+      }
+    ]
+  ]
+}`
+)
+
+type Codes struct {
+    Id     int32          `json:""id""`
+    Result [2]interface{} `json:""result""`
+}
+
+type Result struct {
+    Info  InfoMap
+    Codes []Code
+}
+
+type InfoMap struct {
+    Bundled bool   `json:""bundled""`
+    Type    string `json:""type""`
+}
+
+type Code struct {
+    Name  string `json:""name""`
+    Value string `json:""value""`
+}
+
+func main() {
+    newCodes := &Codes{}
+    err := json.Unmarshal([]byte(inputJSON), newCodes)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Prints the whole object
+    log.Println(newCodes)
+
+    // Prints the Result array (!)
+    log.Println(newCodes.Result)
+
+    if len(newCodes.Result) != 2 {
+        log.Fatal(""Invalid Result struct"")
+    }
+
+    // Marshal and Unmarshal data to obtain the code list
+    byteCodeList, _ := json.Marshal(newCodes.Result[1])
+
+    codeList := make([]Code, 0)
+
+    err = json.Unmarshal(byteCodeList, &codeList)
+    if err != nil {
+        log.Fatal(""Invalid Code list"")
+    }
+
+    // Prints the codeList
+    log.Println(codeList)
+}

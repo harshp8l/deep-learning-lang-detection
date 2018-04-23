@@ -1,0 +1,17 @@
+select a.orgId as orgId, 
+       a.orgStatus as orgStatus, 
+       count(b.eventid) as eventCount
+from (
+      select a.orgId as orgId, 
+             a.orgStatus as orgStatus, 
+             a.startedTime as startedTime, 
+             ifnull(b.startedTime, '2030-01-01 00:00:00') as endedTime
+      from A as a 
+      left join A as b 
+        on a.orgId = b.orgId and a.orgStatus = b.orgStatus - 1
+      order by orgId, orgStatus
+     ) as a 
+left join B as b
+  on a.orgId = b.orgId and b.createdTime between a.startedTime and a.endedTime
+group by orgId, orgStatus
+order by orgId, orgStatus;

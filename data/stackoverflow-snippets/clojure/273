@@ -1,0 +1,18 @@
+;; simple fn to resolve defmethod to call, hardcoded to :do-it
+(defn who-is-it [person] (:name person))
+(spyx (who-is-it {:name :joe}))
+
+;; now change who-is-it
+(defn who-is-it [arg] :ted)
+(spyx (who-is-it :wilma)) ;; expected result = :ted
+; (spyx (do-something {:name :betty}))
+
+(defmulti  do-something who-is-it)
+(defmethod do-something :homer [person] :doh)
+(defmethod do-something :bill  [person] :oh-no)
+(defmethod do-something :ted  [person] :excellent)
+
+(dotest
+  (spyx (do-something {:name :betty})))
+
+(do-something {:name :betty}) => :excellent  ; *** as expected ***

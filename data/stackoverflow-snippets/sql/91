@@ -1,0 +1,19 @@
+SELECT *
+FROM(
+    SELECT
+    ControllerNo as ControlIdNo,
+    ControllerName.Id , 
+    [MonthName] as [month],
+    (select DepartmentName from Dashboard_new where Dashboard_new.Year='2018' group by DepartmentName) as Amount -- this part also looks wrong
+    FROM ControllerName 
+    left join Dashboard_new on ControllerName.ControlIdNo = Dashboard_new.ControlIdNo 
+    and Dashboard_new.Year='2018'--- this is the line to add
+    group by ControllerNo ,ControllerName.Id , [MonthName]
+
+) as s
+PIVOT
+(
+    count(Amount)
+    FOR[month] IN(jan, feb, mar, apr,
+    may, jun, jul, aug, sep, oct, nov, dec)
+)AS pvt

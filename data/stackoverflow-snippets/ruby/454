@@ -1,0 +1,41 @@
+def get_ldap_username cn
+  treebase = ""ou=xxxxxx,ou=xxxxxx,ou=xxxxxxx,ou=xxxxxx,dc=xxx,dc=xx""
+  filter = Net::LDAP::Filter.eq(""cn"", cn)
+  LDAP.search(:filter => filter, :base => treebase) do |item| 
+    return item.sAMAccountName.first
+  end
+end
+
+def get_members name, members = []
+  treebase = ""ou=xxxxxxx,ou=xxxxxxx,ou=xxxxxxx,ou=xxxxxx,dc=xxx,dc=xx""
+  filter = Net::LDAP::Filter.eq(""cn"", name)
+  LDAP.search(:filter => filter, :base => treebase) do |item| 
+    item.each do |attribute, values|
+      if attribute == :member
+        values.each do |value|
+          cn = value[/CN=([^,]+),/,1]
+
+          # my groups all begin with a letter/number sequence
+          # recurse this method if member is a group itself
+          if cn[0..2].downcase == ""xxx"" # xxx something else of course
+            get_members cn, members
+          else
+            members << get_ldap_username(cn)
+          end
+
+        end
+      end
+     end
+  end
+  members # an array of permitted usernames
+end
+
+before do
+  # authentication code 
+  # see https://stackoverflow.com/questions/5506932/is-there-a-way-to-read-a-clients-windows-login-name-using-ruby-on-rails/48407500#48407500
+
+  # authorisation
+  unless $members.include? @username
+    halt ""No access""
+  end
+end

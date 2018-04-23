@@ -1,0 +1,13 @@
+/// Applies the supplied choosing function to successive elements, returning the first result where the function returns `Some (x)` and applies the supplied function `f` to all other elements.
+let tryPickOrApplyFunc chooser f sequ =
+    let folder acc v =
+        match acc, chooser v with
+        |Some x, _ -> // We have already picked an element - apply the function to v and return the already picked element
+            f v
+            Some x
+        |None, Some y -> // We haven't picked a value and the chooser function returns `Some (x)` - Pick the value 
+            Some v
+        |None, None -> // We haven't picked a value and the chooser function returns `None` - apply the function and return `None`
+            f v
+            None
+    Seq.fold (folder) None sequ

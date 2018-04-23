@@ -1,0 +1,15 @@
+$Cluster = Get-ClusterNode -Cluster hv-cluster01.contoso.com
+
+
+$a = ""<style>""
+$a = $a + ""BODY{background-color:peachpuff;}""
+$a = $a + ""TABLE{border-width: 1px;border-style: solid;border-color:  black;border-collapse: collapse;}""
+$a = $a + ""TH{column-width: 200px;border-width: 1px;padding: 8px;border-style: solid;border-color: black;background-color:thistle}""
+$a = $a + ""TD{column-width: 200px;border-width: 1px;padding: 3px;border-style: solid;border-color: black;background-color:PaleGoldenrod;text-align: center}""
+$a = $a + ""</style>""
+
+$Report = ForEach ($Node in $Cluster) {
+    Get-VMReplication -ComputerName $Node | Select-Object VMName, State, Health, PrimaryServer
+}
+
+$Report | ConvertTo-HTML -head $a -body ""<H2>DR Replication Status</H2>"" | Out-File C:\Scripts\Test.htm

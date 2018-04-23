@@ -1,0 +1,23 @@
+import org.apache.spark.sql.functions._
+//filling empty lastupdatedate and changing the date to the expected format
+val newdf = df.na.fill(""01-01-1900"",Seq(""lastupdatedate""))
+  .withColumn(""lastupdatedate"", date_format(unix_timestamp(trim(col(""lastupdatedate"")), ""MM-dd-yyyy"").cast(""timestamp""), ""yyyy-MM-dd""))
+
+//changing the date to the expected format of the second dataframe
+val newdf1 = df1.withColumn(""lastupdatedate"", date_format(unix_timestamp(trim(col(""lastupdatedate"")), ""MM-dd-yyyy"").cast(""timestamp""), ""yyyy-MM-dd""))
+
+//joining both dataframes and updating columns according to your needs
+val tempdf = newdf.as(""table1"").join(newdf1.as(""table2""),Seq(""prodid""), ""outer"")
+    .select(col(""prodid""),
+      when(col(""table1.lastupdatedate"").isNotNull, col(""table1.lastupdatedate"")).otherwise(col(""table2.lastupdatedate"")).as(""lastupdatedate""),
+      when(col(""table1.indicator"").isNotNull, when(col(""table2.lastupdatedate"").isNotNull, col(""table2.lastupdatedate"")).otherwise(lit(""2400-01-01""))).otherwise(lit(""2400-01-01"")).as(""defaultdate""),
+      when(col(""table2.indicator"").isNull, col(""table1.indicator"")).otherwise(when(col(""table2.indicator"") === ""U"", lit(""I"")).otherwise(col(""table2.indicator""))).as(""indicator""))
+
+//filtering tempdf for duplication
+val filtereddf = tempdf.filter(col(""indicator"") === ""I"")
+                        .withColumn(""lastupdatedate"", col(""defaultdate""))
+                        .withColumn(""defaultdate"", lit(""2400-01-01""))
+                        .withColumn(""indicator"", lit(""A""))
+
+//finally merging both dataframes
+tempdf.union(filtereddf).sort(""prodid"", ""lastupdatedate"").show(false)

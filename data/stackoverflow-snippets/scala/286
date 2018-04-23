@@ -1,0 +1,23 @@
+val text = """"""[{""name"": ""John"", ""age"": 30}, null, {""name"": ""Steve"", ""age"": 34}]""""""
+
+import play.api.libs.json._
+
+implicit def optionFormat[T: Format]: Format[Option[T]] = new Format[Option[T]]{
+  override def reads(json: JsValue): JsResult[Option[T]] = json.validateOpt[T]
+
+  override def writes(o: Option[T]) = o match {
+    case Some(t) ⇒ implicitly[Writes[T]].writes(t)
+    case None ⇒ JsNull
+  }
+}
+
+case class Person(name: String, age: Int)
+
+implicit val personFormat= {
+  implicit val f = Json.format[Person]
+  implicitly[Format[Option[Person]]]
+}
+
+
+val data = Json.parse(text).validate[List[Option[Person]]] // JsSuccess(List(Some(Person(John,30)), None, Some(Person(Steve,34))),)
+Json.toJson(data.get) // [{""name"":""John"",""age"":30},null,{""name"":""Steve"",""age"":34}]

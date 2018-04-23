@@ -1,0 +1,33 @@
+# Load WinSCP .NET assembly
+Add-Type -Path ""WinSCPnet.dll""
+
+# Setup session options
+$sessionOptions = New-Object WinSCP.SessionOptions -Property @{
+    Protocol = [WinSCP.Protocol]::Ftp
+    HostName = ""ftp.example.com""
+    UserName = ""user""
+    Password = ""mypassword""
+}
+
+$session = New-Object WinSCP.Session
+
+try
+{
+    # Connect
+    $session.Open($sessionOptions)
+
+    # Download files
+    $options =
+        [WinSCP.EnumerationOptions]::EnumerateDirectories -bor
+        [WinSCP.EnumerationOptions]::AllDirectories
+    $fileInfos = $session.EnumerateRemoteFiles(""/directory/to/list"", $Null, $options)
+    foreach ($fileInfo in $fileInfos)
+    {
+        Write-Host $fileInfo.FullName
+    }
+}
+finally
+{
+    # Disconnect, clean up
+    $session.Dispose()
+}    

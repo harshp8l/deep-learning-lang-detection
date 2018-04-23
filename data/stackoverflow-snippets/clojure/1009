@@ -1,0 +1,20 @@
+(<!! (let [c1 (chan)
+           tchan (timeout 1000) 
+           values [""hi"" ""there""]]
+       (doseq [value values]
+         (thread
+           (>!! c1 value)))
+       (thread
+          (loop [[recvalue rchan] (alts!! [c1 tchan])
+                 timeoutchan tchan]
+            (if (= rchan timeoutchan)
+                (do (close! c1)
+                    :done)
+                (do (println ""Read"" recvalue)
+                    (let [newtimeout (timeout 1000)]
+                        (recur (alts!! [c1 newtimeout])
+                               newtimeout))))))
+
+Read hi
+Read there
+:done

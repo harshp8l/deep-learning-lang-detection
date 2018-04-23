@@ -1,0 +1,46 @@
+bool isJsonEqual(const Json::Value &referenve, Json::Value &v1, Json::Value &v2)
+{
+    switch (reference.GetType()) {
+        case Json::Value::booleanValue: {
+             if (reference.asBool()) {
+                 return v1 == v2;
+             } else {
+                 return true; // don't check comparison
+             }
+        }
+        case Json::Value::nullValue : return true; // don't check comparison
+        case Json::Value::arrayValue: {
+            if (v1.GetType() != Json::Value::arrayValue
+             || v2.GetType() != Json::Value::arrayValue) {
+                 return false;
+            }
+            const auto size = reference.ArraySize();
+            if (v1.ArraySize() != size || v2.ArraySize() != size) {
+                 return false;
+            }
+            // Recurse on array
+            for (std::size_t i = 0; i != size; ++i) {
+                 if (!isJsonEqual(reference[i], v1[i], v2[i])) {
+                     return false;
+                 }
+            }
+            return true;
+        }
+        case Json::Value::objectValue: {
+            if (v1.GetType() != Json::Value::objectValue
+             || v2.GetType() != Json::Value::objectValue) {
+                 return false;
+            }
+            // Recurse on members
+            for (const auto& member : reference.getMemberNames()) {
+                 if (!isJsonEqual(reference[member], v1[member], v2[member])) {
+                     return false;
+                 }
+            }
+            return true;
+        }
+        default: {
+            throw std::runtime_error(""Invalid reference"");
+        }
+    }
+}

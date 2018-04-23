@@ -1,0 +1,65 @@
+public function envoiMailAction()
+{   
+    // always expecting a JSON to come back
+    header('Content-type: application/json');
+
+    if (!$this->data) {
+        echo json_encode(array( 'ciao' => 'nope', 'msg' => 'Erreur envoi impossible' )); 
+        // if you are returning early in an AJAX script, you want to die or exit early
+        exit;
+    }
+
+    $spam = htmlentities($this->data['sujetMessage']);
+    $nom = htmlentities($this->data['nom']);
+    $prenom = htmlentities($this->data['prenom']);
+    $mail = htmlentities($this->data['mail']);
+    $message = htmlentities($this->data['message']);
+
+    if (!empty($spam) && !($spam == '4' || strtolower($spam) == 'quatre')) {   
+        echo json_encode(array( 'ciao' => 'nope', 'msg' => 'Erreur SPAM' )); 
+        exit;
+    }
+
+    $handler = new stringHandler();
+
+    // note the !
+    if (!$handler->checkInput($nom,NAME_MIN,NAME_MAX)) {
+        echo json_encode(array( 'ciao' => 'nope', 'message' => 'Erreur nom' )); 
+        exit;
+    }
+
+    if (!$handler->checkInput($prenom,NAME_MIN,NAME_MAX)) {
+        echo json_encode(array( 'ciao' => 'nope', 'msg' => 'Erreur prenom' ));
+        exit;
+    }
+
+    if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(array( 'ciao' => 'nope', 'msg' => 'Erreur mail' ));
+        exit;
+    }
+
+    if (!$handler->checkMessage($message)){
+        echo json_encode(array( 'ciao' => 'nope', 'msg' => 'Erreur message'));
+        exit;
+    }
+
+    // if we made it here, then it passed the validations
+    $ip           = $_SERVER[""REMOTE_ADDR""];
+    $hostname     = gethostbyaddr($_SERVER[""REMOTE_ADDR""]);
+    $destinataire = ""amandine.dib@live.fr"";
+    $objet        = ""Message de "" . $prenom."" "".$nom;
+    $contenu      = ""Nom de l'expéditeur : "" . $nom . ""\r\n"";
+    $contenu     .= $message . ""\r\n\n"";
+    $contenu     .= ""Adresse IP de l'expéditeur : "" . $ip . ""\r\n"";
+    $contenu     .= ""DLSAM : "" . $hostname;
+
+    $headers  = ""CC: "" . $mail . "" \r\n"";
+    $headers .= ""Content-Type: text/plain; charset=\""ISO-8859-1\""; DelSp=\""Yes\""; format=flowed /r/n"";
+    $headers .= ""Content-Disposition: inline \r\n"";
+    $headers .= ""Content-Transfer-Encoding: 7bit \r\n"";
+    $headers .= ""MIME-Version: 1.0"";
+
+    mail($destinataire, $objet, utf8_decode($contenu), 'From: amandine@exemple.com');
+
+    echo json_encode(array( 'ciao' => 'ok', 'msg' => 'Message envoyé' ));
+}  

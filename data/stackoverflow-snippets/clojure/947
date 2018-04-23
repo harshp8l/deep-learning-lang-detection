@@ -1,0 +1,29 @@
+(def hh (-> (make-hierarchy)
+            (derive :0 :a)
+            (derive :1 :a)
+            (derive :2 :b)
+            (derive :3 :b)
+            atom))
+
+(isa? @hh :3 :b) ;; => true
+
+(defmulti mm
+          ""Demo of using hierarchy""
+          (comp keyword str)
+          :hierarchy hh)
+
+(defmethod mm :b [orig] {:b orig})
+(defmethod mm :a [orig] {:a orig})
+(defmethod mm :default [orig] :oopsie)
+
+(mm 2) ;; => {:b 2}
+(mm 1) ;; => {:a 1}
+(mm 4) ;; => :oopsie
+;; Cool thing is we can steer this at RUNTIME!
+(swap! hh derive :4 :b)
+(mm 4) ;; => {:b 4}
+
+;; So we can keep the data close to the definition:
+(mapv #(swap! hh derive % :c) [:5 :6 :7])
+(defmethod mm :c [orig] {:c orig})
+(mm 6) ;; => {:c 6}

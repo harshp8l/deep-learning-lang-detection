@@ -1,0 +1,32 @@
+def doit(str)
+  split_here = 0.chr
+  stack = 0
+  s = str.gsub(/./) do |c|
+    ret = c
+    case c
+    when '('
+      stack += 1
+    when ','
+      ret = split_here, if stack.zero?
+    when ')'
+      raise(RuntimeError, ""parens are unbalanced"") if stack.zero?
+      stack -= 1
+    end
+    ret
+  end
+  raise(RuntimeError, ""parens are unbalanced, stack at end=#{stack}"") if stack > 0
+  s.split(split_here)
+end
+
+doit ""id,name,title(first_name,last_name)""
+  #=> [""id"", ""name"", ""title(first_name,last_name)""]
+doit ""id,name,title(first_name,last_name,address(street,pincode(id,code)))""
+  #=> [""id"", ""name"", ""title(first_name,last_name,address(street,pincode(id,code)))""]
+doit ""a,b(c(d),e,f)""
+  #=> [""a"", ""b(c(d),e,f)""]
+doit ""id,name,title(first_name,last_name),pub(name,address)""
+  #=> [""id"", ""name"", ""title(first_name,last_name)"", ""pub(name,address​)""]
+doit ""a,b(c)d),e,f)""
+  #=> RuntimeError: parens are unbalanced
+doit ""a,b(c(d),e),f(""
+  #=> RuntimeError: parens are unbalanced, stack at end=[""(""]

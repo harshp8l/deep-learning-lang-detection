@@ -1,0 +1,28 @@
+SELECT
+    artists.artist_id
+    ,s.song_id
+FROM
+    artists
+    INNER JOIN LATERAL
+    (
+        SELECT songs.song_id
+        FROM songs
+        WHERE
+            songs.artist_id = artists.artist_id
+            AND NOT EXISTS
+            (
+                SELECT 1
+                FROM listened
+                WHERE
+                    listened.artist_id = songs.artist_id
+                    -- limit listened songs to one artist
+                    AND listened.song_id = songs.song_id
+            )
+        ORDER BY random()
+        -- shuffle only songs of one artist
+        LIMIT 1
+    ) AS s ON true
+ORDER BY artists.score ASC, random()
+-- if there are several artists with the same score
+-- pick one random artist among them
+LIMIT 1;

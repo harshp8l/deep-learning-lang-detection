@@ -1,0 +1,26 @@
+(defn redist
+  [current remove-key]
+
+  (functor/fmap
+   ;; build a set from the vector of entries for each pair
+   (comp set  (partial functor/fmap second))
+   ;; group the pairs (key value) by key. It yields a map of 
+   ;; {key [(key value1) (key value2) ...]}
+   (group-by first
+             ;; build pairs of (key value) from the sorted sequence of remaining keys
+             ;; and values from the removed key
+             (map list
+                  ;; cycle through the keys (if there are more values 
+                  ;; to distribute than keys)
+                  (cycle 
+                    ;; keep only the keys from the sorted sequence
+                    (map first
+                         ;; sort the remaining keys by [(nb of values) key]
+                         (sort-by 
+                           ;; a weight function for each entry:
+                           ;; [(nb of values) key]
+                           (juxt (comp count second) first)
+                           ;; the map without the remove-key entry 
+                           (dissoc current remove-key))))
+                  ;; the sorted values of the removed key 
+                  (sort (current remove-key))))))

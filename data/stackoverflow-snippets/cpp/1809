@@ -1,0 +1,54 @@
+#include <vector>
+#include <iostream>
+
+template <typename T, typename Index, typename Bool, typename Data,
+          Index n_x, Index n_u, Index n_c, Index n_w>
+class A { };
+
+template <typename T, typename Index, typename Bool, typename Data,
+          Index n_x, Index n_u, Index n_c, Index n_w>
+class B { };
+
+template <typename T, typename Index, typename Bool, typename Data,
+          Index n_x, Index n_u, Index n_c, Index n_w>
+class C { };
+
+template <typename T, typename Index, typename Bool, typename Data,
+          Index I1, Index I2, Index I3, Index I4>
+struct foo
+ { 
+   template <template <typename, typename X, typename, typename, X, X, X, X>
+                       class Cont>
+   using type = Cont<T, Index, Bool, Data, I1, I2, I3, I4>;
+ };
+
+template <template <typename, typename X, typename, typename, X, X, X, X>
+                    class Cont, typename C>
+using foo_t = typename C::template type<Cont>;
+
+
+int main ()
+ {
+   using T     = float;
+   using Index = std::size_t;
+   using Bool  = bool;
+   using Data  = std::vector<std::string>;
+
+   constexpr std::size_t n_x { 0U };
+   constexpr std::size_t n_u { 1U };
+   constexpr std::size_t n_c { 2U };
+   constexpr std::size_t n_w { 3U };
+
+   using f = foo<T, Index, Bool, Data, n_x, n_u, n_c, n_w>;
+
+   foo_t<A, f> a;
+   foo_t<B, f> b;
+   foo_t<C, f> c;
+
+   static_assert( std::is_same<decltype(a),
+                     A<T, Index, Bool, Data, n_x, n_u, n_c, n_w>>{}, ""!"" );
+   static_assert( std::is_same<decltype(b),
+                     B<T, Index, Bool, Data, n_x, n_u, n_c, n_w>>{}, ""!"" );
+   static_assert( std::is_same<decltype(c),
+                     C<T, Index, Bool, Data, n_x, n_u, n_c, n_w>>{}, ""!"" );
+ }

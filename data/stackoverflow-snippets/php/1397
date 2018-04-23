@@ -1,0 +1,53 @@
+<?php
+session_start();
+$error = false;
+if (!isset($_SESSION['login'])) {
+
+    $stage = (isset($_SESSION['stage']))? $_SESSION['stage'] : 0;
+    $stage_labels = array(
+        'First',
+        'Second',
+        'Third',
+        'Final'
+    );
+
+    $passwords = array(
+        '111',
+        '222',
+        '333',
+        '444'
+    );
+
+    if (isset($_POST['password']) && $_POST['password'] == $passwords[$stage]) {
+
+        if ($stage == 3) {
+            // if the final password matches, create a session variable for login
+            $_SESSION['login'] = 'loggedin';
+            header('location: ' . $_SERVER['PHP_SELF']);
+            exit();
+        } else {
+            // if password matches the respective stage, increase the value of stage by 1 to move on to next stage
+            $_SESSION['stage'] = $stage + 1;
+            header('location: ' . $_SERVER['PHP_SELF']);
+            exit();
+        }
+
+    } elseif (isset($_POST['password'])) {
+        $error = true;
+        // if form submitted with mismatch password, stage will restart from 0 again
+        print '<p align=""center""><font color=""red""><b>Incorrect Code entered</b><br>Please enter the correct code or contact Administrator</font></p>';
+        $_SESSION['stage'] = 0;
+
+    }
+
+    if (!$error) {
+        print '<p>Please enter your '. $stage_labels[$stage].' password</p>';
+    }
+
+    print '<form method=""post""><p align=""center""><h2>Please enter code to intiate transfer</h2><br>';
+    print '<input name=""password"" type=""password"" maxlength=""10""><input value=""Authenticate"" type=""submit""></p></form>';
+
+} else {
+    echo 'You have logged in';
+}
+?>

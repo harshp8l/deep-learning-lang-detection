@@ -1,0 +1,63 @@
+import numpy as np
+import math
+import numba as nb
+
+def first_index_using_argmax(val, arr):
+    return np.argmax(arr > val)
+
+def first_index_using_where(val, arr):
+    return np.where(arr > val)[0][0]
+
+def first_index_using_nonzero(val, arr):
+    return np.nonzero(arr > val)[0][0]
+
+def first_index_using_searchsorted(val, arr):
+    return np.searchsorted(arr, val) + 1
+
+def first_index_using_min(val, arr):
+    return np.min(np.where(arr > val))
+
+def first_index_calculate_range_like(val, arr):
+    if len(arr) == 0:
+        raise ValueError('empty array')
+    elif len(arr) == 1:
+        if arr[0] > val:
+            return 0
+        else:
+            raise ValueError('no value greater than {}'.format(val))
+
+    first_value = arr[0]
+    step = arr[1] - first_value
+    if step <= 0:
+        if first_value > val:
+            return 0
+        else:
+            raise ValueError('no value greater than {}'.format(val))
+
+    calculated_position = (val - first_value) / step
+
+    if calculated_position < 0:
+        return 0
+    elif calculated_position > len(arr) - 1:
+        raise ValueError('no value greater than {}'.format(val))
+
+    return int(calculated_position) + 1
+
+@nb.njit
+def first_index_numba(val, arr):
+    for idx in range(len(arr)):
+        if arr[idx] > val:
+            return idx
+    return -1
+
+funcs = [
+    first_index_using_argmax, 
+    first_index_using_min, 
+    first_index_using_nonzero,
+    first_index_calculate_range_like, 
+    first_index_numba, 
+    first_index_using_searchsorted, 
+    first_index_using_where
+]
+
+from simple_benchmark import benchmark, MultiArgument

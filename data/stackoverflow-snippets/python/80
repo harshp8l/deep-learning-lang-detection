@@ -1,0 +1,19 @@
+from scipy.spatial.distance import pdist
+
+def cluster_data_pdist_v1(a, dist_thresh = 0.1):
+    d = pdist(a)
+    mask = d<=dist_thresh
+
+    n = len(a)
+    idx = np.concatenate(( [0], np.arange(n-1,0,-1).cumsum() ))
+    start, stop = idx[:-1], idx[1:]
+    idx_out = np.zeros(mask.sum(), dtype=int) # use np.empty for bit more speedup
+    cur_start = 0
+    for iterID,(i,j) in enumerate(zip(start, stop)):
+        if iterID not in idx_out[:cur_start]:
+            rm_idx = np.flatnonzero(mask[i:j])+iterID+1
+            L = len(rm_idx)
+            idx_out[cur_start:cur_start+L] = rm_idx
+            cur_start += L
+
+    return np.delete(a, idx_out[:cur_start], axis=0)

@@ -1,0 +1,42 @@
+#!/usr/bin/expect
+proc enable {} {
+ expect ""assword:"" {
+  send ""<enable password>\r""
+  expect ""#"" {
+  }
+ }
+}
+
+proc login {} {
+ send ""<login password>\r""
+ expect {
+  ""failed"" {
+   send ""<username>\r""
+   enable
+  }
+  "">"" {
+   send ""en\r""
+   enable
+  }
+  ""#"" {
+ }}
+}
+set user_computer_attached [lindex $argv 0]
+set user_computer [split $user_computer_attached ""@""]
+spawn ssh -oKexAlgorithms=+diffie-hellman-group1-sha1 \
+-oGlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
+-oStrictHostKeyChecking=no $user_computer_attached
+expect_after eof {
+  wait
+  spawn telnet [lindex $user_computer 1]
+  expect ""name:""
+  send [lindex $user_computer 0]
+  send ""\r""
+  expect ""assword:"" {
+   login
+  }
+}
+expect ""assword:"" {
+ login
+}
+interact

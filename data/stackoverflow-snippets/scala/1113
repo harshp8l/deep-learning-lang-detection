@@ -1,0 +1,22 @@
+object MyStream {
+  val empty: MyStream[Nothing] = new MyStream[Nothing] {
+    override def isEmpty = true
+
+    override def head = throw new NoSuchElementException(""tead of empty MyStream"")
+
+    override def tail = throw new NoSuchElementException(""tail of empty MyStream"")
+  }
+
+  def cons[T](h: T, t: => MyStream[T]): MyStream[T] = new MyStream[T] {
+    def isEmpty = false
+
+    def head = h
+
+    lazy val tail = t
+  }
+
+  implicit class MyStreamOps[T](t: => MyStream[T]) {
+    //def #::(h: T): MyStream[T] = cons(h, t)  // bad
+    def #::[U >: T](h: U): MyStream[U] = cons(h, t) //good
+  }  
+}

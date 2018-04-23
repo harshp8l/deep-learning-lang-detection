@@ -1,0 +1,31 @@
+(def all-tests (atom '()))
+
+(defn add-test [test-name expr output-string]
+  (swap! all-tests #(cons (list test-name [expr output-string]) %)))
+
+(defmacro add-tests-with-string-output
+  [test-name & body]
+  ;`(loop [bds# '(~@body)]
+  `(loop [bds# '~body] ; edit
+    (when-not (empty? bds#)
+      (let [bd# (first bds#)
+            expr# (first bd#)
+            output-string# (last bd#)]
+        (add-test ~test-name expr# output-string#)
+        (recur (rest bds#))
+        ))))
+
+(defmacro add-tests-with-string-output2
+  [test-name & body]
+  ;`(doseq [bd# '(~@body)]
+  `(doseq [bd# '~body] ; edit
+    (let [expr# (first bd#)
+          output-string# (last bd#)]
+      (add-test ~test-name expr# output-string#))))
+
+user=> (add-tests-with-string-output ""test1"" [0  => ""0\n""] [1  => ""1\n""])
+nil
+user=> (add-tests-with-string-output2 ""test2"" [0  => ""0\n""] [1  => ""1\n""])
+nil
+user=> @all-tests
+((""test2"" [1 ""1\n""]) (""test2"" [0 ""0\n""]) (""test1"" [1 ""1\n""]) (""test1"" [0 ""0\n""]))

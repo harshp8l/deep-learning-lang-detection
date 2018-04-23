@@ -1,0 +1,19 @@
+declare @table table (
+    PhoneNumber nvarchar(20),
+    EntryTime datetime
+)
+
+insert into @table values ('(321) 546-7842', dateadd(hour,-30,getdate()));
+insert into @table values ('(321) 546-7842', dateadd(hour,-3,getdate()));
+insert into @table values ('(251) 546-9442', dateadd(hour,-2,getdate()));
+
+select  t1.PhoneNumber,
+        t1.EntryTime,
+        t3.NewCall,
+        case when datediff(hour, t1.EntryTime, t3.NewCall) > 24 then 0 else 1 end as 'FCR'
+from @table t1
+outer apply (   select top 1 t2.EntryTime as 'NewCall'
+                from @table t2
+                where t2.PhoneNumber = t1.PhoneNumber
+                  and t2.EntryTime > t1.EntryTime
+                order by t2.EntryTime ) t3

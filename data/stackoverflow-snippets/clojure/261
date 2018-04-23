@@ -1,0 +1,11 @@
+(defmacro defdecorator
+  [type-symbol fields impl & body]
+  (let [provided-protocols-and-defs (->> body
+                                         (partition-by symbol?)
+                                         (partition-all 2))
+        protocols-and-defs (mapcat (fn [[[protocol] fs]]
+                                     (cons protocol
+                                           (get-decorator-definitions protocol impl fs)))
+                                   provided-protocols-and-defs)]
+    `(defrecord ~type-symbol ~fields
+       ~@protocols-and-defs)))

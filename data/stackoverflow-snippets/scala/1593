@@ -1,0 +1,18 @@
+    while(iter.hasNext) {
+      iter.next() match {
+        case (k: String, v) => addField(k, v, obj)
+        case (k: Symbol, v) => addField(k.name, v, obj)
+
+        ...
+
+        case (k, v) => {
+          val customKeySerializer = formats.customKeySerializer(formats)
+          if(customKeySerializer.isDefinedAt(k)) {
+            addField(customKeySerializer(k), v, obj)
+          } else {
+            fail(""Do not know how to serialize key of type "" + k.getClass + "". "" +
+              ""Consider implementing a CustomKeySerializer."")
+          }
+        }
+      }
+    }

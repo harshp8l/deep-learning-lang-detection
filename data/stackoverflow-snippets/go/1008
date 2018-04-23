@@ -1,0 +1,39 @@
+func main() {
+    //Prepare image ...
+    img := ...
+
+    //Prepare output (file etc.) ...
+    outFile := ...
+
+    //Use pipe to connect JPEG encoder output to cmd's STDIN
+    pr, pw := io.Pipe()
+
+    //Exec jpegoptim in goroutine
+    done := make(chan bool, 1)
+    go func() {
+        //execute command
+        cmdErr := bytes.Buffer{}
+        cmd := exec.Command(""jpegoptim"", ""--stdin"", ""--verbose"")
+        cmd.Stdin = pr       //image input from PIPE
+        cmd.Stderr = &cmdErr //message
+        cmd.Stdout = outFile //optimize image output
+
+        if err := cmd.Run(); err != nil {
+            // handle error
+        }
+        fmt.Printf(""Result: %s\n"", cmdErr.String())
+        close(done)
+    }()
+
+    //ENCODE image to JPEG then write to PIPE
+    o := jpeg.Options{Quality: 90}
+    jpeg.Encode(pw, img, &o)
+
+    //When done, close the PIPE
+    if err := pw.Close(); err != nil {
+        // handle error
+    }
+
+    //Wait for jpegoptim
+    <-done
+}

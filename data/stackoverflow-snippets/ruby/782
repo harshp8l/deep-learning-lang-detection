@@ -1,0 +1,19 @@
+require 'nokogiri'
+require 'open-uri'
+
+url = 'https://www.admin.ch/opc/fr/classified-compilation/20061121/index.html'
+doc = Nokogiri.HTML(open url)
+articles_hash = doc.css('#lawcontent .collapseable h5').map do |element|
+  {
+    'number' => element.css('a strong').text.sub(/\AArt. /, ''),
+    'title'  => element.css('a:last-child').text.sub(/\AArt. \d+ |\A\d+/, '')
+  }
+end
+puts articles_hash
+
+# [
+#  {""number""=>""1"", ""title""=>""Objet""}, 
+#  {""number""=>""2"", ""title""=>""Causes de nature internationale""},
+#  {""number""=>""3"", ""title""=>""Organisation des tribunaux et des autorit\u00E9s de conciliation""},
+#  ...
+# ]

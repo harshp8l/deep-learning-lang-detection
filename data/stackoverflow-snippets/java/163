@@ -1,0 +1,27 @@
+@Bean(name = 'myRestTemplate')
+RestTemplate myRestTemplate(RestTemplateBuilder builder) {
+
+    RequestConfig requestConfig = RequestConfig.custom()
+            .setConnectTimeout(10 * 1000) // 10 seconds
+            .setSocketTimeout(300 * 1000) // 300 seconds
+            .build()
+
+    PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager()
+    connectionManager.setMaxTotal(10)
+    connectionManager.closeIdleConnections(5, TimeUnit.MINUTES)
+
+    CloseableHttpClient httpClient = HttpClients.custom()
+            .setConnectionManager(connectionManager)
+            .setDefaultRequestConfig(requestConfig)
+            .disableRedirectHandling()
+            .build()
+
+    RestTemplate restTemplate = builder
+            .rootUri(""https://domain.server.com"")
+            .basicAuthorization(""username"", ""password"")
+            .requestFactory(new BufferingClientHttpRequestFactory(new HttpComponentsClientHttpRequestFactory(httpClient)))
+            .interceptors(new HttpLoggingInterceptor())
+            .build()
+
+    return restTemplate
+}

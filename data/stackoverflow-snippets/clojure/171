@@ -1,0 +1,18 @@
+(def jobs (chan))
+(def solutions (chan))
+(def accepted-solutions (atom (vector)))
+
+(go (loop [job (<! jobs)]
+      (when job
+        (go (doseq [solution (process-job-into-solutions job)]
+              (>! solutions)))
+        (recur (<! jobs)))))
+
+(go (loop [solution (<! solutions)]
+      (when (acceptable? solution)
+        (swap! accepted-solutions conj solution)
+        (doseq [new-job (generate-new-jobs solution)]
+          (>! jobs))
+        (recur (<! solutions)))))
+
+(>!! jobs initial-job)

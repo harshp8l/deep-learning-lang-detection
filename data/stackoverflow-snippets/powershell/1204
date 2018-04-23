@@ -1,0 +1,25 @@
+param
+(
+    $Source = ""C:\Source"",
+    $Destination = ""\\Server01\Destination"",
+    $Filter = ""File*""
+)
+
+$Files = `
+    Get-ChildItem -Path $Source `
+    | Where-Object -Property Name -Like -Value $Filter
+
+for ($i=0;$i -lt $Files.Count;$i++ )
+{
+    $NewName = '{0}{1:D2}{3}' -f $Files[$i].BaseName,$i,$Files[$i].Extension
+    $NewPath = Join-Path -Path $Destination -ChildPath $NewName
+    try
+    {
+        Write-Host ""Moving file from '$($Files[$i].FullName)' to '$NewPath'""
+        Copy-Item -Path $Files[$i] -Destination 
+    }
+    catch
+    {
+        throw ""Error moving file from '$($Files[$i].FullName)' to '$NewPath'""
+    }
+}

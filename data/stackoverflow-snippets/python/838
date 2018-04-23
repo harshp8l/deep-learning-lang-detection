@@ -1,0 +1,27 @@
+def f(gt):
+    # When iterating through the group by object
+    # we will get tuples like (name_of_group, dataframe_slice)
+    n, d = gt
+
+    # A MultiIndex after slicing will have level values that
+    # will get in the way of the things I'm doing.  So I remove them
+    midx = d.index.remove_unused_levels()
+
+    # I `loc` on the first value of the first level.  This removes
+    # the first level for the resulting slice.
+    # When I use nlargest, the resulting index will only be a ref
+    # to the index values without the first level.
+    xidx = d.loc[midx.levels[0][0], 'Column1'].nlargest(2).index
+
+    # Then I return a list of tuples to stitch all values from the
+    # first level to those values from the largest ones from the
+    # first group.
+    return [(lv, mx) for lv in midx.levels[0] for mx in xidx]
+
+# Using factorize here to group the entire data frame into pairs
+# by that first level
+g = pd.factorize(df.index.get_level_values(0))[0] // 2
+grp = df.groupby(g)
+
+# The summation concatenates all the lists of tuples into one list
+df.loc[sum(map(f, grp), [])]

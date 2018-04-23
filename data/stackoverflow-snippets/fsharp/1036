@@ -1,0 +1,19 @@
+open LanguagePrimitives
+type Vector2<[<Measure>] 'u>(x: float32<'u>, y: float32<'u>) =
+    member this.X = x
+    member this.Y = y
+type OverloadedOperators() =
+    static member CreateVector2 (x: float32<'u>, y: float32<'u>) = new Vector2<'u>(x, y)
+    static member CreateVector2 (x: float<'u>, y: float<'u>) = new Vector2<'u>(x |> float32 |> Float32WithMeasure<'u>, y |> float32 |> Float32WithMeasure<'u>)
+    static member CreateVector2 (x: int<'u>, y: int<'u>) = new Vector2<'u>(x |> float32 |> Float32WithMeasure<'u>, y |> float32 |> Float32WithMeasure<'u>)
+    static member ( *** ) (T,(x:float32<'u>,y)) = OverloadedOperators.CreateVector2(x,y)
+    static member ( *** ) (T,(x:float<'u>,y)) = OverloadedOperators.CreateVector2(x,y)
+    static member ( *** ) (T,(x:int<'u>,y)) = OverloadedOperators.CreateVector2(x,y)
+let convert  =OverloadedOperators() 
+
+(* testing *)
+[<Measure>]
+type m
+
+convert *** (1<m>,1<m>)
+convert *** (1.0<m>,1.0<m>)

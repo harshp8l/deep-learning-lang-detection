@@ -1,0 +1,18 @@
+// Options and CiOptions
+namespace util {
+    template <typename Tag>
+    auto as_spirit_parser(Options<Tag> const& o, bool to_lower = false) {
+        x3::symbols<typename Options<Tag>::type> p;
+        int n = 0;
+        for (std::string el : o._options) {
+            if (to_lower) boost::to_lower(el);
+            p.add(el, n++);
+        }
+        return kw(p);
+    }
+
+    template <typename Tag>
+    auto as_spirit_parser(IcOptions<Tag> const& o) {
+        return x3::no_case [ as_spirit_parser(o, true) ];
+    }
+}

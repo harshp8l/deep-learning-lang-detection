@@ -1,0 +1,58 @@
+ask() {
+  local 'args' 'char' 'charcount' 'prompt' 'reply' 'silent'
+
+  # Basic arguments parsing
+  while [[ ""${1++}"" ]]; do
+    case ""${1}"" in
+      ( '--silent' | '-s' )
+        silent='yes'
+        ;;
+      ( '--' )
+        args+=( ""${@:2}"" )
+        break
+        ;;
+      ( * )
+        args+=( ""${1}"" )
+        ;;
+    esac
+    shift || break
+  done
+
+  if [[ ""${silent}"" == 'yes' ]]; then
+    for prompt in ""${args[@]}""; do
+      charcount='0'
+      prompt=""${prompt}: ""
+      reply=''
+      while IFS='' read -n '1' -p ""${prompt}"" -r -s 'char'; do
+        case ""${char}"" in
+          # Handles NULL
+          ( $'\000' )
+            break
+            ;;
+          # Handles BACKSPACE and DELETE
+          ( $'\010' | $'\177' )
+            if (( charcount > 0 )); then
+              prompt=$'\b \b'
+              reply=""${reply%?}""
+              (( charcount-- ))
+            else
+              prompt=''
+            fi
+            ;;
+          ( * )
+            prompt='*'
+            reply+=""${char}""
+            (( charcount++ ))
+            ;;
+        esac
+      done
+      printf '\n' >&2
+      printf '%s\n' ""${reply}""
+    done
+  else
+    for prompt in ""${args[@]}""; do
+      IFS='' read -p ""${prompt}: "" -r 'reply'
+      printf '%s\n' ""${reply}""
+    done
+  fi
+}

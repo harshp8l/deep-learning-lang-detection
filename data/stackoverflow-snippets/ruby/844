@@ -1,0 +1,30 @@
+  public
+
+  def scroll_to(param)
+    args = case param
+           when :top, :start
+             'window.scrollTo(0, 0);'
+           when :center
+             'window.scrollTo(window.outerWidth / 2, window.outerHeight / 2);'
+           when :bottom, :end
+             'window.scrollTo(0, document.body.scrollHeight);'
+           when Array
+             ['window.scrollTo(arguments[0], arguments[1]);', Integer(param[0]), Integer(param[1])]
+           else
+             raise ArgumentError, ""Don't know how to scroll to: #{param}!""
+           end
+
+    @browser.execute_script(*args)
+  end
+  public
+
+  # This method pulls the object on the page you want to interact with, then it 'jumps to it'.
+  def jump_to(param)
+    # Leveraging the scroll_to(param) logic, this grabs the cooridnates,
+    # and then makes them an array that is able to be located and moved to.
+    # This is helpful when pages are getting too long and you need to click a button
+    # or interact with the browser, but the page 'Cannot locate element'.
+    location = param.wd.location
+    location = location.to_a
+    $helper.scroll_to(location)
+  end

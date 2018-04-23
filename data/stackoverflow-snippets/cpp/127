@@ -1,0 +1,28 @@
+class myClass1 {
+    myClass2 obj;
+
+public:
+    // Take by rvalue, uses the move constructor for obj
+    myClass1(myClass2 && obj) : obj(obj) {}
+
+    std::thread spawn() {
+        return std::thread([this] 
+        {
+            // This is suspicious, but safe
+            auto self = std::move(*this); 
+            self.Run(); 
+        });
+    }
+
+    void Run() {
+        std::cout << ""new thread"" << std::endl;
+    }
+}
+
+int main(){
+    // new is not required
+    myClass1 object(myClass2(""test""));
+    object.spawn().join();
+    /* other stuff, not involving object */
+    return 0;
+}

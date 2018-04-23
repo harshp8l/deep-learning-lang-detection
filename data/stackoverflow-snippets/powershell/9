@@ -1,0 +1,13 @@
+$TeamDetailCSV = Import-Csv .\TeamDetail-conv.csv
+
+# Load the team information into a hash table for easy lookups
+$TeamDetailHT = @{}
+foreach ($Team in $TeamDetailCSV) {
+    $TeamDetailHT.Add($Team.Name, $Team)
+}
+
+# Import the team member data, but ignore any data for team members that aren't for valid Teams
+Import-Csv .\Team-conv.csv |
+    Where-Object { $TeamDetailHT.ContainsKey($_.Team) } |
+    Select-Object -Property Team, Name, Number, Color, @{n = 'Shape'; e = {$TeamDetailHT[$_.Team].Shape}}, @{n = 'Code'; e = {$TeamDetailHT[$_.Team].Code}} |
+    Export-Csv -NoTypeInformation -Path $xlsxPath\teamdetails.csv

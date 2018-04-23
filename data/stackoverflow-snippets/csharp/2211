@@ -1,0 +1,136 @@
+<!-- 
+    basic html: depend on user browser preference setting to open as new window or new tab
+-->
+<a href=""http://creativecoder.xyz/stackoverflow/pdf-choice/createpdf.php?file=dummy.pdf"" target=""_blank""><button id=""newtab1"">new tab/new window: basic html</button></a> 
+
+<!--
+    force to open new tab
+    case: without ajax
+-->
+<button id=""newtab2"">new tab: jquery without ajax</button> 
+
+<!--
+    force to open new tab
+    case: with ajax
+
+    hint:
+    * window.open() outside ajax will NOT BLOCKED
+    * window.open() inside ajax will BLOCKED
+    * so we need to hack this
+    * 1st: prepare/declare new var to store blank window
+    * 2nd: change location.href to execute it inside ajax
+-->
+<button id=""newtab3"">new tab: jquery with ajax</button> 
+
+<!--
+    force to open new window
+    case: without ajax
+-->
+<button id=""newwindow1"">new window: jquery without ajax</button> 
+
+<!--
+    force to open new window
+    case: with ajax
+-->
+<button id=""newwindow2"">new window: jquery with ajax</button> 
+
+<!-- 
+    embed
+-->
+<button id=""embed"">embed</button> 
+
+<!--
+    the most easy way
+    force download using HTML5 anchor download attribute
+    maybe not work for old browser
+    hint:
+    - no download attribute: display pdf
+    - download attribute exists,  but content-disposition header is not set as attachment: display pdf
+    - download attribute exists,  but content-disposition header is set as attachment: download pdf
+-->
+<a href=""http://creativecoder.xyz/stackoverflow/pdf-choice/createpdf.php?file=dummy.pdf"" download=""newname.pdf""><button id=""forcedownload1"">force download using anchor download attribute (fail)</button></a>  
+<a href=""http://creativecoder.xyz/stackoverflow/pdf-choice/createpdf.php?file=dummy.pdf&force=1"" download=""newname.pdf""><button id=""forcedownload1"">force download using anchor download attribute (correct)</button></a>  
+
+<!--
+    force download using ajax
+    i think this work in old browser too, since jquery take care of them
+-->
+<button id=""forcedownload2"">force download 2 using ajax/jquery</button> 
+
+<hr>
+<div id=""preview-embed""></div>
+
+<script src=""jquery.min.js""></script>
+<script>
+$(function(){
+
+    /*
+    * you need to read window.open() first: https://www.w3schools.com/jsref/met_win_open.asp to understand the basic
+    * hint:
+    * window.open() recieve 4 parameter
+    * if we not set 3rd parameter: will force open new tab
+    * if we set 3rd parameter: will force open new window
+    */
+
+    $('#newtab2').click(function(){
+        /*
+        * no matter content-disposition is attachment or not, it always display in browser
+        */
+        window.open('http://creativecoder.xyz/stackoverflow/pdf-choice/createpdf.php?filename=dummy.pdf');
+    });
+
+    $('#newtab3').click(function(){
+        var newWindow = window.open("""",""window name"");
+        $.ajax({
+            url: 'http://creativecoder.xyz/stackoverflow/pdf-choice/givemethelink.php',
+            success: function(d){
+                newWindow.location.href = d;
+            },
+            error: function(d){
+                alert('error');
+            }
+        });
+    });
+
+    $('#newwindow1').click(function(){
+        window.open('http://creativecoder.xyz/stackoverflow/pdf-choice/createpdf.php?filename=dummy.pdf','window name', 'width=200,height=100');
+    });
+
+    $('#newwindow2').click(function(){
+        var newWindow = window.open("""",""window name"", 'width=200,height=100');
+        $.ajax({
+            url: 'http://creativecoder.xyz/stackoverflow/pdf-choice/givemethelink.php',
+            success: function(d){
+                newWindow.location.href = d;
+            },
+            error: function(d){
+                alert('error');
+            }
+        });
+    });
+
+    $('#embed').click(function(){
+        $('#preview-embed').html('<embed src=""http://creativecoder.xyz/stackoverflow/pdf-choice/createpdf.php?file=dummy.pdf""></embed>');
+    });
+
+    $('#forcedownload2').click(function(){
+        $.ajax({
+            /*
+            * we need to get file with header attachment
+            * if our file is dont have Content-Disposition: attachment , this ajax will display pdf only
+            * so we need to set request parameter `force=1` 
+            */
+            url: 'http://creativecoder.xyz/stackoverflow/pdf-choice/givemethelink.php?force=1', //correct
+            //url: 'http://creativecoder.xyz/stackoverflow/pdf-choice/givemethelink.php', //fail
+            success: function(d){
+                document.location = d;
+            },
+            error: function(d){
+                alert('error');
+            }
+        });
+    });
+
+
+});
+</script>

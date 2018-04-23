@@ -1,0 +1,37 @@
+cryptopp $ cat test.cxx
+#include ""eccrypto.h""
+#include ""oids.h""
+#include ""osrng.h""
+#include <string>
+#include <iostream>
+
+int main()
+{
+    using namespace CryptoPP;
+    AutoSeededRandomPool prng;
+
+    ECDSA<ECP, SHA256>::Signer signer;
+    ECDSA<ECP, SHA256>::Verifier verifier;
+
+    signer.AccessKey().Initialize(prng, ASN1::secp160r1());
+    signer.AccessKey().MakePublicKey(verifier.AccessKey());
+
+    std::string signature(signer.MaxSignatureLength(), 0);
+    std::string message = ""asdf"";
+
+    auto signature_length = signer.SignMessage(
+        prng, (const byte*)&message[0],
+        message.size(), (byte*)&signature[0]);
+    signature.resize(signature_length);
+
+    bool verified = verifier.VerifyMessage(
+        (const byte*)&message[0], message.size(),
+        (const byte*)&signature[0], signature.size());
+
+    if (verified)
+        std::cout << ""PASS"" << std::endl;
+    else
+        std::cout << ""FAIL"" << std::endl;
+
+    return 0;
+}

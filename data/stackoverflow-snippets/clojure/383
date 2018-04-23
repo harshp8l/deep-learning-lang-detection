@@ -1,0 +1,20 @@
+(ns tst.clj.core
+  (:use clojure.test tupelo.test)
+  (:require
+    [tupelo.core :as t]  ))
+(t/refer-tupelo)
+
+(defn start-segment? [vals]
+  (zero? (rem (first vals) 3)))
+
+(defn partition-using [pred vals-in]
+  (loop [vals   vals-in
+         result []]
+    (if (empty? vals)
+      result
+      (t/spy-let [
+          out-first               (take 1 vals)
+          [out-rest unprocessed]  (split-using pred (spyx (next vals)))
+          out-vals                (glue out-first out-rest)
+          new-result              (append result out-vals)]
+        (recur unprocessed new-result)))))

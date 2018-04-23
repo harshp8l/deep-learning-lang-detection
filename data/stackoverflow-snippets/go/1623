@@ -1,0 +1,31 @@
+ch := make(chan output) //each go routine will write to this channel
+wg := new(sync.WaitGroup) //wait group to sync all go routines
+
+//execute 16 goroutines 
+for i := 0; i < 16; i++ {
+    wg.Add(1)
+    go worker(ch, wg) //this is expecting each worker func to call wg.Done() when completing its portion of work
+}
+
+//create a ""quit"" channel that will be used to signal to the select statement below that your go routines are all done
+quit := make(chan bool)
+go func() {
+    wg.Wait()
+    quit <- true
+}()
+
+//initialize a slice with length and capacity to 1mil, the expected result size mentioned in your question
+sorted := make([]string, 1000000, 1000000)
+
+//use the for loop, select pattern to sync the results from your 16 go routines and insert them into the sorted slice
+for {
+    select {
+        case output := <-ch:
+            //this is not robust - check notes below example
+            sorted[output.index] = output.description
+        case <-quit:
+            //implement a function you could pass the sorted slice to that will write the results
+            // Ex:  writeToFile(sorted)
+            return
+    }
+}

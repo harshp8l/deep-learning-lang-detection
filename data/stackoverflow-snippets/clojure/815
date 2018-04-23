@@ -1,0 +1,54 @@
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.Stream.Builder;
+
+import clojure.lang.AFn;
+import clojure.lang.IFn;
+import clojure.lang.Reduced;
+
+public class StreamUtils {
+    static <T> Stream<T> delay(final Supplier<Stream<T>> thunk) {
+        return Stream.of((Object) null).flatMap(x -> thunk.get());
+    }
+
+    static class Transducer implements Function {
+        IFn rf;
+
+        public Transducer(IFn xf) {
+            rf = (IFn) xf.invoke(new AFn() {
+                public Object invoke(Object acc) {
+                    return acc;
+                }
+
+                public Object invoke(Object acc, Object item) {
+                    ((Builder<Object>) acc).accept(item);
+                    return acc;
+                }
+            });
+        }
+
+        public Stream<?> apply(Object t) {
+            if (rf == null) return Stream.empty();
+            Object ret = rf.invoke(Stream.builder(), t);
+            if (ret instanceof Reduced) {
+                Reduced red = (Reduced) ret;
+                Builder<?> sb = (Builder<?>) red.deref();
+                return Stream.concat(sb.build(), flush());
+            }
+            return ((Builder<?>) ret).build();
+        }
+
+        Stream<?> flush() {
+            if (rf == null) return Stream.empty();
+            Builder<?> sb = (Builder<?>) rf.invoke(Stream.builder());
+            rf = null;
+            return sb.build();
+        }
+    }
+
+    static <T> Stream<?> withTransducer(Stream<T> in, IFn xf) {
+        Transducer transducer = new Transducer(xf);
+        return Stream.concat(in.flatMap(transducer), delay(() -> transducer.flush()));
+    }
+}

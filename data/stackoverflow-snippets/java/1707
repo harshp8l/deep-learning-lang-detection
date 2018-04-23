@@ -1,0 +1,27 @@
+        val ob1 = RxTextView.textChanges(field1).skip(1)
+        val ob2 = RxTextView.textChanges(field2).skip(1)
+        val ob3 = RxTextView.textChanges(field3).skip(1)
+
+        val observableList = arrayListOf<Observable<CharSequence>>()
+
+        observableList.add(ob1)
+        observableList.add(ob3)
+
+        val formValidator = Observable.combineLatest(observableList, {
+            var isValid = true
+            it.forEach {
+                val string = it.toString()
+                if (string.isEmpty()) {
+                    isValid = false
+                }
+            }
+            return@combineLatest isValid
+        })
+
+        formValidator.subscribe { isValid ->
+            if (isValid) {
+                //do something
+            } else {
+                //do something
+            }
+        }

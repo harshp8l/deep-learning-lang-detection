@@ -1,0 +1,17 @@
+let unfolder (functionInvoke : getValue<_>) (retryParameters : Retry<_>) : ((Retry<_>* Retry<_>) option) = 
+
+    let nextRetryResult () = 
+        match functionInvoke() with
+        | ActionResult.ErrorConnecting -> 
+            match retryParameters with
+            | Untried -> Failure 1
+            | Failure pastRetries -> Failure (pastRetries + 1)
+        | ActionResult.Success value -> 
+            match retryParameters with
+            | Untried -> Success (value, 0 )
+            | Failure pastRetries -> Success (value, pastRetries )
+
+    match retryParameters with
+        | Untried 
+        | Failure _ -> Some(retryParameters, nextRetryResult() )
+        | success -> Some(retryParameters, success)

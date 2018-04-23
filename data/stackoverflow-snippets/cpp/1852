@@ -1,0 +1,35 @@
+#include <tuple>
+#include <iostream>
+#include <memory>
+
+struct Base {
+    virtual void toImplement(double a) = 0;
+};
+
+template <class... Impls>
+struct Derived : public Base {
+    virtual void toImplement(double a) override {
+        do_all(a, std::index_sequence_for<Impls...>{});
+    }
+    std::tuple<Impls...> impls;
+private:
+    template<std::size_t... Is>
+    void do_all(double a, std::index_sequence<Is...>) {
+        (std::get<Is>(impls).do_(a), ...);
+    }
+};
+
+// test
+struct Implementor1 {
+    void do_(double a) { std::cout << ""first impl do: "" << a << ""\n""; }
+};
+
+struct Implementor2 {
+    void do_(double a) { std::cout << ""second impl do: "" << a << ""\n""; }
+};
+
+int main() {
+    std::unique_ptr<Base> ptr = std::make_unique<Derived<Implementor1, Implementor2>>();
+
+    ptr->toImplement(2.3);
+}

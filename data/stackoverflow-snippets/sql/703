@@ -1,0 +1,34 @@
+with cte as 
+ (
+   select *,
+      lead(Operation_Name) -- previous Operation_Name
+      over (partition by case_number
+            order by Date desc) as prev_op
+   from tab
+ )
+, cte2 as
+ (
+   select cte.*, 
+      datediff(day
+              ,date
+              ,lag(date) -- previous Operation_Name
+               over (partition by case_number
+                     order by Date desc)
+) as days_between,
+      row_number()
+      over (partition by case_number
+            order by Date desc) as rn
+   from cte
+   where prev_op <> Operation_Name -- different value
+      or prev_op is null           -- or first row
+ )
+select case_number,
+   max(case when rn = 1 then Operation_Name end),
+   max(case when rn = 2 then Operation_Name end),
+   max(case when rn = 2 then days_between end),
+   max(case when rn = 3 then Operation_Name end),
+   max(case when rn = 3 then days_between end),
+   max(case when rn = 4 then Operation_Name end),
+   max(case when rn = 4 then days_between end)
+from cte2
+group by case_number

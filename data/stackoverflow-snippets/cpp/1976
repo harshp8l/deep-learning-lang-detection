@@ -1,0 +1,136 @@
+#include <iostream>
+#include <stdio.h>
+
+#include <vector>
+#include <queue>
+#include <map>
+
+using namespace std;
+
+vector<vector<int>> adjList;
+int N = 0; //vertices quantity
+int K = 0; //players quantity
+map<int, int> playersStartPos;
+int res[100][100];
+
+void read()
+{
+    FILE* fp = fopen(""input.txt"", ""r"");
+    fscanf(fp, ""%d"", &N);
+    fscanf(fp, ""%d"", &K);
+
+    for (int i = 0; i < N; i++) {
+        int size = 0;
+        fscanf(fp, ""%d"", &size);
+
+        vector<int> adjacency(size);
+        for (int j = 0; j < size; j++) {
+            int to = 0;
+            fscanf(fp, ""%d"", &to);
+            adjacency[j] = to;
+        }
+
+        adjList.push_back(adjacency);
+    }
+
+    for (int player = 0; player < K; player++) {
+        int vertex = 0;
+        fscanf(fp, ""%d"", &vertex);
+        playersStartPos[vertex] = player;
+    }
+
+    fclose(fp);
+}
+
+int bfs(int start, int ind)
+{
+    queue<int> q;
+    vector<int> used(N, 0);
+    vector<int> path(N);
+
+    q.push(start);
+    used[start] = true;
+    path[start] = -1;
+
+    while (!q.empty()) {
+
+        int currentVertex = q.front();
+        q.pop();
+
+        for (size_t i = 0; i < adjList[currentVertex].size(); ++i) {
+            int to = adjList[currentVertex][i];
+
+            if (!used[to]) {
+
+                path[to] = path[currentVertex] + 1;
+
+                used[to] = 1;
+                q.push(to);
+
+                auto it = playersStartPos.find(to);
+                if (it == playersStartPos.end()) continue;
+
+                if (to == it->first) {
+                    res[ind][it->second] = path[to] + 1;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+void find()
+{
+    map<int, int>::iterator it;
+    for (it = playersStartPos.begin(); it != playersStartPos.end(); it++) {
+        bfs(it->first, it->second);
+    }
+}
+
+void write()
+{
+    int min = N;
+    int one = 0;
+    int two = 0;
+
+    for (int i = 0; i < K; i++) {
+        for (int j = 0; j < K; j++) {
+
+            if (res[i][j] == 0) {
+                continue;
+            }
+
+            if (min > res[i][j]) {
+                min = res[i][j];
+
+                one = i;
+                two = j;
+            }
+        }
+    }
+
+    FILE* fp = fopen(""output.txt"", ""w"");
+
+    for (int i = 0; i < K; i++) {
+        for (int j = 0; j < K; j++) {
+            fprintf(fp, ""%d "", res[i][j]);
+        }
+        fprintf(fp, ""%c"", '\n');
+    }
+
+    fprintf(fp, ""%d %d\n"", one, two);
+
+    fclose(fp);
+}
+
+int main()
+{
+    read();
+
+    find();
+
+    write();
+
+    return 0;
+}

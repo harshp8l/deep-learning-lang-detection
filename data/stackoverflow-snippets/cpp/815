@@ -1,0 +1,27 @@
+condition_variable cvAdd;
+condition_variable cvTake;
+mutex consumerMutex;
+mutex producerMutex;
+
+ProducerThread(){
+    while( has something to produce ) {    
+         unique_lock<mutex> lock(producerMutex);
+         while(buffer is full){
+            cvAdd.wait(lock);
+         }
+         AddStuffToBuffer();
+         cvTake.notify_one();
+    }
+}
+
+ConsumerThread() {    
+     while( should be taking data ) {    
+        unique_lock<mutex> lock(consumerMutex);
+        while( buffer is empty ){
+            cvTake.wait(lock);
+        }   
+        TakeStuffFromBuffer();
+        if(BufferIsEmpty)
+        cvAdd.notify_one();
+     }    
+}

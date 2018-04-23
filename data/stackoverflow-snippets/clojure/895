@@ -1,0 +1,24 @@
+(ns comment-forest
+  (:require [clojure.walk :refer [postwalk]]
+            [clojure.pprint :refer [pprint]])
+  (:import java.util.UUID))
+
+(defn- key-seq [comment]
+  (->> comment
+       :level 
+       (re-seq (re-pattern ""[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[89aAbB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}""))
+       (map #(UUID/fromString %))
+       (interpose :children))) 
+
+
+;;This is just to print the trees with less unnecessary detail
+(defn- prune [value]
+  (if
+    (or 
+     (not (map? value))
+     (every? (partial contains? value) [:node :children]) 
+     (every? #(= UUID (type %)) (keys value))) 
+    value
+    (select-keys value [:id :content])))
+
+(pprint (map (partial postwalk prune) (list->forest querylist)))

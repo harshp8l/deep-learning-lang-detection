@@ -1,0 +1,29 @@
+import psutil
+import sys
+import os
+import signal
+
+def terminate_others(pattern):
+    pids = psutil.pids();
+    for pid in pids:
+        p = psutil.Process(pid)
+        try:
+            flist = p.open_files()
+            if flist:
+                for f in flist:
+                    if pattern in f.path:
+                        print ""Terminating "" + repr(pid)
+                        os.kill(pid, signal.SIGTERM)
+        except:
+            pass
+
+
+fname = ""Entry_Log.csv""
+
+try:
+    with open(fname, ""a"") as log:
+        log.write(""Some log text"")
+except:
+    print ""error:"", sys.exc_info()[0]
+    # close other processes that have this file open
+    terminate_others(fname)

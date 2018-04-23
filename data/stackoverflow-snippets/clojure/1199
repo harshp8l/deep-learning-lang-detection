@@ -1,0 +1,21 @@
+user> 
+(defn fill-times
+  [time level
+   {:keys [sample-rate calc-bucket-size calc-leak-rate calc-glass-size]
+    :as params}]
+  (loop [t time l level]
+    (let [input-capacity (calc-glass-size time)
+          bucket-capacity (calc-bucket-size time)
+          has-room (> (- bucket-capacity l) input-capacity)
+          leak-delta (* (calc-leak-rate) sample-rate -1)]
+      (if has-room
+        (lazy-seq (cons t (fill-times t (+ l input-capacity)
+                                      params)))
+        (recur (+ t sample-rate) (+ l leak-delta))))))
+
+#'user/fill-times
+user> (take 50 (fill-times 0 0 {:sample-rate 1
+                                 :calc-bucket-size (constantly 3000)
+                                 :calc-leak-rate (constantly 10)
+                                 :calc-glass-size (constantly 100)}))
+(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 11 21 31 41 51 61 71 81 91 101 111 121 131 141 151 161 171 181 191 201)

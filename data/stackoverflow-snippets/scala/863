@@ -1,0 +1,20 @@
+....
+val prodRankDetails: List[SampleRank] = sortRespResult.right.get.sort
+
+val sortedResults = values.copy(
+  responses = values.responses.map { resultForUser =>
+    val rankingForUser = prodRankDetails
+      .find(_.userId == resultForUser.userId)
+      .getOrElse(throw new RuntimeException(s""Rank not found for user ${resultForUser.userId}""))
+      .products
+      .map(product => (product.id, product.rank))
+      .toMap
+
+    resultForUser.copy(
+      products = resultForUser.products.sortWith((a, b) =>
+        rankingForUser.getOrElse(a.productId, Int.MaxValue) < rankingForUser.getOrElse(b.productId, Int.MaxValue))
+    )
+
+  }
+)
+Ok(Json.toJson(sortedResults))

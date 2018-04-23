@@ -1,0 +1,66 @@
+                            var get_user;
+                            var user_active;
+                            var user_profile;
+                            async.series([
+
+                                // check for the new user
+                                function checkForNewUser(callback)
+                                {
+                                    UserProfileMatch.getNewUser(item.fk_user_id).then(function (user) {
+                                        get_user = user;
+                                        callback(null,user);
+
+                                    });
+                                },
+                                // close the profile
+                                function closeProfile(callback)
+                                {
+                                    ActiveAuctionProfile.closeActiveAuctionProfile(item.aap_id).then(function () {
+                                        if (get_user.length > 0) {
+                                            ActiveAuctionProfile.isProfileActive(get_user[0].profile_id).then(function (is_active) {
+                                                user_active = is_active.result;
+                                                callback(null,user_active);
+                                            });
+                                        } else {
+                                            callback(null,false);
+                                        }
+
+                                    });
+
+                                },
+
+                                // count the active profiles
+                                function countActiveProfiles (callback) {
+
+                                    UserProfileMatch.countActiveProfilesForUser(item.fk_user_id).then(function (number_of_profiles) {
+                                        user_profile = number_of_profiles;
+                                        callback(null,user_profile);
+                                    });
+                                },
+
+                                // decide when we want to create an user
+                                function determineCreation(callback) {
+
+                                    if(user_active === 0 && user_active === 0) {
+                                        UserProfileMatch.updateProfileMatch(item.fk_user_id, get_user[0].profile_id, 1, false).then(function () {
+                                            ActiveAuctionProfile.createNewActiveProfile({
+                                                fk_auction_profile_id: get_user[0].profile_id,
+                                                start_date: moment().format(""YYYY-MM-DD HH:mm:ss""),
+                                                expire_date: moment().add(config.settings.increment_settings, 'seconds').format(""YYYY-MM-DD HH:mm:ss"")
+                                            }).then(function () {
+                                                ExpireProfileRegister.removeExpireResult(item.id);
+                                                callback(null,true);
+                                            });
+
+                                        });
+                                    } else {
+                                        ExpireProfileRegister.removeExpireResult(item.id);
+                                        callback(null,true);
+                                    }
+                                }
+
+                            ], function(err,res) {
+                                // after done, go to the next page
+                                page++;
+                                next();
+                            });

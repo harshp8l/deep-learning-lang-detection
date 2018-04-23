@@ -1,0 +1,110 @@
+#include <openssl/evp.h>
+#include <openssl/des.h>
+#include <stdint.h>
+
+int main(int argc, char *argv[])
+{
+  int res;
+  uint8_t key[16] = {
+    0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+    0x21, 0x32, 0x43, 0x54, 0x65, 0x76, 0x87, 0x98
+  };
+
+  uint8_t iv[8] = {
+    0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0
+  };
+
+  uint8_t message[16] = {0,1,2,3,4,5,6,7,8,9,0xa,0xb,0xc,0xd,0xe,0xf};
+  uint8_t ciphertext[24] = {0}; //leave room for padding!
+  int ciphertext_total = 0;
+  uint8_t decrypted [16] = {0};
+  int decrypted_total = 0;
+
+  //Select our cipher of choice: 2-key 3DES in CBC mode (hence the IV)
+  const EVP_CIPHER *tdea_ede = EVP_des_ede_cbc();
+
+  printf(""hardcoded key:       "");
+  {
+    int i;
+    for(i=0; i< (int)sizeof(key); i++)
+    {
+      printf(""%02x "", key[i]);
+    }
+    printf(""\n"");
+  }
+
+  //Note I have to set parity on each of the keys, and I'm doing 2-key 3DES
+  //DES_cblock is an annoying typdef of uchar[8]
+  DES_set_odd_parity((DES_cblock *)key);
+  DES_set_odd_parity((DES_cblock *)(key+8));
+
+  printf(""key with odd parity: "");
+  {
+    int i;
+    for(i=0; i< (int)sizeof(key); i++)
+    {
+      printf(""%02x "", key[i]);
+    }
+    printf(""\n"");
+  }
+
+  printf(""Message:             "");
+  {
+    int i;
+    for(i=0; i< (int)sizeof(message); i++)
+    {
+      printf(""%02x "", message[i]);
+    }
+    printf(""\n"");
+  }
+
+  /* encrypt */
+  {
+    int outl = 0;
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    EVP_EncryptInit(ctx, tdea_ede, key, iv);
+
+    res = EVP_EncryptUpdate(ctx, ciphertext, &outl, message, (int)sizeof(message));
+    printf(""Update wrote %d bytes\n"", outl);
+    ciphertext_total += outl;
+
+    EVP_EncryptFinal(ctx, ciphertext + ciphertext_total, &outl);
+    printf(""Final wrote %d bytes\n"", outl);
+    ciphertext_total += outl;
+  }
+
+  printf(""Ciphertext:          "");
+  {
+    int i;
+    for(i=0; i<ciphertext_total; i++)
+    {
+      printf(""%02x "", ciphertext[i]);
+    }
+    printf(""\n"");
+  }
+
+  /* decrypt */
+  {
+    int outl = 0;
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    EVP_DecryptInit(ctx, tdea_ede, key, iv);
+
+    res = EVP_DecryptUpdate(ctx, decrypted, &outl, ciphertext, ciphertext_total );
+    printf(""Update wrote %d bytes\n"", outl);
+    decrypted_total += outl;
+
+    EVP_DecryptFinal(ctx, decrypted + decrypted_total, &outl);
+    printf(""Final wrote %d bytes\n"", outl);
+    decrypted_total += outl;
+  }
+
+  printf(""Decrypted:           "");
+  {
+    int i;
+    for(i=0; i<decrypted_total; i++)
+    {
+      printf(""%02x "", decrypted[i]);
+    }
+    printf(""\n"");
+  }
+}

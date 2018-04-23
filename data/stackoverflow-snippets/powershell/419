@@ -1,0 +1,24 @@
+Configuration WebSitePublishConfig
+{
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [PSCredential] $Credential,
+        [Parameter(Mandatory=$true)]
+        [string] $CertificateFile
+    )
+
+    Import-DscResource -ModuleName PSDesiredStateConfiguration
+
+    $UserName = $Credential.UserName
+    $EncryptedPassword = $Credential.GetNetworkCredential().Password | Protect-CmsMessage -To $CertificateFile
+
+    Script MyScript
+    {
+        SetScript = `
+            {
+                # $using:UserName
+                $password = Unprotect-CmsMessage -Content $using:EncryptedPassword
+            }
+    }
+}

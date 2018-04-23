@@ -1,0 +1,53 @@
+package main
+
+import (
+    ""bytes""
+    ""strconv""
+    ""strings""
+    ""testing""
+)
+
+func BenchmarkConcat(b *testing.B) {
+    var s string
+    for n := 1; n <= 1<<12; n <<= 3 {
+        s1 := strings.Repeat(""a"", n)
+        s2 := strings.Repeat(""b"", n)
+
+        b.Run(""PlusL""+strconv.Itoa(n), func(b *testing.B) {
+            b.ReportAllocs()
+            b.ResetTimer()
+            for i := 0; i < b.N; i++ {
+                s = s1 + s2
+            }
+            b.StopTimer()
+        },
+        )
+
+        b.Run(""CopyL""+strconv.Itoa(n), func(b *testing.B) {
+            b.ReportAllocs()
+            b.ResetTimer()
+            for i := 0; i < b.N; i++ {
+                buf := make([]byte, len(s1)+len(s2))
+                copy(buf[copy(buf, s1):], s2)
+                s = string(buf)
+            }
+            b.StopTimer()
+        },
+        )
+
+        b.Run(""BufferL""+strconv.Itoa(n), func(b *testing.B) {
+            b.ReportAllocs()
+            b.ResetTimer()
+            for i := 0; i < b.N; i++ {
+                var buf bytes.Buffer
+                buf.WriteString(s1)
+                buf.WriteString(s2)
+                s = buf.String()
+            }
+            b.StopTimer()
+        },
+        )
+
+    }
+    _ = s
+}

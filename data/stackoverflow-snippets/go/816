@@ -1,0 +1,23 @@
+var sess *mgo.Session = ... // Acquire session
+c := sess.DB(""dbname"").C(""candles"")
+
+pipe := c.Pipe([]bson.M{
+    {
+        ""$group"": bson.M{
+            ""_id"": ""$symbol"",
+        },
+    },
+})
+var results = []bson.M{}
+if err := pipe.All(&results); err != nil {
+    log.Printf(""Error: %v"", err)
+    return
+}
+
+// results holds {""_id"": ""symbol""} documents
+// To get a slice of symbols:
+symbols := make([]string, len(results))
+for i, doc := range results {
+    symbols[i] = doc[""_id""].(string)
+}
+fmt.Println(symbols)

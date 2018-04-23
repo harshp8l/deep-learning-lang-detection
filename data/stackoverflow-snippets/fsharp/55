@@ -1,0 +1,27 @@
+#I ""..\packages\Deedle.1.2.5""
+#load ""Deedle.fsx""
+
+open System
+open Deedle
+
+let weightedAverage after before frame: float =
+    let filteredFrame =
+        frame
+        |> Frame.filterRowValues (fun r -> r.GetAs<DateTime>(""trade_timestamp"") < before)
+        |> Frame.filterRowValues (fun r -> r.GetAs<DateTime>(""trade_timestamp"") > after)
+        |> Frame.filterRowValues (fun r -> r.GetAs<int>(""instrument_id"") = 1)
+    let quantities: Series<int, float> = filteredFrame |> Frame.getCol ""trade_qty""
+    let tradePrices: Series<int, float> = filteredFrame |> Frame.getCol ""trade_price""
+    let weightedSum = 
+        (quantities, tradePrices) 
+        ||> Series.zip 
+        |> Series.mapValues (fun (q, p) -> (OptionalValue.get q * OptionalValue.get p)) 
+        |> Series.reduceValues (fun acc curr -> acc + curr)
+    let total = 
+        quantities 
+        |> Series.reduceValues (fun acc curr -> acc + curr) 
+    weightedSum / total 
+
+let path = __SOURCE_DIRECTORY__ + ""\data.csv""
+let df = Frame.ReadCsv(path, separators = ""|"")
+let ans = df |> weightedAverage (DateTime(2017, 1, 1)) (DateTime(2019, 1, 1))

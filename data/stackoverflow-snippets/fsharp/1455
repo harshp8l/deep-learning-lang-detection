@@ -1,0 +1,12 @@
+let printFormScaled (form: Form) (printer: PrintPageEventArgs) pageSizeInch =
+    let mutable target = new Rectangle(0,0,int((fst pageSizeInch)*300.),int((snd pageSizeInch)*300.))
+    let bitmap = new Bitmap(form.Width, form.Height)
+    form.DrawToBitmap(bitmap, new Rectangle(0,0, bitmap.Width, bitmap.Height))
+    let xScale:double = (double bitmap.Width)/(double target.Width)
+    let yScale:double = (double bitmap.Height)/(double target.Height)
+    if (xScale < yScale) then
+        target.Width <- int(xScale * (double target.Width) / yScale)
+    else
+        target.Height <- int(yScale * (double target.Height) / xScale)
+    printer.Graphics.PageUnit <- GraphicsUnit.Pixel
+    printer.Graphics.DrawImage(bitmap, target)

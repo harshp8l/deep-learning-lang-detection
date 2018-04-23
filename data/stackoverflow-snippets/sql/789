@@ -1,0 +1,27 @@
+INSERT INTO #batchdetails (FileID, FileSizeTotal, GroupID)
+SELECT FileID, (
+            SELECT SUM(filesize) FROM #filedetails f2
+            WHERE f1.fileid >= f2.fileid ) AS FileSizeTotal,
+    1+CONVERT(INT,(
+            SELECT SUM(filesize) FROM #filedetails f2
+            WHERE f1.fileid >= f2.fileid
+    )/(@filesizepergroup+0.1)) AS GroupID
+FROM #filedetails f1
+
+SELECT DISTINCT
+    BatchDetails.GroupID AS BatchNo,
+    MIN(BatchDetails.FileID) OVER (PARTITION BY BatchDetails.GroupID ORDER BY BatchDetails.GroupID) AS StartID,
+    MAX(BatchDetails.FileID) OVER (PARTITION BY BatchDetails.GroupID ORDER BY BatchDetails.GroupID) AS EndID,
+    BatchSizeGroup.BatchSize
+FROM #batchdetails BatchDetails
+INNER JOIN (
+    SELECT GroupID, (GroupFileSizeTotal - LAG(GroupFileSizeTotal,1,0) OVER (ORDER BY GroupID)) AS BatchSize
+    FROM (
+        SELECT DISTINCT 
+            GroupID, 
+            MAX(FileSizeTotal) OVER (PARTITION BY GroupID ORDER BY GroupID) AS GroupFileSizeTotal
+        FROM #batchdetails
+        GROUP BY GroupID, FileSizeTotal
+    )A
+)BatchSizeGroup ON BatchDetails.GroupID = BatchSizeGroup.GroupID
+GROUP BY BatchDetails.GroupID, BatchDetails.FileID, BatchSizeGroup.BatchSize

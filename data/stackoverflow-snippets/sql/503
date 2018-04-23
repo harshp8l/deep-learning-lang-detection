@@ -1,0 +1,31 @@
+CREATE PROCEDURE book_part(
+  i_id      IN  BIKE_WITH_INVENTORY.ID%TYPE,
+  i_input   IN  BIKE_WITH_INVENTORY.INPUT%TYPE,
+  o_success OUT NUMBER
+)
+IS
+  p_stock INVENTORY.STOCK%TYPE;
+BEGIN
+  SELECT stock
+  INTO   p_stock
+  FROM   inventory
+  WHERE  id = i_id;
+
+  IF p_stock < i_input THEN
+    o_success := 0;
+    RETURN;
+  END IF;
+
+  INSERT INTO bike_with_inventory ( id, input )
+    VALUES ( i_id, i_input );
+
+  UPDATE inventory
+  SET   stock = stock - i_input
+  WHERE id = i_id;
+
+  o_success := 1;
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    o_success := 0;
+END;
+/

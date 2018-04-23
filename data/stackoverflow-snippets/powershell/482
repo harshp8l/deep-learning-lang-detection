@@ -1,0 +1,15 @@
+$mll = New-Object MailKit.Net.Imap.ImapClient
+$ctoken = New-Object System.Threading.CancellationToken ($false)
+$ssl = [MailKit.Security.SecureSocketOptions]::Auto
+$mll.Connect('server.name', 993, $ssl, $ctoken)
+$mll.Authenticate(([System.Text.Encoding]::UTF8) , ""user@server.name"", ""pass"" , $ctoken)
+$inbox = $mll.Inbox
+$inbox.Open([MailKit.FolderAccess]::ReadOnly) | Out-Null
+$inbox = $inbox.GetSubfolders($false) | ?{$_.Name -eq 'SUBFOLDER'}
+$inbox.Open([MailKit.FolderAccess]::ReadOnly) | Out-Null
+$src = $inbox.Search([MailKit.Search.SearchQuery]::All) 
+$msg = $src | select -Last 1
+try { $id = [MailKit.UniqueId]($msg.Id) ; $inbox.GetMessage($id) }
+catch { $_ }
+$inbox.Close()
+$mll.Disconnect($true , $ctoken)

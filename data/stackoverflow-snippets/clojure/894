@@ -1,0 +1,26 @@
+;To update my state I use a function:
+
+(defn set-owner-state! [owner old-map-key old-map new-map]
+   (om/set-state! owner {old-map-key (merge old-map new-map)}))
+
+om/IInitState
+(init-state [_]
+  (println ""queue->init-state"")
+  {:e-map {:active-fsm nil}})
+
+om/IDidMount
+(did-mount [_]
+    (go-loop []
+        (let [[v _] (alts! [server-fsm-events dispatcher-events])
+              current-state (om/get-state owner)
+              e-map (:e-map current-state)]
+        ; what goes in here is the logic to respond to a message
+        ; in my case I have a match, it could be a cond or a set of
+        ; if's.
+        (set-owner-state! owner :e-map e-map {:active-fsm :active :task-paths nil})
+    ...
+
+om/IRenderState
+(render-state [_ {:keys [e-map]}]
+  (println ""e-map:"" e-map)
+  ...

@@ -1,0 +1,28 @@
+package main
+
+import (
+    ""fmt""
+    ""net/http""
+)
+
+func CheckRedirect(r *http.Request, via []*http.Request) error {
+    fmt.Println(""Redirecting:"", r.Response.StatusCode, r.URL)
+    return nil
+}
+
+func main() {
+    getURL := ""http://swiggy.com//google.com/%2f..""
+    fmt.Println(""getURL:"", getURL)
+    client := &http.Client{
+        CheckRedirect: CheckRedirect,
+    }
+    resp, err := client.Get(getURL)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    finalURL := resp.Request.URL.String()
+    fmt.Println(""finalURL:"", finalURL)
+    fmt.Println(""Req Headers:"", resp.Request.Header)
+    fmt.Println(""Resp Headers:"", resp.Header)
+}

@@ -1,0 +1,111 @@
+object PlayJson {
+
+  import play.api.libs.json._
+
+  // fake types instead of your real ones
+  type ResStart = Int
+  type ResEnd = Int
+  type Center = Int
+
+  sealed trait Rule[A] {
+    def roomId: Option[Long] = None
+
+    def valid(in: A): Boolean
+  }
+
+  sealed trait ValueRule[A, B] extends Rule[A] {
+    def value: B
+  }
+
+  sealed trait NoValueRule[A] extends Rule[A]
+
+  case class OnlyDuringWorkHours(override val roomId: Option[Long] = None) extends NoValueRule[((ResStart, ResEnd), Center)] {
+    override def valid(in: ((ResStart, ResEnd), Center)): Boolean = true
+  }
+
+  case class MaxLeadTime(override val roomId: Option[Long] = None, override val value: Int) extends ValueRule[ResStart, Int] {
+    override def valid(in: ResStart): Boolean = true
+  }
+
+  case class MaxDuration(override val roomId: Option[Long] = None, override val value: String) extends ValueRule[(ResStart, ResEnd), String] {
+    override def valid(in: (ResStart, ResEnd)): Boolean = true
+  }
+
+  case class Rules(centerId: Long, ruleList: Seq[Rule[_]])
+
+
+  object CompoundFormat {
+    final val discriminatorKey = ""$type$""
+
+    private case class UnsafeFormatWrapper[U, R <: U : ClassTag](format: OFormat[R]) extends OFormat[U] {
+      def typeName: String = {
+        val clazz = implicitly[ClassTag[R]].runtimeClass
+        try {
+          clazz.getSimpleName
+        }
+        catch {
+          // getSimpleName might fail for inner classes because of the name mangling
+          case _: InternalError => clazz.getName
+        }
+      }
+
+      override def reads(json: JsValue): JsResult[U] = format.reads(json)
+
+      override def writes(o: U): JsObject = {
+        val base = format.writes(o.asInstanceOf[R])
+        base + (discriminatorKey, JsString(typeName))
+      }
+    }
+
+  }
+
+  class CompoundFormat[A]() extends OFormat[A] {
+
+    import CompoundFormat._
+
+    private val innerFormatsByName = mutable.Map.empty[String, UnsafeFormatWrapper[A, _]]
+    private val innerFormatsByClass = mutable.Map.empty[Class[_], UnsafeFormatWrapper[A, _]]
+
+    override def reads(json: JsValue): JsResult[A] = {
+      val jsObject = json.asInstanceOf[JsObject]
+      val name = jsObject(discriminatorKey).asInstanceOf[JsString].value
+      val innerFormat = innerFormatsByName.getOrElse(name, throw new RuntimeException(s""Unknown child type $name""))
+      innerFormat.reads(jsObject)
+    }
+
+    override def writes(o: A): JsObject = {
+      val innerFormat = innerFormatsByClass.getOrElse(o.getClass, throw new RuntimeException(s""Unknown child type ${o.getClass}""))
+      innerFormat.writes(o)
+    }
+
+    def addSubType[R <: A : ClassTag](format: OFormat[R]): Unit = {
+      val wrapper = new UnsafeFormatWrapper[A, R](format)
+      innerFormatsByName.put(wrapper.typeName, wrapper)
+      innerFormatsByClass.put(implicitly[ClassTag[R]].runtimeClass, wrapper)
+    }
+  }
+
+  def buildRuleFormat: OFormat[Rule[_]] = {
+    val compoundFormat = new CompoundFormat[Rule[_]]
+    compoundFormat.addSubType(Json.format[OnlyDuringWorkHours])
+    compoundFormat.addSubType(Json.format[MaxLeadTime])
+    compoundFormat.addSubType(Json.format[MaxDuration])
+    compoundFormat
+  }
+
+  def test(): Unit = {
+    implicit val ruleFormat = buildRuleFormat
+    implicit val rulesFormat = Json.format[Rules]
+
+    val rules0 = Rules(1, List(
+      OnlyDuringWorkHours(Some(1)),
+      MaxLeadTime(Some(2), 2),
+      MaxDuration(Some(3), ""Abc"")
+    ))
+
+    val json = Json.toJsObject(rules0)
+    println(s""encoded: '$json'"")
+    val rulesDecoded = Json.fromJson[Rules](json)
+    println(s""decoded: $rulesDecoded"")
+  }
+}

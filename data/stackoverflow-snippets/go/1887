@@ -1,0 +1,41 @@
+// the interface :
+type Message interface {
+    GetHeader() MessageHeader
+    GetType() MessageType
+}
+
+// a base struct type, which holds 2 fields and implements the Message interface :
+type baseMessage struct {
+    Header MessageHeader
+    Type   MessageType
+}
+
+func (b *baseMessage) GetHeader() MessageHeader {
+    return b.Header
+}
+
+func (b *baseMessage) GetType() MessageType {
+    return b.Type
+}
+
+// your three types, with an embedded ""baseMessage"" part :
+type QueryMessage struct {
+    baseMessage
+    Query SqlQuery
+}
+
+type UpdateMessage struct {
+    baseMessage
+    OldData map[string]interface{}
+    NewData map[string]interface{}
+}
+
+type InsertMessage struct {
+    baseMessage
+    Data map[string]interface{}
+}
+
+// compile time check : all the above types implement the Message interface :
+var _ Message = &QueryMessage{}
+var _ Message = &UpdateMessage{}
+var _ Message = &InsertMessage{}

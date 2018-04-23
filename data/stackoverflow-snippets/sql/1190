@@ -1,0 +1,46 @@
+DECLARE 
+ ENV VARCHAR(255);
+
+BEGIN
+
+    SELECT sys_context('USERENV','DB_NAME') AS Instance
+    INTO ENV
+    FROM DUAL;
+
+    IF ENV = 'CSTMP' THEN
+        execute immediate 'CREATE MATERIALIZED VIEW TEST_CSTMP
+        USING INDEX 
+        REFRESH 
+        NEXT trunc(SYSDATE, ''hh'') + 1/24       
+        FORCE 
+        USING DEFAULT LOCAL ROLLBACK SEGMENT 
+        ENABLE QUERY REWRITE AS 
+        SELECT count(m.work_ownerid)
+                FROM MV_WWORK_SHRUNK m
+                WHERE WORK_STATUS = 2';
+
+    ELSIF ENV = 'PROD' THEN
+        execute immediate 'CREATE MATERIALIZED VIEW PROD
+        USING INDEX 
+        REFRESH 
+        NEXT trunc(SYSDATE, ''hh'') + 1/24       
+        FORCE 
+        USING DEFAULT LOCAL ROLLBACK SEGMENT 
+        ENABLE QUERY REWRITE AS 
+        SELECT count(m.work_ownerid)
+                FROM MV_WWORK_SHRUNK m
+                WHERE WORK_STATUS = 3';
+
+    ELSE
+        execute immediate 'CREATE MATERIALIZED VIEW TEST_ELSE
+        USING INDEX 
+        REFRESH 
+        NEXT trunc(SYSDATE, ''hh'') + 1/24       
+        FORCE 
+        USING DEFAULT LOCAL ROLLBACK SEGMENT 
+        ENABLE QUERY REWRITE AS 
+        SELECT count(m.work_ownerid)
+                FROM MV_WWORK_SHRUNK m
+                WHERE WORK_STATUS = 4';
+    END IF;
+END;

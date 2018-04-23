@@ -1,0 +1,78 @@
+<#
+    This powershell script pulls from a USB cable connected android device files to a windows folder.
+    If the folder has files in subfolders they will also be copied to a similar subfolder to under the target folder
+    The script requires the Android Debug Bridge (adb) available on the windows computer (no installation required)
+
+    Adb Overview
+    https://developer.android.com/studio/command-line/adb.html
+
+    Get ADB files
+    Download: SDK Platform Tools Release
+    https://developer.android.com/studio/releases/platform-tools.html#download
+
+    ADB Driver Download  
+    I required that driver for the Samsung S7 attached to Windows 7 -> Windows 10 had the driver by default
+    https://www.androidpit.de/adb-treiber-android-windows#windowstreiber
+    http://adbdriver.com/downloads/
+
+    activate on the android device within the developer options ""USB debugging""
+
+    connect the adroid device via USB 
+
+    change the USB connection type to PTP
+
+    check within your android device by the property of a file the path to use
+
+#>
+
+$VerbosePreference = ""SilentlyContinue""
+$ADBExe = ""D:\Android-platform-tools\adb.exe""
+
+cls
+. $ADBExe devices
+
+function FN-PullAllFilesFromAnAndroidFolder(){
+    param 
+        ( [Parameter(mandatory=$true)] [String] $AndroidSourceFolder,
+          [Parameter(mandatory=$true)] [String] $WindowsTargetFolder   )
+
+    if ($True){
+
+        $FilesInAndroidFolder = . $ADBExe shell find ""'$AndroidSourceFolder'"" -type f
+        $FilesInAndroidFolder  | Write-Verbose
+
+        if ($True) 
+        {
+            ForEach ($SingleFileInAndroidFolder in $FilesInAndroidFolder)
+            {
+                #Replace known characters that are not deliverd correctly by the ""adb shell find"" query to windows 
+                $FileFullPathCodePageFixed = $SingleFileInAndroidFolder.Replace('Ã¤', ""ä"")
+                $FileFullPathCodePageFixed = $FileFullPathCodePageFixed.Replace('Ã„', ""Ä"") 
+                $FileFullPathCodePageFixed = $FileFullPathCodePageFixed.Replace('Ã–', ""Ö"") 
+                $FileFullPathCodePageFixed = $FileFullPathCodePageFixed.Replace('Ãœ', ""Ü"") 
+                $FileFullPathCodePageFixed = $FileFullPathCodePageFixed.Replace('Ã¶', ""ö"") 
+                $FileFullPathCodePageFixed = $FileFullPathCodePageFixed.Replace('Ã¼', ""ü"")
+
+                $RelativeFullPath = $FileFullPathCodePageFixed.Substring($AndroidSourceFolder.Length - 1, (($FileFullPathCodePageFixed.Length) - $AndroidSourceFolder.Length) + 1)
+
+                if (!(Test-Path -LiteralPath (Join-Path -Path $WindowsTargetFolder -ChildPath $RelativeFullPath)))
+                {
+                    #Check if folder to copy to exists; if not create it
+                    $TargetDirectoryWindows = Join-Path -Path $WindowsTargetFolder -ChildPath (Split-Path -LiteralPath $RelativeFullPath)
+                    If (! (Test-Path -LiteralPath $TargetDirectoryWindows) ){New-Item -Path $TargetDirectoryWindows -ItemType Directory | Out-Null}
+
+                    #Pull files from android device
+                    . $ADBExe pull $FileFullPathCodePageFixed $(Join-Path -Path $WindowsTargetFolder -ChildPath $RelativeFullPath) 
+
+                } Else
+                {
+                    ""Already Backuped: $FileFullPathCodePageFixed""
+                }
+            }
+        }
+    }
+}
+
+
+FN-PullAllFilesFromAnAndroidFolder  -AndroidSourceFolder ""/storage/3333-3432/DCIM/CAMERA/"" `
+                                    -WindowsTargetFolder ""D:\Data\Pictures\SamsungS7\""

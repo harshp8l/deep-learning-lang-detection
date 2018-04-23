@@ -1,0 +1,98 @@
+public class SocketConnect {
+    private ServerSocket serverSocket = null;
+    private Socket socket = null;
+    private ObjectOutputStream sOutput;
+    private boolean bindSocketPerformed = false;
+
+    public boolean startSocket() {
+        final int port = 4321;
+        InetAddress addr = null;
+        try {
+            addr = InetAddress.getByName(""127.0.0.1"");
+        } catch (UnknownHostException e) {
+            LOG.error(""SocketConnection: UnknownHostException     InetAddress.getByName "", e);
+            shutdownSocket(serverSocket, socket);
+            return false;
+        }
+        if (!bindSocketPerformed) {
+            try {
+                serverSocket = new ServerSocket();
+            } catch (IOException e) {
+                LOG.info(""SocketConnection: IOException new ServerSocket "", e);
+                shutdownSocket(serverSocket, socket);
+                return false;
+            }
+            try {
+                serverSocket.setReuseAddress(true);
+            } catch (SocketException e) {
+                LOG.error(""SocketConnection: IOException setReuseAddress/setSoTimeout "", e);
+                shutdownSocket(serverSocket, socket);
+                return false;
+            }
+            try {
+                SocketAddress socketAddress = new InetSocketAddress(addr, port);
+                serverSocket.bind(socketAddress);
+                bindSocketPerformed = true;
+            } catch (IOException e) {
+                LOG.error(""SocketConnection: IOException bind ServerSocket "", e);
+                shutdownSocket(serverSocket, socket);
+                return false;
+            }
+        }
+        try {
+            socket = serverSocket.accept();
+            LOG.info(""SocketConnection: Server Accept done"");
+            LOG.info(""Initializing with empty message"");
+            LOG.debug(""Finished writing and closing the first object"");
+        } catch (IOException e) {
+            LOG.error(""SocketConnection: IOException bind ServerSocket "", e);
+            shutdownSocket(serverSocket, socket);
+            return false;
+        }
+        return true;
+    }
+
+    private void shutdownSocket(ServerSocket serverSocket, Socket socket) {
+        try {
+            if (sOutput != null) {
+                sOutput.close();
+            }
+            if (socket != null) {
+                socket.close();
+            }
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
+        } catch (IOException e) {
+            LOG.info(""SocketConnection: IOException socket.close "", e);
+        }
+    }
+
+    public writeMsg(MySharedObject obj) {
+        try {
+            LOG.debug(""Before socket write"");
+            sOutput = new ObjectOutputStream(socket.getOutputStream());
+            sOutput.writeObject(obj);
+            sOutput.flush();
+            LOG.info(""After socket write"");
+        }
+        catch (IOException e) {
+            LOG.error(""Error sending message [{}]"", obj.toString());
+        }
+    }
+    private void close() {
+        // try to close the connection
+        try {
+            if (sOutput != null)
+                sOutput.close();
+        } catch (Exception e) {
+            LOG.info(""Close Input/output Streams exception"", e);
+        }
+        try {
+            if (socket != null)
+            socket.close();
+        } catch (Exception e) {
+            LOG.info(""Close Input/output Socket exception"", e);
+        }
+    }
+}

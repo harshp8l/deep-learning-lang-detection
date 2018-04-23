@@ -1,0 +1,20 @@
+         do
+     {
+         ret = avcodec_receive_packet(av_codec_context_, &pkt);
+         if (ret == 0)
+         {
+             break;
+         }
+         else if ((ret < 0) && (ret != AVERROR(EAGAIN)))
+         {
+             return false;
+         }
+         else if (ret == AVERROR(EAGAIN))
+         {
+              ret = avcodec_send_frame(av_codec_context_, NULL);
+              if (0 > ret)
+              {
+                  return false;
+              }
+         }
+     } while (ret == 0);

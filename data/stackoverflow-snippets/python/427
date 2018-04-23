@@ -1,0 +1,26 @@
+import aiofiles
+
+...
+
+async def count_words_for_file(file):
+    async with aiofiles.open(file) as f:
+        rv = sum(len(line.split()) async for line in f)
+        print(rv)
+        return rv
+
+
+async def async_count_words(path, glob_pattern):
+    await asyncio.wait([count_words_for_file(file)
+                        for file in list(path.glob(glob_pattern))])
+    # asyncio.wait() calls loop.create_task() for you for each coroutine
+
+...
+
+if __name__ == '__main__':
+
+    ...
+
+    loop = asyncio.get_event_loop()
+    start = time.time()
+    loop.run_until_complete(async_count_words(path, ""*.txt""))
+    benchmark.append((""async version"", time.time() - start))

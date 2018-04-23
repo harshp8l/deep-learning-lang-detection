@@ -1,0 +1,16 @@
+$result = [];
+foreach($assessed_subjects as $subject) {
+    $query = DB::table('assessment_data')
+        ->select(DB::raw('avg(`assessed_level`) as `avg`'))
+        ->where('user_id', 28)
+        ->where('student_id', $student_id)
+        ->where('subject_id', $subject->subject_id);
+    foreach($user_terms as $term) {
+        $result[$subject->subject_id][$term->id] = (clone $query)
+            ->whereBetween('created_at', [$term->term_start, $term->term_end])
+            ->first()->avg;
+    }
+    $result[$subject->subject_id]['year'] = (clone $query)
+        ->whereBetween('created_at', [$user_terms->first()->term_start, $user_terms->last()->term_end])
+        ->first()->avg;
+}

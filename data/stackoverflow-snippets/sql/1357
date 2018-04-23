@@ -1,0 +1,12 @@
+INSERT INTO @t(xml)
+VALUES
+ ('<FormSearchFilter><test>x</test><IDs><int>1</int><int>2</int></IDs></FormSearchFilter>'),
+ ('<FormSearchFilter><IDs><int>1</int><int>2</int><int>3</int></IDs><test>x</test></FormSearchFilter>'),
+ ('<FormSearchFilter><IDs><int>1</int><int>2</int><int>3</int><int>4</int></IDs></FormSearchFilter>');
+
+ UPDATE @t
+ SET [xml]= (SELECT  [xml].query('/FormSearchFilter/*[local-name()!=""IDs""]') AS [*]
+                    ,REPLACE([xml].query('data(/FormSearchFilter/IDs/int)').value('.','nvarchar(max)'),' ',',') AS IDs 
+             FOR XML PATH('FormSearchFilter'));
+
+ SELECT * FROM @t

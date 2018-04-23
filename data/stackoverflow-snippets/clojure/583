@@ -1,0 +1,19 @@
+(defn function-name
+  ""Transforms data d by finding (nested keys) via data-map m in d and 
+  flattening the structure.""
+  [d m]
+  (let [tree               (map #(find-nested (conj (second %) (first %)) d) m)
+        leaves             (last tree)
+        leaf-indices       (range (count leaves))
+        results            (for [index leaf-indices]
+                             (map (fn [slice]
+                                    (if (string? slice)
+                                      slice
+                                      (loop [node (nth slice index)]
+                                        (if node
+                                          node
+                                          (recur (nth slice (dec index)))))))
+                                  tree))
+        results-with-paths (mapv #(zipmap (keys m) %) results)
+        json               (cheshire/encode results-with-paths)]
+    json))

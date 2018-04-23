@@ -1,0 +1,34 @@
+val df1 = sc.parallelize(Array(
+(""text"",45  ),
+(""data"",100 ),
+(""push"",150 ))).toDF(""key"", ""value"").withColumn(""Filename"", lit(""File1"") )
+
+val df2 = sc.parallelize(Array(
+(""data"",45  ),
+(""lea"",100 ),
+(""jump"",150 ))).toDF(""key"", ""value"").withColumn(""Filename"", lit(""File2"") )
+
+val df = df1.unionAll(df2)
+
+df.show
++----+-----+--------+
+| key|value|Filename|
++----+-----+--------+
+|text|   45|   File1|
+|data|  100|   File1|
+|push|  150|   File1|
+|data|   45|   File2|
+| lea|  100|   File2|
+|jump|  150|   File2|
++----+-----+--------+
+
+
+val finalDf = df.groupBy($""Filename"").pivot(""key"").agg(first($""value"") ).na.fill(0)
+
+finalDf.show
++--------+----+----+---+----+----+
+|Filename|data|jump|lea|push|text|
++--------+----+----+---+----+----+
+|   File1| 100|   0|  0| 150|  45|
+|   File2|  45| 150|100|   0|   0|
++--------+----+----+---+----+----+

@@ -1,0 +1,27 @@
+static QString getHomeDir() {
+  auto const N = sysconf(_SC_GETPW_R_SIZE_MAX);
+  auto *buffer = std::make_unique<char[]>(N);
+  passwd pwd;
+  passwd *result;
+  getpwuid_r(geteuid(), &pwd, buffer.get(), N, &result);
+  if (result) {
+    auto *dir = result->pw_dir;
+    auto const decoded = QFile::decodeName(dir);
+    return QDir::cleanPath(decoded);
+  }
+  return {};
+}
+
+enum class HomeDir { Default, Init };
+QString homeDir(HomeDir option = HomeDir::Default) {
+  // needs a C++11 compiler for thread-safe initialization
+  static QFuture<QString> home = QtConcurrent::run(getHomeDir);
+  return (option == HomeDir::Init) ? QString() : home;
+};
+
+int main(int argc, char **argv) {
+  QCoreApplication app(argc, argv);
+  homeDir(HomeDir::Init);
+  // do other time-consuming initializations here
+  QString () << homeDir();
+}

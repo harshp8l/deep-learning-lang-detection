@@ -1,0 +1,19 @@
+import pandas as pd
+import numpy as np
+
+# sample dataframe
+df = pd.DataFrame({'a':[np.nan,1,np.nan,np.nan],'b':[1, np.nan, np.nan, 1],'c':[np.nan, np.nan, np.nan, 1]})
+df_orig = df
+cols = df.columns.tolist()
+
+rows = []
+while not df.empty:
+    ## Find the row with most non-null column entries
+    x = df.notnull().sum(axis=1).idxmax() # edit - fix for null/nonnull
+    ## Add the row to our list and continue
+    rows.append(x)
+    ## Remove the columns from our dataframe
+    df = df.drop(columns=df.columns[df.loc[[x]].notnull().any()].tolist())
+
+## Access the dataframe with only 'essential' rows
+df_orig.loc[rows]

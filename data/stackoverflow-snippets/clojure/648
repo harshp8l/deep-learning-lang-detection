@@ -1,0 +1,26 @@
+(def a '({:id 9345 :value 3 :type ""orange""}
+         {:id 2945 :value 2 :type ""orange""}
+         {:id 145 :value 3 :type ""orange""}
+         {:id 2745 :value 6 :type ""apple""}
+         {:id 2345 :value 6 :type ""apple""}))
+
+(defn standardise [m]
+  (->> m
+       ;; first stage
+       (reduce (fn [out {:keys [type value id]}]
+                 (update-in out [type value] (fnil #(conj % id) [])))
+               {})
+       ;; second stage
+       (reduce-kv (fn [out k v]
+                    (assoc out (keyword k)
+                           (reduce-kv (fn [out value id]
+                                        (conj out {:value value
+                                                   :id id}))
+                                      []
+                                      v)))
+                  {})))
+
+(standardise a)
+;; => {:orange [{:value 3, :id [9345 145]} 
+;;              {:value 2, :id [2945]}], 
+;;     :apple [{:value 6, :id [2745 2345]}]}

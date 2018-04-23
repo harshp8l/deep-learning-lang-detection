@@ -1,0 +1,29 @@
+public function prepare_items()
+{
+    $columns    = $this->get_columns();
+    $hidden     = $this->get_hidden_columns();
+    $sortable   = $this->get_sortable_columns();
+    $data       = $this->table_data();
+
+    usort( $data, array( &$this, 'sort_data' ) );
+
+    $i = 0;
+    foreach ($data AS $key) {
+        if (isset($key['available_date'])) {
+            $data[$i]['available_date'] = date(""F Y"", strtotime($key['available_date']));
+        }
+        $i++;
+    }
+
+    $perPage        = 20;
+    $currentPage    = $this->get_pagenum();
+    $totalItems     = count($data);
+    $this->set_pagination_args( array(
+        'total_items' => $totalItems,
+        'per_page'    => $perPage
+    ) );
+
+    $data = array_slice($data,(($currentPage-1)*$perPage),$perPage);
+    $this->_column_headers = array($columns, $hidden, $sortable);
+    $this->items = $data;
+}

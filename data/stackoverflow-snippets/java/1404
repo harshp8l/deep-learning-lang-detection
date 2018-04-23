@@ -1,0 +1,63 @@
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.net.URL;
+
+public class Test extends JFrame {
+private JPanel principalPanel;
+private BufferedImage image;
+public Test() {
+    setSize(600,600);
+    setLocationRelativeTo(null);
+    setDefaultCloseOperation(EXIT_ON_CLOSE);
+
+    try {
+        URL url = new
+                URL(""https://boygeniusreport.files.wordpress.com/2017/04/earth.jpg"");
+        image = ImageIO.read(url);
+    } catch (Exception e) {
+        System.out.println(""Problem loading image"");
+        e.printStackTrace();
+    }
+    principalPanel = new JPanel() {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            int original_width = image.getWidth();
+            int original_height = image.getHeight();
+            int bound_width = getWidth();
+            int bound_height = getHeight();
+            int new_width = original_width;
+            int new_height = original_height;
+
+            // first check if we need to scale width
+            if (original_width > bound_width) {
+                //scale width to fit
+                new_width = bound_width;
+                //scale height to maintain aspect ratio
+                new_height = (new_width * original_height) / original_width;
+            }
+
+            // then check if we need to scale even with the new height
+            if (new_height > bound_height) {
+                //scale height to fit instead
+                new_height = bound_height;
+                //scale width to maintain aspect ratio
+                new_width = (new_height * original_width) / original_height;
+            }
+            g.drawImage(image,0,0,new_width,new_height,this);
+        }
+    };
+    setContentPane(principalPanel);
+    setVisible(true);
+}
+public static void main(String[] args) {
+    SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+            new Test();
+        }
+    });
+}
+}

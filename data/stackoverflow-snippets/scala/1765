@@ -1,0 +1,14 @@
+@Singleton
+class BlogDAOImpl @Inject() (protected val dbConfigProvider: DatabaseConfigProvider) extends BlogDAO {
+   val dbConfig: DatabaseConfig[JdbcProfile] = dbConfigProvider.get[JdbcProfile]
+   val db: JdbcBackend#DatabaseDef = dbConfig.db
+
+   import dbConfig.driver.api._
+
+   private val blogs = TableQuery[BlogTable] // this line is here as you can't create object of a @Singleton annotated class
+
+   def save(blog: Blog): Future[Int] = {
+     db.run(
+       blogs += DbBlog(blog.title, blog.content, blog.userID.toString, blog.createdAt.toString))
+   }
+}

@@ -1,0 +1,24 @@
+DECLARE @tbl TABLE(ID INT IDENTITY, TextCol VARCHAR(500));
+INSERT INTO @tbl VALUES
+ ('Phone Call: Fairview Wines & Spirits
+    Number Called: 1 604  601-8000
+    Phone Description: Main
+    Subject: Arrange meeting
+    Result: Arranged interview
+    Duration: 00:00:09
+');
+
+WITH RowWise AS
+(
+    SELECT CAST('<x>' + REPLACE((SELECT REPLACE(TextCol,CHAR(13),'') AS [*] FOR XML PATH('')),CHAR(10),'</x><x>')  + '</x>' AS XML) AS OneRow
+    FROM @tbl 
+)
+,EachRow AS
+(
+    SELECT LTRIM(RTRIM(r.value('text()[1]','nvarchar(max)'))) AS RowText
+    FROM RowWise
+    CROSS APPLY OneRow.nodes('/x[text()]') AS A(r)
+)
+SELECT LEFT(RowText,CHARINDEX(':',RowText)-1)
+      ,SUBSTRING(RowText,CHARINDEX(':',RowText)+1,1000)
+FROM EachRow;

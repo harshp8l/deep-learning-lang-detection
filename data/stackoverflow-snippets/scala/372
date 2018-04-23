@@ -1,0 +1,53 @@
+import org.apache.spark.SparkConf
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
+
+object Test extends App {
+
+  val session: SparkSession = SparkSession
+    .builder.appName(""Example"")
+    .config(new SparkConf().setMaster(""local[*]""))
+    .getOrCreate()
+  val sc = session.sparkContext
+
+  import session.implicits._
+
+  case class Message(key: String, value: String)
+
+  val input: Seq[Message] =
+    Seq(Message(""K1"", ""foo1""),
+      Message(""K1"", ""foo2""),
+      Message(""K2"", ""foo3""),
+      Message(""K2"", ""foo4""))
+
+  val inputRdd: RDD[Message] = sc.parallelize(input)
+
+  val intermediate: RDD[(String, String)] =
+    inputRdd.map(x => (x.key, x.value))
+  intermediate.toDF().show()
+  //  +---+----+
+  //  | _1|  _2|
+  //  +---+----+
+  //  | K1|foo1|
+  //  | K1|foo2|
+  //  | K2|foo3|
+  //  | K2|foo4|
+  //  +---+----+
+
+  val output: RDD[(String, List[String])] =
+    intermediate.groupByKey().map(x => (x._1, x._2.toList))
+  output.toDF().show()
+  //  +---+------------+
+  //  | _1|          _2|
+  //  +---+------------+
+  //  | K1|[foo1, foo2]|
+  //  | K2|[foo3, foo4]|
+  //  +---+------------+
+
+  output.foreachPartition(rdd => if (rdd.nonEmpty) {
+    println(rdd.toList)
+  })
+  //  List((K1,List(foo1, foo2)))
+  //  List((K2,List(foo3, foo4)))
+
+}

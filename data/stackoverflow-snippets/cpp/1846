@@ -1,0 +1,20 @@
+    unsigned long long wSock::decodeTotalFrameSize(char * frame)
+{
+    char secondByte = 0;
+    memcpy_s(&secondByte, 1, frame + 1, 1);
+    unsigned long long size = secondByte & 0b01111111;
+    int headerSize = 2 + 4;
+    if (size == 126) {
+        unsigned short length;
+        memcpy_s(&length, 2, frame + 2, 2);
+        size = ntohs(length);
+        headerSize += 2;
+    }
+    else if (size == 127) {
+        unsigned long long length;
+        memcpy_s(&length, 8, frame + 2, 8);
+        size = ntohll(length);
+        headerSize += 8;
+    }
+    return size + headerSize;
+}

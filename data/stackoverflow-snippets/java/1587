@@ -1,0 +1,64 @@
+import java.util.*;
+import java.util.concurrent.*;
+
+class Main
+{
+    public static void main(String[] args) {
+        ExecutorService ex = Executors.newFixedThreadPool(4);
+
+        Runnable r1 = new Runnable() {
+            private boolean flag = false;
+            @Override
+            public void run() {
+                try {
+                    System.out.println(""Thread: "" + Thread.currentThread().getName());
+                    Thread.sleep((long)(Math.random() * 1000));
+                    flag = true;
+                } catch (InterruptedException ie) {
+                    // do nothing
+                }
+            }
+            public boolean getFlag() {
+                return flag;
+            }
+        };
+
+        Callable<Boolean> c1 = new Callable<Boolean>() {
+            private boolean flag = false;
+            @Override
+            public Boolean call() {
+                try {
+                    System.out.println(""Thread: "" + Thread.currentThread().getName());
+                    Thread.sleep((long)(Math.random() * 1000));
+                    flag = true;
+                } catch (InterruptedException ie) {
+                    // do nothing
+                }
+                return getFlag();
+            }
+            public boolean getFlag() {
+                return flag;
+            }
+        };
+
+        ex.submit(r1);
+        Future<Boolean> f = ex.submit(c1);
+
+        ex.shutdown();
+
+        if (c1 != null) {
+            try {
+                System.out.println(""Callable future-get: "" 
+  + f.get()); //WORKS!: shows boolean value returned from future
+                System.out.println(""Callable direct-var: "" 
+  + ((Callable<Boolean>) c1).flag); //FAIL
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+        if (r1 != null) System.out.println(""Runnable result: "" 
+  + ((Runnable) r1).flag); //FAIL
+    }
+}

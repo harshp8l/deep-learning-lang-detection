@@ -1,0 +1,17 @@
+let dict source =
+    let d = Dictionary<'K, 'V>(HashIdentity.Structural)
+    source |> Seq.iter d.Add
+    { 
+        new IReadOnlyDictionary<'K, 'V> with
+            member x.ContainsKey(key) = d.ContainsKey(key)
+            member x.TryGetValue(key, value) = d.TryGetValue(key, &value)
+            member x.Item with get key = d.[key]
+            member x.Keys = d.Keys :> _
+            member x.Values = d.Values :> _
+        interface IReadOnlyCollection<KeyValuePair<'K, 'V>> with
+            member x.Count = d.Count
+        interface IEnumerable<KeyValuePair<'K, 'V>> with
+            member x.GetEnumerator() = d.GetEnumerator() :> _
+        interface System.Collections.IEnumerable with
+            member x.GetEnumerator() = d.GetEnumerator() :> _
+    }

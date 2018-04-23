@@ -1,0 +1,28 @@
+If (-not (Test-Path -Path DFS:\))
+{ New-PSDrive -Name DFS -PSProvider FileSystem -Root \\mydomain\dfsroot }
+
+$OU         = 'OU=Security Groups,DC=mydomain,DC=local'
+$Filter     = '*501*'
+$Principles = (Get-ADGroup -SearchBase $OU -Filter {Name -like $Filter}).samAccountName
+$Collection = @()
+
+ForEach ($Path in (Get-ChildItem -Path DFS:\ -Recurse -ErrorVariable +CustomERR))
+{
+    ## Using an array literal so items don't end up appended to one giant hashtable
+    $Collection += @(
+        @{ Path = $Path.FullName
+           Acl  = (Get-Acl -Path $Path.FullName).Access.IdentityReference.Value
+         }
+    )
+}
+
+ForEach ($Principle in $Principles)
+{
+    ForEach ($Item in $Collection)
+    {
+        If ($Item.Acl -contains $Principle)
+        {
+            Write-Host ""'$Principle' has rights to '$($Item.Path)'""
+        }
+    }
+}

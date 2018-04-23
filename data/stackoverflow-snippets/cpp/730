@@ -1,0 +1,51 @@
+DWORD APIENTRY WaveFunc(LPVOID data) 
+{
+    WAVEHDR *whdr;
+    WAVE *wave;
+    intptr_t *sink;
+    long size, phaz = 0;
+
+    wave = (WAVE*)data;
+    whdr = (WAVEHDR*)(sink = (intptr_t*) wave->sink)[1];
+    size = wave->chnl * wave->size * (wave->bits >> 3);
+
+    HWAVEOUT hWaveOut = (HWAVEOUT) sink[0];
+    HANDLE hEvent = (HANDLE)sink[2];
+
+    whdr[0].dwBufferLength = whdr[1].dwBufferLength = size;
+    whdr[0].dwFlags        = whdr[1].dwFlags        = 0;
+    whdr[0].dwLoops        = whdr[1].dwLoops        = 0;
+    whdr[0].lpData = (LPSTR)(wave->data[0] = calloc(1, size));
+    whdr[1].lpData = (LPSTR)(wave->data[1] = calloc(1, size));
+
+    ResetEvent(hEvent);
+
+    assert(wave->swiz == 0);
+    FillBuf(wave, freq, ampl, &phaz);
+    waveOutPrepareHeader(hWaveOut, &whdr[1], sizeof (WAVEHDR));
+    waveOutWrite(hWaveOut, &whdr[1], sizeof (WAVEHDR));
+
+    assert(wave->swiz == 1);
+    FillBuf(wave, freq, ampl, &phaz);
+    waveOutPrepareHeader(hWaveOut, &whdr[0], sizeof (WAVEHDR));
+    waveOutWrite(hWaveOut, &whdr[0], sizeof (WAVEHDR));
+
+    for(; ; )
+    {
+        WaitForSingleObject(hEvent, INFINITE);
+        ResetEvent(hEvent);
+        for(long index = 0; index < 2; index++)
+            if(whdr[index].dwFlags & WHDR_DONE)
+            {
+                wave->swiz = index ^ 1;
+                // NOTE: See comment from Paul Sanders: the headers have to be
+                //       prepared before writing, however there is no need to
+                //       re-prepare to upload new data
+                //waveOutUnprepareHeader(hWaveOut, &whdr[wave->swiz], sizeof (WAVEHDR));
+                FillBuf(wave, freq, ampl, &phaz);
+                //waveOutPrepareHeader(hWaveOut, &whdr[wave->swiz], sizeof (WAVEHDR));
+                waveOutWrite(hWaveOut, &whdr[wave->swiz], sizeof (WAVEHDR));
+            }
+    }
+    return 0;
+}

@@ -1,0 +1,36 @@
+(def paths
+  (for [x (file-seq (io/file ""/tmp/root""))]
+    (keep not-empty (str/split (.getPath x) #""/""))))
+
+(defn level-loc [loc v] ;; find node with value at same depth as loc
+  (loop [l loc]
+    (when l
+      (let [n (z/node l)]
+        (cond
+          (= n v) l
+          (and (coll? n) (= (first n) v)) (-> l z/down)
+          :else (recur (-> l z/right)))))))
+
+(defn graft-path [loc path]
+  (reduce
+    (fn [[_ path :as loc] p]
+      (or (level-loc loc p) ;; find existing node
+          (if (nil? path)
+            ;; appends at top of tree
+            (-> loc
+                (z/append-child p)
+                z/down)
+            ;; inserts at depth
+            (-> loc
+                (z/insert-right (list p))
+                z/right
+                z/down))))
+    loc
+    path))
+
+(defn paths->tree [paths]
+  (z/root
+    (reduce
+      (comp z/seq-zip z/root graft-path)
+      (z/seq-zip '())
+      paths)))

@@ -1,0 +1,140 @@
+const Async = require('async'),
+      { MongoClient, Cursor } = require('mongodb');
+
+const testLen = 3;
+(async function() {
+
+  let db;
+
+  try {
+    let client = await MongoClient.connect('mongodb://localhost/');
+
+    let db = client.db('test');
+    let collection = db.collection('cursortest');
+
+    await collection.remove();
+
+    await collection.insertMany(
+      Array(testLen).fill(1).map((e,i) => ({ i }))
+    );
+
+    // Cursor.forEach
+    console.log('Cursor.forEach');
+    await new Promise((resolve,reject) => {
+      collection.find().forEach(
+        console.log,
+        err => {
+          if (err) reject(err);
+          resolve();
+        }
+      );
+    });
+
+    // Async.during awaits cursor.hasNext()
+    console.log('Async.during');
+    await new Promise((resolve,reject) => {
+
+      let cursor = collection.find();
+
+      Async.during(
+        (callback) => Async.nextTick(() => cursor.hasNext(callback)),
+        (callback) => {
+          cursor.next((err,doc) => {
+            if (err) callback(err);
+            console.log(doc);
+            callback();
+          })
+        },
+        (err) => {
+          if (err) reject(err);
+          resolve();
+        }
+      );
+
+    });
+
+    // async/await allows while loop
+    console.log('async/await while');
+    await (async function() {
+
+      let cursor = collection.find();
+
+      while( await cursor.hasNext() ) {
+        let doc = await cursor.next();
+        console.log(doc);
+      }
+
+    })();
+
+    // await event stream
+    console.log('Event Stream');
+    await new Promise((end,error) => {
+      let cursor = collection.find();
+
+      for ( let [k,v] of Object.entries({ end, error, data: console.log }) )
+        cursor.on(k,v);
+    });
+
+    // Promise recursion
+    console.log('Promise recursion');
+    await (async function() {
+
+      let cursor = collection.find();
+
+      function iterate(cursor) {
+        return cursor.hasNext().then( bool =>
+          (bool) ? cursor.next().then( doc => {
+            console.log(doc);
+            return iterate(cursor);
+          }) : Promise.resolve()
+        )
+      }
+
+      await iterate(cursor);
+
+    })();
+
+    // Uncomment if node is run with async iteration enabled
+    // --harmony_async_iteration
+
+
+    console.log('Generator Async Iterator');
+    await (async function() {
+
+      async function* cursorAsyncIterator() {
+        let cursor = collection.find();
+
+        while (await cursor.hasNext() ) {
+          yield cursor.next();
+        }
+
+      }
+
+      for await (let doc of cursorAsyncIterator()) {
+        console.log(doc);
+      }
+
+    })();
+
+    /*
+
+    This is the clear end goal when readable streams support it
+
+    await (async function() {
+
+      for await (let doc of collection.find()) {
+        console.log(doc);
+      }
+
+    })();
+    */
+
+    client.close();
+
+  } catch(e) {
+    console.error(e);
+  } finally {
+    process.exit();
+  }
+
+})();

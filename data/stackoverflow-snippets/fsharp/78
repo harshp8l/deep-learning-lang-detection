@@ -1,0 +1,17 @@
+type RequireObjectPropertiesContractResolver() =
+    inherit DefaultContractResolver()
+
+    override this.CreateObjectContract(objectType : Type) = 
+        let contract = base.CreateObjectContract(objectType)
+        contract.ItemRequired <- new System.Nullable<Required>(Required.Always);
+        contract
+
+    override this.CreateProperty(memberInfo : MemberInfo, memberSerialization : MemberSerialization) =
+        let property = base.CreateProperty(memberInfo, memberSerialization);
+        // https://stackoverflow.com/questions/20696262/reflection-to-find-out-if-property-is-of-option-type
+        let isOption = property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() = typedefof<Option<_>>
+        if isOption then (
+            property.Required <- Required.Default        
+            property.NullValueHandling <- new System.Nullable<NullValueHandling>(NullValueHandling.Ignore)
+        )
+        property

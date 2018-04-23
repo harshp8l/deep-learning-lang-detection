@@ -1,0 +1,23 @@
+#include <tuple>
+#include <iostream>
+
+template <typename... T>
+using tuple_with_removed_refs = std::tuple<typename std::remove_reference<T>::type...>;
+
+template <typename... T>
+tuple_with_removed_refs<T...> remove_ref_from_tuple_members(std::tuple<T...> const& t) {
+    return tuple_with_removed_refs<T...> { t };
+}
+
+int main()
+{
+    int x{5}, y{6};
+
+    std::tuple<int& , int> t(x, y);
+
+    auto [i1, i2] = remove_ref_from_tuple_members(t);
+
+    std::cout << i1 << ' ' << i2 << '\n';
+    i1 = 7; i2 = 8;
+    std::cout << x << ' ' << y << '\n';
+}

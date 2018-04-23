@@ -1,0 +1,34 @@
+trait Functor[F[_]] {
+  def fmap[A, B](f: A => B)(fa: F[A]): F[B]
+}
+
+trait Applicative[F[_]] extends Functor[F] {
+  def pure[A](a: A): F[A]
+  def ap[A, B](ff: F[A => B])(fa: F[A]): F[B]
+  override def fmap[A, B](f: A => B)(fa: F[A]): F[B] = ap(pure(f))(fa)
+}
+
+trait Foldable[T[_]] {
+  def foldr[A, B](op: A => B => B)(seed: B)(ta: T[A]): B =
+    (foldMap(op)(ta) _)(seed)
+  def foldMap[A, M](f: A => M)(ta: T[A])(implicit monoid: Monoid[M]): M =
+    foldr[A, M](a => m => monoid.append(f(a), m))(monoid.empty)(ta)
+}
+
+trait Traversable[T[_]] extends Functor[T] with Foldable[T] {
+  def traverse[F[_]: Applicative, A, B](k: A => F[B])(ta: T[A]): F[T[B]] = 
+    sequence[F, B](fmap[A, F[B]](k)(ta))
+  def sequence[F[_]: Applicative, A](tfa: T[F[A]]): F[T[A]] = 
+    traverse[F, F[A], A](fa => fa)(tfa)
+  override def fmap[A, B](f: A => B)(ta: T[A]): T[B] = traverse[Id, A, B](f)(ta)
+  override def foldr[A, B](op: A => B => B)(seed: B)(ta: T[A]): B =
+    (traverse[Const[B => B]#λ, A, B](op)(ta) _)(seed)
+  override def foldMap[A, M: Monoid](f: A => M)(ta: T[A]): M =
+    traverse[Const[M]#λ, A, M](f)(ta)
+}
+
+type Id[A] = A
+
+trait Const[C] {
+  type λ[A] = C
+}

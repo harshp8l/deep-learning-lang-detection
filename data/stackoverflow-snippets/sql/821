@@ -1,0 +1,30 @@
+declare @example as table (
+    exampleID int identity(1,1) not null primary key clustered
+,   box       varchar(255) not null
+,   match     varchar(25) not null
+);
+
+insert into @example (box, match) 
+
+select 'Box100', 'yes' union all
+select 'Box100', 'yes' union all
+select 'Box100', 'yes' union all
+select 'Box200', 'yes' union all
+select 'Box200', 'no' union all
+select 'Box200', 'yes' union all
+select 'Box300', 'yes' union all
+select 'Box300', 'yes' union all
+select 'Box300', 'yes' union all
+select 'Box400', 'no' union all
+select 'Box400', 'no' union all
+select 'Box400', 'yes';
+
+    select distinct a.box
+         , isnull(b.match, c.match) match
+      from @example a
+ left join @example b
+        on a.box = b.box
+       and b.match = 'no'
+ left join @example c
+        on a.box = c.box
+       and c.match = 'yes'

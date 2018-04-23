@@ -1,0 +1,19 @@
+(def wait-barrier (promise))
+(def conn-count (atom 0))
+(defn worker-dummy []
+  (when (= @wait-barrier :go)
+    (println ""I'm a worker"")))
+
+(defn dummy-receive-msg []
+  (doall (repeatedly 6,
+                     (fn []
+                       (println ""received msg"")
+                       (swap! conn-count inc)))))
+
+(let [workers (doall (repeatedly 6 (fn [] (future (worker-dummy)))))]
+  (add-watch conn-count :barrier-watch
+             (fn [key ref old-state new-state]
+               (when (== new-state 6)
+                 (deliver wait-barrier :go))))
+  (dummy-receive-msg)
+  (doall (map deref workers)))

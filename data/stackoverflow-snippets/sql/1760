@@ -1,0 +1,19 @@
+require_once('db.php');
+$db = new DB(); //Create instance of DB class
+$conn = $db->Conn(); //Call Conn() method of DB class
+
+$username = $_POST[""user""];
+$password = $_POST[""pass""];
+
+$statement = $conn->prepare(""SELECT * FROM phplogin where userName = :user"");
+$statement->execute(array("":user""=>$username)); //For :user in SQL query it enters the username you entered in the login form (bind param)
+$row = $statement->fetch(); //Returns the row from DB
+
+//password_verify() checks if the password you've enteres matches the hash in the DB
+//$row[""pass""] is the hash you get returned from the SQL query aboth
+if(password_verify($password, $row[""pass""])){
+   return true; //Or echo ""success""
+}
+else{
+   return false; //Or echo ""Wrong username/password""
+}

@@ -1,0 +1,11 @@
+$User = Read-Host ""Enter the UserName you wish to look up.""
+
+$UserInfo = Get-ADUser $User -Properties * | Select-Object -Property DisplayName, GivenName, Initials, Surname, SamAccountName, @{Name = 'Student ID'; Expression = {$_.EmployeeID}}
+
+$Pass = '{0}{1}{2}#{3}' -f @(
+            $UserInfo.GivenName[0].ToString().ToUpper(),
+            $UserInfo.Initials[0].ToString().ToLower(),
+            $UserInfo.Surname[0].ToString().ToLower(),
+            $UserInfo.'Student ID')
+
+$UserInfo | Select *,@{l='Password';e={$Pass}} | fl

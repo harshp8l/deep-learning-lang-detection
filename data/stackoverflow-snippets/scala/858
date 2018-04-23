@@ -1,0 +1,20 @@
+import functions._
+import spark.implicits._
+
+// sample data:
+val df = Seq(""1A"", ""1B"", ""1C"", ""2A"", ""2B"", ""2C"", ""1A"", ""1C"", ""2B"", ""2C"", ""1A"", ""1B"", ""1C"").toDF(""val"")
+
+val result = df.withColumn(""id"", monotonically_increasing_id())          // add row ID
+  .withColumn(""isDelimiter"", when($""val"" === ""1A"", 1).otherwise(0))      // add group ""delimiter"" indicator
+  .withColumn(""groupId"", sum(""isDelimiter"").over(Window.orderBy($""id""))) // add groupId using Window function
+  .groupBy($""groupId"").agg(collect_list($""val"") as ""list"") // NOTE: order of list might not be guaranteed!
+  .orderBy($""groupId"").drop(""groupId"")                                   // removing groupId
+
+result.show(false)
+// +------------------------+
+// |list                    |
+// +------------------------+
+// |[1A, 1B, 1C, 2A, 2B, 2C]|
+// |[1A, 1C, 2B, 2C]        |
+// |[1A, 1B, 1C]            |
+// +------------------------+

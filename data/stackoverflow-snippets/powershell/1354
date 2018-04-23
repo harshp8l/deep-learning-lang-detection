@@ -1,0 +1,26 @@
+$inputFolder = ""C:\~\cmp""
+$outputFolder = ""C:\~\convert""
+$handbrake = ""C:\~\convert\HandBrakeCLI.exe""
+$presetJson = ""C:\~\convert\my_preset.json""
+$extIn = ""mkv""
+$extOut = ""mp4""
+
+while ($true) {
+    Get-ChildItem -Path $inputFolder -Filter ""*.$extIn"" | ForEach-Object {
+        $inFile = $_.FullName
+        $outFile = ""$($_.BaseName).$extOut""
+
+        if (Test-Path $outFile) { Remove-Item $outFile -Force -LiteralPath }
+
+        Write-Host ""Converting: $inFile""
+        & $handbrake -i $inFile -o $outFile --preset-import-file $presetJson
+
+        if ($LASTEXITCODE -eq 0) {
+            Move-Item $outFile $outputFolder -Force -LiteralPath
+            Write-Host ""Done: $outFile""
+        } else {
+            Write-Error ""Conversion not successful.""
+        }
+    }
+    sleep 5
+}

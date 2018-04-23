@@ -1,0 +1,47 @@
+package main
+
+import (
+    ""fmt""
+    ""gopkg.in/yaml.v2""
+    ""log""
+)
+
+type Runs struct {
+    Name   string
+    Type   string
+    Path   string   `yaml:""path,omitempty""`
+    Builds []Builds `yaml:”builds,omitempty""`
+}
+
+type Builds struct {
+    Name       string     `yaml:""name,omitempty""`
+    Properties Properties `yaml:""properties,omitempty""`
+}
+
+type Properties map[string]string
+
+func main() {
+    data := `builds: 
+  - 
+    name: db
+    properties: 
+      JBR_CONFIG_RESOURCE_CONFIG: ""[META-INF/context.xml: {\""service_name\"" : \""~{h-container}\""}]""
+      TEST2: aaaa
+name: srv
+path: srv
+type: java
+`
+
+    runs := Runs{}
+
+    err := yaml.Unmarshal([]byte(data), &runs)
+    if err != nil {
+        log.Fatalf(""error: %v"", err)
+    }
+    fmt.Printf(""--- t:\n%v\n\n"", runs)
+    d, err := yaml.Marshal(&runs)
+    if err != nil {
+        log.Fatalf(""error: %v"", err)
+    }
+    fmt.Printf(""--- t dump:\n%s\n\n"", string(d))
+}

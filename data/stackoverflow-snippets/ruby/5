@@ -1,0 +1,36 @@
+module MetaprogrammingStuff
+
+  def rescue_all_methods(klass, *errors_to_rescue, &blk)
+    patch_all_methods(klass) do |orig_method, *args, &caller_blk|
+      begin
+        orig_method.call *args, &caller_blk
+      rescue *errors_to_rescue => e
+        blk.call e
+      end
+    end
+  end
+
+  def patch_all_methods(klass, &blk)
+    patch_class_methods(klass, &blk)
+    patch_instance_methods(klass, &blk)
+  end
+
+  def patch_class_methods(klass, &blk)
+    klass.methods(false).each do |fn_name|
+      orig_method = klass.method fn_name
+      klass.singleton_class.send(:define_method, fn_name) do |*args, &caller_blk|
+        blk.call orig_method, *args, &caller_blk
+      end
+    end
+  end
+
+  def patch_instance_methods(klass, &blk)
+    klass.instance_methods(false).each do |fn_name|
+      orig_method = klass.instance_method fn_name
+      klass.send(:define_method, fn_name) do |*args, &caller_blk|
+        blk.call orig_method.bind(self), *args, &caller_blk
+      end
+    end
+  end
+
+end

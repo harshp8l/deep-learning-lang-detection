@@ -1,0 +1,19 @@
+# Place the trap within your chosen scope (e.g. function or script)
+trap [Net.WebException] { continue; }
+
+# Exceptions are no longer thrown here
+$response = Invoke-WebRequest $endpoint
+
+# Check if last command failed
+if (!$?)
+{   
+    # $error[0] now contains the ErrorRecord of the last error (in this case from Invoke-WebRequest)
+    # Note: $response should be null at this point
+
+    # Due to the magic of Microsoft.PowerShell.Commands.InvokeWebRequestCommand.WebCmdletWebResponseException
+    # we can get the response body directly from the ErrorDetails field
+    $body = $error[0].ErrorDetails.Message
+
+    # For compatibility with $response.StatusCode lets cast to int    
+    $statusCode = [int] $error[0].Exception.Response.StatusCode
+}

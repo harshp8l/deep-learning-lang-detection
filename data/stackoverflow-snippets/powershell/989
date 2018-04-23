@@ -1,0 +1,22 @@
+param(
+[string]$currentEnv
+)
+[object]$paramObj=Get-Content ""PowerShellModuleProject1\parameter2.json""|ConvertFrom-Json 
+$userName =$paramObj.$currentEnv.userName
+$password =$paramObj.$currentEnv.password
+$webAppName =$paramObj.$currentEnv.webAppName
+$resourceGroup=$paramObj.$currentEnv.resourceGroup
+[object[]]$webJobs=$paramObj.$currentEnv.webJobs
+foreach($wj in $webjobs){
+         if($wj.typeName -eq ""continuous"")
+         {
+    Invoke-AzureRmResourceAction -ResourceGroupName $resourceGroup -ResourceType Microsoft.Web/sites/ContinuousWebJobs -ResourceName ""$webAppName/$($wj.name)"" -Action start -ApiVersion 2015-08-01 -Force
+          Write-Host ""continuous""
+         Write-Host $wj.name
+         }
+         else{
+         Invoke-AzureRmResourceAction -ResourceGroupName $resourceGroup -ResourceType Microsoft.Web/sites/TriggeredWebJobs -ResourceName ""$webAppName/$($wj.name)"" -Action run -ApiVersion 2015-08-01 -force
+         Write-Host ""triggered""
+         Write-Host $wj.name
+         }
+         }

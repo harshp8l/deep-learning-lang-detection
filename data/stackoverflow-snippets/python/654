@@ -1,0 +1,34 @@
+import pandas as pd
+import numpy as np
+items = {'id': [11, 22, 33, 44], 'items': [[(123, 2.12,3),(234, 1.2,3)],
+                                      [(567, 2.3, 3),(245, 1.9,3)],
+                                      [(999,4.5, 3),(222, 2.0,3)],
+                                      [(223, 2.34,3),(234,3.5,3)]
+                                      ]}
+
+df1 = pd.DataFrame(data=items)
+item_weight_data = {'items': [123, 234, 567, 245, 999, 222, 223], 'weight':[2.5, 1.8, 19, 3, 2, 2.9, 4.2]}
+df2 = pd.DataFrame(data=item_weight_data)
+df2 = df2.set_index('items')
+
+
+#function that takes row and dataframe as input and returns new row.
+def update_weight(row, item_df):
+    try:
+        new_row = [];
+        for item in row:
+
+            weight = item_df.loc[item[0],'weight']
+            #since item is a tuple, It cannot be updated.
+            #so creating new updated tuple and appending it to the list.
+            updated_item =  (item[0],(item[1] + weight),item[2])
+            new_row.append(updated_item)
+
+        return new_row
+    except Exception as e:
+        raise ValueError(""UNEXPECTED_DATA"")
+
+
+
+df1['items'] = df1['items'].apply(lambda x: update_weight(x, df2))
+print(df1) 

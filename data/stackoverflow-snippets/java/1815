@@ -1,0 +1,17 @@
+private byte[] loadPEM(String resource) throws IOException {
+    URL url = getClass().getResource(resource);
+    InputStream in = url.openStream();
+    String pem = new String(in.readAllBytes(), ISO_8859_1);
+    Pattern parse = Pattern.compile(""(?m)(?s)^---*BEGIN.*---*$(.*)^---*END.*---*$.*"");
+    String encoded = parse.matcher(pem).replaceFirst(""$1"");
+    return Base64.getMimeDecoder().decode(encoded);
+}
+
+@Test
+public void test() throws Exception {
+    KeyFactory kf = KeyFactory.getInstance(""RSA"");
+    CertificateFactory cf = CertificateFactory.getInstance(""X.509"");
+    PrivateKey key = kf.generatePrivate(new PKCS8EncodedKeySpec(loadPEM(""test.key"")));
+    PublicKey pub = kf.generatePublic(new X509EncodedKeySpec(loadPEM(""test.pub"")));
+    Certificate crt = cf.generateCertificate(getClass().getResourceAsStream(""test.crt""));
+}

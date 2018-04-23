@@ -1,0 +1,31 @@
+package main
+
+import (
+    ""fmt""
+
+    ""github.com/gin-gonic/gin""
+    ""github.com/jinzhu/gorm""
+    _ ""github.com/jinzhu/gorm/dialects/postgres""
+)
+
+var (
+    db = func() *gorm.DB {
+        db, err := gorm.Open(""postgres"", fmt.Sprintf(""host=localhost sslmode=disable user=postgres password=""))
+        if err != nil {
+            // if you can't open a db connection you should stop the app,
+            // no point in continuing if you can't do anything useful.
+            panic(err)
+        }
+        return db
+    }() // <- call the anon function to get the db.
+
+    r = gin.Default()
+)
+
+func main() {
+    // you can call defer db.Close() here but you don't really need to
+    // because after main exists, that is, your app terminates, db
+    // will be closed automatically.
+
+    r.Run("":8080"")
+}

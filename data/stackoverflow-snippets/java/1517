@@ -1,0 +1,48 @@
+public class Main {
+
+static String XML = ""<list>\n"" + 
+        ""<job>\n"" + 
+        ""    <id>B001</id>\n"" + 
+        ""    <name>前処理</name>\n"" + 
+        ""    <time>7</time>\n"" + 
+        ""    <status>success</status>\n"" + 
+        ""</job>\n"" + 
+        ""<job>\n"" + 
+        ""    <id>B002</id>\n"" + 
+        ""    <name>商品データ・商品分類関連データDB取込</name>\n"" + 
+        ""    <time>1</time>\n"" + 
+        ""    <status>success</status>\n"" + 
+        ""</job>\n"" + ""</list>"";
+
+static Document readDocument() throws Exception {
+    DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+    f.setNamespaceAware(true);
+    Document doc = f.newDocumentBuilder()
+            .parse(new InputSource(new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8))));
+    return doc;
+}
+
+static void changeTimeOfJob(Document doc, String id, String time) throws Exception {
+    XPath xp = XPathFactory.newInstance().newXPath();
+    String expr = String.format(""/list/job[id = '%s']/time/text()"", id);
+    Text textNode = (Text) xp.evaluate(expr, doc, XPathConstants.NODE);
+    textNode.setNodeValue(time);
+}
+
+static void saveDocuemnt(Document doc, OutputStream out) throws Exception {
+    DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+    f.setNamespaceAware(true);
+    DOMImplementationLS impl = (DOMImplementationLS) f.newDocumentBuilder().getDOMImplementation();
+    LSOutput output = impl.createLSOutput();
+    output.setByteStream(out);
+    LSSerializer ser = impl.createLSSerializer();
+    ser.write(doc, output);
+}
+
+public static void main(String[] args) throws Exception {
+    Document doc = readDocument();
+    changeTimeOfJob(doc, ""B002"", ""3"");
+    saveDocuemnt(doc, System.out);
+}
+
+}

@@ -1,0 +1,18 @@
+rdd1 = sc.parallelize([(('BibNum', 'ItemCollection', 'ItemLocation'), 1),
+(('3011076', 'ncrdr', 'qna'), 1),
+ (('2248846', 'nycomic', 'lcy'), 1),
+                       (('1928264', 'ncpic', '12/14/2005 05:56:00 PM'), 1)])
+
+rdd2 = sc.parallelize([(('BibNum', 'ItemCollection', 'CheckoutDateTime'), 1),
+(('1842225', 'namys', '05/23/2005 03:20:00 PM'), 1), 
+(('1928264', 'ncpic', '12/14/2005 05:56:00 PM'), 1),
+(('1982511', 'ncvidnf', '08/11/2005 01:52:00 PM'), 1),
+(('2026467', 'nacd', '10/19/2005 07:47:00 PM'), 1)])
+
+rdd1_for_join = rdd1.zipWithIndex().filter(lambda x: x[1] != 0)\
+.map(lambda x: ( (x[0][0][0], x[0][0][1]), x[0] ))
+
+rdd2_for_join = rdd2.zipWithIndex().filter(lambda x: x[1] != 0)\
+.map(lambda x: ( (x[0][0][0], x[0][0][1]), x[0] ))
+
+print rdd1_for_join.join(rdd2_for_join).collect()

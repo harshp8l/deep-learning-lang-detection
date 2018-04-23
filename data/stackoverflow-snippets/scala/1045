@@ -1,0 +1,24 @@
+def producerSource[T: MessageType](producerProperties: Map[String, String]) = {
+    val streamSource = source[T](producerProperties)
+    val streamFlow = flow[T](producerProperties)
+    val streamSink = sink(producerProperties)
+    streamSource.via(streamFlow)
+  }
+
+def startStream[A](source: Source[A, NotUsed])(
+  implicit am: ActorMaterializer): (UniqueKillSwitch, Future[Done]) = {
+   source
+   .viaMat(KillSwitches.single)(Keep.right)
+   .toMat(Sink.ignore)(Keep.both)
+   .run
+}
+
+var streamHandler : Option[UniqueKillSwitch] = None
+
+  override def receive: Receive = super.receive orElse {
+    case StartProducerStream(publisherActor, DefaultMessage) =>
+      streamHandler = Some(producerStream[DefaultMessage](cfg.producerProps))
+      context.become(active)
+
+    case other => println(s""SHIT !! Got unknown message: $other"")
+  }

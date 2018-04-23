@@ -1,0 +1,24 @@
+func (b *B) UnmarshalJSON(js []byte) error {
+    //First: decode stream to anonymous struct
+    v := struct {
+        X string
+        Y json.Number
+    }{}
+
+    err := json.Unmarshal(js, &v)
+    if err != nil {
+        return err
+    }
+
+    //Depends on the v.Y value, choose the holder variable
+    //If it's convertible to number, assign to A.Y
+    //otherwise, assign it to b.Y
+    b.X = v.X
+    if fv, err := v.Y.Float64(); err == nil {
+        b.A.Y = int(fv)
+    } else {
+        b.Y = v.Y.String()
+    }
+
+    return nil
+}

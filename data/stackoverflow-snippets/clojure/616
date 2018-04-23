@@ -1,0 +1,31 @@
+(def Ywrap
+  (fn [wrapper-func f]
+    ((fn [x]
+       (x x))
+     (fn [x]
+       (f (wrapper-func (fn [y]
+                      ((x x) y))))))))
+
+ (defn memo-wrapper-generator [] 
+   (let [hist (atom {})]
+    (fn [f]
+      (fn [y]
+        (if (find @hist y)
+          (@hist y)
+         (let [res (f y)]
+           (swap! hist assoc y res)
+        res))))))
+
+(def Ymemo 
+  (fn [f]
+   (Ywrap (memo-wrapper-generator) f)))
+
+(def factorial-gen
+  (fn [func]
+    (fn [n]
+      (println n)
+     (if (zero? n)
+      1
+      (* n (func (dec n)))))))
+
+(def factorial-memo (Ymemo factorial-gen))

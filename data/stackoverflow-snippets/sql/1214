@@ -1,0 +1,19 @@
+select sp.FIRST_NAME + ' ' + sp.LAST_NAME,
+sum(case when sq.SAL_QUOTE_STATUS_ID = '1' then 1 else 0 end) as [Created],
+sum(case when sq.SAL_QUOTE_STATUS_ID = '4' then 1 else 0 end) as [Ordered],
+sum(case when sq.SAL_QUOTE_STATUS_ID = '3' then 1 else 0 end) as [Rejected],
+sum(sq.AMOUNT_INCLUDING_TAX) as [Amount],
+sum(sq.COST) as [Cost],
+sum(sq.AMOUNT_INCLUDING_TAX - sq.COST) as [Profit],
+round(100 * (case when sum(sq.AMOUNT_INCLUDING_TAX) > 0 then 
+(sum(sq.AMOUNT_INCLUDING_TAX) -
+    sum(sq.COST)) / sum(sq.AMOUNT_INCLUDING_TAX) else 0 end), 3) as [GP%],
+sum([x.ytd_sales]) AS YTD_Sales
+from SAL_SALES_QUOTE sq
+inner join CRM_SALESPERSON sp on sp.SALESPERSON_ID = sq.SALESPERSON_ID
+inner join (Select so.salesperson_id, sum(so.amount_including_tax) AS [YTD Sales]
+         from SAL_SALES_ORDER so
+         group by so.salesperson_id) x
+ON x.salesperson_id = sp.salesperson_id
+where sq.CREATED_DATE > '01-01-2018'
+group by sp.FIRST_NAME + ' ' + sp.LAST_NAME

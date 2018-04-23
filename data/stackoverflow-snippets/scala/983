@@ -1,0 +1,20 @@
+import org.apache.spark.mllib.random.StandardNormalGenerator 
+import org.apache.spark.ml.linalg.DenseVector  // or org.apache.spark.mllib
+
+val vectorSize = 42
+val stdDev = 0.1
+val seed = scala.util.Random.nextLong  // Or set manually
+
+// Define seeds for each partition
+val random = new scala.util.Random(seed)
+val seeds = (0 until otherRDD.getNumPartitions).map(
+  i => i -> random.nextLong
+).toMap
+
+otherRDD.mapPartitionsWithIndex((i, iter) => {
+  val generator = new StandardNormalGenerator()
+  generator.setSeed(seeds(i))
+  iter.map(x => 
+    (x, new DenseVector(Array.fill(vectorSize)(generator.nextValue() * stdDev)))
+  )
+})

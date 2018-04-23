@@ -1,0 +1,15 @@
+type Reducer<'b,'c> = abstract Reduce<'a> : ('a -> 'b -> 'a) -> 'a -> 'c -> 'a
+
+module Transducers =
+    let map proj =
+        { new Reducer<_,_> with 
+            member this.Reduce xf result input = xf result (proj input) }
+
+    let (>!>) (r1:Reducer<'b,'c>) (r2:Reducer<'c,'d>) =
+        { new Reducer<_,_> with 
+            member this.Reduce xf result input = (r1.Reduce >> r2.Reduce) xf result input }
+
+    let conj xs x = x :: xs
+    let toList (xf:Reducer<_,_>) input = List.fold  (xf.Reduce conj) [] input
+
+    let xform = map (fun i -> i + 9) >!> map (fun a -> a * 5)

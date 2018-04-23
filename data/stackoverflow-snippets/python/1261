@@ -1,0 +1,25 @@
+def resampleSimplified(pcm, desired_samples, original_samples, dataFormat):
+
+    samples_to_pad = desired_samples - original_samples
+
+    q, r = divmod(desired_samples, original_samples)
+    times_to_pad_up = q + int(bool(r))
+    times_to_pad_down = q
+
+    pcmList = [pcm[i:i+dataFormat] for i in range(0, len(pcm), dataFormat)]
+
+    if samples_to_pad > 0:
+        # extending pcm times_to_pad times
+        pcmListPadded = list(itertools.chain.from_iterable(
+            itertools.repeat(x, times_to_pad_up) for x in pcmList)
+            )
+    else:
+        # shrinking pcm times_to_pad times
+        if times_to_pad_down > 0:
+            pcmListPadded = pcmList[::(times_to_pad_down)]
+        else:
+            pcmListPadded = pcmList
+
+    padded_pcm = ''.join(pcmListPadded[:desired_samples])
+
+    return padded_pcm

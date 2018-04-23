@@ -1,0 +1,35 @@
+package main
+
+import (
+    ""errors""
+    ""fmt""
+
+    validator ""gopkg.in/validator.v2""
+)
+
+var atLeastOneIntValues []interface{}
+
+func atLeastOneInt(v interface{}, param string) error {
+    atLeastOneIntValues = append(atLeastOneIntValues, v)
+    if len(atLeastOneIntValues) == 2 {
+        for _, value := range atLeastOneIntValues {
+            if value.(int64) != 0 {
+                return nil
+            }
+        }
+
+        return errors.New(""At least one non-empty value should be presented"")
+    }
+
+    return nil
+}
+
+type IDs struct {
+    ID1 int64 `json:""id_one"" validate:""atleastoneint""`
+    ID2 int64 `json:""id_two"" validate:""atleastoneint""`
+}
+
+func main() {
+    validator.SetValidationFunc(""atleastoneint"", atLeastOneInt)
+    fmt.Printf(""%v"", validator.Validate(IDs{}))
+}

@@ -1,0 +1,61 @@
+import datetime
+import csv
+from operator import itemgetter
+import itertools as it
+import json
+from StringIO import StringIO
+import sys
+from urllib import urlopen
+from zipfile import ZipFile
+
+# Utility.
+def typed_itemgetter(items, callables):
+    """""" Like operator.itemgetter() but also applies corresponding callable to
+        each retrieved value if it's not None. Creates and returns a function.
+    """"""
+    return lambda row: [f(value) if f else value
+                            for value, f in zip(itemgetter(*items)(row), callables)]
+
+url = urlopen(""https://www.jodidata.org/_resources/files/downloads/gas-data/jodi_gas_csv_beta.zip"")
+myzip = ZipFile(StringIO(url.read()))
+with myzip.open('jodi_gas_beta.csv', 'r' ) as myCSV:
+    reader = csv.DictReader(myCSV)
+    primary_key = itemgetter('REF_AREA', 'ENERGY_PRODUCT', 'FLOW_BREAKDOWN', 'UNIT_MEASURE',
+                             'TIME_PERIOD')
+    reader = sorted(reader, key=primary_key)
+
+# Limit to first 200 rows for TESTING.
+reader = [row for row in it.islice(reader, 200)]
+
+# Group the data by designated keys (aka ""primary key"").
+keys, groups = [], []
+keyfunc = itemgetter('REF_AREA', 'ENERGY_PRODUCT', 'FLOW_BREAKDOWN', 'UNIT_MEASURE')
+for k, g in it.groupby(reader, key=keyfunc):
+    keys.append(k)
+    groups.append(list(g))
+
+# Create corresponding JSON-like Python data-structure.
+myData = []
+for i, group in enumerate(groups):
+    result = {'myPK': ''.join(keys[i]),
+              'TimeSeries': [
+                    typed_itemgetter(('TIME_PERIOD', 'OBS_VALUE'),
+                                     (None, lambda x: int(float(x))))(row)
+                        for row in group]
+             }
+    metadata = dict(zip((""Country"", ""Product"", ""Flow"", ""Unit""), keys[i]))
+    metadata['Quality'] = [typed_itemgetter(
+                            ('TIME_PERIOD', 'ASSESSMENT_CODE'), (None, int))(row)
+                                for row in group]
+    result['Metadata'] = metadata
+    myData.append(result)
+
+# Display the data to be turned into JSON.
+from pprint import pprint
+print('myData:')
+pprint(myData)
+
+# To create JSON format output, use something like:
+import json
+with open('myData.json', 'w') as fp:
+    json.dump(myData, fp, indent=2)

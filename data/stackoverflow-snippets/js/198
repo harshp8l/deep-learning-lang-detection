@@ -1,0 +1,47 @@
+CREATE TEMPORARY FUNCTION tscore_to_p(a FLOAT64, b FLOAT64, c FLOAT64)
+ RETURNS FLOAT64
+ LANGUAGE js AS
+""""""
+  return jStat.ttest(a,b,c); //jStat.ttest( tscore, n, sides)
+""""""
+OPTIONS (
+ library=""gs://my_bucket/jstat.min.js""
+);
+
+
+WITH data AS ( 
+ SELECT * FROM 
+ (SELECT 9.96 AS A, 3.96 AS B) UNION ALL
+ (SELECT 3.76 AS A, 5.76 AS B) UNION ALL
+ (SELECT 1.17 AS A, 7.17 AS B) UNION ALL
+ (SELECT 8.66 AS A, 7.66 AS B) UNION ALL
+ (SELECT 5.25 AS A, 9.25 AS B) UNION ALL
+ (SELECT 7.61 AS A, 3.61 AS B) UNION ALL
+ (SELECT 5.80 AS A, 4.80 AS B) UNION ALL
+ (SELECT 1.84 AS A, 8.84 AS B) UNION ALL
+ (SELECT 7.06 AS A, 6.06 AS B) UNION ALL
+ (SELECT 9.40 AS A, 4.40 AS B) UNION ALL
+ (SELECT 2.99 AS A, 1.99 AS B) UNION ALL
+ (SELECT 9.30 AS A, 8.30 AS B) UNION ALL
+ (SELECT 9.01 AS A, 9.01 AS B) UNION ALL
+ (SELECT 4.24 AS A, 1.24 AS B) UNION ALL
+ (SELECT 3.52 AS A, 5.52 AS B) UNION ALL
+ (SELECT 9.60 AS A, 8.60 AS B) UNION ALL
+ (SELECT 7.59 AS A, 5.59 AS B) UNION ALL
+ (SELECT 6.99 AS A, 1.99 AS B) UNION ALL
+ (SELECT 9.62 AS A, 7.62 AS B) UNION ALL
+ (SELECT 2.18 AS A, 3.18 AS B)
+ ) 
+
+
+SELECT 
+   COUNT(*) n
+ , COUNT(*)-1 dof
+ , AVG(difference) mean
+ , STDDEV_SAMP(difference) SD 
+ , STDDEV_SAMP(difference)/SQRT(COUNT(*)) SE
+ , AVG(difference)/ (STDDEV_SAMP(difference)/SQRT(COUNT(*))) t 
+ , tscore_to_p((AVG(difference)/ (STDDEV_SAMP(difference)/SQRT(COUNT(*)))) COUNT(*), 2) p_value 
+
+FROM 
+  (SELECT *, (A-B) difference FROM data)

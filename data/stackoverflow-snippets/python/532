@@ -1,0 +1,32 @@
+import pandas as pd
+import re  # regular expressions
+
+def coeff_comp(s):
+    # Separate stoichiometric coefficient and compound
+    result = re.search('(?P<coeff>\d*)(?P<comp>.*)', s)
+    coeff = result.group('coeff')
+    comp = result.group('comp')
+    if not coeff:
+        coeff = '1'                          # coefficient=1 if it is missing
+    return comp, int(coeff)
+
+equations = ['R1: A + 2B + C <=> D', 'R2: A + B <=> C']  # some test data
+reactions_dict = {}                          # results dictionary
+
+for equation in equations:
+    compounds = {}                           # dict -> compound: coeff 
+    eq = equation.replace(' ', '')  
+    r_id, reaction = eq.split(':')           # separate id from chem reaction
+    lhs, rhs = reaction.split('<=>')         # split left and right hand side
+    reagents = lhs.split('+')                # get list of reagents
+    products = rhs.split('+')                # get list of products
+    for reagent in reagents:
+        comp, coeff = coeff_comp(reagent)
+        compounds[comp] = - coeff            # negative on lhs
+    for product in products:
+        comp, coeff = coeff_comp(product)
+        compounds[comp] = coeff              # positive on rhs
+    reactions_dict[r_id] = compounds         
+
+# insert dict into DataFrame, replace NaN with 0, let values be int
+df = pd.DataFrame(reactions_dict).fillna(value=0).astype(int)

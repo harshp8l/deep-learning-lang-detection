@@ -1,0 +1,37 @@
+package main
+
+import ""fmt""
+
+// Fibonacci in a recursive version
+func fiboRchan(n int, c chan int) {
+        fmt.Println(""PROCESSING FOR %d"", n)
+    c <- fiboR(n)
+}
+
+func fiboR(n int) int {
+    if n == 0 {
+        return 0
+    } else if n == 1 {
+        return 1
+    } else {
+        return fiboR(n-1) + fiboR(n-2)
+    }
+
+}
+
+func main() {
+    var arr[10]chan int
+    for i := 0; i < 10; i++ {
+        procchan := make(chan int)
+        arr[i] = procchan
+        go fiboRchan(i, procchan)
+    }
+    // By now all the go routines are fired
+
+    // Now iterate through the channel array and read from the
+    // respective channel
+    for i:=0; i< 10; i++ {
+        fmt.Println(i, <-arr[i])
+    }
+
+}

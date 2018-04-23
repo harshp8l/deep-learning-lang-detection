@@ -1,0 +1,34 @@
+func CreateModel(c echo.Context) error {
+    fmt.Println(""====> Entry CreateModel function"");
+    var Success bool = false
+
+    Db := db.MgoDb{}
+    Db.Init()
+    defer Db.Close()
+
+    col := Db.C(db.TrainingDataCollection)
+    var results dataStruct
+    if err := col.Find(nil).All(&results); err != nil {
+           fmt.Println(""ERROR WHILE GETTING THE TRAINING DATA"")
+    } else {
+           Success = true
+     }
+
+   Data := make([]float64, len(results*nbAttrs)
+
+   /**** Filling the Data var with my dataset data *****/
+
+   mat := mat64.NewDense(row,nbAttrs,Data)
+   inst := base.InstancesFromMat64(row,nbAttrs,mat)
+
+   //Selecting the class attribute for our instance
+   attrs := inst.AllAttributes()
+   inst.AddClassAttribute(attrs[4])
+
+   //Initialise a new KNN classifier
+   cls := knn.NewKnnClassifier(""manhattan"",""linear"",3)
+
+   //Training-tessting split
+   trainData, testData := base.InstancesTrainTestSplit(inst,0.7)
+
+   /*******          Continue the Model creation                ******/

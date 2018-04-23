@@ -1,0 +1,36 @@
+declare @T table (yy int, dd int);
+insert into @T values  
+       (201306, 1)
+     , (201306, 2)
+     , (201306, 5)
+     , (201306, 6)
+     , (201306, 7)
+     , (201307, 1)
+     , (201307, 4)
+     , (201307, 6)
+     , (201309, 1)
+     , (201309, 2);
+with cte as 
+( select yy, min(dd) + 1 as mn, max(dd) as mx 
+  from @T 
+  group by yy 
+  having min(dd) + 1 < max(dd)
+  union all 
+  select c.yy, c.mn + 1, c.mx 
+  from cte c
+  where c.mn  + 1 < c.mx 
+)
+select yy, mn as dd 
+from cte 
+except 
+select yy, dd 
+from  @T t
+order by yy, mn;
+
+yy          dd
+----------- -----------
+201306      3
+201306      4
+201307      2
+201307      3
+201307      5

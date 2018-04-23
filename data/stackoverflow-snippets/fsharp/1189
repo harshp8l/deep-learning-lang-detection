@@ -1,0 +1,21 @@
+module BirthdayLibrary = 
+    type Birthday =
+        { day   :int
+          month :int }
+
+module DataGen = 
+    let birthdayGenerator (months:option<list<int>>) = 
+        let monthGen = match months with
+                       | Some m -> Gen.elements m
+                       | None   -> FsCheck.Gen.choose(1,12)
+        (fun m d -> { day   = d
+                      month = m}:BirthdayLibrary.Birthday)
+        <!> monthGen
+        <*> FsCheck.Gen.choose(1,28)
+
+    //I want this to have the signature Gen<BirthdayLibrary.Birthday list>
+    let oneForEveryMonthGen = 
+        [ for m in [1 .. 12] -> birthdayGenerator (Some [m])]
+        |> Gen.sequence
+
+let sample = DataGen.oneForEveryMonthGen |> Gen.sample 10 1

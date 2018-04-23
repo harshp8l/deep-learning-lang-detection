@@ -1,0 +1,35 @@
+declare @id_client as varchar(50)
+declare @amount as money
+
+declare liq_cursor cursor for
+
+SELECT 
+    lq.AMOUNT + ( st.QUANTITY % @num) * @rompu AS newvalue,
+    lq.CLIENT_ID
+FROM
+    LIQUIDITYACCOUNT lq
+INNER JOIN
+    STOCKACCOUNT st 
+ON
+    lq.CLIENT_ID = st.CLIENT_ID
+AND
+    st.TITRE_ID = @id_titre
+AND
+    st.QUANTITY > 0
+
+
+
+OPEN liq_cursor
+    FETCH NEXT  FROM liq_cursor  into @amount,@id_client
+ ---
+
+ WHILE @@FETCH_STATUS=0
+ BEGIN
+        update LIQUIDITYACCOUNT set AMOUNT=@amount,
+                                    DATEMODIF=GETDATE()
+        where CLIENT_ID=@id_client
+        FETCH NEXT  FROM liq_cursor  into @amount,@id_client
+ END
+
+ close liq_cursor
+ deallocate liq_cursor

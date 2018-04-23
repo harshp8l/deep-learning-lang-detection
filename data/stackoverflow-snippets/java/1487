@@ -1,0 +1,62 @@
+// Use an action name instead of a question here because it IS an action.
+private void bringServiceUp() throws Exception {
+
+}
+
+// Encapsulate both a success and a failure into the result.
+class Result {
+    final boolean success;
+    final Exception failure;
+
+    private Result(boolean success, Exception failure) {
+        this.success = success;
+        this.failure = failure;
+    }
+
+    Result(boolean success) {
+        this(success, null);
+    }
+
+    Result(Exception exception) {
+        this(false, exception);
+    }
+
+    public boolean wasSuccessful() {
+        return success;
+    }
+
+    public Exception getFailure() {
+        return failure;
+    }
+}
+
+// No more cognitive dissonance.
+private Result tryToBringServiceUp() {
+    try {
+        bringServiceUp();
+    } catch (Exception e) {
+        return new Result(e);
+    }
+    return new Result(true);
+}
+
+// Now these two are fine.
+public void proceedWhenError() {
+    Result result = tryToBringServiceUp();
+    if (result.wasSuccessful()) {
+        // do stuff
+    } else {
+        logger.debug(""Exception happened, but it's alright."", result.getFailure());
+        // do stuff
+    }
+}
+
+public void doNotProceedWhenError() throws IllegalStateException {
+    Result result = tryToBringServiceUp();
+    if (result.wasSuccessful()) {
+        // do stuff
+    } else {
+        // do stuff
+        throw new IllegalStateException(""Oh, we cannot proceed. The service is not up."", result.getFailure());
+    }
+}

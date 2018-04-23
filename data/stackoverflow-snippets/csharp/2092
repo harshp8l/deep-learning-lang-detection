@@ -1,0 +1,28 @@
+CREATE PROCEDURE USP_AddNewSellDetails (@invoiceNo INT,@invoice_date DATE, @Produt_Detils ProductDetails READONLY)
+AS
+BEGIN
+    BEGIN TRANSACTION
+    INSERT INTO Sell
+    (ID,sellDate) values (@invoiceNo,@invoice_date)
+
+    INSERT INTO Sell_Details (Sell_ID ,Product_ID)   
+    SELECT @invoiceNo, ProductID, QUANTITY ,UNIT ,PRICE ,AMOUNT ,DISCOUNT ,FINAL_TOT FROM @Produt_Detils
+
+    DECLARE ProductDetilsCursor CURSOR FOR
+        SELECT ProductID, QUANTITY FRM @Produt_Detils ORDER BY ProductID
+
+        OPEN ProductDetilsCursor
+        FETCH NEXT FROM ProductDetilsCursor into @ProductID,@QUANTITY
+
+        WHILE ( @@FETCH_STATUS = 0)
+        BEGIN
+            UPDATE Product set Product.Quantity = Product.Quantity - CONVERT(float,@QUANTITY)
+            WHERE Product.Product_ID=@ProductID
+
+            FETCH NEXT FROM ProductDetilsCursor into @ProductID,@QUANTITY
+        END
+    CLOSE ProductDetilsCursor
+    DEALLOCATE ProductDetilsCursor
+
+    COMMIT TRANSACTION
+END

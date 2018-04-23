@@ -1,0 +1,29 @@
+from    gremlin_python                                  import statics
+from    gremlin_python.structure.graph                  import Graph
+from    gremlin_python.process.graph_traversal          import __
+from    gremlin_python.process.strategies               import *
+from    gremlin_python.driver.driver_remote_connection  import DriverRemoteConnection
+
+graph = Graph()
+
+g = graph.traversal().withRemote(DriverRemoteConnection('ws://localhost:8182/gremlin','try1'))
+
+# Drop all vertices in the graph to create a new one
+g.V().drop().iterate()
+
+a = g.addV('person').property('name', 'Tushar').property('pronoun', 'me').next()
+b = g.addV('person').property('name', 'Avi').property('pronoun','you').next()
+
+g.addE('knows').from(a).to(b).property('relation','self').iterate()
+
+c = g.addV('subject').property('name','maths').next()
+
+e2 = g.addE('studies').from(a).to(c).next()
+
+e3 = g.addE('studies').from(b).to(c).next()
+
+v = g.V().toList()
+e = g.E().toList()
+
+print(v)
+print(e)

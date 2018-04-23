@@ -1,0 +1,23 @@
+class UpdateCurrenciesJob < ApplicationJob
+  queue_as :default
+
+  def perform(*_args)
+    hashes = {}
+    CURRENCIES.each do |currency|
+      begin
+        hash = JSON.parse(open(URI(""http://api.fixer.io/latest?base=#{currency}"")).read) # what if not available?
+        hashes[currency] = hash['rates'].merge('updated_at' => Time.current)
+      rescue Timeout::Error
+        puts 'Timeout'
+      rescue OpenURI::Error => e
+        puts e.message
+      end
+
+      if hashes[currency].blank? || hashes[currency]['updated_at'] < Time.current - 24.hours
+        # send a mail saying ""this currency hasn't been updated""
+      end
+    end
+
+    Rails.cache.write('exchange_rates', hashes)
+  end
+end

@@ -1,0 +1,47 @@
+package main
+
+import (
+    ""bytes""
+    ""encoding/binary""
+    ""fmt""
+    ""log""
+)
+
+type A struct {
+    X
+    Data1 int32
+    Data2 int32
+    Data3 int32
+}
+
+type B struct {
+    X
+    Data1 int32
+}
+
+type X struct {
+    Tag byte
+    Ver byte
+}
+
+func main() {
+    var err error
+    data := []byte{1, 1, 0, 0, 0, 42}
+    hdr := X{}
+
+    err = binary.Read(bytes.NewReader(data[:2]), binary.BigEndian, &hdr)
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println(hdr.Tag, hdr.Ver)
+
+    if hdr.Tag == 1 {
+        b := B{}
+        err = binary.Read(bytes.NewReader(data), binary.BigEndian, &b)
+        if err != nil {
+            log.Fatal(err)
+        }
+        fmt.Println(b.Data1)
+    }
+
+}

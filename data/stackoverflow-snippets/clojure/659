@@ -1,0 +1,19 @@
+(defn show-bytes
+  [s encoding]
+  (let [buf (java.io.ByteArrayOutputStream.)
+        stream (string->stream s encoding)
+        ;; worst case, 8 bytes per char?
+        data (byte-array (* (count s) 8))
+        size (.read stream data 0 (count data))]
+    (.write buf data 0 size)
+    (.flush buf)
+    (apply vector-of :byte (.toByteArray buf))))
+
++user=> (string->stream ""hello"")
+#object[java.io.ByteArrayInputStream 0x39b43d60 ""java.io.ByteArrayInputStream@39b43d60""]
++user=> (isa? (class *1) java.io.InputStream)
+true
++user=> (show-bytes ""hello"" ""UTF-8"")
+[104 101 108 108 111]
++user=> (show-bytes ""hello"" ""UTF-32"")
+[0 0 0 104 0 0 0 101 0 0 0 108 0 0 0 108 0 0 0 111]

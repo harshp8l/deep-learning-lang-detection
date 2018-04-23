@@ -1,0 +1,27 @@
+std::string readData = ""Extended ASCII characters (ěščřžýáíé)"";
+int size = MultiByteToWideChar(
+    1252, //1252 corresponds with windows-1252 codepoint
+    0,
+    readData.c_str(),
+    -1, //the string is null terminated, no need to pass the length
+    NULL,
+    0
+);
+wchar_t* wchar_cstr = new wchar_t[size];
+MultiByteToWideChar(
+    1252,
+    0,
+    readData.c_str(),
+    -1,
+    wchar_cstr,
+    size
+);
+std::stringstream encodeStream;
+for(uint32_t i = 0; i < size; i++){
+    wchar_t wchar = wchar_cstr[i];
+    uint16_t val = (uint16_t) wchar;
+    encodeStream << ""%"" << std::setfill('0') << std::setw(2) << std::hex << val;
+}
+delete[] wchar_cstr;
+
+std::string encodedString = encodeStream.str(); // the URL encoded string

@@ -1,0 +1,69 @@
+import scala.reflect.runtime.universe.{TypeTag, Type}
+
+object Deserializer {
+
+  /** Extracts an instance of type `A` from the 
+    * flattened `Any` constructor arguments, and returns 
+    * the constructed instance together with the remaining
+    * unused arguments.
+    */
+  private def deserializeRecHelper(
+    flattened: List[Any], 
+    tpe: Type
+  ): (Any, List[Any]) = {
+    import scala.reflect.runtime.{universe => ru}
+
+    // println(""Trying to deserialize "" + tpe + "" from "" + flattened)
+
+    // println(""Constructor alternatives: "")
+    // val constructorAlternatives = tpe.
+    //   member(ru.termNames.CONSTRUCTOR).
+    //   asTerm.
+    //   alternatives.foreach(println)
+
+    val consSymb = tpe.
+      member(ru.termNames.CONSTRUCTOR).
+      asTerm.
+      alternatives(0).
+      asMethod
+
+    val argsTypes: List[Type] = consSymb.paramLists(0).map(_.typeSignature)
+    if (tpe =:= ru.typeOf[String] || argsTypes.isEmpty) {
+      val h :: t = flattened
+      (h, t)
+    } else {
+      val args_rems: List[(Any, List[Any])] = argsTypes.scanLeft(
+        ((""throwaway-sentinel-in-deserializeRecHelper"": Any), flattened)
+      ) { 
+        case ((_, remFs), t) => 
+        deserializeRecHelper(remFs, t)
+      }.tail
+
+      val remaining: List[Any] = args_rems.last._2
+      val args: List[Any] = args_rems.unzip._1
+
+      val runtimeMirror = ru.runtimeMirror(getClass.getClassLoader)
+      val classMirror = runtimeMirror.reflectClass(tpe.typeSymbol.asClass)
+      val cons = classMirror.reflectConstructor(consSymb)
+
+      // println(""Build constructor arguments array for "" + tpe + "" : "" + args)
+
+      val obj = cons.apply(args:_*)
+      (obj, remaining)
+    }
+  }
+
+  def deserialize[A: TypeTag](flattened: List[Any]): A = {
+    val (a, rem) = deserializeRecHelper(
+      flattened, 
+      (implicitly: TypeTag[A]).tpe
+    )
+
+    require(
+      rem.isEmpty, 
+      ""Superfluous arguments remained after deserialization: "" + rem
+    )
+
+    a.asInstanceOf[A]
+  }
+}

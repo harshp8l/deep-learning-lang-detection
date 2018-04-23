@@ -1,0 +1,25 @@
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
+
+val combinedDF = baseDF.union(
+  DS2.withColumn(""Row_Num"", lit(Long.MaxValue))
+)
+
+val resultDF = combinedDF.select(
+  col(""KEY1""), col(""KEY2""), col(""VAL""), row_number().over(
+    Window.partitionBy(col(""KEY1""), col(""KEY2"")).orderBy(col(""Row_Num""))
+  ).alias(""New_Row_Num"")
+)
+
+resultDF.show
++----+----+---+-----------+
+|KEY1|KEY2|VAL|New_Row_Num|
++----+----+---+-----------+
+| 003|   c|456|          1|
+| 003|   c|ytr|          2|
+| 002|   b|dfr|          1|
+| 002|   b|444|          2|
+| 001|   a|abc|          1|
+| 001|   a|123|          2|
+| 001|   a|y45|          3|
++----+----+---+-----------+

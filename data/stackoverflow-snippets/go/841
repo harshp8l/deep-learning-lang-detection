@@ -1,0 +1,53 @@
+package main
+
+import (
+    ""encoding/xml""
+    ""fmt""
+    ""io/ioutil""
+    ""log""
+    ""os""
+)
+
+type AccountUser struct {
+    UserID              string
+    ActiveFlag          string
+    LastSuccessfulLogin string
+    PartnerProperties   Partner `xml:""PartnerProperties""`
+}
+
+type Partner struct {
+    Name  string
+    Value string
+}
+
+type Query struct {
+    ResultList []AccountUser `xml:""Results""`
+}
+
+func (a *AccountUser) String() string {
+    return fmt.Sprintf(""%s - %s - %s"", a.PartnerProperties.Name, a.PartnerProperties.Value, a.UserID)
+}
+
+func main() {
+    xmlFile, err := os.Open(""read.xml"")
+    if err != nil {
+        fmt.Println(""Error opening file:"", err)
+        return
+    }
+    defer xmlFile.Close()
+
+    b, err := ioutil.ReadAll(xmlFile)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println(""read result = "", string(b))
+
+    var q Query
+    err = xml.Unmarshal(b, &q)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println(q.ResultList[0].String())
+}

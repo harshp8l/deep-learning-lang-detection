@@ -1,0 +1,81 @@
+class Histogram
+{
+  map<int, int> HistMap; //key is the bin, value is count in bin
+
+  void InsertIntoHMap(int);
+  void CheckR1(float);
+  void CheckTheta1(float);
+
+ public:
+   Histogram() {}
+   void FillHistMap(vector<float>&, vector<float>&);
+   map<int, int>& GetHMap();
+   ~Histogram() {}
+ };
+
+ void Histogram::InsertIntoHMap(int bin)
+ {
+    if(HistMap.find(bin) == HistMap.end()) HistMap.insert({bin, 1});
+    else HistMap[bin]++;
+ }
+
+ void Histogram::CheckR1(float r1)
+ {
+   if      (-0.3 <= r1 && r1 < 0.02)  InsertIntoHMap(1);
+   else if (0.02 <= r1 && r1 < 0.34)  InsertIntoHMap(2);
+   else if (0.34 <= r1 && r1 < 0.66)  InsertIntoHMap(3);
+   else if (0.66 <= r1 && r1 < 0.98)  InsertIntoHMap(4);
+   else if (0.98 <= r1 && r1 <= 1.30) InsertIntoHMap(5);
+ }
+
+ void Histogram::CheckTheta1(float t1)
+ {
+ // theta_1 is divided equally into 12 bins ranging from 0 to 2*PI
+
+    if      (0 <= t1 && t1 < CV_PI / 6)                   InsertIntoHMap(1);       
+    else if (CV_PI / 6 <= t1 && t1 < CV_PI / 3)           InsertIntoHMap(2);    
+    else if (CV_PI / 6 <= t1 && t1 < CV_PI / 2)           InsertIntoHMap(3);      
+    else if (CV_PI / 2 <= t1 && t1 < 2 * CV_PI / 3)       InsertIntoHMap(4); 
+    else if (2 * CV_PI / 3 <= t1 && t1 < 5 * CV_PI / 6)   InsertIntoHMap(5);     
+    else if (5 * CV_PI / 6 <= t1 && t1 < CV_PI)           InsertIntoHMap(6);
+    else if (CV_PI <= t1 && t1 < 7 * CV_PI / 6)           InsertIntoHMap(7);     
+    else if (7 * CV_PI / 6 <= t1 && t1 < 4 * CV_PI / 3)   InsertIntoHMap(8);   
+    else if (4 * CV_PI / 3 <= t1 && t1 < 3 * CV_PI / 2)   InsertIntoHMap(9);
+    else if (3 * CV_PI / 2 <= t1 && t1 < 5 * CV_PI / 3)   InsertIntoHMap(10);    
+    else if (5 * CV_PI / 3 <= t1 && t1 < 11 * CV_PI / 6)  InsertIntoHMap(11);      
+    else if (11 * CV_PI / 6 <= t1 && t1 <= 2 * CV_PI)     InsertIntoHMap(12)        
+}
+
+ void Histogram::FillHistMap(vector<float>& r1_vector, vector<float>& theta_1_vector)
+ {
+   for (size_t i = 0; i < r1_vector.size(); i++)
+   {
+       CheckR1(r1_vector[i]);
+       CheckTheta1(theta_1_vector[i]);  
+   }
+ }
+
+int main()
+{
+   vector<float> r1_vec;
+   r1_vec.push_back(-0.2);
+   r1_vec.push_back(1.2);
+   r1_vec.push_back(0.2);
+   r1_vec.push_back(0.3);
+   r1_vec.push_back(0.35);
+   r1_vec.push_back(0.2);
+   r1_vec.push_back(0.8);
+   r1_vec.push_back(0.8);
+
+   vector<float> theta_vec;
+   theta_vec.push_back(1.4);
+   theta_vec.push_back(2.4);
+   theta_vec.push_back(3.7);
+   theta_vec.push_back(2.4);
+   theta_vec.push_back(1.5);
+   theta_vec.push_back(1.6);
+   theta_vec.push_back(2.4);
+   theta_vec.push_back(5.8);
+
+    Histogram H;
+    H.FillHistMap(r1_vec, theta_vec);

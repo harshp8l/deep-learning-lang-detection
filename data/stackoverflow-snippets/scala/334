@@ -1,0 +1,35 @@
+df.printSchema()
+//root
+//|-- bit: struct (nullable = true)
+//|    |-- x: struct (nullable = true)
+//|    |    |-- inputs: array (nullable = true)
+//|    |    |    |-- element: struct (containsNull = true)
+//|    |    |    |    |-- prev_out: struct (nullable = true)
+//|    |    |    |    |    |-- spent: boolean (nullable = true)
+//|    |    |    |    |    |-- tx_infex: long (nullable = true)
+//|    |    |    |    |    |-- value: long (nullable = true)
+
+import org.apache.spark.sql.functions._
+val intermediateDf: DataFrame = df.select(explode(col(""bit.x.inputs"")).as(""interCol""))
+intermediateDf.printSchema()
+
+//root
+//|-- interCol: struct (nullable = true)
+//|    |-- prev_out: struct (nullable = true)
+//|    |    |-- spent: boolean (nullable = true)
+//|    |    |-- tx_infex: long (nullable = true)
+//|    |    |-- value: long (nullable = true)
+
+val finalDf: DataFrame = intermediateDf.select(col(""interCol.prev_out.value"").as(""value""))
+finalDf.printSchema()
+//root
+//|-- value: long (nullable = true)
+
+
+finalDf.show()
+//+-----------+
+//|      value|
+//+-----------+
+//|12347628746|
+//|12347628746|
+//+-----------+

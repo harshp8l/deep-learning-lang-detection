@@ -1,0 +1,33 @@
+Providers as (
+
+Select 
+cll.company_desc as state,
+cll.line_of_business_desc as Lineofbus,
+cll.product_desc as Product,
+cll.paymentdate as YearMonth,
+cll.typeofservice,
+prt.prov_type_short_desc as ProviderSpecialty,
+cll.whole_claim_status_desc as Outcome,
+count(cll.Claim_number) as ""COUNTOFSERVICES""
+--sum(cll.Claim_number) as total --removed
+from claims cll
+
+left join dw.DIM_PROVIDER_TYPE prt -- bringing in provider spec from claim
+on cll.prov_type_dim_id = prt.prov_type_dim_id
+
+Where cll.uniquerow = '1'--dedupping
+
+
+Group By 
+cll.company_desc,
+Cll.line_of_business_desc,
+cll.product_desc,
+cll.paymentdate,
+--cll.memb_dim_id,
+cll.typeofservice,
+prt.prov_type_short_desc,
+cll.whole_claim_status_desc
+
+
+
+)  select * from providers

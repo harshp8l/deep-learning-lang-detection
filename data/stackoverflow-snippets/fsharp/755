@@ -1,0 +1,22 @@
+type IHaveId =
+    abstract Id : int
+    inherit System.IComparable
+
+type [<CustomEquality; CustomComparison>] Node<'T> =
+    { DoStuff: 'T -> unit ; Id: int }
+
+    interface IHaveId with
+        member n.Id = n.Id
+
+    override n.Equals n' =
+        match n' with
+        | :? IHaveId as n' -> n.Id = n'.Id
+        | _ -> invalidArg ""n'"" ""Tried to equate incompatible types.""
+
+    override n.GetHashCode () = n.Id.GetHashCode()
+
+    interface System.IComparable with
+        member n.CompareTo n' =
+            match n' with
+            | :? IHaveId as n' -> n.Id.CompareTo n'.Id
+            | _ -> invalidArg ""n'"" ""Tried to compare incompatible types.""

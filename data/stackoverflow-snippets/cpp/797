@@ -1,0 +1,40 @@
+#include <pybind11/stl.h>
+#include <pybind11/pybind11.h>
+#include <iostream>
+#include <memory>
+#include <vector>
+
+class MyBase {
+public:
+    virtual void print() const {
+        std::cout << ""MyBase::print()"" << std::endl;
+    }
+};
+
+class MyDerived : public MyBase {
+public:
+    virtual void print() const override {
+        std::cout << ""MyDerived::print()"" << std::endl;
+    }
+};
+
+std::vector<std::unique_ptr<MyBase>> mylist() {
+    std::vector<std::unique_ptr<MyBase>> v;
+    v.push_back(std::make_unique<MyBase>());
+    v.push_back(std::make_unique<MyDerived>());
+    return v;
+}
+
+PYBIND11_MODULE(example, m) {
+    pybind11::class_<MyBase>(m, ""MyBase"")
+        .def(pybind11::init<>())
+        .def(""print"", &MyBase::print)
+        .def(""__repr__"", [](MyBase const&) { return ""MyBase""; });
+
+    pybind11::class_<MyDerived>(m, ""MyDerived"")
+        .def(pybind11::init<>())
+        .def(""print"", &MyDerived::print)
+        .def(""__repr__"", [](MyDerived const&) { return ""MyDerived""; });
+
+    m.def(""mylist"", &mylist, ""returns a list"");
+}

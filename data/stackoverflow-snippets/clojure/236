@@ -1,0 +1,18 @@
+(ns tst.demo.core
+  (:use demo.core tupelo.test)
+  (:require
+    [clojure.java.io :as io]
+    [tupelo.core :as t]
+    [me.raynes.conch.low-level :as cll]
+  ))
+(t/refer-tupelo)
+
+(dotest
+  (let [proc          (cll/proc ""dumb.sh"")
+        >>            (pretty proc)
+        out-lines     (line-seq (io/reader (grab :out proc)))
+        lazy-line-seq (lazy-gen
+                        (doseq [line out-lines]
+                          (yield line))) ]
+    (doseq [curr-line lazy-line-seq]
+      (spyx curr-line))))

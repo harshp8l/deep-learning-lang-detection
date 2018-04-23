@@ -1,0 +1,75 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+typedef struct {        /* simple typedef for vect of rectangles */
+    int width, height;
+} rect_t;
+
+int main (int argc, char **argv) {
+
+    vector<double> cir;     /* vector of double for circle radius */
+    vector<double> tri;     /* vector of double for triangle side */
+    vector<rect_t> rect;    /* vector of rect_t for rectangles */
+    string line;            /* string to use a line buffer */
+
+    if (argc < 2) { /* validate at least one argument given */
+        cerr << ""error: insufficient input.\n""
+                ""usage: "" << argv[0] << "" filename\n"";
+        return 1;
+    }
+
+    ifstream f (argv[1]);   /* open file given by first argument */
+    if (!f.is_open()) {     /* validate file open for reading */
+        cerr << ""error: file open failed '"" << argv[1] << ""'.\n"";
+        return 1;
+    }
+
+    while (getline (f, line)) {     /* read each line into 'line' */
+        string shape;               /* string for shape */
+        istringstream s (line);     /* stringstream to parse line */
+        if (s >> shape) {           /* if shape read */
+            if (shape == ""c"") {     /* is it a ""c""? */
+                double r;           /* radius */
+                string rest;        /* string to read rest of line */
+                if (s >> r && !getline (s, rest))  /* radius & nothing else */
+                    cir.push_back(r);   /* add radius to cir vector */
+                else    /* invalid line for circle, handle error */
+                    cerr << ""error: invalid radius or unexpected chars.\n"";
+            }
+            else if (shape == ""t"") {
+                double l;           /* side length */
+                string rest;        /* string to read rest of line */
+                if (s >> l && !getline (s, rest))  /* length & nothing else */
+                    tri.push_back(l);   /* add length to tri vector */
+                else    /* invalid line for triangle, handle error */
+                    cerr << ""error: invalid triangle or unexpected chars.\n"";
+            }
+            else if (shape == ""r"") {    /* is it a rect? */
+                rect_t tmp;             /* tmp rect_t */
+                if (s >> tmp.width && s >> tmp.height)  /* tmp & nohtin else */
+                    rect.push_back(tmp);    /* add to rect vector */
+                else    /* invalid line for rect, handle error */
+                    cerr << ""error: invalid width & height.\n"";
+            }
+            else    /* line neither cir or rect, handle error */
+                cerr << ""error: unrecognized shape '"" << shape << ""'.\n"";
+        }
+    }
+
+    cout << ""\nthe circles are:\n"";     /* output valid circles */
+    for (auto& i : cir)
+        cout << ""  c: "" << i << ""\n"";
+
+    cout << ""\nthe triangles are:\n"";   /* output valid triangles */
+    for (auto& i : tri)
+        cout << ""  t: "" << i << ""\n"";
+
+    cout << ""\nthe rectangles are:\n"";  /* output valid rectangles */
+    for (auto& i : rect)
+        cout << ""  r: "" << i.width << "" x "" << i.height << ""\n"";
+}

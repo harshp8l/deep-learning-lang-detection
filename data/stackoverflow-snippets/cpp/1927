@@ -1,0 +1,16 @@
+struct Void { };
+
+template <typename F, typename... Args,
+    typename R = std::invoke_result_t<F, Args...>,
+    REQUIRES(std::is_void_v<R>)>
+Void invoke_void(F&& f, Args&&... args) {
+    std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+    return Void{};
+}
+
+template <typename F, typename... Args,
+    typename R = std::invoke_result_t<F, Args...>,
+    REQUIRES(!std::is_void_v<R>)>
+R invoke_void(F&& f, Args&&... args) {
+    return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+}

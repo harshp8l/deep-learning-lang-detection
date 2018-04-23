@@ -1,0 +1,18 @@
+from itertools import groupby, chain
+import pandas as pd, numpy as np
+
+data = {'A':[3.5, -2.1, 0.7, -1.1, 2.4, 1.3, -0.5, 0.8, -0.2],
+        'B':[2.2, 1.8, 0.7, -1.8, 3.2, -1.8, -0.9, -0.7, 1.8]}
+
+df = pd.DataFrame(data)
+
+df['Cum(A)'] = df['A'].cumsum()
+df['Cum(B)'] = df['B'].cumsum()
+df['DD(A)'] = df['Cum(A)'] - df['Cum(A)'].cummax()
+df['D(B)'] = df['Cum(B)'] - df['Cum(B)'].cummax()
+
+df['Duration(A)'] = list(chain.from_iterable((np.arange(len(list(j)))+1).tolist() if i==1 \
+                         else [0]*len(list(j)) for i, j in groupby(df['DD(A)'] != 0)))
+
+df['Duration(B)'] = list(chain.from_iterable((np.arange(len(list(j)))+1).tolist() if i==1 \
+                         else [0]*len(list(j)) for i, j in groupby(df['D(B)'] != 0)))

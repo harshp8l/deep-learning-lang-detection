@@ -1,0 +1,43 @@
+type myStruct struct {
+    Id       string `json:""id""`
+    Read     string `json:""read""`
+    Preread  string `json:""preread""`
+    CpuStats cpu `json:""cpu_stats""`
+}
+
+type cpu struct {
+    Usage cpuUsage `json:""cpu_usage""`
+}
+
+type cpuUsage struct {
+    Total float64 `json:""total_usage""`
+}
+
+func main() {
+    ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+    cli, e := client.NewEnvClient()
+    if e != nil {
+        panic(e)
+    }
+    stats, e := cli.ContainerStats(ctx, ""container_id"", true)
+    if e != nil {
+        fmt.Errorf(""%s"", e.Error())
+    }
+    decoder := json.NewDecoder(stats.Body)
+    var containerStats myStruct
+    for {
+        select {
+        case <-ctx.Done():
+            stats.Body.Close()
+            fmt.Println(""Stop logging"")
+            return
+        default:
+            if err := decoder.Decode(&containerStats); err == io.EOF {
+                return
+            } else if err != nil {
+                cancel()
+            }
+            fmt.Println(containerStats.CpuStats.Usage.Total)
+        }
+    }
+}

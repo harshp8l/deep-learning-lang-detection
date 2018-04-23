@@ -1,0 +1,44 @@
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ReflectionApp {
+
+    private static ClassA classA = new ClassA();
+
+    public static void main(String[] args) throws NoSuchFieldException, IllegalArgumentException,
+            IllegalArgumentException, IllegalAccessException {
+        ClassB classB = new ClassB();
+        classB.entry(""Foo"", ""Bar"");
+    }
+
+    public static class ClassA {
+        //I cannot modify or access this class
+
+        private List<Object> list = new ArrayList<>();
+
+        @Override
+        public String toString() {
+            return ""ClassA{"" + ""list="" + list + '}';
+        }
+
+    }
+
+    public static class ClassB {
+
+        public void entry(String... args) throws NoSuchFieldException, IllegalArgumentException,
+                IllegalAccessException {
+            ClassA instance = classA;
+            // Do the reflection
+            Field list = instance.getClass().getDeclaredField(""list"");
+            list.setAccessible(true);
+            ArrayList<Object> actualList = (ArrayList<Object>) list.get(instance);
+            for( Object arg : args ){
+                actualList.add(arg);
+            }
+            list.set(instance, actualList);
+            System.out.println(actualList);
+            System.out.println(classA);
+        }
+    }
+}

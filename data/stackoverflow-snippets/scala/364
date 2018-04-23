@@ -1,0 +1,39 @@
+  import shapeless.{::, HList, HNil}
+
+  def parse[C](implicit p: Parse[C]): C = p.apply
+
+  trait Parse[C] {
+    def apply: C
+  }
+
+  object Parse {
+    implicit val int: Parse[Int] = new Parse[Int] {
+      override def apply: Int = 10
+    }
+
+    implicit val double: Parse[Double] = new Parse[Double] {
+      override def apply: Double = 10.0
+    }
+
+    implicit val string: Parse[String] = new Parse[String] {
+      override def apply: String = ""qwerty""
+    }
+  }
+
+  def parseAll[T <: HList](implicit p: ParseAll[T]): T = p.apply
+
+  trait ParseAll[T <: HList] {
+    def apply: T
+  }
+
+  object ParseAll {
+    implicit def hCons[H, T <: HList](implicit parse: Parse[H], parseAll: ParseAll[T]): ParseAll[H :: T] = new ParseAll[H :: T] {
+      override def apply: H :: T = parse.apply :: parseAll.apply
+    }
+
+    implicit def hNil: ParseAll[HNil] = new ParseAll[HNil] {
+      override val apply: HNil = HNil
+    }
+  }
+
+  parseAll[Int :: Double :: String :: HNil] // 10 :: 10.0 :: ""qwerty"" :: HNil

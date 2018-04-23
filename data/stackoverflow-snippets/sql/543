@@ -1,0 +1,28 @@
+--create a cursor to loop through your temp table
+declare someCur cursor local fast_forward for
+select id from #tempPrueba
+
+--variables for cursor and holding output from proc
+declare @id int
+declare @procOutput varchar(256) --change this to the correct datatype and size
+
+open someCur
+fetch next from someCur into @id
+
+ while @@FETCH_STATUS = 0
+ begin
+
+    --get the result from the proc for the first ID
+    EXEC [BSC].[ftNombreCortoBSC] @id, @procOutput OUTPUT
+
+    --update the temp table
+    update #tempPrueba
+    set Planta = @procOutput
+    where ID = @id 
+
+    --get the next ID
+    fetch next from someCur into @id
+ end
+
+ close someCur
+ deallocate someCur

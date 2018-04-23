@@ -1,0 +1,28 @@
+;WITH FemaleToMale AS
+(
+    SELECT
+        R.Id,
+        NewGender = 'M'
+    FROM
+        Registration AS R
+    WHERE
+        R.Gender = 'F'
+),
+MaleToFemale AS
+(
+    SELECT
+        R.Id,
+        NewGender = 'F'
+    FROM
+        Registration AS R
+    WHERE
+        R.Gender = 'M'
+)
+UPDATE R SET
+    Gender = ISNULL(F.NewGender, M.NewGender)
+FROM
+    Registration AS R
+    LEFT JOIN FemaleToMale AS F ON R.Id = F.Id
+    LEFT JOIN MaleToFemale AS M ON R.Id = M.Id
+WHERE
+    F.Id IS NOT NULL OR M.Id IS NOT NULL

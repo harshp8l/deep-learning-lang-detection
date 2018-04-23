@@ -1,0 +1,136 @@
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.imageio.ImageIO;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
+public class ImageLoaderTest extends JFrame implements ActionListener {
+
+    private static final long serialVersionUID = 1L;
+    private JButton nextButton, previousButton;
+    private CardLayout cards = new CardLayout();
+    private JPanel centerPanel = new JPanel(cards);
+    private JFileChooser jFileChooser;
+
+    public ImageLoaderTest() {
+        setSize(600, 600);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+
+        JPanel northPanel = new JPanel(new FlowLayout());
+        nextButton = new JButton("">>"");
+        nextButton.addActionListener(this);
+        previousButton = new JButton(""<<"");
+        previousButton.addActionListener(this);
+        northPanel.add(previousButton);
+        northPanel.add(nextButton);
+
+        JPanel principalPanel = new JPanel(new BorderLayout());
+        principalPanel.add(northPanel, BorderLayout.NORTH);
+        principalPanel.add(centerPanel, BorderLayout.CENTER);
+        setContentPane(principalPanel);
+        setJMenuBar(myMenu());
+
+        jFileChooser = new JFileChooser();
+        // jFileChooser.setFileFilter(new PictureFilter());
+        jFileChooser.setMultiSelectionEnabled(true);
+
+        setMinimumSize(new Dimension(300, 300));
+        setVisible(true);
+    }
+
+    private JMenuBar myMenu() {
+        JMenuBar jMenuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu(""File"");
+        JMenuItem importItem = new JMenuItem(""Import pictures"");
+        fileMenu.add(importItem);
+        //////////////// Setting Up importItem///////////////////
+        importItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (jFileChooser.showOpenDialog(ImageLoaderTest.this) == JFileChooser.APPROVE_OPTION) {
+                    File[] files = jFileChooser.getSelectedFiles();
+                    for (int i = 0; i < files.length; i++) {
+                        try {
+                            BufferedImage image = ImageIO.read(new File(files[i].getPath())); // Assigned image to variable, not needed but makes next line cleaner.
+                            centerPanel.add(new PicturePanel(image)); // add the picture directly to the panel, no need to create a list. Also used a custom PicturePanel
+                            cards.next(centerPanel); // automatically press the next button so that we see the picture loaded.
+                        } catch (IOException e1) {
+                            System.out.println(""Error loading image"");
+                        }
+                    }
+                }
+            }
+        });
+        jMenuBar.add(fileMenu);
+        return jMenuBar;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == nextButton) {
+            cards.next(centerPanel); // cleaned up code. No need to implement a counter when .next() will do. Unless you want to jump around
+        }
+        if (e.getSource() == previousButton) {
+            cards.previous(centerPanel); // cleaned up code. No need to implement a counter when .previous() will do. Unless you want to jump around
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new ImageLoaderTest();
+            }
+        });
+    }
+}
+
+class PicturePanel extends JPanel {
+    private static final long serialVersionUID = 1L;
+    protected BufferedImage image = null;
+
+    public PicturePanel(BufferedImage image) {
+        super();
+        this.image = image;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        int original_width = image.getWidth();
+        int original_height = image.getHeight();
+        int bound_width = getWidth();
+        int bound_height = getHeight();
+        int new_width = original_width;
+        int new_height = original_height;
+
+        if (original_width > bound_width) {
+            new_width = bound_width;
+            new_height = (new_width * original_height) / original_width;
+        }
+        if (new_height > bound_height) {
+            new_height = bound_height;
+            new_width = (new_height * original_width) / original_height;
+        }
+        g.drawImage(image, (getWidth() - new_width) / 2, (getHeight() - new_height) / 2,
+                new_width, new_height, this);
+    }
+}

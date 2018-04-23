@@ -1,0 +1,41 @@
+(defmacro my-fn
+  [args body]
+      (with-meta  (list 'fn args body)
+                  {:args (list 'quote args)
+                   :body (list 'quote body)
+                   :env (list 'get-env)}))
+
+(defmacro morph
+  [args body]
+  body)
+
+
+; example data for this case
+(def people  #{{:id ""S1"" :name ""Smith"" :status 20 }
+               {:id ""S2"" :name ""Jones"" :status 10 }
+               {:id ""S3"" :name ""Blake"" :status 30 }})
+
+
+
+ (let[a 20
+      f (fn [t] (<= a (:status t)))]
+   (filter f people))
+
+
+ (defmacro get-env
+  []
+  (into {} (for [k (keys &env)]
+             [(name k) k])))
+
+
+(let [a 20
+      f (my-fn [t] (<= a (:status t)))] ; pred should be used like fn
+  (let [env (get-env)
+        pred (eval (list 'fn    ; later this second let code for comes into a macro or somehting
+                         (:args (meta f))
+                         (list 'let
+                               (reduce (fn[v [x y]] (conj v (read-string x) y)) [] (:env (meta f)))
+                               (list 'morph
+                                     (:args (meta f))
+                                     (:body (meta f))))))]
+   (filter pred people))) ; => ({:id ""S3"", :name ""Blake"", :status 30} {:id ""S1"", :name ""Smith"", :status 20})

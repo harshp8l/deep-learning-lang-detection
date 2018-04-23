@@ -1,0 +1,21 @@
+std::array<double, 121> b_y1;
+int k;
+int j;
+static const double dv0[12] = { 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.65 };
+
+jdouble *sig1;
+sig1 = env->GetDoubleArrayElements(ka, 0);
+
+b_y1.fill(0);
+for (k = 0; k < 12; k++) {
+    for (j = k; j + 1 < 122; j++) {
+        b_y1[j] += dv0[k] * sig1[j - k];
+    }
+}
+
+env->ReleaseDoubleArrayElements(ka, sig1, JNI_ABORT);
+
+jdoubleArray output = env->NewDoubleArray(b_y1.size());
+env->SetDoubleArrayRegion(output, 0, b_y1.size(), b_y1.data());
+
+return output;

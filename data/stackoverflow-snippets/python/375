@@ -1,0 +1,34 @@
+def upgrade():
+    ddl = [
+        """"""
+        CREATE VIRTUAL TABLE person_idx USING fts5(
+            name,
+            thumb UNINDEXED,
+            content='person',
+            content_rowid='id'
+        )
+        """""",
+        """"""
+        CREATE TRIGGER person_ai AFTER INSERT ON person BEGIN
+            INSERT INTO person_idx (rowid, name, thumb)
+            VALUES (new.id, new.name, new.thumb);
+        END
+        """""",
+        """"""
+        CREATE TRIGGER person_ad AFTER DELETE ON person BEGIN
+            INSERT INTO person_idx (person_idx, rowid, name, thumb)
+            VALUES ('delete', old.id, old.name, old.thumb);
+        END
+        """""",
+        """"""
+        CREATE TRIGGER person_au AFTER UPDATE ON person BEGIN
+            INSERT INTO person_idx (person_idx, rowid, name, thumb)
+            VALUES ('delete', old.id, old.name, old.thumb);
+            INSERT INTO person_idx (rowid, name, thumb)
+            VALUES (new.id, new.name, new.thumb);
+        END
+        """"""
+    ]
+
+    for stmt in ddl:
+        op.execute(sa.DDL(stmt))

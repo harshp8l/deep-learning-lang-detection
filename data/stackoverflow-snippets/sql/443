@@ -1,0 +1,13 @@
+    select xtype1, Description, total_count, last_crdate, last_refdate 
+    from 
+    (SELECT xtype as xtype1, total_count = COUNT(*), last_crdate = MAX(crdate), last_refdate = MAX(refdate)
+     FROM sysobjects 
+     GROUP BY xtype
+     )o
+    left outer join 
+    (SELECT LEFT(name,PATINDEX('%:%',name)-1) AS xtype2, RIGHT(name, (LEN(name) - PATINDEX('%:%',name))) AS Description
+    FROM master..spt_values 
+    WHERE type = 'O9T' AND number  = -1
+    )x 
+    on o.xtype1 = x.xtype2
+    order by Description;

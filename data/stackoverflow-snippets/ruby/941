@@ -1,0 +1,42 @@
+# modify a specific array in a Rakefile
+
+rakefile_name     = 'Rakefile'
+array_source_name = 'array_source.rb'
+lines = IO.readlines(rakefile_name)
+insert_marker_after_seen  = false
+insert_marker_before_seen = false
+lines1 = []
+lines2 = IO.readlines(array_source_name)
+lines3 = []
+
+# split the Rakefile
+lines.each do | line |
+    case
+    when insert_marker_after_seen == false
+        lines1 << line
+
+        if line.include?('$$insert array after$$')
+        then
+            insert_marker_after_seen = true
+        end
+    when ! insert_marker_before_seen
+        # ignore array lines
+
+        if line.include?('$$insert array before$$')
+        then
+            insert_marker_before_seen = true
+            lines3 << line
+        end
+    else
+        lines3 << line
+    end
+end
+
+# Rewrite the Rakefile
+File.open(rakefile_name, 'w') do | out |
+    [ lines1, lines2, lines3 ].each do | lines_group |
+        lines_group.each { | line | out.puts line }
+    end
+end
+
+puts ""#{rakefile_name} has been updated with #{array_source_name}""

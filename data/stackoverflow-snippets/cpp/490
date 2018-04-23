@@ -1,0 +1,46 @@
+#include <boost/hana.hpp>
+#include <type_traits>
+#include <utility>
+
+namespace hana = boost::hana;
+using hana::Sequence;
+
+
+struct A {
+    template <typename T>
+    std::enable_if_t<Sequence<T>::value, void> foo(T) { }
+};
+
+struct B {
+    template <typename T>
+    void bar(T) { }
+};
+
+
+template <typename T>
+auto has_foo_1 = hana::is_valid([](auto&& a)
+    -> decltype(std::forward<decltype(a)>(a).foo(std::declval<T>())) { });
+
+
+template <template <typename, typename> typename Concept>
+auto declval_concept_impl = int{};
+
+template <>
+auto declval_concept_impl<Sequence> = hana::tuple<>{};
+
+template <template <typename, typename> typename Concept>
+using declval_concept = std::add_rvalue_reference_t<decltype(declval_concept_impl<Concept>)>;
+
+template <template <typename, typename> typename Concept>
+auto has_foo_2 = hana::is_valid([](auto&& a)
+    -> decltype(std::forward<decltype(a)>(a).foo(declval_concept<Concept>{})) { });
+
+int main() {
+    A a;
+    B b;
+
+    static_assert(    has_foo_1<hana::tuple<>>(a));
+    static_assert(not has_foo_1<hana::tuple<>>(b));
+    static_assert(    has_foo_2<Sequence>(a));
+    static_assert(not has_foo_2<Sequence>(b));
+}

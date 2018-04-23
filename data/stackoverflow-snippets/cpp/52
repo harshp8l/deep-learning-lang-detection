@@ -1,0 +1,75 @@
+#include <map>
+#include <set>
+#include <list>
+#include <deque>
+#include <vector>
+#include <iostream>
+#include <forward_list>
+#include <unordered_map>
+#include <unordered_set>
+
+template <std::size_t N>
+struct tag : public tag<N-1U>
+ { };
+
+template <>
+struct tag<0U>
+ { };
+
+template <typename C>
+class MySack
+ {
+   private:
+      C c;
+
+      template <typename D, typename T>
+      auto addHelper (T && t, tag<2> const &)
+       -> decltype((void)std::declval<D>().push_back(std::forward<T>(t)))
+       { c.push_back(std::forward<T>(t)); }
+
+      template <typename D, typename T>
+      auto addHelper (T && t, tag<1> const &)
+       -> decltype((void)std::declval<D>().insert(std::forward<T>(t)))
+       { c.insert(std::forward<T>(t)); }
+
+      template <typename D, typename T>
+      auto addHelper (T && t, tag<0> const &)
+       -> decltype((void)std::declval<D>().push_front(std::forward<T>(t)))
+       { c.push_front(std::forward<T>(t)); }
+
+   public:
+      template <typename T>
+      void add (T && t)
+       { addHelper<C>(std::forward<T>(t), tag<2>{}); }
+ };
+
+int main ()
+ {
+   MySack<std::vector<int>>                    ms0;
+   MySack<std::deque<int>>                     ms1;
+   MySack<std::set<int>>                       ms2;
+   MySack<std::multiset<int>>                  ms3;
+   MySack<std::unordered_set<int>>             ms4;
+   MySack<std::unordered_multiset<int>>        ms5;
+   MySack<std::list<int>>                      ms6;
+   MySack<std::forward_list<int>>              ms7;
+
+   MySack<std::map<int, long>>                 ms8;
+   MySack<std::multimap<int, long>>            ms9;
+   MySack<std::unordered_map<int, long>>       msA;
+   MySack<std::unordered_multimap<int, long>>  msB;
+
+   ms0.add(0);
+   ms1.add(0);
+   ms2.add(0);
+   ms3.add(0);
+   ms4.add(0);
+   ms5.add(0);
+   ms6.add(0);
+   ms7.add(0);
+
+   ms8.add(std::make_pair(0, 0L));
+   ms9.add(std::make_pair(0, 0L));
+   msA.add(std::make_pair(0, 0L));
+   msB.add(std::make_pair(0, 0L));
+ }

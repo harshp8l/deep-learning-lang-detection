@@ -1,0 +1,17 @@
+# 1. PostgreSQL - supports over/partition
+
+library(RPostgreSQL)
+sqldf(""SELECT id, name, \""X\"", ROW_NUMBER() over (PARTITION BY id order by id) as row_no 
+       FROM dd order by id"")
+
+# 2. SQLite - does not support over/partition, use join instead
+
+# Ensure RPostgreSQL is NOT loaded to force use of SQLite.
+sqldf(""select a.*, count(*) row_no 
+       from dd a join dd b on a.id = b.id and b.rowid <= a.rowid
+       group by a.rowid
+       order by a.rowid"")
+
+# 3. Base R
+
+transform(dd, row_no = ave(1:nrow(dd), id, FUN = seq_along))

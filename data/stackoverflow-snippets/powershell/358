@@ -1,0 +1,13 @@
+# Get the block of relevant lines as a single string.
+$unusedVlan = if ((Get-Content -raw c:\config.txt) -match '(?ms)^999.*?(?=\r?\n\S|\Z)') 
+  { $Matches[0]} 
+
+# Split the string into an array of token by whitespace,
+# remove all "","" instances,
+# and skip the first 3 tokens 
+# (the tokens *before* the port numbers, namely '999', 'Unused', 'active')
+# The result is an *array* of all port numbers: @( 'Fa0/10', 'Fa0/11', ... )
+$unusedPorts = (-split $unusedVlan) -replace ',' | Select-Object -Skip 3
+
+# Output the array
+$unusedPorts

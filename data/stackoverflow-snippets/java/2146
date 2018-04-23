@@ -1,0 +1,94 @@
+public class SOD49707387DBHelper extends SQLiteOpenHelper {
+
+    public static final String DBNAME = ""mydatabase"";
+    public static final int DBVERSION = 1;
+    public static final String TBNAME_TIME = ""mytimesave"";
+    public static final String TIME_COL_TIME = ""_time"";
+
+    SQLiteDatabase mDB;
+    public SOD49707387DBHelper(Context context) {
+        super(context, DBNAME, null, DBVERSION);
+        mDB = this.getReadableDatabase();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        String crtsql = ""CREATE TABLE IF NOT EXISTS "" + TBNAME_TIME + ""("" +
+                TIME_COL_TIME + "" TEXT"" +
+                "")"";
+        db.execSQL(crtsql);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+    // Not assumes that time is valid
+    public boolean insertTime(String time) {
+        ContentValues cv = new ContentValues();
+        cv.put(TIME_COL_TIME,time);
+        return  (mDB.insert(TBNAME_TIME,null,cv) > 0);
+    }
+
+    public Cursor getAllTimesAsCursor() {
+         return mDB.query(TBNAME_TIME,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public String[] getAllTimesAsStringArray() {
+        Cursor csr =getAllTimesAsCursor();
+        String[] rv = new String[csr.getCount()];
+        while (csr.moveToNext()) {
+            rv[csr.getPosition()] = csr.getString(csr.getColumnIndex(TIME_COL_TIME));
+        }
+        csr.close();
+        return rv;
+    }
+
+    /*
+     NOTE!! equates to query
+         SELECT
+             max((substr(_time,1,2) * 60) + substr(_time,4,2))
+             -
+             min((substr(_time,1,2) * 60) + substr(_time,42))
+         AS elapsedminutes
+         FROM mytimesave;
+      NOTE!!! inherently unreliable as assumes all rows are valid
+     */
+    public int getElapsedTimeOfAllTimesAsInt() {
+        int rv = 0;
+        String result_column =
+                """" +
+                        ""max((substr("" +
+                        TIME_COL_TIME +
+                        "",1,2) * 60) + substr("" +
+                        TIME_COL_TIME + "",4,2))"" +
+                        "" - "" +
+                        "" min((substr("" +
+                        TIME_COL_TIME +
+                        "",1,2) * 60) + substr("" +
+                        TIME_COL_TIME +
+                        "",4,2))"" +
+                        "" AS "" + TIME_COL_TIME //??? hijack _time column
+                ;
+        Cursor csr = mDB.query(
+                TBNAME_TIME,
+                new String[]{result_column},
+                null,
+                null,
+                null,
+                null,
+                null);
+        if (csr.moveToFirst()) {
+            rv = csr.getInt(csr.getColumnIndex(TIME_COL_TIME));
+        }
+        csr.close();
+        return rv;
+    }
+}

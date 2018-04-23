@@ -1,0 +1,18 @@
+// Typelevel function unapplies unary type constructors:
+// F[A] => (F, A)
+// I think I recall seeing it somewhere in shapeless, but I can't find it,
+// so I implemented it myself
+sealed trait Unapp1[T] { type F[_]; type A; implicit def eq: F[A] =:= T }
+object Unapp1 {
+  type Aux[T0, F0[_], A0] = Unapp1[T0] { type F[X] = F0[X]; type A = A0 }
+  implicit def source[F0[_], A0]: Aux[F0[A0], F0, A0] = new Unapp1[F0[A0]] {
+    type F[X] = F0[X]
+    type A = A0
+    override def eq: F[A] =:= F0[A0] = implicitly
+  }
+  def apply[T](implicit unapp: Unapp1[T]): unapp.type = unapp
+}
+
+// the.`tpe` looks up the implicit value of type tpe and gives it a stable path
+// suitable for type selection
+requestDecodeIterable[the.`Unapp1[CookbookDetails]`.A, the.`Unapp1[CookbookDetails]`.F](request)

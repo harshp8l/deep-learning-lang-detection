@@ -1,0 +1,10 @@
+var result = (from leads in dc.T_DM_FactDemandeWebLeads.AsEnumerable()
+                         join  demands in dc.T_DM_DimDemandeWebs on leads.DemandeWeb_FK equals demands.DemandeWeb_PK
+                         join  temps in dc.T_DM_Temps on demands.DateDemande_FK equals temps.Temps_PK
+                         where leads.longitudeClient != null && (Convert.ToInt32(leads.GeolocDistanceRouteDistrib) > 1000*30) && (temps.Date > new DateTime(2000, 1, 1).Date)
+                         select new Lead
+                         {
+                             lng = leads.longitudeClient,     
+                             lat = leads.latitudeClient,
+                             distance = leads.GeolocDistanceRouteDistrib
+                         }).Take(1000000);

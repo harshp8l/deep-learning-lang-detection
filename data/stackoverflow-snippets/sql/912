@@ -1,0 +1,19 @@
+--data generation
+declare @Membership table (MembershipId varchar(10), ValidFromDate date, ValidToDate date)
+insert into @Membership values
+('0001', '1997-01-01', '2006-05-09'),
+('0002', '1997-01-01', '2017-05-12'),
+('0003', '2005-06-02', '2009-02-07')
+
+;with cte as (
+    select CAST('2016-01-01' as date) [date]
+    union all
+    select DATEADD(day, 1, [date]) from cte
+    where [date] < '2016-12-31'
+)
+
+select [date],
+       (select COUNT(*) from @Membership where ValidFromDate < [date]) - 
+       (select COUNT(*) from @Membership where ValidToDate < [date]) [ongoing]
+from cte
+option (maxrecursion 0)

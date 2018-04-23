@@ -1,0 +1,21 @@
+# Number of input objects to create.
+$count = 1e5 # 100,000
+
+# Create sample input objects.
+$objects = 1..$count | % { [pscustomobject] @{ Number = $_ } }
+
+# An array of script blocks with the various approaches.
+$approaches = { $objects | Select-Object -ExpandProperty Number },
+              { $objects | % Number },
+              { $objects.ForEach('Number') },
+              { $objects.ForEach({ $_.Number }) },
+              { $objects.Number }
+
+# Time the approaches and sort them by execution time (fastest first):
+$approaches | % {
+    $scriptBlock = $_
+    Measure-Command $scriptBlock |
+      Select-Object @{ n='Approach'; e = { $scriptBlock.ToString() } } , Ticks
+} | 
+    Sort-Object Ticks | 
+      Format-Table Approach, @{ n = 'Seconds'; e = { '{0:N3}' -f ($_.Ticks / 1e7) } }

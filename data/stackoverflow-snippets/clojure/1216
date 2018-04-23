@@ -1,0 +1,30 @@
+(ns com.stackoverflow.clojure.testInstaparseWrongGrammar
+  (:require [instaparse.core :as insta])
+  (:require [instaparse.failure :as fail]))
+
+(def raw-parser (insta/parser ""
+    <sentence> = words <DOT>
+    DOT        = '.'
+    <words>    = word (<SPACE> word)*
+    SPACE      = ' '
+    word     = #'(?U)\\w+'
+""))
+
+; pretty-print a failure as a string
+(defn- failure->string [result]
+  (with-out-str (fail/pprint-failure result)))
+
+; create an Exception with the pretty-printed failure message
+(defn- failure->exn [result]
+  (Exception. (failure->string result)))  
+
+(defn parser [expr]
+  (let [result (raw-parser expr)]
+    (if (insta/failure? result)
+      (throw (failure->exn result))
+      result)))
+
+(defn formatter [expr]
+  (->> (parser expr)
+       (insta/transform {:word identity})
+       (apply str)))

@@ -1,0 +1,46 @@
+/** Essentially a function that groups instances of 
+  * type `I` by some feature `F`
+  */
+trait Grouping[I, F] extends (I => F)
+object Grouping {
+  def by[I, F](f: I => F) = new Grouping[I, F] {
+    def apply(i: I) = f(i)
+  }
+}
+
+case class Box(id: Long, version: String)
+object Box {
+  implicit def ordering[A <: Box]: Ordering[A] = Ordering.by(_.version)
+  implicit def grouping[A <: Box]: Grouping[A, Long] = Grouping.by(_.id)
+}
+val list1 = List(new Box(0, ""A""), new Box(1, ""B""), new Box(0, ""C""), new Box(2, ""D""), new Box(1, ""E""))
+val list2 = List(new Box(0, ""W""), new Box(4, ""X""), new Box(0, ""Y""), new Box(3, ""F""))
+
+trait Aggregator[U] {
+   def combOp(l: List[U], r: List[U]): List[U]
+}
+
+class GroupingAndTakeLatestAggregator[B, F](
+  grp: Grouping[B, F],
+  ord: Ordering[B]
+) extends Aggregator[B] {
+   override def combOp(l1: List[B], l2: List[B]) = {
+    // tried to understand what it did, rewrote it a bit...
+    for (vs <- (l1 ++ l2).groupBy(grp).values.toList) 
+    yield vs.sorted(ord).reverse.head
+  }
+}
+
+// Not sure whether you want it. Implicits can quickly pollute everything.
+implicit def groupableAndOrderedIsAggregatable[B, F]
+  (implicit grp: Grouping[B, F], ord: Ordering[B]): Aggregator[B] = 
+  new GroupingAndTakeLatestAggregator(grp, ord)
+
+// Little test, just to see whether an 
+// aggregator is constructed automatically
+// on-demand
+def aggregate[A]
+  (as: List[A], bs: List[A])
+  (implicit aggr: Aggregator[A]): List[A] = aggr.combOp(as, bs)
+
+println(aggregate(list1, list2))

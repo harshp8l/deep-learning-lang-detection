@@ -1,0 +1,16 @@
+import org.apache.spark.sql.functions._
+
+df.withColumn(""range"", 
+          when($""articles"" >  0 and $""articles"" <= 100, lit(""1-100""))
+            .otherwise(
+              when($""articles"" > 100 and $""articles"" <= 10000, lit(""101-10000"")).otherwise(lit(""others""))
+            )
+         ).groupBy(""range"").agg(sum($""articles"")).orderBy(""range"").show
+
+// +---------+-------------+
+// |    range|sum(articles)|
+// +---------+-------------+
+// |    1-100|          109|
+// |101-10000|          202|
+// |   others|      2010007|
+// +---------+-------------+

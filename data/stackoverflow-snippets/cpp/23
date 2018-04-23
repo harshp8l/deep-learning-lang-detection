@@ -1,0 +1,30 @@
+#include <winsock2.h>
+#include <iphlpapi.h>
+#include <stdio.h>
+#include <QCoreApplication>
+#pragma comment(lib, ""IPHLPAPI.lib"")
+
+int main(int argc, char *argv[])
+{
+    QCoreApplication a(argc, argv);
+
+    PIP_ADAPTER_INFO pAdapterInfo;
+    pAdapterInfo = (IP_ADAPTER_INFO *) malloc(sizeof(IP_ADAPTER_INFO));
+    ULONG buflen = sizeof(IP_ADAPTER_INFO);
+
+    if(GetAdaptersInfo(pAdapterInfo, &buflen) == ERROR_BUFFER_OVERFLOW) {
+      free(pAdapterInfo);
+      pAdapterInfo = (IP_ADAPTER_INFO *) malloc(buflen);
+    }
+
+    if(GetAdaptersInfo(pAdapterInfo, &buflen) == NO_ERROR) {
+        PIP_ADAPTER_INFO pAdapter = pAdapterInfo;
+        while (pAdapter) {
+            printf(""\tAdapter Name: \t%s\n"", pAdapter->AdapterName);
+            printf(""\tAdapter Desc: \t%s\n"", pAdapter->Description);
+            printf(""\n\n"");
+            pAdapter = pAdapter->Next;
+      }
+    }
+    return a.exec();
+}

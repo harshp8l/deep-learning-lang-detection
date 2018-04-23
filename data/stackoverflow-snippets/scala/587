@@ -1,0 +1,29 @@
+//create you original DF
+val df = Seq((""A"",1,2,3),(""B"",1,2,3),(""C"",1,2,3),(""D"",4,2,3)).toDF(""col1"",""col2"",""col3"",""col4"")
+df.show
+
+//output
++----+----+----+----+
+|col1|col2|col3|col4|
++----+----+----+----+
+|   A|   1|   2|   3|
+|   B|   1|   2|   3|
+|   C|   1|   2|   3|
+|   D|   4|   2|   3|
++----+----+----+----+
+
+//group by ""col2"",""col3"",""col4"" and store ""col1"" as list and then
+//convert it to string
+
+df.groupBy(""col2"",""col3"",""col4"")
+.agg(collect_list(""col1"").as(""col1""))
+//you can change the string separator by concat_ws first arg
+.select(concat_ws("""", $""col1"") as ""col1"",$""col2"",$""col3"",$""col4"").show
+
+//output
++----+----+----+----+
+|col1|col2|col3|col4|
++----+----+----+----+
+|   D|   4|   2|   3|
+| ABC|   1|   2|   3|
++----+----+----+----+

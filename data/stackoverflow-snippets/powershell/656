@@ -1,0 +1,34 @@
+$sourceDirectory = ""C:\temp\source""
+$destinationDirectoryRoot = ""C:\temp\destination""
+
+# Grab a list of XML source files
+$xmlFiles = Get-ChildItem -Path $sourceDirectory -Filter ""*.xml""
+
+# Iterate over the files
+foreach ($xmlFile in $xmlFiles) {
+    # Grab the content and cast to [xml] type
+    [xml]$xmlContent = Get-Content -Path $xmlFile.FullName
+
+    # We now don't need to use [icky] XPath 
+    $rentityId = $xmlContent.rentity_id
+
+    # Do work if we found a value for rentity_id
+    if ($rentityId) {
+        # Variables for destination dir and file
+        $destinationDirectory = Join-Path -Path $destinationDirectoryRoot -ChildPath $rentityId
+        $destinationFile = Join-Path -Path $destinationDirectory -ChildPath $xmlFile.Name
+
+        # Create destination folder (same name as XML file)
+        New-Item -Path $destinationDirectory -ItemType Directory -Force | Out-Null
+
+        # Move the source file to thenewly created destination directory
+        Move-Item -Path $xmlFile.FullName -Destination $destinationFile -Force
+    }
+    else {
+        Write-Warning ""No rentity_id found in $($xmlFile.FullName)""
+    }
+}
+
+# Confirm output
+Get-ChildItem -Path $destinationDirectoryRoot -Filter ""*.xml"" -Recurse |
+    Select-Object FullName

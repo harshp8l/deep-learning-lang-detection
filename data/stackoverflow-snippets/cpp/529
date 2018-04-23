@@ -1,0 +1,36 @@
+void InterpolateToGrid(pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud, pcl::PointCloud<pcl::PointXYZINormal>::Ptr grid, float max_resolution, int max_nn_to_consider)
+{   
+    pcl::search::KdTree<pcl::PointXYZINormal>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZINormal>);
+    tree->setInputCloud(cloud);
+
+    for (auto idx = 0; idx < grid->points.size(); idx++)
+    {
+        std::vector<int> indices;
+        std::vector<float> distances;
+        if (tree->radiusSearch(grid->points[idx], max_resolution, indices, distances, max_nn_to_consider) > 0)
+        {
+            // Linear Interpolation of:
+            //      Intensity
+            //      Normals- residual vector to inflate(recondtruct) the surface
+            float intensity(0);
+            Eigen::Vector3f n(0, 0, 0);
+            float weight_factor = 1.0F / accumulate(distances.begin(), distances.end(), 0.0F);
+            for (auto i = 0; i < indices.size(); i++)
+            {
+                float w = weight_factor * distances[i];
+                intensity += w * cloud->points[indices[i]].intensity;
+                auto res = cloud->points[indices[i]].getVector3fMap() - grid->points[idx].getVector3fMap();
+                n += w * res;
+            }
+            grid->points[idx].intensity = intensity;
+            grid->points[idx].getNormalVector3fMap() = n;
+            grid->points[idx].curvature = 1;
+        }
+        else
+        {
+            grid->points[idx].intensity = 0;
+            grid->points[idx].curvature = 0;
+            grid->points[idx].getNormalVector3fMap() = Eigen::Vector3f(0, 0, 0);
+        }
+    }
+}

@@ -1,0 +1,21 @@
+val succeded = ds.rdd.mapPartitions(
+    partition => {
+      List(
+        partition.foldLeft[Either[List[String],Unit]](Right(()))(
+          (either, entry) => either match {
+            case Right(()) => writeToCassandra(entry)
+            case Left(errs) => Left(errs)
+          }
+        )
+      ).iterator
+    }
+  )
+
+val overall = succeded.reduce {
+  case (Right(_), Right(_)) => Right(())
+  case (Right(_), Left(err)) => Left(err)
+  case (Left(err), Right(_)) => Left(err)
+  case (Left(err1), Left(err2)) => Left(err1 ::: err2)
+}
+
+println(overall)

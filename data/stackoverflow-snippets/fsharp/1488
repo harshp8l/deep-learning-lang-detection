@@ -1,0 +1,51 @@
+// Access the library containing the Dictionary module
+open System.Collections.Generic
+
+// Crate a key value,pair named factorials, e.g. table, to hold the
+// the factorial number n and it's result.
+let factorials = Dictionary<int, int>()
+
+// Add an initial entry into the factorials table for the 
+// value for one and the result of the factorial of one, being one.
+factorials.Add(1, 1)
+
+// Define a recursive function for factorial
+// taking one integer parameter
+let rec factorial n =
+    // If the parameter is less than or equal to one
+    // then return one
+    if n <= 1 then 1
+    // If the parameter is greater than one then
+    else
+        // look up the result of the factorial in the factorials table.
+        // Use TryGetValue when looking up value to avoid errors when
+        // there is no matching key for the value.
+        // There is a problem here with the way TryGetValue is used.
+        // It should be used as
+        //   let mutable factresult
+        //   factorials.TryGetValue(n,factresult)
+        // The problem causes the result of TryGetValue(n) to be
+        // the tuple (bool * int) instead of bool with the 
+        // value part updating the mutable factresult.
+        // Next the patterns for the match are true,_ and false, _ 
+        // which match the tuple of the TryGetValue(n)
+        // but the _ means to toss out the value it matches
+        // because it doesn't have a name, 
+        // so the whole use of the factorials table is not needed.
+        match factorials.TryGetValue(n) with
+        // If there is an entry in the factorials table then take this action.
+        // Take n and multiply it by the factorial of n-1.
+        // As an example for 5 this becomes 5 * 4 * 3 * 2 * 1
+        // Take the result of n * factorial(n-1) and push it on to the stack
+        // as the result of the function. 
+        | true, _  -> n * factorial(n-1)
+        // If there is no entry in the factorials table then
+        // calculate the result of the factorial of n, i.e. n * factorial(n-1))
+        // and add it to the factorials table.
+        // Take the result of n * factorial(n-1) and push it on to the stack
+        // as the result of the function. 
+        | false, _ -> 
+            factorials.Add(n, n * factorial(n-1))
+            n * factorial(n-1)     
+
+let a = factorial 9

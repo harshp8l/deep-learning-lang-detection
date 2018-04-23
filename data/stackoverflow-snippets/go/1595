@@ -1,0 +1,19 @@
+pattern := regexp.MustCompile(`\A/Date\((\d+)([+-]\d+)\)/\z`)
+m := pattern.FindStringSubmatch(res.ResponseTimestamp)
+if len(m) == 0 {
+    // Handle error: not a datetime in the expected format
+}
+
+// Get the milliseconds part
+ms, err := strconv.Parseint(m[1], 10, 64)
+// Handle err (in the rare case of, say, an out of range error)
+
+// Use Go's time parser to parse the timezone part
+tForLoc, err := time.Parse(""-0700"", m[2])
+// Handle err (invalid timezone spec)
+
+// Combine the milliseconds, the timezone, and the Unix epoch
+t := time.Date(1970, 1, 1, 0, 0, 
+    int(ms/1000), int((ms%1000)*1e6, tForLoc.Location())
+
+return t

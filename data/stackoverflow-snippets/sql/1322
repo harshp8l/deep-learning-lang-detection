@@ -1,0 +1,28 @@
+declare  @TableName table(Column1 varchar(10))
+
+insert into @TableName values
+('1'),
+('1-1'),
+('1-1-1'),
+('1-2'),
+('1-1-1-20'),
+('1-1-1-5'),
+('1-1-2'),
+('1-1-1-25'),
+('1-15-2'),
+('1-1.5')
+
+DECLARE @delimiter VARCHAR(50) = '-' 
+;WITH CTE AS
+( 
+    SELECT column1,
+        CAST('<M>' + REPLACE(column1, @delimiter , '</M><M>') + '</M>' AS XML)  
+        AS [Description XML]
+    FROM  @TableName
+)
+SELECT column1
+
+FROM CTE
+
+Order by [Description XML].value('/M[1]', 'float'), [Description XML].value('/M[2]', 'float'), [Description XML].value('/M[3]', 'float'), [Description XML].value('/M[4]', 'float'),
+[Description XML].value('/M[5]', 'float'), [Description XML].value('/M[6]', 'float'), [Description XML].value('/M[7]', 'float'), [Description XML].value('/M[8]', 'float'), [Description XML].value('/M[9]', 'float')

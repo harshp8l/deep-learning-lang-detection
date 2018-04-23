@@ -1,0 +1,24 @@
+declare @tmp_tbl table (id int identity, Some_string nvarchar(1000))
+
+insert into @tmp_tbl (Some_string)
+select '""Testing Data"" example' union all
+select 'Test data ""Testing Data""' union all
+select 'Test ""Testing Data"" example' union all
+select 'Test example' union all
+select 'Test "" example' union all
+select 'Test """" example' union all
+select 'Test ""Testing Data"" example ""Testing 123 '
+
+select
+    id,
+    iif(
+        patindex('%""%""%', Some_string) = 0,
+        NULL,
+        substring(
+            Some_string,
+            (charindex('""', Some_string) + 1),
+            charindex('""', Some_string, charindex('""', Some_string) + 1) - charindex('""', Some_string) - 1
+        )
+    )
+from
+    @tmp_tbl

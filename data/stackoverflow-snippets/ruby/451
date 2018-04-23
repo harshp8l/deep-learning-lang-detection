@@ -1,0 +1,50 @@
+class Base
+  class Child
+    def im
+      ""from base child""
+    end
+
+    def common
+      ""shared by all subclasses""
+    end
+  end
+
+  def self.inherited subclass
+    # define a new Child class that inherits from Base::Child
+    subclass.const_set ""Child"", Class.new(self::Child)
+  end
+
+  def initialize
+    @child = self.class::Child.new
+  end
+
+  def test
+    puts @child.im
+    puts @child.common
+  end
+end
+
+class A < Base
+   # now this is opening Child, but not Base::Child! Rather A::Child < Base::Child
+   class Child
+     def im
+       ""from a child""
+     end
+   end
+end
+
+class B < Base
+  # same here, opening a subclass of Base::Child so we can make changes but still share behavior with Base::Child
+  class Child
+    def im
+      ""from b child""
+    end
+  end
+end
+
+A.new.test
+# from a child
+# shared by all subclass
+B.new.test
+# from b child
+# shared by all subclasses

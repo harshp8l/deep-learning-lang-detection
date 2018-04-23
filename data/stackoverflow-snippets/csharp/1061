@@ -1,0 +1,17 @@
+var options = new ChangeStreamOptions { FullDocument = ChangeStreamFullDocumentOption.UpdateLookup };
+var addFields = new BsonDocument { { ""$addFields"", new BsonDocument { { ""tmpfields"", new BsonDocument { { ""$objectToArray"", ""$updateDescription.updatedFields"" } } } } } };
+var match = new BsonDocument { { ""$match"", new BsonDocument { { ""tmpfields.k"", new BsonDocument { { ""$nin"", new BsonArray{""a"", ""b""} } } } } } };
+
+// Remove the unwanted field. 
+var project = new BsonDocument { {""$project"", new BsonDocument { {""tmpfields"", 0 } } } };
+var pipeline = new[] { addFields, match, project };
+
+var cursor = collection.Watch<ChangeStreamDocument<BsonDocument>>(pipeline, options);
+
+var enumerator = cursor.ToEnumerable().GetEnumerator();
+while(enumerator.MoveNext())
+{
+     ChangeStreamDocument<BsonDocument> doc = enumerator.Current;
+     Console.WriteLine(doc.DocumentKey); 
+
+ }

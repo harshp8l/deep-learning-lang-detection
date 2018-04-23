@@ -1,0 +1,18 @@
+module Tracing = 
+    open System
+    open System.Text.RegularExpressions
+
+    let (|TraceInfo|_|) (s:string) =
+        let m = Regex.Match(s, ""at (?<mem>.+?) in (?<file>.+?\.[a-zA-Z]+):line (?<line>\d+)"")
+        if m.Success then
+            Some(m.Groups.[""mem""].Value, m.Groups.[""file""].Value, int m.Groups.[""line""].Value)
+        else None
+
+    let inline trace s =
+        printfn ""%s"" s
+        match Environment.StackTrace with
+        | TraceInfo(m, f, l) ->
+            printfn ""  Member: %s"" m
+            printfn ""  File  : %s"" f
+            printfn ""  Line  : %d"" l
+        | _ -> ()

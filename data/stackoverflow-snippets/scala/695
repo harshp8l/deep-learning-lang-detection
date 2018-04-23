@@ -1,0 +1,23 @@
+val rows = Seq(
+  (""T1"", ""D2"", Seq(""F"", ""D"")),
+  (""T1"", ""D3"", Seq(""F"", ""D"")),
+  (""T1"", ""D4"", Seq(""G"", ""D"")),
+  (""T1"", ""D5"", Seq(""G"", ""Q"")),
+  (""T1"", ""D6"", Seq(""A"", ""F""))
+).toDF(""tenant_id"", ""device_id"", ""top_places"")
+
+rows.withColumn(""top_place"", explode($""top_places"")).
+  groupBy(""top_place"").agg(Map(""*""->""count"")).
+  withColumnRenamed(""COUNT(1)"",""Total"").
+  orderBy(""total"").
+  show
+
+// +---------+-----+                                                               
+// |top_place|total|
+// +---------+-----+
+// |        Q|    1|
+// |        A|    1|
+// |        G|    2|
+// |        F|    3|
+// |        D|    3|
+// +---------+-----+

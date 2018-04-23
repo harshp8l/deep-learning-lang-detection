@@ -1,0 +1,48 @@
+(ns points.Point)
+
+;; generate a simple class with the constructors used in the copy method
+(gen-class
+ :name points.Point
+ :init init
+ :constructors {[] []
+                [double double] []})
+
+;; generate the full class 
+(gen-class
+ :name points.Point
+ :prefix pt-
+ :main true
+ :state coordinates
+ :init init
+ :constructors {[] []
+                [double double] []}
+ :methods [[distance [points.Point] double]
+           [copy [] points.Point]])
+
+(defn pt-init
+  ([] (pt-init 0 0))
+  ([x y]
+   [[] {:x x :y y}]))
+
+(defn pt-copy 
+  ""Return a copy of this point""
+  [this]
+  (points.Point. (:x (.coordinates this)) (:y (.coordinates this))))
+
+(defn pt-distance [^points.Point this ^points.Point p]
+  (let [dx (- (:x (.coordinates this)) (:x (.coordinates p)))
+        dy (- (:y (.coordinates this)) (:y (.coordinates p)))]
+    (Math/sqrt (+ (* dx dx) (* dy dy)))))
+
+(defn pt-toString [this]
+  (str ""Point: "" (.coordinates this)))
+
+;; Testing Java constructors and method call on Point class
+(import (points Point))
+(defn pt-main []
+  (let [o (Point.)
+        p (points.Point. 3 4)]
+    (println (.toString o))
+    (println (.toString p))
+    (println (.distance o p))
+    (println (.distance p (.copy p)))))

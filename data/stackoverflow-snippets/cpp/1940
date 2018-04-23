@@ -1,0 +1,56 @@
+- (void)verifySigForXar:(NSString *)path
+{
+    OSStatus err = noErr;
+    xar_t pkg = NULL;
+    xar_signature_t sig = NULL;
+    int32_t ncerts = 0;
+    const uint8_t *data = NULL;
+    uint32_t len = 0;
+    SecCertificateRef tmp = NULL;
+    int cur = 0;
+    CFErrorRef cfError = NULL;
+
+    pkg = xar_open([path UTF8String], READ);
+
+    if (pkg == NULL) 
+    {
+        os_log_error(""error opening Xar in path :%{public}s "", [path UTF8String]);
+        return;
+    }
+
+    sig = xar_signature_first(pkg);
+
+    if (sig == NULL) {
+        os_log_error(g_logger, ""error getting xar signature in path :%{public}s "", [path UTF8String]);
+         return;
+    }
+
+    ncerts = xar_signature_get_x509certificate_count(sig);
+    NSMutableArray *certs = [[NSMutableArray alloc] init];
+
+    //populate array of certs
+    for (int32_t i = 0; i < ncerts; i++) 
+    {
+        if (xar_signature_get_x509certificate_data(sig, i, &data, &len) == -1) 
+        {
+            os_log_error(""Unable to extract certificate data. xar signature in path :%{public}s "", [path UTF8String]);
+            return;
+        }
+
+        const CSSM_DATA crt = { (CSSM_SIZE) len, (uint8_t *) data };
+        err = SecCertificateCreateFromData(&crt, CSSM_CERT_X_509v3, CSSM_CERT_ENCODING_DER, &tmp);
+        [certs addObject:(id)CFBridgingRelease(tmp)];
+    }
+
+    //iterate the array of 
+    for (id certObj in certs) 
+    {
+        if (CFGetTypeID((__bridge CFTypeRef)object) == SecCertificateGetTypeID()) 
+        {
+              SecCertificateRef cert = (__bridge SecCertificateRef)certObj;
+              err = SecStaticCodeCheckValidityWithErrors(codeRef, kSecCSDoNotValidateExecutable, NULL, &cfError);
+              //
+        }
+  }
+
+}

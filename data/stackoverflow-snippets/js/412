@@ -1,0 +1,29 @@
+(function() {
+    $.fn.dataTable.ext.type.search.selected = (data) => !$(data).is(""select"") 
+        ? '' 
+        : $(data).val();
+    $.fn.dataTable.ext.order['dom-select'] = function(settings, col) {
+        return this.api().column(col, {
+            order: 'index'
+        }).nodes().map(td => $('select', td).val());
+    }
+})();
+var table = $('#example').DataTable({
+    ""columnDefs"": [{
+        ""orderDataType"": ""dom-select"",
+        ""type"": ""selected"",
+        ""targets"": 2
+    }]
+});
+$(""#example select"").on(""change"", function() {
+    var $this = $(this),
+        val = $this.val(),
+        cellPosition = table.cell($this.parents(""td"")).index(),
+        rowDate = table.row(cellPosition.row).data();
+    $this.find(""option"").each((k, v) => ($(v).val() === val) 
+        ? $(v).attr(""selected"", ""selected"") 
+        : $(v).removeAttr(""selected""));
+    rowDate[cellPosition.column] = $this.prop(""outerHTML"");
+    table.row(cellPosition.row).data(rowDate);
+    table.cell(cellPosition).invalidate().draw();
+});

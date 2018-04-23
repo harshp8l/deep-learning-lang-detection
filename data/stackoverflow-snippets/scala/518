@@ -1,0 +1,32 @@
+  trait RichTypes {
+
+    import scala.util.{Try, Success, Failure}
+    import scala.concurrent.{Await, Future}
+    import scala.concurrent.duration.Duration
+
+    implicit class RichFuture[T](f: Future[T]) {
+      def awaitResult(d: Duration): Either[Throwable, T] = {
+        Try(Await.result(f, d)).toEither
+      }
+    }
+
+    implicit class RichTry[T](tri: Try[T]) {
+      def toEither(): Either[Throwable, T] = {
+        tri.fold[Either[Throwable, T]](Left(_), Right(_))
+      }
+    }
+  }
+
+  object Example
+    extends App
+      with RichTypes {
+
+    import scala.concurrent.Future
+    import scala.concurrent.duration._
+
+    val succ = Future.successful(""hi"").awaitResult(5.seconds)
+    val fail = Future.failed(new Exception(""x"")).awaitResult(5.seconds)
+
+    println(succ) // Right(hi)
+    println(fail) // Left(Exception(x))
+  }

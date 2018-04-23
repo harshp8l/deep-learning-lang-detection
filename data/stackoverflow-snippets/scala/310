@@ -1,0 +1,20 @@
+object QuickTest extends App {
+
+  val spark = SparkSession.builder().appName(""test"").master(""local[*]"").getOrCreate()
+
+  val empList=List(""111,aaa,20000.0"",""222,bbb,300.00"",""333,ccc,4000.00"")
+
+  import spark.implicits._
+
+  val empDF=spark.sparkContext.parallelize(empList).map{line=>
+    val data=line.split("","")
+    Employee(data(0).toInt,data(1),data(2).toDouble)
+  }.toDF()
+
+  val nameUdf=udf{(name:String)=>name.toUpperCase}
+  val convert=udf[String,String](name=>name.toUpperCase)
+
+  empDF.withColumn(""NAME_UP"",convert($""name"")).show()
+}//end of object QuickTest
+
+case class Employee(id:Int,name:String,salary:Double)

@@ -1,0 +1,22 @@
+from collections import defaultdict
+record1 = [1, 2, 3]
+record2 = [4, 5, 6]
+record3 = [7, 8, 9]
+test = [
+  { 'r1': record1, 'r2': record2, 'corr': 85, 'r1_source': 'source_1', 'r2_source': 'source_2' },
+  { 'r1': record1, 'r2': record3, 'corr': 90, 'r1_source': 'source_1', 'r2_source': 'source_3' },
+  { 'r1': record2, 'r2': record3, 'corr': 77, 'r1_source': 'source_2', 'r2_source': 'source_3' },
+]
+temp = defaultdict(list)
+for item in test:
+    temp[tuple(item['r1'])].insert(0, item)
+    temp[tuple(item['r2'])].append(item)
+
+result = []
+for key, value in temp.items():
+    new_item = {}
+    new_item['avg'] = sum(list(map(lambda item: item['corr'], value)))*1.0/len(value)
+    new_item['record'] = list(key)
+    new_item['source'] = value[0]['r1_source'] if list(key) == value[0]['r1'] else value[0]['r2_source']
+    result.append(new_item)
+print(result)

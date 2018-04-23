@@ -1,0 +1,137 @@
+const { Schema } = mongoose = require('mongoose');
+
+const uri = 'mongodb://localhost/people';
+
+mongoose.Promise = global.Promise;
+mongoose.set('debug', true);
+
+const hobbySchema = new Schema({
+  name: String
+});
+
+const userSchema = new Schema({
+  first_name: String,
+  last_name: String,
+  sex: String,
+  fk_hobbies: [hobbySchema]
+});
+
+const Hobby = mongoose.model('Hobby', hobbySchema)
+const User = mongoose.model('User', userSchema);
+
+const userData = [
+  {
+    ""first_name"" : ""Pierro"",
+    ""last_name"" : ""pierre"",
+    ""sex"" : ""H"",
+    ""fk_hobbies"" : [ 
+       ""Art"",  ""Sport"",  ""Fete"", ""Série"", ""Jeux vidéo""
+    ]
+  },
+  {
+   ""first_name"": ""jean"",
+   ""last_name"" : ""mark"",
+    ""sex"" : ""H"",
+    ""fk_hobbies"" : [
+      ""Musique"", ""Chiller"", ""Papoter"", ""Manger"", ""Film""
+    ]
+  },
+  {
+    ""first_name"" : ""michael"",
+    ""last_name"" : ""ferrari"",
+    ""sex"" : ""H"",
+    ""fk_hobbies"" : [ 
+      ""fashion"", ""Voyage"", ""Papoter"", ""Manger"", ""Film""
+    ]
+  },
+  {
+    ""first_name"" : ""Philip"",
+    ""last_name"" : ""roi"",
+    ""sex"" : ""H"",
+    ""fk_hobbies"" : [ 
+      ""Musique"", ""Chiller"", ""Papoter"", ""Manger"", ""Film""
+    ]
+  }
+];
+
+const log = data => console.log(JSON.stringify(data, undefined, 2));
+
+(async function() {
+
+  try {
+
+    const conn = await mongoose.connect(uri);
+
+    await Promise.all(
+      Object.entries(conn.models).map(([k,m]) => m.remove())
+    );
+
+    const hobbies = await Hobby.insertMany(
+      [
+        ...userData
+          .reduce((o, u) => [ ...o, ...u.fk_hobbies ], [])
+          .reduce((o, u) => o.set(u,1) , new Map())
+      ]
+      .map(([name,v]) => ({ name }))
+    );
+
+    const users = await User.insertMany(userData.map(u => 
+      ({ 
+        ...u, 
+        fk_hobbies: u.fk_hobbies.map(f => hobbies.find(h => f === h.name))
+      })
+    ));
+
+    let user = await User.findOne({
+      ""first_name"" : ""Philip"",
+      ""last_name"" : ""roi""      
+    });
+    let user_hobbies = user.fk_hobbies.map(h => h._id );
+
+    let result = await User.aggregate([
+      { ""$match"": {
+        ""_id"": { ""$ne"": user._id },
+        ""fk_hobbies._id"": { ""$in"": user_hobbies }
+      }},
+      { ""$addFields"": {
+        ""numHobbies"": {
+          ""$size"": {
+            ""$setIntersection"": [
+              ""$fk_hobbies._id"",
+              user_hobbies
+            ]
+          }
+        },
+        ""fk_hobbies"": {
+          ""$map"": {
+            ""input"": ""$fk_hobbies"",
+            ""in"": {
+              ""$mergeObjects"": [
+                ""$$this"",
+                {
+                  ""shared"": {
+                    ""$cond"": {
+                      ""if"": { ""$in"": [ ""$$this._id"", user_hobbies ] },
+                      ""then"": true,
+                      ""else"": ""$$REMOVE""
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }},
+      { ""$sort"": { ""numHobbies"": -1 } }
+    ]);
+
+    log(result);
+
+    mongoose.disconnect();
+
+  } catch(e) {
+
+  } finally {
+    process.exit();
+  }
+})()

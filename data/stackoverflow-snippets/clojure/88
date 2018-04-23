@@ -1,0 +1,24 @@
+(defn clause-coll? [item]
+  (and (vector? item)
+       (symbol? (first item))))
+
+(defn render-map[amap]
+  (let [[[_ v]] (vec amap)]
+    (if (clause-coll? v)
+      [v]
+       v)))
+
+(defn render-item[item]
+  (if (map? item) 
+   (render-map item)
+   [item]))
+
+(defn render-level [[op & etc]]
+  (->> (mapcat render-item etc)
+       (cons op)))
+
+(defn parse-tree[form]
+  (clojure.walk/postwalk #(if (clause-coll? %)
+                              (render-level %)
+                              %)
+                         form))

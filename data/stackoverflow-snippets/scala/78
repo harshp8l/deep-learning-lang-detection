@@ -1,0 +1,44 @@
+package de.jvr
+
+import com.rethinkdb.RethinkDB
+
+object Test {
+
+ def main(args: Array[String]): Unit = {
+
+
+  // database
+  val r = RethinkDB.r
+  val conn = r.connection().hostname(""localhost"").port(28015).connect()
+
+  try {
+   // existing database ""test""
+
+   // drop table
+   r.db(""test"").tableDrop(""posts"").run(conn)
+
+   // create table
+   r.db(""test"").tableCreate(""posts"").run(conn)
+
+   // insert
+   r.table(""posts"").insert(
+    r.hashMap(""id"", 25)
+    .`with`(""value"", ""50"")
+   ).run(conn);
+
+   // update
+   r.table(""posts"").get(25).update(r.hashMap(""value"", ""100"")).run(conn);
+
+   //print
+   val cursorJava: com.rethinkdb.net.Cursor[java.util.HashMap[String, String]] = r.table(""posts"").run(conn)
+   cursorJava forEach(x => println(x))
+
+   // or in the Data Explorer: r.table(""posts"")
+  } catch {
+   case e:Throwable => println(""exception: "" + e.toString)
+  }
+
+
+ sys.exit(0)
+ }
+}

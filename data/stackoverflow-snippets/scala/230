@@ -1,0 +1,102 @@
+import java.time._
+import java.time.temporal.ChronoUnit
+
+import scala.annotation.tailrec
+import scala.concurrent.duration._
+
+object Demo extends App {
+
+  val start = LocalTime.of(9, 0)
+  val midEnd = LocalTime.of(13, 0)
+  val midStart = LocalTime.of(14, 0)
+  val end = LocalTime.of(18, 0)
+  val firstHalf = start.until(midEnd, ChronoUnit.MILLIS).millis
+  val secondHalf = midStart.until(end, ChronoUnit.MILLIS).millis
+
+  implicit class formatter(d: FiniteDuration) {
+    def withMinutes = {
+      val l = d.toMinutes
+      s""${l / 60}:${l % 60}""
+    }
+
+    def withSeconds = s""${d.toHours}:${d.toMinutes % 60}:${d.toSeconds % 60}""
+  }
+
+  // check if day is working. Could be easily adjusted to check not only weekend but holidays as well
+  def isWorkingDay(d: LocalDate) = !Set(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY).contains(d.getDayOfWeek)
+  // check if current day is working day and if not switch to next start of day/previous end of day
+  // depending on ask parameter
+  @tailrec
+  def adjust(t: LocalDateTime, asc: Boolean = true): LocalDateTime = {
+    if (!isWorkingDay(t.toLocalDate) && asc) adjust(t.toLocalDate.plusDays(1).atTime(start), asc)
+    else if (!isWorkingDay(t.toLocalDate) && !asc) adjust(t.toLocalDate.minusDays(1).atTime(end), asc)
+    else t
+  }
+
+  def toEnd(t: LocalTime) = {
+    if (t.isBefore(start)) firstHalf + secondHalf
+    else if (t.isBefore(midEnd)) t.until(midEnd, ChronoUnit.MILLIS).millis + secondHalf
+    else if (t.isBefore(midStart)) secondHalf
+    else if (t.isBefore(end)) t.until(end, ChronoUnit.MILLIS).millis
+    else 0.hours
+  }
+
+
+  def toStart(t: LocalTime) = {
+    if (t.isBefore(start)) 0.hours
+    else if (t.isBefore(midEnd)) start.until(t, ChronoUnit.MILLIS).millis
+    else if (t.isBefore(midStart)) firstHalf
+    else if (t.isBefore(end)) firstHalf + midStart.until(t, ChronoUnit.MILLIS).millis
+    else firstHalf + secondHalf
+  }
+
+  // count amount of working days between two dates.
+  // if dates are the same - means 0 days
+  def jourOuvree(d1: LocalDate, d2: LocalDate): Int = {
+    @tailrec
+    def count(n: LocalDate, acc: Int): Int = {
+      if (n.isEqual(d2) || n.isAfter(d2)) acc
+      else if (!isWorkingDay(n)) count(n.plusDays(1), acc)
+      else count(n.plusDays(1), acc + 1)
+    }
+
+    count(d1, 0)
+  }
+
+  // evaluate duration of working time between to date/times
+  // take into account that start/end could be non-working and
+  // adjust
+  def toEquals(rd1: LocalDateTime, rd2: LocalDateTime) = {
+    val d1 = adjust(rd1)
+    val d2 = adjust(rd2, asc = false)
+    // if we are in the same day ==> I should compute just a difference between hours
+    if (d1.isAfter(d2)) 0.hours
+    else if (d1.toLocalDate.isEqual(d2.toLocalDate)) {
+      toEnd(d1.toLocalTime) - toEnd(d2.toLocalTime)
+    }
+    else {
+      toEnd(d1.toLocalTime) + jourOuvree(d1.toLocalDate.plusDays(1), d2.toLocalDate.minusDays(1)) * 8.hours + toStart(d2.toLocalTime)
+    }
+  }
+
+  val thursdayStart = LocalDate.of(2018, 3, 1).atTime(start)
+  val thursdayEnd = LocalDate.of(2018, 3, 1).atTime(end)
+  val fridayStart = LocalDate.of(2018, 3, 2).atTime(start)
+  val fridayEnd = LocalDate.of(2018, 3, 2).atTime(end)
+  val saturdayStart = LocalDate.of(2018, 3, 3).atTime(start)
+  val saturdayEnd = LocalDate.of(2018, 3, 3).atTime(end)
+  val sundayStart = LocalDate.of(2018, 3, 4).atTime(start)
+  val sundayEnd = LocalDate.of(2018, 3, 4).atTime(end)
+  val mondayStart = LocalDate.of(2018, 3, 5).atTime(start)
+  val mondayEnd = LocalDate.of(2018, 3, 6).atTime(end)
+  println(toEquals(thursdayStart, sundayStart).withSeconds)
+  println(toEquals(thursdayStart, saturdayStart).withSeconds)
+  println(toEquals(thursdayStart, mondayStart).withSeconds)
+  println(toEquals(thursdayStart, mondayEnd).withSeconds)
+  println(toEquals(thursdayStart, thursdayEnd).withSeconds)
+
+  // formatter to use to parse string input
+  import java.time.format.DateTimeFormatter
+  val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(""yyyy-MM-dd HH:mm:ss"")
+  println(toEquals(LocalDateTime.parse(""2018-03-01 11:22:33"", DATE_TIME_FORMATTER), LocalDateTime.parse(""2018-03-02 11:22:33"", DATE_TIME_FORMATTER)).withSeconds)
+}

@@ -1,0 +1,26 @@
+import gensim
+import numpy as np
+
+# toy document set
+texts = ['This is my first b', 'Another b just like so']
+tokenlist = [list(gensim.utils.tokenize(text)) for text in texts]
+
+# create dictionary and MmCorpus
+dictionary = gensim.corpora.Dictionary(tokenlist)
+corpus = [dictionary.doc2bow(tokens) for tokens in tokenlist]
+gensim.corpora.MmCorpus.serialize('MmCorpusTest.mm', corpus)
+
+# assume the word 'b' is to be deleted, put its id in a variable
+del_ids = [k for k,v in dictionary.items() if v=='b']
+
+# remove unwanted word ids from the dictionary in place
+dictionary.filter_tokens(bad_ids=del_ids)
+
+# load corpus from your file
+corpusMm = gensim.corpora.MmCorpus('MmCorpusTest.mm')
+# convert corpus to a dense array, transpose because by default documents would be columns
+np_corpus = gensim.matutils.corpus2dense(corpusMm, corpusMm.num_terms, num_docs=corpusMm.num_docs).T
+# delete columns for specified tokens, transpose back afterwards
+np_corpus = np.delete(np_corpus, del_ids, 1).T
+# convert array to corpus
+new_corpus = gensim.matutils.Dense2Corpus(np_corpus)

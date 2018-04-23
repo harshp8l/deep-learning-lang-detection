@@ -1,0 +1,20 @@
+func (sr *SendResult) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+    var raw string
+    d.DecodeElement(&raw, &start)
+
+    var st struct {
+        Contents  string `xml:"",chardata""`
+        ReturnIDs string `xml:""ReturnIDs""`
+    }
+
+    err := xml.Unmarshal([]byte(""<xml>""+raw+""</xml>""), &st)
+    if err != nil {
+        panic(err.Error())
+    }
+
+    sr.RawMessage = raw
+    sr.Text = st.Contents
+    sr.IDS = strings.Split(st.ReturnIDs, "";"")
+
+    return nil
+}

@@ -1,0 +1,31 @@
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+
+trait IFilterClause
+
+case class ComparisonClause(operand: String, operator: String, value: String, valueType: String) extends IFilterClause
+object ComparisonClause {
+  implicit val comparisonClauseReads: Reads[ComparisonClause] = (
+    (JsPath \ ""operand"").read[String] and
+      (JsPath \ ""operator"").read[String] and
+      (JsPath \ ""value"").read[String] and
+      (JsPath \ ""value_type"").read[String]
+  )(ComparisonClause.apply _)
+}
+
+case class LogicalClause(operator: String, children: List[IFilterClause]) extends IFilterClause
+object LogicalClause {
+  implicit lazy val logicalClauseReads: Reads[LogicalClause] = (
+    (JsPath \ ""logical_operator"").read[String] and
+      (JsPath \ ""children"").read[List[IFilterClause]]
+  )(LogicalClause.apply _)
+}
+
+object IFilterClause {
+  implicit lazy val reader: Reads[IFilterClause] = {
+    // needed because Reads is invariant
+    val reader1 = ComparisonClause.comparisonClauseReads.map(f => f: IFilterClause)
+    lazy val reader2 = LogicalClause.logicalClauseReads.map(f       => f: IFilterClause)
+    reader1 orElse reader2
+  }
+}

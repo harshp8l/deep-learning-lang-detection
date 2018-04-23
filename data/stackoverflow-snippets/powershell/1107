@@ -1,0 +1,41 @@
+function Get-MappedDrive {
+    [CmdletBinding(SupportsShouldProcess = $True, ConfirmImpact = 'Low')]
+    param (
+        [Parameter(Mandatory = $True,
+            ValueFromPipelineByPropertyName = $True,
+            Position = 0)]
+        [string[]]$ComputerName
+    )
+
+    begin {}
+
+    process {
+        if ($pscmdlet.ShouldProcess($ComputerName)) {
+            Invoke-Command -ComputerName $ComputerName {
+                New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS | Out-Null
+                Get-ChildItem HKU:\ |
+                    ForEach-Object {Get-ChildItem ""$($_.pspath)\Network"" -ErrorAction SilentlyContinue} |
+                    ForEach-Object {
+                        [PSCustomObject]@{
+                            User = (New-Object System.Security.Principal.SecurityIdentifier ($_.name -replace 'HKEY_USERS\\(.*?)\\.*','$1')).Translate( [System.Security.Principal.NTAccount]).Value
+                            Drive = ""$((Split-Path $_.name -Leaf).ToUpper()):""
+                            Path = Get-ItemProperty -Path $_.PSPath -Name RemotePath | Select-Object -ExpandProperty RemotePath
+                        }
+                    }
+                Get-ChildItem HKU:\ |
+                    ForEach-Object {
+                        if (Get-ItemProperty -Path ""$($_.PSPath)\Volatile Environment"" -name HOMEDRIVE -ErrorAction SilentlyContinue) {
+                            [PSCustomObject]@{
+                                User = (New-Object System.Security.Principal.SecurityIdentifier ($_.name -replace 'HKEY_USERS.(.*?)(\\.*|$)','$1')).Translate( [System.Security.Principal.NTAccount]).Value
+                                Drive = Get-ItemProperty -Path ""$($_.PSPath)\Volatile Environment"" -name HOMEDRIVE | Select-Object -ExpandProperty HOMEDRIVE
+                                Path = Get-ItemProperty -Path ""$($_.PSPath)\Volatile Environment"" -name HOMESHARE | Select-Object -ExpandProperty HOMESHARE
+                            }
+                        }
+                    }
+                Remove-PSDrive HKU | Out-Null
+
+            }
+        }
+    }
+    end {}
+}

@@ -1,0 +1,39 @@
+using namespace std::chrono;
+
+class benchmark {
+  public:
+  time_point<high_resolution_clock>  t0, t1;
+  unsigned int *d;
+  benchmark(unsigned int *res) : d(res) { 
+                 t0 = high_resolution_clock::now();
+  }
+  ~benchmark() { t1 = high_resolution_clock::now();
+                  milliseconds dur = duration_cast<milliseconds>(t1 - t0);
+                  *d = dur.count();
+  }
+};
+// simple usage 
+// unsigned int t;
+// { // put the code in a block
+//  benchmark bench(&t);
+//  // ...
+//  // code to benchmark
+// }
+// HERE the t contains time in milliseconds
+
+// one way to use it can be :
+#define BENCH(TITLE,CODEBLOCK) \
+  unsigned int __time__##__LINE__ = 0;  \
+  { benchmark bench(&__time__##__LINE__); \
+      CODEBLOCK \
+  } \
+  printf(""%s took %d ms\n"",(TITLE),__time__##__LINE__);
+
+
+int main(void) {
+  BENCH(""TITLE"",{
+    for(int n = 0; n < testcount; n++ )
+      int a = n % 3;
+  });
+  return 0;
+}

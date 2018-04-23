@@ -1,0 +1,38 @@
+from subprocess import Popen, PIPE
+import io
+
+CMD = 'cat'
+
+class Chatbot:
+    def __init__(self):
+        self._chatbot_proc = Popen(CMD, stdin=PIPE, stdout=PIPE)
+        # You may wish to add encoding='ascii' to the TextIOWrapper constructor
+        # if your chatbot is not UTF-aware.
+        self._input = io.TextIOWrapper(self._chatbot_proc.stdin, line_buffering=True)
+        self._output = io.TextIOWrapper(self._chatbot_proc.stdout)
+
+    def close(self):
+        self._input.close()
+        self._output.close()
+        self._chatbot_proc.close()
+
+    def say(self, request):
+        assert '\n' not in request
+        self._input.write(request)
+        self._input.write('\n')
+        return self._output.readline().rstrip()
+
+def main():
+    chatbot = Chatbot()
+    try:
+        while True:
+            user_input = input()
+            print('sending:', repr(user_input))
+            chatbot_response = chatbot.say(user_input)
+            print('chatbot said:', repr(chatbot_response))
+    except Exception:
+        chatbot.close()
+        raise
+
+if __name__ == ""__main__"":
+    main()

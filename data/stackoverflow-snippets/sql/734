@@ -1,0 +1,21 @@
+SELECT a.emplid AS ""Student ID"",
+       a.acad_career AS ""Acad Career"",
+       ROW_NUMBER ()
+       OVER (PARTITION BY a.emplid, a.acad_career
+             ORDER BY a.emplid, a.acad_career)
+           AS ""Row"",
+       COALESCE (unt_passd_prgrss, 0) + COALESCE (unt_trnsfr, 0))
+           AS ""All Units""
+FROM   table_a a
+       LEFT JOIN
+       (SELECT emplid,
+               acad_career,
+               COALESCE (SUM (unt_passd_prgrss), 0) AS unt_passd_prgrss
+        FROM   ps_stf_gr_term_vw) i
+           ON a.emplid = i.emplid AND a.acad_career = i.acad_career
+       LEFT JOIN
+       (SELECT emplid,
+               acad_career,
+               COALESCE (SUM (unt_trnsfr), 0) AS unt_trnsfr
+        FROM   ps_stf_gr_trnsfr_v) j
+           ON a.emplid = j.emplid AND a.acad_career = j.acad_career

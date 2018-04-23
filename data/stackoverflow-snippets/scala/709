@@ -1,0 +1,34 @@
+val result = repeatSmokers
+  .map(recordTuple => Record.tupled(recordTuple))
+  .zipWithIndex
+  .groupBy { case (record, order) => (record.fname, record.lname, record.code) }
+  .flatMap {
+
+    case (_, List(singleRecord)) => Nil // get rid of non-repeat records
+
+    case (key, records) => {
+
+      val firstKeyIdx = records.head._2
+
+      val amounts = records.map {
+        case (record, order) => record.amount.toInt
+      }.foldLeft(List[Int]()) {
+        case (Nil, addAmount) => List(addAmount)
+        case (previousAmounts :+ lastAmount, addAmount) =>
+          previousAmounts :+ lastAmount :+ (lastAmount + addAmount)
+      }
+
+      records
+        .zip(amounts)
+        .zipWithIndex
+        .map {
+          case (((rec, order), amount), idx) =>
+            val serializedRecord =
+              List(rec.id, rec.code, rec.year, amount, idx + 1)
+            (serializedRecord.mkString("",""), (firstKeyIdx, idx))
+        }
+    }
+  }
+  .toList
+  .sortBy { case (serializedRecord, finalOrder) => finalOrder }
+  .map { case (serializedRecord, finalOrder) => serializedRecord }

@@ -1,0 +1,16 @@
+function Wait-RdsNativeBackupSuccess($server, $database, $user, $pwd)
+{
+    $startDate = Get-Date
+    $timeOutminutes = 45
+    $retryIntervalSeconds = 30
+
+    do {
+            $awsResponse = Invoke-Sqlcmd -ServerInstance $server -Database $database -Username $user -Password $pwd -Query ""exec msdb.dbo.rds_task_status @db_name='clarinet'"" -DisableCommands -AbortOnError
+            Write-Host $awsResponse.lifecycle $awsResponse.""% complete""
+
+            if($awsResponse.lifecycle -eq ""SUCCESS"") {break}
+            start-sleep -seconds $retryIntervalSeconds
+
+    } while ($startDate.AddMinutes($timeOutminutes) -gt (Get-Date))
+
+}

@@ -1,0 +1,44 @@
+import java.lang.management.ManagementFactory
+import java.text.NumberFormat
+
+object TestSize {
+
+  val N = 1000000
+  val formatter: NumberFormat = java.text.NumberFormat.getIntegerInstance
+
+  def twoParallelArrays(): Unit = {
+
+    val Z1 = Array.fill[Long](N)(42L)
+    val Z2 = Array.fill[Double](N)(42.0)
+    println(Z1)
+    println(Z2)
+    Z1(N-1) = 1
+    Z2(N-1) = 1.0D
+    println(Z2(N-1) - Z1(N-1))
+    val z1 = ManagementFactory.getMemoryMXBean.getHeapMemoryUsage.getUsed
+    val z2 = ManagementFactory.getMemoryMXBean.getNonHeapMemoryUsage.getUsed
+    Z1((new scala.util.Random).nextInt(N)) = 1234L
+    Z2((new scala.util.Random).nextInt(N)) = 345.0d
+    println(Z2(N-1) - Z1(N-1))
+    println(s""${formatter.format(z1)} ${formatter.format(z2)}"")
+  }
+
+  def arrayOfTuples(): Unit = {
+
+    val Z = Array.fill[(Long, Double)](N)((42L, 42.0d))
+    Z(N-1) = (1, 1.0D)
+    println(Z(N-1)._2 - Z(N-1)._1)
+    val z1 = ManagementFactory.getMemoryMXBean.getHeapMemoryUsage.getUsed
+    val z2 = ManagementFactory.getMemoryMXBean.getNonHeapMemoryUsage.getUsed
+    Z((new scala.util.Random).nextInt(N)) = (1234L, 543.0d)
+    println(Z(N-1)._2 - Z(N-1)._1)
+    println(s""${formatter.format(z1)} ${formatter.format(z2)}"")
+  }
+
+  def main(args: Array[String]): Unit = {
+
+    // Comment one or the other to look at the results
+    arrayOfTuples()
+    // twoParallelArrays()
+  }
+}

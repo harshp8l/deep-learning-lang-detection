@@ -1,0 +1,41 @@
+package main
+
+import (
+    ""errors""
+    ""fmt""
+    ""math/rand""
+    ""time""
+)
+
+func main() {
+    rand.Seed(time.Now().UnixNano())
+
+    // buffer the channel so the async go routines can exit right after sending
+    // their error
+    status := make(chan error, 2)
+
+    go func(c chan<- error) {
+        if rand.Intn(2) == 0 {
+            c <- errors.New(""func 1 error"")
+        } else {
+            fmt.Println(""func 1 done"")
+            c <- nil
+        }
+    }(status)
+
+    go func(c chan<- error) {
+        if rand.Intn(2) == 0 {
+            c <- errors.New(""func 2 error"")
+        } else {
+            fmt.Println(""func 2 done"")
+            c <- nil
+        }
+    }(status)
+
+    for i := 0; i < 2; i++ {
+        if err := <-status; err != nil {
+            fmt.Println(""error encountered:"", err)
+            break
+        }
+    }
+}

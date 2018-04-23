@@ -1,0 +1,31 @@
+@app.route('/my_f')
+def my_f():
+    # OPEN CONNECTION
+    cnx3 = pymysql.connect(***)
+
+    # Create Cursor
+    my_cursor = cnx3.cursor(dictionary=True)
+
+    sql = """"""SELECT f.id, f.rating, t.title, t.w_average, t.runtime, 
+                    t.vote_count, t.year
+             FROM tableau_data.title_data t
+             INNER JOIN webapp.favourites f on f.film_id = t.id 
+             WHERE f.username = %s""""""
+
+    my_cursor.execute(sql, (session['username'],))
+
+    ## Fetch all results into local list
+    results = my_cursor.fetchall()
+
+    # CLOSE CURSOR AND CONNECTION
+    my_cursor.close()
+    cnx3.close() 
+
+    if len(results) > 0:
+        flash('Data Found', 'success')    
+    else:
+        # Message if the sql query does not return a value
+        flash('Nothing Found', 'danger')
+        results = None
+
+    return render_template('my_f.html', results=results)

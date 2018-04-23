@@ -1,0 +1,43 @@
+Declare  @StartDate  DateTime  ='20180301' 
+Declare  @EndDate  DateTime    ='20180330' 
+
+DECLARE @NotVisitedPatients table ( idPatient Int  ,Sday INT , Vdate Date,Vday int ,WeekNumber INT )
+DECLARE @WeekNumber table ( Id Int identity (1,1) ,WeekNumber INT )
+
+INSERT INTO @WeekNumber
+SELECT  distinct
+DATEPART(Week ,V.[VDate])
+FROM [dbo].[tblVisits] V 
+inner  join [dbo].[tblScheduledOrder] S  on V.idPatient =  S.idPatient
+where V.[VDate] between @StartDate and @EndDate 
+
+declare @Total int = (select Max(Id) from  @WeekNumber)
+declare @count  int =1
+declare @week  int = 0 
+
+WHILE (@Total >= @count)
+BEGIN  
+set  @week =(select WeekNumber from @WeekNumber where  id =@count)
+print @week
+INSERT INTO @NotVisitedPatients
+           (idPatient
+           ,Sday
+           ,Vdate
+           ,Vday
+           ,WeekNumber)
+select distinct  S.idPatient ,S.Sday ,null,null, @week from tblScheduledOrder S
+where  S.idPatient  not in (select V.idPatient   from tblVisits V  
+where DATEPART(Week ,V.[VDate]) = @week)
+set @count =@count +1 
+END
+
+select  idPatient   ,Sday , Vdate,Vday  ,WeekNumber  from @NotVisitedPatients
+Union 
+SELECT  distinct S.idPatient
+       ,S.Sday  
+       ,V.[VDate]      
+      , DATEPART(DW ,V.[VDate]) As VDay    
+      , DATEPART(Week ,V.[VDate]) As WeekNumber
+  FROM [dbo].[tblVisits] V 
+  inner  join [dbo].[tblScheduledOrder] S  on V.idPatient =  S.idPatient
+where V.[VDate] between @StartDate and @EndDate 

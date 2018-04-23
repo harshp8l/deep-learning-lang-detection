@@ -1,0 +1,59 @@
+#include ""stack_iterator.hpp""
+
+void Stack::push(int x) {
+    auto newNode = std::make_unique<ListNode>();
+    newNode->content = x;
+    newNode->pNext = std::move(top);
+    top = std::move(newNode);
+}
+
+int Stack::pop() {
+    static constexpr int retvalOnEmpty = -17;
+
+    auto oldTop = std::move(top);
+    if (oldTop != nullptr) {
+        top = std::move(oldTop->pNext);
+        return oldTop->content;
+    }
+    return retvalOnEmpty;
+}
+
+// pre-increment operator
+Stack::const_iterator& Stack::const_iterator::operator++() {
+    pNode = pNode->pNext.get();
+    return *this;
+}
+
+// post-increment operator
+Stack::const_iterator Stack::const_iterator::operator++(int) {
+    auto ret_iterator = *this;
+    ++(*this);
+    return ret_iterator;
+}
+
+// dereference operator
+Stack::const_iterator::reference Stack::const_iterator::operator*() const {
+    return pNode->content;
+}
+
+// comparison operators
+bool Stack::const_iterator::operator==(const Stack::const_iterator& other) const {
+    return this->pNode == other.pNode;
+}
+
+bool Stack::const_iterator::operator!=(const Stack::const_iterator& other) const {
+    return this->pNode != other.pNode;
+}
+
+// semi-private constructor making an iterator pointing to a particular ListNode
+Stack::const_iterator::const_iterator(ListNode* i_node) :
+    pNode(i_node)
+{ }
+
+Stack::const_iterator Stack::begin() const {
+    return Stack::const_iterator{top.get()};
+}
+
+Stack::const_iterator Stack::end() const {
+    return Stack::const_iterator{nullptr};
+}

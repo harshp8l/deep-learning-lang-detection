@@ -1,0 +1,16 @@
+type MySafeHandle() = 
+    inherit SafeHandleZeroOrMinusOneIsInvalid(true)
+    static let freeHandle = ref Unchecked.defaultof<_>
+    static member internal SetFreeHandleRef value = freeHandle := value
+
+    override this.ReleaseHandle() =
+        !freeHandle base.handle            
+        true
+
+module NativeMethods = 
+    [<DllImport(""mylibrary.dll"")>]
+    extern void GetHandle([<Out>]MySafeHandle& handle)
+    [<DllImport(""mylibrary.dll"")>]
+    extern void FreeHandle(nativeint handle)
+
+    MySafeHandle.SetFreeHandleRef FreeHandle

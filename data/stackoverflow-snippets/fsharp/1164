@@ -1,0 +1,16 @@
+open System.Collections.Generic
+
+module Extension =
+    type EmptyDictionaryHolder<'T, 'U>() = 
+        static let value = new Dictionary<'T, 'U>(EqualityComparer<'T>.Default)
+        static member Value: IDictionary<'T, 'U> = value :> _
+
+    type IDictionary<'T,'U> with
+        static member EmptyDictionary = EmptyDictionaryHolder<'T, 'U>.Value
+
+        member this.Update (x: IDictionary<_,_>) =
+            for kvp in x do
+                this.[kvp.Key] <- kvp.Value
+            this
+
+        member this.Empty = Dictionary<'T,'U>.EmptyDictionary

@@ -1,0 +1,80 @@
+#include <windows.h>
+
+#include <iostream>
+#include <string>
+#include <queue>
+#include <thread>
+#include <mutex>
+#include <conditional_variable>
+
+std::queue<std::string> paths;
+std::mutex mtx;
+std::conditional_variable cv;
+bool done = false;
+
+void enumerate(const std::string &path)
+{
+    std::string searchPath = path;
+    if ((!searchPath.empty()) && (searchPath[searchPath.length()-1] != '\\'))
+        searchPath += '\\';
+
+    WIN32_FIND_DATA data;
+    HANDLE hFind = FindFirstFileA((searchPath + ""*"").c_str(), &data);
+    if (hFind != INVALID_HANDLE_VALUE)
+    {
+        do
+        {
+            if ((strcmp(data.cFileName, ""."") != 0) && (strcmp(data.cFileName, "".."") != 0))
+            {
+                string fullpath = searchPath + data.cFileName;
+
+                {
+                std::lock_guard<std::mutex> lock(mtx);
+                paths.push(fullpath);
+                cv.notify_one();
+                }
+
+                if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                    enumerate(fullpath);
+            }
+        }
+        while (FindNextFileA(hFind, &data));
+        FindClose(hFind);
+    }
+}
+
+void print_queue()
+{
+    std::unique_lock<std::mutex> lock(mtx);
+    while (true)
+    {
+        cv.wait(lock, [](){ return (!paths.empty()) || done; });
+        if (paths.empty())
+            return;
+
+        std::string rez = paths.front();
+        paths.pop();
+
+        std::cout << rez << std::endl;
+    }
+}
+
+int main()
+{
+    std::thread thread1(print_queue);
+    std::thread thread2(print_queue);
+    std::thread thread3(print_queue);
+    std::thread thread4(print_queue);
+
+    enumerate(""C:\\"");
+
+    done = true;
+    cv.notify_all();
+
+    thread1.join();
+    thread2.join();
+    thread3.join();
+    thread4.join();
+
+    return 0;
+}

@@ -1,0 +1,126 @@
+#include <Windows.h>
+#include <string>
+
+#define ID_TIMER    2000
+
+class WindowData
+{
+    int i1;
+    int i2;
+public:
+    WindowData() : i1{ 0 }, i2{ 0 } {}
+    void setValue(bool first = true) { first ? ++i1 : ++i2; }
+    int get(bool first = true) const { return first ? i1 : i2; }
+};
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCmdShow)
+{
+    WNDCLASSEX wcex = { 0 };
+
+    // Register the window class for the main window. 
+    wcex.cbSize = sizeof(WNDCLASSEX);
+    wcex.hbrBackground = ::GetSysColorBrush(COLOR_WINDOW);
+    wcex.hCursor = ::LoadCursor(NULL, IDC_ARROW);
+    wcex.hIcon = ::LoadIcon(NULL, IDI_APPLICATION);
+    wcex.hInstance = hInstance;
+    wcex.lpszClassName = ""StackOverflow Demo"";
+    wcex.style = CS_VREDRAW | CS_HREDRAW;
+    wcex.lpfnWndProc = [](HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) -> LRESULT {
+        WindowData *w;
+
+        switch (message)
+        {
+        case WM_CREATE:
+        {
+            LPCREATESTRUCT lpcs = reinterpret_cast<LPCREATESTRUCT>(lParam);
+            w = reinterpret_cast<WindowData *>(lpcs->lpCreateParams);
+            ::SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LPARAM>(w));
+        }
+        return 0;
+        case WM_TIMER:
+            if (wParam == ID_TIMER)
+            {   
+                w = reinterpret_cast<WindowData *>(::GetWindowLongPtr(hwnd, GWLP_USERDATA));
+
+                SYSTEMTIME s;
+                ::GetSystemTime(&s);
+
+                // if s.wSecond is odd number ++ first, else ++ second 
+                (s.wSecond & 1) ? w->setValue() : w->setValue(false);
+
+                ::InvalidateRect(hwnd, NULL, TRUE); // redraw window
+
+                return 0;
+            }
+            return ::DefWindowProc(hwnd, message, wParam, lParam);
+        case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = ::BeginPaint(hwnd, &ps);
+
+            w = reinterpret_cast<WindowData *>(::GetWindowLongPtr(hwnd, GWLP_USERDATA));
+
+            std::string text(""board : "");
+            text += std::to_string(w->get()) + "" x "";
+            text += std::to_string(w->get(false));
+
+            RECT rc = { 0 }; 
+
+            ::DrawText(hdc, text.c_str(), -1, &rc, DT_CENTER | DT_CALCRECT | DT_VCENTER | DT_SINGLELINE );
+
+            // your left and top coordinates were 250, right and bottom are calculated in previous DrawText call
+            rc.left = 250;
+            rc.top = 250;
+
+            ::SetTextColor(hdc, RGB(255, 0, 0));
+            ::SetBkColor(hdc, RGB(0, 0, 255));  // just to see the outcome of the DrawText calculation
+            ::DrawText(hdc, text.c_str(), -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+
+            ::EndPaint(hwnd, &ps);
+        }
+        return 0;
+        case WM_NCDESTROY:
+            ::KillTimer(hwnd, ID_TIMER);
+            ::PostQuitMessage(0);
+            return ::DefWindowProc(hwnd, message, wParam, lParam);
+        default:
+            return ::DefWindowProc(hwnd, message, wParam, lParam);
+        }
+    };
+
+    if (!::RegisterClassEx(&wcex))
+    {
+        return ::GetLastError();
+    }
+
+    WindowData w;
+
+    HWND h = ::CreateWindowEx(0, wcex.lpszClassName, ""SO Demo"", WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, 
+        hInstance, reinterpret_cast<LPVOID>(&w));
+
+    if (NULL == h)
+    {
+        return ::GetLastError();
+    }
+
+    // we shall update variables in a test class inside a timer, to make simulation easy
+    UINT elapsed_time = 3000; // timer will fire on every 3 seconds...
+    if (!::SetTimer(h, ID_TIMER, elapsed_time, NULL))
+    {
+        ::DestroyWindow(h);
+        return -1;
+    }
+
+    ::ShowWindow(h, nCmdShow);
+    ::UpdateWindow(h);
+
+    MSG msg;
+    while (::GetMessage(&msg, NULL, 0, 0) > 0)
+    {
+        ::TranslateMessage(&msg);
+        ::DispatchMessage(&msg);
+    }
+
+    return msg.wParam;
+}

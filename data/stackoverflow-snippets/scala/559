@@ -1,0 +1,24 @@
+val writerForText = new ForeachWriter[Row] {
+    var fileWriter: FileWriter = _
+
+    override def process(value: Row): Unit = {
+      fileWriter.append(value.toSeq.mkString("",""))
+    }
+
+    override def close(errorOrNull: Throwable): Unit = {
+      fileWriter.close()
+    }
+
+    override def open(partitionId: Long, version: Long): Boolean = {
+      FileUtils.forceMkdir(new File(s""src/test/resources/${partitionId}""))
+      fileWriter = new FileWriter(new File(s""src/test/resources/${partitionId}/temp""))
+      true
+
+    }
+  }
+
+val query = sessionUpdates
+  .writeStream
+  .outputMode(""update"")
+  .foreach(writerForText)
+  .start()

@@ -1,0 +1,20 @@
+$previous_items = json_decode($cart['items'], true);
+if (!$previous_items) {
+      $previous_items = array();
+}
+$items_by_unique = array();
+foreach (array_merge($item, $previous_items) as $item) {
+    if (!isset($item['id'], $item['size'], $item['quantity'])) {
+      throw new RuntimeException('Found a invalid invalid data: ' . json_encode($item));
+    }
+    $unique = $item['id'] . '-' . $item['size'];
+    if (isset($items_by_unique[$unique])) {
+      $old_item = $items_by_unique[$unique];
+      $item['quantity'] = $old_item['quantity'];
+    }
+    if ($item['quantity'] > $available) {
+      $item['quantity'] = $available;
+    }
+    $items_by_unique[$unique] = $item;
+}
+$items_json = json_encode(array_values($items_by_unique));

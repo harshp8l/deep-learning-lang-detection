@@ -1,0 +1,18 @@
+val w = Window.orderBy($""date"")
+val tempDf = df.withColumn(""diff"", datediff(lead($""date"", 1).over(w), $""date""))
+  .filter($""diff"" > 1) // Pick date diff more than one day to generate our date
+  .withColumn(""next_dates"", fill_dates($""date"", $""diff""))
+  .withColumn(""quantity"", lit(""0""))
+  .withColumn(""date"", explode($""next_dates""))
+  .withColumn(""date"", $""date"".cast(TimestampType))
+
+tempDf.show(false)
++-------------------+--------+----+------------------------+
+|date               |quantity|diff|next_dates              |
++-------------------+--------+----+------------------------+
+|2016-09-12 00:00:00|0       |3   |[2016-09-12, 2016-09-13]|
+|2016-09-13 00:00:00|0       |3   |[2016-09-12, 2016-09-13]|
+|2016-09-15 00:00:00|0       |2   |[2016-09-15]            |
+|2016-09-18 00:00:00|0       |3   |[2016-09-18, 2016-09-19]|
+|2016-09-19 00:00:00|0       |3   |[2016-09-18, 2016-09-19]|
++-------------------+--------+----+------------------------+

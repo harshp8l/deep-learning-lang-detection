@@ -1,0 +1,43 @@
+import json
+
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
+
+html = None
+url = 'http://demo-tableau.bitballoon.com/'
+selector = '#dataTarget > div'
+delay = 10  # seconds
+
+browser = webdriver.Chrome()
+browser.get(url)
+
+try:
+    # wait for button to be enabled
+    WebDriverWait(browser, delay).until(
+        EC.element_to_be_clickable((By.ID, 'getData'))
+    )
+    button = browser.find_element_by_id('getData')
+    button.click()
+
+    # wait for data to be loaded
+    WebDriverWait(browser, delay).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+    )
+except TimeoutException:
+    print('Loading took too much time!')
+else:
+    html = browser.page_source
+finally:
+    browser.quit()
+
+if html:
+    soup = BeautifulSoup(html, 'lxml')
+    raw_data = soup.select_one(selector).text
+    data = json.loads(raw_data)
+
+    import pprint
+    pprint.pprint(data)

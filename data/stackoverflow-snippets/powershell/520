@@ -1,0 +1,26 @@
+Param(
+    [Parameter(Mandatory = $True, Position = 0, ValueFromPipeline = $True)]
+    [String]
+    $PrinterName
+)
+$local:ErrorActionPreference = [System.Management.Automation.ActionPreference]::SilentlyContinue
+
+$Printer = Get-WmiObject -Class Win32_Printer -Filter ""Name='$PrinterName'""
+$Port = Get-WmiObject -Class Win32_TcpIpPrinterPort -Filter ""Name='$($Printer.PortName)'"" -EnableAllPrivileges
+
+Write-Host $Printer.PortName
+Write-Host $Port
+
+If (-not $Printer) { Return }
+$Printer.Delete()
+Do
+{
+    Start-Sleep -Seconds 2
+} While (Get-WmiObject -Class Win32_Printer -Filter ""Name='$PrinterName'"")
+
+If (-not $Port) { Return }
+$Port.Delete()
+Do
+{
+    Start-Sleep -Seconds 2
+} While (Get-WmiObject -Class Win32_TcpIpPrinterPort -Filter ""Name='$($Printer.PortName)'"" -EnableAllPrivileges)

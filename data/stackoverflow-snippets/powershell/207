@@ -1,0 +1,17 @@
+function CreateMonitor
+{    
+    [cmdletbinding()]
+    Param(
+        $folder = 'C:\Users\...\Monitored Folder\',
+        $filter = '*.*'
+    )
+
+    $fsw = New-Object IO.FileSystemWatcher $folder, $filter -Property @{IncludeSubdirectories = $false;NotifyFilter = [IO.NotifyFilters]'FileName, LastWrite'} 
+
+    Register-ObjectEvent $fsw Created -SourceIdentifier FileCreated -Action { 
+    $name = $Event.SourceEventArgs.Name 
+    $changeType = $Event.SourceEventArgs.ChangeType 
+    $timeStamp = $Event.TimeGenerated 
+    Write-Verbose ""The file '$name' was $changeType at $timeStamp"" -fore green 
+    Out-File -FilePath C:\Users\...\outlog.txt -Append -InputObject ""The file '$name' was $changeType at $timeStamp""}                 
+}

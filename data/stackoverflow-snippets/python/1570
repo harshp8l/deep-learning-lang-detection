@@ -1,0 +1,26 @@
+try:
+
+    # Python 3
+    from tokenize import open as open_with_encoding_check
+
+except ImportError:
+
+    # Python 2
+    from lib2to3.pgen2.tokenize import detect_encoding
+    import io
+
+
+    def open_with_encoding_check(filename):
+        """"""Open a file in read only mode using the encoding detected by
+        detect_encoding().
+        """"""
+        fp = io.open(filename, 'rb')
+        try:
+            encoding, lines = detect_encoding(fp.readline)
+            fp.seek(0)
+            text = io.TextIOWrapper(fp, encoding, line_buffering=True)
+            text.mode = 'r'
+            return text
+        except:
+            fp.close()
+            raise

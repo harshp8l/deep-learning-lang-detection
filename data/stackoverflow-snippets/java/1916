@@ -1,0 +1,46 @@
+import javax.net.ssl.*;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyStore;
+
+public SSLContext getSSLContext() throws Exception
+{
+    return createSSLContext(loadKeyStore(serverKeystore,keyStorePassword),
+            loadKeyStore(serverTruststore,trustStorePassword));
+
+}
+
+
+private SSLContext createSSLContext(final KeyStore keyStore,
+                                    final KeyStore trustStore) throws Exception {
+
+    KeyManager[] keyManagers;
+    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+    keyManagerFactory.init(keyStore, keyStorePassword.toCharArray());
+    keyManagers = keyManagerFactory.getKeyManagers();
+
+    TrustManager[] trustManagers;
+    TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+    trustManagerFactory.init(trustStore);
+    trustManagers = trustManagerFactory.getTrustManagers();
+
+    SSLContext sslContext;
+    sslContext = SSLContext.getInstance(""TLS"");
+    sslContext.init(keyManagers, trustManagers, null);
+
+    return sslContext;
+}
+
+
+private static KeyStore loadKeyStore(final String storeLoc, final String storePw) throws Exception {
+    InputStream stream = Files.newInputStream(Paths.get(storeLoc));
+    if(stream == null) {
+        throw new IllegalArgumentException(""Could not load keystore"");
+    }
+    try(InputStream is = stream) {
+        KeyStore loadedKeystore = KeyStore.getInstance(""JKS"");
+        loadedKeystore.load(is, storePw.toCharArray());
+        return loadedKeystore;
+    }
+}

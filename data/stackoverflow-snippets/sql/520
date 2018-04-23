@@ -1,0 +1,27 @@
+ alter function dbo.HinkyBase26( @Value as varchar(250) ) returns VarChar(250) as
+  begin
+
+
+ --declare @Value as varchar(50) = '13,14,1,2,5,14'
+  -- Notes: 'A' = 0.  Negative numbers are not handled.
+  declare @Result as VarChar(250) = '';
+
+ declare @stringsplit table (numbers nvarchar(50),Letters varchar(1))
+
+insert into @stringsplit(numbers,Letters)
+  select numbers = @Value ,CHAR(64 + value) as Letters from string_split(@Value,',')
+
+  select @Result = Letter from (
+  select numbers,Letter = STUFF((Select  ', ' + Letters
+  from @stringsplit b
+  where b.numbers = a.numbers 
+  FOR XML PATH('')),1,2,'')
+  from @stringsplit a
+  group by numbers
+  )z
+
+
+
+  return @Result
+
+end

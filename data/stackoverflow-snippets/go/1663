@@ -1,0 +1,29 @@
+package main
+
+import ""fmt""
+import ""strconv""
+
+func main() {
+    a := make(chan string)
+    b := make(chan string)
+
+    go func() {
+        for i := 0; i < 2; i++ {
+            go func(i int) {
+                fmt.Println(<-a)
+                b <- strconv.Itoa(i) + ""b"" // replace
+                a <- strconv.Itoa(i) + ""a"" // replace
+            }(i)
+        }
+    }()
+
+    // regardless of which comes in first, this will handle it 
+    select {
+    case ain <- a:
+        fmt.Println(""sent a"", ain)
+    case bin <- b:
+        fmt.Println(""sent b"", bin)
+    case <- cancel:
+        break
+    }
+}

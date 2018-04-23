@@ -1,0 +1,41 @@
+// Add your custom action buttons
+add_filter( 'woocommerce_admin_order_actions', 'add_custom_print_actions_buttons', 100, 2 );
+function add_custom_print_actions_buttons( $actions, $order ) {
+    $opts = get_option('xc_woo_cloud_print_options', array());
+
+    //if (isset($opts['printer']) && $opts['printer'] != """") {
+        $domain = 'woocommerce-pdf-invoices-packing-slips';
+
+        $slugs_label_names = array(
+            'invoice'       => __('Invoice', $domain ),
+            'packing-slip'  => __('Packing Slip', $domain )
+        );
+
+        // Set the action button
+        foreach ( $slugs_label_names as $slug => $label_name ) {
+            $actions[$slug] = array(
+                'url'       => wp_nonce_url( admin_url( ""admin-ajax.php?action=xc_woo_printer_job&document_type={$slug}&order_id="" . $order->get_id()), 'xc_woo_printer_job'),
+                'name'      => $label_name,
+                'action'    => $slug,
+            );
+        }
+    //}
+
+    return $actions;
+}
+
+// Set Here the WooCommerce icon for your action button
+// Available Icons: https://rawgit.com/woothemes/woocommerce-icons/master/demo.html
+add_action( 'admin_head', 'add_custom_print_actions_buttons_css' );
+function add_custom_print_actions_buttons_css() {
+    $slug_icons = array(
+        'invoice'       => '\f497', // '\e02b',
+        'packing-slip'  => '\f491', // '\e028',
+    );
+    echo '<style>';
+
+    foreach ( $slug_icons as $slug => $icon_code )
+        echo '.wc-action-button-'.$slug.'::after { font-family: dashicons !important; content: ""'.$icon_code.'"" !important; font-size:1.4em !important; margin-top: -4px !important; }';
+
+    echo '</style>';
+}

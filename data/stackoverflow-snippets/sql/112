@@ -1,0 +1,13 @@
+DECLARE @command varchar(1000) 
+DECLARE @SearchWord VARCHAR(20) = 'Text'
+CREATE TABLE #Search (DatabaseName VARCHAR(255),SchemaName VARCHAR(50),ObjectName VARCHAR(255),ObjectType VARCHAR(50))
+
+SET @command = 'USE ? INSERT INTO #Search
+                    SELECT DB_NAME(), SCHEMA_NAME(t.schema_id),t.[name] TableName, ''Table'' FROM sys.columns c INNER JOIN sys.tables t on t.object_id = c.object_id WHERE t.[type] = ''U'' AND c.[name] LIKE ' + '''%' + @SearchWord + '%'''
+EXEC sp_MSforeachdb @command;
+
+SET @command = 'USE ? INSERT INTO #Search
+                SELECT DISTINCT DB_Name(),s.name AS Schema_Name, o.name AS Object_Name, o.type_desc FROM sys.sql_modules m INNER JOIN sys.objects o ON m.object_id = o.object_id INNER JOIN sys.schemas s ON o.schema_id = s.schema_id WHERE m.definition Like ''%' + @SearchWord + '%'''
+EXEC sp_MSforeachdb @command 
+SELECT * FROM #Search;
+DROP TABLE #Search

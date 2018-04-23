@@ -1,0 +1,19 @@
+X=tf.random_uniform(shape=(256,256,3),minval=0,maxval=100,dtype=tf.float32,seed=None,name=None)
+
+input2d = tf.reshape(X, [-1,256,256,3])
+print(input2d.shape)
+
+dilation_rate=2
+
+in_channels=3
+out_channels=32
+kernelsize_h=4
+kernelsize_w=4
+
+filter = tf.get_variable(""filter"", [kernelsize_h, kernelsize_w, in_channels, out_channels], dtype=tf.float32,  initializer=tf.random_normal_initializer(0, 0.02))
+output=tf.nn.atrous_conv2d(input2d, filter, rate=dilation_rate, padding=""SAME"")
+print(output.shape)
+filterBack = tf.get_variable(""filterBack"", [kernelsize_h, kernelsize_w, in_channels,out_channels], dtype=tf.float32, initializer=tf.random_normal_initializer(0, 0.02))
+output_shape=[1,256,256,3]
+reversed=tf.nn.atrous_conv2d_transpose(output,filterBack,output_shape,rate=dilation_rate,padding=""SAME"")
+print(reversed.shape)

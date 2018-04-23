@@ -1,0 +1,24 @@
+  import spark.implicits._
+
+
+  val data = spark.sparkContext.parallelize(Seq(
+    (1, ""aaa""), (1, ""bbb""),
+    (1, ""ccc""), (1, ""aaa""),
+    (1, ""aaa""), (1, ""aaa""),
+    (2, ""eee""), (2, ""eee""),
+    (2, ""ggg""), (2, ""hhh""),
+    (2, ""iii""), (3, ""222""),
+    (3, ""333""), (3, ""222"")
+  )).toDF(""a"", ""b"")
+
+  //calculating the count for coulmn a
+  val countDF = data.groupBy($""a"").agg(count(""a"").as(""col_a cnt""))
+
+  val distinctDF = data.groupBy($""a"", $""b"").count()
+    .groupBy(""a"").agg(max(struct(""count"",""b"")).as(""max""))
+  //calculating and selecting the most distinct value 
+    .select($""a"", $""max.b"".as(""most_distinct_value""))
+  //joining both dataframe to get final result
+    .join(countDF, Seq(""a""))
+
+  distinctDF.show()

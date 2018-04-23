@@ -1,0 +1,16 @@
+function Get-ResearchGroup {
+    param (
+        [string[]]$Identity
+    )
+    foreach ($ID in $Identity) {
+        $User = Get-ADUser $ID -Properties MemberOf
+        $ResearchGroupsDN = $User.MemberOf | Where-Object {$_ -like 'CN=ResG*'}
+        foreach ($ResearchGroupDN in $ResearchGroupsDN) {
+            $ResearchGroupObject = Get-ADGroup $ResearchGroupDN
+            [PSCustomObject]@{
+                'Name' = $User.Name
+                'MemberOf' = $ResearchGroupObject.Name -replace 'ResG',''
+            }
+        }
+    }
+}

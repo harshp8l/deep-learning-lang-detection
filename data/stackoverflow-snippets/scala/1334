@@ -1,0 +1,47 @@
+import spray.json.DefaultJsonProtocol._
+import spray.json._
+
+case class ClassDetails(sec: String, teacher: String)
+object ClassDetails {
+  implicit val format: RootJsonFormat[ClassDetails] = jsonFormat2(ClassDetails.apply)
+}
+
+case class School(name: String)
+object School {
+  implicit val format: RootJsonFormat[School] = jsonFormat1(School.apply)
+}
+
+case class ClassInfo
+(
+  id: String,
+  classDetails: ClassDetails,
+  school: School
+)
+
+object ClassInfo {
+  implicit object ClassInfoFormat extends RootJsonFormat[ClassInfo] {
+    def write(c: ClassInfo): JsValue = JsObject(
+      ""id"" -> JsString(c.id),
+      ""classDetails"" -> c.classDetails.toJson,
+      ""school"" -> c.school.toJson
+    )
+    def read(value: JsValue): ClassInfo = {
+      value.asJsObject.getFields(""id"", ""classDetails"", ""school"") match {
+        case Seq(JsString(name), details, school) =>
+          new ClassInfo(name, details.convertTo[ClassDetails], school.convertTo[School])
+        case _ => throw new DeserializationException(""ClassInfo expected"")
+      }
+    }
+  }
+}
+
+val json = """"""[{""id"":""my-id"",""classDetails"":{""sec"":""2"",""teacher"":""John""},""school"":{""name"":""newschool""}}]""""""
+// JSON string to case classes
+val classInfos = json.parseJson.convertTo[Seq[ClassInfo]]
+classInfos.zipWithIndex.foreach { case (c, idx) =>
+  println(s""$idx => $c"")
+}
+println
+// Seq[ClassInfo] to JSON
+println(s""$classInfos: "")
+println(classInfos.toJson.prettyPrint)

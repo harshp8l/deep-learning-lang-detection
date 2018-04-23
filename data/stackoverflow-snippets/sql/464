@@ -1,0 +1,13 @@
+SELECT
+  gu.user_id,
+  a.* -- full answer row
+FROM `groups_users` gu
+JOIN `users` u ON u.id = gu.user_id
+LEFT JOIN `answers` a ON a.created_by = gu.user_id
+LEFT JOIN `answer_plannedday` ap ON ap.answer_id = a.id
+LEFT JOIN `plannedday` p ON p.id = ap.planned_day_id
+WHERE gu.group_id = 213
+  AND u.type = 'student'  
+  AND STR_TO_DATE(CONCAT(p.year, '-', p.month, '-', p.day), '%Y-%m-%d') BETWEEN STR_TO_DATE('2016-12-01', '%Y-%m-%d') AND STR_TO_DATE('2018-04-13', '%Y-%m-%d')
+  -- you say here that you want to get only these rows
+  AND a.deleted_at IS NULL AND a.completed_at IS NULL AND a.checked_at IS NULL

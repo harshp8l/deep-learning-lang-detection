@@ -1,0 +1,36 @@
+import numpy as np
+
+np.random.seed(444)
+
+def loop(b):
+    # Could also use for (i, j), val in np.ndenumerate(b)
+    p = np.zeros_like(b)
+    for i in range(0, n):
+        for j in range(0, m):
+            r = b[i, j]
+            p[i, j] = ((b[:, j] > r).sum())
+    return p / n
+
+def noloop(b):
+    n = b.shape[0]
+    return np.sum(b > b[:, None], axis=-2) / n
+
+n = 10
+m = 2
+b = np.random.rand(n, m)
+
+assert np.allclose(loop(b), noloop(b))
+# True
+
+n = 1000
+m = 200
+b = np.random.rand(n, m)
+
+%timeit loop(b)
+# 1.59 s ± 50.8 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
+%timeit -r 7 -n 1 noloop(b)
+# 443 ms ± 18.3 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
+assert np.allclose(loop(b), noloop(b))
+# True

@@ -1,0 +1,33 @@
+let feb_month_days year =
+    if ((year % 4 = 0) && ((year % 100 <> 0) || (year % 400 = 0))) then 29
+    else 28
+
+let year_days year =
+    if ((year % 4 = 0) && ((year % 100 <> 0) || (year % 400 = 0))) then 366
+    else 365
+
+let rec month_length (month : int) (year : int) : int =
+    match month with
+    | 0 -> failwith ""Wrong month""
+    | _ when month > 12 -> failwith ""Wrong month'""
+    | 1 -> 31
+    | 2 -> month_length (month - 1) year + (feb_month_days year)
+    | 4 | 6 | 9 | 11 -> 30 + month_length (month - 1) year 
+    | n -> 31 + month_length (n - 1) year 
+
+let data_to_day (day : int) (month : int) (year : int) : int =
+    if month = 1 then
+        day
+    else
+        day + month_length (month - 1) year
+
+let data_difference (day1 : int) (month1 : int) (year1 : int) (day2 : int) (month2 : int) (year2 : int) : int =
+    let dy = year1 - year2
+    let range_year_1 = year1 - 1
+    let range_year_2 = year2 + 1
+    let year2_days = (year_days year2) - (data_to_day day2 month2 year2)
+    let year1_days = data_to_day day1 month1 year1
+    let between_year_days = seq {for y in range_year_2..range_year_1 do yield year_days y} |> Seq.sum
+    year2_days + year1_days + between_year_days
+
+printfn ""%A"" (data_difference 01 01 2005 01 01 2001) // gives back 1461

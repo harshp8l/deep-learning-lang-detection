@@ -1,0 +1,33 @@
+############# CODE BEGINS #############
+
+# Use variables instead of hardcoding file paths. Easier to update
+$Path            = ""\\corp\dfs\Transfer\GAB\*DAY2FileOUT""
+$formattedFile   = ""\\corp\dfs\Transfer\GAB\DAY2FileOUT.xml""
+
+# $x - no need to create a variable you're only going to use once.
+# Get-ChildItem already has a Count property - Measure-Object is redundant
+if((Get-ChildItem $Path).Count -ne 1){
+    Get-ChildItem $Path -Verbose
+    Exit 8
+}
+
+# avoid $input - see further explanation
+$xmlContent = Get-Content $Path
+$xmlPart    = [xml] ($xmlContent[1..($xmlContent.count - 2)])
+
+# Thanks to TechSpud.
+$xmlString = New-Object System.IO.StringWriter
+$writer    = New-Object System.Xml.XmlTextwriter($xmlString)
+$writer.Formatting = [System.XML.Formatting]::Indented     # see further explanation
+
+# Save to variable instead of file
+$xmlPart.WriteTo($writer)
+
+# Put the pieces together and export the file in one go.
+# .. means you are specifying a range. not required if you only want 1 element
+# -1 automatically returns the last entry
+$xmlContent[0] + ""`n"" + $xmlString.ToString() + ""`n"" + $xmlContent[-1] |
+   Out-File $formattedFile -Encoding ascii
+
+Exit 0
+############## CODE ENDS ##############

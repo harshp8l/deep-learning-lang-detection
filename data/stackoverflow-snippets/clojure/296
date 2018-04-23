@@ -1,0 +1,35 @@
+(require '[clojure.xml :as xml]
+         '[clojure.walk :as walk])
+
+(def xmlstr
+""<ROOT>
+  <Items>
+    <Item><Type>A</Type><Note>AA</Note></Item>
+    <Item><Type>B</Type><Note>BB</Note></Item>
+    <Item><Type>C</Type><Note>CC</Note></Item>
+    <Item><Type>A</Type><Note>AA</Note></Item>
+  </Items>
+</ROOT>"")
+
+(def xmldoc (xml/parse (java.io.ByteArrayInputStream. (.getBytes xmlstr))))
+
+(defn tag-matches [item tag]
+  (= (:tag item) tag))
+
+(defn content-matches [item to-match]
+  ((into #{} to-match)
+   (apply str (:content item))))
+
+(defn match-criteria [item to-match]
+  (some #(and (tag-matches % :Type)
+              (content-matches % to-match))
+        (:content item)))
+
+(defn mk-xml-walker [& to-remove]
+  (fn [form]
+    (if (and (vector? form)
+             (some #(tag-matches % :Item) form))
+      (filter (complement #(match-criteria % to-remove)) form)
+      form)))
+
+(xml/emit (walk/postwalk (mk-xml-walker ""B"" ""C"") xmldoc))

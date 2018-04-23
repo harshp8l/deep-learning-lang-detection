@@ -1,0 +1,30 @@
+<#  
+.SYNOPSIS
+Adds a new Out-Default command wrapper to store up to 500 elements from
+the previous command. This wrapper stores output in the $ll variable.
+#>
+
+Set-StrictMode -Version 3
+
+New-CommandWrapper Out-Default `
+-Begin {
+    $cachedOutput = New-Object System.Collections.ArrayList
+} `
+-Process {
+    if($_ -ne $null) { $null = $cachedOutput.Add($_) }
+    while($cachedOutput.Count -gt 500) { $cachedOutput.RemoveAt(0) }
+} `
+-End {
+    $uniqueOutput = $cachedOutput | Foreach-Object {
+        $_.GetType().FullName } | Select -Unique
+
+    $containsInterestingTypes = ($uniqueOutput -notcontains `
+    ""System.Management.Automation.ErrorRecord"") -and
+    ($uniqueOutput -notlike `
+    ""Microsoft.PowerShell.Commands.Internal.Format.*"")
+
+    if(($cachedOutput.Count -gt 0) -and $containsInterestingTypes)
+    {
+        $GLOBAL:ll = $cachedOutput | % { $_ }
+    }
+}

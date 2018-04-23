@@ -1,0 +1,24 @@
+CREATE OR REPLACE TRIGGER myschema.BILLING_SUMMARY_CHARGE_TRG
+   BEFORE INSERT OR UPDATE
+   ON myschema.billing_summary_charge
+   REFERENCING NEW AS new OLD AS old
+   FOR EACH ROW
+BEGIN
+   :new.modified_dt   := SYSDATE;
+   :new.modified_by   := USER;
+
+   IF INSERTING
+   THEN
+      :new.i_charge_pk   := billing_summary_charge_seq_pk.NEXTVAL;
+      :new.created_dt    := :new.modified_dt;
+      :new.created_by    := :new.modified_by;
+   END IF;
+
+   -- Don't allow creation columns to change on an update
+   IF UPDATING
+   THEN
+      :new.i_charge_pk   := :old.i_charge_pk;
+      :new.created_dt    := :old.created_dt;
+      :new.created_by    := :old.created_by;
+   END IF;
+END billing_summary_charge_trg;

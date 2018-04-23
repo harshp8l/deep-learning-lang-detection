@@ -1,0 +1,21 @@
+--open transaction
+BEGIN;
+
+--avoid concurrent writes
+LOCK old_table IN ROW SHARE MODE;
+LOCK new_table IN ROW SHARE MODE;
+
+--create a sequence to populate new_table.id
+CREATE SEQUENCE new_table_seq;
+
+--using a writable cte to do the dirty job
+WITH old_table_cte AS (
+    UPDATE old_table SET new_id = nextval('new_table_seq') RETURNING *
+)
+INSERT INTO new_table SELECT new_id, name FROM old_table_cte;
+
+--Create a proper FK
+ALTER TABLE old_table ADD CONSTRAINT old_table_new_table_fk FOREIGN KEY (new_id) REFERENCES new_table (id);
+
+--end transaction
+COMMIT;

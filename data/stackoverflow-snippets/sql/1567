@@ -1,0 +1,19 @@
+declare @myTable as TABLE   (Customer varchar(50), Month int, Amount int);
+INSERT INTO @myTable(Customer, Month, Amount)
+VALUES
+    ('Tom', 1, 10),
+    ('Kate', 1, 60),
+    ('Ali', 1, 70),
+    ('Tom', 2, 50),
+    ('Kate', 2, 40),
+    ('Tom', 3, 80),
+    ('Ali', 3, 20),
+    ('Jack', 3, 90);
+
+    SELECT c.Customer,sv.number AS Month ,SUM(CASE WHEN t.Month<=sv.number THEN t.Amount ELSE 0 END ) AS Amount
+    FROM master.dbo.spt_values AS sv 
+    INNER JOIN (SELECT DISTINCT Customer FROM @myTable) AS c ON 1=1
+    LEFT JOIN @myTable AS t ON t.Customer=c.Customer
+    WHERE sv.type='P' AND sv.number BETWEEN 1 AND MONTH(GETDATE())
+    GROUP BY sv.number,c.Customer
+    ORDER BY c.Customer,sv.number

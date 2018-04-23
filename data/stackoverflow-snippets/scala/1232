@@ -1,0 +1,29 @@
+// instead of a simple list of regular expressions, make this a list of Tuples of (regex, builder),
+// where the builder is a function from the matched groups (List[String]) to the desired result (String)
+val ptrn = List(
+  (
+    """"""/foo/bar/find/(apple|orange)/(\w+)$"""""".r, 
+    (groups: List[String]) => s""/foo/bar/${groups.head}/{id}""
+  ),
+  (
+    """"""/foo/bar/(fruit|vegetable)/(banana|carrot)/(\w+)$"""""".r, 
+    (groups: List[String]) => s""/foo/bar/${groups.head}/${groups(1)}/{ref}""
+  ),
+  (
+    """"""/foo/bar/(volume|size)/(\d+)/(\d+)/(\d+)$"""""".r, 
+    (groups: List[String]) => s""/foo/bar/${groups.head}/${groups(1).toInt * groups(2).toInt * groups(3).toInt})""
+  )
+)
+
+// for some input:
+val str = ""/foo/bar/fruit/banana/split""
+
+// First, flatMap to tuples of (Regex.Match, builder) - 
+// the flatMap will ""filter out"" the ons that didn't match because None results would be lost 
+val res = ptrn.flatMap {
+  case (reg, builder) => reg.findFirstMatchIn(str).map(m => (m, builder))
+}.headOption.map { // then, take the first match and apply the builders to the matched groups
+  case (m, builder) => builder.apply(m.subgroups)
+}.getOrElse(str)   // if no match found, use the original String
+
+println(res) // prints /foo/bar/fruit/banana/{ref} 

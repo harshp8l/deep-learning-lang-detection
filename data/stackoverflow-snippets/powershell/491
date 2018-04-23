@@ -1,0 +1,16 @@
+& {
+  # Create a sample file with 100K lines.
+  1..1e5 > ($tmpFile = [IO.Path]::GetTempFileName())
+
+  (Measure-Command { switch -file ($tmpFile) { default { $_ } } }).TotalSeconds
+  (Measure-Command { 
+    $sr = [IO.StreamReader] (Convert-Path $tmpFile)
+    while(-not $sr.EndOfStream) { $sr.ReadLine() }
+    $sr.Close() 
+  }).TotalSeconds
+  (Measure-Command { [IO.File]::ReadAllLines((Convert-Path $tmpFile)).ForEach({ $_ }) }).TotalSeconds
+  (Measure-Command { [IO.File]::ReadAllLines((Convert-Path $tmpFile)) | % { $_ } }).TotalSeconds
+  (Measure-Command { Get-Content $tmpFile | % { $_ }  }).TotalSeconds
+
+  Remove-Item $tmpFile
+}

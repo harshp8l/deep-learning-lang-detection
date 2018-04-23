@@ -1,0 +1,9 @@
+SELECT  raw_times.*, efforts.id as effort_id, efforts.event_id as event_id, splits.id as split_id 
+FROM raw_times 
+INNER JOIN event_groups ON event_groups.id = raw_times.event_group_id 
+INNER JOIN events ON events.event_group_id = event_groups.id 
+LEFT JOIN efforts ON efforts.event_id = events.id 
+INNER JOIN aid_stations ON aid_stations.event_id = events.id 
+LEFT JOIN splits ON splits.id = aid_stations.split_id 
+WHERE (efforts.bib_number::text = raw_times.bib_number OR efforts.event_id IS NULL)
+    AND (splits.parameterized_base_name = raw_times.parameterized_split_name OR splits.id IS NULL)

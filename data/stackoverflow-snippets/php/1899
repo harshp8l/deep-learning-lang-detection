@@ -1,0 +1,75 @@
+/**
+ * Display list data after single product
+ */
+function display_list_after_single_product() {
+    $product_data = get_product_data();
+
+    ?>
+    <div class=""fs-product-data-wrapper"">
+    <?php
+        if ( isset( $product_data['price'] ) ) {
+            ?>
+            <ul>
+            <?php
+                ?>
+                <li class=""fs-data-price""><?php echo $product_data['price'] ?></li>
+                <li class=""fs-data-size""><?php echo $product_data['size'] ?></li>
+                <li class=""fs-data-sale""><?php echo $product_data['sale_price'] ?></li>
+                <li class=""fs-data-stock""><?php echo $product_data['stock'] ?></li>
+            </ul>
+            <?php
+        } else {
+            foreach ( $product_data as $data ) {
+                ?>
+                <ul>
+                <?php
+                    ?>
+                    <li class=""fs-data-price""><?php echo $data['price'] ?></li>
+                    <li class=""fs-data-size""><?php echo $data['size'] ?></li>
+                    <li class=""fs-data-sale""><?php echo $data['sale_price'] ?></li>
+                    <li class=""fs-data-stock""><?php echo $data['stock'] ?></li>
+                </ul>
+                <?php
+            }
+        }
+    ?>
+    </div>
+    <?php
+
+}
+add_action( 'woocommerce_after_single_product', 'display_list_after_single_product' );
+
+/**
+ * Collect product data depending on product type
+ *
+ * @return array $product_arr
+ */
+function get_product_data() {
+    global $product;
+    if( $product->is_type( 'variable' ) ) {
+        $variation_arr = [];
+        $imp_variations = $product->get_available_variations();
+        foreach ( $imp_variations as $key => $prod_var_arr ) {
+
+            $variation_obj = new WC_Product_variation($prod_var_arr[""variation_id""]);
+            // collect reqired variation data to array
+            $product_arr[] = [
+                'price'      => $variation_obj->get_regular_price(),
+                'sale_price' => $variation_obj->get_sale_price(),
+                'size'       => $prod_var_arr['attributes']['attribute_pa_size'],
+                'stock'      => $variation_obj->get_stock_quantity(),
+            ];
+        }
+    } else if( $product->is_type( 'simple' ) ) {
+        $terms = $product->get_attributes()[""pa_size""]->get_terms();
+
+        $product_arr = [
+            'price'      => $product->get_regular_price(),
+            'sale_price' => $product->get_sale_price(),
+            'size'       => $terms[0]->name,
+            'stock'      => $product->get_stock_quantity(),
+        ];
+    }
+
+    return $product_arr;
+}

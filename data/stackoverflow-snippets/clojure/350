@@ -1,0 +1,24 @@
+(ns your-project.core
+  (:require [clojure.tools.namespace.repl :as tn]
+            [org.httpkit.server :as http]
+            [ring.middleware.reload :refer [wrap-reload]]
+            [compojure.core :refer [defroutes GET]]
+
+(defroutes create-app []
+  (GET ""/"" [] (fn [req] ""hello world"")
+
+(defonce server (atom nil))
+
+(defn start []
+  (let [app (create-app)]
+    (reset! server (http/run-server (wrap-reload app) {:port 3000}))
+    (println (str ""Listening on port "" 3000))))
+
+(defn stop []
+  (when @server
+    (@server :timeout 100)
+    (reset! server nil)))
+
+(defn restart []
+  (stop)
+  (tn/refresh :after 'your-project.core/start))

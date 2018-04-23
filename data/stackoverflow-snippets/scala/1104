@@ -1,0 +1,28 @@
+import java.time.LocalDate
+import scala.util.Random
+
+val maxId = 10000
+val numRows = 15000000
+val lastDate = LocalDate.of(2017, 12, 31)
+
+// Generates the data. As a convenience for working with Dataframes, I converted the dates to epoch days.
+
+val theData = sc.parallelize(1.to(numRows).map{
+  _ => {
+    val id = Random.nextInt(maxId)
+    val nDownloads = Random.nextInt((id / 1000 + 1))
+    Row(id, lastDate.minusDays(Random.nextInt(30)).toEpochDay, nDownloads)
+  }
+})
+
+//Working with Dataframes is much simples, so I'll generate a DF named baseData from the RDD
+
+val schema = StructType(
+    StructField(""downloadId"", IntegerType, false) ::
+    StructField(""date"", LongType, false) ::
+    StructField(""downloadCount"", IntegerType, false) :: Nil)
+
+val baseData = sparkSession.sqlContext.createDataFrame(theData, schema)
+  .groupBy($""downloadId"", $""date"")
+    .agg(sum($""downloadCount"").as(""downloadCount""))
+  .cache()

@@ -1,0 +1,28 @@
+type Repo {
+    db sql.DB
+}
+
+func NewDatabaseRepo(db sql.DB) *Repo {
+    // config if necessary...
+
+    return &Repo{db: db}
+}
+
+func (r Repo)Find(f string) (usecases.Bar, error) {
+    rows, err := db.Query(""SELECT id, foo_bar FROM bar WHERE foo=?"", f)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var id string, fooBar int
+        if err := rows.Scan(&id, &fooBar); err != nil {
+            log.Fatal(err)
+        }
+        // map row value to desired structure
+        return usecases.Bar{Identifier: id, FooBar: fooBar}
+    }
+
+    return errors.New(""not found"")
+}

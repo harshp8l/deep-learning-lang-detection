@@ -1,0 +1,11 @@
+...(cond
+        (and (empty? res) (symbol? x))
+          (recur {:name x} next nil)
+        (fn-body? xs)        (assoc res :bodies (list xs))
+        (every? fn-body? xs) (assoc res :bodies xs)
+        (string? x)          (recur (assoc res :doc x) next nil)
+        (= '< x)             (recur res next :mixins)
+        (= mode :mixins)
+          (recur (update-in res [:mixins] (fnil conj []) x) next :mixins)
+        :else
+          (throw (IllegalArgumentException. (str ""Syntax error at "" xs))))...

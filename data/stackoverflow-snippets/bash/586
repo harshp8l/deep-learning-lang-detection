@@ -1,0 +1,26 @@
+#!/bin/bash
+agentpath=""/Users/vigneshganapathy/Downloads/FS-Agent""
+export pass=""xxx""
+
+expect <<'END_EXPECT'
+    spawn ssh -o StrictHostKeyChecking=no shyamkarthikv@192.168.57.33
+    expect { 
+        ""*?assword:"" {
+            send ""$env(pass)\r""
+            exp_continue
+        }
+        somePatternThatMatchesYourPrompt
+    }
+    set timeout -1  ;# in case it takes a long time to complete
+    send ""sudo installer -pkg /tmp/FS-Agent/FS-Agent.pkg -target / \r""
+    expect { 
+        ""*?assword:"" {
+            send ""$env(pass)\r""
+            exp_continue
+        }
+        somePatternThatMatchesYourPrompt
+    }
+    set timeout 2
+    send ""exit\r""
+    expect eof
+END_EXPECT

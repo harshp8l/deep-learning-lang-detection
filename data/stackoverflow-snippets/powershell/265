@@ -1,0 +1,45 @@
+# Connect Word
+$objWord = New-Object -comobject Word.Application
+$objWord.Visible = $false 
+$templateRootDir = ""\\rspldata\QMS\Owain\Database-Anon-Resumes\Templates\Resumes\Out""
+
+while ( ( Get-Childitem ""\\rspldata\QMS\Owain\Database-Anon-Resumes\DataFiles-new\"").count -ne 0 ) {
+    [int]$hour = get-date -format HH
+
+    If ( $hour -gt 6 -and $hour -lt 6 ) { # Will NEVER happen. $hour can not be both greater than, and also less than 6.
+        Start-Sleep -s 1800100}
+    else {
+        foreach ( $file in ( Get-Childitem ""\\rspldata\QMS\Owain\Database-Anon-Resumes\DataFiles-new\"" ) ) {
+            $templateFile = Get-ChildItem $templateRootDir | Get-Random -Count 1
+            $templateDir =  $templateFile.FullName
+
+            if (!(checkLock $file.fullname) -and (Test-Path $file.FullName) ) {
+                $cand_CSV = Import-CSV $file.fullname
+
+                $LockFile = [System.io.File]::Open(""$($file.fullname)"", 'Open', 'Read','None')
+                Write-Host ""[+] Processing file $($file.fullname)"" -foregroundcolor GREEN
+
+                foreach ( $line in $cand_CSV ) {
+                    $docResume = $objWord.Documents.add($templateDir)
+
+                    <more code>
+
+                    $docResume.Save()
+                    $docResume.Close($false)
+                }
+
+                $LockFile.Close()
+                Remove-Item $file.fullname -force
+            }
+            else {
+                Write-Host ""$($file.fullname) :: locked - continuing""
+            }
+
+        }
+    }
+}
+
+$null = [System.Runtime.InteropServices.Marshal]::ReleaseComObject([System.__ComObject]$objWord)
+[gc]::Collect()
+[gc]::WaitForPendingFinalizers()
+Remove-Variable objWord 

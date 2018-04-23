@@ -1,0 +1,98 @@
+//
+module XML2Excel
+
+open System
+open System.IO
+open Microsoft.Office.Interop
+open System.Xml
+open System.Xml.XPath
+open System.Drawing;; //For Font
+open System.Xml.Linq;
+open FSharp.Data
+
+let functionParseXmlToExcel (fileName:string) =
+            //Function Body goes here
+
+
+        ///////////////////////////////////////////////////Load XmlDoc
+        let xmlDoc = new XmlDocument()
+        //////////////////////////////////////////////////Xml Path
+        let mXmlPath = fileName
+        //(""C:\\Users\\rivkar\\Desktop\\My Projects\\Zmira\\XML2Excel\\"" + ""NIMO.xml"");;
+        //////////////////////////////////////////////////Load XML
+        xmlDoc.Load(mXmlPath)
+
+
+        //////////////////////////////Tables Nodes
+        let tablePath=""/OCEXPORT""
+        let docTablesElement = xmlDoc.DocumentElement
+        let nodeTablesList = docTablesElement.SelectSingleNode(tablePath).ChildNodes
+
+
+
+        ////////////////////////////////// Start Excel
+        let xlApp = new Excel.ApplicationClass()//(Visible = true)
+        let xlWorkBookOutput = xlApp.Workbooks.Add()
+        //xlApp.Visible <- true
+
+        ////////////////////////////////////Load Excel Format
+        //let xlWorkBookFormat = xlApp.Workbooks.Open(@""C:\Users\rivkar\Desktop\My Projects\Zmira\XML2Excel\nimo2_types.xlsx"")
+
+        //////////////////////////////////// Loop on Tables (Excel Sheets)
+        for tabs in 1 .. nodeTablesList.Count do   
+
+            let tableNamePath=""/OCEXPORT/TABLE""
+            let docElement = xmlDoc.DocumentElement
+            let nodeTableNameList = docElement.ChildNodes.[tabs-1].FirstChild
+
+            let columnsPath= tableNamePath+""/""+nodeTableNameList.Name
+
+            let nodeColumsList = docElement.SelectSingleNode(columnsPath).ChildNodes
+
+            let xlWorkSheetOutput = xlWorkBookOutput.Worksheets.[tabs] :?> Excel.Worksheet
+            xlWorkSheetOutput.Name <- nodeTableNameList.Name
+            xlWorkSheetOutput.get_Range(""A1:Z1"").Interior.Color <- Color.SkyBlue
+
+            /////////////////////////////////////Loop on Columns    
+            for columns in 1.. nodeColumsList.Count do
+                     let Node = ""/OCEXPORT/TABLE/""+nodeTableNameList.Name+""/""+nodeColumsList.Item(columns-1).Name+""/text()""   
+                     let data = [|
+                          (xmlDoc.SelectNodes Node
+                              |> Seq.cast<XmlNode>
+                              |> Seq.map (fun node -> node.Value)
+                              |> String.concat Environment.NewLine)
+                              |]
+                     xlWorkSheetOutput.Cells.[1, columns] <- nodeColumsList.Item(columns-1).Name
+                     let rows = data.[0].Split '\n'// rows
+
+                     //let row = xlWorkBookFormat.
+
+                     for j in 1 .. rows.Length do
+                           xlWorkSheetOutput.Cells.[j+1, columns] <- rows.[j-1]
+                           xlWorkSheetOutput.Range(""A1:A100"").NumberFormat <- ""0.0""
+
+            //if (tabs <= nodeTablesList.Count) then
+            xlWorkBookOutput.Worksheets.Add(After=xlWorkBookOutput.Worksheets.[xlWorkBookOutput.Worksheets.Count])
+
+        /////////////////////////////Delete Unnecessary Sheets
+        //xlWorkBookOutput.Worksheets.Visible <- true
+        //xlWorkBookOutput.Worksheets.Delete()
+
+
+        ////////////////////////////Save the Excel File
+        let excelPath = ""C:\\Users\\rivkar\\Desktop\\My Projects\\Zmira\\XML2Excel\\""+DateTime.Today.ToString(""yyyy_dd_MM_BNA"")+"".xls""
+        if File.Exists(excelPath) then
+                 File.Delete(excelPath)
+
+        xlWorkBookOutput.SaveAs excelPath, -4143
+        File.Exists(fileName)
+
+[<EntryPoint>]
+let main(args) =    
+    //printfn ""args: %A"" args.[0]
+    let fName = args.[0]
+    //""C:\\Users\\rivkar\\Desktop\\My Projects\\Zmira\\XML2Excel\\NIMO.XML""
+    printfn ""%A"" (functionParseXmlToExcel fName) |> ignore
+    //Console.ReadLine()
+
+    0

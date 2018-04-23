@@ -1,0 +1,32 @@
+import org.apache.flink.api.common.functions.AggregateFunction
+import org.apache.flink.streaming.api.scala._
+import org.apache.flink.api.common.serialization.SimpleStringSchema
+import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
+import org.apache.flink.streaming.api.windowing.time.Time
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer08
+import org.apache.flink.streaming.connectors.wikiedits.{WikipediaEditEvent, WikipediaEditsSource}
+
+class SumAggregate extends AggregateFunction[WikipediaEditEvent, (String, Int), (String, Int)] {
+  override def createAccumulator() = ("""", 0)
+
+  override def add(value: WikipediaEditEvent, accumulator: (String, Int)) = (value.getUser, value.getByteDiff + accumulator._2)
+
+  override def getResult(accumulator: (String, Int)) = accumulator
+
+  override def merge(a: (String, Int), b: (String, Int)) = (a._1, a._2 + b._2)
+}
+
+object WikipediaAnalysis extends App {
+  val see: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
+  val edits: DataStream[WikipediaEditEvent] = see.addSource(new WikipediaEditsSource())
+
+  val result: DataStream[(String, Int)] = edits
+    .keyBy(_.getUser)
+    .timeWindow(Time.seconds(5))
+    .aggregate(new SumAggregate)
+//    .fold(("""", 0))((acc, event) => (event.getUser, acc._2 + event.getByteDiff))
+  result.print()
+
+  result.map(_.toString()).addSink(new FlinkKafkaProducer08[String](""localhost:9092"", ""wiki-result"", new SimpleStringSchema()))
+  see.execute(""Wikipedia User Edit Volume"")
+}

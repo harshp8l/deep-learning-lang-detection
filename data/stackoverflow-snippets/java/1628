@@ -1,0 +1,99 @@
+@Qualifier
+@Retention(RUNTIME)
+// tag the disabled feature implementation w/ this annotation
+public @interface Disabled {}
+
+@Qualifier
+@Retention(RUNTIME)
+// tag the enabled feature implementation w/ this annotation
+public @interface Enabled {}
+
+@Target(TYPE)
+@Retention(RUNTIME)
+// tag the feature interface w/ this annotation
+public @interface Feature {
+    String value();
+}
+
+// create a concrete implementation of this class for each feature interface and annotate w/ @Primary
+// note the use of @Enabled and @Disabled injection qualifiers
+public abstract class FeatureProxyFactoryBean<T> implements FactoryBean<T> {
+
+    private final Class<T> type;
+    private FeatureFlag featureFlag;
+    protected T enabled;
+    protected T disabled;
+
+    protected FeatureProxyFactoryBean(Class<T> type) {
+        this.type = type;
+    }
+
+    @Autowired
+    public void setFeatureFlag(FeatureFlag featureFlag) {
+        this.featureFlag = featureFlag;
+    }
+
+    @Autowired
+    public void setEnabled(@Enabled T enabled) {
+        this.enabled = enabled;
+    }
+
+    @Autowired
+    public void setDisabled(@Disabled T disabled) {
+        this.disabled = disabled;
+    }
+
+    @Override
+    public T getObject() {
+        Feature feature = type.getAnnotation(Feature.class);
+        if (feature == null) {
+            throw new IllegalArgumentException(type.getName() + "" must be annotated with @Feature"");
+        }
+        String key = feature.value();
+
+        ClassLoader classLoader = FeatureProxyFactoryBean.class.getClassLoader();
+        Class<?>[] interfaces = {type};
+        return (T) Proxy.newProxyInstance(classLoader, interfaces,
+                (proxy1, method, args) -> featureFlag.isEnabled(key) ?
+                        method.invoke(enabled, args) :
+                        method.invoke(disabled, args));
+    }
+
+    @Override
+    public Class<T> getObjectType() {
+        return type;
+    }
+}
+
+// test classes
+
+@Feature(""test_key"")
+public interface SomeFeature {
+    String foo();
+}
+
+@Disabled
+@Component
+public class DisabledFeature implements SomeFeature {
+    @Override
+    public String foo() {
+        return ""disabled"";
+    }
+}
+
+@Enabled
+@Component
+public class EnabledFeature implements SomeFeature {
+    @Override
+    public String foo() {
+        return ""enabled"";
+    }
+}
+
+@Primary
+@Component
+public class SomeFeatureProxyFactoryBean extends FeatureProxyFactoryBean<SomeFeature> {
+    public SomeFeatureProxyFactoryBean() {
+        super(SomeFeature.class);
+    }
+}

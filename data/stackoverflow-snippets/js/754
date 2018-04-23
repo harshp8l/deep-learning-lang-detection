@@ -1,0 +1,25 @@
+const createSortable = (el, options, vnode) => {
+
+    // Copy the order property
+    vnode.context.data.forEach( (obj) => {obj.norder = obj.order} );
+
+    // Create an array of orders
+    const orders = vnode.context.data.map((obj) => obj.order);
+
+    return Sortable.create(el, {
+        ...options,
+        onEnd: function (evt) {
+
+            const data = vnode.context.data;      
+
+            // Update the position of the objects
+            orders.splice(evt.newIndex, 0, ...orders.splice(evt.oldIndex, 1));
+
+            // Change the order parameter
+            data.forEach((obj) => {        
+                obj.order = orders.findIndex((n) => n === obj.norder) + 1;
+            });
+
+        }
+    });
+};

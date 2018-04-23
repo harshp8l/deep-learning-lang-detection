@@ -1,0 +1,15 @@
+import requests
+from bs4 import BeautifulSoup
+
+r = requests.get('https://en.wikipedia.org/wiki/Glossary_of_nautical_terms')
+soup = BeautifulSoup(r.text, 'lxml')
+
+curr_title, curr_description = '', ''
+for tag in soup.find_all(['dt', 'dd']):
+    if tag.name == 'dt':
+        if curr_title:
+            print('{}: {}'.format(curr_title, curr_description))
+            curr_description = ''
+        curr_title = tag.text.strip()
+    else:
+        curr_description = ' '.join((curr_description, tag.text.strip()))

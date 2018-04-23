@@ -1,0 +1,16 @@
+    private static void Main(string[] args)
+    {
+        var argn = Observable.Interval(TimeSpan.FromMilliseconds(100)).Publish().RefCount();
+        argn.Subscribe(Console.WriteLine);
+
+        var map = argn.Select(CreateProcess).Publish().RefCount();
+
+        map.SelectMany(o => o)
+           .Take(1)
+           .Repeat()
+           .Subscribe(d => Console.WriteLine($""Did task which took {d * 100}msecs"" ));
+
+        Console.ReadKey();
+    }
+
+    static IObservable<long> CreateProcess(long i) => Observable.Timer(TimeSpan.FromMilliseconds(i * 100)).Select(_ => i);

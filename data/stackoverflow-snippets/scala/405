@@ -1,0 +1,50 @@
+trait BuildWrap[T] {
+  def result(): T
+}
+
+object BuildWrap {
+  def build[T](t: T): Any = macro BuildWrapImpl.impl[T]
+}
+
+class BuildWrapImpl(val c: whitebox.Context) {
+
+  import c.universe._
+
+  def impl[T: c.WeakTypeTag](t: c.Expr[T]) = {
+    val tpe = c.weakTypeOf[T]
+    //get all set member
+    val setMembers = tpe.members
+      .filter(_.isMethod)
+      .filter(_.name.toString.startsWith(""set""))
+      .map(_.asMethod)
+      .toList
+    // temp value ;
+    val valueName = TermName(""valueName"")
+
+    val buildMethods = setMembers.map { member =>
+      if (member.paramLists.length > 1)
+        c.abort(c.enclosingPosition,""do not support Currying"")
+
+      val params = member.paramLists.head
+      val paramsDef = params.map(e=>q""${e.name.toTermName} : ${e.typeSignature}"")
+      val paramsName = params.map(_.name)
+
+      val fieldName = member.name.toString.drop(3)//drop set
+      val buildFuncName = TermName(s""with$fieldName"")
+      q""def $buildFuncName(..$paramsDef ) = {$valueName.${member.name}(..$paramsName);this} ""
+    }
+
+
+    val result =
+      q""""""new BuildWrap[$tpe] {
+        private val $valueName = $t
+        ..${buildMethods}
+        def result() = $valueName
+
+       }""""""
+
+    // debug
+    println(showCode(result))
+    result
+  }
+}

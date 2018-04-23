@@ -1,0 +1,31 @@
+user> (require '[clojure.core.async :refer [<! <!! chan go go-loop pipeline pipeline-blocking pipeline-async] :as async])
+
+user> (let [output (chan)
+            input (async/to-chan (range 10))]
+        (go-loop [x (<! output)]
+          (println x))
+        (pipeline 4
+                  output
+                  (map #(do
+                          (Thread/sleep (rand-int 200))
+                          (println ""starting"" %)
+                          (Thread/sleep 1000)
+                          (println ""finished"" %)
+                          (inc %)))
+                  input))
+#object[clojure.core.async.impl.channels.ManyToManyChannel 0x3f434b5a ""clojure.core.async.impl.channels.ManyToManyChannel@3f434b5a""]
+user> starting 0
+starting 3
+starting 1
+starting 2
+finished 0
+1
+finished 3
+finished 1
+finished 2
+starting 4
+starting 5
+starting 6
+finished 4
+finished 5
+finished 6

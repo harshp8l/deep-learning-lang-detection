@@ -1,0 +1,30 @@
+/*!
+ * \brief MemoryUsage::getMemoryUsage
+ * \return the overall memory usage in percent.
+ */
+int MemoryUsage::getMemoryUsage()
+{
+    int result = 0;
+
+#ifdef Q_OS_LINUX
+    struct sysinfo sys_info;
+
+    sysinfo(&sys_info);
+
+    unsigned long long total = sys_info.totalram *(unsigned long long)sys_info.mem_unit / 1024;
+    unsigned long long free = sys_info.freeram *(unsigned long long)sys_info.mem_unit/ 1024;
+
+    result = (total - free) * 100 / total;
+#endif
+
+#ifdef Q_OS_WIN
+    MEMORYSTATUSEX statex;
+    statex.dwLength = sizeof (statex);
+
+    GlobalMemoryStatusEx (&statex);
+
+    result = statex.dwMemoryLoad);
+#endif
+
+    return result;
+} 

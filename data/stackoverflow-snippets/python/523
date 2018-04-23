@@ -1,0 +1,24 @@
+dataset = tf.data.TextLineDataset(filename)
+
+# Skip the header line.
+dataset = dataset.skip(1)
+
+# Combine 10 lines into a single observation.   
+dataset = dataset.batch(rows_per_ob)
+
+def parse_observation(line_batch):
+  record_defaults = [[0.0], [0.0], [0.0], [0.0]]
+  a, b, c, d = tf.decode_csv(value, record_defaults=record_defaults)
+  features = tf.stack([a, b, c])
+  label = d[-1]  # Take the label from the last row.
+  return features, label
+
+# Parse each observation into a `row_per_ob X 2` matrix of features and a
+# scalar label.
+dataset = dataset.map(parse_observation)
+
+# Batch multiple observations.
+dataset = dataset.batch(batch_size)
+
+# Optionally add a prefetch for performance.
+dataset = dataset.prefetch(1)

@@ -1,0 +1,40 @@
+require_relative 'tc'
+
+class Operator
+
+    def operation(&block)
+        #execution of a block in some object
+        Special.currently_operational.each do | obj |
+            puts ""operation on #{obj.inspect}""
+            block.call(obj) if obj.respond_to? 'level_up'
+        end
+    end
+end
+
+class Special
+    def self.currently_operational
+        operationals = []
+
+        ObjectSpace.each_object(Operational) do | object |
+            operationals << object
+        end
+
+        puts ""#{operationals.size} objects are flagged as operational""
+        operationals
+    end
+end
+
+Criature.new('c1')
+Criature.new('c2')
+Criature.new('c3')
+
+block = Proc.new{ | x | x.level_up }
+puts 'first round'
+Operator.new.operation(&block)
+
+# later ...
+XYZ.new('x1')
+XYZ.new('x2')
+
+puts 'second round'
+Operator.new.operation(&block)

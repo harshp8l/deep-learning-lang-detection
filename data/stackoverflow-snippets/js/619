@@ -1,0 +1,19 @@
+[HttpPost, DisableRequestSizeLimit]
+[Route(""{blobId}/uploads/{uploadId}/parts/{partNumber}"")]
+public async Task<IActionResult> UploadPart(
+  [FromRoute] string blobId,
+  [FromRoute] string uploadId,
+  [FromRoute] int partNumber,
+  [FromBody] FilePartModel part)
+  {
+    if (!GuidValidator.IsValidGuid(blobId)) throw new ArgumentException(""Invalid BLOB Id"");
+    if (!GuidValidator.IsValidGuid(uploadId)) throw new ArgumentException(""Invalid Upload Id"");
+
+    var bytes = Convert.FromBase64String(part.Data);
+    using (var stream = new MemoryStream(bytes))
+    {
+      var etag = await _blobsService.UploadPartAsync(Guid.Parse(blobId), Guid.Parse(uploadId), partNumber, stream);
+
+      return Ok(new FilePart { ETag = etag, PartNumber = partNumber });
+    }
+}

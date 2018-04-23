@@ -1,0 +1,42 @@
+public static Iterable<Class<?>> getClassHierarchy(Class<?> baseClass) {
+
+    return () -> new Iterator<Class<?>>() {
+
+        private Class<?> nextValue;
+        private Queue<Class<?>> remaining = new LinkedList<>(Collections.singleton(baseClass));
+        private Set<Class<?>> visited = new HashSet<>();
+
+
+        @Override
+        public boolean hasNext() {
+            while (nextValue == null && !remaining.isEmpty()) {
+                Optional.ofNullable(remaining.poll())
+                        .ifPresent((Class<?> type) -> {
+                            visited.add(type);
+                            Stream.concat(
+                                streamOptional(Optional.ofNullable(type.getSuperclass())),
+                                Arrays.stream(type.getInterfaces())
+                            ).filter(visited::add)
+                             .forEach(remaining::offer);
+                            nextValue = type;
+                        });
+            }
+            return nextValue != null;
+        }
+
+        private <T> Stream<T> streamOptional(final Optional<T> optional) {
+            return optional.map(Stream::of).orElse(Stream.empty());
+        }
+
+        @Override
+        public Class<?> next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            Class<?> value = this.nextValue;
+            this.nextValue = null;
+            return value;
+        }
+    };
+
+}

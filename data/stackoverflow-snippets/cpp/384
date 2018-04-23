@@ -1,0 +1,52 @@
+#include ""rapidjson/document.h""
+#include ""rapidjson/writer.h""
+#include ""rapidjson/stringbuffer.h""
+#include <iostream>
+
+
+using namespace rapidjson;
+
+
+//({ id: 1, name : ""test"", randomNo : 1 }, { id: 1, name : ""test"", randomNo : 1 }, { id: null, name : null, randomNo : null }) //shoult assert true 
+//isEqualItem({id: 1, name: ""test"", randomNo: 1}, {id: 1, name: ""test"", randomNo: 2}, {id: null, name: null, randomNo: null}) //shoult assert false 
+//isEqualItem({id: 1, name: ""test"", randomNo: 1}, {id: 1, name: ""test"", randomNo: 3}, {id: null, name: null}) //shoult assert true
+
+bool is_same(const std::string& s1, const std::string& s2, const std::string& s3) {
+
+    Document d1;
+    d1.Parse(s1.c_str());
+    Document d2;
+    d2.Parse(s2.c_str());
+
+    Document d3;
+    d3.Parse(s3.c_str());
+
+    bool matched = true;
+    // iterate through the third json to get the keys and match the keys in first and second
+    for (Value::ConstMemberIterator itr = d3.MemberBegin(); itr != d3.MemberEnd(); itr++) {
+        if (d1.HasMember(itr->name) && d2.HasMember(itr->name)) {       // if the member doesn't exist in both, break
+            if (d1[itr->name] != d2[itr -> name]) {                     // value doesn't match, then break
+                matched = false;
+                break;
+            }
+        }
+        else {
+            matched = false;
+            break;
+        }
+    }
+    return matched;
+}
+
+int main() {
+    // 1. Parse a JSON string into DOM.
+    const char* json = ""{\""id\"":1,\""name\"":\""test\"",\""randomNo\"":1}"";
+    const char* json2 = ""{\""id\"":1,\""name\"":\""test\"",\""randomNo\"":2}"";
+    const char* keys = ""{\""id\"":\""null\"",\""name\"":\""null\""}"";
+
+
+    if (is_same(json, json2,keys)) {
+        std::cout << ""Both are same"" << std::endl;
+    }
+    return 0;
+}

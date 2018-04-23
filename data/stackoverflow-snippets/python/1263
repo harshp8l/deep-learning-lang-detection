@@ -1,0 +1,22 @@
+from bs4 import BeautifulSoup
+soup = BeautifulSoup(html, 'lxml')
+rows = soup.find_all('tr')
+
+# scan for header row and trim list
+for index, row in enumerate(rows):
+    cells = row.find_all('td')
+    if cells and ""NAME OF ISSUER"" in cells[0].text.upper():
+        del rows[:index+1]
+        break
+
+# convert remaining html rows to dict to create dataframe
+positions = []
+for position in rows:
+    dic = {}
+    cells = position.find_all('td')
+    dic[""NAME_OF_ISSUER""] = cells[0].text
+    dic[""CUSIP""] = cells[2].text
+    dic[""VALUE""] = int(cells[3].text.replace(',', ''))*1000
+    dic[""SHARES""] = int(celss[4].text.replace(',', ''))
+    positions.append(dic)
+df = pd.DataFrame(positions)

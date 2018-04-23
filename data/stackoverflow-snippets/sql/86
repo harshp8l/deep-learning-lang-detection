@@ -1,0 +1,28 @@
+create PROCEDURE [dbo].[spQueryMgt] (
+  @Mode               varchar(50) = NULL,
+  @Query_Form         varchar(20) = NULL,
+  @Patient_ID         bigint = NULL,
+  @Verified_By        bigint = NULL,
+  @Verified_Date      datetime = NULL
+)
+AS
+BEGIN
+  SET NOCOUNT ON 
+
+  IF @mode = 'Post_Query'
+  BEGIN
+     DECLARE @sql NVARCHAR(MAX)
+
+     if (@Query_Form is not null) and (@Patient_ID is not null) -- nu use in updating when no table or id is given
+     begin
+         SET @sql = N'Update @P0 ' + 
+                     'set Verified_By = @P1, ' + 
+                     '    Verified_Date = @P2 ' + 
+                     'where Patient_ID = @P3'
+
+         EXEC sp_executesql @sql, 
+              N'@P0 varchar(20), @P1 bigint, @P2 bigint, @P3 datetime', 
+              N'@P0 = @Query_Form, @P1 = @Verified_By, @P2 = @Verified_Date, @P3 = @Patient_ID'
+     end
+  END
+END

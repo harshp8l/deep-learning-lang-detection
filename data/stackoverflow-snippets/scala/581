@@ -1,0 +1,52 @@
+  type Gap = (Int, Int)
+
+  def mergeIntervals(as: List[Gap], bs: List[Gap]): List[Gap] = {
+    require(!as.isEmpty, ""as must be non-empty"")
+    require(!bs.isEmpty, ""bs must be non-empty"")
+
+    @annotation.tailrec
+    def mergeRec(
+      gaps: List[Gap],
+      gapStart: Int,
+      gapEndAccum: Int,
+      as: List[Gap],
+      bs: List[Gap]
+    ): List[Gap] = {
+      as match {
+        case Nil => {
+          bs match {
+            case Nil => (gapStart, gapEndAccum) :: gaps
+            case notEmpty => mergeRec(gaps, gapStart, gapEndAccum, bs, Nil)
+          }
+        }
+        case (a0, a1) :: at => {
+          if (a0 <= gapEndAccum) {
+            mergeRec(gaps, gapStart, gapEndAccum max a1, at, bs)
+          } else {
+            bs match {
+              case Nil => mergeRec((gapStart, gapEndAccum) :: gaps, a0, gapEndAccum max a1, at, bs)
+              case (b0, b1) :: bt => if (b0 <= gapEndAccum) {
+                mergeRec(gaps, gapStart, gapEndAccum max b1, as, bt)
+              } else {
+                if (a0 < b0) {
+                  mergeRec((gapStart, gapEndAccum) :: gaps, a0, a1, at, bs)
+                } else {
+                  mergeRec((gapStart, gapEndAccum) :: gaps, b0, b1, as, bt)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    val (a0, a1) :: at = as
+    val (b0, b1) :: bt = bs
+
+    val reverseRes = 
+      if (a0 < b0) 
+        mergeRec(Nil, a0, a1, at, bs)
+      else
+        mergeRec(Nil, b0, b1, as, bt)
+
+    reverseRes.reverse
+  }

@@ -1,0 +1,79 @@
+<?php
+/*
+This takes a value from the URL.
+For instance, if you go to the page with something like that:
+http://yourdomain.com/the/path/?id=45487
+It will take the value 45487. That's the event id that you're 
+trying to access.
+Of course I don't know what's the URL you're using.
+I made up the ""http://yourdomain.com/the/path/"" and you need to 
+replace it. The important part is the ""?id=45487""
+*/
+if (!filter_has_var(INPUT_GET, 'id')) {
+    echo ""Event id is missing!"";
+    die;
+}
+$eventId = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+/*
+I'm using PDO to access the database.
+Of course, I don't know what's your database name and server host.
+You need to replace the ""tests"" and ""localhost"" accordingly.
+I also don't know what's the username and password you're using.
+You need to replace them.
+*/
+$pdo = new PDO(
+    // replace the database name
+    'mysql:dbname=tests;host=localhost',
+    // replace the username
+    'username',
+    // replace the password
+    'password',
+    [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    ]
+);
+// This is a prepared statement
+$preparedSelect = $pdo->prepare(
+    'select *
+     from event
+     where id = :id
+     limit 1'
+);
+// I'm making a query here
+$preparedSelect->execute(['id' => $eventId]);
+/*
+I'm fetching the event as an object.
+That means that you'd access the values like this:
+$event->title
+If you want to use associative arrays instead, do this:
+$event = $preparedSelect->fetch(PDO::FETCH_ASSOC);
+*/
+$event = $preparedSelect->fetchObject();
+if (!$event) {
+    echo ""Event #$eventId was not found!"";
+    die;
+}
+?>
+
+<div class=""blog-page"">
+      <div class=""container"">
+        <div class=""row""> 
+
+          <!--Blog Block Start-->
+          <div class=""col-md-9 col-sm-8"">
+            <div class=""blog-details blog-post"">
+              <div class=""featured-img"">
+                <div class=""event-counter""></div>
+                <img src=""images/ef-1.jpg"" alt=""""> </div>
+              <div class=""blog-details-text"">
+
+              <div class=""post-title""> <span class=""post-date""></strong> </span>
+                  <h5><a href=""#""><?= htmlspecialchars($event->title) ?></a></h5>
+              </div>
+
+              <ul class=""post-meta"">
+                  <li><a href=""#""><i class=""fa fa-user"" aria-hidden=""true""><?= htmlspecialchars($event->organizer) ?></a></li>
+                  <li><i class=""fa fa-folder-open"" aria-hidden=""true""></i><a href=""#""><?= htmlspecialchars($event->category) ?></a></li>
+
+                <?= $event->descrption ?>

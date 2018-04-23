@@ -1,0 +1,40 @@
+let FloodFill (img : Bitmap) =
+    let bd = img.LockBits(Rectangle(0,0,img.Width,img.Height),ImageLockMode.ReadWrite,PixelFormat.Format32bppArgb)
+
+    let check4 x y =
+        let (checkPointer:nativeptr<byte>) = NativePtr.add (NativePtr.ofNativeInt (bd.Scan0)) (bd.Stride*y+x*4)
+        if(NativePtr.get checkPointer 0 = byte 0) then
+            let st = Stack()
+            st.Push(x,y)
+            while(st.Count > 0) do
+                let current = st.Pop()
+                let xx = fst current
+                let yy = snd current
+                let (pointer:nativeptr<byte>) = NativePtr.add (NativePtr.ofNativeInt (bd.Scan0)) (bd.Stride*yy+xx*4)
+                NativePtr.set pointer 0 (byte 255)
+
+                if(xx+1<=img.Width-1)then
+                    let (point:nativeptr<byte>) = NativePtr.add (NativePtr.ofNativeInt (bd.Scan0)) (bd.Stride*yy+(xx+1)*4)
+                    if(NativePtr.get point 0 = byte 0) then
+                        st.Push(xx+1,yy)
+                if(xx-1>=0)then
+                    let (point:nativeptr<byte>) = NativePtr.add (NativePtr.ofNativeInt (bd.Scan0)) (bd.Stride*yy+(xx-1)*4)
+                    if(NativePtr.get point 0 = byte 0) then
+                        st.Push(xx-1,yy)
+                if(yy+1<=img.Height-1)then
+                    let (point:nativeptr<byte>) = NativePtr.add (NativePtr.ofNativeInt (bd.Scan0)) (bd.Stride*(yy+1)+xx*4)
+                    if(NativePtr.get point 0 = byte 0) then
+                        st.Push(xx,yy+1)
+                if(yy-1>=0)then
+                    let (point:nativeptr<byte>) = NativePtr.add (NativePtr.ofNativeInt (bd.Scan0)) (bd.Stride*(yy-1)+xx*4)
+                    if(NativePtr.get point 0 = byte 0) then
+                        st.Push(xx,yy-1)
+
+    for row in 0 .. img.Height-1 do
+        for col in 0 .. img.Width-1 do
+            if (row=0 || row=img.Height-1 || col=0 || col=img.Width-1) then
+                check4 row col
+        done
+    done
+    img.UnlockBits(bd)
+    img

@@ -1,0 +1,59 @@
+...
+
+set(MYLIB_MAJOR_VERSION 0)
+set(MYLIB_MINOR_VERSION 1)
+set(MYLIB_PATCH_VERSION 0)
+set(MYLIB_VERSION
+  ${MYLIB_MAJOR_VERSION}.${MYLIB_MINOR_VERSION}.${MYLIB_PATCH_VERSION})
+
+...
+
+add_library(mylib SHARED mylib.c ...)
+
+...
+
+install(TARGETS mylib
+  # IMPORTANT: Add the mylib library to the ""export-set""
+  EXPORT MyLibTargets
+  RUNTIME DESTINATION ""${INSTALL_BIN_DIR}"" COMPONENT bin
+  LIBRARY DESTINATION ""${INSTALL_LIB_DIR}"" COMPONENT shlib
+  PUBLIC_HEADER DESTINATION ""${INSTALL_INCLUDE_DIR}/mylib""
+    COMPONENT dev)
+
+...
+
+# The interesting stuff goes here
+# ===============================
+
+# Add all targets to the build-tree export set
+export(TARGETS mylib
+  FILE ""${PROJECT_BINARY_DIR}/MyLibTargets.cmake"")
+
+# Export the package for use from the build-tree
+# (this registers the build-tree with a global CMake-registry)
+export(PACKAGE MyLib)
+
+# Create the MyLibConfig.cmake and MyLibConfigVersion files
+file(RELATIVE_PATH REL_INCLUDE_DIR ""${INSTALL_CMAKE_DIR}""
+   ""${INSTALL_INCLUDE_DIR}"")
+# ... for the build tree
+set(CONF_INCLUDE_DIRS ""${PROJECT_SOURCE_DIR}"" ""${PROJECT_BINARY_DIR}"")
+configure_file(MyLibConfig.cmake.in
+  ""${PROJECT_BINARY_DIR}/MyLibConfig.cmake"" @ONLY)
+# ... for the install tree
+set(CONF_INCLUDE_DIRS ""\${MYLIB_CMAKE_DIR}/${REL_INCLUDE_DIR}"")
+configure_file(MyLibConfig.cmake.in
+  ""${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/MyLibConfig.cmake"" @ONLY)
+# ... for both
+configure_file(MyLibConfigVersion.cmake.in
+  ""${PROJECT_BINARY_DIR}/MyLibConfigVersion.cmake"" @ONLY)
+
+# Install the MyLibConfig.cmake and MyLibConfigVersion.cmake
+install(FILES
+  ""${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/MyLibConfig.cmake""
+  ""${PROJECT_BINARY_DIR}/MyLibConfigVersion.cmake""
+  DESTINATION ""${INSTALL_CMAKE_DIR}"" COMPONENT dev)
+
+# Install the export set for use with the install-tree
+install(EXPORT MyLibTargets DESTINATION
+  ""${INSTALL_CMAKE_DIR}"" COMPONENT dev)

@@ -1,0 +1,92 @@
+package main
+
+import (
+    ""image""
+    ""image/color""
+    ""image/draw""
+    ""image/png""
+    ""log""
+    ""math/cmplx""
+    ""os""
+    ""sync""
+)
+
+var sidex float64 = 4.0
+var sidey float64 = 4.0
+var pixelLengthx int = 4000
+var pixelLengthy int = 4000
+var numSteps int = 100
+
+func main() {
+    err := Main()
+    if err != nil {
+        log.Fatal(err)
+    }
+}
+
+type req struct {
+    x int
+    y int
+    m *image.RGBA
+}
+
+func converges(wg *sync.WaitGroup, q chan *req) {
+    defer wg.Done()
+
+    wht := color.RGBA{255, 50, 128, 255}
+    plx := float64(pixelLengthx)
+    ply := float64(pixelLengthy)
+
+    for r := range q {
+
+        fi := float64(r.x)
+        fj := float64(r.x)
+
+        c := complex((fi-plx/2)/plx*sidex, (fj-ply/2)/ply*sidey)
+        zn := complex(0, 0)
+        for k := 0; k < numSteps; k++ {
+            zn = cmplx.Pow(zn, 2) + c
+        }
+
+        if cmplx.Abs(zn) > 0.1 {
+            r.m.Set(r.x, r.y, wht)
+        }
+    }
+}
+
+const numWorker = 10
+
+func Main() error {
+    q := make(chan *req, numWorker)
+    var wg sync.WaitGroup
+    wg.Add(numWorker)
+    for i := 0; i < numWorker; i++ {
+        go converges(&wg, q)
+    }
+
+    m := image.NewRGBA(image.Rect(0, 0, pixelLengthx, pixelLengthy))
+    blk := color.RGBA{0, 0, 0, 255}
+    draw.Draw(m, m.Bounds(), &image.Uniform{blk}, image.ZP, draw.Src)
+
+    for x := 0; x < pixelLengthx; x++ {
+        for y := 0; y < pixelLengthy; y++ {
+            q <- &req{x: x, y: y, m: m}
+        }
+    }
+    close(q)
+
+    wg.Wait()
+
+    f, err := os.Create(""img.png"")
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+
+    err = png.Encode(f, m)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}

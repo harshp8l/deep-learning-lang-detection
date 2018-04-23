@@ -1,0 +1,48 @@
+$emailFrom = ""example@example.com""
+$emailTo = ""test@example.com""
+
+function Get-Mountpoints {
+    param(
+        $ComputerName, 
+        $FreePercentage,
+        $Filter =""DriveType='3'""
+    )
+
+  $Volumes = Get-WmiObject win32_volume -Filter $Filter -ComputerName $ComputerName |
+    Where-Object {$_.DriverLetter -eq $null -and $_.""Free(%)"" -lt $FreePercentage} 
+
+  if($Volumes){
+
+    # You might want to use the header of the body below, whatever.
+    $Subject = ""To Be Determined""
+
+    # When referencing parameter values in a string, you need to tell powershell to evaluate your string in a special way
+    # Wrapping things in a $() essentially is an order of operations for evaluation, the more nested, the earlier you will be evaluated
+    # You can also use this $() when your variable name abuts a character, like in the % below 
+    $Body = ""Hostname: $ComputerName"" + [System.Environment]::NewLine # a ""shortcut"" for system anonymous newlines
+    $Body += 
+        # If you comment out $Volumes and replace it with the next line, you will get two rows output into $Body
+        $Volumes | 
+        #  @( [pscustomobject]@{Label = ""C""; FreeSpace = 10;}, [pscustomobject]@{Label = ""C""; FreeSpace = 10;)  | 
+        Foreach-Object {
+            ""Disk $($_.Label) has less than $([math]::round(($_.FreeSpace + .1 / 1073741824),2)) GB of free space left, which is $([math]::round(((($_.FreeSpace + .1 / 1073741824)/($_.Capacity / 1073741824)) * 100),0))%"" + [System.Environment]::NewLine
+        } # $_ indicates the current iterated on item 
+
+    # In PowerShell, these messages will be supressed unless the console runs $VerbosePreference=""Continue"" indicating you would like to see more verbose output 
+    # I added the -WhatIf so you wont send anything
+    Write-Verbose ""From: $emailFrom To: $emailTo""
+    Write-Verbose $Subject
+    Write-Verbose $Body
+
+    #Send-MailMessage -From $emailFrom -To $emailTo -Subject $Subject -Body $Body -Priority High -dno onSuccess, onFailure -SmtpServer ""smtp.mail.com"" -Port 25
+  }
+}
+
+
+# Why not maintain a list of computers? 
+$ComputerList = @(
+    ""localhost""
+)
+$ComputerList | ForEach-Object {
+    Get-Mountpoints -ComputerName $_ -Filter ""DriveType='5'"" -FreePercentage 99
+} # I Added some parameters so you can make it a little more flexible

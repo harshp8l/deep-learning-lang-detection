@@ -1,0 +1,33 @@
+abstract class RouteBase[E <: Entity]()(implicit ctx: RouteImplicitContext[E]) {
+
+  def doSomethingStrange(e: Entity)(implicit i: ClassTag[E],
+                                    en: Encoder[E],
+                                    de: Decoder[E],
+                                    sa: InterfaceToStateAccessor,
+                                    ec: ExecutionContext): Unit = {
+    println(s""e = $e; implicits: i = $i, en=$en, de=$de, sa=$sa, ec=$ec"")
+  }
+
+}
+
+abstract class GetRouteBase[E <: Entity](implicit ctx: RouteImplicitContext[E]) extends RouteBase[E] {
+}
+
+class GetRoute[E <: Entity]()(implicit ctx: RouteImplicitContext[E]) extends GetRouteBase[E] {
+
+  import ctx._ // <- this is important for code to compile
+
+  def callSomethingStrange(e: Entity) = {
+    doSomethingStrange(e)
+  }
+}
+
+def test(): Unit = {
+  implicit val en = new Encoder[MyEntity] {}
+  implicit val de = new Decoder[MyEntity] {}
+  implicit val sa = new InterfaceToStateAccessor {}
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  val gr = new GetRoute[MyEntity]()
+  gr.doSomethingStrange(""abc"")
+}

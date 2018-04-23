@@ -1,0 +1,65 @@
+public Matcher appendReplacement(StringBuffer sb, String replacement) {
+
+    // If no match, return error
+    if (first < 0)
+        throw new IllegalStateException(""No match available"");
+
+    // Process substitution string to replace group references with groups
+    int cursor = 0;
+    String s = replacement;
+    StringBuffer result = new StringBuffer();
+
+    while (cursor < replacement.length()) {
+        char nextChar = replacement.charAt(cursor);
+        if (nextChar == '\\') {
+            cursor++;
+            nextChar = replacement.charAt(cursor);
+            result.append(nextChar);
+            cursor++;
+        } else if (nextChar == '$') {
+            // Skip past $
+            cursor++;
+
+            // The first number is always a group
+            int refNum = (int)replacement.charAt(cursor) - '0';
+            if ((refNum < 0)||(refNum > 9))
+                throw new IllegalArgumentException(
+                    ""Illegal group reference"");
+            cursor++;
+
+            // Capture the largest legal group string
+            boolean done = false;
+            while (!done) {
+                if (cursor >= replacement.length()) {
+                    break;
+                }
+                int nextDigit = replacement.charAt(cursor) - '0';
+                if ((nextDigit < 0)||(nextDigit > 9)) { // not a number
+                    break;
+                }
+                int newRefNum = (refNum * 10) + nextDigit;
+                if (groupCount() < newRefNum) {
+                    done = true;
+                } else {
+                    refNum = newRefNum;
+                    cursor++;
+                }
+            }
+
+            // Append group
+            if (group(refNum) != null)
+                result.append(group(refNum));
+        } else {
+            result.append(nextChar);
+            cursor++;
+        }
+    }
+
+    // Append the intervening text
+    sb.append(getSubSequence(lastAppendPosition, first));
+    // Append the match substitution
+    sb.append(result.toString());
+
+    lastAppendPosition = last;
+return this;
+}

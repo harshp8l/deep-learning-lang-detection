@@ -1,0 +1,14 @@
+with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+    future_to_url = {executor.submit(load_url, url, 50): url for url in list1}
+    for future in concurrent.futures.as_completed(future_to_url):
+        url = future_to_url[future]
+        try:
+            data = future.result()
+        except Exception as exc:
+            print('%r generated an exception: %s' % (url, exc))
+        else:
+            print('%r page is %d bytes' % (url, len(data)))
+
+with concurrent.futures.ProcessPoolExecutor() as executor:
+    for n, p in zip(list1, executor.map(scraper, list1)):
+            print(n, p)

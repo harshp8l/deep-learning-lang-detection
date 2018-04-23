@@ -1,0 +1,19 @@
+$computers=""localhost""
+
+foreach ($pc in $computers)
+{
+    $test_netconnection = Test-NetConnection $pc -Port 1433
+
+    Test-Connection -ComputerName $pc -Count 2 |
+        ForEach-Object {
+            [pscustomobject] @{
+                                LocalPC             =$_.PSComputerName
+                                'Tested-Server'     =$test_netconnection.ComputerName
+                                Bytes               =$_.buffersize
+                                Time                =$_.ResponseTime
+                                RemotePort          =$test_netconnection.RemotePort
+                                TcpTestSucceeded    =$test_netconnection.TcpTestSucceeded
+
+                                }
+        } | ft -AutoSize #end of Customobject  
+} 

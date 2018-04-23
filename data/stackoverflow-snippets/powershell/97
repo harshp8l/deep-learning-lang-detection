@@ -1,0 +1,27 @@
+Import-Module ActiveDirectory
+
+$Servers = Get-ADcomputer -Filter {OperatingSystem -like ""*Server*""} -Properties Name, OperatingSystem -SearchBase ""DC=yourDN,DC=local"" | Select Name
+$diskReport = Foreach($Server in $Servers)
+{
+
+    #$Status = ""Offline""    
+    $Name = $Server.Name
+    #Make sure server is online
+    if(Test-Connection -ComputerName $Name -ErrorAction SilentlyContinue)
+    {
+
+        #Get only 10%       
+        Get-WMIObject win32_logicaldisk -ComputerName $Name -Filter ""DriveType=3"" -ErrorAction SilentlyContinue | Where-Object {   ($_.freespace/$_.size) -le '0.1'}        
+    }
+    else
+    {
+        #Server is offline
+    }       
+
+}
+
+$lowservers = $diskreport | Select-Object @{Label = ""Server Name"";Expression = {$_.SystemName}},
+        @{Label = ""Drive Letter"";Expression = {$_.DeviceID}},
+        @{Label = ""Total Capacity (GB)"";Expression = {""{0:N1}"" -f( $_.Size / 1gb)}},
+        @{Label = ""Free Space (GB)"";Expression = {""{0:N1}"" -f( $_.Freespace / 1gb ) }},
+        @{Label = 'Free Space (%)'; Expression = {""{0:P0}"" -f ($_.freespace/$_.size)}} 

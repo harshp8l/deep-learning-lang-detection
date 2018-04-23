@@ -1,0 +1,27 @@
+//Dummy data
+  val df1 = Seq(
+    (""2017-01-08""),
+    (""2017-10-10""),
+    (""2017-05-01"")
+  ).toDF(""DATE1"")
+
+  val df2 = Seq(
+    (""Sayam"", 22.0, ""2017-01-08"", ""7 1 2017"", 3223, ""BHABHA""),
+    (""ADARSH"", 2.0, ""2017-10-10"", ""10.03.2017"", 222, ""SUNSHINE""),
+    (""SADIM"", 1.0, ""2017-05-01"", ""1/2/2017"", 111, ""DAV"")
+  ).toDF(""NAME"", ""SID"", ""DATE1"", ""DATE2"", ""ROLL"", ""SCHOOL"")
+
+  //create new Dataframe1 with new column id
+  val rows1 = df1.rdd.zipWithIndex().map{
+    case (r: Row, id: Long) => Row.fromSeq(id +: r.toSeq)}
+  val dataframe1 = spark.createDataFrame(rows1, StructType(StructField(""id"", LongType, false) +: df1.schema.fields))
+
+  //create new Dataframe2 with new column id
+  val rows2= df2.rdd.zipWithIndex().map{
+    case (r: Row, id: Long) => Row.fromSeq(id +: r.toSeq)}
+  val dataframe2 = spark.createDataFrame(rows2, StructType(StructField(""id"", LongType, false) +: df2.schema.fields))
+
+
+  dataframe2.drop(""DATE1"")
+    .join(dataframe1, ""id"")
+    .drop(""id"").show()

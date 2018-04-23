@@ -1,0 +1,64 @@
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
+
+public class UpdateAllRows {
+
+    private static Connection conn;
+    public static Admin getConnection() throws IOException {
+        if (conn == null) {
+            conn = ConnectionFactory.createConnection(HBaseConfiguration.create());
+        }
+        return conn.getAdmin();
+    }
+
+    public static void main(String args[]) throws Exception {
+        getConnection();
+        updateTable(args[0], args[1], args[2], args[3], args[4]);
+    }
+
+
+    public static void updateTable(String tableName, String columnFamily, String columnQualifier, String oldValue, String newValue) throws Exception{
+        Table table = conn.getTable(TableName.valueOf(tableName));
+        ResultScanner rs = scan(tableName, columnFamily, columnQualifier);
+
+        byte[] cfBytes = Bytes.toBytes(columnFamily);
+        byte[] cqBytes = Bytes.toBytes(columnQualifier);
+        byte[] oldvalBytes = Bytes.toBytes(oldValue);
+        byte[] newvalBytes = Bytes.toBytes(newValue);
+
+        Result res = null;
+        List<Put> putList = new ArrayList<Put>();
+        try {
+            while ((res = rs.next()) != null) {
+                if (Arrays.equals(res.getValue(cfBytes, cqBytes), oldvalBytes)){
+                    Put p = new Put(res.getRow());
+                    p.addColumn(cfBytes, cqBytes, newvalBytes);
+                    putList.add(p);
+                }
+            }
+        } finally {
+            rs.close();
+        }
+        table.put(putList);
+        table.close();
+    }
+
+    public static ResultScanner scan(String tableName, String columnFamily, String columnQualifier) throws IOException {
+        Table table = conn.getTable(TableName.valueOf(tableName));
+        return  table.getScanner(new Scan().addColumn(Bytes.toBytes(columnFamily), Bytes.toBytes(columnQualifier)));
+    }
+}

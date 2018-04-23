@@ -1,0 +1,39 @@
+SELECT
+CASE
+    WHEN A.ResultStart - A.SubjectStart >= 8
+    THEN RTRIM(LTRIM(REPLACE(REPLACE(SUBSTRING(T.TextCol, A.SubjectStart + 8, A.ResultStart - A.SubjectStart - 8), CHAR(10), ''), CHAR(13), '')))
+    ELSE ''
+END
+AS [Subject],
+CASE
+    WHEN A.DurationStart - A.ResultStart >= 7
+    THEN RTRIM(LTRIM(REPLACE(REPLACE(SUBSTRING(T.TextCol, A.ResultStart + 7, A.DurationStart - A.ResultStart - 7), CHAR(10), ''), CHAR(13), '')))
+    ELSE ''
+END
+AS Result,
+CASE
+    WHEN A.DurationStart - A.ResultStart >= 7
+    THEN RTRIM(LTRIM(REPLACE(REPLACE(SUBSTRING(T.TextCol, A.DurationStart + 9, A.DurationStart - A.ResultStart - 9), CHAR(10), ''), CHAR(13), '')))
+    ELSE ''
+END
+AS Duration,
+CASE
+    WHEN A.PhoneStart >= 6
+    THEN RTRIM(LTRIM(REPLACE(REPLACE(SUBSTRING(T.TextCol, 6, A.PhoneStart
+- 6), CHAR(10), ''), CHAR(13), '')))
+    ELSE ''
+END
+AS Note
+FROM AMGR_Notes T
+CROSS APPLY (
+    VALUES
+    (
+    CHARINDEX('Phone Call:', T.TextCol)
+    ,CHARINDEX('Subject:', T.TextCol)
+    ,CHARINDEX('Result:', T.TextCol)
+    ,CHARINDEX('Duration:', T.TextCol)
+    )
+) A (PhoneStart, SubjectStart, ResultStart, DurationStart)
+
+
+where t.type = '2'

@@ -1,0 +1,31 @@
+(require '[clojure.spec.alpha :as spec]
+         '[clojure.spec.gen.alpha :as gen])
+
+(defn memoize! [memo key distance]
+  ""Memoizes the distance at the given key and returns the distance""
+  (swap! memo assoc key distance)
+  distance)
+
+(spec/def ::word
+  (spec/and string? (complement nil?)))
+
+(defn map-atom? [o]
+  (and (instance? clojure.lang.IAtom o)
+       (map? @o)))
+
+(def map-atom-gen
+  (gen/fmap
+   (fn [_] (atom {}))
+   (gen/int)))
+
+(spec/def ::map-atom
+  (spec/with-gen map-atom?
+    (constantly map-atom-gen)))
+
+(spec/fdef memoize!
+           :args (spec/tuple ::map-atom
+                             (spec/coll-of ::word :type vector? :count 2)
+                             nat-int?)
+           :ret nat-int?
+           :fn (fn [{[memo key distance] :args, retval :ret}]
+                 (= distance (@memo key) retval)))

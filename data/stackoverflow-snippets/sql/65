@@ -1,0 +1,22 @@
+WITH Ranked ( CategoryId, rnk, ProductName )  
+             AS ( SELECT CategoryId,
+                         ROW_NUMBER() OVER( PARTITION BY CategoryId ORDER BY CategoryId ),
+                         CAST( ProductName AS VARCHAR(8000) ) 
+                    FROM Northwind..Products),
+   AnchorRanked ( CategoryId, rnk, ProductName )  
+             AS ( SELECT CategoryId, rnk, ProductName 
+                    FROM Ranked
+                   WHERE rnk = 1 ),
+RecurRanked ( CategoryId, rnk, ProductName ) 
+             AS ( SELECT CategoryId, rnk, ProductName 
+                    FROM AnchorRanked
+                   UNION ALL 
+                  SELECT Ranked.CategoryId, Ranked.rnk,
+                         RecurRanked.ProductName + ', ' + Ranked.ProductName
+                    FROM Ranked
+                   INNER JOIN RecurRanked 
+                      ON Ranked.CategoryId = RecurRanked.CategoryId 
+                     AND Ranked.rnk = RecurRanked.rnk + 1 )
+SELECT CategoryId, MAX( ProductName ) 
+      FROM RecurRanked
+  GROUP BY CategoryId;

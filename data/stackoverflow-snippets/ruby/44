@@ -1,0 +1,49 @@
+pg_array = [{""schemaname""=>""public"", ""relname""=>""rental"", ""reltuples""=>""16044""},
+                        {""schemaname""=>""public"", ""relname""=>""payment"", ""reltuples""=>""14596""},
+                        {""schemaname""=>""public"", ""relname""=>""film_actor"", ""reltuples""=>""5462""},
+                        {""schemaname""=>""public"", ""relname""=>""inventory"", ""reltuples""=>""4581""},
+                        {""schemaname""=>""public"", ""relname""=>""film_category"", ""reltuples""=>""1000""},
+                        {""schemaname""=>""public"", ""relname""=>""film"", ""reltuples""=>""1000""},
+                        {""schemaname""=>""public"", ""relname""=>""address"", ""reltuples""=>""603""},
+                        {""schemaname""=>""public"", ""relname""=>""city"", ""reltuples""=>""600""},
+                        {""schemaname""=>""public"", ""relname""=>""customer"", ""reltuples""=>""599""},
+                        {""schemaname""=>""public"", ""relname""=>""actor"", ""reltuples""=>""200""},
+                        {""schemaname""=>""public"", ""relname""=>""country"", ""reltuples""=>""109""},
+                        {""schemaname""=>""public"", ""relname""=>""category"", ""reltuples""=>""16""},
+                        {""schemaname""=>""public"", ""relname""=>""language"", ""reltuples""=>""6""},
+                        {""schemaname""=>""public"", ""relname""=>""store"", ""reltuples""=>""2""},
+                        {""schemaname""=>""public"", ""relname""=>""staff"", ""reltuples""=>""2""}]
+
+# split into headers and data
+data = pg_array.map(&:values)
+headers = pg_array.map(&:keys).uniq[0]
+
+
+# finde each column width
+col_width = []
+headers.each {|header| col_width << header.size }
+
+data.each do |row|
+  row.each_with_index do |value, index|
+    col_width[index] = value.length if value.length > col_width[index]
+  end
+end
+
+# give 1 space more
+col_width.map! {|e| e+1} 
+
+
+# print the output
+def print_row(row_array, col_width)
+  row_array.each_with_index do |val, index|
+    print ""|""
+    print val
+    print "" ""*(col_width[index]-val.length)
+  end
+  print ""|\n""
+end
+
+print_row(headers, col_width)
+print ""-""*10 + ""\n"" # change to print the proper separator
+data.each {|row| print_row(row, col_width)}
+puts ""(#{data.size} rows)""

@@ -1,0 +1,33 @@
+@PostMapping(consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
+public void addProduct(@RequestPart(value=""addProductRequest"") @Valid AddUpdateProductRequest request,
+                             @RequestPart(value = ""files"") final List<MultipartFile> files) throws Exception{
+
+    request.setProductImages(files);
+    productService.createProduct(request);
+}
+
+
+@Test
+public void testUpdateProduct() throws Exception {
+
+
+    AddUpdateProductRequest addProductRequest = prepareAddUpdateRequest();
+
+    final InputStream inputStreamFirstImage = Thread.currentThread().getContextClassLoader().getResourceAsStream(""test_image.png"");
+    final InputStream inputStreamSecondImage = Thread.currentThread().getContextClassLoader().getResourceAsStream(""test_image2.png"");
+
+    MockMultipartFile jsonBody = new MockMultipartFile(""addProductRequest"", """", ""application/json"", JsonUtils.toJson(addProductRequest).getBytes());
+    MockMultipartFile file1 = new MockMultipartFile(""files"", ""test_image.png"", ""image/png"", inputStreamFirstImage);
+    MockMultipartFile file2 = new MockMultipartFile(""files"", ""test_image2.png"", ""image/png"", inputStreamSecondImage);
+
+
+    ResultMatcher ok = MockMvcResultMatchers.status().isOk();
+    mockMvc.perform(MockMvcRequestBuilders.fileUpload(""/add-product"")
+                    .file(file1)
+                    .file(file2)
+                    .file(jsonBody)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andDo(MockMvcResultHandlers.log())
+                .andExpect(ok)
+                .andExpect(content().string(""success""));
+}

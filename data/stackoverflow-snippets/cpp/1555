@@ -1,0 +1,98 @@
+bool socks::start() {
+    if (listen(master_socket, backlog) < 0) {
+        std::cerr << ""Failed to start listening."" << std::endl;
+        return false;
+    }
+
+    std::cout << ""Listening for connections on port "" << listening_port << std::endl;
+
+    std::vector<pollfd> readfds;
+    char buf[256];
+    pollfd pfd;
+
+    //add master socket to set
+    pfd.fd = master_socket;
+    pfd.events = POLLIN;
+    pfd.revents = 0;
+    pollfd.push_back(pfd);
+
+    while (true) {
+
+        // Wait indefinitely for an activity on one of the sockets
+        int activity = poll(&readfds[0], readfds.size(), -1);
+        if (activity < 0) {
+            if (errno == EINTR) continue;
+            std::cerr << ""poll() failed"" << std::endl;
+            return false;
+        }
+
+        // Handle incoming connections, client disconnections, and incoming data
+        size_t j = 0;
+        while (j < readfds.size()) {
+            if (readfds[j].revents == 0) {
+                ++j;
+                continue;
+            }
+
+            int sd = readfds[j].fd;
+
+            if (readfds[j].revents & POLLIN) {
+                if (sd == master_socket) {
+                    sockaddr_in address;
+                    socklen_t addrlen = sizeof(address);
+                    int new_socket = accept(master_socket, (struct sockaddr *) &address, &addrlen);
+                    if (new_socket < 0) {
+                        std::cerr << ""Failed to accept incoming connection."" << std::endl;
+                        return false;
+                    }
+
+                    // Information about the new connection
+                    std::cout << ""New connection : ""
+                              << ""[SOCKET_FD : "" << new_socket
+                              << "" , IP : "" << inet_ntoa(address.sin_addr)
+                              << "" , PORT : "" << ntohs(address.sin_port)
+                              << ""]"" << std::endl;
+
+                    // Add connection to vectors
+
+                    clients.push_back(new_socket);    
+
+                    pfd.fd = new_socket;
+                    pfd.events = POLLIN | POLLRDHUP;
+                    pfd.revents = 0;
+                    readfds.push_back(pfd);
+                }
+                else {
+                    ssize_t rc = recv(sd, buf, sizeof(buf), 0);
+                    if (rc > 0) {
+                        std::cout << ""Client "" << sd << "" sent: "";
+                        std::cout.write(buf, rc);
+                        std::cout << std::endl;
+                    }
+                    else if (rc == 0) {
+                        readfds[j].revents |= POLLHUP;
+                    } else {
+                        readfds[j].revents |= POLLERR;
+                    }
+                }
+            }
+
+            if (readfds[j].revents != POLLIN) {
+                if (sd == master_socket) {
+                    ...
+                }
+                else {
+                    std::cout << ""Client "" << (readfds[j].revents & POLLERR) ? ""read error"" : ""disconnected"" << ""! [SOCKET_FD: "" << sd << ""]"" << std::endl;
+                    close(sd);
+                    clients.erase(std::find(clients.begin(), clients.end(), sd));
+                    readfds.erase(readfds.begin() + j);
+                    continue;
+                }
+            }
+
+            ++j;
+        }
+    }
+
+    return true;
+}

@@ -1,0 +1,38 @@
+#lang racket
+(require (for-syntax unstable/syntax))
+(provide (rename-out [*in-nest-sequence in-nest-sequence]))
+
+(define in-nest-sequence
+  (case-lambda
+    [(func init)
+     (make-do-sequence
+      (thunk (values identity func init #f #f #f)))]
+    [(func . inits)
+     (make-do-sequence
+      (thunk (values (curry apply values)
+                     (lambda (args)
+                       (call-with-values (thunk (apply func args)) list))
+                     inits #f #f #f)))]))
+
+(define-sequence-syntax *in-nest-sequence
+  (lambda () #'in-nest-sequence)
+  (lambda (stx)
+    (syntax-case stx ()
+      [[(x ...) (_ func init ...)]
+       (unless (= (syntax-length #'(x ...)) (syntax-length #'(init ...)))
+         (raise-syntax-error 'in-nest-sequence
+                             (format ""~a values required"" (syntax-length #'(x ...)))
+                             stx #'(init ...)))
+       (with-syntax ([for-arity (syntax-length #'(init ...))]
+                     [(value ...) (generate-temporaries #'(init ...))]
+                     [(y ...) (generate-temporaries #'(init ...))])
+         #'[(x ...) (:do-in ([(f) func])
+                            (unless (procedure-arity-includes? f for-arity)
+                              (raise-arity-error f (procedure-arity f) init ...))
+                            ([value init] ...)
+                            #t
+                            ([(x ...) (values value ...)]
+                             [(y ...) (f value ...)])
+                            #t
+                            #t
+                            (y ...))])])))

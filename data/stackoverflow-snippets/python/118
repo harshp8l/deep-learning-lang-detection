@@ -1,0 +1,36 @@
+import os
+from glob import iglob
+from collections import defaultdict
+
+
+def split_files_into_categories(inputfiles, outputdir):
+    count = 0
+    categories = defaultdict(bytearray)
+
+    for inputfile in inputfiles:
+        with open(inputfile, 'rb')  as f:
+            next(f) # skip first line
+
+            for line in f:
+
+                if count % 10000 == 0:
+                    save_results(categories, outputdir)
+                    categories.clear()
+
+                category, _, rest = line.partition(b',')
+
+                categories[category] += rest
+                count += 1
+
+    save_results(categories, outputdir)
+
+
+def save_results(categories, outputdir):
+    for category, data in categories.items():
+        with open(os.path.join(outputdir, category.decode() + '.csv'), 'ab') as f:
+            f.write(data)
+
+
+if __name__ == '__main__':
+    # run on all csvs in the data folder
+    split_files_into_categories(iglob('data/*.csv'), 'by_category')

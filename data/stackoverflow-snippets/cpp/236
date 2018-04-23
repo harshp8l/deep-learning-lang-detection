@@ -1,0 +1,22 @@
+"" ftplugin/c/mymappings.vim
+function! s:InsertExpr(char) abort
+  let col  = col('.')
+  let line = getline('.')
+
+  let syn = synIDattr(synID(line('.'),col-1,1),'name')
+  if syn =~? 'comment\|string\|character\|doxygen'
+    return a:key
+  endif
+
+  let lcut = getline('.')[: col-2]
+  let before =
+        \   lcut =~ '[=<>!] $'       ? ""\<bs>""
+        \ : lcut =~ ""[=<>![ \t\n]$""  ? ''
+        \ :                            ' '
+  let after = line[col-1] =~ ""[ \t\n\\]]"" ? '' : ' '
+  return before.a:char.after
+endfunction
+
+inoremap <buffer> <expr> = <sid>InsertExpr('=')
+inoremap <buffer> <expr> < <sid>InsertExpr('<')
+inoremap <buffer> <expr> > <sid>InsertExpr('>')

@@ -1,0 +1,42 @@
+package main
+
+import (
+    ""encoding/xml""
+    ""fmt""
+    ""strings""
+)
+
+type XMLTable struct {
+    Rows []struct {
+        Cell string `xml:"",innerxml""`
+    } `xml:""TR>TD""`
+}
+
+func main() {
+    raw_html_table := `
+    <TABLE><TR>
+    <TD>lalalal</TD>
+    <TD>papapap</TD>
+    <TD>fafafa</TD>
+    <TD>
+    <form action=""/addedUrl/;jsessionid=KJHSDFKJLSDF293847odhf"" method=""POST"">
+    <input type=""hidden"" name=""acT"" value=""Dev"">
+    <input type=""hidden"" name=""acA"" value=""Anyval"">
+    <input type=""submit"" name=""submit"" value=""Stop"">
+    </form>
+    </TD>
+    </TR>
+    </TABLE>`
+
+    table := XMLTable{}
+    decoder := xml.NewDecoder(strings.NewReader(raw_html_table))
+    decoder.Entity = xml.HTMLEntity
+    decoder.AutoClose = xml.HTMLAutoClose   
+    decoder.Strict = false
+
+    err := decoder.Decode(&table)
+    if err != nil {
+        fmt.Printf(""error: %v"", err)
+    }
+    fmt.Printf(""%#v\n"", table)
+}

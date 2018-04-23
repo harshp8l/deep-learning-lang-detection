@@ -1,0 +1,27 @@
+// add this field to Registry
+get chan getRequest
+
+struct getRequest struct {
+     ch chan *Client
+     id string
+}
+
+func (r *SocketRegistry) GetClient(id string) (*Client, bool) {
+    ch := make(chan *Client)
+    r.get <- getRequest{id, ch}
+    c := <- ch
+    if c == nil {
+       return &Client{}, false
+    }
+    return c, true
+}
+
+func (r *SocketRegistry) run() {
+    for {
+        select {
+        case gr := <-r.get:
+          gr.ch <- r.clients[id]
+        case client := <-r.Register:
+          ... as before
+    }
+}

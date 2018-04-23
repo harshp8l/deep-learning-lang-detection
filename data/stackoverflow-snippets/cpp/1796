@@ -1,0 +1,36 @@
+void *serverWorker(void *threadarg) {
+    struct workDetails *thisWork;
+    thisWork = (struct workDetails *) threadarg;
+    int threadcount = thisWork->threadcount;
+    int chunkSize = thisWork->chunkSize;
+    char *dataStore = thisWork->dataStore;
+    int sockfd = thisWork->sockfd;
+    struct sockaddr_in cli_addr; // = thisWork->cli_addr;
+    char *buffer = new char[chunkSize];
+
+
+    listen(sockfd, 5);
+    socklen_t clilen = sizeof(cli_addr);
+    sockfd = ::accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+    if (sockfd < 0)
+        error(""ERROR on accept"");
+
+    while (1) {
+        if (recv(sockfd, buffer, chunkSize, 0) > 0) {
+            //lock_guard<mutex> guard(cout_mutex);
+            //cout << ""Server "" << thisWork->threadid << "" Received - "" << buffer << endl;
+            buffer[chunkSize] = NULL;
+            strncat(dataStore, buffer, strlen(buffer));
+            if (strlen(dataStore) == oneGBtoByte) {
+                cout << ""Done - "" << endl;
+                storeInfile(created, dataStore);
+                break;
+            }
+        }
+    }
+
+    //End
+    delete[] buffer;
+    pthread_exit((void *) NULL);
+
+}

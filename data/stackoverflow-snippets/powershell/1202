@@ -1,0 +1,31 @@
+# Here you have an empty array
+$target = @( )
+
+# Here you set call a Foreach, but you don't even need it
+$ini = 0 | foreach {
+    $apiurl = ""http://xxxxxxxxx:8080/fxxxxp/events_xxxx.xml""
+    [xml]$ini = (new-object System.Net.WebClient).downloadstring($apiurl)
+
+    # You duplicated variables here. Just set $nodename = $ini.events.event.name
+    $target = $ini.events.event.name
+    $nodename = $target
+
+    # You duplicate variables here. Just set $statuscode = $ini.events.event.name
+    $target = $ini.events.event.statuscode
+    $statuscode = $target
+}
+
+# You should already have arrays, so now you're making making more arrays duplicating variables again
+$column1 = @($nodename)
+$column2 = @($statuscode)
+
+# counter, but you won't need it
+$i = 0
+
+# So here, youre making a new array again, but this contains two nested arrays. I don't get it. 
+($column1,$column2)[0] | foreach {
+    New-Object PSObject -Property @{
+        POP    = $Column1[$i]
+        Status = $column2[$i++]
+    }  | ft -AutoSize
+} # You were missing a closing bracket for your foreach loop

@@ -1,0 +1,45 @@
+vals := make([]interface{}, len(cols))
+for i := 0; i < len(cols); i++ {
+    vals[i] = new(interface{})
+    if i != 0 {
+        fmt.Fprint(w, ""\t"")
+    }
+    fmt.Fprint(w, cols[i])
+}
+fmt.Fprintln(w)
+for rows.Next() {
+    err = rows.Scan(vals...)
+    if err != nil {
+        fmt.Fprintln(w, err)
+        continue
+    }
+    for i := 0; i < len(vals); i++ {
+        if i != 0 {
+            fmt.Fprint(w, ""\t"")
+        }
+        printValue(w, vals[i].(*interface{}))
+    }
+    fmt.Fprintln(w)
+
+}
+
+... 
+
+func printValue(w io.Writer, pval *interface{}) {
+    switch v := (*pval).(type) {
+    case nil:
+        fmt.Fprint(w, ""NULL"")
+    case bool:
+        if v {
+            fmt.Fprint(w, ""1"")
+        } else {
+            fmt.Fprint(w, ""0"")
+        }
+    case []byte:
+        fmt.Fprint(w, string(v))
+    case time.Time:
+        fmt.Fprint(w, v.Format(""2006-01-02 15:04:05.999""))
+    default:
+        fmt.Fprint(w, v)
+    }
+}

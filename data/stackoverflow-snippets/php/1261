@@ -1,0 +1,35 @@
+/**
+ * @param $array
+ *
+ * @return \Illuminate\Pagination\LengthAwarePaginator
+ */
+public static function makePaginatorForArray(array $array){
+    $collection = collect($array);
+
+    return self::makePaginatorForCollection($collection);
+}
+
+/**
+ * This should match laravel's built in Model::paginate()
+ *
+ * @param \Illuminate\Support\Collection $collection
+ *
+ * @return \Illuminate\Pagination\LengthAwarePaginator
+ */
+public static function makePaginatorForCollection(\Illuminate\Support\Collection $collection){
+    $current_page = (request()->has('page') ? request()->page : 1) - 1;//off by 1 (make zero start)
+    $per_page     = (request()->has('per_page') ? request()->per_page : config('pagination.per_page')) * 1;
+
+    if(env('APP_ENV') == 'testing'){
+        $per_page = 0;
+    }
+
+    if($per_page){
+        $page_data = $collection->slice($current_page * $per_page, $per_page)->all();
+    }else{
+        $page_data = $collection->all();
+        $per_page  = count($page_data) + 1;
+    }
+
+    return new \Illuminate\Pagination\LengthAwarePaginator(array_values($page_data), count($collection), $per_page);
+}

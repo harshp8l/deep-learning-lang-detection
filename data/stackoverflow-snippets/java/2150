@@ -1,0 +1,32 @@
+class Worker extends Thread {
+    private final ResourceLock resourceLock;
+    private final int threadNumber;
+    private final AtomicInteger counter;
+    private volatile boolean running = true;
+    public Worker(ResourceLock resourceLock, int threadNumber, AtomicInteger counter) {
+        this.resourceLock = resourceLock;
+        this.threadNumber = threadNumber;
+        this.counter = counter;
+    }
+    @Override
+    public void run() {
+        while (running) {
+            try {
+                synchronized (resourceLock) {
+                    while (resourceLock.flag != threadNumber) {
+                        resourceLock.wait();
+                    }
+                    System.out.println(""Thread:"" + threadNumber + "" value: "" + counter.incrementAndGet());
+                    Thread.sleep(1000);
+                    resourceLock.flag = (threadNumber + 1) % resourceLock.threadsCount;
+                    resourceLock.notifyAll();
+                }
+            } catch (Exception e) {
+                System.out.println(""Exception: "" + e);
+            }
+        }
+    }
+    public void shutdown() {
+        running = false;
+    }
+}

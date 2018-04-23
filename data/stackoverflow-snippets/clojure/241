@@ -1,0 +1,18 @@
+(def ^:dynamic *context* ())
+
+(defn lookup-context [& kv-pairs]
+  (some #(when (every? (fn [[k v]] (= (k %) v)) kv-pairs) %)
+        *context*))
+
+(defmacro with-context [data]
+  (let [items (tree-seq #(and (vector? %) (#{:frame :page} (first %)))
+                        #(nthnext % 2)
+                        data)
+        ctx-items (reverse (map second items))
+        let-bindings (zipmap ctx-items (repeatedly gensym))
+        data (clojure.walk/postwalk-replace let-bindings data)]
+    (reduce (fn [acc [itm sym]]
+              `(let [~sym ~itm]
+                 (binding [*context* (cons ~sym *context*)] ~acc)))
+                 data ;; here goes your data parsing
+                 let-bindings)))

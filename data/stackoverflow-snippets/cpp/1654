@@ -1,0 +1,25 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <thrust/reduce.h>
+#include <cuda.h>
+
+
+__global__ void loopKernel(float* arrayA, float* arrayB)
+{
+        int i = threadIdx.x + blockDim.x*blockIdx.x;
+        if (i < m)
+        {
+            arrayA[i] = 0.f; 
+            arrayB[(n - 1)*m + i] = 0.f;
+        }
+}
+
+int main(int argc, char** argv)
+{
+    float *arrayA;
+    cudaMalloc((void**)&arrayA, 4096 * 4096 * sizeof(float));
+    float *arrayB;
+    cudaMalloc((void**)&arrayB, 4096 * 4096 * sizeof(float));
+
+    loopKernel << 8, 256 >> (arrayA, arrayB);
+}

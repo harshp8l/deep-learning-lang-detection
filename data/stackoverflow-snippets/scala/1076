@@ -1,0 +1,29 @@
+import org.apache.spark.mllib.linalg.{Vector, Vectors}
+
+val termDocMatrix = sc.parallelize(Array(
+  Vectors.sparse(
+    1000, Array(32, 166, 200, 223, 577, 645, 685, 873, 926), Array(
+      0.18132966949934762, 0.3777537726516676, 0.3178848913768969,
+      0.43380819546465704, 0.30604090845847254, 0.46007361524957147,
+      0.2076406414508386, 0.2995665853335863, 0.1742843713808876
+  )),
+  Vectors.sparse(
+    1000, Array(74, 154, 343, 405, 446, 538, 566, 612 ,732), Array(
+      0.12128098267647237, 0.2499114848264329, 0.1626128536458679,
+      0.12167467201712565, 0.2790928578869498, 0.24904429178306794,
+      0.10039172907499895, 0.22803472531961744, 0.36408630055671115
+  ))
+))
+// termDocMatrix: org.apache.spark.rdd.RDD[org.apache.spark.mllib.linalg.Vector] = ...
+
+val ds = spark.createDataset(termDocMatrix.map(Tuple1.apply)).
+  withColumnRenamed(""_1"", ""features"")
+// ds: org.apache.spark.sql.Dataset[(org.apache.spark.mllib.linalg.Vector,)] = [features: vector]
+
+ds.show
+// +--------------------+
+// |            features|
+// +--------------------+
+// |(1000,[32,166,200...|
+// |(1000,[74,154,343...|
+// +--------------------+

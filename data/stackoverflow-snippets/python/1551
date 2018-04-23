@@ -1,0 +1,66 @@
+import inspect
+
+def generic_operator_function(operator_function, default_value,
+                              function_list, **kwargs):
+    POSITIONALS = {inspect.Parameter.POSITIONAL_ONLY,
+                   inspect.Parameter.POSITIONAL_OR_KEYWORD}
+    KEYWORDS = {inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                inspect.Parameter.KEYWORD_ONLY}
+
+    # if no functions were given, return the default value
+    if not function_list:
+        return lambda: default_value
+
+    # for each function in the list, find out how many positional
+    # arguments it accepts. Also find out which keyword arguments
+    # it accepts.
+    arg_maps = []
+    kwarg_names = []
+    for func in function_list:
+        sig = inspect.signature(func)
+        params = sig.parameters.values()
+
+        # count the positional arguments and map them to
+        # parameter names
+        bound_args = sig.bind_partial(**kwargs).arguments
+        arg_map = [param.name for param in params if param.kind in POSITIONALS
+                                                  and param.name not in bound_args]
+        arg_maps.append(arg_map)
+
+        # find the names of all keyword arguments
+        if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in params):
+            kwnames = True
+        else:
+            kwnames = {param.name for param in params if param.kind in KEYWORDS}
+        kwarg_names.append(kwnames)
+
+    # return a function that iterates through the function_list and
+    # multiplies all results
+    def combined_func(*args, **inner_kwargs):
+        value = default_value
+
+        i = 0
+        for func, arg_map, kwnames in zip(function_list, arg_maps, kwarg_names):
+            # if the function takes **kwargs, pass all kwargs. Otherwise, pass
+            # only those that it supports.
+            kw_arguments = kwargs.copy()
+            kw_arguments.update(inner_kwargs)
+            if kwnames is not True:
+                kw_arguments = {k: v for k, v in kw_arguments.items() if k in kwnames}
+
+            # take the next batch of arguments, but only those that aren't already
+            # provided as keyword arguments
+            arg_map = [arg for arg in arg_map if arg not in kw_arguments]
+            numparams = len(arg_map)
+            arguments = args[i:i+numparams]
+            kw_arguments.update({arg: value for arg, value in zip(arg_map, arguments)})
+
+            # call the function
+            retval = func(**kw_arguments)
+            value = operator_function(value, retval)
+
+            i += numparams
+
+        return value
+
+    return combined_func

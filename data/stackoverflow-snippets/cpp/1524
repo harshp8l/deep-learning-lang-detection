@@ -1,0 +1,37 @@
+class threaded_statement;
+
+class threaded_connection
+{
+    std::unique_ptr<sql::Connection> conn;
+    std::mutex mut;
+public:
+    threaded_statement prepareStatement(const char * stmt)
+    {
+        std::lock_guard<std::mutex> guard(mut);
+        return { conn->prepareStatement(stmt) };
+    }
+};
+
+class threaded_statement
+{
+    std::unique_ptr<sql::PreparedStatement> stmt;
+    std::mutex mut;
+public:
+    threaded_statement(sql::PreparedStatement * stmt) : stmt(stmt) {}
+    void setInt(int pos, int value) 
+    { 
+        std::lock_guard<std::mutex> guard(mut);
+        stmt->setInt(pos, value);
+    }
+    void setString(int pos, std::string value) 
+    { 
+        std::lock_guard<std::mutex> guard(mut);
+        stmt->setString(pos, value);
+    }
+    // etc ...
+    void execute()
+    { 
+        std::lock_guard<std::mutex> guard(mut);
+        stmt->execute();
+    }
+}

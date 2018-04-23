@@ -1,0 +1,38 @@
+import scala.annotation.tailrec
+
+// Implicit class cannot be a top-level element, so it's put in an object.
+object StringUtils {
+
+  // ""Decorate"" strings with additional functions.
+  final implicit class MyRichString(val s: String)
+  extends AnyVal {
+
+    // Find a character satisfying predicate p, report position.
+    def myFind(p: Char => Boolean): Option[Int] = {
+
+      // Helper function to keep track of current position.
+      @tailrec
+      def currentPos(pos: Int): Option[Int] = {
+
+        // If we've passed the end of the string, return None. Didn't find a
+        // character satisfying predicate.
+        if(pos >= s.length) None
+
+        // Otherwise, if the predicate passes for the current character,
+        // return position wrapped in Some.
+        else if(p(s(pos))) Some(pos)
+
+        // Otherwise, perform another iteration, looking at the next character.
+        else currentPos(pos + 1)
+      }
+
+      // Start by looking at the first (0th) character.
+      currentPos(0)
+    }
+  }
+}
+
+import StringUtils._
+val myString = ""Some example""
+myString.myFind(_ == ' ') // Should report Some(4)
+myString.myFind(_ == 'X') // Should report None

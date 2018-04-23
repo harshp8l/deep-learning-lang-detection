@@ -1,0 +1,28 @@
+cls
+
+$xml = New-Object xml
+$xml.Load(""D:\sample.xml"")
+
+$allAttendees = $xml.SelectNodes('//attendee') | ForEach-Object {
+    $attendee = $_
+    $event = $attendee.SelectSingleNode('./ancestor::event[1]')
+    $registrant = $event.SelectSingleNode(""./registrants/registrant[eventuserid = '$($attendee.eventuserid)']"")
+    New-Object PSObject -Property @{
+        FirstName       = $registrant.firstname
+        LastName        = $registrant.lastname
+        City            = $registrant.city
+        State           = $registrant.state
+        Country         = $registrant.country
+        Company         = $registrant.company
+        WorkPhone       = $registrant.workphone
+        Email           = $registrant.email
+        AttendedLive    = $attendee.attendedlive
+        AttendedArchive = $attendee.attendedarchive
+        EventID         = $event.eventid;
+        EventTitle      = $event.eventtitle
+        EventTime       = $event.eventtime
+        Orginization    = 'North America';
+    }
+}
+
+$allAttendees | Export-Csv -Force -Path ""D:\output.csv"" -NoTypeInformation

@@ -1,0 +1,57 @@
+<#define SQL credentials#>
+$dataSource = “SERVERNAME”
+$user = “USERNAME”
+$pwd = “PASSWORD”
+$database = “”
+$connectionString = “Server=$dataSource;uid=$user; pwd=$pwd;Database=$database;Integrated Security=False;”
+
+<#connect with SQL Server#>
+$connection = New-Object System.Data.SqlClient.SqlConnection
+$connection.ConnectionString = $connectionString
+
+$connection.Open()
+
+<#define and execute query#>
+$query = “SELECT [id]
+      ,[name]
+      ,[responsible]
+      ,[targetdate]
+      ,[progress]
+      ,[projectid]
+  FROM TABLENAME WHERE progress < 100 and targetdate < CAST(GETDATE() as DATE);”
+
+$command = $connection.CreateCommand()
+$command.CommandText = $query
+
+$result = $command.ExecuteReader()
+
+<#map result to table#>
+$table = new-object “System.Data.DataTable”
+$table.Load($result)
+
+$format = @{Expression={$_.Id};Label=”Id”;width=10},
+            @{Expression={$_.name};Label=”Name”; width=30},
+            @{Expression={$_.responsible};Label=”Username”; width=30},
+            @{Expression={$_.targetdate};Label=”datetime”; width=30},
+            @{Expression={$_.progress};Label=”progress”; width=30},
+            @{Expression={$_.projectid};Label=”projectid”; width=30}
+
+$table | Format-Table $format | Out-File C:\Users\username\Desktop\table.txt
+
+<#close connection#>
+$connection.Close()
+
+<#define variable expired tasks#>
+$expiredTasks = $table;
+
+<#get unique username#>
+$uniqueUsernames = $expiredTasks | Sort-Object -Property responsible -Unique | select responsible
+
+<#foreach username get all expired tasks#>
+foreach($uniqueUsername in $uniqueUsernames)
+{
+    <#select task where username foreach username#>
+    $selectTasks = $table | Where-Object -Property responsible -Like $uniqueUsername.responsible
+
+    sendMail $selectTasks
+}

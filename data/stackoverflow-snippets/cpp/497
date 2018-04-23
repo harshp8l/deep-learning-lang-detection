@@ -1,0 +1,28 @@
+#ifndef INTEGRATE_CONST_H
+#define INTEGRATE_CONST_H
+
+// This function will iterate the state of the ODE, 
+// with the possibility to observe that state in each step
+
+template<class Stepper, class DynamicSystem, class Observer>
+size_t integrate_const( Stepper& stepper, DynamicSystem& system, 
+                        typename Stepper::container_type& state,
+                        typename Stepper::time_type start_time, 
+                        typename Stepper::time_type end_time,
+                        typename Stepper::time_type dt, 
+                        Observer& observer ) {
+
+    stepper.adjust_size( state );
+    size_t iteration = 0;
+    while( start_time < end_time ) {
+        observer( start_time, state, system );
+        stepper.do_step( system, state, start_time, dt );
+        start_time += dt;
+        ++iteration;
+    }
+    observer( start_time, state, system );
+
+    return iteration;
+}
+
+#endif // !INTEGRATE_CONST_H

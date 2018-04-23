@@ -1,0 +1,36 @@
+DECLARE @tblPlaceHolder TABLE (
+  idPatient BIGINT,
+  VDay TINYINT,
+  SDay TINYINT,
+  Week SMALLINT);
+
+<Your existing loop code except add this:  >
+  INSERT INTO @tblPlaceHolder (
+    idPatient,
+    VDay,
+    SDay,
+    Week)
+  SELECT
+    Visits.idPatient,
+    Visits.VDay,
+    tblScheduledOrder.SDay,
+    @WEEK AS Week    --<-------Addition to SELECT
+  FROM
+    tblScheduledOrder
+    LEFT OUTER JOIN....
+
+<The rest of your loop code>
+
+    SELECT @WEEK = @WEEK - 1
+END  
+
+SELECT 
+  idPatient,
+  SDay,
+  VDay
+FROM 
+  @tblPlaceHolder
+ORDER BY
+  Week DESC, --Not needed in the result set. Just to sort by.
+  SDay,
+  idPatient;

@@ -1,0 +1,79 @@
+package main
+
+import (
+    ""bufio""
+    ""fmt""
+    ""io""
+    ""net/http""
+    ""os""
+    ""strings""
+)
+
+func reader(url string) error {
+    resp, err := http.Get(url)
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+
+    // ReadString
+    r := bufio.NewReader(resp.Body)
+    for {
+        line, err := r.ReadString('\n')
+        if len(line) == 0 && err != nil {
+            if err == io.EOF {
+                break
+            }
+            return err
+        }
+        line = strings.TrimSuffix(line, ""\n"")
+
+        fmt.Println(line)
+
+        if err != nil {
+            if err == io.EOF {
+                break
+            }
+            return err
+        }
+    }
+
+    return nil
+}
+
+func scanner(url string) error {
+    resp, err := http.Get(url)
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+
+    // Scanner
+    s := bufio.NewScanner(resp.Body)
+    for s.Scan() {
+        line := s.Text()
+
+        fmt.Println(line)
+
+    }
+    if s.Err() != nil {
+        return err
+    }
+
+    return nil
+}
+
+func main() {
+    url := ""https://www.example.com""
+    fmt.Println(""\nReader:\n"")
+    err := reader(url)
+    if err != nil {
+        fmt.Fprintln(os.Stderr, err)
+    }
+    fmt.Println(""\nScanner:\n"")
+    err = scanner(url)
+    if err != nil {
+        fmt.Fprintln(os.Stderr, err)
+    }
+    fmt.Println(""\n"")
+}

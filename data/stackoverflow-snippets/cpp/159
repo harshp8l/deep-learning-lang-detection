@@ -1,0 +1,62 @@
+int MyClass::Read(int file_descriptor)
+{
+    unsigned short read_buffer[READ_BUFFER_SIZE];
+    fd_set read_set;
+    time_val timeout;
+    int return_value, count;
+
+    do
+    {
+        // Initialize read file descriptor
+        FD_ZERO(&read_set);
+
+        // Add driver file descriptor
+        FD_SET(file_descriptor, &read_set);
+
+        // Set timeout
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 10000;
+
+        // Wait for data to be available to read
+        return_value = select(file_descriptor + 1, &read_set, NULL, NULL, &timeout);
+
+        // Make sure an error or a timeout didn't occur
+        if (-1 == return_value)
+        {
+            cout << ""select failed"" << endl;
+            return -1;
+        }
+
+        if (0 == return_value)
+        {
+            cout << ""select timed out"" << endl;
+            continue; // or return, your choice...
+        }
+
+        // select() returned > 0, so the fd_set MUST be set,
+        // so no need to check it with FD_ISSET()...
+
+        // read in the data
+
+        count = read(file_descriptor, read_buffer, sizeof(read_buffer));
+
+        // Double check that data was actually read in
+        if (-1 == count)
+        {
+            cout << ""read failed"" << endl;
+            return -1;
+        }
+
+        if (0 == count)
+        {
+            cout << ""peer disconnected"" << endl;
+            return 0; // or -1, or whatever you want...
+        }
+
+        // success
+        break;
+    }
+    while (true);
+
+    return 0;
+}

@@ -1,0 +1,21 @@
+(set-env! :resource-paths #{""src""})
+
+(require '[boot.core :as core]
+         '[boot.pod  :as pod])
+
+(deftask load-ns
+  ""Loads the my-project.utils namespace in a fresh pod.""
+  []
+  (let [pods (pod/pod-pool (core/get-env))]
+    (core/with-pre-wrap [fileset]
+      (pod/with-eval-in (pods :refresh)
+        ;; We require indirectly here so that errors from my-project.utils have
+        ;; proper line and column information.
+        (require 'my-project.load-impl))
+      fileset)))
+
+(deftask dev
+  ""Watches source code and loads my-project/utils every time code changes.""
+  []
+  (comp (watch)
+        (load-ns)))

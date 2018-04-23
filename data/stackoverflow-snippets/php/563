@@ -1,0 +1,33 @@
+// loop through all uploaded files:
+for ($key = 0; $key < count($_FILES['file']['tmp_name']); $key++) {
+
+  // make an array of lines from a single file:
+  $txt_file = file($_FILES['file']['tmp_name'][$key]);
+
+  // loop through this array, line by line:
+  foreach ($txt_file as $line) {
+
+    // if your file is not utf-8 fix the encoding:
+    $line = iconv(""windows-1251"", ""utf-8"", $line);
+
+    // check if this string begins with 'Dude=':
+    if (substr($line, 0, strlen('Dude=')) === 'Dude=') {
+
+      // if yes, then trim the 'Dude=' and get what's after it:
+      $found_value[$key]['dude'] = trim(substr($line, strlen('Dude=')));
+
+      // if this string begins with 'Dude=' it cannot begin with something else,
+      // so we can go straight to the next cycle of the foreach loop:
+      continue;
+
+      // check if this string begins with 'Something else=':
+    } elseif (substr($line, 0, strlen('SomethingElse=')) === 'SomethingElse=') {
+
+      // if yes, then trim the 'SomethingElse=' and get what's after if:
+      $found_value[$key]['something_else'] = trim(substr($line, strlen('SomethingElse=')));
+
+      // if there's more items to find in the string use 'continue' to shorten server's work
+      continue;
+    }
+  }
+}

@@ -1,0 +1,19 @@
+import pprint
+import requests
+from bs4 import BeautifulSoup
+
+html = requests.get('https://www.drugbank.ca/drugs/DB01048#BE0004136').text
+soup = BeautifulSoup(html, 'html.parser')
+div_targets = soup.find('div', class_='bond-list-container targets')
+targets = div_targets.find_all('div', class_='bond card')
+
+t = {}
+for target in targets:
+    k = []
+    v = []
+    for property in target.find_all('dt'):
+        k.append(property.get_text())
+    for property in target.find_all('dd'):
+        v.append(property.get_text())
+    t[target.find('strong').get_text()] = dict(zip(k, v))
+pprint.pprint(t)

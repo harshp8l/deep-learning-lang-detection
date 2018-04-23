@@ -1,0 +1,28 @@
+  case class Product(id: String, title: String, description: String)
+  case class Store(id: String, title: String, address: String)
+
+  trait Client[T] {
+    def getResponse(s: String): Option[T]
+  }
+
+  object Client {
+    implicit val productClient: Client[Product] = new Client[Product] {
+      override def getResponse(s: String): Option[Product] = s match {
+        case ""/product"" => Some(Product(""id"", ""title"", ""description""))
+        case _ => None
+     }
+  }
+
+   implicit val storeClient: Client[Store] = new Client[Store] {
+     override def getResponse(s: String): Option[Store] = s match {
+       case ""/store"" => Some(Store(""id"", ""title"", ""address""))
+       case _ => None
+     }
+  }
+
+  def apply[T : Client](s: String): Option[T] = 
+    implicitly[Client[T]].getResponse(s)
+  }
+
+val product: Option[Product] = Client[Product](""/product"")
+val store: Option[Store] = Client[Store](""/store"")

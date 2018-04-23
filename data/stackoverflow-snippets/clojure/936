@@ -1,0 +1,19 @@
+(defn dedup-rows
+[rows input]
+(let [{:keys [key-col col val]} input  
+  result (-> rows
+           (f/group-by (f/fn [row]
+                        (get row key-col)))
+          (f/values)
+          (f/map (f/fn [rows]
+            (if (= (count rows) 1)
+              rows
+              (filter (fn [row]
+                        (let [col-val (get row col)
+                              equal? (= col-val val)]
+                          (if (not equal?)
+                           true
+                           false))) rows)))
+           (f/flat-map (f/fn [row]
+                           (mapcat vector row)))))]
+  result))

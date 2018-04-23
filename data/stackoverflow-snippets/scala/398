@@ -1,0 +1,8 @@
+def runBroadcast(sc: SparkContext, df: DataFrame): Unit = {
+  val bins = df.select(sort_array(collect_set(""data""))).collect()(0)(0).asInstanceOf[collection.mutable.WrappedArray[Double]]
+  val binsBroadcast = sc.broadcast(bins)
+  val df2 = binsBroadcast.value.map(x => (x, df.filter(col(""data"").geq(x)).select(count(col(""data""))).as[Long].first)).toDF(""data"", ""atRisk"")
+  val finalDF = df.groupBy(col(""data"")).agg(sum(""censorFlag"").as(""wins"")).join(df2, ""data"")
+  finalDF.show
+  binsBroadcast.destroy
+}

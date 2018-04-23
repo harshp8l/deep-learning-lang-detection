@@ -1,0 +1,190 @@
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <limits>
+
+#pragma pack(push, 1) // or your compiler's equivilent...
+struct Inventory
+{
+    char desc[30];
+    int qty;
+    double wholeSaleCost;
+};
+#pragma pack(pop)
+
+// Function prototypes
+void addRecord();
+void viewRecord();
+void changeRecord();
+
+void resetInput()
+{
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');            
+    std::cin.clear();
+}
+
+template<typename T>
+void promptforNumber(const char *prompt, T &value)
+{
+    do
+    { 
+        std::cout << prompt << "": "";
+        if (std::cin >> value)
+        {
+            if (value >= T(0))
+                break;
+
+            std::cout << ""Please enter a number greater than or equal to 0."" << std::endl;
+        }
+        else
+        {
+            resetInput();
+            std::cout << ""That is not a valid number, please try again."" << std::endl;
+        }
+    }
+    while (true);
+}
+
+void promptforRecordData(Inventory &item)
+{
+    std::cout << ""Enter the following inventory data:"" << endl;    
+
+    do
+    {
+        std::cout << ""Description: "";
+        if (std::cin.getline(item.desc, sizeof(item.desc)))
+            break;
+
+        resetInput();
+        std::cout << ""Please enter a string less than "" << sizeof(item.desc) << "" chars."" << std::endl;
+    }
+    while (true);
+    std::cout << std::endl;
+
+    promptforNumber(""Quantity"", item.qty);
+    std::cout << std::endl;
+
+    promptforNumber(""Retail Price"", item.wholeSaleCost);
+    std::cout << std::endl;
+}
+
+void displayRecord(const Inventory &item)
+{
+    std::cout << ""Description: "" << item.desc << std::endl;
+    std::cout << ""Quantity: "" << item.qty << std::endl;
+    std::cout << ""Retail Price: "" << item.wholeSaleCost << std::end;
+}
+
+bool readRecord(std::istream &in, Inventory &item)
+{
+    if (!in.read(reinterpret_cast<char*>(&item), sizeof(item)))
+        std::cout << ""Failed to read inventory item."" << std::endl;
+    return in.good();
+}
+
+bool writeRecord(std::ostream &out, const Inventory &item)
+{
+    if (!out.write(reinterpret_cast<const char*>(&item), sizeof(item)))
+        std::cout << ""Failed to write inventory item."" << std::endl;
+    return out.good();
+}
+
+bool seekInToRecord(std::istream &in, int recordNumber)
+{
+    if (!in.seekg(sizeof(Inventory) * recordNumber))
+        std::cout << ""Failed to seek file."" << std::endl;
+    return in.good();
+}
+
+bool seekOutToRecord(std::ostream &out, int recordNumber)
+{
+    if (!out.seekp(sizeof(Inventory) * recordNumber))
+        std::cout << ""File Failed to seek."" << std::endl;
+    return out.good();
+}
+
+// This function will add a record to the file
+void addRecord()
+{
+    Inventory inventoryItem;    
+    promptforRecordData(inventoryItem);
+
+    // Adding record to the end of a binary file
+    std::ofstream inventoryFile(""C:/temp/inventory.dat"", std::ios::app | ios::binary);    
+    if (!inventoryFile.is_open())
+    {
+        std::cout << ""Failed to open file."" << std::endl;
+        return;
+    }
+
+    writeRecord(inventoryFile, inventoryItem);
+}
+
+// This function will display a record from the file
+void viewRecord()
+{
+    int recordNumber;
+    promptForNumber(""Enter the record number of the item"", recordNumber);
+    std::cout << endl;
+
+    // Reading from file    
+
+    std::ifstream inventoryFile(""C:/temp/inventory.dat"", std::ios::binary);
+    if (!inventoryFile.is_open())
+    {
+        std::cout << ""Failed to open file."" << std::endl;
+        return;
+    }
+
+    if (recordNumber > 0)
+    {
+        if (!seekInToRecord(inventoryFile, recordNumber))
+            return;
+    }
+
+    Inventory inventoryItem;
+    if (!readRecord(inventoryFile, inventoryItem))
+        return;
+
+    inventoryFile.close();
+
+    //Record Display
+    displayRecord(inventoryItem);
+}
+
+// This function will change a record in the file
+void changeRecord()
+{
+    int recordNumber;    
+    promptForNumber(""Enter the record number of the item"", recordNumber);
+    std::cout << endl;
+
+    // Reading from file
+
+    std::fstream inventoryFile(""C:/temp/inventory.dat"", std::ios::in | std::ios::out | std::ios::binary);
+    if (!inventoryFile.is_open())
+    {
+        std::cout << ""File Failed to open."" << std::endl;
+        return;
+    }
+
+    if (recordNumber > 0)
+    {
+        if (!seekInToRecord(inventoryFile, recordNumber))
+            return;
+    }
+
+    Inventory inventoryItem;
+    if (!readRecord(inventoryFile, inventoryItem))
+        return;
+
+    //Record Display
+    displayRecord(inventoryItem);
+
+    // Overwrite record in binary file
+    promptForRecordData(inventoryItem);
+    if (seekOutToRecord(inventoryFile, recordNumber))
+        writeRecord(inventoryFile, inventoryItem);
+}

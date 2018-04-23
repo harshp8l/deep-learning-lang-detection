@@ -1,0 +1,24 @@
+.directive('stockValue', function($compile) {
+   return {
+     restrict: 'E',
+     template: '<input type=""text"" data-numeric-input-directive>',
+     replace: true,
+     scope: {
+       value: '='
+     },
+     controller: function($scope) {
+       $scope.localModel = undefined
+     },
+     link: function link(scope, element, attrs) {
+       scope.localModel = parseFloat(scope.value || 0).toFixed(2);
+       if (!element.attr('ng-model')) {
+         element.attr('ng-model', 'localModel');
+         $compile(element)(scope);
+       }
+       scope.$watch('localModel', function(newVal, oldVal) {
+         if (!oldVal || newVal === oldVal) return
+         scope.value = parseFloat(newVal).toFixed(4);
+       })
+     }
+   }
+});

@@ -1,0 +1,16 @@
+def get_model(n_dimensions):
+    inputs = Input(shape=(timesteps, input_dim))
+    encoded = LSTM(n_dimensions, return_sequences=False, name=""encoder"")(inputs)
+    decoded = RepeatVector(timesteps)(encoded)
+    decoded = LSTM(input_dim, return_sequences=True, name='decoder')(decoded)
+
+    autoencoder = Model(inputs, decoded)
+    encoder = Model(inputs, encoded)
+    return autoencoder, encoder
+
+autoencoder, encoder = get_model(n_dimensions)
+autoencoder.compile(optimizer='rmsprop', loss='mse', 
+                    metrics=['acc', 'cosine_proximity'])
+
+history = autoencoder.fit(x, x, batch_size=100, epochs=100)
+encoded = encoder.predict(x)

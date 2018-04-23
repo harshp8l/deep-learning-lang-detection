@@ -1,0 +1,15 @@
+let computation = async {
+    printfn ""Starting async""
+    let! res = Async.AwaitTask <| client.GetAsync(url)
+    let! content = Async.AwaitTask <| res.Content.ReadAsStringAsync()
+    let x = JsonConvert.DeserializeObject<AlbumInfo>(content)
+    printfn ""Downloaded %s"" x.title
+}
+
+async {
+    let! started = computation |> Async.StartChild
+    let! _ = Async.Sleep 1 // only here to get interleaved ouput
+    printfn ""Please wait...""
+    let! res = started
+    printfn ""Got result %A"" res
+} |> Async.RunSynchronously

@@ -1,0 +1,32 @@
+class body { has ( $.head, @.arms, @.legs ) } # Declare a class (object structure).
+
+class person { has ( $.mom, $.body, $.age ) } # And another that includes first.
+
+multi person's-age-and-legs                   # Declare a function that matches ...
+
+  ( person                                    # ... a person ...
+
+    ( :$age where * > 40,                     # ... whose age is over 40 ...
+
+      :$body ( :@legs, *% ),                  # ... noting their body's legs ...
+
+      *% ) )                                  # ... and ignoring other attributes.
+
+  { say ""$age {+@legs}"" }                     # Display age and number of legs.
+
+my $age = 42;                                 # Let's demo handy :$var syntax below.
+
+person's-age-and-legs                         # Call function declared above ...
+
+  person                                      # ... passing a person.
+
+    .new:                                     # Explicitly construct ...
+
+      :$age,                                  # ... a middle aged ...
+
+      body => body.new:
+        :head,
+        :2arms,
+        legs => <left middle right>           # ... three legged person.
+
+# Displays ""42 3""

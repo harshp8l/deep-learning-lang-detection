@@ -1,0 +1,35 @@
+object Pats extends App {
+
+  trait Pat[A]
+  object Pat {
+    def apply[A](elems: A*): Pat[A] = ???
+  }
+
+  implicit class PatOps[A](p: Pat[A]) {
+
+    def ++(that: Pat[A]): Pat[A] = ???
+
+    def bubble: Pat[Pat[A]] = ???
+
+    def grouped(size: Pat[Int]): Pat[Pat[A]] = ???
+
+    def map[B, A1, B1](f: A => B)
+                      (implicit
+                       ev1: A <:< Pat[A1],
+                       ev2: B <:< Pat[B1]): Pat[B] = ???
+
+    def flatMap[B, A1, B1](f: A => Pat[B])
+                          (implicit
+                           ev1: A <:< Pat[A1],
+                           ev2: B <:< Pat[B1]): Pat[B] = ???
+
+    def flatten[A1](implicit ev: A <:< Pat[A1]): Pat[A1] = ???
+  }
+
+  val lPat = Pat(1, 2, 3)
+  val xs = for {
+    len <- lPat.bubble
+    cantus <- Pat(4, 40, 3).grouped(len)
+  } yield cantus ++ Pat(-1)
+  xs.flatten
+}

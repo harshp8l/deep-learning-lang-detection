@@ -1,0 +1,27 @@
+    JSONCustomDeserializationSchema jsonDeserializationSchema = new JSONCustomDeserializationSchema();
+    FlinkKafkaConsumer011<ObjectNode> logRecordsConsumer = null;
+    try {
+        logRecordsConsumer = new FlinkKafkaConsumer011<>(kafkaTopic,
+                jsonDeserializationSchema, conf.consumerConfig());
+    } catch (Exception e) {
+        log.error(""Kafka consumer is not created"", e);
+    }
+    DataStream<ObjectNode> logStream = null;
+    DataStream<POJO_CLASS> Stream = null;
+
+    if (logRecordsConsumer != null) {
+        try {
+            logStream = env.addSource(logRecordsConsumer);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(""Exception while creating Log datastream from source"", e);
+        }
+    }
+    if (logStream != null) {
+        Stream = logStream.flatMap(new POJO_CLASS(configuration, parameterMap));
+        // move values from json to LogRecord Object
+    }
+
+    Stream .addSink(new CassandraPojoSink<POJO_CLASS>(POJO_CLASS.class, cassandraConfiguration));
+
+    // In Pojo class you can do manipulation.

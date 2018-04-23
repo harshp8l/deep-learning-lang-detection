@@ -1,0 +1,24 @@
+$test_connection = Test-Connection -Computer $pc -Count 2 -EA SilentlyContinue
+if ($test_connection) {
+    $test_connection | ForEach-Object {
+        [PSCustomObject]@{
+            LocalPC          = $env:COMPUTERNAME
+            'Tested-Server'  = $pc
+            Online           = $true
+            Bytes            = $_.buffersize
+            Time             = $_.ResponseTime
+            RemotePort       = $test_netconnection.RemotePort
+            TcpTestSucceeded = $test_netconnection.TcpTestSucceeded
+        }
+    }
+} else {
+    [PSCustomObject]@{
+        LocalPC          = $env:COMPUTERNAME
+        'Tested-Server'  = $pc
+        Online           = $false
+        Bytes            = $null
+        Time             = $null
+        RemotePort       = $test_netconnection.RemotePort
+        TcpTestSucceeded = $test_netconnection.TcpTestSucceeded
+    }
+}

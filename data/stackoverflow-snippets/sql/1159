@@ -1,0 +1,96 @@
+CREATE PROCEDURE [dbo].[SOWReport]
+AS
+BEGIN
+SET NOCOUNT ON;
+DECLARE @cols nvarchar(max),@cols1 nvarchar(max), @stmt nvarchar(max), @year int
+set @year = YEAR(GETDATE())
+
+IF OBJECT_ID('tempdb.dbo.#sowreport') IS NOT NULL
+BEGIN
+    DROP TABLE #sowreport;
+END;
+
+CREATE TABLE #months ([Month] [datetime] NOT NULL)
+INSERT into #months([Month]) SELECT DISTINCT CAST('01 ' + b.[Month] AS datetime) AS [Date] FROM [SOW_PO] a INNER JOIN Projections b ON b.SOW_POId = a.Id WHERE YEAR(CAST('01 ' + b.[Month] AS datetime)) = @year
+SELECT @cols = (isnull(@cols + ', ', '') + '[A' + M.[Month] + ']') FROM (Select FORMAT([Month], N'MMMM yyyy') AS [Month] from #months) AS M
+SELECT @cols1 = (isnull(@cols1 + ', ', '') + '[H' + M.[Month] + ']') FROM (Select FORMAT([Month], N'MMMM yyyy') AS [Month] from #months) AS M
+
+IF OBJECT_ID('tempdb.dbo.#months') IS NOT NULL
+BEGIN
+    DROP TABLE #months;
+END;
+
+CREATE TABLE #sowreport ([Client] [nvarchar](250) NULL, 
+    [SalesRepresentative] [nvarchar](250) NULL, 
+    [SOW] [bit] NULL, 
+    [US] [nvarchar](20) NULL, 
+    [SOWValue] [float] NULL, 
+    [SOWHours] [float] NULL,
+    [Task] [nvarchar](250) NULL,
+    [PONumber] [nvarchar](250) NULL,
+    [Status] [nvarchar](10) NULL,
+    [StartDate] [datetime] NULL, 
+    [EndDate] [datetime] NULL, 
+    [Rate] [float] NULL,
+    [ActualAmount] [float] NULL,
+    [TotalAmountLeft] [float] NULL,
+    [TotalHoursLeft] [float] NULL,
+    [Month] [nvarchar](100) NULL,
+    [Month2] [nvarchar](100) NULL,
+    [BilledHours] [float] NULL,
+    [SOWId] [int] NULL
+    )
+
+    ;WITH cte_result AS (
+    SELECT a.[Id] AS [SOWId],c.[ClientName] AS [Client], 
+    d.[RepName] AS [SalesRepresentative], 
+    a.[IsPO] AS [SOW], 
+    a.[Company] as [US], 
+    a.[TotalAmount] AS [SOWValue], 
+    a.[TotalHours] AS [SOWHours],
+    a.[Comments] AS [Task],
+    ISNULL(a.[SOW_PONumberIfAny], '') AS [PONumber],
+    CASE WHEN a.[IsClosed]=1 THEN 'Closed' ELSE 'Open' END AS [Status],
+    a.[ValidityStartDate] AS [StartDate], 
+    a.[ValidityEndDate] AS [EndDate], 
+    a.[Rate] AS [Rate],
+    --ISNULL(b.[ActualBilledAmount], 0) AS [ActualAmount],
+    --ISNULL(g.[BillableHours],0) AS [TotalBilledHours],
+    SUM(ISNULL(b.[ActualBilledAmount], 0)) AS [ActualAmount],
+    SUM(ISNULL(g.[BillableHours],0)) AS [TotalBilledHours],
+    b.[Month] As [Month],
+    b.[Month] As [Month2]
+    FROM SOW_PO a 
+    JOIN Projections b ON b.SOW_POId = a.Id 
+    JOIN ClientInfo c ON a.ClientId = c.Id 
+    JOIN Representatives d ON a.SalesRepId = d.Id
+    LEFT OUTER JOIN Invoice_SOWPO_Mapping e ON e.SOW_POId = a.Id AND e.[Month] in (Select b.[Month]) 
+    LEFT OUTER JOIN Invoice e1 ON e1.Id = e.InvoiceId AND e1.IsInvoiceCreated=1 AND b.[Month] = e1.[Month] + ' ' + e1.[Year] 
+    LEFT OUTER JOIN Invoice_Task_Mapping f ON f.InvoiceId = e.InvoiceId 
+    LEFT OUTER JOIN TaskMapping g ON g.Id in (Select f.TaskMappingId)
+    GROUP BY g.[BillableHours],b.[Month],c.[ClientName],d.[RepName], a.[IsPO], a.[Company], a.[TotalAmount], a.[TotalHours], a.[Comments], a.[SOW_PONumberIfAny], a.[IsClosed], a.[ValidityStartDate], a.[ValidityEndDate], a.[Rate], b.[ActualBilledAmount],a.[Id])
+
+    --select * from cte_result
+
+    INSERT into #sowreport([SOWId],[Client],[SalesRepresentative],[SOW],[US],[SOWValue],[SOWHours],[Task],[PONumber],[Status],[StartDate],[EndDate],[Rate],[ActualAmount],[TotalAmountLeft],[TotalHoursLeft],[Month],[Month2],[BilledHours]) SELECT [SOWId],[Client],[SalesRepresentative],[SOW],[US],[SOWValue],[SOWHours],[Task],[PONumber],[Status],[StartDate],[EndDate],[Rate],[ActualAmount],[TotalAmountLeft],[HoursLeft],[Month],[Month2],[TotalBilledHours] FROM (
+    SELECT [SOWId],[Client],[SalesRepresentative],[SOW],[US],[SOWValue],[SOWHours],[Task],[PONumber],[Status],[StartDate],[EndDate],[Rate],ISNULL([ActualAmount],0) AS [ActualAmount], [SOWHours] - [TotalBilledHours] AS [HoursLeft], [SOWValue] - SUM([ActualAmount]) AS [TotalAmountLeft],'A' + [Month] AS [Month], 'H' + [Month2] AS [Month2],[TotalBilledHours] FROM cte_result GROUP BY [Client], [SalesRepresentative], [SOW], [US],[SOWValue],[SOWHours],[Task],[PONumber],[Status],[StartDate],[EndDate],[Rate],[ActualAmount],[TotalBilledHours],[Month],[Month2],[SOWId]) as T
+
+    --select * from #sowreport
+
+SET @stmt = '
+SELECT * FROM #sowreport AS T
+PIVOT
+    (
+        SUM(T.[ActualAmount])
+        FOR T.[Month] in (' + @cols + ')
+    ) AS P
+    PIVOT
+    (
+        SUM([BilledHours])
+        FOR [Month2] in (' + @cols1 + ')
+    ) AS P1
+    ORDER BY [Client] ASC'
+exec sp_executesql  @stmt = @stmt
+DROP Table #sowreport
+END
+--exec SOWReport

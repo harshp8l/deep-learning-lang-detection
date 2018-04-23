@@ -1,0 +1,20 @@
+(defprotocol EmptyCollPred
+  (not-empty-coll? [this]))
+
+(extend-protocol EmptyCollPred
+  Object
+    (not-empty-coll? [this] false)
+  nil
+    (not-empty-coll? [this] false)
+  clojure.lang.Seqable
+    (not-empty-coll? [this] (not (empty? (seq this)))))
+
+(is (not (not-empty-coll? nil)))    ;; -> false
+(is (not (not-empty-coll? 1)))      ;; -> false
+(is (not (not-empty-coll? ""foo"")))  ;; -> false
+(is (not (not-empty-coll? [])))     ;; -> nil      (false)
+(is (not (not-empty-coll? '())))    ;; -> nil      (false)
+(is (not (not-empty-coll? {})))     ;; -> nil      (false)
+(is (not-empty-coll? [1]))          ;; -> (1)      (true)
+(is (not-empty-coll? '(1)))         ;; -> (1)      (true)
+(is (not-empty-coll? {:a 1}))       ;; -> ([:a 1]) (true)

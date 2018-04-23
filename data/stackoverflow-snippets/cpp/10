@@ -1,0 +1,46 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <list>
+
+void TraceList( const std::list<int32_t>& lst, const std::string& title = """" )
+{
+    if ( !title.empty() )
+    {
+        std::cout << title << std::endl;
+    }
+    std::copy(lst.begin(), lst.end(), std::ostream_iterator<int16_t>(std::cout, "",""));
+    std::cout << std::endl;
+}
+
+int main()
+{
+    //Input test data. You can use here your input code
+    const uint32_t SIZE_START = 10;
+    int16_t ArrInputData[SIZE_START] = {4, 45, 12, 78, 11, 17, 2, 58, 79, 10 };
+    std::list<int32_t> StartList;
+    std::copy(ArrInputData, ArrInputData + SIZE_START, std::back_inserter(StartList));
+
+    //Separate input data on parts
+    std::list<int> h1;
+    std::list<int> h2;
+    bool CounterFlag = true;
+    std::for_each(StartList.begin(), StartList.end(), [&CounterFlag, &h1, &h2]( int16_t val )
+                  {
+                      CounterFlag ? h1.push_back(val) : h2.push_back(val);
+                      CounterFlag = !CounterFlag;
+                  });
+
+    //Sort separated parts
+    h1.sort();
+    h2.sort();
+    TraceList(h1, ""H1 list:"");
+    TraceList(h2, ""H2 list:"");
+
+    //Merge separated
+    std::list<int32_t> FinalMergedList = h1; //Copy one of separated to new list
+    FinalMergedList.merge(h2);
+    TraceList(FinalMergedList, ""MergeFinal list:"");
+
+    return 0;
+}

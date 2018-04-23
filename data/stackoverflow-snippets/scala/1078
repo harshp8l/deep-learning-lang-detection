@@ -1,0 +1,23 @@
+import AdtValidation._
+
+// the original works as well but this seems better to me
+def registerOrUpdate(enc: EncAdt): AdtValidation[String \/ Int] = {
+//def registerOrUpdate(enc: EncAdt): ValidationNel[AdtError, String \/ Int] = {
+  // First check that admit date is after contract start
+  enc.admitDT.fold[ValidationNel[AdtError, String \/ Int]](
+    //  MissingAdmitDate(enc).failureNel
+    MissingAdmitDate(enc).failureAdt
+  ) { admitTstamp =>
+    //        val beforeContractDate = fac.dosStart.exists(_ isAfter new DateTime(admitTstamp.getTime))
+    if (enc.accountNumber.trim == """") {
+
+      // MissingFin(enc).failureNel
+      MissingFin(enc).failureAdt
+    } else {
+      //...
+      -\/(enc.transactionID.toString).successNel  // this works
+      -\/(enc.transactionID.toString).successAdt  // this also works
+
+    }
+  }
+}

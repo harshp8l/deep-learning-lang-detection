@@ -1,0 +1,24 @@
+type TreeEntry struct {
+    Id       int64        `db:""elementId"" json:""id""`
+    Slug     string       `db:""slug"" json:""slug""`
+    Title    string       `db:""title"" json:""title""`
+    Left     int          `db:""lft"" json:""-""`
+    Right    int          `db:""rgt"" json:""-""`
+    Level    int          `db:""level"" json:""-""`
+    Children []*TreeEntry `json:""children""`
+}
+
+func (t *TreeEntry) AddNestedChild(newEntry TreeEntry) {
+    // If this child is one level below the current node, just add it here for now
+    if newEntry.Level == t.Level+1 {
+        t.Children = append(t.Children, &newEntry)
+    } else {
+        // Loop through the children and see if it fits anywhere
+        for _, child := range t.Children {
+            if newEntry.Left > child.Left && newEntry.Right < child.Right {
+                child.AddNestedChild(newEntry)
+                break
+            }
+        }
+    }
+}

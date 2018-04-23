@@ -1,0 +1,16 @@
+open System.IO
+
+type ResultInfo = { Result: string; ErrorMsg: string } // or use built-in Result type instead
+
+// To install the Json.NET library, enter ""Install-Package Newtonsoft.Json"" in the Tools...NuGet Package Manager...Package Manager Console.
+// let str = Newtonsoft.Json.JsonConvert.SerializeObject(...) throws an OutOfMemoryException for large collections, so use a StreamWriter instead.
+let jsonSerializeToFile obj file =
+    try
+        (new FileInfo(file)).Directory.Create()
+        use writer = File.CreateText(file)
+        let ser =  new Newtonsoft.Json.JsonSerializer()
+        ser.Formatting <- Newtonsoft.Json.Formatting.Indented
+        ser.Serialize(writer, obj)
+        { Result = ""ok""; ErrorMsg = None } // maybe return the length of the serialized string??
+    with
+        | ex -> { Result = ""error""; ErrorMsg = Some <| ex.ToString() }

@@ -1,0 +1,18 @@
+object GlueApp {
+  def main(sysArgs: Array[String]) {
+    val spark: SparkContext = new SparkContext()
+    val glueContext: GlueContext = new GlueContext(spark)
+    // @params: [JOB_NAME]
+    val args = GlueArgParser.getResolvedOptions(sysArgs, Seq(""JOB_NAME"").toArray)
+    Job.init(args(""JOB_NAME""), glueContext, args.asJava)
+
+    val sparknew = glueContext.getSparkSession
+
+    val props = new Properties()
+    props.setProperty(""driver"", ""oracle.jdbc.driver.OracleDriver"")
+    props.setProperty(""user"", ""<USERNAME>"")
+    props.setProperty(""password"", ""<PASSWORD>"")
+    props.setProperty(""nullValue"", ""null"")
+    val url = ""jdbc:oracle:thin:@HOSTNAME:PORT:INSTANCENAME""
+    val table = ""SCHEMA.TABLE""
+    val df_fileInterfacemap = sparknew.read.jdbc(url, table, props)

@@ -1,0 +1,21 @@
+class NoneSpecial { // A base used not to violate ODR
+  NoneSpecial() = delete;
+  NoneSpecial(const NoneSpecial &) = delete;
+  NoneSpecial(NoneSpecial &&) = delete;
+  void operator=(const NoneSpecial &) = delete;
+  void operator=(NoneSpecial &&) = delete;
+  ~NoneSpecial() = delete;
+};
+class CustomWidget final : NoneSpecial { // Must not inherit any other base!
+public:
+  static const QMetaObject staticMetaObject;
+};
+
+template <typename T> QList<QWidget*> getWidgetChildren(QWidget *parent,
+  Qt::FindChildOptions options = Qt::FindChildrenRecursively)
+{
+  auto const widgets = parent->findChildren<T*>();
+  return reinterpret_cast<const QList<QWidget*>&>(widgets);
+}
+
+auto widgets = getWidgetChildren<CustomWidget>(parentWidget);

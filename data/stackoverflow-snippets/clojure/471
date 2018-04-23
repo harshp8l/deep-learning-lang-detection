@@ -1,0 +1,14 @@
+  (let [ao (doto (AnotherClass.)
+                 (.setAnotherkey ""Ano"")
+                 (.setAnothervalue ""Ano-value""))
+    o (doto  (SomeClass.)
+             (.setKey ""A"")
+             (.setValue ""A-value"")
+             (.setAnotherClass ao))]
+   (->> (dissoc (bean o) :class)
+         (w/postwalk (fn [v]
+                    (if (contains? #{AnotherClass SomeClass} (type v))
+                     (dissoc (bean v) :class)
+                     v)))))
+
+;;Output {:anotherClass {:anotherkey ""Ano"", :anothervalue ""Ano-value""}, :key ""A"", :value ""A-value""}

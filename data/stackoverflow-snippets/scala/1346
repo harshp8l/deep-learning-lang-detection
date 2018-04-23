@@ -1,0 +1,28 @@
+import com.google.inject.{AbstractModule, Guice}
+import scala.collection.JavaConverters._
+
+trait Foo {
+    def name: String
+}
+class Foo1 extends Foo {
+    override def name = ""Foo1""
+}
+class Foo2 extends Foo {
+    override def name = ""Foo2""
+}
+
+val testModule = new AbstractModule {
+    override def configure(): Unit = {
+        bind(classOf[Foo1]).toInstance(new Foo1)
+        bind(classOf[Foo2]).toInstance(new Foo2)
+        bind(classOf[Int]).toInstance(42)
+    }
+}
+
+val injector = Guice.createInjector(testModule)
+
+private def bindingsFor[T](c: Class[T]): Iterable[T] = injector.getAllBindings.asScala.keys
+    .filter { key ⇒ c.isAssignableFrom(key.getTypeLiteral.getRawType) }
+    .map { key ⇒ injector.getInstance(key).asInstanceOf[T] }
+
+bindingsFor(classOf[Foo]).map(_.name).mkString("", "")

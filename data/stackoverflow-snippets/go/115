@@ -1,0 +1,38 @@
+package main
+
+import (
+    ""io/ioutil""
+    ""os""
+    ""testing""
+
+    ""github.com/stretchr/testify/assert""
+)
+
+var (
+    err      error
+    testFile *os.File
+    test string
+)
+
+const (
+    TestPrefix  = `test_file_prefix`
+    FileContent = `1234`
+)
+
+func init() {
+    testFile, err = ioutil.TempFile(os.TempDir(), TestPrefix)
+    if err != nil {
+        panic(err)
+    }
+
+    err = ioutil.WriteFile(testFile.Name(), []byte(FileContent), 0644)
+    if err != nil {
+        panic(err)
+    }
+}
+
+func TestAssignFileValueFrom(t *testing.T) {
+    AssignFileValueFrom(testFile.Name(), &test)
+
+    assert.Equal(t, test, FileContent)
+}

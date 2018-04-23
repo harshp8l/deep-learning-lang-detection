@@ -1,0 +1,31 @@
+CC = g++
+debug_FLAGS = -g -std=c++14 -Wall -Wextra -O0
+release_FLAGS = -std=c++14 -Ofast
+
+SRCS := $(wildcard *.cpp)
+OBJS := $(SRCS:.cpp=.o)
+OUT := my_library.a
+
+all: debug/$(OUT) release/$(OUT)
+
+%/$(OUT):
+        ar rcs $@ $^
+# libtool -static -o $@ $^ #other possibilty
+
+debug/$(OUT): $(addprefix debug/,$(OBJS))
+
+debug/%.o: %.cpp Makefile | debug
+        $(CC) $(debug_FLAGS) -c $< -o $@ -arch x86_64 -arch i386
+
+release/$(OUT): $(addprefix release/,$(OBJS))
+
+release/%.o: %.cpp Makefile | release
+        $(CC) $(release_FLAGS) -c $< -o $@ -arch x86_64 -arch i386
+
+debug release:
+        mkdir -p $@
+
+clean:
+        rm -rf debug release
+
+.PHONY: debug release clean

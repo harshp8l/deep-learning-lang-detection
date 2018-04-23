@@ -1,0 +1,15 @@
+SELECT V1.name,
+       V2.name
+FROM   YourTable T WITH (TABLOCKX)
+       CROSS APPLY (SELECT (SELECT T.*
+                            FOR xml path('row'), elements, type)) CA(X)
+       CROSS APPLY CA.X.nodes('/row/*') N1(n)
+       CROSS APPLY CA.X.nodes('/row/*') N2(n)
+       CROSS APPLY (VALUES(n1.n.value('local-name(.)', 'sysname'), n1.n.value('.', 'nvarchar(4000)') )) V1(name, val)
+       CROSS APPLY (VALUES(n2.n.value('local-name(.)', 'sysname'), n2.n.value('.', 'nvarchar(4000)') )) V2(name, val)
+WHERE  V2.name < V1.name
+       AND V1.val = V2.val
+GROUP  BY V1.name,
+          V2.name
+HAVING COUNT(*) = (SELECT COUNT(*)
+                   FROM   YourTable) 

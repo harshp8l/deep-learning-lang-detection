@@ -1,0 +1,75 @@
+## No Need to define these in the foreach loop
+# Output file location to be chnaged as needed
+$file = ""C:\scripts\reports\AD-Inentory_$((Get-Date).ToString('MM-dd-yyyy')).csv""
+$txt = ""c:\scripts\reports\AD-Inentory-error_$((Get-Date).ToString('MM-dd-yyyy')).txt""
+
+# Getting computers from Active Directory
+
+## Update to use pipeline
+Get-ADComputer -Filter {Enabled -eq $true} | Foreach-Object {
+
+    $computer = $_.Name
+
+    if(!(Test-Connection -ComputerName $computer -BufferSize 16 -Count 1 -ea 0 -quiet))
+    {
+        write-host ""Cannot reach $Computer is offline"" -ForegroundColor red
+    }
+    else
+    {
+        Try
+        {
+            ## No Longer Need this because we are uisng the pipe line
+            #$Output = @()
+
+            $xx = Get-WmiObject win32_computersystem -ComputerName $Computer -ErrorAction Stop
+            $in = Get-WmiObject Win32_OperatingSystem -ComputerName $Computer -ErrorAction Stop
+            $mc = Get-WmiObject -class Win32_NetworkAdapterConfiguration -Filter ""IPEnabled='True'"" -ComputerName $Computer -ErrorAction Stop
+            $sr = Get-WmiObject win32_bios -ComputerName $Computer -ErrorAction Stop
+            $Xr = Get-WmiObject –class Win32_processor -ComputerName $Computer -ErrorAction Stop
+            $ld = Get-ADComputer $Computer -properties Name, Lastlogondate, ipv4Address, enabled, description, DistinguishedName -ErrorAction Stop
+            $r = ""{0} GB"" -f ((Get-WmiObject Win32_PhysicalMemory -ComputerName $Computer -ErrorAction Stop | Measure-Object Capacity  -Sum).Sum / 1GB)
+            $x = Get-WmiObject win32_computersystem -ComputerName $Computer -ErrorAction Stop | select @{Name = ""Type""; Expression = {if (($_.pcsystemtype -eq '2')  )
+                    {'Laptop'} Else {'Desktop Or Other'}}
+            }, Manufacturer, @{Name = ""Model""; Expression = {if (($_.model -eq ""$null"")  ) {'Virtual'} Else {$_.model}}}, username
+
+            ## Output on creation
+            New-Object PSObject -Property @{
+                SerialNumber              = $sr.serialnumber -replace ""-.*""
+                Computername              = $ld.name
+                IPaddress                 = $ld.ipv4Address
+                MACaddress                = $mc.MACAddress
+                Enabled                   = $ld.Enabled
+                Description               = $ld.description
+                OU                        = $ld.DistinguishedName.split(',')[1].split('=')[1]
+                DC                        = $xx.domain
+                Type                      = $x.type
+                Manufacturer              = $x.Manufacturer
+                Model                     = $x.Model
+                RAM                       = $R
+                ProcessorName             = ($xr.name | Out-String).Trim()
+                NumberOfCores             = ($xr.NumberOfCores | Out-String).Trim()
+                NumberOfLogicalProcessors = ($xr.NumberOfLogicalProcessors | Out-String).Trim()
+                Addresswidth              = ($xr.Addresswidth | Out-String).Trim()
+                Operatingsystem           = $in.caption
+                InstallDate               = ([WMI] '').ConvertToDateTime($in.installDate)
+                LastLogonDate             = $ld.lastlogondate
+                LoggedinUser              = $x.username
+            }
+
+            ## Only do this kind of update if it hasnt failed yet
+            $desc = ""$($mc.MACAddress) ( $($sr.serialnumber -replace ""-.*"") ) $($x.Model) | $((Get-Date).ToString('MM-dd-yyyy'))""
+            # Properties to be included in the output file
+            Set-ADComputer $Computer -Description $desc -verbose
+
+            ## No longer need this
+            # $t
+        }
+        Catch [Exception]
+        {
+            $ErrorMessage = $_.Exception.Message
+            Add-Content -value ""$Computer, $ErrorMessage, skipping to next"" $txt
+            Set-ADComputer $Computer -Description $ErrorMessage
+            continue
+        }
+    }
+} | select Computername, Enabled, Description, IPaddress, MACaddress, OU, DC, Type, SerialNumber, Manufacturer, Model, RAM, ProcessorName, NumberOfCores, NumberOfLogicalProcessors, Addresswidth, Operatingsystem, InstallDate, LoggedinUser, LastLogonDate | export-csv -Append $file -NoTypeInformation

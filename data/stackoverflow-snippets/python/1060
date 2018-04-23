@@ -1,0 +1,19 @@
+# convert release_date to datetime and calculate year
+df['release_date'] = pd.to_datetime(df['release_date'])
+df['year'] = df['release_date'].dt.year
+
+# create mapping from df1
+s = df1.set_index(['production_companies', 'release_year'])['mean']
+
+# use map on selected condition
+mask = df['budget'] == 0
+df.loc[mask, 'budget'] = df[mask].set_index(['production_company', 'year']).index.map(s.get)
+
+print(df)
+
+#      budget           production_company release_date title  year
+# 0   1000000  Villealfa Filmproduction Oy   1988-10-21   AAA  1988
+# 1       100  Villealfa Filmproduction Oy   1986-10-18   BBB  1986
+# 2  30000000  Villealfa Filmproduction Oy   1955-12-25   CCC  1955
+# 3      1000                Miramax Films   2006-01-01   DDD  2006
+# 4   5000000                Miramax Films   2017-04-13   EEE  2017

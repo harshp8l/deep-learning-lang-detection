@@ -1,0 +1,53 @@
+-- clojure.hs
+{-# LANGUAGE GeneralizedNewtypeDeriving, ForeignFunctionInterface #-}
+
+import Foreign
+import Foreign.C.Types
+import Foreign.C.String
+
+-- Clojure objects are just Java objects, and jsvalue is a union with size 64
+-- bits. Since we are cutting corners, we might as well just derive 'Storable'
+-- from something else that has the same size - 'CLong'.
+newtype ClojureObject = ClojureObject CLong deriving (Storable)
+
+foreign import ccall ""load_methods"" load_methods :: IO ()
+foreign import ccall ""create_vm"" create_vm :: IO ()
+foreign import ccall ""invokeFn"" invokeFn :: ClojureObject -> CUInt -> Ptr ClojureObject -> IO ClojureObject
+-- foreign import ccall ""readObj"" readObj :: CString -> IO ClojureObject
+-- foreign import ccall ""varObj"" varObj :: CString -> IO ClojureObject
+foreign import ccall ""varObjQualified"" varObjQualified :: CString -> CString -> IO ClojureObject
+foreign import ccall ""newLong"" newLong :: CLong -> ClojureObject
+foreign import ccall ""longValue"" longValue :: ClojureObject -> CLong
+
+-- | In order for anything to work, this needs to be called first.
+loadClojure :: IO ()
+loadClojure = create_vm *> load_methods
+
+-- | Make a Clojure function call
+invoke :: ClojureObject -> [ClojureObject] -> IO ClojureObject
+invoke fn args = do
+  args' <- newArray args
+  let n = fromIntegral (length args)
+  invokeFn fn n args'
+
+-- | Make a Clojure number from a Haskell one
+long :: Int64 -> ClojureObject
+long l = newLong (CLong l)
+
+-- | Make a Haskell number from a Clojure one
+unLong :: ClojureObject -> Int64
+unLong cl = let CLong l = longValue cl in l
+
+-- | Look up a var in Clojure based on the namespace and name
+varQual :: String -> String -> IO ClojureObject
+varQual ns fn = withCString ns (\nsCStr ->
+                withCString fn (\fnCStr -> varObjQualified nsCStr fnCStr))
+
+main :: IO ()
+main = do
+  loadClojure
+  putStrLn ""Clojure loaded""
+
+  plus <- varQual ""clojure.core"" ""+""
+  out <- invoke plus [long 3, long 4]
+  print $ unLong out -- prints ""7"" on my tests

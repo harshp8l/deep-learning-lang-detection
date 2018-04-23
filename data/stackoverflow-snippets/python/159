@@ -1,0 +1,40 @@
+import sqlite3
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+from login_form import Ui_Dialog2
+from welcome import Ui_MainWindow
+
+class LoginDialog(QtWidgets.QDialog, Ui_Dialog2):
+    def __init__(self, *args, **kwargs):
+        QtWidgets.QDialog.__init__(self, *args, **kwargs)
+        self.setupUi(self)
+        self.login_button.clicked.connect(self.login_check)
+
+    def login_check(self):
+        uname = self.U_name_text.text()
+        passw = self.pass_text.text()
+        connection = sqlite3.connect(""login.db"")
+        result = connection.execute(""SELECT * FROM USERS WHERE USERNAME = ? AND PASSWORD = ?"", (uname, passw))
+        if result.fetchall():
+            self.accept()
+        else:
+            print(""invalid login"")
+
+class WelcomeWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+    def __init__(self, *args, **kwargs):
+        QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
+        self.setupUi(self)
+
+
+if __name__ == ""__main__"":
+    import sys
+
+    app = QtWidgets.QApplication(sys.argv)
+    login = LoginDialog()
+    w = WelcomeWindow()
+    if login.exec_() == QtWidgets.QDialog.Accepted:
+        username = login.U_name_text.text()
+        w.lineEdit.setText(username)
+        w.show()
+    sys.exit(app.exec_())

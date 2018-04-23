@@ -1,0 +1,14 @@
+def leaving(address: Address): Unit = {
+  // only try to update if the node is available (in the member ring)
+  if (latestGossip.members.exists(m ⇒ m.address == address && m.status == Up)) {
+    val newMembers = latestGossip.members map { m ⇒ if (m.address == address) m.copy(status = Leaving) else m } // mark node as LEAVING
+    val newGossip = latestGossip copy (members = newMembers)
+
+    updateLatestGossip(newGossip)
+
+    logInfo(""Marked address [{}] as [{}]"", address, Leaving)
+    publishMembershipState()
+    // immediate gossip to speed up the leaving process
+    gossip()
+  }
+}

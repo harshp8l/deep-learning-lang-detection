@@ -1,0 +1,78 @@
+#include <tuple>
+
+template<typename... Elems>
+    struct construct 
+    {
+        template<size_t... Ns, typename Head, typename... Rest>
+            static constexpr const std::tuple<Rest...> 
+                drop_head_impl( const std::index_sequence<Ns...> ns, 
+                    const std::tuple<Head, Rest...> tup )
+            {
+                return std::tuple<Rest...>( std::get<Ns + 1u>( tup )... );
+            }
+
+        template<typename Head, typename... Rest>
+            static constexpr const std::tuple<Rest...> 
+                drop_head( const std::tuple<Head, Rest...> tup )
+            {
+                return drop_head_impl( std::make_index_sequence<sizeof...(Rest)>(), tup );
+            }
+
+        template<typename Head>
+            static constexpr const std::tuple<Head> 
+                func_impl( const std::tuple<typename Head::initer_t> initer )
+            {
+                return  std::tuple<Head>( { std::get<0>( initer ) } ); 
+            }
+
+        template<typename Head, typename Next, typename... Rest>
+            static constexpr const std::tuple<Head, Next, Rest...> 
+                func_impl( const std::tuple<typename Head::initer_t, typename Next::initer_t, typename Rest::initer_t...> initer )
+            {
+                std::tuple<Head> head( { std::get<0>( initer ) } ); 
+                return std::tuple_cat( head, func_impl<Next, Rest...>( drop_head(initer) ) );
+            }
+
+        static constexpr const std::tuple<Elems...> 
+            func( const std::tuple<typename Elems::initer_t...> initer )
+        {
+            return func_impl<Elems...>( initer );
+        }
+    };
+
+// Elements are the end points of a Widget hierarchy
+struct Element
+{
+    using initer_t = int;
+    Element( const initer_t pIniter )
+        :data{ pIniter }
+    {
+        printf( ""Creating %i\n"", data );
+    }
+    const initer_t data;
+};
+
+// A Widget class stores any number of Elements and/or other Widget instances
+template<typename... Elems>
+    struct Widget
+    {
+        using initer_t = std::tuple<typename Elems::initer_t...>;
+        Widget( const initer_t pIniter )
+            :elements( construct<Elems...>::func( pIniter ) ) 
+        {}
+        const std::tuple<Elems...> elements;
+    };
+
+int main()
+{
+    using Button = Widget<Element, Element>;
+    using ButtonList = Widget<Button, Button, Element>;
+
+    Button::initer_t basic_button_initer{ 0, 1 }; // presets for Buttons
+    Button::initer_t other_button_initer{ 2, 3 }; 
+
+    ButtonList::initer_t buttonlist_initer{ basic_button_initer, other_button_initer, 4 }; //a preset for a ButtonList
+
+    ButtonList buttonlist{ buttonlist_initer };
+    return 0;
+}

@@ -1,0 +1,95 @@
+## competitors
+function c_readarray { readarray -td '' a < <(awk '{ gsub(/, /,""\0""); print; };' <<<""$1, ""); unset 'a[-1]'; };
+function c_read { a=(); local REPLY=''; while read -r -d ''; do a+=(""$REPLY""); done < <(awk '{ gsub(/, /,""\0""); print; };' <<<""$1, ""); };
+function c_regex { a=(); local s=""$1, ""; while [[ $s =~ ([^,]+),\  ]]; do a+=(""${BASH_REMATCH[1]}""); s=${s:${#BASH_REMATCH}}; done; };
+
+## helper functions
+function rep {
+    local -i i=-1;
+    for ((i = 0; i<$1; ++i)); do
+        printf %s ""$2"";
+    done;
+}; ## end rep()
+
+function testAll {
+    local funcs=();
+    local args=();
+    local func='';
+    local -i rc=-1;
+    while [[ ""$1"" != ':' ]]; do
+        func=""$1"";
+        if [[ ! ""$func"" =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]]; then
+            echo ""bad function name: $func"" >&2;
+            return 2;
+        fi;
+        funcs+=(""$func"");
+        shift;
+    done;
+    shift;
+    args=(""$@"");
+    for func in ""${funcs[@]}""; do
+        echo -n ""$func "";
+        { time $func ""${args[@]}"" >/dev/null 2>&1; } 2>&1| tr '\n' '/';
+        rc=${PIPESTATUS[0]}; if [[ $rc -ne 0 ]]; then echo ""[$rc]""; else echo; fi;
+    done| column -ts/;
+}; ## end testAll()
+
+function makeStringToSplit {
+    local -i n=$1; ## number of fields
+    if [[ $n -lt 0 ]]; then echo ""bad field count: $n"" >&2; return 2; fi;
+    if [[ $n -eq 0 ]]; then
+        echo;
+    elif [[ $n -eq 1 ]]; then
+        echo 'first field';
+    elif [[ ""$n"" -eq 2 ]]; then
+        echo 'first field, last field';
+    else
+        echo ""first field, $(rep $[$1-2] 'mid field, ')last field"";
+    fi;
+}; ## end makeStringToSplit()
+
+function testAll_splitIntoArray {
+    local -i n=$1; ## number of fields in input string
+    local s='';
+    echo ""===== $n field$(if [[ $n -ne 1 ]]; then echo 's'; fi;) ====="";
+    s=""$(makeStringToSplit ""$n"")"";
+    testAll c_readarray c_read c_regex : ""$s"";
+}; ## end testAll_splitIntoArray()
+
+## results
+testAll_splitIntoArray 1;
+## ===== 1 field =====
+## c_readarray   real  0m0.067s   user 0m0.000s   sys  0m0.000s
+## c_read        real  0m0.064s   user 0m0.000s   sys  0m0.000s
+## c_regex       real  0m0.000s   user 0m0.000s   sys  0m0.000s
+##
+testAll_splitIntoArray 10;
+## ===== 10 fields =====
+## c_readarray   real  0m0.067s   user 0m0.000s   sys  0m0.000s
+## c_read        real  0m0.064s   user 0m0.000s   sys  0m0.000s
+## c_regex       real  0m0.001s   user 0m0.000s   sys  0m0.000s
+##
+testAll_splitIntoArray 100;
+## ===== 100 fields =====
+## c_readarray   real  0m0.069s   user 0m0.000s   sys  0m0.062s
+## c_read        real  0m0.065s   user 0m0.000s   sys  0m0.046s
+## c_regex       real  0m0.005s   user 0m0.000s   sys  0m0.000s
+##
+testAll_splitIntoArray 1000;
+## ===== 1000 fields =====
+## c_readarray   real  0m0.084s   user 0m0.031s   sys  0m0.077s
+## c_read        real  0m0.092s   user 0m0.031s   sys  0m0.046s
+## c_regex       real  0m0.125s   user 0m0.125s   sys  0m0.000s
+##
+testAll_splitIntoArray 10000;
+## ===== 10000 fields =====
+## c_readarray   real  0m0.209s   user 0m0.093s   sys  0m0.108s
+## c_read        real  0m0.333s   user 0m0.234s   sys  0m0.109s
+## c_regex       real  0m9.095s   user 0m9.078s   sys  0m0.000s
+##
+testAll_splitIntoArray 100000;
+## ===== 100000 fields =====
+## c_readarray   real  0m1.460s   user 0m0.326s   sys  0m1.124s
+## c_read        real  0m2.780s   user 0m1.686s   sys  0m1.092s
+## c_regex       real  17m38.208s   user 15m16.359s   sys  2m19.375s
+##

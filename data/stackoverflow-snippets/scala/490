@@ -1,0 +1,19 @@
+trait Error
+case class NotFound(id: Int) extends Error
+case class QueryFailed(msg: String) extends Error
+
+def read (id: Int): Future[Either[Error, Customer]] = {
+   val db = // .... 
+   val customers = TableQuery[CustomerDB]
+   val action = customers.filter(_.id === id).result
+   val future = db.run(action.asTry)
+   future.map{
+      case Success(s) => 
+         if (s.length>0)
+           Right(s(0))
+         else
+           Left(NotFound(id))
+
+      case Failure(f) => Left(QueryFailed(f.getMessage))
+   }
+}

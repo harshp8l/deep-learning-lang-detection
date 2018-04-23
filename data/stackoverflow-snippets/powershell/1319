@@ -1,0 +1,53 @@
+#requires -Version 3
+$SchoolCodes = @{
+    20 = ""Exeter Township Senior High""
+    30 = ""Exeter Township Junior High""
+    40 = ""Lorane Elementary School""
+    50 = ""Jacksonwald ES""
+    70 = ""Reiffton School""
+    90 = ""Owatin Creek Elementary School""
+}
+
+# CSV file being imported.
+$CsvFile = ""$env:USERPROFILE\Downloads\SampleData.csv""
+
+# Import the contents of the CSV file.
+$Users = Import-Csv -Path ""$CsvFile""
+
+# Loop through each line of the CSV, creating variables for each field.
+ForEach ($User in $Users)
+{
+    [String]$LoginName = $User.'Stu Access Login'
+    If (-not (Get-ADUser -Filter {SamAccountName -eq $LoginName}))
+    {
+        $FirstName = $User.'Student First Name'
+        $LastName = $User.'Student Last Name'
+
+        $Params = @{
+            Name = ""$FirstName $LastName""
+            SamAccountName = $LoginName
+            GivenName = $FirstName
+            Initials = $User.I
+            Surname = $LastName
+            DisplayName = ""$FirstName $($User.I) $LastName""
+            UserPrincipalName = ""$LoginName@mydomain.k12.pa.us""
+            EmailAddress = ""$LoginName@mydomain.k12.pa.us""
+            AccountPassword = ConvertTo-SecureString -String (
+                '{0}{1}{2}#{3}' -f @(
+                    $FirstName[0].ToString().ToUpper(),
+                    $User.I[0].ToString().ToLower(),
+                    $LastName[0].ToString().ToLower(),
+                    $User.'Other ID')) -AsPlainText -Force
+            Enabled = $False
+            PasswordNeverExpires = $True
+            CannotChangePassword = $True
+            Path = 'OU={0},OU=Students,OU={1},OU=accounts,DC=academic,DC=mydomain,DC=k12,DC=pa,DC=us' -f @(
+                $User.'Grad Year',
+                $SchoolCodes[[Int]$User.School])
+            WhatIf = $True
+        }
+
+        Try {New-ADUser @Params}
+        Catch {Write-Error ""[ERROR] Can't create user [$LoginName] : $_""}
+    }
+}

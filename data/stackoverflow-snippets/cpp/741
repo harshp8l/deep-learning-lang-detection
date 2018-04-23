@@ -1,0 +1,43 @@
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <iostream>
+
+int main(int argc, char** argv)
+{    
+    int n(1000);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    cloud->resize(n);
+    double max(10);
+    double min(-10);
+    for (int i = 0;i<cloud->size();i++)
+    {
+        std::cout<<i<<""/""<<cloud->size()<<""\r"";
+        cloud->points[i].x = (max-min) * rand () / (RAND_MAX + 1.0f) + min;
+        cloud->points[i].y = (max-min) * rand () / (RAND_MAX + 1.0f) + min;
+        cloud->points[i].z = (max-min) * rand () / (RAND_MAX + 1.0f) + min;
+        std::cout<<i<<""/""<<cloud->size()<<""\r"";
+    }
+    // Display cloud
+    pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer);
+    viewer->addCoordinateSystem(2);
+    viewer->addPointCloud(cloud,""original"");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,1,1,1,""original"");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE,1,""original"");
+
+    // Create the filtering object
+    pcl::PassThrough<pcl::PointXYZ> pass;
+    pass.setInputCloud (cloud);
+    pass.setFilterFieldName (""z"");
+    pass.setFilterLimits (0.0, max);
+    std::cout<<""Cloud size: ""<<cloud->size()<<std::endl;
+    pass.filter (*cloud);
+    std::cout<<""Cloud size: ""<<cloud->size()<<std::endl;
+    viewer->addPointCloud(cloud,""filtered"");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,1,0,0,""filtered"");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE,2,""filtered"");
+
+    // Display
+    viewer->spin();
+}

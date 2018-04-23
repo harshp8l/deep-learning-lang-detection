@@ -1,0 +1,24 @@
+// Error: ""x"" is unknown
+let inline f (a: ^a when ^a: (member x: unit -> string)) = a.x() 
+
+// Compiles fine
+let inline f a = (^a: (member x: unit -> string)( a )) 
+
+// Have to jump through the same hoop for every call
+let inline f (a: ^a) (b: ^a) = 
+  let x = (^a: (member x: unit -> string)( a ))
+  let y = (^a: (member x: unit -> string)( b ))
+  x+y
+
+// But can wrap it up if it becomes too messy
+let inline f (a: ^a) (b: ^a) = 
+  let callX t = (^a: (member x: unit -> string) t)
+  (callX a) + (callX b)
+
+// This constraint also implicitly carries over to anybody calling your function:
+> let inline g x y = (f x y) + (f y x)
+val inline g : x: ^a -> y: ^a -> string when  ^a : (member x :  ^a -> string)
+
+// But only if those functions are also inline:
+> let g x y = (f x y) + (f y x)
+Script.fsx(49,14): error FS0332: Could not resolve the ambiguity inherent in the use of the operator 'x' at or near this program point. Consider using type annotations to resolve the ambiguity.

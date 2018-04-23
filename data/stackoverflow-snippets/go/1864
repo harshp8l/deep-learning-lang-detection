@@ -1,0 +1,21 @@
+func (c *ServicesController) Edit() {
+    var id, _ = c.GetUint64("":id"")
+    var service models.Service{}
+    var serviceModel = models.Service{}
+    var err error
+
+    if c.Ctx.Input.IsPost() {
+        if err = c.ParseForm(&service); err != nil {
+            c.Abort(""500"")
+        }
+        service.Id = id
+        serviceModel.CreateOrUpdate(service)
+    } else {
+        service, err = serviceModel.FindById(id)
+        if err == orm.ErrNoRows || err == orm.ErrMissPK  {
+        c.Abort(""404"")
+    }
+
+    c.Data[""Service""] = service
+    c.TplName = ""services/edit.html""
+}

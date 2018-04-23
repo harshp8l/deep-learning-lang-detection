@@ -1,0 +1,13 @@
+WITH a AS (
+SELECT col1, col2, col3, 
+        PERCENTILE_CONT(0.05) WITHIN GROUP (ORDER BY col4) 
+            OVER (PARTITION BY col1, col2, col3) as 5th_percentile,
+        PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY col4) 
+            OVER (PARTITION BY col1, col2, col3) as 50th_percentile,
+        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY col4) 
+            OVER (PARTITION BY col1, col2, col3) as 95th_percentile
+FROM table
+)
+SELECT DISTINCT col1, col2, col3, 5th_percentile, 50th_percentile, 95th_percentile
+FROM a
+LIMIT 100

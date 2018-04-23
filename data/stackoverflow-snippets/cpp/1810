@@ -1,0 +1,16 @@
+details {
+  template<class T>
+  const B<T>& downcast(const A<T>& x) { return static_cast<const B<T>&>(x); }
+
+  template<class T>
+  auto downcast(A<T>& a) ->
+  decltype(cast_away_const(details::downcast(add_const(a)))) {
+    return cast_away_const(details::downcast(add_const(a)));
+  }
+}
+template<class X,
+  std::enable_if_t< /* A<T> is a base of X for some T */,  bool> =true
+>
+auto downcast(X&& x)
+-> decltype(details::downcast(std::forward<X>(x)))
+{ return details::downcast(std::forward<X>(x)); }

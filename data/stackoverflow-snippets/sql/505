@@ -1,0 +1,23 @@
+declare @U table (s decimal(5,2));
+declare @S table (s decimal(5,2));
+insert into @U values (7), (9), (12), (15), (17); 
+insert into @S values (8.5), (13), (6), (10.5), (18), (14); 
+
+select u.s, ss.s 
+from @U u
+cross apply ( select top 1 s.s 
+              from @S s 
+              order by abs(u.s - s.s)
+            ) ss;
+
+select us, ss, diff 
+from 
+( select u.s as us, s.s as ss 
+       , abs(s.s - u.s) as diff 
+       , ROW_NUMBER() over (partition by u.s order by abs(s.s - u.s) asc) as rn
+  from @U u
+  cross join @S s 
+  where u.s is not null and s.s is not null 
+) tt
+where tt.rn = 1
+order by us, rn

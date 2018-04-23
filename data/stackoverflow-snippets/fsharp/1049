@@ -1,0 +1,20 @@
+let splitByChanged f xs =
+    let acc = ref (None,[])
+    seq {
+        for x in xs do
+            match !acc with
+            | None,_ ->
+                acc := Some (f x),[x]
+            | Some key, chunk when key = f x ->
+                acc := Some key, x::chunk
+            | Some key, chunk -> 
+                let group = chunk |> Seq.toList |> List.rev
+                yield key, group
+                acc := Some (f x),[x]
+        match !acc with
+        | None,_ -> ()
+        | Some key,chunk -> 
+            let group = chunk |> Seq.toList |> List.rev
+            yield key, group
+    }
+    points |> splitByChanged (fun point -> point.x)

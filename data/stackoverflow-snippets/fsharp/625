@@ -1,0 +1,40 @@
+type Range = {Min : int; Max : int}
+
+type Problem= 
+    |Addition of int*int
+    |Subtraction of int*int
+    |Multiplication of int*int
+    |Division of int*int
+
+module NumeracyProblems =
+    let private rnd = System.Random()
+
+    let randomInRange range = rnd.Next(range.Min, range.Max+1)
+
+    let isInRange range x = x >= range.Min && x <= range.Max
+
+    let randomOpGen() = 
+        match randomInRange {Min = 0; Max = 3} with
+        |0 -> Addition
+        |1 -> Subtraction 
+        |2 -> Multiplication
+        |3 -> Division
+
+    let calc = function
+        |Addition (v1, v2) -> Some(v1 + v2)
+        |Subtraction (v1, v2) -> Some(v1 - v2)
+        |Multiplication (v1, v2) -> Some(v1 * v2)
+        |Division (v1, v2) -> 
+            match v1 % v2 = 0 with 
+            |true -> Some(v1 / v2)
+            |false -> None
+
+    let quiz range =
+        let op = randomOpCtor()
+        let optionInRange x =
+            match isInRange range x with
+            |true -> Some x
+            |false -> None
+        Seq.initInfinite (fun _ -> randomInRange range, randomInRange range)
+        |> Seq.map (op)
+        |> Seq.find (Option.isSome << Option.bind (optionInRange) << calc)

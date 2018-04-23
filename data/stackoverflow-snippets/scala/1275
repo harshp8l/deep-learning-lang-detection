@@ -1,0 +1,27 @@
+object MyExCont extends ExecutionContext {
+    override def execute(runnable: Runnable): Unit = runnable.run()
+
+    override def reportFailure(cause: Throwable): Unit = cause.printStackTrace()
+  }
+
+
+  def main(args: Array[String]): Unit = {
+    val p = Promise[String]()
+    val e = p.future
+
+    val t = new Thread(()=>{
+      LOGGER.info(""Completing"")
+      p.complete(Try {
+        ""hello""
+      })
+    })
+
+    val f = e.map(x => {
+      LOGGER.info(""Adding..."")
+      x + "";""
+    }, MyExCon)
+
+    Thread.sleep(10)
+    t.start()
+    LOGGER.info(Await.result(f, Duration.Inf))
+  }

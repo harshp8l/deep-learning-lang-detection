@@ -1,0 +1,57 @@
+import shapeless.{::, HList, HNil, LabelledGeneric, Witness}
+import shapeless.labelled._
+
+case class Foo(name: String)
+
+trait MapToHList[L <: HList] {
+  def apply(map: Map[String, Any]): Option[L]
+}
+object MapToHList {
+  implicit object hNilMapToHList extends MapToHList[HNil] {
+    override def apply(map: Map[String, Any]): Option[HNil] = Some(HNil)
+  }
+
+  implicit def hConsMapToHList[K <: Symbol, V, T <: HList](implicit
+                                                           mapToHList: MapToHList[T],
+                                                           witness: Witness.Aux[K]
+                                                          ): MapToHList[FieldType[K, V] :: T] =
+    new MapToHList[FieldType[K, V] :: T] {
+      override def apply(map: Map[String, Any]): Option[FieldType[K, V] :: T] = {
+        val str = witness.value.toString.tail
+        for {
+          v <- map.get(str)
+          t <- mapToHList(map)
+        } yield field[K](v.asInstanceOf[V]) :: t
+      }
+    }
+}
+
+trait ToCase[A] {
+  def from(map: Map[String, Any]): Option[A]
+}
+object ToCase {
+  implicit def mkToCase[A, L <: HList](implicit
+                                       gen: LabelledGeneric.Aux[A, L],
+                                       mapToHList: MapToHList[L]
+                                      ): ToCase[A] =
+    new ToCase[A] {
+      override def from(map: Map[String, Any]): Option[A] = mapToHList(map).map(gen.from)
+    }
+}
+
+
+class Morphic(map: Map[String, Any]) {
+
+  def add(k: String, v: Any) = {
+    new Morphic((map + (k -> v)))
+  }
+
+  def to[T](implicit toCase: ToCase[T]): T = toCase.from(map).get
+
+}
+
+object testApp extends App {
+  var m = new Morphic(Map[String, Any]())
+  var m1 = m.add(""name"", ""john"")
+  println(m1.to[Foo]) // Foo(john)
+}

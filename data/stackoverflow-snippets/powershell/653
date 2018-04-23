@@ -1,0 +1,22 @@
+function TailFile-UntilProcessStops {
+    Param ($processID, $filePath)
+
+    $loopBlock = {
+        Param($filePath) Get-Content $filePath -Wait -Tail 0
+    }
+    $TailLoopJob = start-job -scriptBlock $loopBlock -ArgumentList $filePath
+    try {
+        do {
+            $TailLoopJob | Receive-Job
+            try {
+                Wait-Process -id $processID -ErrorAction Stop -Timeout 1
+                $waitMore = $false
+            } catch {
+                $waitMore = $true
+            }
+        } while($waitMore)
+    } finally {
+        Stop-Job $TailLoopJob
+        Remove-Job $TailLoopJob
+    }
+}

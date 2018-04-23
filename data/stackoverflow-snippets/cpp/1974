@@ -1,0 +1,49 @@
+#include <cstddef> // std::size_t
+#include <iostream>
+#include <iterator>
+#include <utility>
+
+struct Offset {
+    std::size_t _offset;
+};
+
+constexpr Offset offset(std::size_t s)
+{
+    return {s};
+}
+
+template <typename Iterator>
+struct View {
+    constexpr Iterator begin() const {return _begin;}
+    constexpr Iterator end() const {return _end;}
+    Iterator _begin;
+    Iterator _end;
+};
+
+// Combine a range with an Offset using operator| like boost::adaptors::sliced
+template <typename Range>
+auto operator |(Range &&range, const Offset &offset) 
+    -> View<decltype(std::begin(std::forward<Range>(range)))> 
+{
+    return {
+        std::begin(std::forward<Range>(range)) + offset._offset, 
+        std::end(std::forward<Range>(range))
+    };
+}
+
+int main() {
+    int a[] = {0,1,2}, b[] = {0,1,2};
+
+    std::size_t off = 0;
+    for (int term1 : a) {
+        for (int term2 : b | offset(off)) {
+            if (term1 > term2) {
+                std::cout << ""Term 1 is greater than term 2"" << std::endl;
+            } else {
+                std::cout << ""Term 1 is not greater than term 2"" << std::endl;
+                ++off;
+                break;
+            }
+        }
+    }
+}

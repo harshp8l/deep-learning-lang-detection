@@ -1,0 +1,45 @@
+<?php
+    // define variables and set to empty values
+    $mem_name = $mem_expires = $mem_rating = $mem_ID = $mem_class = """";
+    if ($_SERVER[""REQUEST_METHOD""] == ""GET"") {
+        $mem_name = test_input($_GET[""mem-name""]);
+        $mem_expires = test_input($_GET[""mem-expires""]);
+        $mem_rating = test_input($_GET[""mem-rating""]);
+        $mem_ID = test_input($_GET[""mem-ID""]);
+        $mem_class = test_input($_GET[""mem-class""]);
+    }    
+    // Clean up data
+    function test_input($data) {
+        $data = trim($data);
+        $data = stripslashes($data);
+        $data = htmlspecialchars($data);
+        return $data;
+    }
+    // Read JSON file
+    $json = file_get_contents('cccr_mems.json');
+    //Decode JSON
+    $json_data = json_decode($json,true);
+    //Print data print_r($json_data); <=== WORKS
+    //Here I want to push the GET vars to json members w/o writing to disk!
+
+    //Create an element of the array.
+    $array = array(
+
+      ""Class""   => $mem_class,
+      ""Rating""  => $mem_rating,
+      ""ID""      => $mem_ID,
+      ""Name""    => $mem_name,
+      ""Expires"" => $mem_expires
+
+
+    );
+
+    array_push($json_data, $array); //Add the element to the $json_data array.
+
+    //print_r($json_data);  //Shows the results as a php array. 
+
+    echo json_encode($json_data); //Shows results as json string.
+    //This is what will get sent back to the calling js page.
+
+
+?> 

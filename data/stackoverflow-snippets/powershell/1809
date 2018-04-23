@@ -1,0 +1,15 @@
+::Backup Bat file Created By Vinod Amarathunga 2017-08-11 V 3.0 Improved
+::Please do not change anything
+@echo off
+::Login to the server
+NET USE \\server IP\IPC$ /u:server IP\username password
+::Backup 
+ROBOCOPY ""\\server IP\c\Program Files (x86)\source"" /S E:\Backup\Backup_%date:~-4,4%%date:~-10,2%%date:~-7,2% /unilog+:""E:\Log\backup_log_%date:~-4,4%%date:~-10,2%%date:~-7,2%.log""
+::End the session 
+NET USE \\server IP\IPC$ /D
+::Archive Backup
+""C:\Program Files\WinRAR\WinRAR.exe"" a -r E:\TMS_Auto_Backup\Zip\Zip_Backup_%date:~-4,4%%date:~-10,2%%date:~-7,2%.rar E:\TMS_Auto_Backup\Backup\Backup_%date:~-4,4%%date:~-10,2%%date:~-7,2%
+forfiles /p E:\Backup /s /m *.* /D -7 /C ""cmd /c del @path""
+::Call mail script
+powershell -ExecutionPolicy ByPass -Command ""C:\mail.ps1"" 
+pause

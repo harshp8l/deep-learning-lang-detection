@@ -1,0 +1,83 @@
+package main
+
+import (
+    ""bufio""
+    ""fmt""
+    ""go/ast""
+    ""go/parser""
+    ""go/token""
+    ""go/types""
+    ""log""
+    ""strings""
+)
+
+var src = strings.TrimSpace(`
+package main
+
+type T struct{}
+
+func f() {
+    var _ T
+    var _ *T
+
+    var _ int
+    var _ *int
+    var _ **int
+    var _ []int
+    var _ []T
+    var _ map[string]int
+    var _ map[string]T
+}
+`)
+
+func main() {
+    // Parse source
+    fset := token.NewFileSet()
+    f, err := parser.ParseFile(fset, ""src.go"", src, 0)
+    if err != nil {
+            log.Fatal(err)
+    }
+
+    // Run type checker
+    info := types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}
+
+    _, err = (&types.Config{}).Check(""mypkg"", fset, []*ast.File{f}, &info)
+    if err != nil {
+            log.Fatal(err)
+    }
+
+    printSrc()
+
+    // Inspect variable types in f()
+    for _, varDecl := range f.Decls[1].(*ast.FuncDecl).Body.List {
+            value := varDecl.(*ast.DeclStmt).Decl.(*ast.GenDecl).Specs[0].(*ast.ValueSpec)
+
+            pos := fset.Position(value.Type.Pos())
+            typ := info.Types[value.Type].Type
+
+            fmt.Println(pos, ""basic:"", isBasic(typ))
+    }
+}
+
+func isBasic(t types.Type) bool {
+    switch x := t.(type) {
+    case *types.Basic:
+            return true
+    case *types.Slice:
+            return true
+    case *types.Map:
+            return true
+    case *types.Pointer:
+            return isBasic(x.Elem())
+    default:
+            return false
+    }
+}
+
+func printSrc() {
+    s := bufio.NewScanner(strings.NewReader(src))
+    for i := 1; s.Scan(); i++ {
+            fmt.Printf(""%2d: %s\n"", i, s.Text())
+    }
+    fmt.Println("""")
+}

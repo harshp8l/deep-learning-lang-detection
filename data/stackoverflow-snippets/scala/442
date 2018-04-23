@@ -1,0 +1,62 @@
+val array = Array.ofDim[Byte](10000000)
+
+def naive(ba: Array[Byte]): Unit = {
+  var pos = 0
+  for (i <- 0 until ba.size) {
+    if (pos == 3) ba(i) = 32
+    pos += 1
+    if (pos == 20) pos = 0
+  }
+}
+
+def parallel(ba: Array[Byte], blockSize: Int): Unit = {
+  val n = ba.size
+  val numJobs = (n + blockSize - 1) / blockSize
+  (0 until numJobs).par.foreach { i =>
+    val startIdx = i * blockSize
+    val endIdx = n min ((i + 1) * blockSize)
+    var j = startIdx + ((3 - startIdx) % 20 + 20) % 20
+    while (j < endIdx) {
+      ba(j) = 32
+      j += 20
+    }
+  }
+}
+
+def measureTime[U](repeats: Long)(block: => U): Double = {
+  val start = System.currentTimeMillis
+
+  var iteration = 0
+  while (iteration < repeats) {
+    iteration += 1
+    block
+  }
+
+  val end = System.currentTimeMillis
+  (end - start).toDouble / repeats
+}
+
+println(""Basic sanity check (did I get the modulo arithmetic right?):"")
+
+{
+  val testArray = Array.ofDim[Byte](50)
+  naive(testArray)
+  println(testArray.mkString(""["", "","", ""]""))
+}
+{
+  for (blockSize <- List(3, 7, 13, 16, 17, 32)) {
+    val testArray = Array.ofDim[Byte](50)
+    parallel(testArray, blockSize)
+    println(testArray.mkString(""["", "","", ""]""))
+  }
+}
+
+val Reps = 1000
+
+val naiveTime = measureTime(Reps)(naive(array))
+
+println(""Naive:          "" + naiveTime)
+for (blockSize <- List(16,32,64,128,256,512,1024,2048,4096,8192)) {
+  val parallelTime = measureTime(Reps)(parallel(array, blockSize))
+  println(""Parallel(%4d): %f"".format(blockSize, parallelTime))
+}

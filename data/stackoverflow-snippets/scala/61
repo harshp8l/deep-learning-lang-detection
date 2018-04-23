@@ -1,0 +1,23 @@
+val emptyMap = Map.empty[String,List[String]]
+
+def xml2map(xml: String): Map[String,List[String]] = add2map(XML.loadString(xml), """", emptyMap)
+
+private def add2map(node: Node, xPath: String, oldMap: Map[String,List[String]]): Map[String,List[String]] = {
+
+  val elems = node.child.filter(_.isInstanceOf[Elem])
+  val xCurr = xPath + ""/"" + node.label
+
+  val currElems = elems.filter(_.child.count(_.isInstanceOf[Elem]) == 0)
+  val nextElems = elems.diff(currElems)
+
+  val currMap = currElems.foldLeft(oldMap)((map, elem) => map + {
+    val key = xCurr + ""/"" + elem.label
+
+    val oldValue = map.getOrElse(key, List.empty[String])
+    val newValue = oldValue ::: List(elem.text)
+
+    key -> newValue
+  })
+
+  nextElems.foldLeft(currMap)((map, elem) => map ++ add2map(elem, xCurr, emptyMap))
+}

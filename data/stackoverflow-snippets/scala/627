@@ -1,0 +1,36 @@
+object Table {
+
+  private def mapResultToTable(rs: WrappedResultSet): Table = Table(
+    dbId = rs.intOpt(""db_id""),
+    id = rs.intOpt(""id""),
+    name = rs.string(""name""),
+    shouldCopy = rs.booleanOpt(""should_copy""),
+    lastUpdated = rs.dateTimeOpt(""last_updated"").flatMap { zonedDateTime: ZonedDateTime =>
+      Some(DateTime.parse(zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)).plusMinutes(330))
+    }
+  )
+
+  def getTables(db: Db)(implicit session: DBSession): Seq[Table] = {
+    sql""""""
+       SELECT
+         *
+       FROM
+         db_name.tables
+       WHERE
+         db_id = ${db.id} AND
+         should_copy = b'1'
+       ORDER BY
+         name ASC
+    """""".
+      map(mapResultToTable).
+      list().
+      apply()
+  }
+
+  // for Play-Json [Scala-Json]
+  implicit val dateTimeJsReader = JodaReads.jodaDateReads(""yyyyMMddHHmmss"")
+  implicit val dateTimeWriter = JodaWrites.jodaDateWrites(""dd/MM/yyyy HH:mm:ss"")
+
+  implicit val reads = Json.reads[Table]
+  implicit val writes = Json.writes[Table]
+}

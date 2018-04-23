@@ -1,0 +1,56 @@
+class TabBar(QtWidgets.QTabBar):
+    def __init__(self, parent):
+        QtWidgets.QTabBar.__init__(self, parent)
+        self.colorIndexes = parent.colorIndexes
+        self.setStyleSheet('''
+            QTabBar {
+                font-family: Courier;
+                font-size: 12pt;
+            }
+            QTabBar::tab {
+                min-height: 40px;
+                padding: 2px 8px;
+            }
+            ''')
+
+    def paintEvent(self, event):
+        qp = QtGui.QPainter(self)
+        qp.setRenderHints(qp.Antialiasing)
+        option = QtWidgets.QStyleOptionTab()
+        option.features |= option.HasFrame
+        palette = option.palette
+        for index in range(self.count()):
+            self.initStyleOption(option, index)
+            palette.setColor(palette.Button, self.colorIndexes.get(index, QtGui.QColor(QtCore.Qt.green)))
+            palette.setColor(palette.Window, QtGui.QColor(QtCore.Qt.blue))
+            option.palette = palette
+            self.style().drawControl(QtWidgets.QStyle.CE_TabBarTab, option, qp)
+
+
+class TabWidget(QtWidgets.QTabWidget):
+    def __init__(self):
+        QtWidgets.QTabWidget.__init__(self)
+        self.setStyleSheet('''
+            QTabWidget::pane {
+                border: 2px solid blue;
+                border-radius: 6px;
+            }
+            QTabWidget::tab-bar {
+                left: 5px;
+            }
+            ''')
+        self.colorIndexes = {
+            1: QtGui.QColor(QtCore.Qt.red), 
+            3: QtGui.QColor(QtCore.Qt.blue), 
+            }
+        self.setTabBar(TabBar(self))
+        for i in range(5):
+            w = QtWidgets.QWidget()
+            self.addTab(w, 'tab {}'.format(i))
+
+
+app = QtWidgets.QApplication(sys.argv)
+QtWidgets.QApplication.setStyle('Fusion')
+w = TabWidget()
+w.show()
+sys.exit(app.exec_())

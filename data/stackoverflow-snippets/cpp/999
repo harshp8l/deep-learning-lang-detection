@@ -1,0 +1,221 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+//#include <conio.h>
+
+typedef struct Node_ {
+    int data;
+    struct Node_ *next;
+} Node;
+
+typedef struct List_ {
+    int count;
+    Node *head;
+    Node *tail;
+} List;
+
+typedef struct Freelist_ {
+    int count;
+    Node *head;
+    Node *tail;
+    Node *avail;
+    Node *reuse;
+} FreeList;
+
+Node *NewNode(void);
+Node *Insert(List *p,int data);
+void Print(Node *p);
+void PrintList(List *list);
+void RevPrint(Node *p);
+void RevPrintList(List *list);
+void FreeOne(Node *p);
+void FreeAll(void);
+
+FreeList freelist = { 0 };
+
+int
+main()
+{
+    List nodelist = { 0, NULL, NULL };
+
+    printf(""---------------------------------\n"" ""Insert()\n---------------------------------\n"");
+
+    for (int i = 1; i < 1000000; i++) {
+        Insert(&nodelist,i);
+        // this printf will radically slow things down
+#if 0
+        printf("" %d"",i);
+#endif
+    }
+
+    printf(""\n---------------------------------\n"" ""Print()\n---------------------------------\n"");
+#if 0
+    Print(nodelist.head);
+#else
+    PrintList(&nodelist);
+#endif
+
+    printf(""---------------------------------\n"" ""RevPrint()\n---------------------------------"");
+#if 0
+    RevPrint(nodelist.head);
+#else
+    RevPrintList(&nodelist);
+#endif
+
+    // release all nodes back to the malloc free pool
+    FreeAll();
+
+    printf(""\nPress any key to continue..."");
+#if 0
+    _getch();
+#else
+    getchar();
+#endif
+}
+
+Node *
+NewNode(void)
+{
+    FreeList *list;
+    Node *node;
+
+    list = &freelist;
+
+    do {
+        // try to reuse a node that has been released by FreeOne
+        node = list->reuse;
+        if (node != NULL) {
+            list->reuse = node->next;
+            node->next = NULL;
+            break;
+        }
+
+        // NOTE: adjust the count setup (e.g. 1000) to what ever value you want
+        if (list->count <= 0) {
+            list->count = 1000;
+            node = calloc(list->count,sizeof(Node));
+
+            // maintain linked list of nodes that are at the _start_ of a
+            // malloc area/arena
+            if (list->head == NULL)
+                list->head = node;
+            else
+                list->tail->next = node;
+            list->tail = node;
+
+            // burn the first node as a placeholder
+            list->avail = node + 1;
+            list->count -= 1;
+        }
+
+        // grab one from the current allocation array
+        node = list->avail++;
+        list->count -= 1;
+    } while (0);
+
+    return node;
+}
+
+void
+FreeOne(Node *node)
+{
+    FreeList *list;
+
+    list = &freelist;
+
+    // push this node onto the front of the reuse list (i.e. it's fast)
+    node->next = list->reuse;
+    list->reuse = node;
+}
+
+void
+FreeAll(void)
+{
+    Node *node;
+    Node *next;
+
+    for (node = freelist.head; node != NULL; node = next) {
+        next = node->next;
+        free(node);
+    }
+
+    memset(&freelist,0,sizeof(FreeList));
+}
+
+Node *
+Insert(List *list,int _nbr)
+{
+    Node *node = NewNode();
+
+    node->data = _nbr;
+    node->next = NULL;
+
+    if (list->head == NULL) {
+        list->head = node;
+    }
+    else {
+        list->tail->next = node;
+    }
+
+    list->tail = node;
+    list->count += 1;
+
+    return node;
+}
+
+void
+Print(Node *p)
+{
+
+    if (p == NULL) {
+        printf(""\n"");
+        return;
+    }
+
+    printf("" %d"",p->data);
+    Print(p->next);
+}
+
+void
+PrintList(List *list)
+{
+    Node *node;
+
+    for (node = list->head; node != NULL; node = node->next)
+        printf("" %d"",node->data);
+
+    printf(""\n"");
+}
+
+void
+RevPrint(Node *p)
+{
+
+    if (p == NULL) {
+        printf(""\n"");
+        return;
+    }
+
+    RevPrint(p->next);
+    printf("" %d"",p->data);
+}
+
+void
+RevPrintList(List *list)
+{
+    Node **rlist = malloc(sizeof(Node **) * (list->count + 1));
+    Node *node;
+    int ridx;
+
+    ridx = list->count - 1;
+    for (node = list->head; node != NULL; node = node->next, --ridx)
+        rlist[ridx] = node;
+
+    for (ridx = 0; ridx < list->count; ++ridx) {
+        node = rlist[ridx];
+        printf("" %d"",node->data);
+    }
+    printf(""\n"");
+
+    free(rlist);
+}

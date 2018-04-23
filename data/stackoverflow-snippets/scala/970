@@ -1,0 +1,23 @@
+import com.google.inject.Inject
+import play.api.Configuration
+import play.api.libs.oauth.{ConsumerKey, RequestToken}
+import play.api.mvc.{ BaseController,  ControllerComponents}
+
+import scala.concurrent.Future
+
+class Application @Inject() (config: Configuration, c: ControllerComponents) extends BaseController {
+  def tweets = Action.async {
+    val credentials : Option[(ConsumerKey, RequestToken)] = for {
+      apiKey <- config.getOptional[String](""twitter.apiKey"")
+      apiSecret <- config.getOptional[String](""twitter.apiSecret"")
+      token <- config.getOptional[String](""twitter.token"")
+      tokenSecret <- config.getOptional[String](""twitter.tokenSecret"")
+    } yield (
+      ConsumerKey(apiKey.toString, apiSecret.toString),
+      RequestToken(token.toString, tokenSecret.toString)
+    )
+
+    // use credentials to invoke twitter API and return Ok
+    Future.successful { Ok } 
+  }    
+}

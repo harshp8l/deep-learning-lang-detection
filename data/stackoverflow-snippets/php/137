@@ -1,0 +1,28 @@
+$folder = ""images"";
+    $results_img_arr = array();
+    if (is_dir($folder))
+    {
+            if ($handle = opendir($folder))
+            {
+                    while(($file = readdir($handle)) !== FALSE)
+                    {
+                        if(!in_array($file,array(""."","".."")))
+                            $results_img_arr[] = $folder.""/"".$file;
+                   }
+             closedir($handle);
+            }
+    }
+    $ran_img_key  = array_rand($results_img_arr);
+    $dbconn = mysqli_connect(""127.0.0.1"", ""root"", """", ""images"");
+    $img_path = $results_img_arr[$ran_img_key];
+    $select_img_exist = mysqli_query($dbconn,""SELECT imagespath FROM imgfiles WHERE  imagespath = '$img_path'"");
+    $img_rowcount=mysqli_num_rows($select_img_exist);
+        if($img_rowcount == 0 )
+        {
+         $insert_img = ""INSERT INTO imgfiles (imagespath,views) VALUES ('$img_path',1)"";
+        mysqli_query($dbconn, $insert_img);
+        echo ""<img src='"".$img_path.""'>"";
+        }
+        else{
+            echo ""all images are displayed"";
+        }

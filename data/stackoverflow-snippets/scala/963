@@ -1,0 +1,58 @@
+import scala.collection._
+
+type Bit = Boolean
+type BitStream = Iterator[Bit]
+type BitArray = Array[Bit]
+type ByteStream = Iterator[Byte]
+type CharStream = Iterator[Char]
+
+case class EncodingMapping(charMapping: Map[Char, BitArray], eofCharMapping: BitArray)
+
+def buildMapping(src: CharStream): EncodingMapping = {
+  def accumulateStats(src: CharStream): Map[Char, Int] = ???
+
+  def buildMappingImpl(stats: Map[Char, Int]): EncodingMapping = ???
+
+  val stats = accumulateStats(src)
+  buildMappingImpl(stats)
+}
+
+def convertBitsToBytes(bits: BitStream): ByteStream = {
+  bits.grouped(8).map(bits => {
+    val res = bits.foldLeft((0.toByte, 0))((acc, bit) => ((acc._1 * 2 + (if (bit) 1 else 0)).toByte, acc._2 + 1))
+    // last byte might be less than 8 bits
+    if (res._2 == 8)
+      res._1
+    else
+      (res._1 << (8 - res._2)).toByte
+  })
+}
+
+def encodeImpl(src: CharStream, mapping: EncodingMapping): ByteStream = {
+  val mainData = src.flatMap(ch => mapping.charMapping(ch))
+  val fullData = mainData ++ mapping.eofCharMapping
+  convertBitsToBytes(fullData)
+}
+
+// can be used to encode String as src. Thanks to StringLike/StringOps extension
+def encode(src: Iterable[Char]): (EncodingMapping, ByteStream) = {
+  val mapping = buildMapping(src.iterator)
+  val encoded = encode(src.iterator, mapping)
+  (mapping, encoded)
+}
+
+def wrapClose[A <: java.io.Closeable, B](resource: A)(op: A => B): B = {
+  try {
+    op(resource)
+  }
+  finally {
+    resource.close()
+  }
+}
+
+def encodeFile(fileName: String): (EncodingMapping, ByteStream) = {
+  // note in real life you probably want to specify file encoding as well
+  val mapping = wrapClose(Source.fromFile(fileName))(buildMapping)
+  val encoded = wrapClose(Source.fromFile(fileName))(file => encode(file, mapping))
+  (mapping, encoded)
+}

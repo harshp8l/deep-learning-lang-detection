@@ -1,0 +1,61 @@
+var wg sync.WaitGroup
+
+// create  HTTP server.
+serveSvr := http.NewServeMux()
+serveSvr.HandleFunc(""/"", handler())
+server := &http.Server{Addr: "":8080"", Handler: serveSvr}
+
+// create http server error channel
+httpErr := make(chan error, 1)
+
+// start HTTP server.
+wg.Add(1)
+go func() {
+    defer wg.Done()
+    httpErr <- server.ListenAndServe()
+    // http cleanup
+}()
+
+tcpErr := make(chan error, 1)
+listener, err := net.Listen(""tcp"", "":1111"")
+if err != nil {
+    tcpErr <- err
+} else {
+    // start TCP server
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        defer listener.Close()
+        for {
+            conn, err := listener.Accept()
+            if err != nil {
+                if ne, ok := err.(net.Error); ok && ne.Temporary() {
+                    // temp error, wait and continue
+                    continue
+                }
+                tcpErr <- err
+
+                // cleanup TCP
+                return
+            }
+
+            // code to handle each connection
+        }
+    }()
+}
+select {
+case err := <-httpErr:
+    // handle http error and close tcp listen
+    if listener != nil {
+        listener.Close()
+    }
+case err := <-tcpErr:
+    // handle tcp error and close http server
+    server.Close()
+}
+
+// you may also want to receive the error from the server
+// you shutdown to log
+
+// wait for any final cleanup to finish
+wg.Wait()

@@ -1,0 +1,91 @@
+--------1. CTE  
+
+WITH
+
+Memb AS (
+Select *
+ From icue.HSC_MBR_COV mbc
+     Where mbc.POL_ISS_ST_CD = 'PA' 
+  And  (mbc.LOB_TYP_ID = '12' OR mbc.CLM_PLTFM_ID  = 'A9')
+
+  Union 
+
+
+  Select *
+ From icue.HSC_MBR_COV mbc
+     Where mbc.POL_ISS_ST_CD = 'NJ' 
+  And  (mbc.LOB_TYP_ID = '12' OR mbc.CLM_PLTFM_ID  = 'A9')                    
+
+),
+  --select * from Memb
+
+
+----------- 2.CTE Fax Flag 
+--- With 
+
+  Fax_Flag AS(
+
+SELECT Distinct
+  cmt.CNTC_NM As Provider_Name,
+  cmt.FAX_NBR,
+
+  CASE When cmt.FAX_NBR ='201-553-7889' THEN 'Yes'
+     ELSE 'No'
+       END  AS Fax_Flag
+
+   From  icue.cmnct_trans cmt
+    Where cmt.CNTC_NM ='CHILDRENS HOSP PHILADELPHIA'
+
+   ),   
+
+   --Select * From Fax_Flag
+
+
+   ------------3. CTE  Letter Flag
+
+---  With 
+
+   Letter_Sent AS(
+
+   Select Distinct
+   act.Actv_strt_dttm AS Fax_Date,
+   act.ACTV_TYP_ID,
+
+
+    CASE When ACTV_TYP_ID ='5' THEN 'Yes'
+     ELSE 'No'
+       END  AS Letter_Flag
+
+  From icue.actv act
+     Where trunc(act.actv_strt_dttm) between to_date('19-FEB-2018','DD-MON-YYYY') and to_date('06-MAR-2018','DD-MON-YYYY')
+
+) -- , Removed the comma
+
+
+
+---------FINAL - I want to put all the CTE together
+
+Select Distinct
+
+    mb.Fst_Nm AS First_Name,
+    mb.Lst_Nm AS Last Name,
+    mbc.Member_Policy_State,
+    mbc.mbr_id AS Memeber_ID,
+    cmt.HSC_ID AS Auth_Number,
+    cmt.Fax_Number,
+    cmt.Provider_Name,
+    act.Fax_Date,
+    act.Letter_Flag,
+    cmt.Fax_Flag
+
+    From icue.mbr mb
+
+
+ Inner Join Memb mbc     --- CTE 1
+  On mb.Mbr_ID = mbc.Mbr_ID
+
+ Inner Join Fax_Flag cmt   ---- CTE 2
+  On cmt.HSC_ID = cmt.HSC_ID
+
+ Inner Join Letter_Sent act ---- CTE 3
+  On act.Mbr_ID = mbc.Mbr_ID

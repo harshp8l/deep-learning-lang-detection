@@ -1,0 +1,54 @@
+$(function() {
+  var themes = {
+    light: 'light',
+    dark: 'dark'
+  };
+
+  var currentTheme = themes.light; // default to light
+
+  function changeTheme(theme) {
+    if (!theme || !themes[theme]) return;
+    setTheme(theme);
+
+    Object.keys(themes).forEach(function(t) {
+      var linkEl = $('link[href*=""css/' + t + '.css""]');
+      if (linkEl.length && t !== theme) {
+        linkEl.remove();
+      }
+    });
+  }
+
+  function setTheme(theme) {
+    if (!theme || !themes[theme]) return;
+
+    var linkEl = document.createElement('link');
+    linkEl.rel=""stylesheet"";
+    linkEl.href=""css/"" + theme + "".css"";
+    document.getElementsByTagName('head')[0].appendChild(linkEl);
+
+    if (localStorage) {
+      localStorage.setItem('theme', theme);
+    }
+
+    currentTheme = theme;
+  }
+
+  if (localStorage) {
+    var theme = localStorage.getItem('theme');
+    changeTheme(theme);
+  } else {
+    changeTheme(currentTheme);
+  }
+
+  $('#toggler').click(function(){
+      switch (currentTheme) {
+        case themes.light:
+          changeTheme(themes.dark);
+          break;
+        case themes.dark:
+        default:
+          changeTheme(themes.light);
+          break;
+      }
+  });
+})

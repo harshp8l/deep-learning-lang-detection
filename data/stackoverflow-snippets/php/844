@@ -1,0 +1,60 @@
+// You'd retrieve the requested change data from your form (or whatever)
+update_categories_so(
+    (int) $_POST['category_id'],
+    (int) $_POST['current_so'],
+    (int) $_POST['new_so']
+);
+
+/**
+ * @param int $categoryIdForChangedSo
+ * @param int $currentSo
+ * @param int $newSo
+ *
+ * @return void
+ */
+function update_categories_so($categoryIdForChangedSo, $currentSo, $newSo)
+{
+    // Determine if incrementing or decrementing
+    $increment = $newSo < $currentSo  ? true : false;
+
+    // Set increment or decrement var for the update
+    $changeBy = $increment ? '+' : '-';
+
+    // Set the where clause to get the current category_ids
+    // which would need to be updated
+    $selectWhereClause = $increment
+        ? ""'so' >= $newSo AND 'so' < $currentSo""
+        : ""'so' <= $newSo AND 'so' > $currentSo"";
+
+    $selectSql = ""
+        SELECT
+            `category_id`
+        FROM
+            `webshop_categories`
+        WHERE
+            {$selectWhereClause}
+        "";
+
+    // Return the results into $categoryIdsForUpdate
+
+    // Update the categories which are affected by the main change,
+    // from the array from the DB
+    $updateOtherSoSql = ""
+        UPDATE
+            `webshop_categories`
+        SET
+            'so' = 'so' {$changeBy} 1
+        WHERE
+            'category_id' IN ({$categoryIdsForUpdate})
+        "";
+
+    // Update the main one being changed
+    $updateRequestedSosql = ""
+        UPDATE
+            `webshop_categories`
+        SET
+            so = {$newSo}
+        WHERE
+            'category_id' = {$categoryIdForChangedSo}
+        "";
+}

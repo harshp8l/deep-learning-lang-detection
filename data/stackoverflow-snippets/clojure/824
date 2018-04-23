@@ -1,0 +1,21 @@
+(declare primes)
+
+(defn is-relatively-prime? [n candidates]
+  (if-let [current (first candidates)]
+    (if (zero? (rem n current))
+      false
+      (recur n (rest candidates)))
+    true))
+
+(defn get-next-prime [largest-prime-so-far]
+  (let [primes-so-far (concat (take-while #(not= largest-prime-so-far %) primes) [largest-prime-so-far])]
+    (loop [n (+ (last primes-so-far) 2)]
+      (if
+        (is-relatively-prime? n (rest primes-so-far))
+        n
+        (recur (+ n 2))))))
+
+(def primes
+  (lazy-cat '(2 3) (map get-next-prime (rest primes))))
+
+(time (first (drop 10000 primes)))

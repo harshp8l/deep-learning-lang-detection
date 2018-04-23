@@ -1,0 +1,22 @@
+# shell function which reads a NUL-delimited list of filenames on stdin
+# and returns the number of them that actually exist on stdout, or ""NODIR""
+checkFunc() {
+  test -d ""$dir3"" || { echo ""NODIR""; return; }
+
+  local filename successCount=0
+  while IFS= read -r -d '' filename; do
+    test -e ""$dir3/process_${filename}.log"" && (( ++successCount ))
+  done
+  printf '%s\n' ""$successCount""
+}
+
+actual=$(
+  printf '%s\0' ""${FILES[@]}"" | \
+    ssh ""$machine"" ""$(declare -p dir3; declare -f checkFunc); checkFunc""
+) || { echo ""ERROR: Unable to retrieve remote file count"" >&2; exit 1; }
+
+case $actual in
+  (${#FILES[@]}) echo ""SUCCESS: Expected, and found, $numberOfActuallyRemoteFiles files"" ;;
+  (NODIR)        echo ""FAILURE: Directory $dir3 does not exist"" ;;
+  (*)            echo ""FAILURE: Out of ${#FILES[@]} files, only $actual exist"" ;;
+esac

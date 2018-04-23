@@ -1,0 +1,58 @@
+<?php
+
+/**
+ * Add a new item ...
+ * 
+ * If it's being requested more items then available ...
+ *
+ * @param array $newItem The new item that should be added.
+ * @param array $items The list of items where the item should be added.
+ * @param integer $available Available items.
+ * @return void
+ */
+function add_item(array $newItem, array &$items, int $available=MAX_INT_MAX)
+{
+  throw_error_if_invalid_item($newItem);
+
+  $unique = $newItem['id'] . '-' . $newItem['size'];
+  if (isset($items_by_unique[$unique])) {
+    add_item_quantity(
+      $items_by_unique[$unique],
+      $item['quantity'],
+      $available
+    );
+  } else {
+    $items[] = $newItem;
+  }
+}
+
+/**
+ * Add quantity ...
+ *
+ * @param array $item ...
+ * @param integer $moreQuantity ...
+ * @param integer $available ...
+ * @return void
+ */
+function add_item_quantity(array &$item, int $moreQuantity, int $available=MAX_INT_MAX)
+{
+  $item['quantity'] += $moreQuantity;
+  if ($item['quantity'] > $available) {
+    $item['quantity'] = $available;
+  }
+}
+
+/**
+ * ...
+ *
+ * @param array $item ...
+ * @return void
+ */
+function throw_error_if_invalid_item(array $item)
+{
+  if (!isset($item['id'], $item['size'], $item['quantity'])) {
+    throw new RuntimeException(
+      'Found a invalid invalid item data: ' . json_encode($item)
+    );
+  }
+}

@@ -1,0 +1,33 @@
+open System
+open FSharp.Charting
+open FSharp.Charting.ChartTypes
+open System.Drawing
+open System.Drawing.Printing
+open System.Windows.Forms
+
+[<STAThread; EntryPoint>]
+let main args =
+    let captureScreen (form: Form) =
+        let myGraphics = form.CreateGraphics()
+        let size = form.Size
+        let memoryImage = new Bitmap(size.Width, size.Height, myGraphics)
+        let memoryGraphics = Graphics.FromImage(memoryImage)
+        memoryGraphics.CopyFromScreen(form.Location.X, form.Location.Y, 0, 0, size)
+        memoryImage
+
+    let myChart = [for x in 0.0 .. 0.1 .. 6.0 -> sin x + cos (2.0 * x)]
+                    |> Chart.Line |> Chart.WithYAxis(Title=""Test"")
+
+    let chart = new ChartControl(myChart, Dock=DockStyle.Fill)
+    use printer = new System.Drawing.Printing.PrintDocument()
+    let printBtn = new Button(Text=""Print"", Dock=DockStyle.Bottom) 
+    printBtn.Click.Add(fun prt -> printer.Print())
+    let form = new Form(Visible = true, TopMost = true, Width = 700, Height = 500)
+    printer.PrintPage.Add(fun prt ->
+                                printBtn.Visible <- false
+                                prt.Graphics.DrawImage(captureScreen(form), 0, 0)
+                                printBtn.Visible <- true)
+
+    form.Controls.AddRange([|chart; printBtn |])
+    do Application.Run(form) |> ignore
+    0

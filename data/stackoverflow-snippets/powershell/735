@@ -1,0 +1,52 @@
+Start-Transcript -Path C:\cfn\log\Tag-EBS-Volumes.ps1.txt -Append
+        # Create a hash table that maps each device to a SCSI target
+        $Map = @{""0"" = '/dev/sda1'}
+        for($x = 1; $x -le 25; $x++) {$Map.add($x.ToString(), [String]::Format(""/dev/xvd{0}"",[char](97 + $x)))}
+        for($x = 78; $x -le 102; $x++) {$Map.add($x.ToString(), [String]::Format(""/dev/xvdc{0}"",[char](19 + $x)))}
+
+    Try {
+        # Use the metadata service to discover which instance the script is running on
+        $InstanceId = (Invoke-WebRequest '169.254.169.254/latest/meta-data/instance-id').Content
+        $AvailabilityZone = (Invoke-WebRequest '169.254.169.254/latest/meta-data/placement/availability-zone').Content
+        $Region = $AvailabilityZone.Substring(0, $AvailabilityZone.Length -1)
+
+        # Get the list of volumes attached to this instance
+        $BlockDeviceMappings = (Get-EC2Instance -Region $Region -Instance $InstanceId).Instances.BlockDeviceMappings
+    }
+    Catch
+    {
+        Write-Host ""Could not access the AWS API, are your credentials loaded?""  -ForegroundColor Yellow
+    }
+
+    Get-WmiObject -Class Win32_DiskDrive | %{
+        $Drive = $_
+        # Find the partitions for this drive
+        Get-WmiObject -Class Win32_DiskDriveToDiskPartition |  Where-Object {$_.Antecedent -eq $Drive.Path.Path} | %{
+            $D2P = $_
+            # Get details about each partition
+            $Partition = Get-WmiObject -Class Win32_DiskPartition |  Where-Object {$_.Path.Path -eq $D2P.Dependent}
+            # Find the drive that this partition is linked to
+            $Disk = Get-WmiObject -Class Win32_LogicalDiskToPartition | Where-Object {$_.Antecedent -in $D2P.Dependent} | %{
+                $L2P = $_
+                # Get the drive letter for this partition, if there is one
+                Get-WmiObject -Class Win32_LogicalDisk | Where-Object {$_.Path.Path -in $L2P.Dependent}
+            }
+
+            $BlockDeviceMapping = $BlockDeviceMappings | Where-Object { $_.DeviceName -eq $Map[$Drive.SCSITargetId.ToString()] }
+
+             If( $Disk.VolumeName -eq """") {
+                $tagvalue= ""$env:COMPUTERNAME-Root""
+             }  ElseIf ($Disk.VolumeName -eq ""ABC"" )
+             {
+                $tagvalue= ""$env:COMPUTERNAME-ABC""
+             }ElseIf ($Disk.VolumeName -eq ""DEF"" )
+             {
+                $tagvalue= ""$env:COMPUTERNAME-DEF""
+             }Else
+             {
+                $tagvalue= """"
+             }
+
+             New-EC2Tag -Resources $BlockDeviceMapping.Ebs.VolumeId -Tags @{ Key = ""Name""; Value = $tagvalue } # Add volume name tag that matches VolumeId
+        }
+    }

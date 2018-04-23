@@ -1,0 +1,17 @@
+(def !                                            ; global variable referring to a function
+  (let [m (atom [1 1 2 6 24])]                    ; buffer of results
+    (fn [n]                                       ; factorial function definition
+      (let [m-count (count @m)]                   ; number of results in a buffer
+        (if (< n m-count)                         ; do we have buffered result for n?
+          (nth @m n)                              ; · yes: return it
+          (loop [cur m-count]                     ; · no: compute it recursively
+            (let [r (*' (nth @m (dec cur)) cur)]  ; new result
+              (swap! m assoc cur r)               ; store the result
+              (if (= n cur)                       ; termination condition:
+                r                                 ; · base case
+                (recur (inc cur))))))))))         ; · recursive case
+
+(time (do (! 8000) nil))  ; => ""Elapsed time: 154.280516 msecs""
+(time (do (! 8001) nil))  ; => ""Elapsed time: 0.100222 msecs""
+(time (do (! 7999) nil))  ; => ""Elapsed time: 0.090444 msecs""
+(time (do (! 7999) nil))  ; => ""Elapsed time: 0.055873 msecs""

@@ -1,0 +1,59 @@
+Function Copy-IfNotPresent {
+<#
+    Copy file only if not present at destination.
+    This is a one file at a time call. It's not meant to replace complex call like ROBOCOPY.
+    Destination can be a file or folder. If it's a folder, you can use -Container to force Folder creation when not exists
+#>
+[CmdletBinding()]
+Param (
+    [Parameter(Mandatory)]
+    $FilePath,
+
+    [Parameter(Mandatory)]
+    [string]$Destination,
+
+    [switch]$Container,
+
+    [switch]$WhatIf
+)
+#region validations
+if ($FilePath -isnot [System.IO.FileInfo]){
+    $File = Get-ChildItem $FilePath -File
+} else {
+    $File = $FilePath
+}
+
+if (!$File.Count){
+    Write-Warning ""$FilePath no file found.""
+    return
+} elseif ($File.Count -gt 1) {
+    Write-Warning ""$FilePath must resolve to one file only.""
+    return
+}
+#endregion
+
+# Destination is a folder
+if ($Container -or (Test-Path -Path $Destination -PathType Container)) {
+    if (!(Test-Path $Destination)) {
+        New-Item -Path $Destination -ItemType Container | Out-Null
+    }
+    $Destination += ""\$($File.Name)""
+}
+
+# Destination is a file
+if (!(Test-Path $Destination)) {
+    if ($WhatIf) {
+        Write-Host ""WhatIf:Copy-IfNotPresent $FilePath -> $Destination""
+    } else {
+        # Force creation of parent folder
+        $Parent = Split-Path $Destination -Parent
+        if (!(Test-Path $Parent)) { 
+            New-Item $Parent -ItemType Container | Out-Null
+        }
+        Copy-Item -Path $FilePath -Destination $Destination  
+        Write-Verbose ""Copy-IfNotPresent $FilePath -> $Destination (is absent) copying""
+    }
+} else {
+    Write-Verbose ""Copy-IfNotPresent $Destination (is present) not copying""
+}
+}

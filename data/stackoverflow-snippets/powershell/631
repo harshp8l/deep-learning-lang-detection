@@ -1,0 +1,24 @@
+# Import-CSV already returns an array of objects.
+# No need to wrap in another array
+#ImportCSV = $CSVArray = Import-Csv ""#CSV file to read"" 
+# $CSVArray = @($ImportCSV)
+$CSVArray = Import-Csv ""#CSV file to read"" 
+
+# Mispelling of 'ForEach-Object' below?
+$CSVArray | ForEach-Object {
+    # $battingAvg is undeclared at this point, so how does it have a 'result' property?
+    # Maybe there's more to this variable that you haven't shared
+    # $battingAVG.result = [math]::Round($_.Hits / $_.AtBats)
+    $battingAVG = [math]::Round($_.Hits / $_.AtBats)
+
+    $battingObject = New-Object System.Object
+    # Now that you're inside the loop, get the Name property of the current record $_
+    $battingObject | Add-Member -Type NoteProperty -Name ""Name"" -Value $_.Name
+    $battingObject | Add-Member -Type NoteProperty -Note ""BattingAverage"" -Value $battingAVG
+}
+
+# You want to create a new object for each row of the data, so this code
+# belongs inside your loop
+# $battingObject = New-Object System.Object
+# $battingObject | Add-Member -Type NoteProperty -Name ""Name"" -Value $CVSArray.Name
+# $battingObject | Add-Member -Type NoteProperty -Note ""BattingAverage"" -Value $battingAVG

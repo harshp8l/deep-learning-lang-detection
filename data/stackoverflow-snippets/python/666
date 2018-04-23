@@ -1,0 +1,18 @@
+df = pd.DataFrame({""ID"" : [""x13"", ""x13"", """", ""x14"", """" , ""x13""],
+                   ""Name"": [""Master1"", ""Slave1"", ""Master2"", ""Master3"", ""Master4"" , ""Slave2""],
+                   ""value"":["""", ""5"", ""7"", ""8"", """", ""1""]})
+
+s = df[(df.ID != '') & (df.value != '')].groupby('ID')['value'].apply(list)
+
+mask = df['ID'].isin(s.index) & df['Name'].str.startswith('Master')
+df.loc[mask, 'value'] = df.loc[mask, 'ID'].map(s).apply(lambda x: ', '.join(x))
+
+print(df)
+
+#     ID     Name value
+# 0  x13  Master1  5, 1
+# 1  x13   Slave1     5
+# 2       Master2     7
+# 3  x14  Master3     8
+# 4       Master4      
+# 5  x13   Slave2     1

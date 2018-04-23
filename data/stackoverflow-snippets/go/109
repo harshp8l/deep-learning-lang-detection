@@ -1,0 +1,22 @@
+func IPWhiteList(whitelist map[string]bool) func(http.Handler) http.Handler {
+    f := func(h http.Handler) http.Handler {
+        fn := func(w http.ResponseWriter, r *http.Request) {
+            // Get IP of this request
+            ip := doSomething()
+
+            // If the IP isn't in the whitelist, forbid the request.
+            if !whitelist[ip] {
+                w.Header().Set(""Content-Type"", ""text/plain"")
+                w.WriteHeader(http.StatusForbidden)
+                w.Write([]byte("".""))
+                return
+            }
+
+            h.ServeHTTP(w, r)
+        }
+
+        return http.HandlerFunc(fn)
+    }
+
+    return f
+}

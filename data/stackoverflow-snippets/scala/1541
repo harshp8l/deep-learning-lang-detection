@@ -1,0 +1,47 @@
+class A {
+  // ...
+}
+
+class B {
+  // ...
+}
+
+// Constructor is private to require construction through companion's factory method.
+class Relationships private(private val parentToChild: Map[A, B], private val childToParent: Map[B, A]) {
+
+  // Return new relationship that adds relationship between child and parent instance.
+  //
+  // This particular approach assumes a one-to-one mapping (one child per parent).
+  // One-to-many (multiple children per parent) are possible by mapping the parent to a
+  // collection of children.
+  def relate(parent: A, child: B): Relationships = {
+
+    // Verify that neither parent nor child currently have relationships.
+    require(!parentToChild.contains(parent) && !childToParent.contains(child))
+
+    // Add the relationship, return new relationships instance.
+    val newParentToChild = parentToChild + (parent -> child)
+    val newChildToParent = childToParent + (child -> parent)
+    new Relationships(newParentToChild, newChildToParent)
+  }
+
+  // Lookup child of particular parent. Return None if no child found, Some(child) otherwise.
+  def childOf(parent: A): Option[B] = parentToChild.get(parent)
+
+  // Lookup parent of particular child. Return None if no parent found, Some(parent) otherwise.
+  def parentOf(child: B): Option[A] = childToParent.get(child)
+}
+
+// Companion.
+object Relationships {
+
+  // Create initial relationship instance with no relationships.
+  def apply() = new Relationships(Map.empty[A, B], Map.empty[B, A])
+}
+
+// Sample use:
+val a = new A
+val b = new B
+val tracker = Relationships().relate(a, b)
+tracker.childOf(a) // Should return Some(b).
+tracker.parentOf(b) // Should return Some(a).

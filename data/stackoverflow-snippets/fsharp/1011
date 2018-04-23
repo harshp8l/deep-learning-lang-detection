@@ -1,0 +1,19 @@
+namespace Space.Views
+
+open FsXaml
+open System
+
+type UserView = XAML<""View/UserControl.xaml"", true>
+
+type CompositionUserControl () =
+    inherit UserControlViewController<UserView>()
+
+    let numeric (txt : string) =
+        try txt |> int with
+        | :? System.FormatException -> 0
+        | _ -> 1
+
+    override this.OnLoaded view = 
+        view.Box.PreviewTextInput.Add(fun e -> if numeric e.Text = 0 then e.Handled <- true) 
+
+    member __.ViewModel = Space.ViewModels.UserControlViewModel(Space.Models.Handling.proces)

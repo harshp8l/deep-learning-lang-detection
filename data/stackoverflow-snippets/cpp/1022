@@ -1,0 +1,44 @@
+#include <iostream>
+
+template <auto Val>
+struct foo
+ {
+   using T = decltype(Val);
+
+   T t { Val }; // or also decltype(Val) t {Val};
+
+   static constexpr bool isSpecialized { false };
+ };
+
+template <>
+struct foo<20>
+ {
+   static constexpr bool isSpecialized { true };
+ };
+
+template <auto Val, typename T = decltype(Val)>
+struct bar
+ {
+   T t { Val };
+
+   static constexpr bool isSpecialized { false };
+ };
+
+template <>
+struct bar<20>
+ {
+   static constexpr bool isSpecialized { true };
+ };
+
+int main ()
+ {
+   std::cout << foo<0>::isSpecialized << std::endl;   // print 0
+   std::cout << foo<20>::isSpecialized << std::endl;  // print 1
+   std::cout << foo<20L>::isSpecialized << std::endl; // print 0
+
+   std::cout << bar<0>::isSpecialized << std::endl;         // print 0
+   std::cout << bar<20>::isSpecialized << std::endl;        // print 1
+   std::cout << bar<20L>::isSpecialized << std::endl;       // print 0
+   std::cout << bar<20, float>::isSpecialized << std::endl; // print 0
+
+ }

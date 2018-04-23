@@ -1,0 +1,33 @@
+package main
+
+import (
+    ""fmt""
+    ""sync""
+)
+
+func double(line int, ch chan int, wg *sync.WaitGroup) {
+    defer wg.Done()
+    ch <- line * 2
+
+}
+
+func collectResult(channel chan int, sampleList *[]int) {
+    for s := range channel {
+        *sampleList = append(*sampleList, s)
+    }
+
+}
+
+func main() {
+    contents := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19}
+    sampleChan := make(chan int, 1)
+    var sampleList []int
+    var wg sync.WaitGroup
+    for _, line := range contents {
+        wg.Add(1)
+        go double(line, sampleChan, &wg)
+    }
+    go collectResult(sampleChan, &sampleList)
+    wg.Wait()
+    fmt.Println(sampleList)
+}

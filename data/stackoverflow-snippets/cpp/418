@@ -1,0 +1,53 @@
+#include <assert.h>         // assert
+#include <limits>           // std::(numeric_limits)
+#include <string>           // std::(string)
+#include <sstream>          // std::(ostringstream)
+
+namespace my{
+    // Visual C++2017 doesn't support comma-separated list for `using`:
+    using std::fixed; using std::numeric_limits; using std::string;
+    using std::ostringstream;
+
+    auto max_fractional_digits_for_positive( double value )
+        -> int
+    {
+        int result = numeric_limits<double>::digits10 - 1;
+        while( value < 1 ) { ++result; value *= 10; }
+        return result;
+    }
+
+    auto string_from_positive( double const value )
+        -> string
+    {
+        ostringstream stream;
+        stream << fixed;
+        stream.precision( max_fractional_digits_for_positive( value ) );
+        stream << value;
+        string result = stream.str();
+        while( result.back() == '0' )
+        {
+            result.resize( result.size() - 1 );
+        }
+        return result;
+    }
+
+    auto string_from( double const value )
+        -> string
+    {
+        return (0?""""
+            : value == 0?   ""0""
+            : value < 0?    ""-"" + string_from_positive( -value )
+            :               string_from_positive( value )
+            );
+    }
+}
+
+#include<iostream>
+auto main()
+    -> int
+{
+    using std::cout;
+    cout << my::string_from( 7.40200133400 ) << ""\n"";
+    cout << my::string_from( 0.00000000000740200133400 ) << ""\n"";
+    cout << my::string_from( 128.82 ) << ""\n"";
+}

@@ -1,0 +1,13 @@
+def loadFromMongodb[T1: ClassTag](
+                                   mongoUri: String,
+                                   spark: SparkSession,
+                                   pipeline: Seq[Document]
+                                 )(
+                                   resultHandler: Document => T1
+                                 ): RDD[T1] = {
+  spark
+    .sparkContext
+    // specify [Document] explicitly
+    .loadFromMongoDB[Document](ReadConfig(Map(""uri"" -> mongoUri)))
+    .withPipeline(pipeline) // filter push down
+    .map(doc => resultHandler(doc))

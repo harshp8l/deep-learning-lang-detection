@@ -1,0 +1,48 @@
+Function Get-FilePath{
+[CmdletBinding()]
+Param(
+    [String]$Filter = ""All Files (*.*)|*.*|Comma Seperated Values (*.csv)|*.csv|Text Files (*.txt)|*.txt"",
+    [String]$InitialDirectory = $home,
+    [String]$Title)
+
+    [void][System.Reflection.Assembly]::LoadWithPartialName(""System.windows.forms"")
+    $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+    $OpenFileDialog.initialDirectory = $InitialDirectory
+    $OpenFileDialog.filter = $Filter
+    $OpenFileDialog.Title = $Title
+    [void]$OpenFileDialog.ShowDialog()
+    $OpenFileDialog.filename
+}
+
+cls
+If (!(Get-Module -Name activerolesmanagementshell -ErrorAction SilentlyContinue))
+{
+Import-Module activerolesmanagementshell
+}
+Write-host $(""*"" * 75)
+Write-host ""*""
+Write-host ""*    Input file should contain just a list of samaccountnames - no header row.""
+Write-host ""*""
+Write-host $(""*"" * 75)
+
+$File = Get-FilePath -Filter 'Text Files (*.txt)|*.txt|All Files (*.*)|*.*' -InitialDirectory ""$home\Desktop"" -Title 'Select user list'
+
+If (!(test-path $File))
+{
+Write-host ""Sorry couldn't find the file...buh bye`n`n""
+exit
+}
+
+$Managers = @{'NONE'='NONE'}
+Get-Content $File | %{
+    $EmpInfo = get-qaduser -proxy -Identity $_ -IncludedProperties employeeid,edsva_SSCOOP_managerEmployeeID
+    Switch($EmpInfo.edsva_SSCOOP_managerEmployeeID){
+        {$_.Length -lt 2} {$EmpInfo.edsva_SSCOOP_managerEmployeeID = 'NONE'}
+        {$_ -notin $Managers.Keys} {
+            $MgrLookup = Get-QADUser -SearchAttributes @{employeeid=$EmpInfo.edsva_SSCOOP_managerEmployeeID} |% Name
+            If(!$MgrLookup){$MgrLookup = 'NONE'}
+            $Managers.add($EmpInfo.edsva_SSCOOP_managerEmployeeID,$MgrLookup)
+            }
+    }
+    Add-Member -InputObject $EmpInfo -NotePropertyName 'ManagerName' -NotePropertyValue $Managers[$EmpInfo.edsva_SSCOOP_managerEmployeeID] -PassThru
+} | select samaccountname,edsva_SSCOOP_managerEmployeeID,ManagerName | Export-Csv ""C:\Users\sfp01\Documents\Data_Deletion_Testing\Script_DisaUser_MgrEmpID\Disabled_Users_With_Manager.txt"" -NoTypeInformation -Append

@@ -1,0 +1,35 @@
+namespace App\Providers;
+
+use App\Dependencies\DependencyA;
+use App\Dependencies\DependencyB;
+use App\Dependencies\DependencyC;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Bootstrap any application services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        //
+    }
+
+    /**
+     * Register any application services.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        $this->app->bind(DependencyB::class, function ($app) {
+            return new DependencyB(new DependencyC());
+        });
+
+        $this->app->bind(DependencyA::class, function ($app) {
+            return new DependencyA($app->make(DependencyB::class));
+        });
+    }
+}

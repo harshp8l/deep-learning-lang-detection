@@ -1,0 +1,18 @@
+class Identity < ApplicationRecord
+  belongs_to :user
+  validates_presence_of :uid, :provider
+  validates_uniqueness_of :uid, :scope => :provider
+
+  def self.find_for_oauth(auth)
+    identity = find_or_create_by(uid: ""nickname: "" + auth.uid, provider: auth.provider) # Same as User.rb (in find_for_oauth)
+
+    identity.name = auth.extra.raw_info.name
+    identity.email = auth.info.email
+    identity.image_url = auth.info.image
+    identity.profile_url = nil
+    identity.token = auth.credentials.token
+    identity.secret = auth.credentials.secret
+    identity.save
+    identity
+  end
+end

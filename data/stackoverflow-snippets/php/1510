@@ -1,0 +1,16 @@
+public function actionMigrateTest()
+{
+    ob_start();
+
+    defined('STDIN') or define('STDIN', fopen('php://stdin', 'r'));
+    defined('STDOUT') or define('STDOUT', fopen('php://stdout', 'w'));
+    defined('STDERR') or define('STDERR', fopen('php://stderr', 'w'));
+
+    $migration = new \yii\console\controllers\MigrateController('migrate', Yii::$app);
+    $status = $migration->runAction('up', ['migrationPath' => '@app/migrations/', 'interactive' => false]);
+
+    fclose(\STDOUT);
+    fclose(\STDERR);
+
+    return ob_get_clean();
+}

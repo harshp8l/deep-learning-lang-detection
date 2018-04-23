@@ -1,0 +1,35 @@
+// Return both, and grab the required one
+struct A
+{
+private:
+    // This function does the actual getter work, hiding the template details
+    // from the public interface, and allowing the use of auto as a return type
+    auto get_do_work()
+    {
+        // Your getter logic etc.
+        // ...
+        // ...
+
+        // Return both versions, but have the other functions extract the required one
+        return std::make_pair(examples.begin(), examples.cbegin());
+    }
+
+public:
+    std::vector<int> examples{ 0, 1, 2, 3, 4, 5 };
+
+    // You'll get a regular iterator from the .first
+    auto get()
+    {
+        return get_do_work().first;
+    }
+
+    // This will get a const iterator
+    auto get() const
+    {
+        // Force using the non-const to get a const version here
+        // Basically the inverse of Meyer's casting. Then just get
+        // the const version of the type and return it
+        return const_cast<A&>(*this).get_do_work().second;
+    }
+
+};

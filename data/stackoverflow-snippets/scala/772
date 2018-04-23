@@ -1,0 +1,39 @@
+def process(): StreamExecutionEnvironment = {
+val env = StreamExecutionEnvironment.getExecutionEnvironment
+
+implicit val typeInfo = TypeInformation.of(classOf[Int])
+implicit val typeInfo2 = TypeInformation.of(classOf[Unit])
+
+val BUF_SIZE = 3
+val STREAM_NUM = 2
+
+val a = env.fromElements(1, 2, 3, 3, 4, 5, 6, 7, Int.MaxValue)
+val b = env.fromElements(4, 5, 9, 10 , 11, 13, Int.MaxValue)
+
+val c = a.union(b).flatMap(new FlatMapFunction[Int, Int] {
+  val heap = collection.mutable.PriorityQueue[Int]().reverse
+  var endCount = 0
+
+  override def flatMap(value: Int, out: Collector[Int]): Unit = {
+    if (value == Int.MaxValue) {
+      endCount += 1
+
+      if (endCount == STREAM_NUM) {
+        heap.foreach(out.collect)
+      }
+    }
+    else {
+      heap += value
+
+      while (heap.size > BUF_SIZE) {
+        val v = heap.dequeue()
+        out.collect(v)
+      }
+    }
+  }
+}).setParallelism(1)
+
+c.map(x => println(s""X=$x"")).setParallelism(1)
+
+env
+}

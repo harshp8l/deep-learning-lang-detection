@@ -1,0 +1,23 @@
+class Supervisor  extends Actor with ActorLogging {
+
+  var shutdownInitiator:ActorRef = _
+  var numberOfActorsToWatch = 0L
+
+  override def receive: Receive = {
+    case InitShutdown =>
+      this.numberOfActorsToWatch = context.children.length
+      context.children.foreach(context.watch(_))
+      context.children.foreach { s => s ! TerminateSomehow } 
+      shutdownInitiator = sender
+    case Terminated(terminatedActor) if this.numberOfActorsToWatch > 0 =>
+      log.info(""Following actor {} is terminated. Remaining alives actors is {}"", terminatedActor.path.toStringWithoutAddress, this.numberOfActorsToWatch)
+      this.numberOfActorsToWatch -= 1
+
+    case Terminated(lastTerminatedActor) if this.numberOfActorsToWatch == 0 =>
+      log.info(""Following actor {} is terminated. All actors has been terminated"",lastTerminatedActor.path.toStringWithoutAddress, this.numberOfActorsToWatch)
+      // what I can do here ?
+      shutdownInitiator ! Done
+      context.stop(self)
+
+  }
+}

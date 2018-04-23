@@ -1,0 +1,11 @@
+SELECT AVG(Cnt)
+FROM (SELECT requestID, COUNT(*) Cnt
+      FROM table1 t
+      JOIN calendarTable ct ON t.dateStageChangedToPendingApproval >= ct.Calendar_Date
+                           AND t.dateApprovalReceived < ct.Calendar_Date                        
+      WHERE MONTH(datecompleted) = MONTH(DATEADD(MONTH,-1,current_timestamp))
+      AND YEAR(datecompleted) = YEAR(DATEADD(MONTH,-1,current_timestamp))
+      AND ApprovalRequiredFrom = 'GRM'
+      AND ct.Day_Name NOT IN ('Saturday', 'Sunday')
+      GROUP BY requestID
+     ) A

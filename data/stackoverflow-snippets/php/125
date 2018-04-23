@@ -1,0 +1,54 @@
+file name: insert.php
+<?php
+
+header(""Access-Control-Allow-Origin: *"");
+header(""Content-Type: application/json; charset=UTF-8"");
+
+//Creating Array for JSON response
+$response = array();
+
+// Check if we got the field from the user
+//here, we're getting only one parameter(puissance) from raspberry
+if (isset($_POST['puissance'])) {
+
+// Include database connection
+// all your database credentials(hostname, dbname, usrname,...) should 
+//be written in db_connect.php 
+//file
+include_once 'db_connect.php';
+
+$puissance = $_POST['puissance'];
+date_default_timezone_set('Africa/Casablanca');
+$dt = date('Y-m-d H:i:s');
+
+
+// SQL query to insert data in sensorpower1
+$sql = ""INSERT INTO sensorpower1(sensor_power, power_date) 
+VALUES('$puissance','$dt');"";
+$result =  mysqli_query($conn, $sql);
+
+// Check for succesfull execution of query
+if ($result) {
+// successfully inserted 
+$response[""success""] = 1;
+$response[""message""] = ""Puissance insérée avec succès."";
+
+// Show JSON response
+echo json_encode($response);
+} else {
+// Failed to insert data in database
+$response[""success""] = 0;
+$response[""message""] = ""Une erreur s'est produite"";
+
+// Show JSON response
+echo json_encode($response);
+}
+} else {
+// If required parameter is missing
+$response[""success""] = 0;
+$response[""message""] = ""Paramètre manquant"";
+
+// Show JSON response
+echo json_encode($response);
+}
+?>

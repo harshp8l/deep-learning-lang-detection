@@ -1,0 +1,20 @@
+DateTime[] dates ={
+     Convert.ToDateTime(""2018-04-19""), //Thursday
+     Convert.ToDateTime(""2018-04-20"")  //Friday
+};
+
+var result =Plans.Where(x => x.Patient.Id==5 && dates.Contains(x.Date))
+            .Join(PlanDetails,
+            x => x.Id,
+            y => y.Plan.Id,
+            (x, y) => new { PlanDetail = x, Plan = y })
+            .GroupJoin(ObservationCares,
+            x => x.Plan.Id,
+            y => y.Plan.Id,
+            (x, y) => new { x.Plan, x.PlanDetail, ObservationCare = y.DefaultIfEmpty() })
+            .SelectMany(x => x.ObservationCare
+            .Select(y=>new{
+                x.Plan.Id,
+                x.PlanDetail,
+                ObservationCare=y
+            }));

@@ -1,0 +1,23 @@
+from sklearn.model_selection import ShuffleSplit
+from sklearn.utils import safe_indexing, indexable
+from itertools import chain
+import numpy as np
+X = np.reshape(np.random.randn(20),(10,2)) # 10 training examples
+y = np.random.randint(2, size=10) # 10 labels
+seed = 1
+
+cv = ShuffleSplit(random_state=seed, test_size=0.25)
+arrays = indexable(X, y)
+train, test = next(cv.split(X=X))
+iterator = list(chain.from_iterable((
+    safe_indexing(a, train),
+    safe_indexing(a, test),
+    train,
+    test
+    ) for a in arrays)
+)
+X_train, X_test, train_is, test_is, y_train, y_test, _, _  = iterator
+
+print(X)
+print(train_is)
+print(X_train)

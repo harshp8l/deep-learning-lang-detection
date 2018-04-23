@@ -1,0 +1,54 @@
+import ""fmt""
+import ""time""
+
+type Result struct {
+    Data, Seq int
+}
+
+type Job struct {
+    Data string
+    Seq  int
+}
+
+func worker(id int, jobs <-chan Job, results chan<- Result) {
+    for j := range jobs {
+        fmt.Println(""worker"", id, ""started  job"", j)
+        time.Sleep(time.Second)
+        fmt.Println(""worker"", id, ""finished job"", j)
+        results <- Result{len(j.Data), j.Seq}
+    }
+}
+
+func main() {
+    workload := 5
+
+    jobs := make(chan Job, 100)
+    results := make(chan Result, 100)
+
+    output := make([]Result, workload)
+
+    for w := 1; w <= 3; w++ {
+        go worker(w, jobs, results)
+    }
+
+    for j := 0; j < workload; j++ {
+        jobs <- Job{ // explicit to make it clear
+            Data: fmt.Sprintf(""blah blah blah %d"", j),
+            Seq:  j,
+        }
+    }
+    close(jobs)
+
+    // receive results
+    for a := 1; a <= workload; a++ {
+        res := <-results
+        output[res.Seq] = res
+
+        // uncomment to see unordered
+        // fmt.Printf(""received: %#v"", res)
+    }
+
+    for _, out := range output {
+        fmt.Printf(""output %#v\n"", out)
+    }
+}

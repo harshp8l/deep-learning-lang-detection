@@ -1,0 +1,39 @@
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spider import CrawlSpider, Rule
+
+
+class QuotesSpider(CrawlSpider):
+    name = ""dialpad""
+
+    start_urls = [
+        'https://help.dialpad.com/hc/en-us/categories/201278063-User-Support',
+        'https://www.domo.com/',
+        'https://www.zenreach.com/',
+        'https://www.trendkite.com/',
+        'https://peloton.com/',
+        'https://ting.com/',
+        'https://www.cedar.com/',
+        'https://tophat.com/',
+        'https://www.bambora.com/en/ca/',
+        'https://www.hoteltonight.com/'
+    ]
+
+    rules = [
+        Rule(
+            LinkExtractor(
+                allow=(r'url patterns here to follow'),
+                deny=(r'other url patterns to deny'),
+            ),
+            callback='parse_item',
+            follow=True,
+        )
+    ]
+
+    def parse_item(self, response):
+        page = response.url.split(""/"")[2]
+        filename = 'quotes-thing-{}.csv'.format(page)
+
+        with open(filename, 'w') as f:
+            for selector in response.css('body').xpath('.//text()'):
+                selector = selector.extract()
+                f.write(selector)

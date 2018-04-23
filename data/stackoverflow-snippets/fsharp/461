@@ -1,0 +1,66 @@
+/// The colours that pegs are allowed to be.
+type Peg = Blue | Red | Green | Yellow | Purple | Brown
+
+/// A shared instance of the System.Random () class for all the random number
+/// generators.
+let private rnd = new System.Random ()
+
+/// Make a random set of four peg colours.
+let randomGuess () =
+    let randomPeg () =
+        match rnd.Next(1, 6) with
+        | 1 -> Blue
+        | 2 -> Red
+        | 3 -> Green
+        | 4 -> Yellow
+        | 5 -> Purple
+        | 6 -> Brown
+        | _ -> failwith ""Random number generation failed.""
+    [ randomPeg (); randomPeg (); randomPeg (); randomPeg () ]
+
+/// Iterate over the colours to make all of the possible combinations.
+let allPossibles =
+    let colours = [ Blue; Red; Green; Yellow; Purple; Brown]
+    set [ for a in colours do for b in colours do for c in colours do for d in colours -> [ a; b; c; d ] ] 
+
+/// Get the number of white and black pegs when comparing solution to guess.
+let checkGuess solution guess =
+    /// Create a map of (colour -> count).
+    let toMap = List.countBy id >> Map.ofList
+    /// Compute how many pegs' colours are shared in the guesses.
+    let mapIntersect map1 map2 =
+        let overlap peg count =
+            match Map.tryFind peg map2 with
+            | None -> 0
+            | Some num -> min num count
+        Map.fold (fun acc peg count -> acc + overlap peg count) 0 map1
+    /// Simply compare to see if each peg is in the correct place.
+    let blacks = List.map2 (fun x y -> if x = y then 1 else 0) solution guess |> List.sum
+    // The number of pegs of the right colour but the wrong location is the
+    // same as the total number of pegs of the right colour subtract the ones
+    // that are also in the right place.
+    let whites = mapIntersect (toMap solution) (toMap guess) - blacks
+    whites, blacks
+
+/// Get a random element of a set.
+let randomSetElement set =
+    let arr = Set.toArray set
+    arr.[rnd.Next (Array.length arr)]
+
+let playMastermind () =
+    // This creates a closure so we can check our guess against the solution,
+    // without storing the actual value of the solution.
+    let checkAnswer = checkGuess (randomGuess ())
+    let rec loop turnCount remaining =
+        if Set.count remaining = 1 then
+            let answer = Set.maxElement remaining
+            printfn ""The answer is %A, which I calculated in %d turns."" answer (turnCount - 1)
+        else
+            let guess = randomSetElement remaining
+            let (whites, blacks) = checkAnswer guess
+            printfn ""On turn %d I guessed %A, which gave %d white pins and %d black pins."" turnCount guess whites blacks
+            /// Remove all possibilities from the solution that wouldn't give the
+            /// same numbers of white and black pins and continue.
+            loop (turnCount + 1) (Set.filter (fun possible -> (whites, blacks) = checkGuess possible guess) remaining)
+    // Play the game!
+    loop 1 allPossibles

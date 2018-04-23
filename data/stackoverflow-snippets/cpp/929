@@ -1,0 +1,32 @@
+#include ""conio.h""
+#include <iostream>    
+#include <thread>
+#include <atomic>
+#include <chrono>
+#include <mutex>
+#include <condition_variable>
+
+using namespace std;
+
+class foo_t
+{
+private:
+    atomic<bool>& running_;
+    thread worker_;
+    mutex lock_;
+    condition_variable signal_;
+    atomic<bool> pause_;
+
+public:
+    foo_t(atomic<bool>& running): running_(running)
+    {
+        pause_ = false;
+        worker_ = thread([&]() { run(); });
+    }
+
+    ~foo_t()
+    {
+        worker_.join();
+    }       
+
+};

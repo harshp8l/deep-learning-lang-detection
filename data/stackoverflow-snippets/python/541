@@ -1,0 +1,67 @@
+import re
+import csv
+import glob, os
+from datetime import datetime
+import dateutil.parser as dparser
+
+def load_patterns():
+    ''' load patterns from existing pat_*.csv 
+        return a dict of the form { sequence: [sequence,pattern,replace] }
+        sequence is an example of the string that should be handled by this pattern
+        pattern and replace have the same meaning as for re.sub
+    '''
+    patterns = {}
+    for pattern_file in glob.glob(""pat_*.csv""):
+        with open(pattern_file, 'r') as fh:
+            reader = csv.DictReader(fh, delimiter=',', quotechar='""', skipinitialspace=True)
+            reader.fieldnames=[f.strip() for f in reader.fieldnames]
+            for row in reader:
+                # skipping empty patterns if there was non-empty one for this sequence
+                if row['sequence'] in patterns and  not row['pattern']:
+                    continue
+                patterns[row['sequence']]=(row['pattern'],row['replace'])
+    return patterns
+
+def save_nonmatched(patterns, nonmatched):
+    ''' saves a new pattern file with the empty pattern field
+        supposed to be edited manually afterwards
+    '''
+    items_to_save = [ key for key in nonmatched if key not in patterns ]
+    if not items_to_save:
+        return
+
+    new_file=datetime.now().strftime('pat_%Y%m%d_%H%M%S.csv')
+    with open(new_file, 'w', newline='') as fh:
+        writer = csv.DictWriter(fh, fieldnames=['sequence', 'pattern', 'replace'], quoting=csv.QUOTE_ALL)
+        writer.writeheader()
+        for key in items_to_save:
+            writer.writerow({'sequence':key, 'pattern':'', 'replace':''})
+
+def sub_with_patterns(s, patterns):
+    ''' try to match each pattern in patterns iterable
+        return expanded string if match succeeded
+    '''
+    debug=1
+    for sequence, (pattern, replace) in patterns.items():
+        if not pattern:
+            continue
+        match=re.search(pattern,s,re.X)
+        if match:
+            return match.expand(replace)
+    return None
+
+
+nomatch={}
+patterns = load_patterns()
+Raw_Text = re.sub(r'\s+', ' ' ,open('in.txt','r').read().lower()).strip()
+
+for dt in re.findall(r'date1(.*?)by', Raw_Text, re.S):
+    corrected = sub_with_patterns(dt, patterns)
+    try:
+        parsed = dparser.parse(corrected or dt)
+        print (""input:%s parsed:%s"" % (dt,parsed))
+    except:
+        nomatch[dt]=1
+        print (""input:%s ** not parsed"" % (dt))            
+
+save_nonmatched(patterns, nomatch)

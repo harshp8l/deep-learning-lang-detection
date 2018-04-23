@@ -1,0 +1,23 @@
+type ScoreData = {
+    Name  : string
+    Time  : string // could be a DateTime, using string for simplicity
+    Score : int
+}
+
+let readHighScores file =
+    File.ReadAllLines file
+    |> Array.choose (fun line ->
+        match line.Split ',' with
+        | [| name; time; score |] ->
+            {
+                Name  = name
+                Time  = time
+                Score = (int)score // This will crash if the score isn't an integer - see paragraph below.
+            }
+            |> Some
+        | _ ->
+            // Line doesn't match the expected format, we'll just drop it
+            None
+    )
+    |> Array.sortBy (fun scoreData -> -scoreData.Score) // Negative score, so that the highest score comes first
+    |> Seq.take 3

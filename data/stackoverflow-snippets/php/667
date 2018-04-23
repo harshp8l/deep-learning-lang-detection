@@ -1,0 +1,50 @@
+<?php 
+function short_url($longUrl){
+        $apiKey = '******************'; // put your GOOGLE API SHORTENING KEY 
+        $postData = array('longUrl' => $longUrl, 'key' => $apiKey);
+        $curlObj = curl_init();
+        $jsonData = json_encode($postData);
+        curl_setopt($curlObj, CURLOPT_URL, 'https://www.googleapis.com/urlshortener/v1/url?key='.$postData['key']);
+        curl_setopt($curlObj, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curlObj, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($curlObj, CURLOPT_HEADER, 0);
+        curl_setopt($curlObj, CURLOPT_HTTPHEADER, array('Content-type:application/json'));
+        curl_setopt($curlObj, CURLOPT_POST, 1);
+        curl_setopt($curlObj, CURLOPT_POSTFIELDS, $jsonData);
+        $response = curl_exec($curlObj);
+        $json = json_decode($response);
+        curl_close($curlObj);
+        if(isset($json->error) || $json == null){
+             return $longUrl; // retrun same url in case of error or null response
+        }else{
+            return $json->id; // return shorted url
+        }
+    }
+// use this function here
+$longUrl = 'https://www.w3schools.com/';
+echo short_url($longUrl); // print short url
+
+// If you want to return short url to long url use below function
+function long_url($shortUrl){
+        $apiKey = '***********'; // put your GOOGLE API SHORTENING Key
+        $params = array('shortUrl' => $shortUrl, 'key' => $apiKey,'projection' => ""ANALYTICS_CLICKS"");
+        $final_url = 'https://www.googleapis.com/urlshortener/v1/url?'.http_build_query($params);
+        $curlObj = curl_init($final_url);
+        curl_setopt($curlObj, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curlObj, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($curlObj, CURLOPT_HEADER, 0);
+        curl_setopt($curlObj, CURLOPT_HTTPHEADER, array('Content-type:application/json'));
+        $response = curl_exec($curlObj);
+        $json = json_decode($response);
+        curl_close($curlObj);
+        if(isset($json->error) || $json == null){
+            return $shortUrl;
+        }else{
+            return $json->longUrl;
+        }
+    }
+//Function Use here
+echo ""<br>""; // For next line
+$shortUrl = ''; // put the short url generated from above function
+echo long_url($shortUrl); // get long url
+?>

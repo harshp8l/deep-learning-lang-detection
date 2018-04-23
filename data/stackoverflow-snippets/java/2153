@@ -1,0 +1,85 @@
+public static void main(String[] args) throws IOException {
+    Path path = Paths.getPath(""inventory.out"");
+    List<Item> items = readItems(path);
+    for (Item item : items) {
+        System.out.printf(""Item (name='%s', capacity=%d,  cost=%f, price=%f)\n"",
+            item.getName(), item.getCapacity(), item.getCost(), item.getPrice());
+    }
+}
+public class Item {
+    private final String name;
+    private final int quantity;
+    private final double cost;
+    private final double price;
+
+    public Item (String name, int capacity, double cost, double price) {
+        this.name = name;
+        this.capacity = capacity;
+        this.cost = cost;
+        this.price = price;
+    }
+
+    // Getters omitted.
+}
+
+public class ItemUtils {
+    /**
+     * Read all lines from a file and maps them to items.
+     *
+     * @param path the path to the file, non-null
+     * @return the list of items read from the file
+     * @throws IOException if an I/O error occurs reading from the file or a malformed or unmappable byte sequence is read
+     * @throws CustomRuntimeException if a line can't be mapped to an item
+     */
+    public static List<Item> readItems(Path path) throws IOException {
+        Objects.requireNonNull(path);
+
+        return Files.readAllLines(path, StandardCharsets.UTF_8)
+            .stream()
+            .map(ItemUtils::mapStringToItem)
+            .collect(Collectors.toList());
+
+    }
+
+    /**
+     * Maps a string to an item.
+     *
+     * @param str the string to map, non-null
+     * @return the mapped item
+     * @throws CustomRuntimeException if the string can't be mapped to an item
+     */
+    private static Item mapStringToItem(String str) {
+        String[] tokens = str.split("","");
+
+        if (tokens.length != 4) {
+            String msg = String.format(""Invalid item: 4 tokens expected, %d tokens found"", tokens.length);
+            throw new CustomRuntimeException(msg);
+        }
+
+        try {
+            String name = tokens[0];
+            int quantity = Integer.parseInt(tokens[1]);
+            double cost = Double.parseDouble(tokens[2]);
+            double price = Double.parseDouble(tokens[3]);
+            return new Item(name, quantity, cost, price);
+        } catch (NumberFormatException e) {
+            throw new CustomRuntimeException(""Invalid item: Type conversion failed"", e);
+        }
+    }
+
+    private ItemUtils() {
+        // Utility class, prevent instantiation.
+    }
+}
+
+/**
+ * A custom runtime exception. Should be renamed to a more specific name.
+ */
+public class CustomRuntimeException extends RuntimeException {
+    public CustomRuntimeException(String msg) {
+       super(msg);
+    }
+
+    public CustomRuntimeException(String msg, Throwable e) {
+        super(msg, e);
+    }

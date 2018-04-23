@@ -1,0 +1,25 @@
+create table holiday_dates(holiday_dte date, holiday_desc varchar(100));
+insert into holiday_dates values(TO_DATE('13/01/2018','DD-MM-YYYY'), 'Not a Working Day');
+
+With tmp as (
+select count(*) as num_of_working_days 
+from ( select rownum  as rn
+from all_objects 
+where rownum <= to_date('15/01/2018','DD-MM-YYYY') - to_date('12/01/2018','DD-MM-YYYY')+1 ) 
+where to_char( to_date('12/01/2018','DD-MM-YYYY')+rn-1, 'DY' ) not in ( 'SUN' ) 
+and not exists ( select null from holiday_dates where holiday_dte = trunc(to_date('12/01/2018','DD-MM-YYYY') + rn - 1)))
+SELECT   TO_CHAR (Sales_Date, 'MM') Sales_Month,
+           Sales_Category,
+           SUM (Sales_Value) Sales_Val_Monthly,
+           Target_Month,
+           Target_Category,
+           Target_Value,
+           tmp.num_of_working_days 
+    FROM   Sales_Data, Target_Data, tmp
+   WHERE   Sales_Date between to_date('12/01/2018','DD-MM-YYYY') and to_date('15/01/2018','DD-MM-YYYY')
+           AND Sales_Category = Target_Category
+GROUP BY   TO_CHAR (Sales_Date, 'MM'),
+           Target_Month,
+           Target_Category,
+           Sales_Category,
+           Target_Value;

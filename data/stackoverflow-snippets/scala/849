@@ -1,0 +1,29 @@
+trait Circular[T, C <: Circular[T, C]] {
+  // Nodes in the list from the current position up to but NOT INCLUDING the end
+  def toStream(end: C): Stream[C]
+
+  def next: C
+}
+
+case class Node[T](val data: T, var prev: Node[T], var next: Node[T])
+
+case class CircularList[T](first: Node[T], last: Node[T], current: Node[T]) extends Circular[T, CircularList[T]] {
+
+  // Nodes in the list from the current position up to but not including the end
+  def toStream(end: CircularList[T]): Stream[CircularList[T]] = {
+    @tailrec
+    def toStreamRec(end: CircularList[T], acc: Stream[CircularList[T]]): Stream[CircularList[T]] = {
+      if (this == end) {
+        acc
+      } else {
+        toStreamRec(end.prev, Stream.cons(end.prev, acc))
+      }
+    }
+
+    toStreamRec(end, Stream.empty)
+  }
+
+  def prev: CircularList[T] = new CircularList[T](first, last, current.prev)
+
+  override def next: CircularList[T] = ???
+}

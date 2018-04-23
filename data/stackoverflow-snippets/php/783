@@ -1,0 +1,13 @@
+    select m.*
+        from private_messages m
+        join user_table s ON m.sender_id = s.id
+        join user_table r ON m.receiver_id = r.id
+        join (select if(sender_id = $UID, receiver_id, sender_id) as user_id_other,
+            max(posted_at) AS date_time_max from private_messages
+                where (sender_id = $UID OR receiver_id = $UID)
+                group by if(sender_id=$UID, receiver_id, sender_id)
+                ) AS t
+        on if(m.sender_id = $UID, m.receiver_id, m.sender_id) = user_id_other 
+        AND m.posted_at=date_time_max
+    where m.sender_id = $UID OR m.receiver_id = $UID
+    order by m.posted_at desc

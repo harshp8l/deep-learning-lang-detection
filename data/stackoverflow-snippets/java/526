@@ -1,0 +1,39 @@
+private String extractFieldFromXml(Document doc, XPath xPath, String expression)
+{
+    if (expression.equals(RECIPIENT_EXPRESSION)) {
+        try
+        {
+            NodeList nodes = (NodeList) xPath.evaluate(expression,doc, XPathConstants.NODESET);
+
+            ArrayList<String> recipientsList = new ArrayList<String>();
+
+            for (int i = 0; i < nodes.getLength(); i++){
+
+                Node node = nodes.item(i);
+                if (node != null) {
+                    String recipient = node.getTextContent();
+                    recipientsList.add(recipient);
+                }
+            }
+
+            String recipients = StringUtils.join(recipientsList,"","");
+            return recipients == null ? null: recipients;
+
+        } catch (XPathExpressionException e)
+        {
+            log.info(e.getMessage());
+            return null;
+        }
+    }
+    else {
+        try
+        {
+            Node node = (Node) xPath.compile(expression).evaluate(doc, XPathConstants.NODE);
+            return node == null ? null : node.getTextContent();
+        } catch (XPathExpressionException e)
+        {
+            log.info(e.getMessage());
+            return null;
+        }
+    }
+}

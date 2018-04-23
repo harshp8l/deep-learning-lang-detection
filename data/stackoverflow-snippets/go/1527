@@ -1,0 +1,16 @@
+// Generate the public key corresponding to the already hashed private
+// key.
+//
+// This code is mostly copied from GenerateKey in the
+// golang.org/x/crypto/ed25519 package, from after the SHA512
+// calculation of the seed.
+func getPublicKey(privateKey []byte) []byte {
+    var A edwards25519.ExtendedGroupElement
+    var hBytes [32]byte
+    copy(hBytes[:], privateKey)
+    edwards25519.GeScalarMultBase(&A, &hBytes)
+    var publicKeyBytes [32]byte
+    A.ToBytes(&publicKeyBytes)
+
+    return publicKeyBytes[:]
+}

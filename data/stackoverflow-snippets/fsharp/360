@@ -1,0 +1,44 @@
+module NeuralNetwork1 =
+
+    //# Third-party libraries
+    open MathNet.Numerics.Distributions         // Normal.Sample
+    open MathNet.Numerics.LinearAlgebra         // Matrix
+
+    type Network(sizes : int array) = 
+
+        let mutable (_biases : Matrix<double> list) = []
+        let mutable (_weights : Matrix<double> list) = []    
+
+        member __.Biases
+            with get() = _biases
+            and set value = 
+                _biases <- value
+        member __.Weights
+            with get() = _weights
+            and set value = 
+                _weights <- value
+
+        member __.Backprop (x : Matrix<double>) (y : Matrix<double>) =
+            // Note: There is a separate member for feedforward. This one is only used within Backprop 
+            // Note: In the text layers are numbered from 1 to n   with 1 being the input and n   being the output
+            //       In the code layers are numbered from 0 to n-1 with 0 being the input and n-1 being the output
+            //       Layers
+            //         1     2     3    Text
+            //         0     1     2    Code
+            //       784 -> 30 -> 10
+            let feedforward () : (Matrix<double> list * Matrix<double> list) =
+                let (bw : (Matrix<double> * Matrix<double>) list) = List.zip __.Biases __.Weights
+                let rec feedfowardInner layer activation zs activations =
+                    match layer with
+                    | x when x < (__.NumLayers - 1) ->
+                        let (bias, weight) = bw.[layer]
+                        let z = weight * activation + bias
+                        let activation = __.Sigmoid z
+                        feedfowardInner (layer + 1) activation (z :: zs) (activation :: activations)
+                    | _ -> 
+                        // Normally with recursive functions that build list for returning
+                        // the final list(s) would be reversed before returning.
+                        // However since the returned list will be accessed in reverse order
+                        // for the backpropagation step, we leave them in the reverse order.
+                        (zs, activations)
+                feedfowardInner 0 x [] [x]

@@ -1,0 +1,25 @@
+def main(args: Array[String]): Unit = {
+
+    val spark = SparkSession.builder().appName(""sparkToHive"").enableHiveSupport().getOrCreate()
+    import spark.implicits._
+
+    val config = HBaseConfiguration.create()
+    config.set(""hbase.zookeeper.quorum"", ""ip's"")
+    config.set(""hbase.zookeeper.property.clientPort"",""2181"")
+    config.set(TableInputFormat.INPUT_TABLE, ""tableName"")
+
+    val newAPIJobConfiguration1 = Job.getInstance(config)
+    newAPIJobConfiguration1.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, ""tableName"")
+    newAPIJobConfiguration1.setOutputFormatClass(classOf[TableOutputFormat[ImmutableBytesWritable]])
+
+    val df: DataFrame  = Seq((""foo"", ""1"", ""foo1""), (""bar"", ""2"", ""bar1"")).toDF(""key"", ""value1"", ""value2"")
+
+    val hbasePuts= df.rdd.map((row: Row) => {
+      val  put = new Put(Bytes.toBytes(row.getString(0)))
+      put.addColumn(Bytes.toBytes(""cf1""), Bytes.toBytes(""value1""), Bytes.toBytes(row.getString(1)))
+      put.addColumn(Bytes.toBytes(""cf2""), Bytes.toBytes(""value2""), Bytes.toBytes(row.getString(2)))
+      (new ImmutableBytesWritable(), put)
+    })
+
+    hbasePuts.saveAsNewAPIHadoopDataset(newAPIJobConfiguration1.getConfiguration())
+    }

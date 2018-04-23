@@ -1,0 +1,20 @@
+$backgroundTask = {
+$sync.softwareTable.DataSource = $null
+  $task1 = [PowerShell]::Create().AddScript({
+
+        #here I would like to clear all data from a previous execution. But nothing worked.
+        $softwareQuery = Get-WMIObject -ComputerName virinfpshd001w  -Class Win32_Product | Select Name
+        $softwareList = New-Object System.collections.ArrayList
+        $softwareList.AddRange($softwareQuery)
+        $sync.softwareTable.DataSource = $softwareList
+
+  })
+  $runspace = [RunspaceFactory]::CreateRunspace()
+  $runspace.ApartmentState = ""STA""
+  $runspace.ThreadOptions = ""ReuseThread""
+  $runspace.Open()
+  $runspace.SessionStateProxy.SetVariable(""sync"", $sync)
+  $task1.Runspace = $runspace
+  $handle = $task1.BeginInvoke()
+  Start-Sleep -seconds 5
+}

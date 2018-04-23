@@ -1,0 +1,57 @@
+class worker
+{
+private:
+    std::thread thread1;
+    std::atomic<bool> thread1ShouldRun;
+    std::thread thread2;
+    std::atomic<bool> thread2ShouldRun;
+
+    void workerFunc1() {
+        bool threadWorkIsDone = false;
+        while (thread1ShouldRun.load()) {
+            // Do Stuff
+            // Set threadXShouldRun to false when you're done
+            // thread1ShouldRun.store(false);
+        }
+    }
+
+    void workerFunc2() {
+        bool threadWorkIsDone = false;
+        while (thread2ShouldRun.load()) {
+            // Do Stuff
+            // Set threadXShouldRun to false when you're done
+            // thread2ShouldRun.store(false);
+        }
+    }
+
+public:
+    worker() {}
+
+    void start()
+    {
+        thread1ShouldRun.store(true);
+        thread1 = std::thread(&worker::workerFunc1, this);
+        thread2ShouldRun.store(true);
+        thread2 = std::thread(&worker::workerFunc2, this);            
+    }
+
+    ~worker()
+    {
+        thread1ShouldRun.store(false);
+        // Protection in case you create a worker that you delete and never call start()
+        if (thread1.joinable())
+            thread1.join();
+        thread2ShouldRun.store(false);
+        if (thread2.joinable())
+            thread2.join();
+    }
+};
+
+int main()
+{
+    worker *p_worker = new worker();
+    p_worker->start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // 1 sec
+
+    delete p_worker; // Threads will be joined here
+}

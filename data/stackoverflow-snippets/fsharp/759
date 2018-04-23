@@ -1,0 +1,27 @@
+#r @""FsControl.dll""
+#r @""FSharpPlus.dll""
+
+open FSharpPlus
+open FSharpPlus.Operators.GenericMath
+
+module Seq =
+    let inline private avgVarianceReducer (count, oldM, oldS) (x:'R) =
+        if count = 1 then
+            2, x, 0G
+        else
+            let meanFree = x - oldM
+            let newM = oldM + meanFree / explicit count
+            count + 1, newM, oldS + meanFree * (x - newM)
+
+    let inline avgVariance source : 'R * 'R =
+        match source |> Seq.fold avgVarianceReducer (1, 0G, 0G) with
+        | 0, _, _ -> 0G, 0G
+        | 1, mean, _ -> mean, 0G
+        | n, mean, var -> mean, var / (n - 2 |> explicit)
+
+    // or if you prefer specific functions
+    let avgVarianceF32 source : float32 * float32 = avgVariance source
+    let avgVarianceF   source : float   * float   = avgVariance source
+
+    // it will work with other types as well
+    let avgVarianceD source : decimal * decimal   = avgVariance source

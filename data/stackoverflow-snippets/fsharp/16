@@ -1,0 +1,33 @@
+type ThrottlingAgentMessage =
+  | Completed
+  | Enqueue of Async<unit>
+
+let inline (>>=) x f = async.Bind(x, f)
+let inline (>>-) x f = async.Bind(x, f >> async.Return)
+
+let throttlingAgent limit =
+    let agent = MailboxProcessor.Start(fun inbox ->
+        let queue = System.Collections.Generic.Queue<Async<unit>>()
+
+        let startWork work = 
+            work
+            >>- fun _ -> inbox.Post Completed
+            |> Async.StartChild |> Async.Ignore
+
+        let rec loop curWorkers =
+            inbox.Receive()
+            >>= function
+            | Completed when queue.Count > 0 -> 
+                queue.Dequeue() |> startWork
+                >>= fun _ -> loop curWorkers
+            | Completed -> 
+                loop (curWorkers - 1)
+            | Enqueue w when curWorkers < limit ->
+                w |> startWork
+                >>= fun _ -> loop (curWorkers + 1)
+            | Enqueue w ->
+                queue.Enqueue w
+                loop curWorkers
+
+        loop 0)
+    Enqueue >> agent.Post

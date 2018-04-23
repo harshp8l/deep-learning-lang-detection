@@ -1,0 +1,44 @@
+import java.io.Serializable;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.orm.hibernate4.HibernateTemplate;
+import org.springframework.stereotype.Service;
+
+
+
+
+    public class UserDAO implements GenericDao<User,String> {
+
+        @Autowired
+        private HibernateTemplate template;
+
+        @Override
+        public User load(final String id) {
+            return template.load(User.class,id);
+        }
+
+        @Override
+        public User get(final String id) {
+            return template.get(User.class,id);
+        }
+
+        public User getUserVideos(final String id) {
+            User user = template.get(User.class,id);
+            template.initialize(user.getVideo());
+            return user;
+        }
+
+
+
+        @Override
+        public Long count() {
+            return new Long(template.loadAll(User.class).size());
+        }
+
+        @Override
+        public void flush() {
+            template.flush();
+        }
+
+    }

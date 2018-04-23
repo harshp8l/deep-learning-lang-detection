@@ -1,0 +1,27 @@
+import requests, csv
+from bs4 import BeautifulSoup
+
+LINK = 'http://active.boeing.com/doingbiz/d14426/geoprocess.cfm?ProcessCode=000&pageID=m20487&Country=AllLocations&State='
+
+def get_item(url):
+    res = requests.get(url).text
+    soup = BeautifulSoup(res,""lxml"")
+    name = [item.find_next_sibling().text for item in soup.select(""strong"")]
+    spaces = len("" "".join(itm for itm in name))*""  ""
+    table = soup.select('table[cellspacing=""1""]')[0]
+    for idx, items in enumerate(table.select(""tr"")[1:]):
+        data = [item.get_text(strip=True) for item in items.select(""td"")]
+        if idx == 0:
+            print(name,data)  #this is where I need to twitch the code to get them printed like how it should be
+        else:
+            print(spaces,data)
+        with open(""itemresults.csv"",""a"",newline="""") as infile:
+            writer = csv.writer(infile)
+            if idx == 0 :
+
+                writer.writerow([name,data])  #I can't write them like so but if I try like [name,data] this the results are messy
+            else:
+                writer.writerow([spaces,data])  #I can't write them like so but if I try like [name,data] this the results are messy
+
+if __name__ == '__main__':
+    get_item(LINK)

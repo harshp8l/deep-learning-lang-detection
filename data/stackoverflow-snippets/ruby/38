@@ -1,0 +1,13 @@
+class Request < ActiveRecord::Base
+  # this defaults to true in Rails 5.
+  belongs_to :user, required: true
+  enum status: [:pending, :running, :completed, :failed, :error]
+  validate :unique_status_within_collection, on: :create
+
+  def unique_status_within_collection
+    unique_statuses = %w[ pending running error]
+    if unique_statuses.includes?(self.status) && user.requests.exists?(status: unique_statuses)
+      errors.add(:base, ""There is another request for this user"")
+    end
+  end
+end

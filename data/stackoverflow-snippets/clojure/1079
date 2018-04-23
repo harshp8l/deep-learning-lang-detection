@@ -1,0 +1,18 @@
+(set! *unchecked-math* true)
+
+(defn testspeed
+  ""test array bit manipulating tight loop speeds.""
+  []
+  (let [lps 1000,
+        len (bit-shift-left 1 11),
+        bits (bit-shift-left 1 17),
+        buf (long-array len)]
+    (letfn [(doit []
+              (loop [i (int 0)]
+                (if (< i bits)
+                  (let [w (bit-shift-right i 6)]
+                    (do
+                      (aset buf w (bit-or (aget buf w)
+                                          (bit-shift-left 1 (bit-and i 63))))
+                      (recur (inc i)))))))]
+      (dorun lps (repeatedly doit)))))

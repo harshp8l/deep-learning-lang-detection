@@ -1,0 +1,21 @@
+let map f (MultiSet s) =
+    mapSum f s
+
+let add (MultiSet fms) (MultiSet sms) =
+    Seq.append fms sms
+    |> mapSum id
+
+let subtract (MultiSet fms) (MultiSet sms) =
+    Seq.map (fun (KeyValue(k, v)) ->
+        System.Collections.Generic.KeyValuePair(k, -v)) sms
+    |> Seq.append fms
+    |> mapSum id
+
+let f = MultiSet(dict[""a"", 1; ""b"", 2; ""c"", 1])
+let g = MultiSet(dict[""a"", 1; ""b"", 3; ""c"", 1])
+
+subtract f g
+// val it : MultiSet<string> = MultiSet (seq [])
+subtract g f
+// val it : MultiSet<string> = MultiSet (seq [[b, 1] {Key = ""b"";
+//                                                    Value = 1;}])

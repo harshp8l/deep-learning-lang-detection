@@ -1,0 +1,15 @@
+public scheduleEvent(int id, long scheduleTime) {
+    final PendingIntent pendingIntent = pendingIntent(id);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, scheduleTime, pendingIntent);
+    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, scheduleTime, pendingIntent);
+    } else {
+        alarmManager.set(AlarmManager.RTC_WAKEUP, scheduleTime, pendingIntent);
+    }
+
+private PendingIntent pendingIntent(int id) {
+    final Intent intent = new Intent(app, EventReceiver.class);
+    intent.setAction(""some event "" + id);
+    return PendingIntent.getBroadcast(context, 10, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+}

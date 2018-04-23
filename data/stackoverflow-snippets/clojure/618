@@ -1,0 +1,20 @@
+(defn parent [node]
+  (first (:_children node)))
+
+
+(defn ancestors [node]
+  (->> node
+       (iterate parent)
+       (take-while some?)
+       reverse))
+
+
+(defn last-common-ancestor [db name1 name2]
+  (let [node1 (d/entity db [:name name1])
+        node2 (d/entity db [:name name2])]
+         ;; zipping ancestor chains together
+    (->> (map vector (ancestors node1) (ancestors node2))
+         ;; selecting common prefix
+         (take-while (fn [[ac1 ac2]] (= ac1 ac2)))
+         ;; last item in common prefix is what you looking for
+         (last))))

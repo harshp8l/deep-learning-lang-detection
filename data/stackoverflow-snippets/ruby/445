@@ -1,0 +1,38 @@
+post '/message' do
+  from = params['From']
+  body = params['Body']
+  media_url = params['MediaUrl0']
+
+  if from == MY_NUMBER
+    twiml = send_to_contacts(body, media_url)
+  else
+    twiml = send_to_me(from, body, media_url)
+  end
+
+  content_type 'text/xml'
+  twiml.to_s
+end
+
+def send_to_contacts(body, media_url = nil)
+  response = Twilio::TwiML::MessagingResponse.new do |r|
+    contacts_numbers.each do |num|
+      r.message to: num do |msg|
+        msg.body body
+        msg.media media_url unless media_url.nil?
+      end
+    end
+  end
+  response.to_s
+end
+
+def send_to_me(from, body, media_url = nil)
+  name = contact_name(from)
+  body = ""#{name} (#{from}):\n#{body}""
+  response = Twilio::TwiML::MessagingResponse.new do |r|
+    r.message to: MY_NUMBER do |msg|
+      msg.body body
+      msg.media media_url unless media_url.nil?
+    end
+  end
+  response.to_s
+end

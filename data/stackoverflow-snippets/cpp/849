@@ -1,0 +1,76 @@
+// **** main.cpp ****
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <limits.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+#include <ctype.h>
+
+#include<string>
+#include<iostream>
+using namespace std;
+
+extern size_t msc_get_no(const char*);
+
+int main(int argc, char** argv)
+{
+    assert(argc >= 0);
+    return (int)msc_get_no(argv[1]); // casting
+
+}
+
+// **** msclib.cpp ****
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <string.h>
+#include <ctype.h>
+
+extern size_t msc_get_no(const char*);
+
+struct msc_data
+{
+   const char* code;
+   const char* desc;
+};
+
+typedef struct msc_data MSCDat;
+
+static const MSCDat mscdat[] =
+{
+    { ""*****"", ""Error"" },
+    { ""00-01"", ""Instructional exposition (textbooks, tutorial papers, etc.)"" },
+    { ""00-02"", ""Research exposition (monographs, survey articles)"" },
+    { ""00A05"", ""General mathematics"" }
+}
+   ;
+
+static const size_t msccnt = sizeof(mscdat) / sizeof(mscdat[0]);
+
+static int msc_cmp(const void* a, const void* b)
+{
+   const char*   msc_code = static_cast<const char*>(a); //<----
+   const MSCDat* p        = static_cast<const MSCDat*>(b); // (const MSCDat*)b also works
+   return strcmp(msc_code, p->code);
+}
+
+
+size_t msc_get_no(const char* msc_code)
+{
+   assert(NULL != msc_code);
+   assert(strlen(msc_code) == 5);
+
+    MSCDat* p; // changed initialization of p
+   p = (MSCDat*) bsearch(msc_code, &mscdat[0], msccnt, sizeof(mscdat[0]), msc_cmp);
+
+   if (NULL == p)
+   {
+      fprintf(stderr, ""MSC \""%s\"" not valid\n"", msc_code);
+      return 0;
+   }
+
+   assert(NULL != p);
+   return p - &mscdat[0];
+}

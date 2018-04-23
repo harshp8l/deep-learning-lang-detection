@@ -1,0 +1,21 @@
+create table my_table(
+    id serial primary key, 
+    fid int references my_other_table(id), 
+    str varchar(10));
+
+select 
+    column_name, data_type, character_maximum_length, 
+    bool_or(contype is not distinct from 'p') as primary_key, 
+    bool_or(contype is not distinct from 'f') as foreign_key
+from information_schema.columns
+left join pg_constraint 
+    on conrelid = table_name::regclass and ordinal_position = any(conkey)
+where table_name='my_table'
+group by 1, 2, 3;
+
+ column_name |     data_type     | character_maximum_length | primary_key | foreign_key 
+-------------+-------------------+--------------------------+-------------+-------------
+ id          | integer           |                          | t           | f
+ fid         | integer           |                          | f           | t
+ str         | character varying |                       10 | f           | f
+(3 rows)    

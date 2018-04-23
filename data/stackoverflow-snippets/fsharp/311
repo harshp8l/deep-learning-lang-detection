@@ -1,0 +1,45 @@
+#if INTERACTIVE
+#r ""../packages/System.Data.SQLite.Core/lib/net46/System.Data.SQLite.dll""
+#endif
+
+
+open System.IO
+open System.IO.Compression
+open System.Data.SQLite
+
+let compressString (s:string) =
+  let bs = System.Text.Encoding.UTF8.GetBytes(s)
+  use outStream = new MemoryStream()
+  use gzOutStream = new GZipStream(outStream, CompressionMode.Compress, false)
+  gzOutStream.Write(bs, 0, bs.Length)
+  outStream.ToArray()
+
+let decompressString (bs:byte[]) =
+  use newInStream = new MemoryStream(bs)
+  use gzOutStream = new GZipStream(newInStream, CompressionMode.Decompress, false)
+  use sr = new StreamReader(gzOutStream)
+  sr.ReadToEnd()
+
+let insert dbc (key:string) (value:string) =
+    let compressed = compressString value
+    let cmd = new SQLiteCommand(""INSERT into kvt (key, value) VALUES (@key, @value)"", dbc)
+    cmd.Parameters.Add(new SQLiteParameter(""@key"", key)) |> ignore
+    cmd.Parameters.Add(new SQLiteParameter(""@value"", compressed)) |> ignore
+    let res = cmd.ExecuteNonQuery()
+    res
+
+let fetch dbc (key:string) =
+    let cmd = new SQLiteCommand(""SELECT value FROM kvt WHERE key = @key"", dbc)
+    cmd.Parameters.Add(new SQLiteParameter(""@key"", key)) |> ignore
+    let reader = cmd.ExecuteReader()
+    reader.Read() |> ignore
+    let compressed = unbox<byte[]> reader.[""value""]
+    decompressString compressed
+
+let create() = 
+    System.Data.SQLite.SQLiteConnection.CreateFile(""mydb.sqlite"")
+    let dbc = new SQLiteConnection(""Data Source=mydb.sqlite;Version=3;"")
+    dbc.Open()
+    let cmd = new SQLiteCommand(""CREATE TABLE kvt (key TEXT PRIMARY KEY, value BLOB)"", dbc)
+    let res = cmd.ExecuteNonQuery()
+    dbc

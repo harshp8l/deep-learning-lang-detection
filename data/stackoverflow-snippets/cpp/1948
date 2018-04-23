@@ -1,0 +1,130 @@
+#include <boost/functional/factory.hpp>
+#include <boost/function.hpp>
+#include <boost/variant.hpp>
+
+#include <map>
+#include <stdexcept>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+// Just for debugging.
+#include <iostream>
+#include <typeinfo>
+#include <cxxabi.h>
+
+// Tuple manipulation.
+
+template <typename Signature>
+struct signature_impl;
+
+template <typename ReturnType, typename... Args>
+struct signature_impl<ReturnType(Args...)>
+{
+    using return_type = ReturnType;
+    using param_types = std::tuple<Args...>;
+};
+
+template <typename T>
+using signature_t = signature_impl<T>;
+
+
+template <std::size_t... Ints>
+struct indices {};
+
+template <std::size_t N, std::size_t... Ints>
+struct build_indices : build_indices<N-1, N-1, Ints...> {};
+
+template <std::size_t... Ints>
+struct build_indices<0, Ints...> : indices<Ints...> {};
+
+template <typename Tuple>
+using make_tuple_indices = build_indices<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>;
+
+// The multiple-signature factory.
+template <class AbstractProduct, typename IdentifierType, typename... ProductCreators>
+class multifactory
+{
+    using functions = boost::variant<boost::function<ProductCreators>...>;
+
+    std::map<IdentifierType, functions> associations_;
+
+    template <typename Signature>
+    struct dispatch_foo
+    {
+        template <typename CreateArgs, std::size_t... Indices>
+        typename std::enable_if<std::is_convertible<CreateArgs, typename signature_t<Signature>::param_types>::value, AbstractProduct>::type
+        static apply(boost::function<Signature> const &f, CreateArgs && t, indices<Indices...>)
+        {
+            return f(std::get<Indices>(std::forward<CreateArgs>(t))...);
+        }
+
+        template <typename CreateArgs, std::size_t... Indices>
+        typename std::enable_if<!std::is_convertible<CreateArgs, typename signature_t<Signature>::param_types>::value, AbstractProduct>::type
+        static apply(boost::function<Signature> const &, CreateArgs &&, indices<Indices...>)
+        {
+            return nullptr;
+        }
+    };
+
+    template <typename... CreateArguments>
+    struct dispatcher : boost::static_visitor<AbstractProduct>
+    {
+        std::tuple<CreateArguments...> args;
+
+        dispatcher(CreateArguments const&... args) : args{std::forward_as_tuple(args...)} {}
+
+        template <typename Signature>
+        AbstractProduct operator()(boost::function<Signature> const &f) const
+        {
+            int status;
+            std::cout << ""visitor: "" << abi::__cxa_demangle(typeid(Signature).name(), nullptr, 0, &status) << ""\n"";
+            return dispatch_foo<Signature>::apply(f, args, make_tuple_indices<std::tuple<CreateArguments...>>{});
+        }
+    };
+
+public:
+    template <typename ProductCreator>
+    bool Register(IdentifierType id, ProductCreator &&creator) {
+        return associations_.emplace(id, std::forward<ProductCreator>(creator)).second;
+    }
+
+    bool Unregister(const IdentifierType& id) {
+        return associations_.erase(id) == 1;
+    }
+
+    template <typename... Arguments>
+    AbstractProduct CreateObject(const IdentifierType& id, Arguments const& ... args) {
+        auto i = associations_.find(id);
+        if (i != associations_.end()) {
+            dispatcher<Arguments...> impl(args...);
+            return boost::apply_visitor(impl, i->second);
+        }
+        throw std::runtime_error(""Creator not found."");
+    }
+};
+
+
+struct Arity {
+    virtual ~Arity() = default;
+};
+
+struct Nullary : Arity {};
+
+struct Unary : Arity {
+    Unary() {} // Also has nullary ctor.
+    Unary(int) {}
+};
+
+
+int main(void)
+{
+    multifactory<Arity*, int, Arity*(), Arity*(const int&)> factory;
+    factory.Register(0, boost::function<Arity*()>( boost::factory<Nullary*>() ));
+    factory.Register(1, boost::function<Arity*(const int&)>(boost::factory<Unary*>()) );
+    auto a = factory.CreateObject(0);
+    assert(a);
+    assert(typeid(*a) == typeid(Nullary));
+    auto b = factory.CreateObject(1, 2);
+    assert(b);
+    assert(typeid(*b) == typeid(Unary));
+}

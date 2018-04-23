@@ -1,0 +1,45 @@
+import pandas as pd
+# Used for the legend
+import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
+
+# Set a margin for the time on the plot
+tmargin = pd.Timedelta(hours=2)
+
+# Set up the figure and the plotting region
+_ = plt.figure(figsize=(12,8))
+_ = plt.xlabel(df.index.name)
+_ = plt.xlim(df.index.min()-tmargin, df.index.max()+tmargin)
+
+# Plot the points with scatter, using the colors you can define for each event type
+cdict = {1: 'green', 2: 'maroon', 3: 'yellow', 4: 'cyan', 5: 'red'}
+ldict = {1: '1 - Login', 2: '2 - Watch', 3: '3 - Buy', 4: '4 - Like', 5: '5 - Logout'}
+_ = plt.scatter(df.index, df.event_type, marker='*', zorder=2, s=400, 
+        c=[cdict[value] for value in df.event_type.values])
+_ = plt.xticks(rotation=30)
+
+# make default background red for inactive regions
+_ = plt.axvspan(df.index.min()-tmargin, df.index.max()+tmargin, color='r', alpha=0.5)
+
+# make the active regions blue
+for region in (zip(df[df.event_type==1].index, df[df.event_type==5].index)):
+    _ = plt.axvspan(region[0], region[1], color='white', alpha=1, lw=0)
+    _ = plt.axvspan(region[0], region[1], color='b', alpha=0.2, lw=0)
+
+# Set a margin for the event type
+_ = plt.margins(.02)
+
+# Create the legend for the points
+labels=[]
+for item in df.event_type.unique():
+    labels.append(mlines.Line2D([], [], color=cdict[item], marker='*',
+                          markersize=15, label=ldict[item], lw=0))
+
+# Add the session information to the legend
+labels.append(mpatches.Patch(color='red', alpha=0.5, label='Inactive Session'))
+labels.append(mpatches.Patch(color='blue', alpha=0.2, label='Active Session'))
+
+_ = plt.legend(bbox_to_anchor=(1,1), handles=labels, fontsize=20)
+
+# Display the plot
+_ = plt.show()

@@ -1,0 +1,27 @@
+### (unchanged)
+### $MemberDefinition =  …
+### $Advapi32 = Add-Type … 
+
+$guid  = [System.Int64]::MinValue            ### or ### [System.Int64]0
+$count = [System.Int32]::MaxValue            ### or ### [System.Int64]0
+
+$aux = [Win32.Advapi32]::AuditEnumerateCategories([ref]$guid, [ref]$count)
+
+$guidArr = @()                               ### array to store GUIDs
+
+$guidPtr = [int64]$guid                      ### pointer to next GUID
+$guidOff = [System.Runtime.InteropServices.Marshal]::SizeOf([type][guid])
+$ppszCategoryName = [System.Text.StringBuilder]::new()
+
+for ( $i=0; $i -lt $count; $i++ ) {
+    $guidAux = [System.Runtime.InteropServices.Marshal]::
+                      PtrToStructure( [System.IntPtr]$guidPtr,[type][guid] )
+    $guidArr += $guidAux           ### update array of GUIDs for future use
+    $guidPtr += $guidOff           ### shift pointer to next GUID
+
+    ### debugging: try another method of [Win32.Advapi32] Runtime Type 
+    $foo = [Win32.Advapi32]::AuditLookupCategoryName([ref]$guidAux,[ref]$ppszCategoryName)
+    ### debugging: show partial results
+    Write-Host $('{0} {1,4} {2,4}' -f $guidAux.Guid, 
+                      $ppszCategoryName.Capacity, $ppszCategoryName.Length)
+}

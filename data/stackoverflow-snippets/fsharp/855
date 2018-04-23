@@ -1,0 +1,35 @@
+type MException<'a> = 
+    | Success of 'a
+    | Failure of string
+
+type ExceptionBuilder() =
+
+    member this.Bind (m, f) =
+        match m with
+        | Success a -> f a
+        | Failure m -> Failure m
+
+    member this.Return (x) =
+        Success (x)
+
+let ex = new ExceptionBuilder()
+
+let divide n m =
+    if m = 0 then Failure ""Cannot divide by zero""
+             else Success ((float n)/(float m))
+
+let round (f : float) =
+    Success (System.Math.Round(f, 3))
+
+let divideRoundAndPrintNumber a b =
+    ex {
+        let! c = divide a b
+        let! d = round c
+        printf ""result of divideRoundAndPrintNumber: %f\n"" d
+        return d
+    }
+
+let result = divideRoundAndPrintNumber 11 0
+match result with
+| Success r -> printf ""%f\n"" r
+| Failure m -> printf ""%s\n"" m

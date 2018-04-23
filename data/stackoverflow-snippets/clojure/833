@@ -1,0 +1,23 @@
+(deftest test-async-component
+  (cljs.test/async done
+    (with-redefs
+      [async-call (fn [path]
+                    (let [mock-ch (async/chan 1)
+                          fixture-data {:body {:fixture-with path :and ""foobar""}})]
+                      (async/put! mock-ch fixture-data)
+                      mock-ch)]
+      ; At this point we successfully mocked out our data source (the API call)
+      ; the only task that remains is to render our Om component into DOM and inspect it.
+      ; As this task requires utility fns I will reuse the ones in this blog post:
+      ; http://lab.brightnorth.co.uk/2015/01/27/unit-and-browser-testing-om-clojurescript-applications/
+
+      (let [c (new-container!)
+            initial-data {:objects [{:initial-object 42}]}]
+        ; This will mount and render your component into the DOM residing in c.
+        (om/root async-component initial-data {:target c})
+
+        (testing ""fixture data gets put into the DOM""
+          (is (= ""foobar"" (text (sel1 c :ul)))))
+
+        ; You can add more tests in this manner, then finally call 'done'.
+        (done)))))

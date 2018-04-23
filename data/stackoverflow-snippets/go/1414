@@ -1,0 +1,46 @@
+type VendorMapInfo struct {
+    MapHierarchyString string      `xml:""mapHierarchyString,attr""`
+    FloorRefID         interface{} `xml:""floorRefId,attr""`
+    Image              Image       `xml:""Image""`
+    FloorDimension     VendorFloorDimension
+}
+
+type Image struct {
+    Name string `xml:""imageName,attr""`
+}
+
+func (mf *VendorMapInfo) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+    // Attributes
+    for _, attr := range start.Attr {
+        switch attr.Name.Local {
+        case ""mapHierarchyString"":
+            mf.MapHierarchyString = attr.Value
+        case ""floorRefId"":
+            mf.FloorRefID = findFloorRefIDType(attr.Value)
+        }
+    }
+
+    for {
+        token, err := d.Token()
+        if err != nil {
+            return err
+        }
+
+        switch el := token.(type) {
+        case xml.StartElement:
+            if el.Name.Local == ""Image"" {
+                item := new(Image)
+                if err = d.DecodeElement(item, &el); err != nil {
+                    return err
+                }
+                mf.Image = *item
+            }
+        case xml.EndElement:
+            if el == start.End() {
+                return nil
+            }
+        }
+    }
+
+    return nil
+}

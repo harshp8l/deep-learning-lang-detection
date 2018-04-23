@@ -1,0 +1,27 @@
+#r ""Newtonsoft.Json""
+#r ""System.Xml.Linq""
+#r ""System.Linq""
+
+using System;
+using System.Net;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Text;
+using System.Xml.Linq;
+using System.Linq;
+
+public static async Task<object> Run(HttpRequestMessage req, TraceWriter log)
+{
+    log.Info($""Webhook Combine Messages was triggered!"");
+
+    string jsonContent = await req.Content.ReadAsStringAsync();
+
+    StringBuilder sb = new StringBuilder();
+    JArray array = JArray.Parse(jsonContent);
+
+    List<string> list = array.Select(p => (string)p[""XML_F52E2B61-18A1-11d1-B105-00805F49916B""]).ToList();
+    foreach (var l in list)
+        sb.Append(l);
+
+    return req.CreateResponse(HttpStatusCode.OK, sb.ToString());
+}

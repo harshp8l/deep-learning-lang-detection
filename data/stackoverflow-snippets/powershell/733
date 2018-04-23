@@ -1,0 +1,34 @@
+Clear-Host 
+Import-Module ActiveDirectory
+
+$SRVS = (Get-ADComputer -Filter * -SearchBase (Get-ADDomainController).DefaultPartition)
+$MeltHive = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\QualityCompat'
+$MeltHiveKey = 'cadca5fe-87d3-4b96-b7fb-a231484277cc'
+
+ForEach($Srv in $SRVS)
+{
+    Invoke-Command -ComputerName $Srv.Name -ScriptBlock {
+            If (Get-ItemProperty -Path $Using:MeltHive -Name $MeltHiveKey -ErrorAction SilentlyContinue)
+            {""On Host $env:COMPUTERNAME MELT registry information exists""}
+            Else {Write-Warning -Message ""On host $env:COMPUTERNAME MELT registry information does not exist""}
+        }
+}
+
+
+
+ForEach($Srv in $SRVS)
+{
+    Invoke-Command -ComputerName $Srv.Name -ScriptBlock {
+            If ((Get-ChildItem -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion) -match 'QualityCompat')
+            {""On Host $env:COMPUTERNAME MELT registry information exists""}
+            Else {Write-Warning -Message ""On host $env:COMPUTERNAME MELT registry information does not exist""}
+        }
+}
+
+
+Results of both the above is:
+
+WARNING: On host DC01 MELT registry information does not exist
+WARNING: On host EX01 MELT registry information does not exist
+WARNING: On host SQL01 MELT registry information does not exist
+On Host IIS01 MELT registry information exists

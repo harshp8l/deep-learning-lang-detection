@@ -1,0 +1,31 @@
+(require '[clojure.zip :as z])
+
+(defn modify-related
+  [results id sub]
+  (loop [loc (z/down (z/seq-zip results))
+         done? false]
+    (if (= done? true)
+      (z/root loc)
+      (let [change? (->> loc z/node :_id (= id))]
+        (recur (z/next (cond change?
+                             (z/edit loc (fn [_] identity sub))
+                             :else loc))
+               change?)))))
+
+(defn modify-results
+  [results id sub]
+  (loop [loc   (z/down (z/seq-zip results))
+         done? false]
+    (if (= done? true)
+      (z/root loc)
+      (let [related (->> loc z/node :related)
+            change? (->> related (map :_id) set (#(contains? % id)))]
+        (recur (z/next (cond change?
+                             (z/edit loc #(assoc % :related (modify-related related id sub)))
+                             :else loc))
+               change?)))))
+
+(defn sub-for-first
+  [results ids substitutes]
+  (let [subs (zipmap ids substitutes)]
+    (reduce-kv modify-results results subs)))

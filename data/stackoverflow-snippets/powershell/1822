@@ -1,0 +1,29 @@
+Get-ChildItem -Recurse -Directory | Where-Object {
+    # find schedule directories below the current working directory
+    $_.Name -match '^\d{2}_(\d{2})_Schedules$'
+} | ForEach-Object {
+    $prefix  = $matches[1]
+    $pattern = ""^${prefix}_(\d{2})_""
+
+    # enumerate subfolders of schedule directory
+    $folders = Get-ChildItem $_.DirectoryName -Directory
+
+    # find highest existing index of folders that already conform to the
+    # name schema
+    $lastindex = $folders |
+                 Where-Object { $_.Name -match $pattern } |
+                 ForEach-Object { [int]$matches[1] } |
+                 Sort-Object |
+                 Select-Object -Last 1
+    $nextindex = if ($lastindex) { $lastindex + 1 } else { 0 }
+
+    # rename folders that don't conform to the name schema starting with the
+    # index after the highest existing index (or 0 if there was none), remove
+    # digits and underscores from beginning of folder name
+    $folders | Where-Object {
+        $_.Name -notmatch $pattern
+    } | Rename-Item -NewName {
+        $_.Name -replace '^\d(?:[_\d]*)', ""${prefix}_${script:nextindex}_""
+        ${script:nextindex}++
+    }
+}

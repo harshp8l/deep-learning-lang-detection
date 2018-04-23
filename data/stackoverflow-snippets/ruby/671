@@ -1,0 +1,48 @@
+class Question
+    attr_reader :choices, :text
+
+    def initialize(p_text)
+        @choices = []
+        @text    = p_text
+    end
+
+    def add_answer(p_choice, p_validity)
+        @choices << [p_choice, p_validity]
+    end
+end
+
+@questions = []
+
+IO.foreach('input.txt') do | line |
+    code, text, validity = line.chomp.split(';')
+
+    case code
+    when 'Q'
+        @question  = Question.new(text)
+        @questions << @question
+    when 'A'
+        @question.add_answer(text, validity.strip == '1' ? true : false)
+    else
+        puts ""Wrong code #{code}""
+    end
+end
+
+p @questions
+
+@questions.each do | question |
+    answer       = nil
+    valid_number = question.choices.index{ | item | item.last } # find the item [x, true]
+
+    until answer == valid_number
+        puts
+        puts question.text
+        question.choices.each_with_index do | choice, i |
+            puts ""#{i + 1}. #{choice.first}""
+        end
+
+        print 'Please enter answer > '
+        answer = gets.chomp.to_i - 1
+
+        puts 'Wrong answer.' unless answer == valid_number
+    end
+end

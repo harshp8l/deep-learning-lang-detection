@@ -1,0 +1,46 @@
+package main
+
+import (
+    ""encoding/json""
+    ""fmt""
+    ""io/ioutil""
+    ""log""
+    ""net/http""
+)
+
+func main() {
+
+    //Ask user to enter search parameter
+    fmt.Printf(""Search something: "")
+    var s string
+    fmt.Scanf(""%s"", &s)
+
+    //Create search url
+    url := s
+    request := ""https://en.wikipedia.org/w/api.php?action=opensearch&search="" + url + ""&limit=5&origin=*&format=json""
+
+    //Sending request
+    response, err := http.Get(request)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer response.Body.Close()
+
+    //Unmarshal and store to responsedata interface    
+    var responsedata []interface{}
+    if err := json.NewDecoder(response.Body).Decode(&responsedata); err != nil {
+        log.Fatal(err)
+    }
+
+    //Loop through the responsedata and output
+    for _, x := range responsedata {
+        switch value := x.(type) {
+        case string:
+            fmt.Println(value)
+        case []interface{}:
+            for _, v := range value {
+                fmt.Println(v.(string))
+            }
+        }
+    }
+}

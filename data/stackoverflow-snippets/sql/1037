@@ -1,0 +1,40 @@
+DECLARE @Counter INT = 0;
+DECLARE @Result nvarchar(4000);
+
+DECLARE @HashThis nvarchar(4000);  
+SET @HashThis = CONVERT(nvarchar(4000),'Some dummy text.'); 
+
+-- timing for SHA2_256
+DECLARE
+      @startTime_256 datetime2(7) = GETUTCDATE()
+    , @endTime_256 datetime2(7);
+
+WHILE @Counter <= 10000
+    BEGIN 
+        SET @Result = HASHBYTES('SHA2_256', @HashThis);
+        SET @Counter = @Counter +1
+    END
+
+SET @endTime_256 = GETUTCDATE();
+
+
+SET @Counter = 0;
+
+-- timing for SHA2_512
+DECLARE
+      @startTime_512 datetime2(7) = GETUTCDATE()
+    , @endTime_512 datetime2(7);
+
+WHILE @Counter <= 10000
+    BEGIN 
+        SET @Result = HASHBYTES('SHA2_512', @HashThis);
+        SET @Counter = @Counter +1
+    END
+
+SET @endTime_512 = GETUTCDATE();
+
+-- results
+SELECT
+      DATEDIFF(MILLISECOND, @startTime_256, @endTime_256) AS [SHA2_256_Milliseconds]
+    , DATEDIFF(MILLISECOND, @startTime_512, @endTime_512) AS [SHA2_512_Milliseconds]
+    , 1.0*DATEDIFF(MILLISECOND, @startTime_256, @endTime_256)/DATEDIFF(MILLISECOND, @startTime_512, @endTime_512) AS [SHA2_256_TimesFasterThen_SHA2_512];

@@ -1,0 +1,46 @@
+-- setting up my environment
+CREATE TABLE dbo.StoreTransactions (
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [TransactionID] [bigint] NOT NULL,
+    [Title] [nvarchar](120) NOT NULL,
+    [QuantitySoldTransaction] [int] NOT NULL,
+    [TransactionPrice] [float] NOT NULL,
+    [ItemID] [bigint] NOT NULL,
+    [TransactionDate] [datetime] NULL,
+    [StateOrProvince] [nvarchar](400) NULL,
+    [CountryName] [nvarchar](400) NULL,
+    [TwoCountryCode] [nvarchar](200) NULL,
+    [UserStoreId] [int] NOT NULL,
+    CONSTRAINT PK_StoreTransactions PRIMARY KEY(Id) -- this makes a unique clustered index on the Id column
+);
+GO
+
+-- making a covering index for the calculations
+CREATE NONCLUSTERED INDEX IX_StoreTransactions_Title_TransactionPrice_QuantitySoldTransaction
+    ON dbo.StoreTransactions(Title, TransactionPrice, QuantitySoldTransaction);
+GO
+-- making an index for the ItemID example
+CREATE NONCLUSTERED INDEX IX_StoreTransactions_ItemID
+    ON dbo.StoreTransactions(ItemID);
+GO
+
+-- stored procedure grouped by ItemID
+CREATE PROCEDURE dbo.ReturnPaginatedDataByItemID
+    -- set your defaults
+    @pageNumber int = 1,
+    @pageSize int = 10
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+          MIN(t.Title) AS Title -- this is based on your FirstOrDefault() function
+        , t.ItemID
+        , AVG(t.TransactionPrice) AS AveragePrice
+        , SUM(t.QuantitySoldTransaction) AS TotalSoldItems
+        , SUM(t.TransactionPrice*t.QuantitySoldTransaction) AS TotalRevenuePerItem
+    FROM dbo.StoreTransactions t
+    GROUP BY t.ItemID
+    ORDER BY TotalRevenuePerItem DESC   -- order is required for the evaluator to be able to know which rows from pages to take
+    OFFSET @pageSize * (@pageNumber - 1) ROWS FETCH NEXT @pageSize ROWS ONLY;
+END;

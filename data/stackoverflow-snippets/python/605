@@ -1,0 +1,30 @@
+import tensorflow as tf
+
+r = 1.0
+
+rnd = tf.random_uniform( shape = ( 100, 50 ), dtype = tf.float32, minval = 0.0, maxval = 1.0 )
+
+l1 = tf.layers.dense( rnd, 50, activation = tf.nn.relu, kernel_regularizer = tf.nn.l2_loss )
+l2 = tf.layers.dense( l1, 50, activation = tf.nn.relu, kernel_regularizer = tf.nn.l2_loss )
+l3 = tf.layers.dense( l2, 50, activation = None, kernel_regularizer = tf.nn.l2_loss )
+X_pred = tf.layers.dense( l3, 1, activation = None, kernel_regularizer = tf.nn.l2_loss )
+Y_pred = tf.layers.dense( l3, 1, activation = None, kernel_regularizer = tf.nn.l2_loss )
+
+dist_from_perimeter = ( tf.square( X_pred ) + tf.square( Y_pred ) ) - tf.square( r )
+dist_loss = tf.sign( dist_from_perimeter ) * tf.pow( tf.abs( dist_from_perimeter ), 0.5 ) # 0.5 for square root
+inside = tf.reduce_mean( dist_loss ) # 0-based now!
+loss = tf.abs( inside )
+
+inside_binary = tf.sign(tf.sign( dist_from_perimeter ) + 1 )
+prop = tf.reduce_mean( inside_binary )
+
+global_step = tf.Variable(0, name='global_step', trainable=False)
+updates = tf.train.GradientDescentOptimizer( 0.0001 ).minimize( loss )
+
+with tf.Session() as sess:
+    init = tf.global_variables_initializer()
+    sess.run(init)
+    for step in xrange( 100000 ):
+        _, loss_value, prop_val = sess.run( [ updates, loss, prop ] )
+        if 0 == step % 2000:
+            print( ""Step {}, loss {:.6f}, proportion inside: {:.4f}"". format( step, loss_value, prop_val ) )

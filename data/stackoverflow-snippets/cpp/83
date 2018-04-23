@@ -1,0 +1,42 @@
+// Returns the current time, in microseconds-since-some-arbitrary-time-zero
+unsigned long long GetCurrentTimeMicroseconds()
+{
+   static unsigned long long _ticksPerSecond = 0;
+   if (_ticksPerSecond == 0) _ticksPerSecond = (QueryPerformanceFrequency(&tps)) ? tps.QuadPart : 0;
+
+   LARGE_INTEGER curTicks;
+   if ((_ticksPerSecond > 0)&&(QueryPerformanceCounter(&curTicks)))
+   {
+      return (curTicks.QuadPart*1000000)/_ticksPerSecond;
+   }
+   else
+   {
+      printf(""GetCurrentTimeMicroseconds() failed, oh dear\n"");
+      return 0;
+   }
+}
+
+[...]
+
+// A particular location on the screen
+int startPositionX = 0;
+
+// A clock-value at which the rectangle was known to be at that location
+unsigned long long timeStampAtStartPosition = GetCurrentTimeInMicroseconds();
+
+// The rectangle's current velocity, in pixels-per-second
+int speedInPixelsPerSecond = 10;
+
+// Given any clock-value (in microseconds), returns the expected position of the rectangle at that time
+int GetXAtTime(unsigned long long currentTimeInMicroseconds)
+{
+   const long long timeSinceMicroseconds = currentTimeInMicroseconds-timeStampAtStartPosition;
+   return startPositionX + ((speedInPixelsPerSecond*timeSinceMicroseconds)/1000000);
+}
+
+void PaintScene()
+{
+   const int rectX = GetXAtTime(GetCurrentTimeMicroseconds());
+
+   // code to paint the rectangle at position (rectX) goes here...
+}

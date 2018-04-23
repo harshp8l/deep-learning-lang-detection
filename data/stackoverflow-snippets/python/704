@@ -1,0 +1,21 @@
+    pbex = PlaybookExecutor(playbooks=[playbook], inventory=inventory, variable_manager=variable_manager, loader=loader, options=options, passwords={})
+
+    callback = ResultsCallback()
+    pbex._tqm._stdout_callback = callback
+
+    logging.print('Provisioning cluster with Ansible...')
+    pbex.run()
+    failed = callback.failed
+    if failed:
+        logging.critical('Playbook failed! Attempting retry...')
+        pbex_retry = PlaybookExecutor(playbooks=[playbook], inventory=inventory, variable_manager=variable_manager, loader=loader, options=options, passwords={})
+        callback_retry = ResultsCallback()
+        pbex_retry._tqm._stdout_callback = callback_retry
+        pbex_retry.run()
+        failed_retry = callback_retry.failed
+        if failed_retry:
+            logging.critical('Playbook failed again! Failed on task:\n{0}'.format(failed_retry[0]))
+            remove_inventory_file(host_file)
+            raise RuntimeError('Playbook failed to successfully configure the cluster.')
+
+    remove_inventory_file(host_file)

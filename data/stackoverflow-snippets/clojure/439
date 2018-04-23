@@ -1,0 +1,33 @@
+(ns hello-enlive
+  (:require [net.cgrand.enlive-html :refer [deftemplate]]))
+
+(defn- template-name [lang page] (symbol (str ""-template-"" (name page) ""-"" (name lang) ""__"")))
+(defn- html-file [lang page] (str (name lang) ""/"" (name page) "".html""))
+(defn- page-fun-name [page] (symbol (str ""-page"" (name page))))
+
+(defmacro def-page [app languages [page & forms]]
+  `(do
+     ~@(for [lang languages]
+         `(deftemplate ~(template-name lang page) ~(html-file lang page)
+            ~@forms))
+
+      (defn ~(page-fun-name page) [lang#]
+         (case lang#
+           ~@(for [lang languages
+                   clause [(keyword lang) (template-name lang page)]]
+               clause)))
+
+      (def ^:dynamic ~app
+        (assoc ~app ~page ~(page-fun-name page)))
+      ))
+
+(defmacro def-app [app-name languages pages]
+  (let [app (gensym ""app__"")]
+    `(do
+       (def ~(vary-meta app merge {:dynamic true}) {})
+
+       ~@(for [page# pages]
+           `(def-page ~app ~languages ~page#))
+
+       (defn ~app-name [lang# [page# params#]]
+         (apply (apply (get ~app page#) [lang#]) params#)))))

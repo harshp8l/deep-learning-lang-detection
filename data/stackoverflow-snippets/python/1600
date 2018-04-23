@@ -1,0 +1,22 @@
+from pyspark.sql.functions import udf
+
+keys = [k for k in chain.from_iterable(df.select(explode(""value"")).distinct().collect())]
+
+def f(keys):
+    @udf(""map<string,long>"")
+    def _(values):
+        d = dict.fromkeys(keys, 0)
+        for v in values:
+            d[v] += 1
+        return d
+    return _
+
+df.select(""key"", f(keys)(""value"").alias(""value"")).show(truncate=False)
+# 
+# +---+---------------------------+
+# |key|value                      |
+# +---+---------------------------+
+# |A  |Map(x -> 1, y -> 1, z -> 0)|
+# |B  |Map(x -> 0, y -> 1, z -> 1)|
+# |C  |Map(x -> 0, y -> 0, z -> 1)|
+# +---+---------------------------+

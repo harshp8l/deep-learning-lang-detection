@@ -1,0 +1,12 @@
+type Class() as __ =
+  member __.optionC(args : string array) = printfn ""optionC!""
+  static member optionD(args : string array) = printfn ""optionD""
+
+let run (command : string) = 
+  let words = command.Split [|','|]
+  [ { name = ""optionA""; action = fun args -> printfn ""%A"" args }
+    { name = ""optionB""; action = fun _ -> printfn ""optionB!"" } 
+    { name = ""optionC""; action = fun args -> (new Class()).optionC(args) } 
+    { name = ""optionD""; action = Class.optionD } ]
+  |> List.tryFind(cmdName >> (icmp words.[0]))                   // [1]
+  |> Option.iter(cmdAction >> ((|>) words.[1..words.Length - 1]) // [2])

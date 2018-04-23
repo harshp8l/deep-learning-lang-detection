@@ -1,0 +1,20 @@
+implicit class FilterGroups[A, CC[X] <: Iterable[X]](self: CC[A]) {
+  import scala.collection.mutable
+  import scala.collection.mutable.Builder
+  import scala.collection.generic.CanBuildFrom
+  def filterGroups[K, That](f: A => K)(p: CC[A] => Boolean)(implicit bfs: CanBuildFrom[CC[A], A, CC[A]], bf: CanBuildFrom[CC[A], A, That]): That = {
+    val m = mutable.Map.empty[K, Builder[A, CC[A]]]
+    for (elem <- self) {
+      val key = f(elem)
+      val bldr = m.getOrElseUpdate(key, bfs())
+      bldr += elem
+    }
+    val b = bf()
+    for {
+      (_, v) <- m
+      group = v.result if p(group)
+      elem <- group
+    } b += elem
+    b.result
+  }
+}

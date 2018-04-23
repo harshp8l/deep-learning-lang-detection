@@ -1,0 +1,24 @@
+#create Series for unique index values of dirs and lists for file names 
+s = df.groupby('Id')['Image'].apply(list)
+
+import os, glob, shutil
+#get all images from folder  
+src_files = glob.glob('E:/Images/*.jpg')
+#create dictionary for lookup values from DataFrame
+lookup = {x.split('\\')[-1]:x for x in src_files}
+print (lookup)
+
+#loop by Series 
+for directory, files in s.items():
+    #first create folders
+    path = os.path.join('E://Images//', directory)
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    for file in files:
+        #get path of each image, if not exist return None
+        orig = lookup.get(file, None)
+        #copy files from DataFrame
+        if orig is not None:
+            dest = os.path.join(path, file)
+            shutil.copy(orig, dest)

@@ -1,0 +1,46 @@
+package main
+
+import(
+    ""crypto/tls""
+    ""crypto/x509""
+    ""crypto/x509/pkix""
+    ""io/ioutil""
+
+    ""google.golang.org/grpc""
+    ""google.golang.org/grpc/credentials""
+    ""mysource.com/packages/grpcserver""
+)
+
+func main(){
+    cert := ""/path/to/cert.crt""
+    key := ""/path/to/cert.key""
+    caCrt := ""/path/to/my.ca""
+
+    certificate, err := tls.LoadX509KeyPair(cert, key)
+    if err != nil {
+        return
+    }   
+    certPool := x509.NewCertPool()
+
+    ca, err := ioutil.ReadFile(caCrt)
+    if err != nil {
+        return
+    }
+
+    if ok := certPool.AppendCertsFromPEM(ca); !ok {
+        return
+    }
+    creds := credentials.NewTLS(&tls.Config{
+        ClientAuth:   tls.RequireAndVerifyClientCert,
+        Certificates: []tls.Certificate{certificate},
+        ClientCAs:    certPool,
+        MinVersion:   tls.VersionTLS12,
+    })
+
+    grpcServer := grpc.NewServer(grpc.Creds(creds))
+    server := grpcserver.NewGrpcServer()
+    grpcserver.RegisterGrpcServer(grpcServer, server)
+
+    lis, err := net.Listen(""tcp"", ""0.0.0.0:11311"")      
+    log.Fatal(grpcServer.Serve(lis))
+}

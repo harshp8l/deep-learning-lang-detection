@@ -1,0 +1,8 @@
+abstract class BaseRepository[E <: BaseEntity, T <: BaseTable[E]](val dbConfigProvider: DatabaseConfigProvider, executionContext: ExecutionContext, query: TableQuery[T]) extends HasDatabaseConfigProvider[JdbcProfile] {
+  def all(): Future[Seq[E]] = db.run(query.result)
+  def find(id: Long): Future[Option[E]] = db.run(query.filter(_.id === id).result.headOption)
+}
+
+class UserRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(implicit executionContext: ExecutionContext) extends BaseRepository[User, UserTable](dbConfigProvider, executionContext, TableQuery[UserTable]) {
+
+}

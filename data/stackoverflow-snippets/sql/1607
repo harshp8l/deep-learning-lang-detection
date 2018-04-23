@@ -1,0 +1,75 @@
+-- Period to consider
+DECLARE @StartDate DATE = '2018-06-20'
+DECLARE @EndDate DATE = '2018-09-01'
+
+;WITH GeneratedDates AS
+(
+    SELECT
+        GeneratedDate = @StartDate
+
+    UNION ALL
+
+    SELECT
+        GeneratedDate = DATEADD(DAY, 1, G.GeneratedDate)
+    FROM
+        GeneratedDates AS G
+    WHERE
+        G.GeneratedDate < @EndDate
+),
+ExistingRooms AS
+(
+    SELECT DISTINCT
+        RoomId
+    FROM
+        HotelReservation.dbo.Reservation AS R
+),
+UnavailableDatesByRoom AS
+(
+    SELECT DISTINCT
+        R.RoomID,
+        UnavailableDate = G.GeneratedDate
+    FROM
+        HotelReservation.dbo.Reservation AS R
+        INNER JOIN GeneratedDates AS G ON G.GeneratedDate BETWEEN R.CheckIn AND R.CheckOut
+),
+AvailableDaysByRoom AS
+(
+    SELECT
+        AvailableDate = G.GeneratedDate,
+        E.RoomID,
+        DateRanking = ROW_NUMBER() OVER (PARTITION BY E.RoomID ORDER BY G.GeneratedDate ASC)
+    FROM
+        GeneratedDates AS G
+        CROSS JOIN ExistingRooms AS E
+    WHERE
+        NOT EXISTS (
+            SELECT
+                'unavailable date for that room'
+            FROM
+                UnavailableDatesByRoom AS U
+            WHERE
+                U.RoomID = E.RoomID AND
+                G.GeneratedDate = U.UnavailableDate)
+),
+AvailableDaysByRoomGroupings AS
+(
+    SELECT
+        A.*,
+        MagicRanking = DENSE_RANK() OVER (PARTITION BY A.RoomID ORDER BY DateRanking - DATEDIFF(DAY, '2010-01-01', A.AvailableDate))
+    FROM
+        AvailableDaysByRoom AS A
+)
+SELECT
+    G.RoomID,
+    FirstAvailableStartDate = MIN(G.AvailableDate),
+    LastAvailableStartDate = MAX(G.AvailableDate)
+FROM
+    AvailableDaysByRoomGroupings AS G
+GROUP BY
+    G.RoomID,
+    G.MagicRanking
+ORDER BY
+    G.RoomID,
+    FirstAvailableStartDate
+OPTION
+    (MAXRECURSION 32000)

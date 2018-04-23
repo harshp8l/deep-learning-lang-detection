@@ -1,0 +1,21 @@
+while read -r dir && read -r data; do                                       
+   ARRAY[$dir]=""$data""                                                      
+
+done < <(   
+  # sub shell level one   
+
+  find /dir -name ""MYDATA.bam"" | while read filename; do                    
+    (        
+      # sub shell level two
+
+      # run each task in parallel, output will be in the following format   
+      # ""directory""                                                                                                                                                          
+      # ""result""                                                            
+      # ...                                                                 
+
+      dir=$(awk -F""/"" '{ print $(NF-1)}' <<< ""$filename"")                   
+      printf ""%s\n%s\n"" \                                                   
+        ""$dir"" ""$(samtools view ""$filename"" | head -1)""                     
+    ) &                                                                             
+  done                                                                              
+) 

@@ -1,0 +1,17 @@
+$newlog=@()
+$logfile =  get-content C:\temp\programlogs.log
+$searchFor=""error"",""device"",""does not exist"",""Could not identify speaker!"",""warn""
+foreach($line in $logfile){
+    if($line.Length -gt 18){
+        $datetime=date $line.substring(0,$line.indexof("",""))
+        if(((date)-$datetime).TotalHours -lt 49){
+            $keep=$false
+            foreach($item in $searchFor){
+                if($line.contains($item)){ $keep=$true }
+            } 
+            if ($keep){$newlog+=$line}
+        }
+    }
+}
+
+$newlog | sort | % {add-content C:\temp\NewLog.log $_}

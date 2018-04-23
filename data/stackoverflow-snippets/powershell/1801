@@ -1,0 +1,41 @@
+$minimumCertAgeDays = 60
+$timeoutMilliseconds = 10000
+$urls = get-content .\check-urls.txt
+
+#disabling the cert validation check. This is what makes this whole thing work with invalid certs...
+[Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+
+foreach ($url in $urls)
+{
+    Write-Host Checking $url -f Green
+    $req = [Net.HttpWebRequest]::Create($url)
+    $req.Timeout = $timeoutMilliseconds
+    $req.AllowAutoRedirect = $false
+    try {$req.GetResponse() |Out-Null} catch {Write-Host Exception while checking URL $url`: $_ -f Red}
+    $certExpiresOnString = $req.ServicePoint.Certificate.GetExpirationDateString()
+    #Write-Host ""Certificate expires on (string): $certExpiresOnString""
+    [datetime]$expiration = [System.DateTime]::Parse($req.ServicePoint.Certificate.GetExpirationDateString())
+    #Write-Host ""Certificate expires on (datetime): $expiration""
+    [int]$certExpiresIn = ($expiration - $(get-date)).Days
+    $certName = $req.ServicePoint.Certificate.GetName()
+    $certPublicKeyString = $req.ServicePoint.Certificate.GetPublicKeyString()
+    $certSerialNumber = $req.ServicePoint.Certificate.GetSerialNumberString()
+    $certThumbprint = $req.ServicePoint.Certificate.GetCertHashString()
+    $certEffectiveDate = $req.ServicePoint.Certificate.GetEffectiveDateString()
+    $certIssuer = $req.ServicePoint.Certificate.GetIssuerName()
+    if ($certExpiresIn -gt $minimumCertAgeDays)
+    {
+        Write-Host Cert for site $url expires in $certExpiresIn days [on $expiration] -f Green
+    }
+    else
+    {
+        Write-Host WARNING: Cert for site $url expires in $certExpiresIn days [on $expiration] -f Red
+        Write-Host Threshold is $minimumCertAgeDays days. Check details:`nCert name: $certName -f Red
+        Write-Host Cert public key: $certPublicKeyString -f Red
+        Write-Host Cert serial number: $certSerialNumber`nCert thumbprint: $certThumbprint`nCert effective date: $certEffectiveDate`nCert issuer: $certIssuer -f Red
+    }
+    Write-Host
+    rv req
+    rv expiration
+    rv certExpiresIn
+}

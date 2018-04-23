@@ -1,0 +1,32 @@
+function Register-MyAppDll
+{
+
+    param(
+        [Parameter(Mandatory=$true,ParameterSetName=""Both"")]
+        [switch]$ReRegister,
+        [Parameter(Mandatory=$true,ParameterSetName=""UnregisterOnly"")]
+        [Alias(""u"")]
+        [switch]$UnRegister,
+        [Parameter(Mandatory=$true,ParameterSetName=""RegisterOnly"")]
+        [Alias(""r"")]
+        [switch]$Register
+    )
+
+
+    $RegOptions = @()
+    if ($UnRegister -or $ReRegister) { $RegOptions += @{Unregister=$true} }
+    if ($Register -or $ReRegister) { $RegOptions += @{} }
+
+    $dlltoregister = Get-ChildItem ""C:\MyApp\bin"" -Filter *.dll | where {$_ -notmatch '^interop'}
+
+    foreach ($RegOpt in $RegOptions)
+    {
+        $dlltoregister | Register-Dll @RegOpt
+    }
+
+}
+
+
+Register-MyAppDll -UnRegister
+Register-MyAppDll -Register
+Register-MyAppDll -ReRegister 

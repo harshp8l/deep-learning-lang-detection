@@ -1,0 +1,28 @@
+// INTERFACE
+
+namespace compat {
+#if QT_VERSION >= QT_VERSION_CHECK(5,4,0)
+
+using QT_PREPEND_NAMESPACE(QTimer);
+
+#else
+
+using Q_QTimer = QT_PREPEND_NAMESPACE(QTimer);
+class QTimer : public Q_QTimer {
+  Q_OBJECT
+public:
+  #if __cplusplus >= 201703L
+  using Q_QTimer::Q_QTimer; // C++17
+  #else
+  QTimer(QObject *parent = {}) : Q_QTimer(parent) {}
+  #endif
+  template <class Functor> static void singleShot(int, QObject *, Functor &&);
+};
+
+template <class Functor>
+void QTimer::singleShot(int msec, QObject *context, Functor &&fun) {
+  ...
+}
+
+#endif
+} // compat

@@ -1,0 +1,39 @@
+class MyImageSeek implements IEventListener{
+
+private int pageNr = 0;
+private Map<Integer, Map<Rectangle, BufferedImage>> images = new HashMap<>();
+
+public MyImageSeek(PdfDocument pdfDocument){
+    PdfCanvasProcessor canvasProcessor = new PdfCanvasProcessor(this);
+    for(int i=1;i<=pdfDocument.getNumberOfPages();i++) {
+        images.put(i, new HashMap<Rectangle, BufferedImage>());
+        pageNr = i;
+        canvasProcessor.processPageContent(pdfDocument.getPage(i));
+    }
+}
+
+@Override
+public void eventOccurred(IEventData data, EventType type) {
+    if(type != EventType.RENDER_IMAGE)
+        return;
+    ImageRenderInfo imageRenderInfo = (ImageRenderInfo) data;
+
+    int x = (int) imageRenderInfo.getStartPoint().get(0);
+    int y = (int) imageRenderInfo.getStartPoint().get(1);
+    int w = (int) imageRenderInfo.getImageCtm().get(Matrix.I11);
+    int h = (int) imageRenderInfo.getImageCtm().get(Matrix.I22);
+
+    try {
+        images.get(pageNr).put(new Rectangle(x,y,w,h), imageRenderInfo.getImage().getBufferedImage());
+    } catch (IOException e) {}
+}
+
+@Override
+public Set<EventType> getSupportedEvents() {
+    return null;
+}
+
+public Map<Rectangle, BufferedImage> getImages(int pageNr){
+    return images.get(pageNr);
+}
+}

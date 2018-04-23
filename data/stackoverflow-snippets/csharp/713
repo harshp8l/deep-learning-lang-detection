@@ -1,0 +1,32 @@
+IDictionary<Task<TcpClient>, Tuple<int, TcpListener>> tcpListeners = new Dictionary<Task<TcpClient>, Tuple<int, TcpListener>>();
+
+foreach (var port in Enumerable.Range(20000, 5))
+{
+    var tcpListener = new TcpListener(IPAddress.Any, port);
+
+    tcpListener.Start();
+
+    var task = tcpListener.AcceptTcpClientAsync();
+    var tcpListenerPortPair = new Tuple<int, TcpListener>(port, tcpListener);
+
+    tcpListeners.Add(task, tcpListenerPortPair);
+}
+
+Task<TcpClient> tcpClientTask;
+
+while ((tcpClientTask = await Task.WhenAny(tcpListeners.Keys)) != null)
+{
+    var tcpListenerPortPair = tcpListeners[tcpClientTask];
+    var port = tcpListenerPortPair.Item1;
+    var tcpListener = tcpListenerPortPair.Item2;
+
+    tcpListeners.Remove(tcpClientTask);
+
+    // This needs to be async. What to do with its Task?
+    // It cannot be awaited here.
+    var handlerTask = HandleByPortNumber(tcpClientTask.Result, port);
+
+    var task = tcpListener.AcceptTcpClientAsync();
+
+    tcpListeners.Add(task, tcpListenerPortPair);
+}

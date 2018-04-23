@@ -1,0 +1,32 @@
+@Singleton
+class MyWSClient @Inject()(delegate: WSClient) extends WSClient {
+  override def underlying[T]: T = delegate.underlying.asInstanceOf[T]
+
+  override def url(url: String): WSRequest = {
+    val fooHeaderOption = Http.Context.current()._requestHeader().headers.get(FooHeaderFilter.fooHeaderName)
+    val baseRequest = delegate.url(url)
+    if (fooHeaderOption.isDefined)
+      baseRequest.withRequestFilter(new FooHeaderFilter(fooHeaderOption.get))
+    else
+      baseRequest
+  }
+
+  override def close(): Unit = delegate.close()
+
+  class FooHeaderFilter(headerValue: String) extends WSRequestFilter {
+
+    import FooHeaderFilter._
+
+    override def apply(executor: WSRequestExecutor): WSRequestExecutor = {
+      (request: StandaloneWSRequest) => {
+        request.addHttpHeaders((fooHeaderName, headerValue))
+        executor.apply(request)
+      }
+    }
+  }
+
+  object FooHeaderFilter {
+    val fooHeaderName = ""X-Foo""
+  }
+
+}

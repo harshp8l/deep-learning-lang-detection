@@ -1,0 +1,30 @@
+SELECT
+    C.cid
+FROM
+    Customers C
+
+    CROSS JOIN (
+        SELECT DISTINCT
+            P.pid
+        FROM
+            Customers C
+            INNER JOIN Orders O ON C.cid = O.cid
+            INNER JOIN Products P ON O.pid = P.pid
+        WHERE
+            C.cname = 'Smith' AND
+            YEAR(O.odate) = 2013) X
+
+    LEFT JOIN (
+        SELECT DISTINCT
+            C.cid,
+            P.pid
+        FROM
+            Customers C
+            INNER JOIN Orders O ON C.cid = O.cid
+            INNER JOIN Products P ON O.pid = P.pid
+        WHERE
+            YEAR(O.odate) = 2014) R ON C.cid = R.cid AND X.pid = R.pid
+GROUP BY
+    C.cid
+HAVING
+    COUNT(X.pid) = COUNT(R.pid)

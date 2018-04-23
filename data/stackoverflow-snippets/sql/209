@@ -1,0 +1,23 @@
+#standardSQL
+WITH `mytablehere` AS (
+  SELECT '2018-01-01' AS receivedOn, 1 amount UNION ALL
+  SELECT '2018-01-02' AS receivedOn, 2 amount UNION ALL
+  SELECT '2018-03-04' AS receivedOn, 4 amount UNION ALL
+  SELECT '2018-05-10' AS receivedOn, 3 amount UNION ALL
+  SELECT '2018-05-11', 5
+), months AS (
+  SELECT month FROM (
+    SELECT 
+      MIN(PARSE_DATE('%Y-%m-%d', receivedOn)) AS min_month, 
+      MAX(PARSE_DATE('%Y-%m-%d', receivedOn)) AS max_month 
+    FROM `mytablehere`
+  ), UNNEST(GENERATE_DATE_ARRAY(min_month, max_month, INTERVAL 1 MONTH)) month
+)
+SELECT 
+  FORMAT_DATE('%Y-%m', month) AS DATE,
+  SUM(amount) amount
+FROM months
+LEFT JOIN `mytablehere`
+ON FORMAT_DATE('%Y-%m', PARSE_DATE('%Y-%m-%d', receivedOn)) = FORMAT_DATE('%Y-%m', month)
+GROUP BY DATE
+ORDER BY DATE ASC   

@@ -1,0 +1,45 @@
+import calendar
+from datetime import datetime
+from datetime import timedelta
+import math
+
+
+cal = calendar.Calendar()
+
+start_date = datetime.strptime(input(""Enter a start date: ""), ""%Y-%m-%d"").date()
+end_date = datetime.strptime(input(""Enter an end date: ""), ""%Y-%m-%d"").date()
+days_difference = (end_date - start_date).days
+week_number = math.ceil((start_date - start_date.replace(day=1)).days / 7) - 1
+weekday = start_date.weekday()
+
+for _ in range(15):
+    weeks = cal.monthdayscalendar(start_date.year, start_date.month)
+
+    for x, week in enumerate(weeks):
+        if(week[weekday] == 0):
+            weeks.pop(x)
+            break
+
+    if(len(weeks) == 5 and (week_number+1) == 4):
+        if(weeks[len(weeks)-1][weekday] != 0 and weeks[0][weekday] != 0):
+            weeks.pop(0)
+
+    new_weekday = weeks[week_number][weekday]
+
+    start_date = datetime(start_date.year, start_date.month, new_weekday).date()
+    print(start_date)
+
+    for x in range(1, days_difference+1):
+        start_date += timedelta(days=1)
+        print(start_date)
+
+    if(start_date.month + 1 > 12):
+        new_year = start_date.year + 1
+        new_month = 1
+    else:
+        new_month = start_date.month + 1
+        new_year = start_date.year
+
+    start_date = datetime(new_year, new_month, 1).date()
+
+    print("""")

@@ -1,0 +1,86 @@
+public class CustomAnnotationApplicationContextProvider {
+private final Vertx vertx;
+
+public CustomAnnotationApplicationContextProvider(Vertx vertx) {
+    this.vertx = vertx;
+}
+
+/**
+ * Register all beans to spring bean factory
+ *
+ * @param beanFactory, spring bean factory to register your instances
+ */
+private void configureBeans(ConfigurableListableBeanFactory beanFactory) {
+    beanFactory.registerSingleton(""vertx"", vertx);
+}
+
+/**
+ * Proxy method to create {@link AnnotationConfigApplicationContext} instance with no params
+ *
+ * @return {@link AnnotationConfigApplicationContext} instance
+ */
+public AnnotationConfigApplicationContext get() {
+    return new AnnotationConfigApplicationContext() {
+
+        @Override
+        protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+            super.postProcessBeanFactory(beanFactory);
+            configureBeans(beanFactory);
+        }
+    };
+}
+
+/**
+ * Proxy method to call {@link AnnotationConfigApplicationContext#AnnotationConfigApplicationContext(DefaultListableBeanFactory)} with our logic
+ *
+ * @param beanFactory bean factory for spring
+ * @return
+ * @see AnnotationConfigApplicationContext#AnnotationConfigApplicationContext(DefaultListableBeanFactory)
+ */
+public AnnotationConfigApplicationContext get(DefaultListableBeanFactory beanFactory) {
+    return new AnnotationConfigApplicationContext(beanFactory) {
+
+        @Override
+        protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+            super.postProcessBeanFactory(beanFactory);
+            configureBeans(beanFactory);
+        }
+    };
+}
+
+/**
+ * Proxy method to call {@link AnnotationConfigApplicationContext#AnnotationConfigApplicationContext(Class[])} with our logic
+ *
+ * @param annotatedClasses, set of annotated classes for spring
+ * @return
+ * @see AnnotationConfigApplicationContext#AnnotationConfigApplicationContext(Class[])
+ */
+public AnnotationConfigApplicationContext get(Class<?>... annotatedClasses) {
+    return new AnnotationConfigApplicationContext(annotatedClasses) {
+
+        @Override
+        protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+            super.postProcessBeanFactory(beanFactory);
+            configureBeans(beanFactory);
+        }
+    };
+}
+
+/**
+ * proxy method to call {@link AnnotationConfigApplicationContext#AnnotationConfigApplicationContext(String...)} with our logic
+ *
+ * @param basePackages set of base packages for spring
+ * @return
+ * @see AnnotationConfigApplicationContext#AnnotationConfigApplicationContext(String...)
+ */
+public AnnotationConfigApplicationContext get(String... basePackages) {
+    return new AnnotationConfigApplicationContext(basePackages) {
+
+        @Override
+        protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+            super.postProcessBeanFactory(beanFactory);
+            configureBeans(beanFactory);
+        }
+    };
+}
+}

@@ -1,0 +1,42 @@
+#! /usr/bin/awk -f
+BEGIN {
+    FS  = "",""
+    OFS = "", ""
+    rows=0
+    cols=0
+    head=""""
+    split("""", data)
+    split("""", row)
+    split("""", col)
+}
+!($2 in col) { # new project
+    if (head == """")
+        head = $2
+    else
+        head = head OFS $2
+    i = col[$2] = cols++
+    row[i] = 0
+}
+{
+    i = col[$2]
+    j = row[i]++
+    data[i,j] = $1
+    if (j > rows)
+        rows = j
+}
+END {
+    print head
+    for (j=0; j<=rows; ++j) {
+        if ((0,j) in data)
+            x = data[0,j]
+        else
+            x = """"
+        for (i=1; i<cols; ++i) {
+            if ((i,j) in data)
+                x = x OFS data[i,j]
+            else
+                x = x OFS
+        }
+        print x
+    }
+}

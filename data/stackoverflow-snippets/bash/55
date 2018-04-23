@@ -1,0 +1,18 @@
+printUSBDevices() {
+  typeset -a usbDevices
+  typeset -a devices
+  getDeviceType() {
+    typeset deviceName=/sys/block/${1#/dev/}
+    typeset deviceType=$(udevadm info --query=property --path=""$deviceName"" | grep -Po 'ID_BUS=\K\w+')
+    echo ""$deviceType""
+  }
+  mapfile -t devices < <(lsblk -o NAME,TYPE | grep --color=never -oP '^\K\w+(?=\s+disk$)')
+  for device in ""${devices[@]}"" ; do
+    if [ ""$(getDeviceType ""/dev/$device"")"" == ""usb"" ]; then
+      usbDevices+=(""/dev/$device"")
+    fi
+  done
+  echo ""${usbDevices[@]}""
+}
+
+printUSBDevices

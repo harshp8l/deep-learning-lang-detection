@@ -1,0 +1,37 @@
+import tensorflow as tf
+from keras.layers import Input, Conv2D, Lambda
+from keras.models import Model
+from keras import backend as K
+import cv2
+
+def image_func(img):
+    img=cv2.cvtColor(img,cv2.COLOR_BGR2YUV) 
+    img=cv2.resize(img,(200,66))
+    return img.astype('float32')
+
+def image_tensor_func(img4d) :
+    results = []
+    for img3d in img4d :
+        rimg3d = image_func(img3d )
+        results.append( np.expand_dims( rimg3d, axis=0 ) )
+    return np.concatenate( results, axis = 0 )
+
+class CustomLayer( Layer ) :
+    def call( self, xin )  :
+        xout = tf.py_func( image_tensor_func, 
+                           [xin],
+                           'float32',
+                           stateful=False,
+                           name='cvOpt')
+        xout = K.stop_gradient( xout ) # explicitly set no grad
+        xout.set_shape( [xin.shape[0], 66, 200, xin.shape[-1]] ) # explicitly set output shape
+        return xout
+    def compute_output_shape( self, sin ) :
+        return ( sin[0], 66, 200, sin[-1] )
+
+x = Input(shape=(None,None,3))
+f = CustomLayer(name='custom')(x)
+y = Conv2D(1,(1,1), padding='same')(x)
+
+model = Model( inputs=x, outputs=y )
+print model.summary()

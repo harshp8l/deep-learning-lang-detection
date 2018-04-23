@@ -1,0 +1,32 @@
+import org.apache.spark.ml.feature.Bucketizer
+
+val data = Array(0.99, 0.64, 0.39, 0.44, 0.15, 0.05, 0.30, 0.31, 0.22, 0.45, 0.52, 0.26)
+val df = spark.createDataFrame(data.map(Tuple1.apply)).toDF(""continuousFeature"")
+
+val bucketizer = new Bucketizer()
+    .setInputCol(""continuousFeature"")
+    .setOutputCol(""discretizedFeature"")
+    .setSplits( Array(0.0, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.0 ) )
+
+    // the array of split values are the binning boundaries
+
+val binnedData = bucketizer.transform(df)
+
+binnedData.show
+
++-----------------+------------------+
+|continuousFeature|discretizedFeature|
++-----------------+------------------+
+|             0.99|               9.0|
+|             0.64|               6.0|
+|             0.39|               3.0|
+|             0.44|               4.0|
+|             0.15|               1.0|
+|             0.05|               0.0|
+|              0.3|               3.0|
+|             0.31|               3.0|
+|             0.22|               2.0|
+|             0.45|               4.0|
+|             0.52|               5.0|
+|             0.26|               2.0|
++-----------------+------------------+

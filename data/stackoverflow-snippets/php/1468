@@ -1,0 +1,24 @@
+# Install MSSQL Client for PHP7 on Debian 9
+apt update && apt install curl apt-transport-https
+curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list
+apt update
+ACCEPT_EULA=Y apt install msodbcsql17 mssql-tools unixodbc-dev php-pear php7.0-dev
+pecl install sqlsrv
+pecl install pdo_sqlsrv
+# if previous pecl cmds fails to download files at it's own - try the following ones:
+#wget http://pecl.php.net/get/sqlsrv-5.2.0.tgz
+#wget http://pecl.php.net/get/pdo_sqlsrv-5.2.0.tgz
+#pecl install sqlsrv-5.2.0.tgz
+#pecl install pdo_sqlsrv-5.2.0.tgz
+
+cat <<EOF > /etc/php/7.0/cli/conf.d/99-sqlsrv.ini  
+extension=sqlsrv.so
+extension=pdo_sqlsrv.so
+EOF
+cat <<EOF > /etc/php/7.0/apache2/conf.d/99-sqlsrv.ini  
+extension=sqlsrv.so
+extension=pdo_sqlsrv.so
+EOF
+
+service apache2 restart

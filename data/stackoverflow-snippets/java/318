@@ -1,0 +1,24 @@
+List<Data> data = ...;
+Map<String, Task> tasks = ...;
+
+UnaryOperator<String> function = s -> {
+    return Joiner.on(""."")
+                 .useForNull(""null"")
+                 .join(Arrays.copyOfRange(s.split(""\\.""), 0, 3));
+};
+
+data.forEach(datum -> {
+    final String compKey = datum.getCompKey();
+
+    tasks.entrySet()
+         .stream()
+         .filter(e -> e.getKey() != null && e.getValue() != null)
+         .filter(e -> compKey.equals(function.apply(e.getKey())))
+         .findFirst()
+         .map(Map.Entry::getValue)
+         .ifPresent(task -> {
+             task.setVal1(datum.getVal1());
+             task.setVal2(datum.getVal2());
+             task.setVal3(datum.getVal3());
+         });
+});

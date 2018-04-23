@@ -1,0 +1,20 @@
+df = pd.concat([df] * 1000, ignore_index=True)
+
+def wen(df):
+    df=df.reindex(columns=df.columns.tolist()+['sector','education'])
+
+    df[['sector','education']]=df.reset_index()['index'].apply(pd.Series).values
+    return df
+
+def jez(df):
+    df[['sector','education']] = pd.DataFrame(df.index.tolist(), index=df.index)
+    return df
+
+print (jez(df.copy()))
+print (wen(df.copy()))
+
+In [396]: %timeit (jez(df.copy()))
+2.69 ms ± 50.2 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+
+In [397]: %timeit (wen(df.copy()))
+1.53 s ± 45.9 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)

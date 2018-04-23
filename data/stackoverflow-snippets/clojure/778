@@ -1,0 +1,23 @@
+(ns tst.clj.core
+  (:use clj.core 
+        clojure.test 
+        tupelo.core))
+
+(def input    [ {:id 1 :sku 105} 
+                {:id 2 :sku 105}
+                {:id 3 :sku 120} ] )
+
+(def result   [ [ {:id 1 :sku 105} 
+                  {:id 2 :sku 105} ]
+                [ {:id 3 :sku 120} ] ] )
+
+(deftest t-separate-by-sku
+  ; the result of 'group-by' is a map keyed by the grouping value 
+  ; (the sku in this case)
+  (is (= (group-by :sku input)
+         { 105 [{:id 1, :sku 105} {:id 2, :sku 105}],  
+           120 [{:id 3, :sku 120}] } ))
+  ; we do not care about the grouping value, so just extract
+  ; the values from the map with 'vals'
+  (is (= (vals (group-by :sku input))   
+         result)))

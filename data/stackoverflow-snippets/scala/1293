@@ -1,0 +1,13 @@
+  @tailrec
+  private def pool[F[_]: Monad, A](consumer: Consumer[String, String])(cb: Vector[KkConsumerRecord] => F[A]): IO[Unit] = {
+    val records: ConsumerRecords[String, String] = consumer.poll(Long.MaxValue)
+    val converted = records.iterator().asScala.map(rec => {
+      KkConsumerRecord(rec.key(), rec.value(), rec.offset(), rec.partition(), rec.topic())
+    })
+
+    val vec = converted.foldLeft(Vector.empty[KkConsumerRecord]) { (b, a) =>
+      a +: b
+    }
+    cb(vec)
+    pool(consumer)(cb)
+  }

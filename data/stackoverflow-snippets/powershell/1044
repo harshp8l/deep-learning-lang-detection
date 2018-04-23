@@ -1,0 +1,24 @@
+$fh = ""http://fileholdtest8/fh/filehold""
+
+$uri = $fh + ""/UserRoleManager/SessionManager.asmx?WSDL""
+$SessionManager = New-WebServiceProxy -Uri $uri -Namespace FileHold.SessionManager
+$sessionId = $SessionManager.StartSession( 'sysadm', '12345', 4 )
+
+if ( !(Test-Path variable:dm) )
+{
+    $uri = $fh + ""/LibraryManager/DocumentManager.asmx?WSDL""
+    $dm = New-WebServiceProxy -Uri $uri -Namespace FileHold.Library
+
+    $FieldWithValueType = ""{0}.FieldWithValue"" -f $dm.GetType().Namespace
+
+    $dm.CookieContainer = New-Object System.Net.CookieContainer
+    $cookie = New-Object System.Net.Cookie( 'FHLSID', $sessionId, ""/"", ([System.Uri]$dm.Url).Host )
+    $dm.CookieContainer.Add( $cookie )    
+}
+
+$newFieldValue = [FileHold.Library.FieldWithValue]::new()
+$newFieldValue.FieldId = 1007
+$newFieldValue.FieldValue = $true
+$fieldsWithValues = @( ,$newFieldValue )
+
+$dm.SetMetadata( 4041, 1002, ""EmployeeInfo_filled1-test"", $fieldsWithValues, $false, $null ) 

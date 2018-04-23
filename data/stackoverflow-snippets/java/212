@@ -1,0 +1,42 @@
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.RunnableFuture;
+
+import javax.annotation.Resource;
+import javax.enterprise.concurrent.ManagedExecutorService;
+import javax.enterprise.context.ApplicationScoped;
+
+@ApplicationScoped
+public class AsyncTaskManager {
+
+    @Resource
+    private ManagedExecutorService mes;
+
+    private Map<String, Future> futureByUUID = new ConcurrentHashMap<>();
+
+    /**
+     * Launch the provided Future implemented task.
+     * @param runnable The runnable implementation to execute.
+     * @param <R> The type of the task result returned.
+     * @return The UUID that the executing ask is mapped to.
+     */
+    public <R> String launch (RunnableFuture<R> runnable) {
+        String uuid = UUID.randomUUID().toString();
+        mes.submit(runnable);
+        futureByUUID.put(uuid, runnable);
+        return uuid;
+    }
+
+    /**
+     * Retrieve a future instance by it's UUID.
+     * @param uuid The uuid of the future.
+     * @param <T> The type of the future's result.
+     * @return The future instance.
+     */
+    @SuppressWarnings(""unchecked"")
+    public <T> Future<T> getByUUID (String uuid) {
+        return (Future<T>)futureByUUID.get(uuid);
+    }
+}

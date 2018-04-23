@@ -1,0 +1,39 @@
+#!/bin/bash
+
+GLOBAL_SRC_DIR=""/home/usr/abc""
+GLOBAL_DEST_DIR=""/tmp/xyz""
+
+create_symlinks ()
+{
+    local SRC_DIR=""${1}""
+    local DEST_DIR=""${2}""
+
+    # read in our file, use null terminator
+    while IFS= read -r -d $'\0' file; do
+
+            # If file ends with .xxx or .yyy
+            if [[ ${file} =~ .*\.(xxx|yyy) ]] ; then
+                    basePath=""$(dirname ${file})""
+                    fileName=""$(basename ${file})""
+                    completeSourcePath=""${basePath}/${fileName}""
+                    #echo ""${completeSourcePath}""
+
+                    # strip off preceding text
+                    partialDestPath=$(echo ${basePath} | sed -r ""s|^${SRC_DIR}||"" )
+                    fullDestPath=""${DEST_DIR}/${partialDestPath}""
+
+                    # rename file from .xxx to .zzz. don't rename just link .yyy
+                    cppFileName=$(echo ${fileName} | sed -r ""s|\.xxx$|\.zzz|"" )
+                    completeDestinationPath=""${fullDestPath}/${cppFileName}""
+
+                    $(ln -s ${completeSourcePath} ${completeDestinationPath})
+            fi
+    done < <(find ${SRC_DIR} -type f -print0)
+}
+
+main ()
+{
+    create_symlinks ${GLOBAL_SRC_DIR} ${GLOBAL_DEST_DIR}
+}
+
+main

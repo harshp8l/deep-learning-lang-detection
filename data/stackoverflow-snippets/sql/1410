@@ -1,0 +1,19 @@
+CREATE OR REPLACE FUNCTION update_or_insert(in_parameter1 INTEGER, ...) RETURNING SETOF my_table AS $$
+DECLARE
+    result my_table%ROWTYPE;
+BEGIN
+    WITH updated_rows AS (
+        UPDATE my_table SET ... WHERE ... RETURNING *
+    )
+    SELECT * INTO result FROM updated_rows;
+    IF FOUND THEN
+        RETURN NEXT result;
+    ELSE
+        WITH inserted_rows AS (
+            INSERt INTO my_table (...) VALUES (...) RETURNING *
+        )
+        SELECT * INTO result FROM inserted_rows;
+        RETURN NEXT result;
+    END IF;
+RETURN;
+$$ LANGUAGE plpgsql;

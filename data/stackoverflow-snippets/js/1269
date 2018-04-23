@@ -1,0 +1,31 @@
+function retryPromise({
+    maxRetries,
+    promiseMethod,
+    successConditionMethod,
+    retryInterval,
+    increaseInterval = true
+}) {
+    if (increaseInterval) {
+        retryInterval = retryInterval + 1000;
+    }
+
+    return promiseMethod().then((result) => {
+        if (successConditionMethod(result)) {
+            return $q.resolve(result);
+        } else if (maxRetries > 0) {
+            return $timeout(retryInterval)
+                .then(() => {
+                    return retryPromise({
+                        maxRetries: maxRetries - 1,
+                        promiseMethod,
+                        successConditionMethod,
+                        retryInterval,
+                        increaseInterval
+                    });
+                });
+        } else {
+            retryInterval = 0;
+            return $q.reject();
+        }
+    });
+}

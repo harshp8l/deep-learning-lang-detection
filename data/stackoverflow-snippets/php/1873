@@ -1,0 +1,47 @@
+// prepare an array with variable (should come from database, or whatever)
+$vars = [
+  [
+    'user' => 'lam',
+    'path' => '/lam/files/a',
+    'id' => 9,
+    'bucket' => 'lam-15215156681752265498',
+    'pass' => 'NHBuZHd4azhvZDB6b29oYSu5U7JLrDC3AdZGykzNpDU=',
+  ],
+  [
+    'user' => 'lam',
+    'path' => '/lam/files/test',
+    'id' => 12,
+    'bucket' => 'lam-152153961597103330',
+    'pass' => 'MjdzcDlrenptcG5udzI2MLSQvuGIczY/SyHZVf9o7e8=',
+  ]
+];
+
+// prepare data to be encoded.
+$data = [];
+
+// iterate over the variables,
+foreach ($vars as $var) {
+
+  // prepare an array for the options
+  $options = [
+    ""user"" => ""owncloud"",
+    ""bucket"" => $var['bucket'], // fill with current variable
+    ""password"" => """",
+    ""region"" => ""regionOne"",
+    ""service_name"" => ""swift"",
+    ""tenant"" => ""owncloud"",
+    ""timeout"" => ""30"",
+    ""url"" => ""http:\/\/controller:5000\/v2.0"",
+    ""password_encrypted"" =>$var['pass'], // fill with current variable
+  ];
+  $userdata = [
+    'id' => $var['id'], // fill with current variable
+    'class' => '\\OC\\Files\\Storage\\Swift',
+    'options' => $options, // append options
+  ];
+  $name = $var['user'];
+  $path = $var['path'];
+  $data['user'][$name][$path] = $userdata ; // append to $data array
+}
+
+echo json_encode($data, JSON_PRETTY_PRINT);

@@ -1,0 +1,17 @@
+  def mydef(nums:Iterator[Int]): Iterator[Int] = {
+    var before: Option[Int] = None
+
+    val helperIterator = new Iterator[(Option[Int], Int)] {
+      override def hasNext: Boolean = nums.hasNext
+
+      override def next(): (Option[Int], Int) = {
+        val result = (before, nums.next())
+        before = Some(result._2)
+        result
+      }
+    }
+    helperIterator.withFilter(_._2 % 2 == 0).flatMap{
+      case (None, next) => Iterator(next)
+      case (Some(prev), next) => Iterator(prev, next)
+    }
+  }

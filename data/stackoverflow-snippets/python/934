@@ -1,0 +1,14 @@
+rdd1=sc.textFile('checkouts').map(lambda line:line.split(','))
+rdd2=sc.textFile('inventory2').map(lambda line:line.split(','))
+# Define the headers for both the files
+rdd1_header = rdd1.first()
+rdd2_header = rdd2.first()
+
+# Define the dataframe
+rdd1_df = rdd1.filter(lambda line: line != rdd1_header).toDF(rdd1_header)
+rdd2_df = rdd2.filter(lambda line: line != rdd2_header).toDF(rdd2_header)
+
+common_cols = [x for x in rdd1_df.columns if x in rdd2_df.columns]
+
+df_final = rdd1_df.join(rdd2_df, on=common_cols)
+date_count = df_final.groupBy([""BibNum"", ""ItemCollection"", ""CheckoutDateTime""]).count()

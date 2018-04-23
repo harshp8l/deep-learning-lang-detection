@@ -1,0 +1,34 @@
+function bindAndPassContext(target: any, prop: string, descriptor?: PropertyDescriptor) {
+    const fn = target[prop];
+
+    return {
+        configurable: true,
+        get: function () {
+            const classInstance = this;
+            function wrapperFn (...args) {
+                return fn.call(classInstance, this, ...args);
+            }
+
+            Object.defineProperty(this, prop, {
+                configurable: true,
+                writable: true,
+                value: wrapperFn
+            });
+
+            return wrapperFn;
+        }
+    };
+}
+
+...
+
+@bindAndPassContext
+handleGridKeyDown(context: DynamicThisType, e: any) {
+    // class instance is available as `this`
+    // dynamic `this` is available as `context` param
+}
+
+
+...
+
+this._grid.onKeyDown.subscribe(this.handleGridKeyDown);

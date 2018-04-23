@@ -1,0 +1,32 @@
+create trigger tr_check_qty
+ON orderdetails
+FOR UPDATE
+AS
+DECLARE @orderdetail_id int
+DECLARE @prod_id int
+DECLARE UpdatedProducts CURSOR FOR select orderdetailid, productid from inserted
+OPEN UpdatedProducts
+FETCH NEXT FROM UpdatedProducts INTO @orderdetail_id, @product_id
+WHILE @@fetch_status = 0
+BEGIN
+  IF(
+      select UnitsInStock
+      from products
+      where products.productid = @prod_id
+  )
+  >= 
+  (
+      select quantity
+      from orderdetails
+      where orderdetailid = @orderdetail_id and productid = @prod_id
+  )
+  BEGIN
+    CLOSE UpdatedProducts
+    DEALLOCATE UpdatedProducts
+    RAISERROR('Not enough units in stock.', 20, -1)
+  END
+  @FETCH NEXT FROM UpdatedProducts INTO @orderdetail_id, @product_id
+END
+CLOSE UpdatedProducts
+DEALLOCATE UpdatedProducts
+GO

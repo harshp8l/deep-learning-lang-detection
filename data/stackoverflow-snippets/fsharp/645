@@ -1,0 +1,97 @@
+open System
+open System.Drawing
+open System.Drawing.Imaging
+open System.IO
+open System.Threading
+
+module BitmapCreator =
+  module internal Details =
+    let dispose (d : IDisposable) =
+      if d <> null then
+        try
+          d.Dispose ()
+        with
+        | e -> () // TODO: log
+
+    // state is ThreadLocal, it means the resources gets initialized once per thread
+    let state =
+      let initializer () =
+        // Allocate all objects needed for work
+        let font        = new Font(""Courier"", 24.0F)
+        let red         = new SolidBrush(Color.Red)
+        let white       = new SolidBrush(Color.White)
+        let bitmap      = new Bitmap(600,400)
+        let g           = Graphics.FromImage bitmap
+        let ms          = new MemoryStream 1024
+        // disposer should be called when Thread is terminating to reclaim
+        //  resources as fast as possible
+        let disposer () =
+          dispose ms
+          dispose g
+          dispose bitmap
+          dispose white
+          dispose red
+          dispose font
+        font, red, white, bitmap, g, ms, disposer
+
+      new ThreadLocal<_>(initializer)
+
+  // Draws text on a bitmap and returns that as a byte array
+  let draw text =
+    // Grab the state for the current thread
+    let font, red, white, bitmap, g, ms, _ = Details.state.Value
+
+    g.FillRectangle(white, 0.0F, 0.0F, 600.0F, 400.0F)
+    g.DrawString(text, font, red, 10.0F, 40.0F)
+    g.Flush()
+
+    // Resets the memory stream
+    //  The capacity is preserved meaning as long as the generated
+    //  images is equal or smaller in size no realloc is needed
+    ms.Seek (0L, SeekOrigin.Begin) |> ignore
+    ms.SetLength 0L
+
+    bitmap.Save(ms, ImageFormat.Png)
+
+    // Here a new array is allocated per call
+    //  Depending on how FillRectangle/DrawString works this is hopefully our
+    //  only allocation
+    ms.ToArray()
+
+  // Disposes all BitmapCreator resources held by the current thread
+  let dispose () =
+    let _, _, _, _, _, _, disposer = Details.state.Value
+    disposer ()
+
+[<EntryPoint>]
+let main argv =
+  // Saves some bitmaps to file, the name include the thread pid in order
+  //  to not overwrite other threads' images
+  let save () =
+    let texts = [|""Hello""; ""There""|]
+    let tid   = Thread.CurrentThread.ManagedThreadId
+    for text in texts do
+      File.WriteAllBytes (sprintf ""%s_%d.png"" text tid, BitmapCreator.draw text)
+
+  // Runs a in other thread, disposes BitmapCreator resources when done
+  let runInOtherThread (a : unit -> unit) =
+    let a () =
+      try
+        a ()
+      finally
+        BitmapCreator.dispose ()
+    let thread = Thread a
+    thread.Start ()
+    thread.Join ()
+
+  Environment.CurrentDirectory <- AppDomain.CurrentDomain.BaseDirectory
+
+  try
+    save () // Here we allocate BitmapCreator resources
+    save () // Since the same thread is calling the resources will reused
+    runInOtherThread save // New thread, new resources
+    runInOtherThread save // New thread, new resources
+  finally
+    BitmapCreator.dispose ()
+
+  0

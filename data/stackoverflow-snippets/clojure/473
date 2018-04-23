@@ -1,0 +1,22 @@
+(require '[clojure.core.async :as a])
+
+(defn interval [f msecs]
+  (let [action (a/chan (a/dropping-buffer 1))
+        timing (a/chan)
+        kickoff
+        #(a/go
+           (a/<! (a/timeout msecs))
+           (a/>! timing true))]
+    (a/go-loop []
+      (when (a/<! action)
+        (f)
+        (recur)))
+    (a/go-loop []
+      (if (a/<! timing)
+        (do
+          (a/>! action true)
+          (kickoff)
+          (recur))
+        (a/close! action)))
+    (kickoff)
+    #(a/close! timing)))

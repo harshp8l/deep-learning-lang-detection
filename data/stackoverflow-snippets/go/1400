@@ -1,0 +1,27 @@
+type Cached2 struct {
+    origv   reflect.Value
+    hasherv reflect.Value
+    hasher  hash.Hash
+
+    result [sha256.Size]byte
+}
+
+func NewCached2(fixed []byte) *Cached2 {
+    h := sha256.New()
+    h.Write(fixed)
+
+    c := &Cached2{origv: reflect.ValueOf(h).Elem()}
+    hasherv := reflect.New(c.origv.Type())
+    c.hasher = hasherv.Interface().(hash.Hash)
+    c.hasherv = hasherv.Elem()
+
+    return c
+}
+
+func (c *Cached2) Sum(data []byte) []byte {
+    // Set state of the fixed hash:
+    c.hasherv.Set(c.origv)
+
+    c.hasher.Write(data)
+    return c.hasher.Sum(c.result[:0])
+}

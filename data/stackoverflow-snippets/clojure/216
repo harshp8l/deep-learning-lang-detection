@@ -1,0 +1,45 @@
+;; lambda calculus expression constructors
+(defn variable [identifier]
+  (list 'variable identifier))
+
+(defn lambda [parameter body]
+  (list 'lambda parameter body))
+
+(defn application [proc argument]
+  (list 'application proc argument))
+
+;; environment abstraction
+(defn empty-env []
+  (hash-map))
+
+(defn env-get [env key]
+  ;; implement
+)
+
+(defn env-set [env key value]
+  ;; implement
+)
+
+;; meat & potatoes
+(defn evaluate [env expr]
+  (case (first expr)
+    ;; evaluate a variable
+    variable (let [[_ identifier] expr]
+               (env-get env identifier))
+
+    ;; evaluate a lambda
+    lambda (let [[_ parameter body] expr]
+             (fn [argument] (evaluate (env-set env parameter argument) body)))
+
+    ;; evaluate an application
+    ;; this is strict because the argument is evaluated first before being given to the evaluated proc
+    application (let [[_ proc argument] expr]
+                  ((evaluate env proc) (evaluate env argument)))
+
+    ;; bad expression given
+    (throw (ex-info ""invalid expression"" {:expr expr}))))
+
+
+(evaluate (empty-env)
+          ;; ((λx.x) y)
+          (application (lambda 'x (variable 'x)) (variable 'y))) ;; should be 'y

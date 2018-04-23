@@ -1,0 +1,15 @@
+$Unity = uemcli -d 192.168.1.100 -u Local/admin -p admin /event/alert/hist show -acknowledged no |
+        select -Skip 4 |
+        Out-String
+$style = @""
+<style>
+TABLE{border-width: 1px;border-style: solid;border-color: black;border-collapse: collapse; }
+TH{border-width: 2px;padding: 3px;border-style: solid; border-color: black;background-color: #08088A; color: white; font-size: 67%;}
+TD{border-width: 2px;padding: 3px;border-style: solid; border-color: black; font-size: 100%;}
+</style>
+""@
+$Unity -split '(?m)^\d:' |
+    Where{$_.Trim()} |
+    ForEach{ [PSCustomObject](ConvertFrom-StringData -StringData $_) } |
+    ConvertTo-Html -Head $style -as Table -Property 'Id','Time','Message' |
+    Set-Content $PSScriptRoot\weboutput.html

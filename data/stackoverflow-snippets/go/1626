@@ -1,0 +1,63 @@
+package main
+
+import (
+    ""encoding/xml""
+    ""fmt""
+)
+
+type Root struct {
+    Translation Text `xml:""Texts>Text>Text""`
+}
+
+type Text []struct {
+    Language string `xml:""Language,attr""`
+    Value    string `xml:""Value""`
+}
+
+func main() {
+    foo := `
+        <Root>
+            <Texts>
+                <Text>
+                    <Text Language=""EN"">
+                        <Value>One</Value>
+                    </Text>
+                    <Text Language=""de"">
+                        <Value>Eins</Value>
+                    </Text>
+                </Text>
+            </Texts>
+        </Root>
+        `
+
+    var root Root
+    e := xml.Unmarshal([]byte(foo), &root)
+    if e != nil {
+        panic(e)
+    }
+
+    fmt.Printf(""%+v\n"", root)
+}
+
+func (t *Text) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+    tx := []struct{
+        Language string `xml:""Language,attr""`
+        Value    string `xml:""Value""`
+    }{}
+    d.DecodeElement(&tx, &start)
+
+
+    tSl := *t
+    for _, elem := range tx {
+        switch elem.Language {
+        case ""EN"":
+            tSl = append(tSl, struct{
+                Language string `xml:""Language,attr""`
+                Value    string `xml:""Value""`}{elem.Language, elem.Value})
+        default:
+            d.Skip()
+        }
+    }
+    *t = tSl
+    return nil
+}

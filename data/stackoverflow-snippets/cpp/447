@@ -1,0 +1,9 @@
+__asm__ volatile(
+                ""mov r3, r3, lsr #3\n""           /* Divide number of pixels by 8 because we process them 8 at a time */
+                ""loopRGBACopy:\n""
+                ""vld1.8 {d0-d3}, [r1]!\n""        /* Load 8 pixels into d0 through d2. d0 = R[0-7], d1 = G[0-7], d2 = B[0-7], d3 = A[0-7] */
+                ""subs r3, r3, #1\n""              /* Decrement the loop counter */
+                ""vst1.8 {d0-d3}, [r2]!\n""        /* Store the RGBA into destination 8 pixels at a time */
+                ""bgt loopRGBACopy\n""
+                ::: ""r1"", ""r2"", ""r3"", ""d0"", ""d1"", ""d2"", ""d3"", ""cc"", ""memory""
+                );

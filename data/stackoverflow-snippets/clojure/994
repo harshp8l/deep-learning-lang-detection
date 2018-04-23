@@ -1,0 +1,34 @@
+;; defining helper function
+[{:db/id #db/id[:db.part/user]
+  :db/doc ""Helper function for defining entity fields schema attributes in a concise way.""
+  :db/ident :utils/field
+  :db/fn #db/fn {:lang :clojure
+                 :require [datomic.api :as d]
+                 :params [_ ident type doc opts]
+                 :code [(cond-> {:db/cardinality :db.cardinality/one
+                                 :db/fulltext true
+                                 :db/index true
+                                 :db.install/_attribute :db.part/db
+
+                                 :db/id (d/tempid :db.part/db)
+                                 :db/ident ident
+                                 :db/valueType (condp get type
+                                                 #{:db.type/string :string} :db.type/string
+                                                 #{:db.type/boolean :boolean} :db.type/boolean
+                                                 #{:db.type/long :long} :db.type/long
+                                                 #{:db.type/bigint :bigint} :db.type/bigint
+                                                 #{:db.type/float :float} :db.type/float
+                                                 #{:db.type/double :double} :db.type/double
+                                                 #{:db.type/bigdec :bigdec} :db.type/bigdec
+                                                 #{:db.type/ref :ref} :db.type/ref
+                                                 #{:db.type/instant :instant} :db.type/instant
+                                                 #{:db.type/uuid :uuid} :db.type/uuid
+                                                 #{:db.type/uri :uri} :db.type/uri
+                                                 #{:db.type/bytes :bytes} :db.type/bytes
+                                                 type)}
+                                doc (assoc :db/doc doc)
+                                opts (merge opts))]}}]
+
+;; ... then (in a later transaction) using it to define application model attributes
+[[:utils/field :person/name :string ""A person's name"" {:db/index true}]
+ [:utils/field :person/age :long ""A person's name"" nil]]

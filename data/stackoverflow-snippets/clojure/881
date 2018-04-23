@@ -1,0 +1,103 @@
+(ns printscaling.core
+  (:gen-class
+   :extends javafx.application.Application)
+  (:import
+   [javafx.application Application]
+   [javafx.beans.value ChangeListener]
+   [javafx.event EventHandler]
+   [javafx.geometry Insets Pos]
+   [javafx.print PrinterJob]
+   [javafx.scene Scene]
+   [javafx.scene.canvas Canvas]
+   [javafx.scene.control Button]
+   [javafx.scene.layout BorderPane Pane Region VBox]
+   [javafx.scene.paint Color]
+   [javafx.scene.transform Scale]
+   [javafx.stage Screen]))
+
+(def points-per-inch 72.0)
+
+(defn redraw-board
+  ""Draw the board on the canvas.""
+  [canvas]
+  (let [w (.getWidth canvas)
+        h (.getHeight canvas)
+        gc (.getGraphicsContext2D canvas)]
+
+    (doto gc
+      (.clearRect 0 0 w h)
+      (.setLineWidth 3)
+      (.setFill (Color/BLUE))
+      (.setStroke (Color/BLUE))
+      (.strokeRect 0 0 w h)
+      (.strokeLine 0 0 w h)
+      (.strokeLine w 0 0 h))))
+
+(defn create-print-button-handler
+  ""Handle a click on the 'Print' button. Print a 5 inch square version
+   of the board.""
+  [stage]
+  (reify EventHandler
+    (handle [this event]
+      (let [job (PrinterJob/createPrinterJob)]
+        (if (.showPrintDialog job stage)
+          (let [dpi (.getDpi (Screen/getPrimary))
+                pixels (* dpi 5)
+                canvas (Canvas. pixels pixels)
+                scale (/ points-per-inch dpi)]
+            (.add (.getTransforms canvas) (Scale. scale scale))
+            (redraw-board canvas)
+            (if (.printPage job canvas)
+              (.endJob job))))))))
+
+(defn create-print-btn [stage]
+  (let [btn (Button. ""Print"")]
+    (.setOnAction btn (create-print-button-handler stage))
+    btn))
+
+(defn -start
+  ""Build the application interface and start it up.""
+  [this stage]
+  (let [root (BorderPane.)
+        center (Pane.)
+        spacer (Region.)
+        btn-pane (VBox.)
+        scene (Scene. root)
+        canvas (Canvas.)
+        print-btn (create-print-btn stage)]
+
+    (doto (.widthProperty canvas)
+      (.bind (.widthProperty center))
+      (.addListener
+       (reify ChangeListener
+         (changed [_ _ _ _]
+           (redraw-board canvas)))))
+    (doto (.heightProperty canvas)
+      (.bind (.heightProperty center))
+      (.addListener
+       (reify ChangeListener
+         (changed [_ _ _ _]
+           (redraw-board canvas)))))
+
+    (doto btn-pane
+      (.setId ""btn-pane"")
+      (.setPadding (Insets. 10))
+      (.setAlignment Pos/CENTER)
+      (.setStyle ""-fx-background-color: slategray;""))
+
+    (.setPrefHeight spacer Integer/MAX_VALUE)
+    (.addAll (.getChildren btn-pane) [print-btn spacer])
+
+    (.add (.getChildren  center) canvas)
+    (.setCenter root center)
+    (.setRight root btn-pane)
+
+    (doto stage
+      (.setTitle ""Print Scaling"")
+      (.setScene scene)
+      (.setHeight 400)
+      (.setWidth 600)
+      (.show))))
+
+(defn -main [& args]
+  (Application/launch printscaling.core args))

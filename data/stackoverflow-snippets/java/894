@@ -1,0 +1,46 @@
+public class ClassHierarchy {
+    private Queue<Class<?>> queue;
+    //a collection of ""visited"" classes,
+    //which is also the result of the search
+    private Set<Class<?>> visited;
+
+    public Set<Class<?>> getClassHierarchy(Class<?> cls){
+        visited = new LinkedHashSet<>(); //initialize visited log
+        bfs(cls);
+        return visited;
+    }
+
+    //breadth first traverse on hierarchy
+    private void bfs(Class<?> cls) {
+
+        if(cls == null){ return; }
+        queue = new LinkedList<>(); //initialize queue
+        queue.add(cls);
+        while (! queue.isEmpty()) {
+           cls = queue.poll();
+           //loop over super classes
+           for(Class<?> nextClass : getSuperClasses(cls)){
+                if((nextClass != null) &&  visited.add(nextClass)) {
+                     queue.add(nextClass); //add class to the queue
+                }
+           }
+        }
+        return;
+    }
+
+    private List<Class<?>> getSuperClasses(Class<?> cls) {
+         List<Class<?>> superCs = new ArrayList<>();
+         superCs.addAll(Arrays.asList(cls.getInterfaces()));
+         superCs.add(cls.getSuperclass());
+         return superCs;
+    }
+
+    private boolean isVisited(Class<?> cls) {
+        return !(visited.add(cls));
+    }
+
+    public static void main(String[] args) {
+        ClassHierarchy ch = new ClassHierarchy();
+        System.out.println(ch.getClassHierarchy(LinkedList.class));
+    }
+}

@@ -1,0 +1,58 @@
+create or replace package body csv_pkg as  
+  function describe(  
+    tab in out dbms_tf.table_t,  
+    col_names varchar2  
+  )   
+    return dbms_tf.describe_t as  
+    new_cols dbms_tf.columns_new_t;  
+    col_id   pls_integer := 2;  
+  begin   
+
+    /* Enable the source colun for reading */  
+    tab.column(1).pass_through := FALSE;  
+    tab.column(1).for_read     := TRUE;  
+    new_cols(1) := tab.column(1).description;  
+
+    /* Extract the column names from the header string,  
+       creating a new column for each   
+     */  
+    for j in 1 .. ( length(col_names) - length(replace(col_names,',')) ) + 1 loop   
+      new_cols(col_id) := dbms_tf.column_metadata_t(  
+        name=>regexp_substr(col_names, '[^,]+', 1, j),--'c'||j,   
+        type=>dbms_tf.type_varchar2  
+      );  
+      col_id := col_id + 1;  
+    end loop;  
+
+    return dbms_tf.describe_t( new_columns => new_cols );  
+  end;  
+
+  procedure fetch_rows (col_names varchar2) as   
+    rowset    dbms_tf.row_set_t;  
+    row_count pls_integer;  
+  begin  
+    /* read the input data set */  
+    dbms_tf.get_row_set(rowset, row_count => row_count);  
+
+    /* Loop through the input rows... */  
+    for i in 1 .. row_count loop  
+      /* ...and the defined columns, extracting the relevant value   
+         start from 2 to skip the input string  
+      */  
+      for j in 2 .. ( length(col_names) - length(replace(col_names,',')) ) + 2 loop  
+        rowset(j).tab_varchar2(i) :=   
+          regexp_substr(rowset(1).tab_varchar2(i), '[^,]+', 1, j - 1);  
+      end loop;  
+    end loop;  
+
+    /* Output the new columns and their values */  
+    dbms_tf.put_row_set(rowset);  
+
+  end;  
+
+end csv_pkg;  
+
+--function
+create or replace function csv_to_columns(  
+  tab table, col_names varchar2  
+) return table pipelined row polymorphic using csv_pkg; 

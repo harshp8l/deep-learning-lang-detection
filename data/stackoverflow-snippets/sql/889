@@ -1,0 +1,24 @@
+ALTER TRIGGER [dbo].[trgForMedCMDWorkItemsUpdate]
+ON  [dbo].[MedCMDWorkItems]
+AFTER UPDATE AS 
+BEGIN
+  SET NOCOUNT ON;
+
+  declare @NewAssignedAt DateTime;
+  declare @OldAssignedAt DateTime;
+  declare @NewPulledAt DateTime;
+  declare @ID int;
+
+  select @NewPulledAt = i.PulledAt from inserted i;
+  select @NewAssignedAt = i.AssignedAt from inserted i;
+  select @OldAssignedAt = d.AssignedAt from deleted d;
+  select @ID = i.ID from inserted i;
+
+  --If work item is being un-assigned
+  if(@OldAssignedAt is NOT NULL and @NewAssignedAt is NULL)
+  BEGIN
+    SET NOCOUNT ON;
+    Update MedCMDWorkItems 
+    Set PulledAt = NULL
+    Where  ID = @ID
+  END

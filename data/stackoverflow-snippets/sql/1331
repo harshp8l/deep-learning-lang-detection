@@ -1,0 +1,24 @@
+add_filter( 'posts_search', 'extend_product_search', 20, 2 );
+function extend_product_search( $where, $query ) {
+    global $pagenow, $wpdb;
+
+    if ( 'edit.php' != $pagenow || ! is_search() || ! isset( $query->query_vars['s'] ) || 'product' != $query->query_vars['post_type'] ) {
+        return $where;
+    }
+    // Here your post meta keys
+    $meta_keys = array('_supplier_sku', '_sku_2');
+    $meta_keys = implode(""','"", $meta_keys);
+    // get the search value
+    $term      = sanitize_text_field( $query->query_vars['s'] );
+    // Light SQL Query to get the corresponding product IDs 
+    $search_ids = $wpdb->get_col( ""SELECT ID FROM {$wpdb->prefix}posts as p
+        LEFT JOIN {$wpdb->prefix}postmeta as pm ON p.ID = pm.post_id
+        WHERE pm.meta_key IN ('$meta_keys') AND pm.meta_value LIKE '%$term%'"" );
+    // Cleaning
+    $search_ids = array_filter( array_unique( array_map( 'absint', $search_ids ) ) );
+    // Alter the WHERE clause in the WP_Query search
+    if ( count( $search_ids ) > 0 ) {
+        $where = str_replace( 'AND (((', ""AND ( ({$wpdb->posts}.ID IN ("" . implode( ',', $search_ids ) . "")) OR (("", $where );
+    }
+    return $where;
+}

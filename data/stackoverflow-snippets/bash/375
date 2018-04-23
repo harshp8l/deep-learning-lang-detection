@@ -1,0 +1,26 @@
+const http = require('http');
+http.get(
+    'http://10.0.1.61:3052/agent/ppbe.js/init_status.js',
+    response => {
+        let body = '';
+
+        // Read the data.
+        response.on('data', chunk => {body += chunk});
+
+        // The file is complete, now we can use it.
+        response.on('end', () => {
+            const data = JSON.parse(
+                body.replace(
+                    /(?:^[\s\S]*?(?={))|(?:;[^;]*?$)/g,
+                    """"
+                )
+            );
+
+            // This logs the entire JSON object.
+            console.log(data);
+
+            // Getting the 'battery state'
+            console.log(data.status.battery.state);
+        });
+    }
+);

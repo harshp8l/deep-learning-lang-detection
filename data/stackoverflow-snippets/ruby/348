@@ -1,0 +1,20 @@
+Types::MutationType = GraphQL::ObjectType.define do
+  name ""Mutation""
+
+  field :createUser, Types::UserType do
+    description 'Allows you to create a new user'
+
+    argument :name, !types.String
+    argument :phone_number, !types.String
+
+    resolve ->(obj, args, ctx) {
+      begin
+        user = User.new(args.to_h)
+        user.save!
+        user
+      rescue ActiveRecord::RecordInvalid => err
+        GraphQL::ExecutionError.new(""#{user.errors.full_messages.join(', ')}"")
+      end
+    }
+  end
+end

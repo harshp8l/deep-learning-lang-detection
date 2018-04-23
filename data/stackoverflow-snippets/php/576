@@ -1,0 +1,24 @@
+use Doctrine\ORM\EntityManager;
+use Symfony\Component\Validator\Constraint;
+use Symfony\Component\Validator\ConstraintValidator;
+
+class UniquePhoneNumberValidator extends ConstraintValidator
+{
+    private $entityManager;
+
+    public function __construct(EntityManager $entityManager)
+    {
+        $this->entityManager = $entityManager;
+    }        
+
+    public function validate($phoneNumber, Constraint $constraint)
+    {
+        $client = $this->entityManager->getRepository(Client::class)->findByPhoneNumber($phoneNumber);
+
+        if (!is_null($client)) {
+            $this->context->buildViolation($constraint->message)
+                ->setParameter('{{ phoneNumber }}',$phoneNumber)
+                ->addViolation();
+        }
+    }
+}

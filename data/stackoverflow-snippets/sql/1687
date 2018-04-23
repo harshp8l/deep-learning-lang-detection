@@ -1,0 +1,19 @@
+WITH equivalent_courses ( course, course_num, equ_course, equ_num ) AS (
+  SELECT CONNECT_BY_ROOT( course ),
+         CONNECT_BY_ROOT( course_num ),
+         equ_course,
+         equ_num
+  FROM   Table2
+  START WITH ( course, course_num )
+             NOT IN ( SELECT equ_course, equ_num FROM TABLE2 )
+  CONNECT BY PRIOR equ_course = course
+  AND        PRIOR equ_num    = course_num
+)
+SELECT t.*,
+       COUNT(*) OVER (
+         PARTITION BY COALESCE( e.course, t.course ),
+                       COALESCE( e.course_num, t.course_num )
+       ) AS repeated
+FROM   Table1 t
+       LEFT OUTER JOIN equivalent_courses e
+       ON ( t.course = e.equ_course AND t.course_num = e.equ_num )

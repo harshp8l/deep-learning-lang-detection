@@ -1,0 +1,39 @@
+require 'sinatra'
+require './models/questionaire_manager'
+
+set :bind, '0.0.0.0'
+set :port, ENV['PORT']
+enable :sessions
+set :session_secret, 'SecretString#!$%'
+
+helpers do
+  def quiz_manager
+    @questionaire = session[:quiz_manager] ||= Questionaire_Manager.new 0
+  end
+end
+
+get '/' do
+  # Uncomment the line below if you intend to create a new quiz each time
+  # session[:quiz_manager] = nil
+  quiz_manager   # Initializes the session variable
+  erb :index
+end
+
+post '/' do
+  quiz_manager.number = params[:number]
+  redirect '/quiz'
+end
+
+get '/quiz' do
+  quiz_manager.genQuestionaire
+  erb :quiz
+end
+
+post '/quiz' do
+  redirect '/results'
+end
+
+get '/results' do
+  @number = quiz_manager.number
+  erb :results
+end

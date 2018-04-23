@@ -1,0 +1,52 @@
+class ActiveSupport::TestCase
+
+  def assert_xml(xml)
+    @xdoc = Nokogiri::XML(xml, nil, nil, Nokogiri::XML::ParseOptions::STRICT)
+    refute_nil @xdoc
+    return @xdoc
+  end
+
+  def assert_html(html=nil)
+    html ||= response.body
+    @xdoc = Nokogiri::HTML(html, nil, nil, Nokogiri::XML::ParseOptions::STRICT)
+    refute_nil @xdoc
+    return @xdoc
+  end
+
+  def assert_xpath(path, replacements={}, &block)
+    @xdoc ||= nil  #  Avoid a dumb warning
+    @xdoc or assert_html  #  Because assert_html snags response.body for us
+    element = @xdoc.at_xpath(path, nil, replacements)
+
+    unless element
+      complaint = ""Element expected in:\n`#{@xdoc}`\nat xpath:\n`#{path}`""
+      replacements.any? and complaint += ""\nwith: "" + replacements.pretty_inspect
+      raise Minitest::Assertion, complaint
+    end
+
+    if block
+      begin
+        waz_xdoc = @xdoc
+        @xdoc = element
+        block.call(element)
+      ensure
+        @xdoc = waz_xdoc
+      end
+    end
+
+    return element
+  end
+
+  def refute_xpath(path, replacements={}, &block)
+    @xdoc ||= nil  #  Avoid a dumb warning
+    @xdoc or assert_html  #  Because assert_html snags @response.body for us
+    element = @xdoc.at_xpath(path, nil, replacements)
+
+    if element
+      complaint = ""Element not expected in:\n`#{@xdoc}`\nat xpath:\n`#{path}`""
+      replacements.any? and complaint += ""\nwith: "" + replacements.pretty_inspect
+      raise Minitest::Assertion, complaint
+    end
+  end
+
+end

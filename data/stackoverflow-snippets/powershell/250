@@ -1,0 +1,25 @@
+$adminUrl = ""https://<tenant>-admin.sharepoint.com""
+$UserName = ""<username>@<tenant>.onmicrosoft.com"" 
+$Password = ""--password goes here--""
+
+$SecurePassword = $Password | ConvertTo-SecureString -AsPlainText -Force
+$creds = New-Object Microsoft.SharePoint.Client.SharePointOnlineCredentials($UserName, $SecurePassword)
+$pscreds = New-Object -TypeName System.Management.Automation.PSCredential -argumentlist $userName, $SecurePassword
+
+Connect-SPOService -Url $adminUrl -Credential $pscreds
+$sitesInfo = Get-SPOSite 
+
+foreach ($site in $sitesInfo) {
+    Write-Host 'Site collection:' $site.Url     
+    #1. Retrieve and print site info 
+    #Get-SPOSiteGroup -Site $site.Url
+    $AllWebs = Get-SPOWebs -Url $site.Url -Credential $creds
+
+    #2.Retrieve and print webs info (groups Title property in this case)
+    foreach ($web in $AllWebs) {
+        $web.Context.Load($web.RoleAssignments.Groups)
+        $web.Context.ExecuteQuery()
+        $web.RoleAssignments.Groups.GetEnumerator() | % { Write-Host $_.Title }   
+    }
+    Write-Host '-----------------------------' 
+}

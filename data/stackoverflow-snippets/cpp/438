@@ -1,0 +1,25 @@
+struct WrapperType {
+  using compare_t = int(void*,void*);
+    using copy_t    = void*(void*);
+    using free_t    = void(void*);
+
+    compare_t* _compare;
+    copy_t*    _copy;
+    free_t*    _free;
+};
+struct Wrapper {
+    void*      _data;
+    WrapperType* _type;
+
+    explicit Wrapper(void* data, WrapperType* type) noexcept : _data(data), _type(type) {}
+    Wrapper(Wrapper&& other) noexcept : _data(other._data), _type(other._type) {}
+    Wrapper& operator=(Wrapper&& other) noexcept 
+    {reset(); _data=other.release(); _type=other._type; return *this;}
+    ~Wrapper() noexcept {reset();}
+    void reset() noexcept {_type._free(_data); _data=nullptr;}
+    void* release() noexcept {void* data=_data; _data=nullptr; return data;}
+    boolean operator<(const Wrapper&other) noexcept {
+        assert(_type==other._type);
+        return _type._compare(_data, other._data)<0;
+    }
+};

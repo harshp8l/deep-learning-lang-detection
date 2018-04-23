@@ -1,0 +1,40 @@
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <atomic>
+
+inline void std_sleep(long double seconds) noexcept
+{    
+    using duration_t = std::chrono::duration<long long, std::nano>;
+    const auto duration =  duration_t(static_cast<long long> (seconds * 1e9));
+    std::this_thread::sleep_for(duration);
+}
+
+
+int main() {
+
+   std::atomic<bool> stop = false;
+
+    std::thread reader_thread;
+
+    auto reader = [&stop]() {
+      std::cout << ""starting reader"" << std::endl;
+      //BindToCPU(reader_thread, 0);
+
+      while(!stop) {
+          std_sleep(.25);
+      }
+
+      std::cout << ""exiting reader"" << std::endl;
+    };
+
+
+    reader_thread = std::thread(reader);
+
+    std_sleep(2.0);
+     stop = true;
+     std::cout << ""stopped"" << std::endl;
+
+    reader_thread.join();
+    return 0;
+}

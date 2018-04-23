@@ -1,0 +1,37 @@
+func (dao *campaignDAO) GetEventLevel(eventID string) (string, error) {
+    c := sess.DB("""").C(""eventboosts"") // sess represents a MongoDB Session
+    now := time.Now()
+    pipe := c.Pipe([]bson.M{
+        {
+            ""$match"": bson.M{
+                ""_event_id"":    eventID,            // Boost for the specific event
+                ""is_published"": true,               // Boost is active
+                ""start_date"":   bson.M{""$lt"": now}, // now is between start and end
+                ""end_date"":     bson.M{""$gt"": now}, // now is between start and end
+            },
+        },
+        {
+            ""$lookup"": bson.M{
+                ""from"":         ""campaigns"",
+                ""localField"":   ""_campaign_id"",
+                ""foreignField"": ""_id"",
+                ""as"":           ""campaign"",
+            },
+        },
+        {""$unwind"": ""$campaign""},
+        {
+            ""$match"": bson.M{
+                ""campaign.is_published"": true,      // Attached campaign is active
+            },
+        },
+    })
+
+    var result []*EventBoost
+    if err := pipe.All(&result); err != nil {
+        return """", err
+    }
+    if len(result) == 0 {
+        return ""standard"", nil
+    }
+    return result[0].Level, nil
+}

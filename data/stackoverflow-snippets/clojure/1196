@@ -1,0 +1,30 @@
+; https://projecteuler.net/problem=205
+
+(defn cart [& lists]
+  (let [syms (for [_ lists] (gensym))]
+    (eval `(for [~@(mapcat #(list %1 `'~%2) syms lists)]
+             (list ~@syms)))))
+
+(defn project-euler-205 []
+
+  (let [rolls (fn [n d]
+                (->> (range 1 (inc d))
+                  (repeat n)
+                  (apply cart)
+                  (map #(apply + %))
+                  frequencies))
+
+        peter-rolls (rolls 9 4)
+        colin-rolls (rolls 6 6)
+
+        all-results (* (apply + (vals peter-rolls))
+                       (apply + (vals colin-rolls)))
+
+        peter-wins (apply + (for [[pk pv] peter-rolls
+                                  [ck cv] colin-rolls
+                                  :when (> pk ck)]
+                              (* pv cv)))]
+
+    (/ peter-wins all-results)))
+
+(println (project-euler-205)) ; 48679795/84934656

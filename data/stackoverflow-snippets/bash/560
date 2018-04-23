@@ -1,0 +1,45 @@
+#!/bin/bash
+
+
+
+while :
+
+do
+
+        if [ ! -e RadiusLogInvalidarchive ] ; then
+
+                grep Invalid radius.log > RadiusLogInvalidArchive
+
+                mailx -E -s Radius-Invalid-User myuser@mail.com < RadiusLogInvalidArchive
+
+        else
+
+
+comm -2 -3 <(grep Invalid radius.log) RadiusLogInvalidArchive > testFile
+
+
+        if [ -s testFile ] ; then
+
+
+                awk ' BEGIN {
+                print ""|-------------------------------------------------Invalid User-----------------------------------------------------|""
+                print "" ""
+                print "" >> Port-NR <<         >>  Switch <<             >> MAC-Address << ""
+                print "" ""}
+                {print ""                 "", $22, ""                   "", $19, ""                  "", $11}' testFile | mailx -E -s Radius-Test myuser@mail.com
+
+        fi
+
+
+grep Invalid radius.log > RadiusLogInvalidArchive
+
+                if [ -f testFile ] ; then
+
+                        rm testFile
+
+                fi
+        fi
+
+sleep 1
+
+done

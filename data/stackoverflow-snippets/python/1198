@@ -1,0 +1,64 @@
+import random
+
+class Ability():
+    """"""Holds data of attacks:
+    ap = cost, desc= description, damage = ap + randint(0,ap), key = key to use it""""""
+    def __init__(self,ap,desc,key):
+        self.ap = int(ap)
+        self.desc = desc  
+        self.key = key
+
+    def __str__(self, **kwargs):
+        """"""Print one ability.""""""
+        return f'  {self.key} -> {self.desc} for {self.ap} AP'
+
+
+class NStats :
+    """"""Stats of player/monster""""""
+    def __init__(self, health:int, actionpoints:int):
+         self.health = health
+         self.ap = actionpoints
+         self.abilities  = { ""SHP""  :Ability( 5,""Super Hard Punch"", ""SHP"" ), 
+                             ""WP""   :Ability( 1,""Weak Punch"", ""WP"" ), 
+                             ""KAME"" :Ability(50,""All Out Attack"", ""KAME"" ), 
+                             ""SA""   :Ability(10,""Your Special Attack"", ""SA"" ) } 
+    def printAbs(self): 
+        """"""Print own abilities""""""
+        for n in sorted(self.abilities, key = lambda x: self.abilities[x].ap):
+            print(str(self.abilities[n]))
+
+    def attack(self, other):
+        """"""Attack other. TODO: other should retaliate. Currently you
+        die only by exausting all your ap.""""""
+        print(""FIIIIIGHT"")
+        while other.health > 0 and self.health > 0:
+            print(f'Rest Health: {self.health} Rest AP: {self.ap}  vs  {other.health}')
+            self.printAbs()
+            what = input(""What to do...\n"" ).upper()
+
+            # dict.get(key,default) - if key not in dict, it returns None 
+            ab = self.abilities.get(what,None)
+            # only if attack found in dict AND ap are enough
+            if ab and ab.ap <= self.ap:
+                other.health -= ab.ap + random.randint(0,ab.ap) # damage of attack
+                self.ap -= ab.ap    # cost of attack
+
+            # only if attack found in dict AND ap too low
+            elif ab and ab.ap > self.ap:
+                print(""you are too exhausted and loose another 10 AP"")
+                self.ap -= 10 
+
+            # no else : typos simply query for new input 
+
+            if other.health <= 0:
+                print(""You win"")
+                break
+            elif self.health <= 0 or self.ap <= 0:
+                print(""You loose"")
+                break
+
+# lets fight, me vs you ;o)
+Me = NStats(100,100)
+You = NStats(100,5)
+
+Me.attack(You)

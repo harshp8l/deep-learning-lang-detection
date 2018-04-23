@@ -1,0 +1,34 @@
+const oracledb = require('oracledb');
+const config = require('./dbConfig.js');
+
+async function runTest() {
+  let conn;
+
+  try {
+    conn = await oracledb.getConnection(config);
+
+    let result;
+    let value = 1;
+
+    if (value === null) {
+      result = await conn.execute('delete from t where c is null');
+    } else { // other values should have a bind
+      result = await conn.execute('delete from t where c = :value', [value]);
+    }
+
+    // Note that the work was not committed.
+    console.log('Rows deleted:', result.rowsAffected);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+}
+
+runTest();

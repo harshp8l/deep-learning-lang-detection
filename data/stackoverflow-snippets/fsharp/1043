@@ -1,0 +1,100 @@
+open System
+open System.IO
+
+// The result of a stream reader operation is either
+//  Success of value
+//  Failure of list of failures
+type StreamReaderResult<'T> =
+  | Success of 'T
+  | Failure of (string*StreamPosition) list
+
+and StreamPosition =
+  {
+    Stream    : byte[]
+    Position  : int
+  }
+
+  member x.Remaining = max 0 (x.Stream.Length - x.Position)
+
+  member x.ReadBytes (size : int) : StreamPosition*StreamReaderResult<byte[]> =
+    if x.Remaining < size then
+      x, Failure [""EOS"", x]
+    else
+      let nsp = StreamPosition.New x.Stream (x.Position + size)
+      nsp, Success (x.Stream.[x.Position..(x.Position + size - 1)])
+
+  member x.Read (converter : byte[]*int -> 'T) : StreamPosition*StreamReaderResult<'T> =
+    let size = sizeof<'T>
+    if x.Remaining < size then
+      x, Failure [""EOS"", x]
+    else
+      let nsp = StreamPosition.New x.Stream (x.Position + size)
+      nsp, Success (converter (x.Stream, x.Position))
+
+  static member New s p = {Stream = s; Position = p;}
+
+// Defining the StreamReader<'T> function is the most important decision
+//   In this case a stream reader is a function that takes a StreamPosition 
+//   and produces a (potentially) new StreamPosition and a StreamReadeResult
+type StreamReader<'T> = StreamReader of (StreamPosition -> StreamPosition*StreamReaderResult<'T>)
+
+// Defining the StreamReader CE
+module StreamReader =
+  let Return v : StreamReader<'T> =
+    StreamReader <| fun sp -> 
+      sp, (Success v)
+
+  let Bind (StreamReader t) (fu : 'T -> StreamReader<'U>) : StreamReader<'U> =
+    StreamReader <| fun sp -> 
+      let tsp, tr = t sp
+      match tr with
+      | Success tv ->
+        let (StreamReader u) = fu tv
+        u tsp
+      | Failure tfs -> tsp, Failure tfs
+
+  let Yield (ft : unit -> StreamReader<'T>) : StreamReader<'T> =
+    StreamReader <| fun sp -> 
+      let (StreamReader t) = ft ()
+      t sp
+
+type StreamReaderBuilder() =
+  member x.Return v   = StreamReader.Return v
+  member x.Bind(t,fu) = StreamReader.Bind t fu
+  member x.Yield(ft)  = StreamReader.Yield ft
+
+let reader = StreamReaderBuilder ()
+
+let read (StreamReader sr) (bytes : byte[]) (pos : int) : StreamReaderResult<'T> =
+  let sp    = StreamPosition.New bytes pos
+  let _, sr = sr sp
+  sr
+
+// Defining various stream reader functions
+let readValue (converter : byte[]*int -> 'T) : StreamReader<'T> =
+  StreamReader <| fun sp -> sp.Read converter
+
+let readInt32 = readValue BitConverter.ToInt32
+let readInt16 = readValue BitConverter.ToInt16
+let readBytes size : StreamReader<byte[]> = 
+  StreamReader <| fun sp -> 
+    sp.ReadBytes size
+
+let readImage = 
+  reader {
+    let! width  = readInt32 
+    let! height = readInt32 
+    let! bytes  = readBytes (width*height)
+
+    return width, height, bytes
+  }
+
+[<EntryPoint>]
+let main argv = 
+  // Sample byte stream
+  let bytes   = [|2;0;0;0;3;0;0;0;1;2;3;4;5;6|] |> Array.map byte
+  let result  = read readImage bytes 0
+
+  printfn ""%A"" result
+
+  0

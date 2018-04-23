@@ -1,0 +1,25 @@
+(defn apply-style-x
+  ""Given an existing-map and a new-map, if the new-map specifies a   
+  style, apply it if it exists.  Otherwise do nothing. Return   
+  [updated-map new-doc-map error-string]""
+  [doc-string doc-map existing-map new-map]
+  (let [style-name (get new-map :style :not-specified)]
+    (if (= style-name :not-specified)
+      [existing-map doc-map nil]
+      (let [style-map (if (= style-name :default)
+                        (get-default-options)
+                        (get-in existing-map
+                                [:style-map style-name]))]
+        (cond
+          (nil? style-name) [existing-map doc-map
+                             ""Can't specify a style of nil!""]
+          style-map
+            [(merge-deep existing-map style-map)
+             (when doc-map
+               (diff-deep-doc
+                 (str doc-string "" specified :style "" style-name)
+                 doc-map
+                 existing-map
+                 style-map)) nil]
+          :else [existing-map doc-map
+                 (str ""Style '"" style-name ""' not found!"")])))))

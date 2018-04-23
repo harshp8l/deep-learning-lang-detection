@@ -1,0 +1,22 @@
+(def make-game
+  [players]
+  (let [[draw & deck] (shuffle cards)]
+  {:draw draw
+   :deck deck
+   :points (zipmap players (repeat 0))
+   :dealer (first players)})
+
+(defn run-round
+  [game]
+  (let [points (update-points (:draw game) (:points game))
+        [draw & deck] (:deck game)]
+    (assoc game :deck deck :draw draw :points points)))
+
+(defn winner?
+  [game]
+  (some #(> (val %) 42) (:points game)))
+
+(defn -main
+  (let [gameplay (take-while #(not (winner? %))
+                             (iterate run-round (make-game)))]
+    (:points (run-round (last gameplay)))))

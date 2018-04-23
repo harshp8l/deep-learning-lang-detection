@@ -1,0 +1,32 @@
+//add a type parameter, now you have a typeclass
+trait LettersSingleton[T] {
+   def sayhi() : String
+}
+
+//LettersClass stays the same
+
+object Implicits {
+  //implicit classes/objects have to go inside an object
+
+  //create typeclass instances as implicit objects
+  implicit object LetterASingleton extends LettersSingleton[LetterA] {
+     def sayhi = ""Hi I am A""
+  }
+
+  implicit object LetterBSingleton extends LettersSingleton[LetterB] {
+     def sayhi = ""Hi I am B""
+  }
+}
+
+import Implicits._
+
+//add an implicit parameter to the class
+abstract class Act[ T <: LettersClass ](implicit singleton: LettersSingleton[T])  {
+
+   def actionTwo() = {
+       println( singleton.sayhi )
+   }
+}
+
+(new Act[LetterA]).actionTwo() //prints ""Hi I am A""
+(new Act[LetterB]).actionTwo() //prints ""Hi I am B""

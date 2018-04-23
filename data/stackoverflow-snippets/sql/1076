@@ -1,0 +1,41 @@
+SQL> select *
+  2  from test t
+  3  where t.date_time = (select max(t1.date_time) from test t1
+  4                       where t1.usern = t.usern
+  5                         and t1.date_time <= to_date('&&date_you_enter', 'dd.mm.yyyy')
+  6                      )
+  7    and t.hour = (select max(case when e.it_exists = 'Y' then t.hour
+  8                                  else t2.hour
+  9                             end)
+ 10                  from test t2 left join
+ 11                      (select t3.usern, 'Y' it_exists
+ 12                       from test t3
+ 13                       where t3.date_time = to_date('&&date_you_enter', 'dd.mm.yyyy')
+ 14                      ) e on e.usern = t2.usern
+ 15                 )
+ 16  order by t.date_time, t.hour;
+Enter value for date_you_enter: 20.05.2018
+
+USE DATE_TIME        HOUR      VALUE
+--- ---------- ---------- ----------
+HH1 20.05.2018          1         50
+HH1 20.05.2018         10         50
+HH1 20.05.2018         18        120
+
+SQL> undefine date_you_enter
+SQL> /
+Enter value for date_you_enter: 21.05.2018
+
+USE DATE_TIME        HOUR      VALUE
+--- ---------- ---------- ----------
+HH1 20.05.2018         18        120
+
+SQL> undefine date_you_enter
+SQL> /
+Enter value for date_you_enter: 25.05.2018
+
+USE DATE_TIME        HOUR      VALUE
+--- ---------- ---------- ----------
+HH1 25.05.2018         12         10
+
+SQL>

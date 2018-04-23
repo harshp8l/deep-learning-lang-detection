@@ -1,0 +1,38 @@
+string GenerateCode()
+{
+    return string.Join(""\n"", GetImplementationCode());
+}
+
+IEnumerable<string> GetImplementationCode()
+{
+    return UpgradeManager.Instance.HasUpgrade(""basicCounter"")
+        ? GetCounterCode()
+        : GetIncreaseUnitsCode();
+}
+IEnumerable<string> GetCounterCode()
+{
+    yield return ""private timer = 20;"";
+
+    yield return ""private void Update() {"";
+    yield return ""if(timer > 0) {"";
+
+    foreach (var loc in GetIncreaseUnitsCode())
+    {
+        yield return loc;
+    }
+
+    yield return ""}"";
+    yield return ""}"";
+}
+IEnumerable<string> GetIncreaseUnitsCode()
+{
+    if (UpgradeManager.Instance.HasUpgrade(""basicFunction""))
+    {
+        yield return ""GainUnits();"";
+    }
+    else
+    {
+        var gains = /* insert logics here */;
+        yield return $""units += {gains};"";
+    }
+}

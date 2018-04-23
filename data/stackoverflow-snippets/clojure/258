@@ -1,0 +1,21 @@
+(require '[better-cond.core :as b])
+
+(def s 10)
+(def keyboards '(3 1))
+(def drives '(5 2 8))
+
+(let [k (sort (fn [x y] (> x y)) keyboards) ; sort into decreasing
+      d (sort (fn [x y] (> x y)) drives)]   ; sort into decreasing
+  (loop [k1 (first k) ks (rest k) d1 (first d) ds (rest d)]
+    (b/cond
+      (or (nil? k1) (nil? d1)) -1           ; when one of the list is empty
+      :let [x (+ k1 d1)]
+      (< x s) x
+      (and (empty? ks) (empty? ds)) -1
+      :let [y (+ k1 (first ds))]
+      (empty? ks) (if (< y s) (dec y))
+      :let [z (+ d1 (first ks))]
+      (empty? ds) (if (< z s) (dec z))
+      :else (let [bs (take-while #(< % s) [(+ k1 (first ds)) (+ (first ks) d1)])]
+              (if (empty? bs) (recur (first ks) (rest ks) (first ds) (rest ds))
+                (apply max bs))))))

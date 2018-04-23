@@ -1,0 +1,183 @@
+' Liste des fichiers à concaténer.
+FILE_1 = ""Fichier 1.txt""
+FILE_2 = ""Fichier 2.txt""
+FILE_3 = ""Fichier 3.txt""
+FILE_4 = ""Fichier 4.txt""
+
+
+
+' Nom du fichier concaténé.
+OUTPUT_FILE = ""Final.txt""
+
+
+
+' _____________________________________________________________________________
+
+' Liste des Byte Order Mark (BOM).
+BOM_UTF8     = ""EFBBBF""
+BOM_UTF16_LE = ""FFFE""
+BOM_UTF16_BE = ""FEFF""
+BOM_UTF32_LE = ""FFFE0000""
+BOM_UTF32_BE = ""0000FEFF""
+
+' Taille maximum d'un BOM, ici 4 octets avec l'UTF-32.
+BOM_MAX_SIZE = 4
+
+error_message_1 = """"""Erreur, le fichier : """""""""""" & FILE_1 & """""""""""" n'existe pas.""""  & vbCrLf & """"Ce script va s'arrêter.""""""
+'                 """"""Error, the file: """"""""""""     & FILE_1 & """""""""""" doesn't exist."""" & vbCrLf & """"This script will stop.""""""
+error_message_2 = """"""Erreur : Le Byte Order Mark de """""""""""" & current_file_name & """""""""""" est """""""""""" & FILE_BOM & """""""""""" au lieu de """""""""""" & FIRST_FILE_BOM & """""""""""".""""  & vbCrLf & """"Ce script va s'arrêter.""""""
+'                 """"""Error: The Byte Order Mark in """"""""""""  & current_file_name & """""""""""" is """"""""""""  & FILE_BOM & """""""""""" instead of """""""""""" & FIRST_FILE_BOM & """""""""""".""""  & vbCrLf & """"This script will stop.""""""
+end_message     = ""Opération accomplie.""
+'                 ""Operation completed.""
+error_code      = 0
+exit_delay      = 5000 
+' On attend 5 secondes (5000 millisecondes) au cas où le script serait exécuté en mode console.
+
+dim file_system_object
+set file_system_object = CreateObject(""Scripting.FileSystemObject"")
+dim current_directory
+set current_directory  = file_system_object.GetFolder(""."")
+
+' Si le premier fichier n'existe pas, on stoppe le programme en renvoyant le code d'erreur -1.
+if (file_system_object.FileExists(FILE_1) = FALSE) then
+    Execute ""WScript.Echo("" & error_message_1 & "")""
+    WScript.Sleep exit_delay
+    WScript.Quit(-1)
+end if
+
+' On détecte le BOM du premier fichier.
+FILE_BOM = ""NONE""
+
+error_code = my_function_read_bom(FILE_1, FILE_BOM)
+If error_code <> 0 Then
+    WScript.Sleep exit_delay
+    WScript.Quit(error_code)
+End If
+
+FIRST_FILE_BOM = FILE_BOM
+' WScript.Echo(FILE_1 & "" : "" & FIRST_FILE_BOM)
+
+' On crée le fichier de sortie.
+file_system_object.CopyFile current_directory & ""\"" & FILE_1, current_directory & ""\"" & OUTPUT_FILE, TRUE
+' TRUE = Écraser le fichier s'il existe déjà.
+
+' On prend chaque fichier suivant avec une boucle while en utilisant un nom de variable dynamique (avec la commande ""Execute"").
+dim input_file
+dim output_file
+set output_file   = file_system_object.OpenTextFile(OUTPUT_FILE, 8, FALSE, 0)
+current_file_name = FILE_2
+file_number       = 2
+Do While (file_system_object.FileExists(current_file_name) = TRUE)
+    ' Execute ""WScript.Echo """"Current file: """" & FILE_"" & file_number
+
+    If FIRST_FILE_BOM = ""NONE"" Then
+        set input_file  = file_system_object.OpenTextFile(current_file_name, 1, FALSE, 0)
+        Do Until input_file.AtEndOfStream
+            output_file.Write(input_file.Read(1))
+        Loop
+        input_file.Close
+    Else
+        ' On vérifie son BOM.
+        FILE_BOM = ""NONE""
+        error_code = my_function_read_bom(current_file_name, FILE_BOM)
+        If error_code <> 0 Then
+            WScript.Sleep exit_delay
+            WScript.Quit(error_code)
+        End If
+        ' WScript.Echo current_file_name & "" : "" & FILE_BOM
+
+        ' Si le BOM est différent, on stoppe avec le code d'erreur -2.
+        If FIRST_FILE_BOM <> FILE_BOM Then
+            Execute ""WScript.Echo("" & error_message_2 & "")""
+            WScript.Sleep exit_delay
+            WScript.Quit(-2)
+        End If
+
+        ' On ajoute dans le fichier de sortie le contenu du fichier mais sans son BOM.
+        Select Case FILE_BOM
+        Case ""UTF8""
+            SIZE_OF_BOM = 3
+        Case ""UTF16LE"", ""UTF16BE""
+            SIZE_OF_BOM = 2
+        Case ""UTF32LE"", ""UTF32BE""
+            SIZE_OF_BOM = 4
+        Case Else
+            WScript.Sleep exit_delay
+            WScript.Quit(-3)
+        End Select
+
+        count_character = 1
+        set input_file  = file_system_object.OpenTextFile(current_file_name, 1, FALSE, 0)
+        Do Until input_file.AtEndOfStream
+            If count_character > SIZE_OF_BOM Then
+                output_file.Write(input_file.Read(1))
+            Else
+                input_file.Read(1)
+            End If
+            count_character = count_character + 1
+        Loop
+        input_file.Close
+    End If
+
+    file_number = file_number + 1
+    Execute ""current_file_name = FILE_"" & file_number
+    ' WScript.Echo ""Next file: "" & current_file_name
+Loop
+output_file.Close
+
+WScript.Echo(end_message)
+WScript.Sleep exit_delay
+WScript.Quit(0)
+
+
+
+' ___________________________________________________________________________''
+
+Function my_function_read_bom(Byval file_name, ByRef FILE_BOM)
+    dim input_file
+    ' 1 = ForReading   2 = ForWriting   8 = ForAppending (écrire à partir de la fin).
+    ' FALSE = Ne pas créer le fichier s'il n'existe pas.
+    ' -1 = TristateTrue (ouvre en UTF-16 LE, par groupe de 2 octets)   0 = TristateFalse = 0 (en ASCII, lit octet par octet, mode par défaut)   -2 = TristateUseDefault = -2 (selon l'encodage par défaut du système d'exploitation).
+    set input_file = file_system_object.OpenTextFile(file_name, 1, FALSE, 0)
+
+    offset_read = 0
+    byte_read   = """"
+    byte_string = """"
+
+    Do Until input_file.AtEndOfStream
+    ' Ou   Do While Not input_file.AtEndOfStream
+
+        byte_read   = UCase(CStr(Hex(Asc(input_file.Read(1)))))
+        byte_read   = String(2 - Len(byte_read), ""0"") & byte_read
+        byte_string = byte_string & byte_read
+        byte_read   = """"
+        offset_read = offset_read + 1
+
+        If offset_read >= BOM_MAX_SIZE Then
+            Exit Do
+        End If
+    Loop
+    input_file.Close
+
+    If FILE_BOM = ""NONE"" Then
+        If Left(UCase(byte_string), 8) = BOM_UTF32_LE Then
+            FILE_BOM = ""UTF32LE""
+        Else If Left(UCase(byte_string), 8) = BOM_UTF32_BE Then
+            FILE_BOM = ""UTF32BE""
+        Else If Left(UCase(byte_string), 6) = BOM_UTF8 Then
+            FILE_BOM = ""UTF8""
+        Else If Left(UCase(byte_string), 4) = BOM_UTF16_LE Then
+            FILE_BOM = ""UTF16LE""
+        Else If Left(UCase(byte_string), 4) = BOM_UTF16_BE Then
+            FILE_BOM = ""UTF16BE""
+        Else
+            my_function_read_bom = -4
+        End If
+        End If
+        End If
+        End If
+        End If
+    End If
+
+    my_function_read_bom = 0
+End Function

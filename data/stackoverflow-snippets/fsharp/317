@@ -1,0 +1,54 @@
+(* xsd.fsi *)
+
+/// Just a string marked by the type of data whose XSD it holds.
+/// Implementation is private so that callers can't create any XSD
+/// they like.
+type 'a t
+
+/// Gives us the string representation of the XSD.
+val to_string : 'a t -> string
+
+/// Wraps an XSD encoding inside the <xsd:schema> tag pair.
+val root : 'a t -> 'a t
+
+// Primitive types.
+
+val int : int t
+val int64 : int64 t
+val string : string t
+
+/// Encode a two-field record's type (name and fields along with their
+/// types) as XSD.
+val record2 : string -> string * 'a1 t * string * 'a2 t -> 'a t
+
+(* xsd.fs *)
+
+type 'a t = { to_string : string }
+
+let to_string xsd = xsd.to_string
+let root xsd =
+  { to_string =
+      sprintf ""<xsd:schema xmlns:xsd=\""http://www.w3.org/2001/XMLSchema\"">
+  %s
+</xsd:schema>"" xsd.to_string }
+
+let int = { to_string = ""integer"" }
+let int64 = { to_string = ""long"" }
+let string = { to_string = ""string"" }
+
+/// Helper for record fields.
+let element name typ =
+  sprintf ""<xsd:element name=\""%s\"" type=\""%s\""/>"" name typ
+
+let record2 name (field1, xsd1, field2, xsd2) =
+  { to_string =
+      sprintf
+        ""<xsd:complexType name=\""%s\"">
+  <xsd:sequence>
+    %s
+    %s
+  </xsd:sequence>
+</xsd:complexType>""
+        name
+        (element field1 xsd1.to_string)
+        (element field2 xsd2.to_string) }

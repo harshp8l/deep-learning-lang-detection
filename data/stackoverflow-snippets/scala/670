@@ -1,0 +1,18 @@
+class WorkerActor extends Actor {
+  // you do not need to declare implicit val if you just need to pass it once
+  val healthCheckService = new HealthCheckService(context.system)
+
+  override def receive: Receive = {
+    case HealthCheck => sender ! healthCheckService.execute()
+  }
+}
+
+class HealthCheckService(implicit val system: ActorSystem) {
+  // dispatcher is already implicit so you need just import it, not declare another val
+  import system.dispatcher
+  def execute() = {
+    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = ""http://someRandom.url""))
+
+    and do something with the response....
+  }
+}

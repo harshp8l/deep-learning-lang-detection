@@ -1,0 +1,51 @@
+type Employee = { Id : int; SupervisorId : int option; PersonalSales : double }
+
+type GroupSales = double
+type SalesMember =
+  | SalesPerson of Employee
+  | Supervisor of Employee * SalesMember List * GroupSales
+
+let rawData =
+    [ 0, None, 0.
+      1, Some 0, 100.00
+      2, Some 0, 110.00
+      3, Some 1, 50.00
+      4, Some 1, 75.00
+      5, Some 2, 80.00
+      6, Some 0, 92.00 ]
+
+let flatList =
+    rawData
+    |> List.map (fun (id, superId, sales) -> 
+                     {Id = id; SupervisorId = superId; PersonalSales = sales})
+
+let getTree salesPeople =
+    let root = salesPeople |> List.find (fun p -> p.SupervisorId = None)
+    let children supervisorId = 
+        salesPeople |> List.filter (fun p -> p.SupervisorId = Some supervisorId)
+
+    let rec loop employee = 
+        match children employee.Id with
+          | [] -> SalesPerson employee
+          | list -> Supervisor (employee, List.map loop list, 0.)
+
+    loop root
+
+let transformTree root =
+    let rec getGroupSales = function
+      | SalesPerson emp 
+        -> emp.PersonalSales
+      | Supervisor (sup, reports, _) 
+        -> sup.PersonalSales + List.sumBy getGroupSales reports
+
+    let rec loop = function
+      | Supervisor (sup, reports, _) as mem
+        -> Supervisor (sup, List.map loop reports, getGroupSales mem)
+      | salesPerson -> salesPerson
+
+    loop root
+
+let salesForce = 
+    flatList 
+    |> getTree
+    |> transformTree

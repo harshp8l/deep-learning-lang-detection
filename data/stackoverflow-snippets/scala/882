@@ -1,0 +1,27 @@
+// import required packages
+import java.io._
+import com.github.plokhotnyuk.jsoniter_scala.macros._
+import com.github.plokhotnyuk.jsoniter_scala.core._
+
+// define your model that mimic JSON format
+case class Device(id: Int, model: String)
+case class User(name: String, devices: Seq[Device])
+
+// create codec for type that corresponds to root of JSON
+val codec = JsonCodecMaker.make[User](CodecMakerConfig())
+
+// read & parse JSON from file to your data structures
+val user = {
+  val fis = new FileInputStream(""/tmp/input.json"")
+  try JsonReader.read(codec, fis)
+  finally fis.close()
+}
+
+// transform your data
+val newUser = user
+  .copy(devices = user.devices :+ Device(id = 2, model = ""iPhone X""))
+
+// write your transformed data to json file
+val fos = new FileOutputStream(""/tmp/output.json"")
+try JsonWriter.write(codec, newUser, fos)
+finally fos.close()

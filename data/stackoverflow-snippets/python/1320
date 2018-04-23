@@ -1,0 +1,60 @@
+def subset_sum_of_len_in_range (vals, total_to_use, lower, upper):
+    # Sorting it makes it easy to calculate min/max of partial sum
+    # from here - it will be the beginning or end.  This will be
+    # useful in filtering.
+    sorted_vals = sorted(vals)
+
+    # Precalculating partial sums from beginning makes partial sum
+    # of a range even easier - just subtract two.
+    total = 0
+    cum_prev_sum = [total]
+    for i in sorted_vals:
+        total = total + i
+        cum_prev_sum.append(total)
+
+    # It is always easiest to solve DP problems by caching recursive ones.
+    cache = {}
+
+    # And now our recursive cached solver.
+    def sub_problem (position, to_use, current_sum):
+        if len(vals) - position < to_use:
+            # Not enough values left to possibly solve this.
+            return False
+
+        cache_key = (position, to_use, current_sum)
+        if cache_key not in cache:
+            lowest_sum = current_sum + cum_prev_sum[position + to_use] - cum_prev_sum[position]
+            if upper < lowest_sum:
+                # Can't possibly get in range.
+                cache[cache_key] = False
+                return False
+            elif lower <= lowest_sum:
+                # Found one in range!
+                cache[cache_key] = True
+                return True
+
+            highest_sum = current_sum + cum_prev_sum[len(vals)] - cum_prev_sum[len(vals) - to_use]
+            if highest_sum < lower:
+                # Can't possibly get in range.
+                cache[cache_key] = False
+                return False
+            elif highest_sum <= upper:
+                # Found one in range!
+                cache[cache_key] = True
+                return True
+
+            # Now try recursion.
+            if sub_problem(position + 1, to_use, current_sum):
+                # There is a solution that did not use this value
+                cache[cache_key] = True
+            elif sub_problem(position + 1, to_use-1, current_sum + vals[position]):
+                # There is a solution that did use this value
+                cache[cache_key] = True
+            else:
+                # There is no solution.
+                cache[cache_key] = False
+
+
+        return cache[cache_key]
+
+    return sub_problem(0, total_to_use, 0)

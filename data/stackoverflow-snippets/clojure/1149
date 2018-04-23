@@ -1,0 +1,12 @@
+(defmacro with-callable (bindings &body body)
+  ""For each binding that contains a name and an expression, bind the
+   name to a local function which will be a callable form of the
+   value of the expression.""
+  (let ((gensyms (loop for b in bindings collect (gensym))))
+    `(let ,(loop for (var val) in bindings
+                 for g in gensyms
+                 collect `(,g (make-callable ,val)))
+       (flet ,(loop for (var val) in bindings
+                    for g in gensyms
+                    collect `(,var (&rest args) (apply ,g args)))
+         ,@body))))

@@ -1,0 +1,24 @@
+(require '[clojure.zip :as zip :refer [root node]])
+
+(defn complex-thing [zip]
+  (if (zip/end? zip) ;; are we done?
+    (root zip) ;; return the ""updated"" vector
+    (let [current-node (node zip)
+          before-node (node (zip/prev zip))] ;; you can access any map in the vector, both before or after
+      (if (= (:tag current-node) (:tag before-node))
+        (recur (-> zip
+                   zip/prev ;; move to the previous map
+                   (zip/edit update :dups inc) ;; increment it
+                   zip/next ;; move back to the current map
+                   (zip/edit update :dups inc)
+                   (zip/insert-left {:tag ""----""}) ;; insert ""---"" before the current tag
+                   zip/next)) ;; move to next map to process
+        (recur (zip/next zip))))))
+
+(complex-thing (zip/next (zip/next (zip/vector-zip x)))) ;; start from the second element of the vector
+
+[{:tag ""0"", :dups 0} 
+ {:tag ""1"", :dups 1} 
+ {:tag ""----""} 
+ {:tag ""1"", :dups 1} 
+ {:tag ""3"", :dups 0}]

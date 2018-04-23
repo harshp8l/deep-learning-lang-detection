@@ -1,0 +1,25 @@
+DECLARE @MyTable TABLE ([DateTime] DATETIME, UserName VARCHAR(10))
+INSERT INTO @MyTable VALUES
+('2017-01-01 07:45:00', 'User1'),
+('2017-01-01 08:46:00', 'User2'),
+('2017-01-01 09:45:00', 'User1'),
+('2017-01-01 20:46:00', 'User2'),
+('2017-01-01 22:58:00', 'User1'),
+('2017-01-01 23:30:00', 'User2')
+
+
+SELECT UserName, [DateTime] FROM (
+    SELECT 
+        UserName
+        , SHF.SDate [DateTime]
+        , ROW_NUMBER() OVER( PARTITION BY SHF.SDate ORDER BY COUNT(*) DESC) RN 
+    FROM @MyTable T
+        CROSS APPLY( VALUES( CONVERT(VARCHAR(10), T.[DateTime], 112) + ' 07:30', CONVERT(VARCHAR(10), T.[DateTime], 112) + ' 19:29' ),
+                           ( CONVERT(VARCHAR(10), T.[DateTime], 112) + ' 19:30', DATEADD(DAY,1,CONVERT(VARCHAR(10), T.[DateTime], 112) + ' 07:29'))
+        ) SHF ( SDate ,EDate ) 
+    WHERE T.[DateTime] BETWEEN SHF.SDate AND SHF.EDate
+    GROUP BY 
+        UserName
+        , SHF.SDate
+) AS A
+WHERE RN = 1

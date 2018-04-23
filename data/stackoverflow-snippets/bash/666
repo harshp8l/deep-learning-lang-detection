@@ -1,0 +1,39 @@
+use Data::Dumper;
+
+# we only need to process the sync file once -
+# and store what we find in a hash (dictionary)
+
+open $fh1, '<', 'shadow.sync.txt';
+
+while (<$fh1>)
+{
+    m/^([^:]+):(.*)$/;
+
+    $hash->{$1} = $2;
+}
+
+close $fh1;
+
+# this shows us what we found & stored
+
+print Dumper $hash;
+
+# now we'll process the shadow file which needs updating -
+# here we output a side-by-side comarison of what the passwords
+# currently are & what they will be updated to (from the hash)
+
+open $fh2, '<', 'shadow.txt';
+open $fh3, '>', 'shadow.UPDATED.txt';
+
+while (<$fh2>)
+{
+    m/^([^:]+):(.*)$/;
+
+    printf ( ""%s => %s\n"",   $1, $2 );
+    printf ( ""%s => %s\n\n"", $1, $hash->{$1} );
+
+    printf $fh3 ( ""%s:%s\n"", $1, $hash->{$1} );
+}
+
+close $fh3;
+close $fh2;

@@ -1,0 +1,38 @@
+(ns xyz
+  (:require
+    [tupelo.core :as t]
+  ))
+(t/refer-tupelo)
+(spyx *clojure-version*)
+
+(defmacro dissect [ fn-src ]
+  (let [fn-fn     (first fn-src)
+        arg-vec   (second fn-src)
+        forms     (drop 2 fn-src) ]
+    (spyx fn-fn)
+    (spyx arg-vec)
+    (spyx forms)
+    ; Here is the return value; ie the transformed code
+    `(defn my-fn 
+       ~arg-vec
+       (apply + ~arg-vec))))
+
+; show the result
+(newline)
+(println
+  (macroexpand-1 
+    '(dissect 
+      (fn [a b c] 
+        (println ""the answer is"")
+        42))))
+
+; call it for real
+(newline)
+(dissect 
+  (fn [a b c] 
+    (println ""the answer is"")
+    42))
+
+; use the generated function
+(newline)
+(spyx (my-fn 1 2 3))

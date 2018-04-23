@@ -1,0 +1,27 @@
+select *
+from
+(
+    SELECT
+      employee_tbl.emp_maxid,
+      emp_name AS 'Employee Name',
+      Designation_tbl.Des_Name AS Designation,
+      emp_LabourID,
+      emp_IBAN,
+      emp_monthlysalary AS Salary,
+      0 AS commission,
+      ISNULL(emp_monthlysalary - sum(S.Paid), emp_monthlysalary) AS Total
+    FROM dbo.employee_tbl
+    INNER JOIN dbo.Designation_tbl
+      ON Designation_tbl.Des_id = employee_tbl.Des_id
+    LEFT JOIN SalaryProcessLog_tbl S
+      ON S.emp_maxid = employee_tbl.emp_maxid
+    WHERE (emp_deleted = 0
+    OR emp_deleted IS NULL)
+    AND employee_tbl.emp_maxid NOT IN (SELECT
+      emp_maxid
+    FROM SalaryProcessLog_tbl
+    WHERE Balance = 0)
+    group by employee_tbl.emp_maxid,dbo.employee_tbl.emp_name,Designation_tbl.Des_Name,
+    employee_tbl.emp_LabourID, emp_IBAN,emp_monthlysalary
+) dt
+WHERE Total <> 0

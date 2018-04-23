@@ -1,0 +1,35 @@
+user> (ns my.ns)
+nil
+
+my.ns> (in-ns 'user)
+#namespace[user]
+
+user> (defn register-trace [v-name]
+        (let [v (intern 'my.ns v-name (atom {}))]
+          (println (str ""v is "" v))
+          (println (str ""v's contents is "" @v))
+          (println (str ""v's internal value is "" @@v))
+          v))
+#'user/register-trace
+
+user> (register-trace 'asd)
+;;=> v is #'my.ns/asd
+;;=> v's contents is clojure.lang.Atom@6a6ee04b
+;;=> v's internal value is {}
+#'my.ns/asd
+
+user> (let [var-atom @(register-trace 'my-var)]
+        (swap! var-atom assoc :x 101))
+;;=> v is #'my.ns/my-var
+;;=> v's contents is clojure.lang.Atom@2164d9ed
+;;=> v's internal value is {}
+{:x 101}
+
+user> @my.ns/my-var
+{:x 101}
+
+user> (swap! my.ns/my-var update :x inc)
+{:x 102}
+
+user> @my.ns/my-var
+{:x 102}

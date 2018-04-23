@@ -1,0 +1,23 @@
+/// Simple Map
+/// usage: let z = Map [""hello"" => 1; ""bye"" => 2]
+let (=>) x y = x,y
+let makeMap x = new Map<_,_>(x)
+
+/// A handy construct allowing NOT to write lengthy type definitions
+/// and also avoid Value Restriction error
+type Parser<'t> = Parser<'t, UserState>
+
+/// A list combinator, inspired by FParsec's (>>=) combinator
+let (<<+) (p1: Parser<'T list>) (p2: Parser<'T>) =
+    p1 >>= fun x -> p2 >>= fun y -> preturn (y::x)
+
+/// Runs all parsers listed in the source list;
+/// All but the trailing one are also combined with a separator
+let allOfSepBy separator parsers : Parser<'T list> =
+    let rec fold state =
+        function
+        | [] -> pzero
+        | hd::[] -> state <<+ hd 
+        | hd::tl -> fold (state <<+ (hd .>> separator)) tl
+    fold (preturn []) parsers
+    |>> List.rev    // reverse the list since we appended to the top

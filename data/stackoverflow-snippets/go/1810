@@ -1,0 +1,36 @@
+var (
+    result    [][]string
+    container []string
+    pointers  []interface{}
+)
+
+rows, err := db.Query(""SELECT id, login, password FROM Users"")
+
+if err != nil {
+    panic(err.Error())
+}
+
+cols, err := rows.Columns()
+
+if err != nil {
+    panic(err.Error())
+}
+
+length := len(cols)
+
+for rows.Next() {
+    pointers = make([]interface{}, length)
+    container = make([]string, length)
+
+    for i := range pointers {
+        pointers[i] = &container[i]
+    }
+
+    err = rows.Scan(pointers...)
+
+    if err != nil {
+        panic(err.Error())
+    }
+
+    result = append(result, container)
+}

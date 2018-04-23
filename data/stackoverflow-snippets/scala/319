@@ -1,0 +1,36 @@
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.ISODateTimeFormat
+
+trait Show[-T] {
+  def show: T => String
+}
+
+trait LowPriorityShow {
+  implicit def showAnything[T] = new Show[T] {
+    def show: T => String = _.toString
+  }
+}
+
+object Show extends LowPriorityShow {
+
+  implicit val showString: Show[String] = new Show[String] {
+    def show: String => String = identity
+  }
+
+  implicit val showDateTime: Show[DateTime] =
+    new Show[DateTime] {
+      def show: DateTime => String =
+        ISODateTimeFormat.dateTime().withZone(DateTimeZone.forID(""America/New_York"")).print
+    }
+
+  implicit def showOpt[T : Show]: Show[Option[T]] =
+    new Show[Option[T]] {
+      def show: Option[T] => String = _.fold("""")(implicitly[Show[T]].show)
+    }
+
+  def show[T : Show](v: T): String = implicitly[Show[T]].show(v)
+}
+
+println(Show.show(DateTime.now()))
+println(Show.show(Some(""abc"")))
+println(Show.show(12))

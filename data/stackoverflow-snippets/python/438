@@ -1,0 +1,13 @@
+@login_required
+def signuptwo(request):
+    if request.method == 'POST':
+        form = EditProfileForm(request.POST, instance=request.user.profile)
+        profile = form.save(commit=False)
+        profile.user = request.user
+        if form.is_valid():
+            form.save()
+            return redirect('profile')
+    else:
+        user_profile = Profile.objects.get(user=request.user)
+        form = EditProfileForm(initial={'state':user_profile.state,'city':user_profile.city,'birth_date':user_profile.birth_date,'Primary_Campaign_Interest':user_profile.Primary_Campaign_Interest,'Secondary_Campaign_Interest':user_profile.Secondary_Campaign_Interest})
+        return render(request, 'Accounts/Editprofile.html', {'form':form})

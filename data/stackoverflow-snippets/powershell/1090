@@ -1,0 +1,37 @@
+function Invoke-MyPipeline {
+[CmdletBinding()]
+param(
+    [Parameter(ValueFromPipeline=$true)]
+    $Value
+)
+
+    Begin {
+        Write-Verbose -Message 'Begin Invoke-MyPipeline' -Verbose
+    }
+
+    Process {
+        $Value * 2
+    }
+
+    End {
+        Write-Verbose -Message 'End Invoke-MyPipeline' -Verbose
+    }
+}
+
+1..10 | 
+    Invoke-MyPipeline | 
+    ForEach-Object -Begin { 
+        Write-Verbose -Message 'ForEach (1) Begin' -Verbose
+    } -Process {
+        ""~$_~""
+    } -End {
+        Write-Verbose -Message 'ForEach (1) End' -Verbose
+    } |
+    ForEach-Object -Begin { 
+        Write-Verbose -Message 'ForEach (2) Begin' -Verbose
+    } -Process {
+        ""@$_@""
+        Start-Sleep -Milliseconds 500  # watch this effect on the whole pipeline
+    } -End {
+        Write-Verbose -Message 'ForEach (2) End' -Verbose
+    }

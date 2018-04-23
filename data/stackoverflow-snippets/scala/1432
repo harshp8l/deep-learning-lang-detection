@@ -1,0 +1,27 @@
+   df.repartition(numofpartitionsyouwant) // numPartitions ~ number of simultaneous DB connections you can planning to give...
+def insertToTable(sqlDatabaseConnectionString: String,
+                  sqlTableName: String): Unit = {
+
+  val tableHeader: String = dataFrame.columns.mkString("","")
+  dataFrame.foreachPartition { partition =>
+    //NOTE : EACH PARTITION ONE CONNECTION (more better way is to use connection pools)
+    val sqlExecutorConnection: Connection =
+      DriverManager.getConnection(sqlDatabaseConnectionString)
+    //Batch size of 1000 is used since some databases cant use batch size more than 1000 for ex : Azure sql
+    partition.grouped(1000).foreach { group =>
+      val insertString: scala.collection.mutable.StringBuilder =
+        new scala.collection.mutable.StringBuilder()
+
+      group.foreach { record =>
+        insertString.append(""('"" + record.mkString("","") + ""'),"")
+      }
+
+      sqlExecutorConnection
+        .createStatement()
+        .executeUpdate(f""INSERT INTO [$sqlTableName] ($tableHeader) VALUES ""
+          + insertString.stripSuffix("",""))
+    }
+
+    sqlExecutorConnection.close() // close the connection so that connections wont exhaust.
+  }
+}

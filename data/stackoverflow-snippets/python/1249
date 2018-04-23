@@ -1,0 +1,35 @@
+import subprocess,re
+from datetime import datetime
+FIREFOX = r""C:\Program Files\Mozilla Firefox\firefox.exe""
+USER_AGENT = ""Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:{0}.{1}) Gecko/20100101 Firefox/{0}.{1}""
+VERSION = re.compile('(\d+)\.(\d+)\.(\d+)')
+DATE = re.compile('DATE_CHECKED\s+=\s+""(.*?)""',re.MULTILINE|re.DOTALL)
+CDEF = re.compile('DEFAULT\s*=\s*""\d+\.\d+""',re.MULTILINE|re.DOTALL)
+DAYS_BEFORE_CHECK = 30
+DATE_CHECKED = ""2018-04-13""  # Don't change manually
+DEFAULT = ""59.0""  # Don't change manually
+
+
+def get_user_agent():
+    with open(""UserAgent.py"") as f:
+        program_data = f.read()
+        date_format = ""%Y-%m-%d""
+        last_date = datetime.strptime(DATE.search(program_data).group(1), date_format)
+        today = datetime.strptime(datetime.now().strftime(date_format), date_format)
+        days = abs(today - last_date).days
+        if days >= DAYS_BEFORE_CHECK:
+            rebuild1 = re.sub(DATE.search(program_data).group(1), str(datetime.now().strftime(date_format)),
+                              program_data)
+
+            x = subprocess.check_output([FIREFOX, '-v', ""|"", ""more""])
+            version_no = x.strip()
+            try:
+                a, b, c = VERSION.search(version_no.decode()).groups()
+            except:
+                raise FileNotFoundError(""Check firefox path"")
+
+            rebuild2 = CDEF.sub('DEFAULT = ""{0}.{1}""'.format(a, b), rebuild1)
+            with open(""UserAgent.py"", ""w"") as f:
+                f.write(rebuild2)
+
+    return USER_AGENT.format(*DEFAULT.split("".""))

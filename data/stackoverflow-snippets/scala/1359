@@ -1,0 +1,37 @@
+import java.io._
+import scala.io.Source
+
+val bufferSize: Int = 10 * 1024
+
+val inPath: String = ""/tmp/file_in""
+val outPath: String = ""/tmp/file_out""
+
+copyFile(inPath, outPath)
+
+def copyFile(inPath: String, outPath: String): Unit = {
+  val fsInStream: InputStream = new FileInputStream(inPath)
+  val source: Source = Source.createBufferedSource(new FileInputStream(inPath), bufferSize)
+
+  // Two try finally blocks to make sure that writer and fsInStream will be closed,
+  // even if an exception will be thrown
+  try {
+    val writer: Writer = new PrintWriter(outPath)
+    try {
+      copy(source, writer)
+    }
+    finally {
+      // We don't care about exception during closing, so put it in Try()
+      Try(writer.close())
+    }
+  }
+  finally {
+    // We don't care about exception during closing, so put it in Try()
+    Try(fsInStream.close())
+  }
+}
+
+def copy(source: Source, writer: Writer): Unit = {
+  source.foreach { b =>
+    writer.write(b)
+  }
+}

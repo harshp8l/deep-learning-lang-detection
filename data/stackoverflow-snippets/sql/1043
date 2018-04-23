@@ -1,0 +1,80 @@
+function searchArray($a, $b) {
+    $cnt = count($a);
+    $sqlArr = array();
+    $lastOne = end($b);
+    $valCnt = 0;
+    $qArr = array();
+    foreach ($b as $x => $x_value) {
+        $valCnt++;
+        $docCnt = $a[$x]['doccount'];
+        $LocCnt = $a[$x]['loccount'];
+        $PeepCnt = $a[$x]['namecount'];
+        $val = pg_escape_string($x_value);
+        $brac = ""'%"" . pg_escape_string($val) . ""%'"";
+        $haveCnt = """";
+        if ($docCnt == 0 && $LocCnt == 0 && $PeepCnt == 0) {
+            return;
+        }
+            $haveCnt = sprintf(""GROUP BY t.document_id HAVING COUNT(*) > $cnt - 1"");
+        $andOR = """";
+        $cntZero = array_filter($a[$x], function($value) {
+            return $value > 0;
+        });
+        $cntTheCnt = count($cntZero) >= 2 ? true : false;
+        if ($cntTheCnt == false) {
+            $andOR = ""WHERE"";
+        } else {
+            $andOR = ""AND"";
+        }
+
+        $subQuery = sprintf("" SELECT DISTINCT a$valCnt.document_id""
+                . "" FROM archive_main a$valCnt"");
+
+        $locJoin = sprintf("" INNER JOIN archive_locations f$valCnt""
+                . "" ON a$valCnt.document_id = f$valCnt.document_id"");
+
+        $locFind = sprintf("" %s f$valCnt.street_address ILIKE %s""
+                . "" OR f$valCnt.location_name ILIKE %s "", $andOR, $brac, $brac);
+
+        $nameJoin = sprintf("" INNER JOIN archive_names b$valCnt""
+                . "" ON a$valCnt.document_id = b$valCnt.document_id"");
+
+        $nameFind = sprintf("" %s (b$valCnt.last_name ILIKE %s""
+                . "" OR b$valCnt.first_name ILIKE %s) "", $andOR, $brac, $brac);
+        $nameFind .= ""OR (FORMAT('%s %s', b$valCnt.first_name, b$valCnt.last_name) ILIKE $brac)"";
+
+        $whereDoc = sprintf("" %s a$valCnt.document_id ILIKE %s""
+                . "" OR a$valCnt.title ILIKE %s""
+                . "" OR a$valCnt.description ILIKE %s"", $andOR, $brac, $brac, $brac);
+        $find = """";
+        $union = """";
+        $joins = """";
+        if ($LocCnt != 0) {
+            $find .= $locFind;
+            $joins .= $locJoin;
+        }
+        if ($PeepCnt != 0) {
+            $find .= $nameFind;
+            $joins .= $nameJoin;
+        }
+        if ($docCnt != 0) {
+            $find .= $whereDoc;
+        }
+        if ($x_value != $lastOne) {
+            $union .= sprintf("" UNION ALL "");
+        } else {
+            $union .= sprintf("""");
+        }
+        array_push($qArr, $subQuery, $joins, $find, $union);
+    }
+    $boom = implode(' ', $qArr);
+    $mainQuery = sprintf(""SELECT DISTINCT t.document_id FROM (%s) as t %s
+                            order by t.document_id;"", $boom, $haveCnt);
+    $sql = pg_query($mainQuery);
+    if (!$sql) {
+        $errrormsge = pg_last_error();
+        print_r(""$errrormsge - An error occurred during your query."");
+        exit;
+    }
+    return($sql);
+}

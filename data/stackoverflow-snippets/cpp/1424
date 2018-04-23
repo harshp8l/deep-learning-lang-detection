@@ -1,0 +1,127 @@
+///  \brief Immutable zero ending C style string wrapper
+class const_string final {
+private:
+    static inline void intrusive_add_ref(uint8_t* const ptr) noexcept {
+        std::size_t volatile *p = reinterpret_cast<std::size_t volatile*>(ptr);
+        detail::atomic_traits::inc(p);
+    }
+    static inline bool intrusive_release(uint8_t* const ptr) noexcept {
+        std::size_t volatile *p = reinterpret_cast<std::size_t volatile*>(ptr);
+        return static_cast<size_t>(0) == detail::atomic_traits::dec(p);
+    }
+public:
+   typedef std::char_traits<char> traits_type;
+
+    /// Creates empty constant string  object
+    constexpr const_string() noexcept:
+        data_(nullptr)
+    {}
+
+    /// Shallow copy this string (inc reference count)
+    const_string(const const_string& other):
+        data_(other.data_) {
+        if(nullptr != data_)
+            // increase reference count
+            intrusive_add_ref(data_);
+    }
+
+    /// Copy assignment operator, shallow copy this string
+    const_string& operator=(const const_string& rhs) {
+        const_string(rhs).swap( *this );
+        return *this;
+    }
+
+    /// Movement constructor, default movement semantic
+    const_string(const_string&& other) noexcept:
+        data_(other.data_) {
+        other.data_ = nullptr;
+    }
+
+    /// Movement assignment operator, default movement semantic
+    const_string& operator=(const_string&& other) noexcept {
+        const_string( std::forward<const_string>(other) ).swap( *this );
+        return *this;
+    }
+
+    /// Constructs constant string object by deep copying a character array
+    /// \param str pointer to character array begin
+    /// \param length count of bytes to copy from array
+    /// \throw never throws, constructs empty string if no free memory left
+    const_string(const char* str, std::size_t length) noexcept:
+        data_(nullptr) {
+        assert(nullptr != str && length > 0);
+        const std::size_t len = sizeof(std::size_t) + length + 1;
+        data_ = std::calloc(len, sizeof(uint8_t) );
+        if(nullptr != data_) {
+            // set initial intrusive atomic reference count
+            std::size_t *rc = reinterpret_cast<std::size_t*>(data_);
+            *rc = 1;
+            // copy string data
+            char *b = reinterpret_cast<char*>( data_ + sizeof(std::size_t) );
+            traits_type::copy(b, str, length);
+        }
+    }
+
+    /// Decrement this string reference count, release allocated memory when
+    /// reference count bring to 0
+    ~const_string() noexcept {
+        if(nullptr != data_ && intrusive_release(data_) )
+            std::free(data_);
+    }
+
+    /// Deep copy a continues memory block (character array)
+    /// \param first pointer on memory block begin
+    /// \param last pointer on block end
+    const_string(const char* first, const char* last) noexcept:
+        const_string( first, static_cast<std::size_t>(last)-static_cast<std::size_t>(first) )
+    {}
+
+    /// Deep copies a zero ending C string
+    const_string(const char* str) noexcept:
+        const_string(str, traits_type::length(str) )
+    {}
+
+    /// Deep copy STD lib string
+    /// \param str STD lib string to be copied
+    const_string(const std::string& str) noexcept:
+        const_string( str.data(), str.length() )
+    {}
+
+    /// Swaps this object with another one
+    /// \param with object to swap with this
+    inline void swap(const_string& with) noexcept {
+        std::swap(data_, with.data_);
+    }
+
+    /// Returns whether this string is pointing on nullptr
+    /// \return whether nullptr string
+    inline bool empty() const noexcept {
+        return nullptr == data_;
+    }
+
+    /// Checks whether this string empty or contains only whitespace characters
+    /// \return whether this string is blank
+    inline bool blank() const noexcept {
+        const char *c = data();
+        while( *c != '\0') {
+            if( !std::isspace( traits_type::to_int_type( *c ) ) )
+                return false;
+            ++c;
+        }
+        return true;
+    }
+
+    /// Returns raw C-style zero ending string
+    /// \return C-style string, """" if string is empty
+    inline const char* data() const noexcept {
+        return nullptr == data_ ? """" : reinterpret_cast<char*>(data_+sizeof(std::size_t));
+}
+
+    /// Returns string size in bytes
+    /// \return string size in bytes
+    inline std::size_t size() const noexcept {
+        return empty() ? 0 : traits_type::length( data() );
+    }
+  private:
+     uint8_t* data_;
+};

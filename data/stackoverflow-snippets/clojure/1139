@@ -1,0 +1,15 @@
+(defn update-all
+  ""Like update-in except the second parameter is a vector of predicate
+  functions taking keys as arguments. Updates all values contained at a
+  matching path. Looks for keys in maps only.""
+  [m [key-pred & key-preds] update-fn]
+  (if (map? m)
+    (let [matching-keys (filter key-pred (keys m))
+          f (fn [acc k]
+              (update-in acc [k] (if key-preds
+                                   #(update-all %
+                                                key-preds
+                                                update-fn)
+                                   update-fn)))]
+      (reduce f m matching-keys))
+    m))

@@ -1,0 +1,16 @@
+(ns ratecalc.core
+  (:require [cljs.core.async :refer [chan <! go-loop]])
+  (:import [goog.date DateTime]))
+
+(defn calc-rate [input-chan do-fun max-count]
+  (go-loop [count 0
+            start-time nil]
+    (<! input-chan)
+    (let [inc-count (inc count)
+          now (.getTime (DateTime.))
+          start-time* (if-not start-time now start-time)
+          rate-per-ms (/ inc-count (- now start-time*))]
+      (do-fun rate-per-ms)
+      (if (= count max-count)
+        rate-per-ms
+        (recur inc-count start-time*)))))

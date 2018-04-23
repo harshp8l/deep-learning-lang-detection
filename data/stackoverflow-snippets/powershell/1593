@@ -1,0 +1,23 @@
+start-process powershell C:\Scripts\URLwatcher\ManualScrape.ps1
+----------------------------------------------------------------
+
+#Debugger \\ Set-PSDebug -Trace 1
+
+#Create a timestamp var
+$movetimestamp = (Get-Date -Format yyyy-mm-dd-hhmmss)
+
+#Create a timestamp file name
+$timestampedURLfile = ""C:\Scripts\URLwatcher\processing\"" + $movetimestamp + "".txt""
+
+#Move URL file and rename it
+move-item C:\Scripts\tmp\data.txt $timestampedURLfile
+
+#Extract & store the URL from the file
+$addURL = Get-Content $timestampedURLfile
+
+#Run the scraper
+cd C:\Scripts
+python.exe DailyStats.py -l $addURL
+
+#Delete the URL file
+del $timestampedURLfile

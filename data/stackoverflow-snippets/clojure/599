@@ -1,0 +1,14 @@
+(defn -main [& [config-path]]
+  (let [content  (delay (read-file config-path))
+        raw-data (delay (read-edn @content))
+        parsed   (delay (parse @raw-data))]
+    (and config-path
+         @content
+         @raw-data
+         @parsed)
+    (cond
+      (nil? config-path) (error ""no argument"")
+      (nil? @content)    (error ""file-not-found"")
+      (nil? @raw-data)   (error ""invalid-edn-format"")
+      (nil? @parsed)     (error ""parsing-error"")
+      :else (start-processing @parsed))))

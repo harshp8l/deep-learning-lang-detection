@@ -1,0 +1,68 @@
+import yaml
+
+
+yamldata1 = r""""""
+- !
+  name: Martial Focus
+  prerequisites:
+    tier1:
+      any:
+        Attribute:
+        - Attribute1:§ 1
+        - Attribute2:§ 1
+        Feat:
+        - Feat1
+        Other:
+        - Other Prerequisites
+  cost:
+  - 3
+  description: |
+    [...]
+  effect: |
+    [...]
+""""""
+yamldata2 = r""""""
+- !
+  name: Martial Focus
+  prerequisites:
+    tier1:
+        Attribute:
+        - Attribute1:§ 1
+        - Attribute2:§ 1
+        Feat:
+        - Feat1
+        Other:
+        - Other Prerequisites
+  cost:
+  - 3
+  description: |
+    [...]
+  effect: |
+    [...]
+""""""
+
+
+def process(data):
+    output = """"
+    for tier_name, tier in data['prerequisites'].items():
+        output += f""* {tier_name}""
+        if 'any' in tier:
+            content = tier['any']
+            prerequisites = content.get('Other', []) + content.get('Attribute', []) + content.get('Feat', [])
+            if prerequisites:
+                output += ""\n** "" + "" or "".join(prerequisites)
+        else:
+            content = tier
+            prerequisites = [content.get('Other', []), content.get('Attribute', []), content.get('Feat', [])]
+
+            for subset in prerequisites:
+                if subset:
+                    output += ""\n** "" + "" or "".join(subset)
+    return output
+
+
+data = yaml.load(yamldata1)[0]
+print(process(data))
+print('#'*10)
+data = yaml.load(yamldata2)[0]
+print(process(data))

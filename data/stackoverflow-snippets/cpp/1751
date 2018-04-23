@@ -1,0 +1,38 @@
+template <class T>
+__global__ void version5(T *g_idata, T *g_odata, unsigned int N)
+{
+    extern __shared__ T sdata[];
+
+    unsigned int tid = threadIdx.x;                                 // --- Local thread index
+    unsigned int i = blockIdx.x * (blockDim.x * 2) + threadIdx.x;   // --- Global thread index - Fictitiously double the block dimension
+
+    // --- Performs the first level of reduction in registers when reading from global memory. 
+    T mySum = (i < N) ? g_idata[i] : 0;
+    if (i + blockDim.x < N) mySum += g_idata[i + blockDim.x];
+    sdata[tid] = mySum;
+
+    // --- Before going further, we have to make sure that all the shared memory loads have been completed
+    __syncthreads();
+
+    // --- Reduction in shared memory. Only half of the threads contribute to reduction.
+    for (unsigned int s = blockDim.x / 2; s > 32; s >>= 1)
+    {
+        if (tid < s) { sdata[tid] = mySum = mySum + sdata[tid + s]; }
+        // --- At the end of each iteration loop, we have to make sure that all memory operations have been completed
+        __syncthreads();
+    }
+
+    // --- Single warp reduction by shuffle operations
+    if (tid < 32)
+    {
+        // --- Last iteration removed from the for loop, but needed for shuffle reduction
+        mySum += sdata[tid + 32];
+        // --- Reduce final warp using shuffle
+        //for (int offset = warpSize / 2; offset > 0; offset /= 2) mySum += __shfl_down_sync(0xffffffff, mySum, offset);
+        for (int offset=1; offset < warpSize; offset *= 2) mySum += __shfl_xor_sync(0xffffffff, mySum, i);
+    }
+
+    // --- Write result for this block to global memory. At the end of the kernel, global memory will contain the results for the summations of
+    //     individual blocks
+    if (tid == 0) g_odata[blockIdx.x] = mySum;
+}

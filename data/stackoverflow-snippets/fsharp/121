@@ -1,0 +1,17 @@
+let rec pick accum elem tried = function
+    | [] -> (accum, List.rev tried)
+    | chooser :: rest ->
+        if chooser elem then (elem :: accum, List.rev_append tried rest)
+        else pick accum elem (chooser :: tried) rest
+
+let rec multipick_l accum choosers list =
+    match choosers, list with
+    | [], _
+    | _, [] -> List.rev accum
+    | _, elem :: elems ->
+        let (accum', choosers') = pick accum elem [] choosers in
+        multipick_l accum' choosers' elems
+
+let multipick choosers array =
+    Array.of_list
+        (multipick_l [] (Array.to_list choosers) (Array.to_list array))

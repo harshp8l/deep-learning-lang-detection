@@ -1,0 +1,9 @@
+$rgname=""""
+$storagename=""""
+$tablename=""""
+$saContext = (Get-AzureRmStorageAccount -StorageAccountName $storagename -ResourceGroupName $rgname).Context
+$table = Get-AzureStorageTable -Name $tablename -Context $saContext
+$query = New-Object Microsoft.WindowsAzure.Storage.Table.TableQuery
+$data = $table.CloudTable.ExecuteQuery($query)    
+$remove=$data  | Select-Object PartitionKey, RowKey, TimeStamp| Where-Object {$_.TimeStamp -lt ((Get-Date).ToUniversalTime().AddDays(-10))} 
+$removedata|Remove-AzureStorageTableRow -table $table

@@ -1,0 +1,13 @@
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+
+case class Event(val a: Int)
+
+val eGood: EitherT[Future, String, Event] = EitherT[Future, String, Event](Future(Right(Event(42))))
+val resultGood: Future[Event] = eGood.getOrElseF(Future.failed(new NoSuchElementException(""whatever"")))
+val eBad: EitherT[Future, String, Event] = EitherT[Future, String, Event](Future(Left(""hello"")))
+val resultBad: Future[Event] = eBad.getOrElseF(Future.failed(new NoSuchElementException(""whatever"")))
+
+println(""good = "" + scala.concurrent.Await.result(resultGood, 1 second))
+println()
+scala.concurrent.Await.result(resultBad, 1 second)) // don't need println as there will be exception anyway

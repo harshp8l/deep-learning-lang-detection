@@ -1,0 +1,22 @@
+let scan (s:string) = s.ToCharArray() |> Array.toList
+let toInt c = int c - int '0'
+let makeInt n chars = (n,chars)
+
+type expr = RP | LP | Plus | Times | Pow | Int of int
+
+let tokenizer s = 
+  let chars1 = scan s
+  let rec repeat list = 
+    match list with
+    | []->[]
+    | char::chars ->
+      match char with
+      | ')' -> RP::repeat chars
+      | '(' -> LP::repeat chars
+      | '+' -> Plus::repeat chars
+      | '*' -> Times::repeat chars
+      | '^' -> Pow::repeat chars
+      | _ -> 
+        let (x,y) = makeInt (toInt char) chars
+        Int x::repeat chars
+  repeat chars1

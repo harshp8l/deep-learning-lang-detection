@@ -1,0 +1,19 @@
+import scala.util.Either
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global // required by Monad[Future]
+import cats.instances.future._                            // Monad for `Future`
+import cats.syntax.apply._                                // `tupled` and `mapN`
+import cats.data.EitherT                                  // EitherT monad transformer
+
+type M[X] = Future[Either[Error, X]]
+val ma: M[A] = ???
+val mb: M[B] = ???
+
+def doStuff(a: A, b: B): C = ???
+val result1: M[C] = (EitherT(ma), EitherT(mb)).mapN(doStuff).value
+
+def doFancyStuff(a: A, b: B): M[C] = ???
+val result2: M[C] = (for {
+  ab <- (EitherT(ma), EitherT(mb)).tupled
+  c <- EitherT(doFancyStuff(ab._1, ab._2))
+} yield c).value

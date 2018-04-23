@@ -1,0 +1,77 @@
+import scala.annotation.tailrec
+import java.time.ZonedDateTime
+
+object TailRecursionExample {
+    def checkDate(start: ZonedDateTime, end: ZonedDateTime, 
+                  between: Seq[ZonedDateTime]): Boolean = {
+
+        // We have dates in range (inclusive) [start, end] with step = 1 day
+        // All these days should be in between collection
+
+        // set for fast lookup
+        val set = between.toSet
+
+        @tailrec
+        def checkDate(curr: ZonedDateTime, iterations: Int): (Int, Boolean) = {
+            if (curr.isAfter(end)) (iterations, true)
+            else if (set.contains(curr)) checkDate(curr.plusDays(1), iterations + 1)
+            else (iterations, false)
+
+        }
+
+        val (iterations, result) = if (start.isAfter(end)) 
+            (0, false) 
+        else 
+            checkDate(start, 0)
+
+        println(s""\tNum of iterations: $iterations"")
+        result
+    }
+
+    def main(args: Array[String]): Unit = {
+        testWhenStartIsAfterEnd()
+        println
+
+        testWhenStartIsBeforeEnd()
+        println
+
+        testWhenStartIsBeforeEndButBetweenSkipOneDay()
+        println
+        ()
+    }
+
+    def testWhenStartIsAfterEnd(): Unit = {
+        val start = ZonedDateTime.now().plusDays(5)
+        val end = ZonedDateTime.now()
+        val between = (0 to 5).map(i => start.plusDays(i))
+
+        verboseTest(""testWhenStartIsAfterEnd"", start, end, between)
+    }
+
+    def testWhenStartIsBeforeEnd(): Unit = {
+        val start = ZonedDateTime.now().minusDays(5)
+        val end = ZonedDateTime.now()
+        val between = (0 to 5).map(i => start.plusDays(i))
+
+        verboseTest(""testWhenStartIsBeforeEnd"", start, end, between)
+    }
+
+    def testWhenStartIsBeforeEndButBetweenSkipOneDay(): Unit = {
+        val start = ZonedDateTime.now().minusDays(5)
+        val end = ZonedDateTime.now()
+        val between = (1 to 5).map(i => start.plusDays(i))
+
+        verboseTest(""testWhenStartIsBeforeEndButBetweenSkipOneDay"", start, end, between)
+    }
+
+    def verboseTest(name: String, start: ZonedDateTime, end: ZonedDateTime, 
+                  between: Seq[ZonedDateTime]): Unit = {
+        println(s""$name:"")
+        println(s""\tStart: $start"")
+        println(s""\tEnd:   $end"")
+        println(s""\tBetween: "")
+        between.foreach(t => println(s""\t\t$t""))
+        println(s""\tcheckDate: ${checkDate(start, end, between)}"")
+
+    }  
+}

@@ -1,0 +1,31 @@
+# below is the sentiment analysis code written for sentence-level analysis
+import glob
+import os
+import nltk.data
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from nltk import sentiment
+from nltk import word_tokenize
+# Next, VADER is initialized so I can use it within the Python script
+sid = SentimentIntensityAnalyzer()
+# I will also initialize the 'english.pickle' function and give it a short 
+# name
+tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+#Each of the text file is listed from the folder speeches
+files = glob.glob(os.path.join(os.getcwd(), 'speeches', '*.txt'))
+
+text = []
+
+#iterate over the list getting each file
+for file in files:
+#open the file and then call .read() to get the text
+with open(file) as f:
+    text=f.read()
+sentences = tokenizer.tokenize(text)
+for sentence in sentences:
+    print(sentence,  file=open('sentiment1.txt', 'a'))
+    scores = sid.polarity_scores(sentence)
+    for key in sorted(scores):
+            print('{0}: {1}, '.format(key, scores[key]), end='',  
+                               file=open('sentiment1.txt', 'a'))
+
+    print()

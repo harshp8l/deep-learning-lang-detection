@@ -1,0 +1,38 @@
+@Override
+public void start(Stage primaryStage) {
+    Topping[] toppings = new Topping[] {
+        new Topping(""Nuts"", 0.5),
+        new Topping(""Cherries"", 0.5),
+        new Topping(""Jelly"", 0.75)
+    };
+
+    // create ui based on toppings data
+    Map<Topping, CheckBox> toppingsBoxes = new HashMap<>();
+    VBox toppingsPane = new VBox();
+    for (Topping topping : toppings) {
+        CheckBox cb = new CheckBox(topping.getName());
+        toppingsBoxes.put(topping, cb);
+        toppingsPane.getChildren().add(cb);
+    }
+
+    Button btn = new Button(""Calculate Price"");
+    btn.setOnAction((ActionEvent event) -> {
+        double price = 0;
+
+        // loop reads the selected state of the CheckBoxes
+        for (Map.Entry<Topping, CheckBox> entry : toppingsBoxes.entrySet()) {
+            if (entry.getValue().isSelected()) {
+                price += entry.getKey().getPrice();
+            }
+        }
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setContentText(String.format(""Price: %.2f"", price));
+        alert.initOwner(primaryStage);
+        alert.showAndWait();
+    });
+
+    Scene scene = new Scene(new HBox(toppingsPane, btn));
+
+    primaryStage.setScene(scene);
+    primaryStage.show();
+}

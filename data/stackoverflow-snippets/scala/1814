@@ -1,0 +1,26 @@
+class PingActor extends Actor with ActorLogging {
+  import PingActor._
+
+  override def preStart(): Unit = {
+    pongActor = Option(context.actorOf(PongActor.props, ""pongActor""))
+  }
+
+  override def preRestart(reason: Throwable, message: Option[Any]): Unit = {
+    log.info(""Don't stop the children"")
+    postStop()
+  }
+
+  override def postRestart(reason: Throwable): Unit = {
+    log.info(""RESTARTING"")
+  }
+
+  var counter = 0
+  var pongActor: Option[ActorRef] = None
+
+  def receive = {
+    case Initialize => 
+      pongActor.foreach(_ ! PingMessage(""ping""))
+    case PongActor.PongMessage(text) =>
+      ...
+  } 
+}

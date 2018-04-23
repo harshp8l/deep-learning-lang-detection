@@ -1,0 +1,14 @@
+template <typename Rt = void, typename F, typename T, typename... Ts>
+      auto mapf(F f, const T & t, const Ts & ... ts) {
+          auto m = minsize(t, ts...);
+          using Vt = decltype(std::forward<F>(f)(*begin(t), *begin(ts)...));
+          using V = typename std::conditional<is_same<Rt,void>::value, vector<Vt>, Rt>::type;
+          V r;                                                                                                                                                                                                                                                               
+          r.resize(m);
+          for(auto i = 0u; i < m; i++) {
+              auto tuples =  make_tuple(*next(begin(t),i), *next(begin(ts),i)...);
+             auto v = apply<tuple<typename T::value_type, typename Ts::value_type ...>>(tuples, forward<F>(f));
+              *next(begin(r),i) = move(v);
+          }    
+          return r;
+      }

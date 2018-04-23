@@ -1,0 +1,72 @@
+public class TimeCountWindowProcessFunction extends ProcessFunction {
+
+    protected long windowStart;
+    protected long windowEnd;
+    protected long count;
+    private ValueState<CountPojo> state;
+
+    public TimeCountWindowProcessFunction(long windowSize, long count) {
+
+    this.windowSize = windowSize;
+    this.count = count;
+
+    }
+
+@Override
+    public void open(Configuration parameters) {
+
+    TypeInformation<CountPojo> typeInformation = TypeInformation.of(new TypeHint<CountPojo>() {
+    });
+    ValueStateDescriptor<CountPojo> descriptor = new ValueStateDescriptor(""test"", typeInformation);
+
+    state = getRuntimeContext().getState(descriptor);
+}
+
+
+    @Override
+    public void processElement(CountPojo input, Context ctx, Collector<CountPojo> out)
+            throws Exception {
+
+    long timestamp = ctx.timestamp();
+        windowStart = timestamp - (timestamp % windowSize);
+        windowEnd = windowStart + windowSize;
+
+        // retrieve the current count
+        CountPojo current = (CountPojo) state.value();
+
+        if (current == null) {
+
+            current = new CountPojo();
+        current.count = 1;
+
+            ctx.timerService().registerEventTimeTimer(windowEnd);
+        } else {
+
+            current.count += 1;
+        }
+
+        if(current.count >= count) {
+        out.collect(current);
+    }
+
+        // set the state's timestamp to the record's assigned event time timestamp
+        current.setLastModified(ctx.timestamp());
+
+        // write the state back
+        state.update(current);
+    }
+
+
+    @Override
+    public void onTimer(long timestamp, OnTimerContext ctx, Collector<CountPojo> out)
+            throws Exception {
+
+
+        if (windowEnd == timestamp) {
+
+            out.collect(state.value());
+        }
+
+        state.clear();
+    }
+}

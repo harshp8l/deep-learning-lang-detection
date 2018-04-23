@@ -1,0 +1,40 @@
+class Throttle {
+    constructor() {
+        this.on = true; 
+    }
+    get(fn, wait) {
+        var time = Date.now();
+        return (...args) => {
+            if ((time + wait - Date.now()) < 0 && this.on) {
+                fn(...args);
+                time = Date.now();
+            }
+        }
+    }
+}
+
+class Scroll {
+    constructor(state, wrapper, children) {
+        this.state = state;
+        this.wrapper = wrapper;
+        this.children = children;
+        this.throttle = new Throttle();
+    }
+    triggered() {
+        if (this.state.check !== 0) {
+            this.throttle.on = false;
+            this.wrapper.classList.toggle('flic-down', this.state.check === 1)
+            this.wrapper.classList.toggle('flic-up', this.state.check === -1)
+            this.state.update();
+
+            this.wrapper.classList.add('flic-transition')
+            setTimeout(()=>{this.changeDone()}, 1200);
+        }
+    }
+    changeDone() {
+        this.wrapper.classList.remove('flic-transition', 'flic-up', 'flic-down');
+        this.children.setClasses(this.state.state);
+        this.wrapper.getElementsByClassName('flic-active')[0].scrollIntoView(true);
+        this.throttle.on = true;
+    }
+}

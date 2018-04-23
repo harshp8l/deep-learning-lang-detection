@@ -1,0 +1,23 @@
+import com.mongodb.MongoClient
+import com.mongodb.client.MongoCollection
+import com.mongodb.client.model.Projections
+
+def getLatestCommitOffsetFromDB(
+  databaseName: String,
+  collectionName: String
+): Long = {
+
+  val mongoClient = new MongoClient(""localhost"", 27017);
+
+  val collection =
+    mongoClient.getDatabase(databaseName).getCollection(collectionName)
+
+  val record = collection
+    .find()
+    .projection(
+      Projections
+        .fields(Projections.include(""offset""), Projections.excludeId()))
+    .first
+
+  record.get(""offset"").asInstanceOf[Double].toLong
+}

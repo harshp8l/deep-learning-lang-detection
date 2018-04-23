@@ -1,0 +1,66 @@
+class thread_t
+{
+public:
+    thread_t(int id, bool& running)
+        :id_(id)
+        , running_(running)
+    {
+        idle_ = true;
+        thread_ = new thread([=]() { run(); });
+    }
+
+    ~thread_t()
+    {
+        cout << id_ << ""  killing  \n"";
+        thread_->join();
+    }
+
+private:
+    void run()
+    {
+        cout << id_ << ""  starting  \n"";
+        while (running_)
+        {
+            this_thread::sleep_for(chrono::milliseconds(10ms));
+        }
+    }
+private:
+    thread* thread_;
+    bool idle_;
+    int id_;
+    bool& running_;
+};
+
+class pool
+{
+public:
+    pool(int n, bool& running)
+        :nthreads_(n)
+        ,running_(running)
+    {
+        if (n > std::thread::hardware_concurrency()) nthreads_ = n = std::thread::hardware_concurrency();
+        for (int i = 0; i < n; i++)
+        {
+            threads_.push_back(make_unique<thread_t >(i, running_));
+        }
+    }
+
+private:
+    vector<unique_ptr<thread_t>> threads_;
+    int nthreads_;
+    bool& running_;
+};
+
+
+//queue < function<void(void)>> tasks;
+
+int main()
+{
+    bool running = true;
+    pool pool1(5, running);
+
+    this_thread::sleep_for(chrono::seconds(5s));
+
+    running = false;
+    return 0;
+}

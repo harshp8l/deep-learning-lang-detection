@@ -1,0 +1,24 @@
+(import '[java.io PushbackReader])
+(require '[clojure.java.io :as io])
+(require '[clojure.edn :as edn])
+
+;; adapted from: http://stackoverflow.com/a/24922859/6264
+(defn read-forms [file]
+  (let [rdr (-> file io/file io/reader PushbackReader.)
+        sentinel (Object.)]
+    (loop [forms []]
+      (let [form (edn/read {:eof sentinel} rdr)]
+        (if (= sentinel form)
+          forms
+          (recur (conj forms form)))))))
+
+(comment
+  (spit ""/tmp/example.clj""
+        ""(def a 2)
+(def b 3)
+(defn add-two [x y] (+ x y))
+(println (add-two a b))"")
+
+  (read-forms ""/tmp/example.clj"")
+  ;;=> [(def a 2) (def b 3) (defn add-two [x y] (+ x y)) (println (add-two a b))]
+)

@@ -1,0 +1,21 @@
+open System.IO
+
+let getFilesOfDirectory directoryPath = 
+    Directory.EnumerateFiles directoryPath
+
+let getFileLength filePath =
+    (FileInfo filePath).Length
+
+let groupFilesByLength files =
+    files
+    |> Seq.groupBy getFileLength
+
+let removeSingletonGroups groupedSeq =
+    groupedSeq
+    |> Seq.filter (fun (_, group) -> Seq.length group > 1)
+
+let getDuplicateFileCandidates directoryPath =
+    directoryPath
+    |> getFilesOfDirectory
+    |> groupFilesByLength
+    |> removeSingletonGroups

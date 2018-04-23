@@ -1,0 +1,140 @@
+class User {
+
+    private $userId;
+    private $password;
+    private $firstName;
+    private $surname;
+    private $email;
+    private $userLevel;
+
+    function __construct($userId, $password, $firstName, $surname, $email, $userLevel) {
+        $this->userId = $userId;
+        $this->password = $password;
+        $this->firstName = $firstName;
+        $this->surname = $surname;
+        $this->email = $email;
+        $this->userLevel = $userLevel;
+    }
+
+    function getUserId() {
+        return $this->userId;
+    }
+
+    function getPassword() {
+        return $this->password;
+    }
+
+    function getFirstName() {
+        return $this->firstName;
+    }
+
+    function getSurname() {
+        return $this->surname;
+    }
+
+    function getEmail() {
+        return $this->email;
+    }
+
+    function getUserLevel() {
+        return $this->userLevel;
+    }
+
+    function setUserId($userId) {
+        $this->userId = $userId;
+    }
+
+    function setPassword($password) {
+        $this->password = $password;
+    }
+
+    function setFirstName($firstName) {
+        $this->firstName = $firstName;
+    }
+
+    function setSurname($surname) {
+        $this->surname = $surname;
+    }
+
+    function setEmail($email) {
+        $this->email = $email;
+    }
+
+    function setUserLevel($userLevel) {
+        $this->userLevel = $userLevel;
+    }
+
+}
+
+class UserDBServiceImpl extends DBService implements UserDBService {
+
+    public function authenticate($Email, $Password) {
+        global $database;
+        $sql = ""SELECT * FROM Users "";
+        $sql .= ""WHERE Email = '{$Email}' "";
+        $sql .= ""AND Password = '{$Password}' "";
+        $sql .= ""LIMIT 1"";
+        self::find_by_sql($sql);
+        $result_array = self::find_by_sql($sql);
+        return !empty($result_array) ? array_shift($result_array) : false;
+    }
+
+    public function find_by_sql($sql = """") {
+
+        $result_set = $database->query($sql);
+        $object_array = array();
+        while ($row = $database->fetch_array($result_set)) {
+            $object_array[] = self::instantiate($row);
+        }
+        return $object_array;
+    }
+
+    public function fetch_array($result_set) {
+        return mysqli_fetch_array($result_set);
+    }
+
+    private function instantiate($row) {
+        $object = new self;
+        foreach ($row as $attribute => $value) {
+            if ($object->has_attribute($attribute)) {
+                $object->$attribute = $value;
+            }
+        }
+        return $object;
+    }
+
+    private function has_attribute($attribute) {
+        $object_vars = get_object_vars($this);
+        return array_key_exists($attribute, $object_vars);
+    }
+
+}
+
+class DBService {
+
+    private $database = null;
+
+    private function init() {
+        $this->database = """"; // Create connection to database
+    }
+
+    protected static function getInstance() {
+        if ($database == null)
+            init();
+        return $database;
+    }
+
+}
+
+interface UserDBService {
+
+    public function authenticate($Email, $Password);
+
+    public function find_by_sql($sql = """");
+
+    public function fetch_array($result_set);
+
+    function instantiate($row);
+
+    function has_attribute($attribute);
+}

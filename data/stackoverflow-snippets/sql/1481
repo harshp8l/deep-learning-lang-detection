@@ -1,0 +1,17 @@
+SELECT 
+       Coalesce(CASE WHEN (m1.is_internal = 1 AND m2.is_internal = 1) THEN
+            SUM(CAST([size] AS BIGINT)) END, 0) AS internal_volume,
+       Coalesce(CASE WHEN (m1.is_internal = 0 AND m2.is_internal = 1) THEN
+            SUM(CAST([size] AS BIGINT)) END, 0) AS external_volume_in
+FROM 
+       messagesgal msg
+LEFT JOIN 
+       messages_addresses m1
+       ΟΝ msg.originator = m1.address
+LEFT JOIN 
+       messages_addresses m2
+       ΟΝ msg.recipient = m2.address
+WHERE 
+       date >= 43179 and internal_volume IS NOT NULL AND external_volume_in IS NOT NULL 
+GROUP BY 
+       floor(date), m1.is_internal, m2.is_internal

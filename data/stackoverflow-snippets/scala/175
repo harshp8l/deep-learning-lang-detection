@@ -1,0 +1,14 @@
+val sortUdf = udf { (xs: Seq[Row]) => xs.sortBy(_.getAs[Int](1) )
+                                        .map{ case Row(x:java.sql.Date, y: Int) => (x,y) }}
+
+first.join(second.withColumnRenamed(""c"", ""c2""), Seq(""a"", ""b""))
+     .groupBy(""a"")
+     .agg(sortUdf(collect_list(""c2"")))
+     .show(false)
+
+//+---+----------------------------------+
+//|a  |UDF(collect_list(c2, 0, 0))       |
+//+---+----------------------------------+
+//|1  |[[2018-01-01,20], [2018-01-02,30]]|
+//|2  |[[2018-01-02,50], [2018-01-01,60]]|
+//+---+----------------------------------+

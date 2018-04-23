@@ -1,0 +1,18 @@
+type TestClient struct {
+     recordedArgs [][]interface{}
+     returnValues []interface{}
+}
+
+func (c *TestClient) mock(args ...interface{}) interface{} {
+    c.recordedArgs = append(c.recordedArgs, args)
+    if len(c.returnValues) != 0 {
+        last := c.returnValues[0]
+        c.returnValues = c.returnValues[1:]
+        return last
+    }
+    return nil
+}
+
+func (c *TestClient) Request(body io.Reader, method string, endpoint string, headers []Header) ([]byte, error) {
+    return c.mock(body,method,endpoint,headers).([]byte), nil
+}

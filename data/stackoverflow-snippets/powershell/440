@@ -1,0 +1,33 @@
+$pcHostNames = Get-Content ""$scriptPath\HostNames.txt""
+
+$scriptBlock = {
+    Param(pcHostName)
+
+    $softwareInstalled = $false
+
+    # Test to see if host can be reached
+    If (Test-Connection -ComputerName $pcHostName -Quiet)
+    {
+        # Multiple lines of code to check if different files/software are installed on each remote PC
+        # If they are installed, set $softwareInstalled to true
+
+        if (-not $softwareInstalled)
+        {
+            Write-Output ""$pcHostName`: Not installed`n""
+        }
+        else
+        {
+            Write-Output ""$pcHostName`: Fully installed`n""
+        }
+    }
+    else
+    {
+        Write-Output ""$pcHostName`: Error - Connection failed`n""
+    }
+} # End - $scriptBlock  
+
+$pcHostNames | % {
+    Start-Job -Scriptblock $scriptBlock -ArgumentList $_
+}
+
+$reportList = Get-Job | Wait-Job | ?{$_.state -eq ""Completed""} | Receive-Job

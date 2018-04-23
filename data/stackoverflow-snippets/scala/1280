@@ -1,0 +1,30 @@
+/** A generator that, given the current abstract state, should produce
+  * a suitable Command instance. */
+def genCommand(state: State): Gen[Command] = {
+  val incGen = for (v <- arbitrary[Int]) yield Inc(v)
+  val decGen = for (v <- arbitrary[Int]) yield Dec(v)
+  Gen.oneOf(incGen, decGen, Gen.oneOf(Get, Reset))
+}
+
+// A UnitCommand is a command that doesn't produce a result
+case class Inc(dif: Int) extends UnitCommand {
+  def run(sut: Sut): Unit = sut.inc(dif)
+
+  def nextState(state: State): State = state + dif
+
+  // This command has no preconditions
+  def preCondition(state: State): Boolean = true
+
+  // This command should always succeed (never throw an exception)
+  def postCondition(state: State, success: Boolean): Prop = success
+}
+
+case class Dec(dif: Int) extends UnitCommand {
+  def run(sut: Sut): Unit = sut.dec(dif)
+
+  def nextState(state: State): State = state - dif
+
+  def preCondition(state: State): Boolean = true
+
+  def postCondition(state: State, success: Boolean): Prop = success
+}

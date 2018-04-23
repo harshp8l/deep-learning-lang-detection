@@ -1,0 +1,38 @@
+package main
+
+import (
+    ""bufio""
+    ""bytes""
+    ""io""
+    ""testing""
+
+    ""github.com/pelletier/go-buffruneio""
+)
+
+var buf = make([]byte, 64*1024)
+
+func BenchmarkBuffruneio(b *testing.B) {
+    b.ReportAllocs()
+    for i := 0; i < b.N; i++ {
+        r := buffruneio.NewReader(bytes.NewBuffer(buf[:cap(buf)]))
+        for {
+            rune, _, err := r.ReadRune()
+            if err == io.EOF || rune == buffruneio.EOF {
+                break
+            }
+        }
+    }
+}
+
+func BenchmarkBufio(b *testing.B) {
+    b.ReportAllocs()
+    for i := 0; i < b.N; i++ {
+        r := bufio.NewReader(bytes.NewBuffer(buf[:cap(buf)]))
+        for {
+            _, _, err := r.ReadRune()
+            if err == io.EOF {
+                break
+            }
+        }
+    }
+}

@@ -1,0 +1,11 @@
+let root = directoryInfo "".""
+
+let solutionReferences baseDir = baseDir |> filesInDirMatching ""*.sln"" |> Seq.ofArray
+
+let solutionNames paths = paths |> Seq.map (fun (f:System.IO.FileInfo) -> f.FullName)
+
+let projectsInSolution solutions = solutions |> Seq.collect ReadFile |> Seq.filter (fun line -> line.StartsWith(""Project""))
+
+let projectNames projects = projects |> Seq.map (fun (line:string) -> (line.Split [|','|]).[1])
+
+Target ""SLN"" ( fun () -> root |> solutionReferences |> solutionNames |> projectsInSolution |> projectNames |> Seq.iter (printfn ""%s""))

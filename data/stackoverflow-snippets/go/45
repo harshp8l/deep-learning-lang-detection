@@ -1,0 +1,23 @@
+func total(in chan int, out chan int) {
+    res := 0
+    // this will just pull the value, and then wait till the next value 
+    // is pushed... till you close the ""in"" channel
+    for iter := range in {
+        res += iter
+    }
+    out <- res // sends back the result
+}
+
+func check() {
+
+    ch := make(chan int)
+    rch := make(chan int)
+    go total(ch, rch)
+    // we are pushing this value into a unbuffered channel...
+    ch <- 1  // this gets pushed and waits until it is pulled in the total function 
+    ch <- 2  // this gets pushed and waits until it is pulled in the total function 
+    ch <- 3  // this gets pushed and waits until it is pulled in the total function 
+    close(ch)       // this will end the loop in the total function
+    result := <-rch // waits for total to give the result
+    fmt.Println(""Total is "", result)
+} 

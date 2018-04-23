@@ -1,0 +1,52 @@
+#define _CRT_SECURE_NO_WARNINGS
+
+#include <iostream>
+#include <cstdlib>
+#include <string>
+
+std::wstring wstring_from_bytes(std::string const& str)
+{
+    size_t requiredSize = 0;
+    std::wstring answer;
+    wchar_t *pWTempString = NULL;
+
+    /*
+    * Call the conversion function without the output buffer to get the required size
+    *  - Add one to leave room for the NULL terminator
+    */
+    requiredSize = mbstowcs(NULL, str.c_str(), 0) + 1;
+
+    /* Allocate the output string (Add one to leave room for the NULL terminator) */  
+    pWTempString = (wchar_t *)malloc( requiredSize * sizeof( wchar_t ));  
+    if (pWTempString == NULL)  
+    {  
+        printf(""Memory allocation failure.\n"");  
+    }
+    else
+    {
+        // Call the conversion function with the output buffer
+        size_t size = mbstowcs( pWTempString, str.c_str(), requiredSize);
+        if (size == (size_t) (-1))  
+        {  
+            printf(""Couldn't convert string\n"");  
+        }
+        else
+        {
+            answer = pWTempString;
+        }
+    }
+
+
+    if (pWTempString != NULL)
+    {
+        delete[] pWTempString;
+    }
+
+    return answer;
+}
+
+int main()
+{
+   std::string str = ""abcd"";
+   std::wstring wstr = wstring_from_bytes(str);
+}

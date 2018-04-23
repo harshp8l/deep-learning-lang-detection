@@ -1,0 +1,37 @@
+Date now = new Date();    
+now.set(2018, Calendar.FEBRUARY, 15, 1, 0); // set date to 2018-02-15
+//set current time to 2018-02-15
+mockCurrentTime(now.getTimeInMillis());
+
+private void mockCurrentTime(long currTimeUTC) throws Exception {
+    // mock new dates with current time
+    PowerMockito.mockStatic(Date.class);
+    PowerMockito.whenNew(Date.class).withNoArguments().thenAnswer(new Answer<Date>() {
+
+        @Override
+        public Date answer(InvocationOnMock invocation) throws Throwable {
+            return new Date(currTimeUTC);
+        }
+    });
+
+    //do not mock creation of specific dates
+    PowerMockito.whenNew(Date.class).withArguments(anyLong()).thenAnswer(new Answer<Date>() {
+
+        @Override
+        public Date answer(InvocationOnMock invocation) throws Throwable {
+            return new Date((long) invocation.getArguments()[0]);
+        }
+    });
+
+    // mock new calendars created with time zone
+    PowerMockito.mockStatic(Calendar.class);
+    Mockito.when(Calendar.getInstance(any(TimeZone.class))).thenAnswer(new Answer<Calendar>() {
+        @Override
+        public Calendar answer(InvocationOnMock invocation) throws Throwable {
+            TimeZone tz = invocation.getArgumentAt(0, TimeZone.class);
+            Calendar cal = Calendar.getInstance(tz);
+            cal.setTimeInMillis(currTimeUTC);
+            return cal;
+        }
+    });
+}

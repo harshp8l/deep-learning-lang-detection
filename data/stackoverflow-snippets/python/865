@@ -1,0 +1,31 @@
+def gendistrib(n):
+    if n % 2 != 0 :
+        raise ValueError(""gendistrib needs an even parameter"")
+    n2 = n//2     # n / 2 in Python 2
+    pop1 = list(range(2, 7))               # lower range
+    pop2 = list(range(7, 41))              # upper range
+    w2 = [ 5, 4, 3, 2 ] + ( [1] * 30)      # weights for upper range
+    r1 = random.choices(pop1, k=n2)        # lower part of the distrib.
+    r2 = random.choices(pop2, w2, k=n2)    # upper part
+    r = r1 + r2
+    random.shuffle(r)                      # randomize order
+    # time to force an exact mean
+    tot = sum(r)
+    expected = 12 * n
+    if tot > expected:                     # too high: decrease some values
+        for i, val in enumerate(r):
+            if val != 2 and val != 7:
+                r[i] = val - 1
+                tot -= 1
+                if tot == expected:
+                    random.shuffle(r)      # shuffle again the decreased values
+                    break
+    elif tot < expected:                   # too low: increase some values
+        for i, val in enumerate(r):
+            if val != 6 and val != 40:
+                r[i] = val + 1
+                tot += 1
+                if tot == expected:
+                    random.shuffle(r)      # shuffle again the increased values
+                    break
+    return r

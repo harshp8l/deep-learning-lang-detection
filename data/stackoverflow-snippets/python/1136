@@ -1,0 +1,21 @@
+def detail(request, slug=None):
+    post = get_object_or_404(Post, slug=slug)
+    user = request.user
+
+    if request.method == 'POST':
+        comment = newComment(request.POST)
+        if comment.is_valid():
+            new_Comment = comment.save(commit=False)
+            new_Comment.author = user
+            new_Comment.post = post
+            new_Comment.save()
+            # successfully commented, now do whatever you want
+            return HttpResponse('commented')
+    else:
+        comment = newComment()
+
+    context = {
+        'post' : post,
+        'comment' : comment
+    }
+    return render(request, 'post/detail.html', context)

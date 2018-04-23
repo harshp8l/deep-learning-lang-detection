@@ -1,0 +1,29 @@
+val ficRDDResult = ficDataFrameSelect.map(
+
+        f => {
+
+          if(f.getAs(""ListOfRficAction"")!=null){
+            var listActions = f.getAs(""ListOfRficAction"").asInstanceOf[WrappedArray[List[List[Any]]]] .map(m=>m:+f.getAs(""AssetId"").toString)
+
+
+              var listAttachments = listActions 
+                                                 .map(m=>{
+                                                   m.map(x=> {
+                                                   val a = Try(x.asInstanceOf[List[Any]])
+                                                   if(a.isSuccess)
+                                                     x
+                                                   else
+                                                     null
+                                                 }).filter(f=>f!=null).map(x=>x.asInstanceOf[List[Any]])
+                                                 })
+                                                 .flatMap(f=>f)
+                                             .filter(f=>f!=null)
+
+
+            (listActions, listAttachments)
+
+          }else{
+            (null, null)
+          }
+
+        }).filter(f=>f._1!=null)

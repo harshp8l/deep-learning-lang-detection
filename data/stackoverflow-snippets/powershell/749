@@ -1,0 +1,26 @@
+function Get-ChildItemRecursive {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory=$false,
+            ValueFromPipeline=$true,
+            ValueFromPipelineByPropertyName=$true
+        )]
+        [string[]]$Path = $PWD.Path,
+
+        [Paramter(Mandatory=$false)]
+        [string]$Filter = '*.*',
+
+        [Parameter(Mandatory=$false)]
+        [int]$Depth = 0
+    )
+
+    Process {
+        Get-ChildItem -Path $Path -Filter $Filter
+        if ($Depth -gt 0) {
+            Get-ChildItem -Path $Path |
+                Where-Object { $_.PSIsContainer } |
+                Get-ChildItemRecursive -Filter $Filter -Depth ($Depth - 1)
+        }
+    }
+}

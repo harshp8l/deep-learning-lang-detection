@@ -1,0 +1,82 @@
+#include <regex>
+#include <map>
+#include <string>
+#include <iostream>
+#include <fstream>
+
+using namespace std;
+
+class CFG
+{
+   public:
+
+      static void Init(char* path_);
+      static string Param(string name_);
+      static void ParseConfigFile();
+
+   private:
+
+      static void GetPathEXE(string path_);
+      static map<string, string> mapData;
+};
+
+void CFG::ParseConfigFile()
+{
+   ifstream file;
+   file.open(""ConfigMS.cfg"");
+
+   if (file.is_open())
+   {
+      string file_line;
+      cmatch results;
+      regex reg3(""(.*)=(.*)"", std::regex_constants::ECMAScript);
+      std::cout<<""Parsing cfg file""<<endl;
+      while (getline(file, file_line) && (file_line.substr(0, 3) != ""***""))
+      {
+         std::cout<<file_line<<endl;
+         std::regex_match(file_line.c_str(), results, reg3);
+         mapData.insert(std::pair<string,string>(results.str(1),results.str(2) ));
+         mapData[string(results.str(1))] =string( results.str(2));
+         std::cout<<""key: ""<<results.str(1)<<"" val: ""<<results.str(2)<<endl;
+
+      }
+      //mapData[""OuterIP""] = ""10.77.1.68"";
+      std::cout<<""Config loaded\n"";
+      for (auto it : mapData)
+      {
+         std::cout<<it.first<<""=""<<it.second<<endl;
+      }
+
+      if (Param(""OuterIP"") == """") mapData[""Error""] = ""IP for receiving messages not set in *.cfg file.\n"";
+      //else if (data[""sipName""] == """") error = ""sipName for receiving messages not set in *.cfg file.\n"";
+   }
+   else { mapData[""Error""] = ""Could not open *.cfg file. Check its existance or name. Name Must \""be ConfigMS.cfg\"".\n""; }
+   if (Param(""RTPPort"") == Param(""MGCPPort""))
+   {
+      mapData[""Error""] = ""RTP port is same as MGCP port. Please change one of them.\n"";
+   }
+   if (Param(""Error"") != """")
+   {
+      cout << ""\n"" + Param(""Error"");
+      //system(""pause"");
+      //exit(-1);
+   }
+
+}
+string CFG::Param(string name_)
+{
+
+   return mapData[name_];
+}
+
+map<string, string> CFG::mapData;
+
+int main ()
+{
+    CFG::ParseConfigFile ();
+
+
+    cout << ""Param: "" << CFG::Param(""OuterIP"") << std::endl;
+
+    return 0;
+}

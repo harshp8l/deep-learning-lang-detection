@@ -1,0 +1,74 @@
+size_t get_unique_union(short *arr, size_t size, short *target) {
+    size_t target_bigger = 0;
+    short *curr, *curr_test;
+    //size_t dup = 0; (1)
+
+    if (!size) {
+        return target_bigger;
+    }
+
+    curr = arr + 1; // Current place in the array.
+    curr_test = curr; // Current place with the offset of the duplicate elements.
+    while (curr_test < arr + size) {
+        while (curr_test < arr + size && *arr == *curr_test) {
+            curr_test++;
+            //dup++; // | (1) Update global size. see comment.
+        }
+        *curr++ = *curr_test++;
+    }
+    size -= curr_test - curr; // Update global size | (1) size -= dup;
+
+    if (curr == curr_test) { // If it is a unique appearance (If there were no founded duplicates).
+        *target = *arr; // Set target in the current place the appearance.
+        target_bigger = 1; // Mention that in the next recursive calling,
+                            // it will be called from the next place in the unique array.
+    }
+
+    for (size_t i = 0; i < size; i++) { // Display the current checked array (Without the doubles of the current appearance).
+        cout << arr[i] << "" "";
+    }
+    cout << endl;
+
+    return target_bigger + get_unique_union(arr + 1, size - 1, target + target_bigger); // Recursive call with the next element in the array.
+}
+
+size_t get_union(short *set1, unsigned size1, short *set2, unsigned size2, short *uniq_arr) {
+    size_t global_size = size1 + size2;
+    size_t uniq_size = 0;
+    short union_array[global_size];
+
+    for (size_t i = 0; i < size1; i++) {
+        union_array[i] = set1[i];
+    }
+
+    for (size_t i = 0; i < size2; i++) {
+        union_array[i + size1] = set2[i];
+    }
+
+    for (size_t i = 0; i < global_size; i++) {
+        cout << union_array[i] << "" "";
+    }
+    cout << endl;
+
+    return get_unique_union(union_array, global_size, uniq_arr);
+}
+
+int main () {
+    short set1[] = {12, 0, 2, 1, 12, 12, 6, 8};
+    short set2[] = {3, 0, 300, 12, 12, 12};
+    size_t size1 = sizeof(set1) / sizeof(*set1);
+    size_t size2 = sizeof(set2) / sizeof(*set2);
+    short union_arr[size1  + size2];
+    size_t count;
+    count = get_union(set1, size1, set2, size2, union_arr);
+
+    cout << ""Results:"" << endl;
+    cout << ""Count: "" << count << endl;
+    cout << ""Arr: ["";
+    for (size_t i = 0; i < count; i++) {
+        cout << union_arr[i] << ((i < count - 1) ? "", "" : """");
+    }
+    cout << ""]"" << endl;
+
+    return 0;
+}

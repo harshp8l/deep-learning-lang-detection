@@ -1,0 +1,42 @@
+import numpy as np
+import pandas as pd
+
+dates = pd.DataFrame(pd.date_range('2000-01-01', periods = 15), columns = ['date'])
+d = pd.DataFrame(np.random.randint(1, 5, (15, 3)), columns = list('abc'))
+d = pd.concat([dates, d], axis = 1)
+
+writer = pd.ExcelWriter('dates_border.xlsx',
+                    #OR: 'c:\\users\\USER_NAME\\desktop\\dates_border.xlsx',
+                    datetime_format='yyyy.mm') 
+d.to_excel(writer, 'Sheet1', index = False)
+worksheet = writer.sheets['Sheet1']
+workbook  = writer.book
+
+# header: I LOSE THE THICK BOTTOM BORDER OF THE HEADER
+header_format = workbook.add_format({'bottom': 2, 'bg_color': '#F9DA04'})
+for col_num, value in enumerate(d.columns.values):
+    worksheet.write(0, col_num, value, header_format)
+
+# data with bottom borders
+format1 = workbook.add_format()
+format1.set_bottom(7)
+
+#snippet added to op script
+format2 = workbook.add_format()
+format2.set_top(2)
+format2.set_bottom(7)
+
+worksheet.conditional_format(1, 0, 1, d.shape[1] -1,
+{'type': 'cell',
+ 'criteria': '<>',
+ 'value': '""""',
+ 'format': format2})
+#end of snippet added to op script
+
+worksheet.conditional_format(1, 0, d.shape[0], d.shape[1] -1,
+{'type': 'cell',
+ 'criteria': '<>',
+ 'value': '""""',
+ 'format': format1})
+
+writer.save()

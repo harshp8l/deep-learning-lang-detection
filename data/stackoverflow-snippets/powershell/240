@@ -1,0 +1,68 @@
+            #######################
+            # Function to Generate dynamic 22char random string for password use
+            # Call custom function to write php constants for basic auth 
+            Function writeFocusDomainCredFile{
+
+                param( $configObject, $hash, $farmprojectname )
+                #setting auth username:password
+                $configObject.authPasswordKey = (Get-RandomAlphanumericString -length 22 | Tee-Object -variable teeTime )
+                $hash['global_cred'] = [String]( $configObject.authUsernameKey + ':' + $configObject.authPasswordKey )
+                $prfilename = ( $configObject.ftpappdirectory + '\cred.php')
+                writeProjectBasicAuthCredOnNew -filename $prfilename -configObject $configObject
+            }
+
+            ##########################
+            # Function to write the credentials to cred php file for basic auth use
+            # This file with other dependent files could be automatically ftp'd. 
+            # Would share in another post 
+            Function writeProjectBasicAuthCredOnNew{
+               param( $filename
+                      ,$configObject
+                      )
+
+                writeDeployFileFiltersForDomain -ReportFileName $filename
+                Add-Content $filename ( ""<?php"" )
+                Add-Content $filename (""define('WPIZED_AUTH_USER', '"" + $configObject.authUsernameKey + ""');""); 
+                Add-Content $filename (""define('WPIZED_AUTH_PASS', '"" + $configObject.authPasswordKey + ""');"");   
+            }
+
+            ###################################################################################################
+            # Configure Below as You prefer or desire #
+
+
+            $properties = @{
+                            'ResourceName' = ""AzureAppName"";
+                            'myResourceGroupName' = ""{App Resource Group Name}""; 
+                            'mySubscriptionName' = ""{subscription name}""; 
+                            'adminEmail' = ""H.Bala@volunteering.com"";
+                            'ResourceGroupLocation' = ""East US"";      
+                            'authUsernameKey' = 'HBalaUsername'; #For this post, using fixed username as 'HBalaUsername'
+                            'authPasswordKey' = '';
+                            'PathFormatDate' = Get-Date -UFormat ""%Y_%m_%d"";
+
+                       }
+            $configObject = New-Object –TypeName PSObject –Prop $properties
+            Write-Output $configObject
+
+
+
+            #Login cmdlet for active session
+            Login-AzureRmAccount
+            Get-AzureRmSubscription –SubscriptionName $configObject.mySubscriptionName | Select-AzureRmSubscription 
+            (Get-AzureRmContext).Subscription
+            Select-AzureRMSubscription -SubscriptionName $configObject.mySubscriptionName 
+
+            #Pull the Webapp details and configuration
+            $webApp = Get-AzureRMWebApp -ResourceGroupName $configObject.myResourceGroupName -Name $configObject.ResourceName 
+            #Pull the Application Listing Environment / Configuration Variables
+            $appSettingList = $webApp.SiteConfig.AppSettings
+            $hash = @{}
+            ForEach ($kvp in $appSettingList) {
+               $hash[$kvp.Name] = $kvp.Value
+            }
+
+
+            writeFocusDomainCredFile -configObject $configObject -hash $hash
+            #[FTP Deploy Logic of this file and other basic auth or files shall cover in seperate topic ]
+            #[ Only setting the generated Credentials and saving to Application setting focused here ]
+            Set-AzureRMWebApp -ResourceGroupName $configObject.myResourceGroupName -Name $configObject.ResourceName -AppSettings $hash  

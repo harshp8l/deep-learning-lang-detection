@@ -1,0 +1,20 @@
+  trait HasHitPoints[Self <: HasHitPoints[Self]] { 
+    val hitPoints: Int 
+    def updateHitpoints(f: Self => Int): Self
+  }
+  trait HasBearing { val bearing: Double }
+
+  case class Ship(hitPoints: Int, bearing: Double)
+      extends HasHitPoints[Ship]
+      with HasBearing {
+    override def updateHitpoints(f: Ship => Int): Ship = copy(hitPoints = f(this))
+  }
+  case class Base(hitPoints: Int) extends HasHitPoints[Base] {
+    override def updateHitpoints(f: Base => Int): Base = copy(hitPoints = f(this))
+  }
+
+  val things = Ship(50, 0) :: Base(100) :: Nil
+
+  val heal = things.map(_.updateHitpoints(_.hitPoints + 10))
+
+  val totalHitPoints = heal.map(_.hitPoints).sum

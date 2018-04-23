@@ -1,0 +1,20 @@
+select 
+    person.personid, 
+    person.DOB,
+    person.FullName,
+    visit.visit_2017,
+    visit.visit_2018
+into 
+    #temp
+from 
+    table1 person
+    cross apply (
+        select 
+            sum(case when date >= '20170101' and date < '20180101' then events end) as visit_2017,
+            sum(case when date >= '20160101' and date < '20170101' then events end) as visit_2016
+         from 
+             Visit 
+         where
+             date >= '20160101' and date < '20180101' and 
+             Visit.PersonID = person.PersonID
+    ) visit 

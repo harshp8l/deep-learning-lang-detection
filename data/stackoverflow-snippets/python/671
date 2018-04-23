@@ -1,0 +1,17 @@
+# one of decorator variants from source:
+def _lru_cache_wrapper(user_function, maxsize, typed, _CacheInfo):
+    cache = {}                                # RESULTS SAVES HERE
+    # ...
+    def wrapper(*args, **kwds):
+        # Simple caching without ordering or size limit
+        nonlocal hits, misses
+        key = make_key(args, kwds, typed)
+        result = cache_get(key, sentinel)
+        if result is not sentinel:            # ALREADY CALLED WITH PASSED ARGUMENTS
+            hits += 1
+            return result                     # RETURN SAVED RESULT
+                                              # WITHOUT ACTUALLY CALLING FUNCTION
+        result = user_function(*args, **kwds) # FUNCTION CALL - if cache[key] empty
+        cache[key] = result                   # SAVE RESULT
+        misses += 1
+        return result

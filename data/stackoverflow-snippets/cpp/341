@@ -1,0 +1,19 @@
+std::pair<DataStore::iterator, bool>
+insert(DataStore& vec, const Key& k, const Data& d)
+{
+  // Note: since you are using C++11, you can use lambdas rather than `std::bind`.
+  // This simplifies your code and makes it easier for the compiler to optimize
+  auto location = std::lower_bound(std::begin(vec), std::end(vec), k,
+    [](const std::unique_ptr<std::pair<Key,Data>>& elem, const Key& key) {
+      return elem->first < key;
+    });
+
+  // exists, return element location 
+  if(location != vec.end() && (*location)->first == k) {
+    return std::make_pair(location, false);
+  }
+
+  // non-existing element, add it to the right location
+  auto addedLocation = vec.emplace(location, new std::pair<Key,Data>(k,d));
+  return std::make_pair(addedLocation, true);
+}

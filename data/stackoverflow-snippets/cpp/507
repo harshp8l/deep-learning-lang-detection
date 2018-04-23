@@ -1,0 +1,52 @@
+#include <boost/asio.hpp>
+#include <iostream>
+
+#define RUN_CHECK                                                                                                      \
+    do {                                                                                                               \
+        std::cout << ""Here:"" << __LINE__ << ""\n"";                                                                      \
+    } while (0)
+
+struct X {
+    boost::asio::io_service io;
+    boost::asio::ip::tcp::socket socket{io};
+
+    X() {
+        socket.connect({ {}, 6767 });
+    }
+
+    boost::asio::streambuf response;
+
+    void foo() {
+        boost::asio::async_read_until(socket, response, ""\n"",
+              [&](const boost::system::error_code &ec, std::size_t length) {
+                  RUN_CHECK;
+                  if (!ec) {
+                      RUN_CHECK;
+                      std::string r = this->response_get(length);
+                      /*
+                      .. do stuff here
+                      */
+
+                  } else {
+                      report_error(ec);
+                  }
+              });
+    }
+
+    std::string response_get(std::size_t length) {
+        std::string result;
+        std::copy_n(boost::asio::buffers_begin(response.data()), length, back_inserter(result));
+        return result;
+    }
+
+    void report_error(boost::system::error_code ec) {
+        std::cout << ""Error: "" << ec.message() << ""\n"";
+    }
+};
+
+int main() {
+    X x;
+    x.foo();
+
+    x.io.run();
+}

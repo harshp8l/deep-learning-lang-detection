@@ -1,0 +1,9 @@
+update commissions c
+LEFT JOIN advertiser_balance_transactions new_t 
+    ON c.id=new_t.commission_id AND new_t.transaction_type='new_commissions'
+LEFT JOIN advertiser_balance_transactions first_nt_t 
+    ON c.id=first_nt_t.commission_id AND first_nt_t.transaction_type='nt_commission' 
+        AND first_nt_t.created_at=(SELECT MIN(created_at) 
+                       FROM advertiser_balance_transactions t3 
+                       WHERE t3.commission_id=c.id AND transaction_type='nt_commission')
+set commissions.network_commission = first_nt_t.amount * 100 / new_t.amount

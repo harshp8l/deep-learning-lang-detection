@@ -1,0 +1,16 @@
+inputDF.withColumn(""DEPART"", last(""DEPART"").over(w_col))
+   .withColumn(""row_sum"",($""COL1"" + $""COL2"" + $""COL3""))
+   .withColumn(""lag_sum"", lag($""row_sum"",1).over(w_key))
+   .filter($""LAYER_NO"" === 0 || not($""row_sum"" === $""lag_sum""))
+   .withColumn(""LAYER_NO"", rank.over(w_key)-1)
+   .drop(""row_sum"", ""lag_sum"").show()
++-----+--------+----+----+----+------+
+|  KEY|LAYER_NO|COl1|COl2|COl3|DEPART|
++-----+--------+----+----+----+------+
+|key_1|       0| 200| 300| 400|   abc|
+|key_1|       1| 200| 300| 600|   xyz|
+|key_2|       0| 500| 700| 900|   prq|
+|key_2|       1| 888| 555| 900|   tep|
+|key_3|       0| 111| 222| 333|   lgh|
+|key_3|       1| 084| 222| 333|   rrr|
++-----+--------+----+----+----+------+

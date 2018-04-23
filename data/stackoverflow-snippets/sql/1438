@@ -1,0 +1,39 @@
+  ALTER proc dbo.spBornBefore2000 as
+    set nocount on 
+    DECLARE @sub VARCHAR(100),
+     @qry VARCHAR(max),
+     @msg VARCHAR(250),
+     @query NVARCHAR(max),
+     @tab char(1) = CHAR(9)
+
+    SELECT @sub = 'before 1990 -' + cast(getdate() as varchar(100)) 
+    SELECT @msg = N'blablabla.....'
+    SET @query = ' select id, name, dob, year(dob) as birth_year 
+                         from people
+                         where year(dob) < 2000  '
+
+    IF EXISTS (select id, name, dob, year(dob) as birth_year 
+                         from people
+                         where year(dob) < 2000)
+        begin
+
+            EXEC msdb.dbo.sp_send_dbmail
+                        @profile_name = 'USERS',
+                        @recipients =  'abc@gmail.com',
+                        @body = @msg,
+                        @subject = @sub,
+                        @query = @query,
+                        @query_attachment_filename = 'before2000.csv',
+                        @attach_query_result_as_file = 1,
+                        @query_result_header = 1,
+                        @query_result_width = 256 ,
+                        @query_result_separator = @tab,
+                        @query_result_no_padding =1;
+        end
+    ELSE
+        begin
+        EXEC msdb.dbo.sp_send_dbmail
+                        @profile_name = 'USERS',
+                        @recipients =  'myself@gmail.com',
+                        @body = 'No results returned'
+        end

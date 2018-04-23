@@ -1,0 +1,38 @@
+version: ""3""
+
+services:
+  achi-php-apache:
+    image: wordpress:4.9.4-php7.0-apache
+    container_name: achi-php-apache
+    ports:
+      - ""8080:80""
+    environment:
+      WORDPRESS_DB_HOST: achi-mysql
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: 123456
+      WORDPRESS_DB_NAME: wp-dbname
+    volumes:
+      - /home/achi/workspace/web/wordpress-template:/var/www/html:rw
+    depends_on:
+      - achi-mysql
+    networks:
+      - wp-net
+  achi-mysql:
+    image: mysql:5.7
+    container_name: achi-mysql
+    ports:
+      - ""3306:3306""
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: wp-dbname
+    volumes:
+      - wp-mysql-data:/var/lib/mysql
+    networks:
+      - wp-net
+
+networks:
+  wp-net:
+    driver: bridge
+
+volumes:
+  wp-mysql-data:

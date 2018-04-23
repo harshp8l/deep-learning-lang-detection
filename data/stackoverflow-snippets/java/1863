@@ -1,0 +1,17 @@
+  @Test
+    public void asyncFlatMapWithMaxConcurrent() {
+        Observable.from(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
+                .flatMap(value -> Observable.just(value)
+                        .map(number -> {
+                            try {
+                                Thread.sleep(1000);
+                                System.out.println(String.format(""Value %s in Thread execution:%s"",number, Thread.currentThread().getName()));
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            return number;
+                        }).subscribeOn(Schedulers.newThread())
+                        , 2)//This is the max concurrenrt
+        .subscribe();
+        new TestSubscriber()
+                .awaitTerminalEvent(15, TimeUnit.SECONDS);    }

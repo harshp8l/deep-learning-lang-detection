@@ -1,0 +1,26 @@
+val src1 = Source(List(1, 3, 5, 7))
+val src2 = Source(List(1, 5, 7))
+val src3 = Source(List(2, 4, 5))
+
+def mergeSortedSources(sources: List[Source[Int, NotUsed]]): Source[Int, NotUsed] =
+  sources.foldLeft(Source.empty[Int])(_ mergeSorted _)
+         .concat(Source.single(0)) // this ending element is needed to print the last pair
+
+mergeSortedSources(List(src1, src2, src3))
+  .statefulMapConcat { () =>
+    var prev: Option[Int] = None
+    var count = 0
+
+    x =>
+      prev match {
+        case None | Some(`x`) =>
+          count = count + 1
+          prev = Some(x)
+          Nil
+        case Some(oldElem) =>
+          val oldCount = count
+          count = 1
+          prev = Some(x)
+          (oldElem -> oldCount) :: Nil
+      }
+  }.runForeach(println)

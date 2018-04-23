@@ -1,0 +1,29 @@
+import numpy as np
+import pandas as pd
+
+np.random.seed(42018)
+
+CPTY = [""BARC"", ""BMON"", ""CALIP"", ""BNP"", ""CIBC"", ""CANTR"", ""CITI""]
+currency = [""RUB"", ""ZAR"", ""JPY"", ""EUR"", ""GBP"", ""USD"", ""CAD""]
+
+data = pd.DataFrame({'CPTY': ["""".join(np.random.choice(CPTY,1)) for _ in range(50)],
+                     'currency': ["""".join(np.random.choice(currency,1)) for _ in range(50)],
+                     'Gross Loan Amount': abs(np.random.randn(50))*10000000
+                    }, columns = ['CPTY','currency','Gross Loan Amount'])
+
+brkrcy = data.groupby(['CPTY','currency'], as_index=False).agg({""Gross Loan Amount"": ""sum""})\
+             .sort_values(by=['CPTY', 'Gross Loan Amount'], ascending=[True, False])\
+             .set_index('CPTY')
+print(brkrcy.head(10))
+#       currency  Gross Loan Amount
+# CPTY                             
+# BARC       JPY       3.854475e+07
+# BARC       RUB       9.201352e+06
+# BARC       USD       7.744341e+06
+# BMON       EUR       2.780286e+07
+# BMON       JPY       2.365747e+07
+# BMON       CAD       8.523440e+06
+# BNP        RUB       1.268484e+07
+# BNP        GBP       8.149266e+06
+# BNP        EUR       7.575220e+06
+# CALIP      USD       3.387214e+07

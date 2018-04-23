@@ -1,0 +1,33 @@
+class ExternalAPIActor(apiClient: HttpClient) extends Actor with Stash {
+        import ExternalAPIActor._
+
+        def receive: Receive = {
+            case msg @ CreateUser(data) =>
+                context.become(waitingForExternalServiceReceive(msg))
+                apiClient.post(data)
+                    .map(_ => UserCreatedInAPI())
+                    .pipeTo(self)
+        }
+
+        def waitingForExternalServiceReceive(event: InputEvent): Receive = LoggingReceive {
+            case Failure(_) =>
+              unstashAll()
+              context.unbecome()
+              context.system.scheduler.scheduleOnce(3 seconds, self, event)
+
+            case msg:OutputEvent =>
+              unstashAll()
+              context.unbecome()
+              context.parent ! msg
+
+            case _ => stash()
+        }
+}
+
+object ExternalAPIActor {
+    sealed trait InputEvent
+    sealed trait OutputEvent
+
+    final case class CreateUser(data: Map[String,Any]) extends InputEvent
+    final case class UserCreatedInAPI() extends OutputEvent
+}

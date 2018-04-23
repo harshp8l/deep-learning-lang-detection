@@ -1,0 +1,34 @@
+;; lib.clj
+(defprotocol MyLibDependencies
+  (provide-status [this x])
+  (provide-response [this x]))
+
+(defn render-response
+  [responder val]
+  {:status (provide-status responder val)
+   :code (provide-response responder val)})
+
+;; client.clj
+(defrecord Foo [y]
+  MyLibDependencies
+  (provide-status [this val]
+    (if (even? val)
+      :ok
+      :err))
+  (provide-response [this val]
+    (+ y val)))
+
+(defrecord Bar [y]
+  MyLibDependencies
+  (provide-status [this val]
+    (if (odd? val)
+      :ok
+      :err))
+  (provide-response [this val]
+    (+ y val)))
+
+
+(comment
+  (render-response (Bar. 10) 1) ;; => {:status :ok :code 11}
+  (render-response (Foo. 10) 1) ;; => {:status :err :code 11}
+  )

@@ -1,0 +1,27 @@
+(ns tst.xyz
+  (:use clojure.test tupelo.test)
+  (:require [tupelo.core :as t] ))
+
+(defn yadda-lazy-gen
+  [len iters]
+  (t/lazy-gen
+    (let [base (cycle (range len))]
+      (loop [i      0
+             v1     base
+             v2     (map #(* %1 %1) base)
+             v3     (map #(* %1 %1 %1) base)]
+        (when (< i iters)
+          (t/yield (yadda-iter v1 v2 v3))
+          (recur
+            (inc i)
+            (rest v1)
+            (rest v2)
+            (rest v3)))))))
+
+Testing tst.clj.core
+(take 11 (yadda-lazy 4))  => (0 3 14 39 0 3 14 39 0 3 14)
+(yadda-loop 4 11)         => (0 3 14 39 0 3 14 39 0 3 14)
+(yadda-lazy-gen 4 11)     => (0 3 14 39 0 3 14 39 0 3 14)
+
+Ran 1 tests containing 1 assertions.
+0 failures, 0 errors.

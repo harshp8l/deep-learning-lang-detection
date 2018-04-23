@@ -1,0 +1,47 @@
+package main
+
+import (
+    ""fmt""
+    ""strings""
+    ""regexp""
+    )
+
+type Test struct {
+    Field      string `bson:""Field"" json:""field""`
+    OtherField int    `bson:""OtherField"" json:""otherField""`
+}
+
+func main() {
+    fields, err := GetFieldNames(Test{})
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    fmt.Println(fields)
+}
+
+
+func GetFieldNames(i interface{}) ([]string, error) {
+    // regular expression to find the unquoted json
+    reg := regexp.MustCompile(`(\s*?{\s*?|\s*?,\s*?)(['""])?(?P<Field>[a-zA-Z0-9]+)(['""])?:`)
+
+    // print struct in almost json form (fields unquoted)
+    raw := fmt.Sprintf(""%#v"", i)
+
+    // remove the struct name so string begins with ""{""
+    fjs := raw[strings.Index(raw,""{""):]
+
+    // find and grab submatch 3
+    matches := reg.FindAllStringSubmatch(fjs,-1)
+
+    // collect
+    fields := []string{}
+    for _, v := range matches {
+        if len(v) >= 3 && v[3] != """" {
+            fields = append(fields, v[3])
+        }
+
+    }
+
+
+return fields, nil

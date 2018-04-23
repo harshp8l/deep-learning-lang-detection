@@ -1,0 +1,35 @@
+chIn := make(chan label.Label, 20)
+chOut := make(chan label.Label, 20)
+
+for i:=0;i<10;i++ {
+    go func(gClient *gmail.Client, chIn chan label.Label, chOut chan<- label.Label) {
+
+        for gmailLabels := range chIn {
+            d, err := s.gClient.Service.Users.Labels.Get(s.gClient.User, l.Id).Do()
+
+            if err != nil {
+                panic(err)
+            }
+
+            // Performs some operation with the label `d`
+            preparedLabel := ....
+
+            chOut <- preparedLabel
+
+        }
+
+    }(s.gClient, chIn, chOut)
+
+}
+
+go func(chIn chan label.Label) {
+    defer close(chIn)
+    for _, l := range r.Labels {
+        chIn <- l
+    }
+}(chIn)
+
+for i := 0; i < len(r.Labels); i++ {
+    lab := <-chOut
+    fmt.Printf(""Processed %v\n"", lab.LabelID)
+}

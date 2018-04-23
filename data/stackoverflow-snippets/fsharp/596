@@ -1,0 +1,47 @@
+open System
+open System.IO
+open System.Net
+
+type T = { Url : string }
+
+let xs = [
+    { Url = ""http://microsoft.com"" }
+    { Url = ""thisDoesNotExists"" } // throws when constructing Uri, before downloading
+    { Url = ""https://thisDotNotExist.Either"" }
+    { Url = ""http://google.com"" }
+]
+
+let isAllowedInFileName c =
+    not <| Seq.contains c (Path.GetInvalidFileNameChars())
+
+let downloadAsync url =
+    async {
+        use client = new WebClient()
+        let fn =
+            [|
+                __SOURCE_DIRECTORY__
+                url |> Seq.filter isAllowedInFileName |> String.Concat
+            |]
+            |> Path.Combine
+        printfn ""Downloading %s to %s"" url fn
+        return! client.AsyncDownloadFile(Uri(url), fn)
+    }
+
+xs
+|> Seq.map (fun u -> downloadAsync u.Url |> Async.Catch)
+|> Async.Parallel
+|> Async.RunSynchronously
+|> Seq.iter (function
+    | Choice1Of2 () -> printfn ""Succeeded""
+    | Choice2Of2 exn -> printfn ""Failed with %s"" exn.Message)
+
+(*
+Downloading http://microsoft.com to httpmicrosoft.com
+Downloading thisDoesNotExists to thisDoesNotExists
+Downloading http://google.com to httpgoogle.com
+Downloading https://thisDotNotExist.Either to httpsthisDotNotExist.Either
+Succeeded
+Failed with Invalid URI: The format of the URI could not be determined.
+Failed with The remote name could not be resolved: 'thisdotnotexist.either'
+Succeeded
+*)

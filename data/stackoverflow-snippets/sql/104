@@ -1,0 +1,277 @@
+  SELECT ips_rc.ListOrder
+    , ips_rc.project
+    , lfbe.Category
+    , ips_rc.roster_id
+    , ips_rc.role_category
+    , ips_rc.role_title AS [ROLE]
+    , ips_rc.role_code
+    , ips_rc.role_title + ' (' + ips_rc.role_code + ')' AS PS_Role
+    , CASE 
+        WHEN ISNULL(lfbe.Pronto_Role_Code, '') = ''
+            THEN 'TO_BE_MAPPED'
+            ELSE ISNULL(lfbe.Pronto_Role_Code, '')
+        END AS Pronto_Role_Code
+    , CASE 
+        WHEN ISNULL(lfbe.Pronto_Role_Code_Description, '') = ''
+            THEN ips_rc.role_title
+        ELSE ISNULL(lfbe.Pronto_Role_Code_Description, '')
+        END AS Pronto_Role_Code_Description
+    , ISNULL(lfbe.Rate, 0) AS Rate
+    , CASE 
+        WHEN ISNULL(lfbe.Pronto_Role_Code_Old, '') = ''
+            THEN ips_rc.role_title
+        ELSE lfbe.Pronto_Role_Code_Old
+        END AS Pronto_Role_Code_Old
+        , CASE 
+        WHEN ISNULL(lfbe.Pronto_Role_Code_Description_Old, '') = ''
+            THEN 'TO_BE_MAPPED'
+        ELSE lfbe.Pronto_Role_Code_Description_Old
+        END AS Pronto_Role_Code_Description_Old
+        , ips_rc.Shift
+        , ips_rc.UOM
+        , ips_rc.DATE
+        , ips_rc.DHours
+        , ips_rc.NHours
+FROM (
+    SELECT psrc.ListOrder -- Added
+    , psrc.project
+    , pr_jcm.customer
+    , pr_jcm.subcode
+    , psrc.roster_id
+    , psrc.role_id
+    , psrc.role_category
+    , psrc.role_title
+    , psrc.role_code
+
+    , CASE 
+            WHEN SUM(CASE 
+                        WHEN psrc.DATE BETWEEN psrc.start_date
+                                AND psrc.end_date
+                            THEN psrc.NWorkHours
+                        ELSE 0
+                        END) OVER (PARTITION BY psrc.project, psrc.roster_id) >= SUM(CASE 
+                        WHEN psrc.DATE BETWEEN psrc.start_date
+                                AND psrc.end_date
+                            THEN psrc.DWorkHours
+                        ELSE 0
+                        END) OVER (PARTITION BY psrc.project, psrc.roster_id)
+                THEN 'Night Shifts'
+            ELSE 'Day Shifts'
+            END AS Shift, 'HOURS' AS UOM, psrc.DATE, psrc.DHours, psrc.NHours
+    FROM (
+        SELECT rcd.list_order --Added
+            , rcd.project
+            , rcd.start_date
+            , rcd.end_date
+            , rcd.roster_id
+            , rcd.role1_id AS role_id
+            , CASE 
+                    WHEN rb_test1.role1_id IS NOT NULL
+                        THEN rb_test1.category
+                    WHEN rb_test2.role1_id IS NOT NULL
+                        THEN rb_test2.category
+                    WHEN rb_test3.role1_id IS NOT NULL
+                        THEN rb_test3.category
+                    ELSE rcd.role_category
+            END AS role_category
+            , CASE 
+                    WHEN rb_test1.role1_id IS NOT NULL
+                        THEN rb_test1.title
+                    WHEN rb_test2.role1_id IS NOT NULL
+                        THEN rb_test2.title
+                    WHEN rb_test3.role1_id IS NOT NULL
+                        THEN rb_test3.title
+                    ELSE rcd.role_title
+                    END AS role_title
+                    , CASE 
+                    WHEN rb_test1.role1_id IS NOT NULL
+                        THEN CAST(rb_test1.band_role_id AS VARCHAR)
+                    WHEN rb_test2.role1_id IS NOT NULL
+                        THEN CAST(rb_test2.band_role_id AS VARCHAR)
+                    WHEN rb_test3.role1_id IS NOT NULL
+                        THEN CAST(rb_test3.band_role_id AS VARCHAR)
+                    ELSE rcd.role_code
+                    END AS role_code, rcd.shift_date AS DATE
+            , SUM(CASE 
+                        WHEN rcd.shift_ampm = 'day'
+                        THEN rcd.shift_time
+                    ELSE 0
+                    END) AS DHours
+            , SUM(CASE 
+                        WHEN rcd.shift_ampm = 'day'
+                            AND rcd.shift_type = 'work'
+                            THEN rcd.shift_time
+                        ELSE 0
+                        END) AS DWorkHours
+            , SUM(CASE 
+                        WHEN rcd.shift_ampm = 'day'
+                            AND rcd.shift_type = 'eqmob'
+                            THEN rcd.shift_time
+                        ELSE 0
+                        END) AS DEqmobHours
+            , SUM(CASE 
+                        WHEN rcd.shift_ampm = 'day'
+                            AND rcd.shift_type = 'eqdemob'
+                            THEN rcd.shift_time
+                        ELSE 0
+                        END) AS DEqdemobHours
+            , SUM(CASE 
+                        WHEN rcd.shift_ampm = 'night'
+                            THEN rcd.shift_time
+                        ELSE 0
+                        END) AS NHours
+            , SUM(CASE 
+                        WHEN rcd.shift_ampm = 'night'
+                            AND rcd.shift_type = 'work'
+                            THEN rcd.shift_time
+                        ELSE 0
+                        END) AS NWorkHours
+            , SUM(CASE 
+                        WHEN rcd.shift_ampm = 'night'
+                            AND rcd.shift_type = 'eqmob'
+                            THEN rcd.shift_time
+                        ELSE 0
+                        END) AS NEqmobHours
+            , SUM(CASE 
+                        WHEN rcd.shift_ampm = 'night'
+                            AND rcd.shift_type = 'eqdemob'
+                            THEN rcd.shift_time
+                        ELSE 0
+                        END) AS NEqdemobHours
+        FROM OPENQUERY([LFMANAGE], 'SELECT p.job_no AS project, p.start_date, p.end_date, rs.roster_id, IFNULL(rs.role_id, 0) AS role1_id, IFNULL(r.role2_id, 0) AS role2_id, IFNULL(r.role3_id, 0) AS role3_id, rl,ListOrder, rl.category AS role_category, rl.title AS role_title, rl.role_code AS role_code, rs.shift_date, rs.shift_ampm, rs.shift_time, rs.shift_type, s.client_id FROM lfmanage.t_roster_shift rs JOIN lfmanage.t_project AS p ON p.project_id = rs.project_id LEFT JOIN lfmanage.t_site AS s ON s.site_id = p.site_id JOIN lfmanage.t_roster AS r ON r.roster_id = rs.roster_id JOIN lfmanage.t_role AS rl ON rl.role_id = rs.role_id WHERE p.job_no = ''700704'' AND CASE WHEN ISNULL(rs.deleted) THEN 0 ELSE rs.deleted END = 0') AS rcd --Added
+        LEFT JOIN (
+                    SELECT client_id
+                    , band_role_id
+                    , title
+                    , CASE 
+                            WHEN CHARINDEX(UPPER(title), 'SUPER') > 0
+                                THEN 'super'
+                            ELSE 'trade'
+                            END AS category
+                    , role1_id
+                    , role2_id
+                    , role3_id
+                    FROM OPENQUERY([LFMANAGE], 'SELECT br.client_id, MIN(brs.band_role_id) AS band_role_id, br.title, brs.role1_id, brs.role2_id, brs.role3_id FROM t_band_role_set AS brs INNER JOIN t_band_role AS br ON br.band_role_id = brs.band_role_id WHERE IFNULL(brs.role1_id, 0) <> 0 AND IFNULL(brs.role2_id, 0) <> 0 AND IFNULL(brs.role3_id, 0) <> 0 GROUP BY br.client_id, br.title, brs.role1_id, brs.role2_id, brs.role3_id')
+                ) AS rb_test1
+                ON rb_test1.client_id = rcd.client_id
+                    AND rb_test1.role1_id = rcd.role1_id
+                    AND rb_test1.role2_id = rcd.role2_id
+                    AND rb_test1.role3_id = rcd.role3_id
+        LEFT JOIN (
+            SELECT client_id, band_role_id, title, CASE 
+                    WHEN CHARINDEX(UPPER(title), 'SUPER') > 0
+                        THEN 'super'
+                    ELSE 'trade'
+                    END AS category, role1_id, role2_id
+            FROM OPENQUERY([LFMANAGE], 'SELECT br.client_id, MIN(brs.band_role_id) AS band_role_id, br.title, brs.role1_id, brs.role2_id FROM t_band_role_set AS brs INNER JOIN t_band_role AS br ON br.band_role_id = brs.band_role_id WHERE IFNULL(brs.role1_id, 0) <> 0 AND IFNULL(brs.role2_id, 0) <> 0 GROUP BY br.client_id, br.title, brs.role1_id, brs.role2_id ')
+            ) AS rb_test2
+                ON rb_test2.client_id = rcd.client_id
+                    AND rb_test2.role1_id = rcd.role1_id
+                    AND rb_test2.role2_id = rcd.role2_id
+        LEFT JOIN (
+            SELECT client_id, band_role_id, title, CASE 
+                    WHEN CHARINDEX(UPPER(title), 'SUPER') > 0
+                        THEN 'super'
+                    ELSE 'trade'
+                    END AS category, role1_id, role3_id
+            FROM OPENQUERY([LFMANAGE], 'SELECT br.client_id, MIN(brs.band_role_id) AS band_role_id, br.title, brs.role1_id, brs.role3_id FROM t_band_role_set AS brs INNER JOIN t_band_role AS br ON br.band_role_id = brs.band_role_id WHERE IFNULL(brs.role1_id, 0) <> 0 AND IFNULL(brs.role3_id, 0) <> 0 GROUP BY br.client_id, br.title, brs.role1_id, brs.role3_id ')
+            ) AS rb_test3
+                ON rb_test3.client_id = rcd.client_id
+                    AND rb_test3.role1_id = rcd.role1_id
+                    AND rb_test3.role3_id = rcd.role3_id
+        WHERE rcd.shift_date > '2017-01-01'
+        GROUP BY rcd.list_order --Added 
+            , rcd.project
+            , rcd.start_date
+            , rcd.end_date
+            , rcd.roster_id
+            , rcd.role1_id
+            , CASE 
+                WHEN rb_test1.role1_id IS NOT NULL
+                    THEN rb_test1.category
+                WHEN rb_test2.role1_id IS NOT NULL
+                        THEN rb_test2.category
+                    WHEN rb_test3.ROLE1_id IS NOT NULL
+                        THEN rb_test3.category
+                    ELSE rcd.role_category
+                END
+            , CASE 
+                WHEN rb_test1.role1_id IS NOT NULL
+                    THEN rb_test1.title
+                WHEN rb_test2.role1_id IS NOT NULL
+                    THEN rb_test2.title
+                WHEN rb_test3.role1_id IS NOT NULL
+                    THEN rb_test3.title
+                ELSE rcd.role_title
+                END
+            , CASE 
+                WHEN rb_test1.role1_id IS NOT NULL
+                    THEN CAST(rb_test1.band_role_id AS VARCHAR)
+                WHEN rb_test2.role1_id IS NOT NULL
+                    THEN CAST(rb_test2.band_role_id AS VARCHAR)
+                WHEN rb_test3.role1_id IS NOT NULL
+                    THEN CAST(rb_test3.band_role_id AS VARCHAR)
+                ELSE rcd.role_code
+                END
+            , rcd.shift_date
+        ) AS psrc
+    INNER JOIN (
+                SELECT job_no AS project
+                    , Client AS customer
+                    , '3700002213' AS subcode
+                FROM [dbo].[vw_PlanningSystem_Projects]
+                WHERE job_no = '700704'
+                ) AS pr_jcm
+                    ON pr_jcm.project = psrc.project
+    ) AS ips_rc
+LEFT JOIN (
+            SELECT rates.Client
+                , rates.SubCode
+                , mapping.Category
+                , mapping.Shift
+                , mapping.IPS_Role_Code
+                , rates.Pronto_Role_Code
+                , rates.Pronto_Role_Code_Description
+                , rates.Rate
+                , rates.Pronto_Role_Code_Old
+                , rates.Pronto_Role_Code_Description_Old
+            FROM (
+                    SELECT UPPER(Category) AS Category
+                        , 'Day Shifts' AS Shift
+                        , IPS_Role_Code
+                        , Day_Cost_Code AS Pronto_Role_Code
+                    FROM [LFBudgetEstimate].[dbo].[LFBE_RoleCode_MasterMapping]
+
+                    UNION ALL
+
+                    SELECT UPPER(Category) AS Category
+                        , 'Night Shifts' AS Shift
+                        , IPS_Role_Code
+                        , Night_Cost_Code AS Pronto_Role_Code
+                    FROM [LFBudgetEstimate].[dbo].[LFBE_RoleCode_MasterMapping]
+                    ) AS mapping
+INNER JOIN (
+            SELECT Client
+                , SubCode
+                , CASE 
+                    WHEN Shift = 'Day Shift'
+                        THEN 'Day Shifts'
+                    WHEN Shift = 'Night Shift'
+                        THEN 'Night Shifts'
+                    ELSE ''
+                    END AS Shift
+                , Pronto_Role_Code
+                , Pronto_Role_Code_Description
+                , Rate
+                , Pronto_Role_Code_Old
+                , Pronto_Role_Code_Description_Old
+            FROM [LFBudgetEstimate].[dbo].[LFBE_SubCodes_Rates]
+            ) AS rates
+            ON rates.Shift = mapping.Shift
+                AND rates.Pronto_Role_Code = mapping.Pronto_Role_Code
+        ) AS lfbe
+            ON lfbe.Client = ips_rc.customer
+                AND lfbe.SubCode = ips_rc.subCode
+                AND lfbe.Shift = ips_rc.Shift
+                AND lfbe.IPS_Role_Code = ips_rc.role_code
+ORDER BY ips_rc.project ASC, ips_rc.role_title ASC, ips_rc.list_order ASC

@@ -1,0 +1,26 @@
+(defn map-to-vec
+  [map]
+  (reduce-kv (fn [vec k v] (into vec [k v])) [] map))
+
+(defn substitute-seq
+  [form syms]
+  (if (seq form) 
+    (lazy-seq
+     (if (and (not-empty syms) (list? (first form)))
+       (cons 
+        (first syms)
+        (substitute-seq (rest form) (rest syms)))
+       (cons 
+        (first form)
+        (substitute-seq (rest form) syms))))))
+
+(defn substitute
+  [form syms]
+  (cond
+   (list? form) (apply list (sub-syms-seq form syms))
+   (map? form) 
+   (reduce
+    (fn [m [k v]] (conj m [k v]))
+    (empty form) 
+    (partition 2 (sub-syms-seq (map-to-vec form) syms)))
+   (coll? form) (into (empty form) (sub-syms-seq form syms))))

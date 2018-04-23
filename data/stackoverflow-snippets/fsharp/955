@@ -1,0 +1,21 @@
+open Microsoft.FSharp.Reflection
+
+type MyRecord = {
+    Name : string
+    Address : string
+    City : string
+    Postcode : string
+    Tel : string } with
+    static member CreateFromFixedWidth format (line : string) =
+        let fields =
+            format 
+            |> List.fold (fun (index, acc) length ->
+                let str = line.[index .. index + length - 1].Trim()
+                index + length, box str :: acc )
+                (0, [])
+            |> snd
+            |> List.rev
+            |> List.toArray
+        FSharpValue.MakeRecord(
+            typeof<MyRecord>,
+            fields ) :?> MyRecord

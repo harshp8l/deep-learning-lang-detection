@@ -1,0 +1,19 @@
+function mcopy($srcdir,$destdir)
+{
+ls $srcdir -recurse | Where-Object { $_.PSIsContainer -eq $false } | foreach($_) {
+$SourceFile = $_.FullName
+$DestinationFile = $destdir+$_
+If (Test-Path $DestinationFile) {
+    $i = 0
+    While (Test-Path $DestinationFile) {
+        $i += 1
+        $DestinationFile = $destdir+$_+$i
+    }
+} Else {
+    New-Item -ItemType File -Path $DestinationFile -Force
+}
+Copy-Item -Path $SourceFile -Destination $DestinationFile -verbose -Force
+}
+}
+
+mcopy -srcdir C:\copyme\ -destdir C:\copyharder\

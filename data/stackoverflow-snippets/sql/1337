@@ -1,0 +1,38 @@
+DECLARE @PageNumber AS INT
+declare @RowspPage AS INT
+SET @PageNumber = 1
+SET @RowspPage = 100
+
+declare @more int = 1
+while  (@more=1)
+begin
+
+SELECT  [SSN]
+        ,[DOB]
+        ,[LastName]
+        ,[FirstName]
+        ,[CustomerRecordID]
+        ,[ADDate]
+        ,[MiddleName] FROM (
+         SELECT ROW_NUMBER() OVER(ORDER BY ID) AS NUMBER,
+                 [SSN]
+                ,[DOB]
+                ,[LastName]
+                ,[FirstName]
+                ,[CustomerRecordID]
+                ,[ADDate]
+                ,[MiddleName]
+        FROM [dbo].[All Borrowers 20180222]
+               ) AS TBL
+        WHERE 
+            NUMBER BETWEEN ((@PageNumber - 1) * @RowspPage + 1) AND 
+       (@PageNumber * @RowspPage)
+        ORDER BY 
+            NUMBER
+
+            if @@rowcount = 0
+                break
+        set @pagenumber += 1
+    end
+
+     This will loop through and stop when you run out of rows (@@rownumber = 0). I am assuming that there always some rows.

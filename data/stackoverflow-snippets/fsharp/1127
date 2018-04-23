@@ -1,0 +1,49 @@
+type A1Message =
+    | CreateChild
+    | ChildNotification of MailboxProcessor<A2Message>
+
+and A2Message =
+    | Start
+    | Stop
+
+let a1 (inbox : MailboxProcessor<_>) =
+    async {      
+        printfn ""Parent started""
+        while true do
+                let! msg = inbox.Receive()
+                printfn ""Parent received: %A"" msg
+                match msg with
+                | CreateChild -> 
+                    let childInbox = MailboxProcessor.Start (a2 inbox)
+                    childInbox.Post Start
+                | ChildNotification childInbox -> 
+                    childInbox.Post Stop
+    }
+
+let a2 (parentInbox : MailboxProcessor<_>) (inbox : MailboxProcessor<_>) = 
+    async {
+        printfn ""Child started""
+        let cont = ref true
+        while !cont do
+            let! msg = inbox.Receive()
+            printfn ""Child received: %A"" msg
+            match msg with
+            | Start -> parentInbox.Post <| ChildNotification inbox
+            | Stop  ->
+                cont := false
+        printfn ""Child stopped""
+    }
+
+open System
+
+[<EntryPoint>]
+let main argv = 
+
+    printfn ""Starting parent""
+    let inbox = MailboxProcessor.Start a1
+
+    inbox.Post CreateChild
+
+    ignore <| Console.ReadKey ()
+
+    0

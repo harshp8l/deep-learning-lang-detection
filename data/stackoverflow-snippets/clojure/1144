@@ -1,0 +1,17 @@
+(defn merge-map-vals [m]
+  (reduce (partial merge-with vector)
+          (map (fn [[_ v]]
+                 (when (map? v) v))
+               m)))
+
+(defn find-key [m k]
+  (flatten
+   (nfirst
+    (drop-while first
+                (iterate (fn [[m' acc]]
+                           (if (seq m')
+                             (if-let [v (get m' k)]
+                               [(merge-map-vals m') (conj acc v)]
+                               [(merge-map-vals m') acc])
+                             [nil acc]))
+                         [m []])))))

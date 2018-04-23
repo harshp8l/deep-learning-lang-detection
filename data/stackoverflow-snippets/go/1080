@@ -1,0 +1,17 @@
+switch m := raw.(type) {
+case *ClientMessageHistory:
+    channelID := h.resolveSlackChannel(m.ChannelID)
+    if channelID == """" {
+        log.Printf(""error: no channel found matching %s\n"", m.ChannelID)
+        return
+    }
+    var username string
+    if c.Client.User != nil {
+        username = c.Client.User.Username
+    } else {
+        username = ""<anonymous>""
+    }
+    log.Printf(""sending previous messages for channel %s to client %s\n"", channelID, username)
+    for _, prevMessage := range h.previousMessages(channelID, m.Limit) {
+        c.Client.send <- prevMessage
+    }

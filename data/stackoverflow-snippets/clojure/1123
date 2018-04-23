@@ -1,0 +1,25 @@
+(defn alone
+  ([l1 l2]
+   (cond (empty? l1) l2
+         (empty? l2) l1
+         :else (alone (vec (set (into l1 l2))) '() l1 l2)))
+
+  ([common-elms return-list l1 l2]
+   ""common-elms = set of common elements
+     return-list = list of XOR items
+     l1 = list 1
+     l2 = list 2 ""
+   (cond (empty? common-elms) return-list
+         (let [ce (first common-elms)]   ;; see [1]
+           (and (some #{ce} l1)
+                (some #{ce} l2)))
+         (alone (rest common-elms) 
+                return-list 
+                l1 l2)
+         :else (alone (rest common-elms) 
+                      (conj return-list (first common-elms)) ;; see [2] 
+                      l1 l2))))
+
+user> (alone '(1 2 3 4 5) '(3 4 5 6 7))
+(2 6 1 7)
+user> 

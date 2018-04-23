@@ -1,0 +1,19 @@
+foreach ( $sender in $senders ) {
+  Get-TransportServer |
+    Get-MessageTrackingLog -Start (Get-Date).AddHours(-4) -ResultSize Unlimited -Sender $sender.PrimarySmtpAddress |
+      Where-Object { ($_.Recipients -notlike ""*@domain.us"") -and
+      ($_.RecipientCount -eq 1) -and
+      ($_.RecipientStatus -notlike ""*,*"") -and
+      ($_.eventid -eq 'RECEIVE') } | ForEach-Object {
+        $results += New-Object PSObject -Property @{
+        Sender = $_.Sender
+        Receiver = $_.Recipients
+        MessageSubject = $_.MessageSubject
+        RecipientCount = $_.RecipientCount
+        TimeStamp = $_.TimeStamp
+      }
+    }
+
+
+    }
+$results| ConvertTo-Html -Head $style| Out-File $reportpath

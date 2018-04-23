@@ -1,0 +1,50 @@
+sum(int, int):
+        lea     eax, [rdi+rsi]
+        ret
+accumulate_function(int (&) [5]):
+        mov     eax, DWORD PTR [rdi+4]
+        add     eax, DWORD PTR [rdi]
+        add     eax, DWORD PTR [rdi+8]
+        add     eax, DWORD PTR [rdi+12]
+        add     eax, DWORD PTR [rdi+16]
+        ret
+accumulate_inline(int (&) [5]):
+        mov     eax, DWORD PTR [rdi]
+        neg     eax
+        sub     eax, DWORD PTR [rdi+4]
+        sub     eax, DWORD PTR [rdi+8]
+        sub     eax, DWORD PTR [rdi+12]
+        sub     eax, DWORD PTR [rdi+16]
+        ret
+accumulate_functor(int (&) [5]):
+        mov     eax, DWORD PTR [rdi]
+        imul    eax, DWORD PTR [rdi+4]
+        imul    eax, DWORD PTR [rdi+8]
+        imul    eax, DWORD PTR [rdi+12]
+        imul    eax, DWORD PTR [rdi+16]
+        ret
+accumulate_closure(int (&) [5]):
+        mov     eax, DWORD PTR [rdi+4]
+        or      eax, DWORD PTR [rdi+8]
+        or      eax, DWORD PTR [rdi+12]
+        or      eax, DWORD PTR [rdi]
+        or      eax, DWORD PTR [rdi+16]
+        ret
+accumulate_exetern(int (&) [5]):
+        push    rbp
+        push    rbx
+        lea     rbp, [rdi+20]
+        mov     rbx, rdi
+        xor     eax, eax
+        sub     rsp, 8
+.L8:
+        mov     esi, DWORD PTR [rbx]
+        mov     edi, eax
+        add     rbx, 4
+        call    extern_operation(int, int)
+        cmp     rbx, rbp
+        jne     .L8
+        add     rsp, 8
+        pop     rbx
+        pop     rbp
+        ret

@@ -1,0 +1,38 @@
+object DepType extends App {
+
+  def feedExplicitInstance[AnimalInstance]
+      (animal: AnimalTypeClass[AnimalInstance])(food: animal.FoodThatAnimalLikes) = {
+      animal.feed(food)
+  }
+  class Feeder[AnimalInstance] { 
+    def apply[F <: Food](food: F)(implicit animal: AnimalTypeClass.Aux[AnimalInstance, F]) =
+      animal.feed(food)
+  }
+  def feedImplicitInstance[AnimalInstance] = new Feeder[AnimalInstance]
+
+  feedExplicitInstance(Cat.CatInstance)(new CatFood())
+  feedImplicitInstance[Cat](new CatFood())
+
+}
+
+trait Food{
+  def eat(): Unit
+}
+class CatFood extends Food{
+  override def eat(): Unit = println(""meow"")
+}
+
+trait AnimalTypeClass[AnimalInstance] {
+  type FoodThatAnimalLikes <: Food
+  def feed(f: FoodThatAnimalLikes) = f.eat()
+}
+object AnimalTypeClass {
+  type Aux[A, F <: Food]= AnimalTypeClass[A] {type FoodThatAnimalLikes = F}
+}
+
+trait Cat
+object Cat {
+  implicit object CatInstance extends AnimalTypeClass[Cat]{
+    override type FoodThatAnimalLikes = CatFood
+  }
+}

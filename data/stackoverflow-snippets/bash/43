@@ -1,0 +1,26 @@
+#!bin/bash
+
+limite=""75""
+dir=""/var/spool/asterisk/monitor""
+mes_actual=`date +%m`
+anyo_actual=`date +%Y`
+ref=""2"";
+# espacio en disco #
+df -h | grep /dev/xvdb1 | sed s/%//g | awk '{print $5}' >> temp.log
+
+temp=$( cat temp.log)
+
+if [ $limite -le $temp ];
+then
+        A_BORRAR=$((10#$mes_actual-$ref))
+        sudo rm -rf ""$dir""/""$anyo_actual""/""$A_BORRAR""
+        echo ""borrado"" ""$A_BORRAR""
+
+else
+        echo ""nada para borrar""
+
+fi
+
+echo ""all OK""
+rm -Rf temp.log
+df -h | grep /dev/xvdb1 | sed s/%//g | awk '{print $5}'

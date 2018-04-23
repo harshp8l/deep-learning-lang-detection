@@ -1,0 +1,41 @@
+DECLARE @cols AS NVARCHAR(MAX),
+    @query  AS NVARCHAR(MAX),
+    @year As varchar(100),
+    @cols1 as varchar(1000),
+    @cols2 as varchar(1000)
+
+select @cols = STUFF((SELECT ',' + QUOTENAME(Month1) 
+                    from employee1
+                    group by Month1
+                    order by Month1
+            FOR XML PATH(''), TYPE
+            ).value('.', 'NVARCHAR(MAX)') 
+        ,1,1,'')
+
+set @cols1 = STUFF((SELECT ',' + QUOTENAME(Month) 
+                    from employee2
+                    group by Month
+                    order by Month
+            FOR XML PATH(''), TYPE
+            ).value('.', 'NVARCHAR(MAX)') 
+        ,1,1,'')
+
+set @cols2 = @cols1 +',' + @cols
+
+
+set @year = '2017'
+
+set @query = 'SELECT code,name,' + @cols2 + ' from 
+             (
+                select code, name, salary,Month1,year
+                from employee1 
+                union all
+                select code,name,salary,Month,year from employee2
+            ) x
+            pivot 
+            (
+                sum(salary)
+                for month1 in (' + @cols2 + ')
+            ) p  where year ='+ @year +''
+
+execute (@query)

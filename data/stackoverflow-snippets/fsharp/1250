@@ -1,0 +1,31 @@
+let numbers =
+    let rec create n =
+        if n = 0 then [(0,[])] else
+        [
+            for x in [0..9] do
+            for (_,xs) in create (n-1) do
+            yield (n, x::xs)
+        ]
+    Seq.initInfinite create |> Seq.concat
+
+let toNumber (ds : int list) =
+    ds |> List.fold (fun s d -> s*10I + bigint d) 0I
+
+let armstrong (m : int, ds : int list) =
+    ds |> List.map (fun d -> bigint d ** m) |> List.sum
+
+let leadingZero = 
+    function
+    | 0::_ -> true
+    | _    -> false
+
+let isArmstrong (m : int, ds : int list) =
+    if leadingZero ds then false else
+    let left = armstrong (m, ds)
+    let right = toNumber ds
+    left = right
+
+let armstrongs =
+    numbers
+    |> Seq.filter isArmstrong
+    |> Seq.map (snd >> toNumber)

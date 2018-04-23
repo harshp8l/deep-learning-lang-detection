@@ -1,0 +1,62 @@
+var getLastLong = function() {
+    return $q(function(resolve, reject) {
+
+        var geo = new google.maps.Geocoder;
+
+        var address = $scope.form.adress;
+
+        console.log(address);
+
+        geo.geocode({ 'address': address }, function(results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+                console.log(""Status geocoder OK"");
+                $scope.form.lat = results[0].geometry.location.lat();
+                $scope.form.lng = results[0].geometry.location.lng();
+
+                var latlng = new google.maps.LatLng($scope.form.lat, $scope.form.lng);
+
+                var mapProp = {
+                    center: latlng,
+                    zoom: 18,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+                    mapTypeControl: false
+                };
+
+                var map = new google.maps.Map(document.getElementById(""map""), mapProp);
+                var marker = new google.maps.Marker({
+                    position: latlng,
+                    map: map,
+                    title: name
+                });
+                // say success with marker payload.
+                resolve(marker);
+
+            } else {
+                // Say error with marker payload.
+                reject(status);
+            }
+        });
+    });
+}
+
+$scope.findLocations = function () {
+
+    var dist = 0.1;
+    getLatLong()
+    .then(function(marker) {
+        // Here you receive marker defer by promise, this code will be execute when ""resolve"" is call on your getLatLong() method
+        $http.get('/api/locations/findByLocation/'+$scope.form.lng+'/'+$scope.form.lat+'/'+dist)
+        .success(function(data) {
+            $scope.locations = data;
+            $scope.form = {};
+            console.log(""locations: "", data);
+        })
+        .error(function(data) {
+            console.log('Error: ' + data);
+        });
+
+    })
+    .catch(function(error) {
+        console.log(error)
+    });
+};

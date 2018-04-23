@@ -1,0 +1,26 @@
+with five_day_count as 
+( select o.owner, 
+         last_ddl_time range_end,
+         min(last_ddl_time) 
+            over ( partition by owner 
+                   order by last_ddl_time 
+                   range numtodsinterval(5, 'DAY') PRECEDING ) range_start,
+         count(*) 
+            over ( partition by owner 
+                   order by last_ddl_time range 
+                   numtodsinterval(5, 'DAY') PRECEDING ) cnt
+  from dba_objects o),
+max_counts as 
+( SELECT owner, 
+         range_start, 
+         range_end, 
+         cnt, 
+         row_number() 
+             over ( partition by owner 
+                    order by cnt desc, 
+                             range_end desc) rn 
+  FROM five_day_count
+  WHERE cnt > = 5)
+select owner, range_start, range_end, cnt
+from max_counts
+where rn = 1;

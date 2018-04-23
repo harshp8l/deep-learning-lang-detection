@@ -1,0 +1,5 @@
+[IO.File]::ReadAllText(""C:\YourLogFile.txt"") | Select-String -Pattern ""SERVICE_NAME[\s\S]*?(?=(SERVICE_NAME)|($))"" -AllMatches | % {$_.Matches} | % {$_.Value} | % { `
+    @([PSCustomObject]@{
+        ""Type"" = Select-String -InputObject $_ -Pattern ""(?<=TYPE          : ).*?(?=\r)"" | % {$_.Matches} | % {$_.Value};
+        ""START_TYPE"" = Select-String -InputObject $_ -Pattern ""(?<=START_TYPE    : ).*?(?=\r)"" | % {$_.Matches} | % {$_.Value};
+    })} | Select-Object -Property Type,Start_Type | Export-Csv -Path C:\temp\test\myout.txt -NoTypeInformation

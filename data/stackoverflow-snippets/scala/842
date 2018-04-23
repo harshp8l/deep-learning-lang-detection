@@ -1,0 +1,15 @@
+val kafkaMessages: Source[ConsumerMessage.CommittableMessage[String, Array[Byte]], Consumer.Control] = Consumer.committableSource(
+    consumerSettings,
+    Subscriptions.topics(conf.getString(""kafka.topics.errorRawCdr"")))
+
+    import scala.collection.mutable._
+    val errorMessages: MutableList[String] = new MutableList
+
+  val cdrs: Source[Errors, Consumer.Control] = kafkaMessages.map(msg => {
+    val bytes: Array[Byte] = msg.record.value()
+    val errormsg = (bytes.map(_.toChar)).mkString
+    errorMessages += errormsg
+    new Errors(1235, ""filename"", ""cdr"", ""cdr_type"", 0, errormsg)
+  })
+
+  cdrs.to(new ErrorKuduSink(session, table)).run()

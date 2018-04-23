@@ -1,0 +1,18 @@
+class OkHttpProvider @Inject constructor(cacheHolder: CacheHolder, prefs: IPreferences, redirectInterceptor: RedirectInterceptor) : Provider<OkHttpClient> {
+
+    private val client: OkHttpClient
+
+    init {
+
+        val builder = OkHttpClient.Builder()
+        builder
+                .addNetworkInterceptor(redirectInterceptor)
+                .addNetworkInterceptor(HeaderInterceptor(prefs.getAuthToken()))
+                .readTimeout(30, TimeUnit.SECONDS)
+                .cache(cacheHolder.okHttpCache)
+
+        client = builder.build()
+    }
+
+    override fun get() = client
+}

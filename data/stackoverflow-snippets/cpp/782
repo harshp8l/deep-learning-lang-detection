@@ -1,0 +1,130 @@
+/*
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+
+#ifdef _WIN32
+#   define HAS_BSOD
+#   include <windows.h>
+#endif // _WIN32
+
+#if defined(unix) \
+      || defined(__unix) \
+      || defined(_XOPEN_SOURCE) \
+      || defined(_POSIX_SOURCE) 
+
+#   include <sys/types.h>
+#   include <sys/wait.h>
+
+#endif // defined
+
+#if defined(__GNUC__) && !defined(_alloca)
+#   define _alloca(__s) __builtin_alloca( (__s) )
+#endif // __GNUC__
+
+
+/// execute an external command and suspend current thread until this command exit
+int execute_and_wait(const char* command, const char *args);
+
+#ifdef HAS_BSOD
+int execute_and_wait(const char* command, const char *args)
+{
+    ::STARTUPINFOW cif;
+    std::memset(&cif, 0, sizeof(cif));
+    cif.cb = sizeof(cif);
+    ::PROCESS_INFORMATION pi;
+    std::memset( &pi, 0, sizeof(pi) );
+
+    // MS API expecting single line path and program arguments
+    const std::size_t len = std::strlen(command) + std::strlen(args) + 2;
+    char* cmdline = static_cast<char*>( _alloca( len ) );
+    std::memset(cmdline, 0, len);
+    std::strcat(cmdline, command);
+    std::strcat(cmdline, "" "");
+    std::strcat(cmdline, args);
+
+    // We need to convert our command line into UTF-16LE, since MS API like
+    // this UNICODE representation, and don't like UTF-8
+   // furthermore may crash a whole application  or even show blue screen of doom when UTF-8, depending on something we don't know
+    ::UINT acp = ::GetACP(); // obtain current ISO like code-page i.e. CP1252
+    const std::size_t wlen = ::MultiByteToWideChar(acp, 0, cmdline, len, nullptr, 0) + 1;
+    wchar_t* wcmdline = static_cast<wchar_t*>( _alloca(wlen) );
+    std::memset(wcmdline, 0, wlen );
+    ::MultiByteToWideChar(acp, 0, cmdline, len, wcmdline , wlen );
+
+    if ( ::CreateProcessW(
+                      NULL, /* Say hello to MS DOS and OS/2 and left NULL */
+                      wcmdline, /* command and arguments  */
+                      NULL, /* Some security structure, with void* pointer on another security structure, needs to be NULL to be inherited from parent  */
+                      NULL, /*  Some security structure, with void* pointer on another security structure, needs to be NULL to be inherited from parent */
+                      FALSE, /*
+                                copy all opened files and sockets if TRUE,
+                                almost fork if
+                                typedef int BOOL;
+                                #define TRUE 1
+                                #define FALSE 0
+                                 */
+                      NORMAL_PRIORITY_CLASS, /* 20 possible flags */
+                      NULL, /* add ability to add a few additional environment variables, or change existing like PATH (actually nice feature)  */
+                      NULL, /* execution directory, nice feature but needs to be NULL to be inherited from parent */
+                      &cif,
+                      &pi)
+        )
+    {
+        ::WaitForSingleObject( pi.hProcess, INFINITE );
+        int ret = EXIT_FAILURE;
+        ::GetExitCodeProcess(pi.hProcess,LPDWORD(&ret));
+        // Close process and thread handles.
+        ::CloseHandle( pi.hProcess );
+        ::CloseHandle( pi.hThread );
+        return ret;
+    }
+    return EXIT_FAILURE;
+}
+
+#else // no Blue Screen of Doom (Some UNIX variant like Linux/Mac/FreeBSD etc)
+
+int execute_and_wait(const char* command, const char *args)
+{
+    ::pid_t child_pid = ::fork();
+    if(child_pid < 0)
+        return EXIT_FAILURE;
+    if(0 == child_pid) {
+        // UTF-8 in most cases, if it's not - we don't expect a crash or kernel panic
+        ::execl(command, args);
+        // if we here something went wrong
+        ::exit(EXIT_FAILURE);
+    }
+    int ret;
+    ::waitpid(child_pid, &ret, 0);
+    return ret;
+}
+
+#endif // HAS_BSOD
+
+#ifdef HAS_BSOD
+static const char *SYS_EDITOR = ""notepad.exe"";
+#else
+static const char *SYS_EDITOR = ""less"";
+#endif // HAS_BSOD
+
+int main(int argc, const char** argv)
+{
+    std::printf(""About to fork with: %s \n"", __FILE__ );
+    int exit_code = execute_and_wait(SYS_EDITOR, __FILE__);
+    std::printf(""This is it, exit code :%d \n"", exit_code);
+    return 0;
+}

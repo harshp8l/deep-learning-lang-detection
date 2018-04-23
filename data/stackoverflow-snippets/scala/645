@@ -1,0 +1,31 @@
+object WebsocketClient {
+
+  /**
+   * Some messages with which we can subscribe to a topic
+   * These messages could be streamed through the websocket from the client
+   */
+  case class SubscribeTo(eventID: UUID)
+  /** This is an example of some data we want to go back to the client. Uses int for simplicity **/
+  case class EventData(data: Int)
+
+  def props(out: ActorRef, telemetryHub: ActorRef) = Props(new WebsocketClient(out, telemetryHub))
+}
+
+/** Every client will own one of these actors. **/
+class WebsocketClient(out: ActorRef, telemetryHub: ActorRef) extends Actor {
+  def receive = {
+    /** We can send these subscription request to a hub **/
+    case subscriptionRequest: SubscribeTo => telemetryHub ! subscriptionRequest
+    /** When we get data back, we can send it right to the client **/
+    case EventData(data) => out ! data
+  }
+}
+
+/** We can make a single hub which will be shared between all the connections **/
+val telemetryHub = actorSys actorOf TelemetryHub.props
+
+def events = WebSocket.accept[String, String] { _ =>
+  ActorFlow.actorRef { out => {
+    WebsocketClient.props(out, telemetryHub)
+  }}
+}

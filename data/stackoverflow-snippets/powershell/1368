@@ -1,0 +1,23 @@
+function Get-ProxyAddresses
+{
+    Param(
+    [Parameter(Mandatory=$true)] 
+    [string[]]$username,
+    [string[]]$domains = 'domain.com'
+    )
+
+    #Strip off any leading @ signs people may have provided. We'll add these later 
+    $domains = $domains.Replace('@','')
+
+    $ProxyAddresses = New-Object System.Collections.ArrayList
+    foreach ($uname  in $username) {
+        foreach ($domain in $domains ) {
+            if ($ProxyAddresses.Count -lt 1) {
+                $ProxyAddresses.Add( ""SMTP:$uname@$domain"" ) | Out-Null
+            } else {
+                $ProxyAddresses.Add( ""smtp:$uname@$domain"" ) | Out-Null
+            }
+        }
+    }
+    return $ProxyAddresses 
+}

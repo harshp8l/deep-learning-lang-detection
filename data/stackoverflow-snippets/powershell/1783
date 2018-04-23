@@ -1,0 +1,41 @@
+    # Read the CSV file and create the users
+    # The CSV file structure is:
+    # UserName,FullName,Description
+    $Users = Import-Csv -Path ""C:\Users.csv""
+    foreach ($User in $Users)            
+    {
+        # adds user
+        $computer = ""localhost""
+        $username = $User.UserName
+        #$username = ""atest001""
+        $fullname = $User.FullName
+        #$fullname = ""My Name""
+        $description = $User.Description
+        #$description = ""A new user description""
+        $password = ""MyGreatUnbreakableSecretPassword""
+        $objComputer = [ADSI]""WinNT://$computer""
+        $objUser = $objComputer.Create('user', $username)
+        $objUser.SetPassword($password)
+        $objUser.PSBase.InvokeSet(""Description"", $description)
+        $objUser.PSBase.InvokeSet('userflags', 65536)
+        $objUser.SetInfo();
+        # set password not to expire
+        #wmic USERACCOUNT WHERE ""Name = '$username'"" SET Passwordexpires=FALSE
+
+        # Add to groups
+        $group = [ADSI]""WinNT://./Power Users,group""
+        $group.Add(""WinNT://$username,user"")
+        $group = [ADSI]""WinNT://./WW_Users,group""
+        $group.Add(""WinNT://$username,user"")
+
+        $ou = [adsi]""WinNT://127.0.0.1""
+        $user = $ou.psbase.get_children().find($username)
+        $user.PSBase.InvokeSet(""TerminalServicesInitialProgram"", ""C:\Program Files (x86)\Wonderware\InTouch\view.exe c:\program files (x86)\archestra\framework\bin\sibanyegold-kdce_app_tse1_test"")
+        $user.PSBase.InvokeSet(""MaxConnectionTime"", 120)
+        $user.PSBase.InvokeSet(""MaxDisconnectionTime"", 1)
+        $user.PSBase.InvokeSet(""MaxIdleTime"", 30)
+        $user.PSBase.InvokeSet(""BrokenConnectionAction"", 1)
+        $user.PSBase.InvokeSet(""ReconnectionAction"", 1)
+        $user.PSBase.InvokeSet(""FullName"", $fullname)
+        $user.setinfo()
+    }

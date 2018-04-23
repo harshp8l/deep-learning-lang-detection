@@ -1,0 +1,11 @@
+select *, volume/ case when National_Avg=0 then 1 else National_Avg end NewColumn  from (select volume, YR, MTH
+from example.dbo.table1
+where month(datecompleted) = month(dateadd(month,-1,current_timestamp))
+      and year(datecompleted) = year(dateadd(month,-1,current_timestamp))
+group by MTH, YR)a
+join
+(select cal_month, cal_year, National_Avg
+from example.dbo.table2
+where cal_month = DATENAME(mm, DATEADD(month,-1,current_timestamp))
+    AND cal_year  = DATENAME(yyyy, DATEADD(month,-1,current_timestamp)))b
+    on a.yr=b.cal_year and a.mth=b.cal_month

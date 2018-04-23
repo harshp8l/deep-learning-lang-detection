@@ -1,0 +1,38 @@
+from functools import wraps
+from inspect import signature, BoundArguments, Parameter
+
+
+def positional_argument_wrapper(func):
+
+    func_signature = signature(func)
+    if any(v.kind == Parameter.VAR_KEYWORD
+           for v in func_signature.parameters.values()):
+        raise TypeError('Keyword-only arguments are not supported by '
+                        'positional_argument_wrapper')
+
+    @wraps(func)
+    def wrapped_func(*args, **kwargs):
+        bound_arguments: BoundArguments = func_signature.bind(*args, **kwargs)
+        bound_arguments.apply_defaults()
+        assert len(bound_arguments.kwargs) == 0
+        print(f'The positional arguments are {bound_arguments.args}')
+        return func(*args, **kwargs)
+    return wrapped_func
+
+
+@positional_argument_wrapper
+def myfunc1(x=None, y=7):
+    print(f'myfunc called with x={x} and y={y}')
+
+
+# prints: The positional arguments are (3,)
+#         myfunc called with x=3 and y=7
+myfunc1(x=3)
+# prints: The positional arguments are (None, 3)
+#         myfunc called with x=None and y=3
+myfunc1(y=3)
+
+# raises: TypeError: Keyword-only arguments are not supported by positional_argument_wrapper
+@positional_argument_wrapper
+def myfunc1(x=None, y=7, **kwargs):
+    pass

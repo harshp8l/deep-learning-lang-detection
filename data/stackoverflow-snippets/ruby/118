@@ -1,0 +1,20 @@
+module MethodThing
+  # added to remove binding from class since 
+  # #my_method relies on the existence of #foo and #foo=
+  def self.prepended(base)
+    base.attr_reader(:foo) unless base.method_defined?(:foo)
+    base.attr_writer(:foo) unless base.method_defined?(:foo=)
+  end
+  def my_method
+    puts ""Before: #{foo}""
+    original_foo = foo
+    self.foo= 'CUSTOM FOO'
+    begin
+      super
+    rescue NoMethodError
+      warn ""(skipped) #{self.class}##{__method__} not defined""
+    end
+    self.foo = original_foo
+    puts ""After: #{foo}""
+  end
+end

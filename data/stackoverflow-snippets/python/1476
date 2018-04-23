@@ -1,0 +1,17 @@
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from ico_login.models import UserAddress 
+from coinbase.wallet.client import Client
+
+
+@login_required()
+def generate_address_btc(request, *args, **kwargs):
+    client = Client('api', 'key')
+    r = client.get_addresses('account_id')
+    address = r['data'][0]['address']
+    # next 2 lines changed
+    request.user.user_address.address = str(address)
+    request.user.user_address.save()
+
+return HttpResponse(address)

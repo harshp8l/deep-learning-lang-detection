@@ -1,0 +1,40 @@
+package main
+
+import (
+    ""sync""
+    ""testing""
+)
+
+var GlobalInt int
+
+func BenchmarkCount(b *testing.B) {
+    var a, c int
+    count(&a, b.N)
+    count(&c, b.N)
+    GlobalInt = a + c // make sure the result is actually used
+}
+
+func count(a *int, max int) {
+    for i := 0; i < max; i++ {
+        *a += i
+    }
+}
+
+var wg sync.WaitGroup
+
+func BenchmarkCountConcurrent(b *testing.B) {
+    var a, c int
+    wg.Add(2)
+    go countCon(&a, b.N)
+    go countCon(&c, b.N)
+    wg.Wait()
+
+    GlobalInt = a + c // make sure the result is actually used
+}
+
+func countCon(a *int, max int) {
+    for i := 0; i < max; i++ {
+        *a += i
+    }
+    wg.Done()
+}

@@ -1,0 +1,27 @@
+#!/bin/bash    
+inFile=${1:-checkHugeFile}.in
+ctrlFile=${1:-checkHugeFile}_CTRL.txt
+outFile=${1:-checkHugeFile}.txt
+cat /dev/null > $outFile
+
+typeset -a array # Create array
+while read -r line # Read a line
+do
+    coOrdinates=""${line#*(}""
+    coOrdinates=""${coOrdinates%%)*}""
+    [[ -z ""${coOrdinates// }"" ]] && { echo ""Not adding""; continue; }
+    array+=(""$coOrdinates"")
+done < <(grep POSITION ""$ctrlFile""  )
+echo coOrdinates: ""${array[@]}""
+
+for e in ""${array[@]}""
+do
+    nr=$((nr+1))
+    start=${e%:*}
+    len=${e#*:}
+    from=$(( start + 1 ))
+    to=$(( start + len + 1 ))
+    cut -c$from-$to $inFile > ${outFile}.$nr
+done
+paste $outFile.* | sed -e 's/^/""/' -e 's/\t/"",""/' -e 's/$/""/' >${outFile}
+rm $outFile.[0-9]

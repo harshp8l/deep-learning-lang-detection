@@ -1,0 +1,46 @@
+public class LdapSearchRecursive {
+    private final LdapTemplate ldapTemplate;
+    private Set<String> groups;
+
+    public LdapSearchRecursive(LdapTemplate ldapTemplate) {
+        this.ldapTemplate = ldapTemplate;
+        this.groups = new HashSet<>();
+    }
+
+    /**
+     * Retrieve all groups that this user belongs to.
+     */
+    public Set<String> getAllGroupsForUserRecursively(String userCN) {
+        List<String> distinguishedNames = this.ldapTemplate.search(
+                query().where(""objectCategory"").is(""user"").and(
+                        query().where(""sAMAccountName"").is(userCN)
+                                .or(query().where(""userPrincipalName"").is(userCN))
+                ),
+                (AttributesMapper<String>) attrs -> attrs.get(""distinguishedName"").get().toString()
+        );
+
+        if (distinguishedNames.isEmpty()) {
+            throw new UsernameNotFoundException(""User not recognized in LDAP"");
+        }
+
+        return this.getAllGroupsRecursivelyByUserDistinguishedName(distinguishedNames.get(0), null);
+    }
+
+    private Set<String> getAllGroupsRecursivelyByUserDistinguishedName(String dn, @Nullable String parentDN) {
+        List<String> results = this.ldapTemplate.search(
+                query().where(""member"").is(dn),
+                (AttributesMapper<String>) attrs -> attrs.get(""distinguishedName"").get().toString()
+        );
+
+        for (String result : results) {
+            if (!(result.equals(parentDN) //circular, ignore
+                    || this.groups.contains(result) //duplicate, ignore
+                    )) {
+                this.getAllGroupsRecursivelyByUserDistinguishedName(result, dn);
+            }
+        }
+        this.groups.addAll(results);
+
+        return this.groups;
+    }
+}

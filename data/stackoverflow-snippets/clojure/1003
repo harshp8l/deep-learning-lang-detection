@@ -1,0 +1,18 @@
+(let [email (mailer {:host ""localhost""
+                     :port 1025
+                     :from ""abc@gmail.com""})]
+  (streams
+    (where (and (service ""system_log"")
+                (not (expired? event)))
+      (fixed-time-window
+        5
+        (smap
+          (fn [events]
+            (let [count-of-failures (count (filter #(= ""IE"" (:description %)) events))]
+              (event
+                {:status ""login failures""
+                 :metric  count-of-failures 
+                 :total-fail (>= count-of-failures 2)})))
+          (where (and (= (:status event) ""login failures"")
+                      (:total-fail event))
+            (email ""hello123@gmail.com"")))))))

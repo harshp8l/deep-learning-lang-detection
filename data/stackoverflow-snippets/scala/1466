@@ -1,0 +1,30 @@
+    case class DeviceUser(id: Int,name: Option[String] = None)
+
+    class DeviceUserRepo @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)  {
+
+      val dbConfig = dbConfigProvider.get[JdbcProfile]
+      val db = dbConfig.db
+      import dbConfig.profile.api._
+      val DeviceUsers = TableQuery[DeviceUserTable]
+
+      private def _findById(id: Int): DBIO[Option[DeviceUser]] =
+        DeviceUsers.filter(_.id === id).result.headOption
+
+      def findById(id: Int): Future[Option[DeviceUser]] =
+        db.run(_findById(id))
+
+      def all: Future[List[DeviceUser]] =
+        db.run(DeviceUsers.to[List].result)
+
+      def create(deviceUser: DeviceUser): Future[Int] = {
+        db.run(DeviceUsers returning DeviceUsers.map(_.id) += deviceUser)
+      }
+
+      class DeviceUserTable(tag: Tag) extends Table[DeviceUser](tag, ""DEVICE_USERS"") {
+
+        def id = column[Int](""ID"", O.PrimaryKey)
+        def name = column[Option[String]](""NAME"")
+        def * = (id, name).<>(DeviceUser.tupled, DeviceUser.unapply)
+      }
+
+    }

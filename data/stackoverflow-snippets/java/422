@@ -1,0 +1,47 @@
+@Builder
+public class SearchPersonRequest {
+
+    private String name;
+    private String city;
+    private String state;
+    private String code;
+
+    public Specification<Person> createSpecification() {
+        List<Specification<Person>> specifications = getSpecifications();
+        Specifications<Person> spec = null;
+
+        if (!specifications.isEmpty()) {
+            Iterator<Specification<Person>> it = specifications.iterator();
+            spec = where(it.next());
+
+            while (it.hasNext()) {
+                spec = spec.and(it.next());
+            }
+        }
+
+        return spec;
+    }
+
+    private List<Specification<Person>> getSpecifications() {
+        return Arrays.stream(Field.values())
+                     .filter(field -> field.isExists(this))
+                     .map(field -> (Specification<Person>)(root, query, builder) -> builder.equal(root.get(field.id), field.get.apply(this)))
+                     .collect(Collectors.toList());
+    }
+
+    @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+    private enum Field {
+        NAME(""name"", request -> request.name),
+        CITY(""city"", request -> request.city),
+        STATE(""state"", request -> request.state),
+        CODE(""code"", request -> request.code);
+
+        private final String id;
+        private final Function<SearchPersonRequest, String> get;
+
+        private boolean isExists(SearchPersonRequest request) {
+            return StringUtils.isNotBlank(get.apply(request));
+        }
+    }
+
+}

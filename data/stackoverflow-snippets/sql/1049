@@ -1,0 +1,14 @@
+select avg(loan_amt) ""LOAN_AVG"",age_range from(
+  select l.loan_amount as loan_amt,
+  (case
+  when FLOOR((months_between(sysdate,to_CHAR(c.c_dob,'DD-MON-YYYY')))/12) 
+  between 20 and 25 then '20-25'
+  when FLOOR((months_between(sysdate,to_CHAR(c.c_dob,'DD-MON-YYYY')))/12) 
+  between 30 and 35 then '30-35'
+  when FLOOR((months_between(sysdate,to_CHAR(c.c_dob,'DD-MON-YYYY')))/12) 
+  between 40 and 45 then '40-45'
+  else '46-90'
+  end) as age_range
+from customer c,cust_loan_taken l
+ where c.C_ID=l.C_ID) a
+ group by age_range;

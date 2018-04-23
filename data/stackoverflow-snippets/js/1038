@@ -1,0 +1,17 @@
+@Effect()
+router.events
+    .pipe(
+        filter(event => event instanceof NavigationEnd) // or whatever you wish
+        switchMap((event) => {
+            return store
+                .pipe(
+                    map((state) => {
+                        const featureId = 
+                            getFeatureIdToActivate(event);
+                        return state.features.find(f => f.id === featureId);
+                    }),
+                    filter(feature => feature != null),
+                    map(feature => new ActivateFeatureAction(feature))
+                );
+        })
+    );

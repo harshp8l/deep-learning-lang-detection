@@ -1,0 +1,25 @@
+SELECT year, month, sum(NewProd) as NewProd, sum(OldProd) as OldProd
+FROM (
+    Select year, month, Count(prodid) as NewProd, 0 as OldProd
+    from (select DATEPART(""yyyy"", datum) AS year,
+                 DATEPART(""mm"", datum)   AS month,
+                 DatePart(""dd"", datum)   AS Day,
+                 DATEFROMPARTS(YEAR(datum), MONTH(datum), Day(datum)) as MonthDate 
+           from qProds
+          ) dates left join
+          Products
+          on products.lnewprod = dates.Monthdate 
+     Group By year, month
+    UNION
+    Select year, month, 0 as NewProd, Count(prodid) as OldProd
+    from (select DATEPART(""yyyy"", datum) AS year,
+                 DATEPART(""mm"", datum)   AS month ,
+                 DatePart(""dd"", datum)   AS Day,
+                 DATEFROMPARTS(YEAR(datum), MONTH(datum), Day(datum)) as MonthDate 
+          from qProds
+         ) dates left join
+         products
+         on products.loldprod = dates.Monthdate 
+    Group By year, month) as combined_counts
+GROUP BY year, month
+ORDER BY year, month

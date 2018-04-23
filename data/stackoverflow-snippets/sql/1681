@@ -1,0 +1,15 @@
+SELECT Column5 AS Column1,Column2,Column3,Column4,Column5,Column6,Column7,Column8 
+FROM 
+     (SELECT Column1,Column2,Column3,Column4,
+      @rownumber:=IF(@lastId=Column1,@rownumber+1,1) AS RowNumber,
+      @lastId:=Column1
+      FROM Table1,
+      (Select @rownumber:=0,@lastId:=MIN(Column1) FROM TABLE1 ) AS r) AS Tbl1
+RIGHT JOIN 
+      (SELECT Column5,Column6,Column7,Column8,
+       @rownumber:=IF(@lastId=Column5,@rownumber+1,1) AS RowNumber,
+       @lastId:=Column5
+       FROM Table2, 
+       (Select @rownumber:=0,@lastId:=MIN(Column5) FROM TABLE2 ) AS r) AS Tbl2
+ON Tbl1.Column1 = Tbl2.Column5
+AND Tbl1.RowNumber = Tbl2.RowNumber

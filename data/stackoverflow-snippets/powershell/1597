@@ -1,0 +1,45 @@
+$log = @()
+Get-Content $logFile -wait |
+    ForEach-Object {
+    switch ($_) {
+        {$_.Contains(""[OK]"")} {
+            $logentry = [pscustomobject]@{
+                'Status'  = 'Success'
+                'Message' = ($_ -split '\[OK\]')[-1]
+            }
+            $log += $logentry
+        }
+        {$_.Contains(""[FAIL]"")} {
+            $logentry = [pscustomobject]@{
+                'Status'  = 'Failure'
+                'Message' = ($_ -split '\[FAIL\]')[-1]
+            }
+            $log += $logentry
+        }
+        {$_.Contains(""[INFO]"")} {
+            $logentry = [pscustomobject]@{
+                'Status'  = 'Info'
+                'Message' = ($_ -split '\[INFO\]')[-1]
+            }
+            $log += $logentry
+        }
+        default {
+            $logentry = [pscustomobject]@{
+                'Status'  = 'Unknown'
+                'Message' = $_
+            }
+            $log += $logentry
+        }
+    }
+    Clear-Host
+    foreach ($logentry in $log) {
+        switch ($logentry.Status) {
+            'Success' { Write-Host -ForegroundColor Green $logentry }
+            'Failure' { Write-Host -ForegroundColor Red $logentry }
+            'Info' { Write-Host -ForegroundColor Yellow $logentry }
+            default { Write-Host $logentry }
+        }
+    }
+}
+
+$log | Export-CSV C:\Example\path.csv -NoTypeInformation

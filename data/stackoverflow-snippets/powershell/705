@@ -1,0 +1,12 @@
+Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
+    Select-Object DisplayName, DisplayVersion, Publisher, InstallDate |
+    Export-Csv -Path app32.csv -NoTypeInformation
+
+Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* |
+    Select-Object DisplayName, DisplayVersion, Publisher, InstallDate |
+    Export-Csv -Path app64.csv -NoTypeInformation
+
+Import-Csv app32.csv, app64.csv |
+    Where-Object { -not [System.String]::IsNullOrWhitespace($_.DisplayName) } |
+    Sort-Object -Property DisplayName |
+    Export-Csv -Path all_apps.csv -NoTypeInformation

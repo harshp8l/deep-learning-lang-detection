@@ -1,0 +1,27 @@
+// NonNullString coalesces null values into empty strings
+type NonNullString<'Tag>(s : string) =
+  struct
+    member    x.AsString      = if s <> null then s else """"
+    override  x.ToString ()   = x.AsString
+    static member OfString s  = NonNullString<'Tag> s
+  end
+
+// Some tags that will be used when we create the type aliases
+type FooTag = FooTag
+type BarTag = BarTag
+
+// The type aliases
+type Foo    = NonNullString<FooTag>
+type Bar    = NonNullString<BarTag>
+
+// The function
+let baz (foo : Foo) (bar : Bar) = printfn ""%A, %A"" foo.AsString.Length bar.AsString.Length
+
+[<EntryPoint>]
+let main argv = 
+  // Some tests
+  baz (Foo.OfString null) (Bar.OfString ""Hello"")
+  // Won't compile
+  // baz (Bar.OfString null) (Bar.OfString ""Hello"")
+  // baz """" (Bar.OfString ""Hello"")
+  0

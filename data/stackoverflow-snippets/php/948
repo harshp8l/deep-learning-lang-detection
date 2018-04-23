@@ -1,0 +1,27 @@
+ request = url
+ request.Headers.Add(""Authorization"", ""Bearer "" + accessToken)
+
+            'Get response
+            response = DirectCast(request.GetResponse(), HttpWebResponse)
+
+            ' Get the response stream into a reader  
+            reader = New StreamReader(response.GetResponseStream())
+            Dim JSONresponseFromServer As String = reader.ReadToEnd()
+
+            ' Parse the content into a json object
+            Dim json As String = JSONresponseFromServer
+            Dim ser As JObject = JObject.Parse(json)
+            Dim data As List(Of JToken) = ser.Children().ToList
+
+            For Each item As JProperty In data
+                item.CreateReader()
+                Select Case item.Name
+             Case ""sensors"" 'each record is inside the entries array
+                     For Each Entry As JObject In item.Values
+                       Dim naming As String = Entry(""naming "").ToList.Item(0)
+                       Dim factor As String = Entry(""factor"").ToList.Item(0)
+' you can continue listing the array items untill you reach the end of you array
+
+             Next
+        End Select
+ Next 

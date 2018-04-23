@@ -1,0 +1,23 @@
+require 'avro'
+require 'json'
+
+schema = { 'type' => 'record', 'name' => 'Test', 'fields' => [ { 'name' => 'field_one', 'type' => 'string' },
+                                                               { 'name' => 'field_two', 'type' => 'string'},
+                                                               { 'name' => 'field_three', 'type' => 'string'},
+                                                               { 'name' => 'field_four', 'type' => 'string' } ] }.to_json
+
+message = {'field_one' => 'why',
+             'field_two' => 'this',
+             'field_three' => 'no',
+             'field_four' => 'worky?'}
+
+schema = Avro::Schema.parse(schema)
+writer = Avro::IO::DatumWriter.new(schema)
+buffer = StringIO.new
+writer = Avro::DataFile::Writer.new(buffer, writer, schema)
+writer << message
+writer.close # important
+
+result = buffer.string
+
+puts result

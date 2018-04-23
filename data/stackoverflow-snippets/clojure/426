@@ -1,0 +1,16 @@
+user=> (ns my.project
+  #_=>   (:use [clojail.core :only [sandbox]]
+  #_=>         [clojail.testers :only [blacklist-symbols blacklist-objects]]))
+nil
+my.project=> 
+
+my.project=> (def tester [(blacklist-symbols #{'alter-var-root 'clojure.string/blank?})
+        #_=>              (blacklist-objects [java.lang.Thread])]) ; Create a blacklist.
+#'my.project/tester
+my.project=> (def sb (sandbox tester :timeout 5000))
+#'my.project/sb
+my.project=> 
+
+my.project=> (sb '(println (clojure.string/blank? """")))
+
+AccessControlException access denied (""java.lang.RuntimePermission"" ""createClassLoader"")  java.security.AccessControlContext.checkPermission (AccessControlContext.java:457)

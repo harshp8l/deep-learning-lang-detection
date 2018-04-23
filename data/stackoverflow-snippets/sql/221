@@ -1,0 +1,37 @@
+     ;WITH CTE
+     AS
+    (
+        SELECT  1   AS RowNo,
+        (SELECT COUNT(*) FROM Mytable) AS RowCnt,
+        EmpID,
+        Type,
+        timestamp,
+        block_id,
+        CASE WHEN Type = 'P' THEN 1 ELSE 0 END AS P_count,
+        CASE WHEN Type = 'D' THEN 1 ELSE 0 END AS D_count
+FROM    (SELECT ROW_NUMBER()OVER(ORDER BY EmpID) AS ID,* FROM Mytable) t
+WHERE   t.ID    =   1
+
+UNION ALL
+
+SELECT  CTE.RowNo+1,
+        CTE.RowCnt - 1,
+        t1.EmpID,
+        t1.Type,
+        t1.timestamp,
+        CASE WHEN t1.block_id IS NULL THEN CTE.block_id ELSE t1.block_id END 
+        AS block_id,
+        CASE WHEN t1.Type = 'P' THEN 1 ELSE 0 END AS P_count,
+        CASE WHEN t1.Type = 'D' THEN 1 ELSE 0 END AS D_count
+FROM    CTE
+JOIN    (SELECT ROW_NUMBER()OVER(ORDER BY EmpID) AS ID,* FROM Mytable) t1
+    ON  (1  =   1)
+WHERE   t1.ID   =   CTE.RowNo+1
+    AND CTE.RowCnt  <>  0
+  )
+
+  SELECT EmpID,MIN(timestamp)  begin_timestamp,MAX(timestamp) 
+        end_timestamp,block_id,SUM(P_count) P_count,SUM(D_count) D_count
+   FROM CTE
+   GROUP BY EmpID,block_id
+   ORDER BY EmpID

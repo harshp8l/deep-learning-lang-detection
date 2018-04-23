@@ -1,0 +1,77 @@
+const UserIcon = props => <div>{props.user.name}</div>;
+
+class UserDropdown extends React.Component {
+
+  render() {
+    let initialUsers = this.props.state.users;
+
+    let alphabetizeUsers = initialUsers
+      .sort((a, b) => {
+        return a.name > b.name;
+      })
+      .map(obj => {
+        return (
+          <option key={obj.id} value={obj.id}>
+            {obj.name}
+          </option>
+        );
+      });
+
+    return (
+      <select
+        onChange={e => this.props.onChange(e.target.value)}
+      >
+        {alphabetizeUsers}
+      </select>
+    );
+  }
+}
+
+class UserHeader extends React.Component {
+  state = {
+    users: [
+      {name: ""thompson"", id: 1},
+      {name: ""anderson"", id: 2}
+    ]
+  };
+
+  handleChange = selectedId => {
+    const selectedUser = this.state.users.find( el => el.id === selectedId);
+    this.props.onChange(selectedUser);
+  }
+
+  render() {
+    return (
+      <UserDropdown state={this.state} onChange={this.handleChange} />
+    );
+  }
+}
+
+class App extends React.Component {
+  state = {
+    selectedUser: {
+      name: """",
+      id: """"
+    }
+  };
+
+  onChangeUser = user => {
+    this.setState({ selectedUser: user });
+  };
+
+  render() {
+    return (
+      <div className=""App"">
+        <header className=""App-header"">
+          <span className=""App-title"">
+            SELECT A POLICY:{' '}
+            <UserHeader onChange={this.onChangeUser} />
+          </span>
+          <br /> <br />
+          <UserIcon user={this.state.selectedUser} />
+          Dropdown value here: {JSON.stringify(this.state)}
+        </header>
+      </div>
+    );
+  }
+}

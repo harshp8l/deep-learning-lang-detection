@@ -1,0 +1,48 @@
+function initRequestResponseSocket(socket, requestHandler, timeout) {
+    var cntr = 0;
+    var openResponses = {};
+
+    // send a request
+    socket.sendRequestResponse = function(data, fn) {
+        // put this data in a wrapper object that contains the request id
+        // save the callback function for this id
+        var id = cntr++;
+        openResponses[id] = {fn: fn};
+        socket.emit('requestMsg', {id: id, data: data});
+        if (timeout) {
+            openResponses[id].timer = setTimeout(function() {
+                delete openResponses[id];
+                if (fn) {
+                    fn(""timeout"");
+                }
+            }, timeout);
+        }
+    }
+
+    // process a response message that comes back from a request
+    socket.on('responseMsg', function(wrapper) {
+        var id = wrapper.id, requestInfo;
+        if (typeof id === ""number"" && typeof openResponse[id] === ""object"") {
+            requestInfo = openResponses[id];
+            delete openResponses[id];
+            if (requestInfo) {
+                if (requestInfo.timer) {
+                    clearTimeout(requestInfo.timer);
+                }
+                if (requestInfo.fn) {
+                    requestInfo.fn(null, wrapper.data);
+                }
+            }
+        }
+    });
+
+    // process a requestMsg
+    socket.on('requestMsg', function(wrapper) {
+        if (requestHandler && wrapper.id) {
+            requestHandler(wrapper.data, function(responseToSend) {
+                socket.emit('responseMsg', {id: wrapper.id, data; responseToSend});
+            });
+
+        }
+    });
+}

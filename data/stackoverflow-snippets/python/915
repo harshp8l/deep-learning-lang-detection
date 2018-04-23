@@ -1,0 +1,15 @@
+SQL> merge into dept d
+  2    using (select deptno, dname, loc
+  3           from (select 10 deptno, 'ACC' dname, 'NY' loc from dual --> already exists, should be updated
+  4                 union all
+  5                 select 99       , 'NEW DEPT' , 'LONDON' from dual --> doesn't exists, should be inserted
+  6                )
+  7          ) x
+  8  on (d.deptno = x.deptno)
+  9  when matched then update set
+ 10                      d.dname = x.dname,
+ 11                      d.loc   = x.loc
+ 12  when not matched then insert (d.deptno, d.dname, d.loc)
+ 13                        values (x.deptno, x.dname, x.loc);
+
+2 rows merged.

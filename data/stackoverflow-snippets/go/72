@@ -1,0 +1,28 @@
+var db *sql.DB
+
+func init() {
+    var err error
+    db, err = sql.Open(""mysql"", ""db_url_string"")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    if err = db.Ping(); err != nil {
+        log.Fatal(err)
+    }
+}
+
+func dbExecute(sql_cmd string) error {
+    stmt, err := db.Prepare(sql_cmd)
+    if err != nil {
+        return err
+    }
+    _, err = stmt.Exec()
+    return err
+}
+
+func dbTabelaSelect(cod_cliente string) (id, cod1, cod2, cod3 string, err error) {
+    query := ""select id, cod1, cod2, cod3 from db_tabela WHERE 'cliente'=? LIMIT 1""
+    err = db.QueryRow(query, cod_cliente).Scan(&id, &cod1, &cod2, &cod3)
+    return
+}

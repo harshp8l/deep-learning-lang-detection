@@ -1,0 +1,16 @@
+user> 
+(def query [:db/id
+            :list/title
+            :list/type
+            {:list/items [:db/id
+                          :list/title
+                          :list/type
+                          {:list/items []}]}])
+#'user/query
+
+user> (clojure.walk/postwalk #(if (= :list/items %)
+                               '(default :list/items [])
+                               %) 
+                             query)
+[:db/id :list/title :list/type 
+ {(default :list/items []) [:db/id :list/title :list/type {(default :list/items []) []}]}]

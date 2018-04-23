@@ -1,0 +1,32 @@
+template <std::size_t N> void bar() { std::cout << ""bar<"" << N << "">() called.\n""; }
+template <std::size_t N> void hit() { std::cout << ""hit<"" << N << "">() called.\n""; }
+
+template <typename T>  
+struct evaluate : std::bool_constant<std::is_integral_v<T>> 
+{   
+    static constexpr std::size_t size = sizeof(T);  // Simplified for illustration only.
+};  
+
+void foo() { } 
+
+template <typename T, typename... Args>
+void foo( const T&, const Args&... args) 
+{   
+    using X = evaluate<T>;
+
+    if constexpr ( X::value )
+    {   
+        bar<X::size>();
+    }   
+    else
+    {   
+        hit<X::size>();
+    }   
+
+    foo( args... );
+}   
+
+
+int main() {
+    foo (5, ""hello"", true);
+}

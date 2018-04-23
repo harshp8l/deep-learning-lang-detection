@@ -1,0 +1,27 @@
+WITH
+input(         user_id,email            ,home_phone,incoming_number,date_time) AS (
+          SELECT     1,'dan@dan.com'    , 8893432  , 5453455       ,TIMESTAMP '2018-03-27 13:48:10'
+UNION ALL SELECT     1,'dan@dan.com'    , 8893432  ,65765489       ,TIMESTAMP '2018-03-27 13:47:10'
+UNION ALL SELECT     1,'dan@dan.com'    , 8893432  ,65765489       ,TIMESTAMP '2018-03-27 13:48:05'
+UNION ALL SELECT     2,'sam@sam.com'    ,16568675  ,65658403       ,TIMESTAMP '2018-03-27 13:46:05'
+UNION ALL SELECT     2,'sam@sam.com'    ,16568675  ,57575748       ,TIMESTAMP '2018-03-27 13:32:05'
+UNION ALL SELECT     2,'sam@sam.com'    ,16568675  ,76547946       ,TIMESTAMP '2018-03-27 13:43:05'
+UNION ALL SELECT     3,'allen@allen.com',12345678  ,85768576       ,TIMESTAMP '2018-03-27 13:46:05'
+UNION ALL SELECT     3,'allen@allen.com',12345678  ,65658403       ,TIMESTAMP '2018-03-27 13:42:05'
+UNION ALL SELECT     3,'allen@allen.com',12345678  ,76547946       ,TIMESTAMP '2018-03-27 13:43:05'
+UNION ALL SELECT     3,'allen@allen.com',12345678  ,76547946       ,TIMESTAMP '2018-03-27 13:20:05'
+)
+,
+w_filter_val AS (
+SELECT
+  *
+, date_time - LAG(date_time,2) OVER(PARTITION BY user_id ORDER BY date_time) AS time4these3
+, CONDITIONAL_CHANGE_EVENT(incoming_number) OVER(PARTITION BY user_id ORDER BY incoming_number) AS count_in_nbr_minus1
+FROM input
+)
+SELECT * FROM w_filter_val WHERE time4these3 <= '10 MINUTES' AND count_in_nbr_minus1 + 1 >= 3
+;
+
+ user_id |      email      | home_phone | incoming_number |      date_time      | time4these3 | count_in_nbr_minus1 
+---------+-----------------+------------+-----------------+---------------------+-------------+---------------------
+       3 | allen@allen.com |   12345678 |        85768576 | 2018-03-27 13:46:05 | 00:04       |                   2

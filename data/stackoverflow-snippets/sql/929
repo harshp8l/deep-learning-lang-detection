@@ -1,0 +1,37 @@
+with data (OrgId, ParentOrgId) as
+(
+    select 100, null union all
+    select 129, 100 union all
+    select 134, 100 union all
+    select 133, 134 union all
+    select 135, 134 union all
+    select 439, 129 union all
+    select 450, 129 union all
+    select 501, 439 union all
+    select 602, 501 
+), cte as
+(
+    select 
+        sPath = cast(concat('/', OrgId, '/') as varchar(max)),
+        Path = hierarchyid::Parse(concat('/', OrgId, '/')),
+        PreviousPath = hierarchyid::GetRoot(),
+        OrgId,
+        ParentOrgId
+    from data
+    where ParentOrgId is null
+    union all
+    select 
+        sPath = cast(concat(c.sPath, s.OrgId, '/') as varchar(max)),
+        Path = hierarchyid::Parse(concat(c.sPath, s.OrgId, '/')),
+        PreviousPath = c.Path,
+        OrgId = s.OrgId,
+        ParentOrgId = s.ParentOrgId
+    from cte c
+    inner join data s
+        on c.OrgId = s.ParentOrgId
+)
+select a.OrgId, NumChildren = count(1)
+from cte a
+inner join cte b
+    on b.Path.IsDescendantOf(a.Path) = 1
+group by a.OrgId

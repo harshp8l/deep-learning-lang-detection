@@ -1,0 +1,69 @@
+enum Priority
+{
+    zero, standard, urgent
+};
+
+inline std::ostream& operator <<(std::ostream& os, const Priority& p)
+{
+    switch (p) {
+        case zero:
+            os << ""zero""; break;
+        case standard:
+            os << ""standard""; break;
+        case urgent:
+            os << ""urgent""; break;
+    }
+    return os;
+}
+
+class Lettura
+{
+public:
+    int      valore;
+    char     sensore;
+    Priority priorita;
+
+    Lettura()
+        : valore(0)
+        , sensore('\0')
+        , priorita(zero) {}
+
+    Lettura(const int val, const char s = '\0', const Priority p = zero)
+        : valore(val)
+        , sensore(s)
+        , priorita(p) {}
+
+    friend std::ostream& operator <<(std::ostream& out, const Lettura& lett)
+    {
+        return out << ""{ valore: "" << lett.valore << "", sensore: "" << lett.sensore << "", priorita: "" << lett.priorita
+                   << "" }"";
+    }
+};
+
+bool operator<(const Lettura& l, const Lettura& r)
+{
+    return l.priorita < r.priorita;
+}
+
+int main()
+{
+    stable_priority_queue<Lettura> coda;
+
+    Lettura l1(50, 'a', standard);
+    Lettura l2(50, 'b', standard);
+    Lettura l3(120, 'c', standard);
+    Lettura l5(30, 'e', urgent);
+    Lettura l6(35, 'f', standard);
+
+    coda.push(l1);
+    coda.push(l2);
+    coda.push(l3);
+    coda.emplace(100, 'd', standard);
+    coda.emplace(l5);
+    coda.emplace(l6);
+
+    while (!coda.empty()) {
+        std::cout << ""top: "" << coda.top() << ""\n"";
+        coda.pop();
+    }
+}

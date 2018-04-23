@@ -1,0 +1,27 @@
+# Get current Export Requests
+$ExportStats = Get-MailboxExportRequest
+
+#Check if there are completed questes
+If ($ExportStats.Status -eq ""Completed"")
+{
+  Write-Host ""Export done""
+  Get-MailboxExportRequest -Status Completed -Name ""$ObjectName-Export"" | Remove-MailboxExportRequest -Confirm:$false
+  #Disable-Mailbox -identity ""AD\$ObjectName""
+
+  # Create a new CSV file, which isn´t including the current export name we just marked as finish via above's section.      
+  # CODE MISSING HERE!      
+
+  # Now import our CSV list and proceed it
+  Import-CSV <Filepath of CSV file(\\server\folder\file.csv)> | ForEach-Object {
+  # Perform the export
+  New-MailboxExportRequest -Mailbox $_.MailboxAlias -FilePath $_.PSTpath
+  New-MailboxExportRequest -Mailbox $_.MailboxAlias -FilePath $_.ArchivePath
+  # Once done exit here, this will ensure we proceed only the first entry
+  Exit
+  } 
+
+}
+elseif ($ExportStats.Status -eq ""InProgress"")
+{
+    Write-Host ""Export still ongoing""    
+}

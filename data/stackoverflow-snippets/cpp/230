@@ -1,0 +1,136 @@
+#include <GL/glut.h>
+// https://glm.g-truc.net/
+#include <glm/glm.hpp>
+#include <vector>
+
+struct Rect
+{
+    glm::vec2 pos;
+    glm::vec2 dim;
+
+    bool IsInside( glm::vec2 point ) const
+    {
+        const bool inX = pos.x < point.x && point.x < pos.x + dim.x;
+        const bool inY = pos.y < point.y && point.y < pos.y + dim.y;
+        return inX && inY;
+    }
+};
+
+// rect list & selection
+std::vector< Rect > rects;
+int selected = -1;
+
+// animation state
+int timeBeg = -1;
+int timeEnd = -1;
+glm::vec2 src;
+glm::vec2 dst;
+
+void mouse( int button, int state, int x, int y )
+{
+    if( GLUT_RIGHT_BUTTON == button )
+    {
+        // add rect
+        if( GLUT_UP == state )
+        {
+            rects.push_back( Rect{ glm::vec2( x, y ), glm::vec2( 60, 60 ) } );
+            glutPostRedisplay();
+        }
+
+        return;
+    }
+
+    if( GLUT_LEFT_BUTTON == button && ( timeBeg < 0 || timeEnd < 0 ) )
+    {
+        // select rect
+        if( GLUT_DOWN == state )
+        {
+            for( size_t i = 0; i < rects.size(); ++i )
+            {
+                if( !rects[i].IsInside( glm::vec2( x, y ) ) )
+                    continue;
+
+                selected = i;
+                glutPostRedisplay();
+                return;
+            }
+        }
+
+        // finish select
+        if( GLUT_UP == state && selected >= 0 )
+        {
+            timeBeg = glutGet( GLUT_ELAPSED_TIME );
+            timeEnd = timeBeg + 1000;
+            src = rects[ selected ].pos;
+            dst = glm::vec2( x, y );
+        }
+
+        return;
+    }
+}
+
+void timer( int value )
+{
+    glutTimerFunc( 16, timer, 0 );
+
+    // don't repaint if we aren't animating
+    if( timeBeg < 0 || timeEnd < 0 || selected < 0 )
+        return;
+
+    const int timeCur = glutGet( GLUT_ELAPSED_TIME );
+    if( timeCur > timeEnd )
+    {
+        // animation done
+        timeBeg = -1;
+        timeEnd = -1;
+        selected = -1;
+        glutPostRedisplay();
+        return;
+    }
+
+    float pct = ( timeCur - timeBeg ) / static_cast< float >( timeEnd - timeBeg );
+    rects[ selected ].pos = glm::mix( src, dst, pct );
+
+    glutPostRedisplay();
+}
+
+void display()
+{
+    glClearColor( 0, 0, 0, 1 );
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glMatrixMode( GL_PROJECTION );
+    glLoadIdentity();
+    double w = glutGet( GLUT_WINDOW_WIDTH );
+    double h = glutGet( GLUT_WINDOW_HEIGHT );
+    glOrtho( 0, w, h, 0, -1, 1 );
+
+    glMatrixMode( GL_MODELVIEW );
+    glLoadIdentity();
+
+    for( size_t i = 0; i < rects.size(); ++i )
+    {
+        if( selected == i )
+            glColor3ub( 255, 0, 0 );
+        else
+            glColor3ub( 255, 255, 255 );
+
+        const Rect& rect = rects[i];
+        glRectf( rect.pos.x, rect.pos.y, rect.pos.x + rect.dim.x, rect.pos.y + rect.dim.y );
+    }
+
+    glutSwapBuffers();
+}
+
+int main( int argc, char** argv )
+{
+    glutInit( &argc, argv );
+    glutInitWindowSize( 800, 600 );
+    glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE );
+    glutCreateWindow( ""GLUT"" );
+    glutMouseFunc( mouse );
+    glutTimerFunc( 0, timer, 0 );
+    glutDisplayFunc( display );
+    glutMainLoop();
+    return 0;
+}

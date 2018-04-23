@@ -1,0 +1,43 @@
+package org.dpp.cdi.singleton;
+
+import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
+import javax.enterprise.inject.se.SeContainer;
+import javax.enterprise.inject.se.SeContainerInitializer;
+import javax.inject.Singleton;
+import org.jboss.weld.environment.se.Weld;
+
+/**
+ *
+ * @author mochieng
+ */
+public class TestMain {
+
+    public static void main(String[] args) {
+        SeContainerInitializer weld = Weld.newInstance();
+        try (SeContainer se = weld.disableDiscovery().addBeanClasses(TestServiceImpl.class).initialize()) {
+            TestService service = se.select(TestService.class).get();
+        }
+    }
+
+    public static interface TestService {
+
+        void doTest();
+    }
+
+    @Singleton
+    public static class TestServiceImpl implements TestService {
+
+        private static final Logger LOG = Logger.getLogger(TestServiceImpl.class.getName());
+
+        @PostConstruct
+        void initImpl() {
+            LOG.info(""Initialized singleton"");
+        }
+
+        @Override
+        public void doTest() {
+            LOG.info(""Singleton called"");
+        }
+    }
+}

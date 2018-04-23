@@ -1,0 +1,17 @@
+(def data [{:date :2007-08-05 :meat-weight-gain 100 :meat-weight-loss 80 :meat-balance 20}, 
+           {:date :2007-08-06 :meat-weight-gain 10 :meat-weight-loss 60 :meat-balance -30},
+           {:date :2007-08-07 :meat-weight-gain 40 :meat-weight-loss 80 :meat-balance -70}
+           {:date :2007-08-08 :meat-weight-gain 100 :meat-weight-loss 0 :meat-balance 30}
+           {:date :2007-08-09 :meat-weight-gain 100 :meat-weight-loss 0 :meat-balance -10}])
+
+user> (let [parts (partition-by #(-> % :meat-balance neg?) data)]
+        (keep #(let [{p-start :date} (first %)
+                     {p-end :date balance :meat-balance} (last %)]
+                 (when (neg? balance)
+                   {:period-start p-start
+                    :period-end p-end
+                    :end-period-balance balance}))
+              parts))
+
+;;=> ({:period-start :2007-08-06, :period-end :2007-08-07, :end-period-balance -70} 
+;;    {:period-start :2007-08-09, :period-end :2007-08-09, :end-period-balance -10})

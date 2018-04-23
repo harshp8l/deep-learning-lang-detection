@@ -1,0 +1,19 @@
+def getShards(id: String, shards: Int): Future[List[Array[Byte]]] = {
+  val futures = (1 to shards).map(Database.ShardModel.find(id, _)).toList
+  Future.sequence(futures)
+}
+
+def getAsset = get {
+  pathPrefix(""asset"") {
+    parameters('id) { id =>
+      val f = mediaService.getMetadata(id).flatMap { x =>
+        mediaService.getShards(id, x.shards)
+      }
+      val source =
+        Source.fromFuture(f)
+              .flatMapConcat(Source.apply)
+              .map(ByteString.apply)
+      complete(HttpEntity(/* a content type */, source))
+    }
+  }
+}

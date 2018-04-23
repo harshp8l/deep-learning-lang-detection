@@ -1,0 +1,12 @@
+  override def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] =
+    for {
+      scheduler <- Scheduler[IO](corePoolSize = 1)
+      exitStream = scheduler.sleep[IO](10 seconds)
+       .evalMap(_ => requestShutdown)
+       .map(_ => ExitCode.Success)
+      serverStream = BlazeBuilder[IO]
+        .bindHttp(port, ""0.0.0.0"")
+        .mountService(services(scheduler), ""/"")
+        .serve
+      result <- Stream.emits(List(exitStream, serverStream)).joinUnbounded
+    } yield result

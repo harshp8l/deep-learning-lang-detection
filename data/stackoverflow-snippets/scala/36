@@ -1,0 +1,17 @@
+case class Record( key: String, value: Int )
+
+object Job extends App
+{
+  val env = StreamExecutionEnvironment.getExecutionEnvironment
+  val data = env.fromElements( Record(""01"",1), Record(""02"",2), Record(""03"",3), Record(""04"",4), Record(""05"",5) )
+  val step1 = data.filter( record => record.value % 3 != 0  ) // introduces some data loss
+  val step2 = data.map( r => Record( r.key, r.value * 2 ) )
+  val step3 = data.map( r => Record( r.key, r.value * 3 ) )
+  val merged = step1.union( step2, step3 )
+  val keyed = merged.keyBy(0)
+  val windowed = keyed.timeWindow( Time.milliseconds( 50 ) )
+  val triggered = windowed.trigger( new CountTriggerWithTimeout( 3, env.getStreamTimeCharacteristic ) )
+  val summed = triggered.sum( 1 )
+  summed.print()
+  env.execute(""test"")
+}

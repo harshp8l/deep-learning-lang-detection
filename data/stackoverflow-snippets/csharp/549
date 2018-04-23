@@ -1,0 +1,58 @@
+ Here is an example i created for you... You can replace the dummy customer 
+ list with your desired data. 
+
+
+    public class Customer
+    {
+
+        public string Name { get; set; }
+        public string LastName { get; set; }
+    }
+
+
+    public Form1()
+    {
+        InitializeComponent();
+        var customer = new List<Customer>();
+        customer.Add(new Customer { Name = ""A"", LastName = ""B"" });
+        customer.Add(new Customer { Name = ""C"", LastName = ""D"" });
+        dataGridView1.DataSource = customer;
+
+    }
+
+
+    private void button1_Click(object sender, EventArgs e)
+    {
+        DataTable dt = new DataTable();
+        foreach (DataGridViewColumn col in dataGridView1.Columns)
+        {
+            dt.Columns.Add(col.Name);
+        }
+
+        foreach (DataGridViewRow row in dataGridView1.Rows)
+        {
+            DataRow dRow = dt.NewRow();
+            foreach (DataGridViewCell cell in row.Cells)
+            {
+                dRow[cell.ColumnIndex] = cell.Value;
+            }
+            dt.Rows.Add(dRow);
+        }
+        try
+        {
+            reportViewer1.ProcessingMode = 
+            Microsoft.Reporting.WinForms.ProcessingMode.Local;
+            reportViewer1.LocalReport.ReportPath = @""Your Path to the Report File"";
+
+            Microsoft.Reporting.WinForms.ReportDataSource dataSource = new 
+            Microsoft.Reporting.WinForms.ReportDataSource(""DataSet1"", dt);
+            reportViewer1.LocalReport.DataSources.Clear();
+            reportViewer1.LocalReport.DataSources.Add(dataSource);
+            reportViewer1.LocalReport.Refresh();
+            reportViewer1.RefreshReport();
+        }
+        catch
+        {
+
+        }
+   }

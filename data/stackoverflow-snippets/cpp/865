@@ -1,0 +1,69 @@
+#include <QApplication>
+#include <QLabel>
+#include <QPainter>
+#include <QThread>
+#include <QDateTime>
+#include <QDebug>
+
+
+struct Chunk
+{
+    QPixmap blocks;
+    QDateTime time;
+};
+
+Q_DECLARE_METATYPE(Chunk)
+
+class Thread: public QThread{
+    Q_OBJECT
+public:
+    using QThread::QThread;
+    ~Thread() { quit(); wait();}
+    Q_SIGNAL void sendPixmap(const Chunk &);
+protected:
+    void run() override{
+
+        while (true) {
+
+            Chunk chunkResponse;
+            QImage image(128, 128, QImage::Format_ARGB32_Premultiplied);
+            image.fill(Qt::transparent);
+
+            QPainter p(&image);
+
+            for(int x=0; x<256; x+=2)
+            {
+                for(int z=0; z<256; z+=2)
+                {
+                    QColor color(qrand() % 256, qrand() % 256, qrand() % 256);
+                    p.setPen(color);
+                    p.drawPoint(x/2, z/2);
+                }
+            }
+
+            p.end();
+            chunkResponse.blocks = QPixmap::fromImage(image);
+            chunkResponse.time = QDateTime::currentDateTime();
+            Q_EMIT sendPixmap(chunkResponse);
+            QThread::msleep(10);
+        }
+    }
+};
+
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    QLabel w;
+    w.setFixedSize(128, 128);
+    Thread thread;
+    QObject::connect(&thread, &Thread::sendPixmap, [&](const Chunk & chunk){
+        w.setPixmap(chunk.blocks);
+        qDebug()<<chunk.time.toString();
+    });
+    thread.start();
+    w.show();
+    return a.exec();
+}
+
+#include ""main.moc""

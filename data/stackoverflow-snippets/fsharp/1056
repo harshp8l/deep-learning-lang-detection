@@ -1,0 +1,21 @@
+#r @""..\packages\FSharp.Data.2.2.2\lib\net40\FSharp.Data.dll""
+
+open FSharp.Data
+open System
+
+type SampleCsv = CsvProvider<""Sample.csv"">
+
+let sample = SampleCsv.GetSample()
+
+let rec collectLeaves (typeTree : Type) =
+    seq {
+        match typeTree.IsGenericType with
+        | false -> yield typeTree.Name
+        | true -> yield! typeTree.GetGenericArguments() |> Seq.collect collectLeaves
+    }
+
+let columnTypes = (sample.Rows |> Seq.head).GetType() |> collectLeaves
+
+let columnDefinitions = columnTypes |> Seq.zip sample.Headers.Value |> Map.ofSeq
+
+let getDefinitions (sample : SampleCsv) = (sample.Rows |> Seq.head).GetType() |> collectLeaves |> Seq.zip sample.Headers.Value |> Map.ofSeq

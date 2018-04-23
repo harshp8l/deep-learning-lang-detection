@@ -1,0 +1,27 @@
+let poperator: Parser<_,_> =
+    let f c = (isAsciiIdContinue c || isAnyOf [|' ';'\t';'\n';'\""';'(';')';'{';'}';'[';']'|] c) = false
+    (many1Satisfy f .>> spaces)
+    >>= fun token ->
+        match dict_operator.TryGetValue token with
+        | true, x -> preturn x
+        | false, _ -> fail ""unknown operator""
+
+let rec led poperator term left (prec,asoc,m) =
+    match asoc with
+    | Associativity.Left | Associativity.None -> tdop poperator term prec |>> m left
+    | Associativity.Right -> tdop poperator term (prec-1) |>> m left
+    | _ -> failwith ""impossible""
+
+and tdop poperator term rbp =
+    let rec f left =
+        poperator >>= fun (prec,asoc,m as v) ->
+            if rbp < prec then led poperator term left v >>= loop
+            else pzero
+    and loop left = attempt (f left) <|>% left
+    term >>= loop
+
+let operators expr i (s: CharStream<_>) =
+    let expr_indent expr (s: CharStream<_>) = expr_indent i (<=) expr s
+    let op s = expr_indent poperator s
+    let term s = expr_indent expr s
+    tdop op term 0 s

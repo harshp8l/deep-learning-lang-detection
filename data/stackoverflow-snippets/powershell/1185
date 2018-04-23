@@ -1,0 +1,26 @@
+#
+# Script.ps1
+#
+
+Import-Module activedirectory
+
+$varCSV = """"
+$userlist = Import-Csv -Path $varCSV -Delimiter "",""
+
+foreach ($user in $userlist)
+{
+    $samN = $user.samaccouNtname
+    $GivenN = $user.GivenName
+    $FullN = $user.Name
+    $SurN = $user.Surname
+    $dn = (Get-ADUser -Identity $samN).DistinguishedName
+    Get-ADUser -Identity $user.SamAccountName | Set-ADUser -GivenName $GivenN -SurName $SurN -DisplayName $FullN  
+    Try {
+        Rename-ADObject $dn -NewName $FullN
+    }
+
+    catch {
+        Write-Output ""usuario repetido: "" ($user.samaccountname) | Out-File C:\errors.txt -Append
+    }
+
+}

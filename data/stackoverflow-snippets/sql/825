@@ -1,0 +1,10 @@
+select c.country_id
+     , count(u.id) as TotalUsers
+     , sum(case when u.status = 'active' then 1 else 0 end) as ActiveUsers
+     , sum(case when u.status = 'Inactive' then 1 else 0 end) as InactiveUsers
+     , (select count(*) from user_subscribed_disciplines) as DisciplineSubscribers
+     , (select name from (select top 1 name,count(*) from disciplines group by name order by count(*) desc) t) as TopDiscipline
+     , (select count(*) from  user_subscribed_study_levels) as StudyLevelCount
+     , (select name from (select top 1 name,count(*) from study_levels group by name order by count(*) desc) t) as TopStudyLevel
+from countries c
+inner join user u on u.country_id=c.country_id

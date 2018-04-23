@@ -1,0 +1,63 @@
+user> (with-resources [a 100 b 200 c 300]
+        ;;body
+        (+ a b c)
+        ;;cleanup
+        (println ""cleanup:"" :a a :b b :c c)
+        ;;error handler
+        (error (do (println ""Error caught:"" (.getMessage error))
+                   :error)))
+
+cleanup: :a 100 :b 200 :c 300
+600
+
+user> (with-resources [a (throw (Exception. ""A THROWS"")) b 200 c 300]
+        ;;body
+        (+ a b c)
+        ;;cleanup
+        (println ""cleanup:"" :a a :b b :c c)
+        ;;error handler
+        (error (do (println ""Error caught:"" (.getMessage error))
+               :error)))
+
+cleanup: :a nil :b nil :c nil
+Error caught: A THROWS
+:error
+
+user> (with-resources [a 100 b (throw (Exception. ""B THROWS"")) c 300]
+        ;;body
+        (+ a b c)
+        ;;cleanup
+        (println ""cleanup:"" :a a :b b :c c)
+        ;;error handler
+        (error (do (println ""Error caught:"" (.getMessage error))
+                   :error)))
+
+cleanup: :a 100 :b nil :c nil
+Error caught: B THROWS
+:error
+
+user> (with-resources [a 100 b 200 c (throw (Exception. ""C THROWS""))]
+        ;;body
+        (+ a b c)
+        ;;cleanup
+        (println ""cleanup:"" :a a :b b :c c)
+        ;;error handler
+        (error (do (println ""Error caught:"" (.getMessage error))
+                   :error)))
+
+cleanup: :a 100 :b 200 :c nil
+Error caught: C THROWS
+:error
+
+user> (with-resources [a 100 b 200 c 300]
+        ;;body
+        (throw (Exception. ""BODY THROWS""))
+        ;;cleanup
+        (println ""cleanup:"" :a a :b b :c c)
+        ;;error handler
+        (error (do (println ""Error caught:"" (.getMessage error))
+                   :error)))
+
+Error caught: BODY THROWS
+cleanup: :a 100 :b 200 :c 300
+:error

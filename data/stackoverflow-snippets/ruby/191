@@ -1,0 +1,14 @@
+customers = Customer.all
+
+customers = customers.joins(""LEFT OUTER JOIN sales ON customers.id = sales.customer_id"")
+
+customers = customers.joins(""LEFT OUTER JOIN (SELECT sale_id, SUM(total) total FROM sale_line_items GROUP BY sale_id) sli ON sli.sale_id = sales.id"")
+customers = customers.joins(""LEFT OUTER JOIN (SELECT sale_id, SUM(effect_to_balance) effect_to_balance FROM sale_adjustments GROUP BY sale_id) sa ON sa.sale_id = sales.id"")
+customers = customers.joins(""LEFT OUTER JOIN (SELECT sale_id, SUM(amount) amount FROM sale_payments GROUP BY sale_id) sp ON sp.sale_id = sales.id"")
+
+customers = customers.select(""customers.*,
+    COALESCE(SUM(total), 0) as sales_total,
+    COALESCE(SUM(total), 0) + 
+    COALESCE(SUM(effect_to_balance),0) - 
+    COALESCE(SUM(amount),0) AS customer_balance"")
+customers.group(""customers.id"").distinct 

@@ -1,0 +1,28 @@
+truncate table LongestPath_Routes
+
+DECLARE @From TinyInt
+DECLARE @To TinyInt
+
+DECLARE PathCursor CURSOR FAST_FORWARD FOR
+    select Nodes_From.Id as [From], Nodes_To.Id as [To]
+    from LongestPath_Nodes as Nodes_From
+    inner join LongestPath_Nodes as Nodes_To
+        on Nodes_From.Id <> Nodes_To.Id
+
+OPEN PathCursor
+
+FETCH NEXT FROM PathCursor INTO @From, @To
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+set nocount on
+ EXEC LongestPath_Calculate_for_Nodes @From, @To
+set nocount off
+
+ FETCH NEXT FROM PathCursor INTO @From, @To
+END
+
+CLOSE PathCursor
+DEALLOCATE PathCursor 
+
+select * from LongestPath_Routes order by [weight] desc

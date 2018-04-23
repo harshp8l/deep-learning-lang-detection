@@ -1,0 +1,15 @@
+(defn write-dht-metric [e]
+  (let [dhstate (:dhstate e)]
+        (prn ""RESULT>"" dhtstate)
+        (index {:host ""dht-info""
+                :service (:service e)
+                :time (unix-time)
+                :dhtStatus (get dhtstate 1)
+                :msgCount (get dhtstate 2)
+                :pingDelay (get dhtstate 3)})))
+
+(let [index (index)]
+  (streams
+   (with :dhstate (re-find #""dht_status: health\.(\S+), msg count (\d+) \((\d+) bytes\).*peak \{ping = (\d+)"" (:pgmsg event))
+       (when :dhstate 
+         write-dht-metric)))

@@ -1,0 +1,126 @@
+uint64_t GetPreciseTickCount()
+{
+    FILETIME fileTime;
+    GetSystemTimePreciseAsFileTime(&fileTime);
+    ULARGE_INTEGER large;
+    large.LowPart = fileTime.dwLowDateTime;
+    large.HighPart = fileTime.dwHighDateTime;
+    return large.QuadPart;
+}
+
+uint64_t g_blockedTime = 0, g_waitTime = 0;
+int main()
+{
+    HANDLE hToken;
+    auto openResult = OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken);
+    if (!openResult)
+    {
+        std::cout << ""OpenProcessToken failed with err "" << GetLastError() << std::endl;
+        return 1;
+    }
+
+    TOKEN_PRIVILEGES tp;
+    tp.PrivilegeCount = 1;
+    tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+    auto lookupResult = LookupPrivilegeValue(NULL, SE_MANAGE_VOLUME_NAME, &tp.Privileges[0].Luid);
+    if (!lookupResult)
+    {
+        std::cout << ""LookupPrivilegeValue failed with err "" << GetLastError() << std::endl;
+        return 1;
+    }
+
+    auto adjustResult = AdjustTokenPrivileges(hToken, FALSE, &tp, 0, NULL, NULL);
+    if (!adjustResult || GetLastError() != ERROR_SUCCESS)
+    {
+        std::cout << ""AdjustTokenPrivileges failed with err "" << GetLastError() << std::endl;
+        return 1;
+    }
+
+    auto hFile = CreateFile(
+        L""test.dat"",
+        GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING | FILE_FLAG_WRITE_THROUGH,
+        NULL);
+
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
+        std::cout << ""CreateFile failed with err "" << GetLastError() << std::endl;
+        return 1;
+    }
+
+    uint32_t bufferSize = 4*1024*1024;
+    char* buffer = (char*)_aligned_malloc(bufferSize, 4096);
+    const int loop = 100;
+
+    auto start = GetPreciseTickCount();
+
+    LARGE_INTEGER endPosition;
+    endPosition.QuadPart = bufferSize * loop;
+    auto setFileErr = SetFilePointerEx(hFile, endPosition, nullptr, FILE_BEGIN);
+    if (setFileErr == INVALID_SET_FILE_POINTER)
+    {
+        std::cout << ""SetFilePointer failed with err "" << GetLastError() << std::endl;
+        return 1;
+    }
+
+    if (!SetEndOfFile(hFile))
+    {
+        std::cout << ""SetEndOfFile failed with err "" << GetLastError() << std::endl;
+        return 1;
+    }
+
+    if (!SetFileValidData(hFile, bufferSize * loop))
+    {
+        std::cout << ""SetFileValidData failed with err "" << GetLastError() << std::endl;
+        return 1;
+    }
+
+    OVERLAPPED overlapped;
+    auto completionEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+
+    for (int i = 0; i < loop; ++i)
+    {
+        overlapped.hEvent = completionEvent;
+        overlapped.Offset = i * bufferSize;
+        overlapped.OffsetHigh = 0;
+        overlapped.Internal = 0;
+        overlapped.InternalHigh = 0;
+
+        auto writeFileStart = GetPreciseTickCount();
+        auto err = WriteFile(
+            hFile,
+            buffer,
+            bufferSize,
+            nullptr,
+            &overlapped);
+
+        auto writeFileEnd = GetPreciseTickCount();
+        g_blockedTime += (writeFileEnd - writeFileStart) / 10;
+        if (err == FALSE)
+        {
+            auto lastErr = GetLastError();
+            if (lastErr != ERROR_IO_PENDING)
+            {
+                std::cout << ""WriteFile failed with err "" << lastErr << std::endl;
+                return 1;
+            }
+
+            auto waitErr = WaitForSingleObject(overlapped.hEvent, INFINITE);
+            g_waitTime += (GetPreciseTickCount() - writeFileEnd) / 10;
+            if (waitErr != 0)
+            {
+                std::cout << ""WaitForSingleObject failed with err "" << waitErr << std::endl;
+                return 1;
+            }
+        }
+    }
+
+    auto end = GetPreciseTickCount();
+    CloseHandle(hFile);
+    std::cout << ""Took "" << (end - start) / 10 << "" micros"" << std::endl;
+    std::cout << ""Blocked time "" << g_blockedTime << "" micros"" << std::endl;
+    std::cout << ""Wait time "" << g_waitTime << "" micros"" << std::endl;
+}

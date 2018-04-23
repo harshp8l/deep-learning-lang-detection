@@ -1,0 +1,45 @@
+import scala.language.implicitConversions
+
+object myproject /* should be package, object only for script */ {
+
+  trait AIntf {
+    def usefulOperationOnStrings(s: String): String
+  }
+
+  object syntax /* should be package, object only for script */ {
+    object a {
+      class A_Ops(wrapped: String, ai: AIntf) {
+        def a: String = ai.usefulOperationOnStrings(wrapped)
+      }
+      implicit def everyStringHasAOps(s: String)(implicit ai: AIntf): A_Ops = {
+        new A_Ops(s, ai)
+      }
+    }
+  }
+
+  class A extends AIntf {
+    def usefulOperationOnStrings(s: String): String = ""<foo>"" + s + ""</foo>""
+  }
+
+  class A2 extends AIntf {
+    def usefulOperationOnStrings(s: String): String = s.toUpperCase
+  }
+}
+
+
+
+import myproject.AIntf
+import myproject.syntax.a._
+
+class C(implicit val a: AIntf) {
+  {
+    println(""hello"".a)
+  }
+}
+
+val c1 = new C()(new myproject.A)
+val c2 = new C()(new myproject.A2)
+
+// prints:
+// <foo>hello</foo>
+// HELLO

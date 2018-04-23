@@ -1,0 +1,34 @@
+require 'watir'
+
+# Monkey-patch due to being unable to check the tag name of the shadow root
+class Watir::Browser
+  def wrap_element(scope, element)
+    Watir.element_class_for(element.tag_name.downcase).new(scope, element: element)
+  rescue Selenium::WebDriver::Error::UnknownError # need a better rescue
+    Watir::Element.new(scope, element: element)
+  end
+end
+
+def expand_root_element(element, browser)
+    browser.execute_script(""return arguments[0].shadowRoot"", element)
+end
+
+browser = Watir::Browser.new
+
+# Create a download item
+browser.goto('https://chromedriver.storage.googleapis.com/2.33/chromedriver_win32.zip')
+browser.goto('chrome://downloads')
+
+# Navigate the shadow DOM to the download items
+download_manager = browser.element(css: 'downloads-manager')
+shadow_download_manager = expand_root_element(download_manager, browser)
+
+download_items = shadow_download_manager.elements(css: '#downloads-list downloads-item')
+shadow_download_items = download_items.map { |s| expand_root_element(s, browser) }
+
+# Find a specific download item by file name
+expected_file = /chromedriver_win32/
+download = shadow_download_items.find { |s| s.span(id: 'name').text_content =~ expected_file }
+
+# Do something with the download - eg wait for the download to complete
+download.link(id: 'show').wait_until_present

@@ -1,0 +1,36 @@
+#include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/phoenix.hpp>
+
+namespace qi = boost::spirit::qi;
+namespace px = boost::phoenix;
+
+int main() {
+    using Attr = std::vector<int>;
+    using It   = std::string::const_iterator;
+
+    qi::rule<It, Attr(), qi::space_type> rule;
+
+    rule %= qi::omit[qi::int_ [ px::reserve(qi::_val, qi::_1) ] >> ';' ]
+         >> (qi::eps(px::size(qi::_val) < px::capacity(qi::_val)) >> qi::int_) % ','
+         >> ';'
+         ;
+
+    for (std::string const input : { 
+            ""42; 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41;"", })
+    {
+        It f = begin(input), l = end(input);
+        Attr data;
+        std::cout << ""Capacity before: "" << data.capacity() << ""\n"";
+
+        if (phrase_parse(f, l, rule, qi::space, data))
+            std::cout << ""Parsed: "" << data.size() << "" elements "";
+        else
+            std::cout << ""Parse failed at '"" << std::string(f,l) << ""' "";
+
+        if (f != l)
+            std::cout << ""Remaining: '"" << std::string(f,l) << ""'"";
+        std::cout << '\n';
+
+        std::cout << ""Capacity after: "" << data.capacity() << ""\n"";
+    }
+}

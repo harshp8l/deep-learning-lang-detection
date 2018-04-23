@@ -1,0 +1,14 @@
+EXPLAIN 
+SELECT
+    DATE_TRUNC('DAY', W.dat_creation), COUNT(1), SUM(W.NUM_VALUE)
+FROM WITHDRAW W
+WHERE W.dat_creation >= (NOW() - INTERVAL '2 DAY')::timestamp
+AND W.dat_creation < (NOW() - INTERVAL '1 DAY')::timestamp
+GROUP BY 1
+
+HashAggregate  (cost=11428.33..11594.13 rows=11053 width=48)
+  Group Key: date_trunc('DAY'::text, dat_creation)
+  ->  Bitmap Heap Scan on withdraw w  (cost=237.73..11345.44 rows=11053 width=14)
+        Recheck Cond: ((dat_creation >= ((now() - '2 days'::interval))::timestamp without time zone) AND (dat_creation < ((now() - '1 day'::interval))::timestamp without time zone))
+        ->  Bitmap Index Scan on withdraw_dat_creation  (cost=0.00..234.97 rows=11053 width=0)
+              Index Cond: ((dat_creation >= ((now() - '2 days'::interval))::timestamp without time zone) AND (dat_creation < ((now() - '1 day'::interval))::timestamp without time zone))

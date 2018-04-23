@@ -1,0 +1,26 @@
+public class RetryingDelay implements clojure.lang.IDeref {
+  private final IFn fun;
+  private volatile boolean available;
+  private volatile Object value;
+
+  public RetryingDelay(IFn fun) {
+    this.fun = fun;
+  }
+
+  public Object deref() {
+    if(available) {
+      return value;
+    } else {
+      synchronized(fun) {
+        if(available) {
+          return value;
+        } else {
+          Object v = fun.invoke();
+          value = v;
+          available = true;
+          return v;
+        }
+      }
+    }
+  }
+}

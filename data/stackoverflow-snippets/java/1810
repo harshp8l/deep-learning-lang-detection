@@ -1,0 +1,82 @@
+private static final String fileName = ""MyAppsTextFile.txt"";
+
+private void getFiles()
+{
+    System.out.println(""GetGoogleDriveFile > getFiles"");
+
+    Query query = new Query.Builder()
+            .addFilter(Filters.eq(SearchableField.TITLE, fileName))
+            .build();
+
+    Task<MetadataBuffer> queryTask = getDriveResourceClient().query(query);
+
+    queryTask
+            .addOnSuccessListener(this,
+                    new OnSuccessListener<MetadataBuffer>()
+                    {
+                        @Override
+                        public void onSuccess(MetadataBuffer metadataBuffer)
+                        {
+                            System.out.println(""On SUCCESS"");
+
+                            for( Metadata m : metadataBuffer )
+                            {
+                                DriveFile driveFile = m.getDriveId().asDriveFile();
+                                getFileContents(driveFile);
+                            }
+                        }
+                    })
+            .addOnFailureListener(this, new OnFailureListener()
+            {
+                @Override
+                public void onFailure(@NonNull Exception e)
+                {
+                    System.out.println(""On FAILURE"");
+                }
+            });
+}
+
+private void getFileContents(DriveFile myFile)
+{
+    System.out.println(""GetGoogleDriveFile > getFileContents"");
+
+    Task<DriveContents> openFileTask =
+            getDriveResourceClient().openFile(myFile, DriveFile.MODE_READ_ONLY);
+
+    openFileTask
+            .continueWithTask(new Continuation<DriveContents, Task<Void>>()
+            {
+                @Override
+                public Task<Void> then(@NonNull Task<DriveContents> task) throws Exception
+                {
+                    DriveContents contents = task.getResult();
+
+                    try (BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(contents.getInputStream())))
+                    {
+                        StringBuilder builder = new StringBuilder();
+                        String line;
+
+                        while ((line = reader.readLine()) != null)
+                        {
+                            builder.append(line).append(""\n"");
+                        }
+
+                        userData = builder.toString();
+                    }
+
+                    System.out.println(""We have the file content!"");
+
+                    Task<Void> discardTask = getDriveResourceClient().discardContents(contents);
+                    return discardTask;
+                }
+            })
+            .addOnFailureListener(new OnFailureListener()
+            {
+                @Override
+                public void onFailure(@NonNull Exception e)
+                {
+                    System.out.println(""Unable to read file!"");
+                }
+            });
+}

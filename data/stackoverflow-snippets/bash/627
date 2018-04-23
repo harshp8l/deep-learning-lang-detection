@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+while (<>) { # read from STDIN a line at a time
+  # Split data on whitespace, but only into four columns
+  my @cols = split /\s+/, $_, 4;
+
+  next unless $cols[0] eq 'FORMUL';
+
+  # Now extract the letter stuff into a hash for easy access.
+  # We extract letters from the final column in the record.
+  my %letters = $cols[-1] =~ m/([A-Z])(\d+)/g;
+
+  # Give the values we're interested in, a default of 0
+  $letters{$_} //= 0 for (qw[C O N]);
+
+  next if $letters{C} > 2
+    and $letters{C} + $letters{O} + $letters{N} >= 6;
+
+  # I think we can then print the line;
+  print;
+}

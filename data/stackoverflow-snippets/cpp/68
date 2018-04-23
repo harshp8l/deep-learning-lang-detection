@@ -1,0 +1,23 @@
+void setWinParent(HWND ownerWin)
+{
+    HWND hwnd = (HWND)this->winId();
+    DWORD exStyle = GetWindowLong(hwnd, GWL_EXSTYLE) ;//1
+    DWORD style   = GetWindowLong(hwnd, GWL_STYLE);//2
+    WCHAR className[256];//3
+    GetClassName(hwnd, className,256);//4
+    HWND newHwnd = CreateWindowEx(exStyle, className, NULL, style,//5
+                                  CW_USEDEFAULT, CW_USEDEFAULT,
+                                  CW_USEDEFAULT, CW_USEDEFAULT,
+                                  ownerWin, NULL, qWinAppInst(), NULL);
+    QWindow *qw=QWindow::fromWinId((WId)newHwnd);
+    QWidget* qWidget = createWindowContainer(qw);
+    qWidget->show();
+    this->setParent(qWidget);
+    this->setWindowFlags(Qt::Window);
+    qWidget->close();    
+}
+void showWindow(HWND ownerHwnd)
+{
+    show();
+    SetWindowLongPtr((HWND)this->winId(), GWLP_HWNDPARENT, (LONG)ownerHwnd);
+}

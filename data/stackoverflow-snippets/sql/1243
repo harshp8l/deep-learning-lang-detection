@@ -1,0 +1,39 @@
+DECLARE
+   CURSOR crs
+   IS
+      SELECT *
+      FROM   user_objects
+      WHERE  status = 'INVALID';
+
+   TYPE work_recs IS TABLE OF crs%ROWTYPE;
+   messages work_recs;
+
+   lbol_invalid_objects BOOLEAN := FALSE;
+   email_body  VARCHAR2(2000);
+
+BEGIN
+   OPEN crs;
+
+   LOOP
+      FETCH crs BULK COLLECT INTO messages LIMIT 10;
+
+      DBMS_OUTPUT.PUT_LINE('COUNT - '||messages.COUNT);
+
+      EXIT WHEN messages.COUNT = '0';
+
+      lbol_invalid_objects := TRUE;
+
+      FOR indx IN messages.FIRST .. messages.LAST
+      LOOP
+         email_body := email_body||CHR(10)||'OBJECT NAME: '||messages(indx).OBJECT_NAME||', OBJECT TYPE: '||messages(indx). OBJECT_TYPE||', STATUS: '||messages(indx).STATUS;
+      END LOOP;
+   END LOOP;
+
+   IF lbol_invalid_objects THEN
+      email_body := email_body||CHR(10)|| '' ||CHR(10)||'All of these objects are invalid in your database. Please troubleshoot the issue. Thank you.'
+      dbms_output.put_line('Invalid obj.');
+   ELSE
+      email_body := 'There are no invalid objects in your database. Thank You.';
+      dbms_output.put_line('No Invalid obj.');
+   END IF;
+END;

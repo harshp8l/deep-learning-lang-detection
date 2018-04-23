@@ -1,0 +1,263 @@
+(ns arcis.models.nessus
+  (:use [taoensso.timbre :only [trace debug info warn error fatal]])
+  (:require [arcis.util :as util]
+            [arcis.models.db :as db]
+            [clojure.java.io :as io]
+            [clojure.xml :as xml]
+            [clojure.zip :as zip]
+            [clojure.data.zip.xml :as zx]))
+
+(def nessus-host-keys [:hostname :host_fqdn
+                       :system_type :operating_system
+                       :operating_system_unsupported])
+
+(def used-nessus-host-keys (conj nessus-host-keys
+                                   :host_start :host_end
+                                   :items :traceroute_hop_0 :traceroute_hop_1
+                                   :traceroute_hop_2 :traceroute_hop_3
+                                   :traceroute_hop_4 :traceroute_hop_5
+                                   :traceroute_hop_6 :traceroute_hop_7
+                                   :traceroute_hop_8 :traceroute_hop_9
+                                   :traceroute_hop_10 :traceroute_hop_11
+                                   :traceroute_hop_12 :traceroute_hop_13
+                                   :traceroute_hop_14 :traceroute_hop_15
+                                   :traceroute_hop_16 :traceroute_hop_17
+                                   :host_ip :patch_summary_total_cves
+                                   :cpe_0 :cpe_1 :cpe_2 :cpe_3 :cpe_4 :cpe_5
+                                   :cpe_6 :cpe_7 :cpe_8 :cpe_9))
+
+(def nessus-item-keys [:port :svc_name :protocol :severity :plugin_id
+                       :plugin_output])
+
+(def used-nessus-item-keys (conj nessus-item-keys
+                                 :plugin_details
+                                 :plugin_name
+                                 :plugin_family))
+
+(def nessus-plugin-keys [:plugin_id :plugin_name :plugin_family :fname
+                         :script_version :plugin_type :exploitability_ease
+                         :vuln_publication_date :cvss_temporal_data
+                         :solution :cvss_temporal_score :risk_factor
+                         :description :cvss_vector :synopsis
+                         :patch_publication_date :exploit_available
+                         :plugin_publication_date :plugin_modification_date
+                         :cve :bid :exploit_framework_canvas :edb_id
+                         :exploit_framework_metasploit :exploit_framework_core
+                         :metasploit_name :canvas_package :osvdb :cwe
+                         :cvss_temporal_vector :cvss_base_score :cpe
+                         :exploited_by_malware])
+
+(def used-nessus-plugin-keys (conj nessus-plugin-keys
+                                   :xref :see_also :cert
+                                   :attachment :iava :stig_severity :hp
+                                   :secunia :iawb :msft))
+
+(def show-unprocessed true)
+
+(defn log-unprocessed [title vls]
+  (if (and show-unprocessed
+           (seq vls))
+    (println (str ""Unprocessed "" title "": "" vls))))
+
+;;; parse nessus report
+(defn parse-xref [xref]
+  {:xref (first (:content xref))})
+
+(defn parse-see-also [see-also]
+  {:see_also (first (:content see-also))})
+
+(defn parse-plugin [plugin]
+  {(util/db-keyword (name (:tag plugin))) (first (:content plugin))})
+
+(defn parse-contents [cont]
+  (let [xref (mapv parse-xref (filter #(= (:tag %) :xref) cont))
+        see-also (mapv parse-see-also (filter #(= (:tag %) :see-also) cont))
+        details (reduce merge {}
+                        (map parse-plugin
+                             (remove #(or (= (:tag %) :xref)
+                                          (= (:tag %) :see-also)) cont)))]
+    (assoc details
+      :see_also see-also
+      :xref xref)))
+
+(defn fix-item-keywords [item]
+  (let [ks (keys item)]
+    (into {}
+          (for [k ks]
+            [(util/db-keyword (name k))
+             (k item)]))))
+
+(defn parse-item [item]
+  (let [attrs (fix-item-keywords (:attrs item))
+        contents (parse-contents (:content item))]
+    (assoc attrs
+      :plugin_output (:plugin_output contents)
+      :plugin_details (assoc (dissoc contents :plugin_output)
+                        :plugin_id (:plugin_id attrs)
+                        :plugin_family (:plugin_family attrs)))))
+
+(defn parse-properties [props]
+  (into {}
+        (for [p props]
+          [(util/db-keyword (:name (:attrs p)))
+           (first (:content p))])))
+
+(defn parse-host [h]
+  (let [items (map first (zx/xml-> h :ReportItem))
+        properties (:content (first (zx/xml1-> h :HostProperties)))]
+    (assoc (parse-properties properties)
+      :hostname (zx/attr h :name)
+      :items (mapv parse-item items))))
+
+(defn parse-hosts [hosts]
+  (mapv parse-host hosts))
+
+(defn parse-file [f]
+  (let [root (zip/xml-zip (xml/parse (io/file f)))
+        report-xml (zx/xml1-> root :Report)
+        hosts (zx/xml-> report-xml :ReportHost)]
+    {:report_name (zx/attr report-xml :name)
+     :policy (zx/text (zx/xml1-> root :Policy :policyName))
+     :hosts (parse-hosts hosts)}))
+
+;;; insert nessus records into db
+(defn mk-host-rec [scan-id host]
+  (let [[id err] (db/get-sequence-nextval ""host_seq"")]
+    (if (nil? err)
+      (assoc (util/build-map host nessus-host-keys)
+        :ipv4 (:host_ip host)
+        :scan_start (util/from-nessus-date (:scan_start host))
+        :scan_end (util/from-nessus-date (:scan_end host))
+        :total_cves (:patch_summary_total_cves host)
+        :id id
+        :scan_id scan-id)
+      nil)))
+
+(defn insert-patches [p]
+  (when (seq p)
+    (db/insert-nessus-host-patch (first p))
+    (recur (rest p))))
+
+(defn insert-host-patch [id host]
+  (let [p-keys (filter #(re-find #""patch_summary_*"" %) (map name (keys host)))
+        recs (map (fn [s]
+                    {:id (first (db/get-sequence-nextval ""patch_seq""))
+                     :host_id id
+                     :summary ((keyword (str ""patch_summary_txt_"" s)) host)
+                     :cve_num ((keyword (str ""patch_summary_cve_num_"" s)) host)
+                     :cves ((keyword (str ""patch_summary_cves_"" s)) host)})
+                  (filter seq
+                          (map #(second (re-find #""patch_summary_txt_(.*)"" %))
+                               p-keys)))]
+    (insert-patches recs)
+    (util/remove-keys host (map keyword p-keys))))
+
+(defn mk-item-rec [host-id item]
+  (let [[id err] (db/get-sequence-nextval ""item_seq"")]
+    (assoc (util/build-map item nessus-item-keys)
+      :host_id host-id
+      :id id)))
+
+(defn insert-item [host-id item]
+  (let [rec (mk-item-rec host-id item)
+        not-done (keys (util/remove-keys item used-nessus-item-keys))]
+    (log-unprocessed ""Item Keys"" not-done)
+    (db/insert-nessus-report-item rec)
+    (:plugin_id item)))
+
+(defn mk-plugin-rec [item]
+  (let [rec (util/build-map (:plugin_details item) nessus-plugin-keys)
+        not-used (keys (util/remove-keys (:plugin_details item)
+                                          used-nessus-plugin-keys))]
+    (log-unprocessed ""Plugin Keys"" not-used)
+    (assoc rec
+      :vuln_publication_date (util/from-nessus-date
+                              (:vuln_publication_date rec))
+      :patch_publication_date (util/from-nessus-date
+                               (:patch_publication_date rec))
+      :plugin_publication_date (util/from-nessus-date
+                                (:plugin_publication_date rec))
+      :plugin_modification_date (util/from-nessus-date
+                                 (:plugin_modificaiton_date rec)))))
+
+(defn insert-xref [plugin-id xrefs]
+  (when (seq xrefs)
+    (let [xref {:id (first (db/get-sequence-nextval ""xref_seq""))
+                :plugin_id plugin-id
+                :xref (:xref (first xrefs))}]
+      (db/insert-nessus-xref xref)
+      (recur plugin-id (rest xrefs)))))
+
+(defn insert-see-also [plugin-id see-also]
+  (when (seq see-also)
+    (let [sa {:id (first (db/get-sequence-nextval ""ref_seq""))
+              :plugin_id plugin-id
+              :reference (:see_also (first see-also))}]
+      (db/insert-nessus-ref sa)
+      (recur plugin-id (rest see-also)))))
+
+(defn insert-plugin [item]
+  (let [rec (mk-plugin-rec item)
+        xref (:xref (:plugin_details item))
+        see-also (:see_also (:plugin_details item))]
+    (if (seq xref)
+      (insert-xref (:plugin_id rec) xref))
+    (if (seq see-also)
+      (insert-see-also (:plugin_id rec) see-also))
+    (db/upsert-nessus-plugin rec)))
+
+(defn insert-items [host-id items plugin-set]
+  (if (empty? items)
+    plugin-set
+    (let [p (insert-item host-id (first items))]
+      (if-not (contains? plugin-set p)
+        (insert-plugin (first items)))
+      (recur host-id (rest items) (conj plugin-set p)))))
+
+(defn insert-host [scan-id host plugin-set]
+  (if-let [h-rec (mk-host-rec scan-id host)]
+    (let [[v err] (db/insert-nessus-host h-rec)
+          items (:items host)]
+      (if (nil? err)
+        (let [host2 (insert-host-patch (:id h-rec) host)]
+          (log-unprocessed ""Host Keys"" (keys (util/remove-keys
+                                              host2 used-nessus-host-keys)))
+          (insert-items (:id h-rec) items plugin-set))
+        plugin-set))
+    plugin-set))
+
+(defn insert-hosts
+  ([id hosts]
+     (insert-hosts id hosts #{}))
+  ([id hosts plugins]
+     (if (empty? hosts)
+       plugins
+       (let [plugin-set (insert-host id (first hosts) plugins)]
+         (recur id (rest hosts) plugin-set)))))
+
+(defn mk-scan-record [id report]
+  {:id id
+   :name (:report_name report)
+   :scan_dt (util/to-sql-date)
+   :policy (:policy report)
+   :entered_dt (util/to-sql-date)})
+
+(defn store-report [update-plugins report]
+  (let [[id err] (db/get-sequence-nextval ""nscan_seq"")
+        scan-rec (mk-scan-record id report)]
+    (if (nil? err)
+      (let [[v e] (db/insert-nessus-scan scan-rec)]
+        (if (nil? e)
+          (if update-plugins
+            (let [plugin-list (set (first (db/select-nessus-plugin-ids)))]
+              [(insert-hosts id (:hosts report) plugin-list) nil])
+            [(insert-hosts id (:hosts report)) nil])
+          [v e]))
+      [id err])))
+
+(defn process-nessus-report [update-plugins filename]
+  (let [report (parse-file filename)]
+    (println (str ""Report: "" (:report_name report)
+                  ""\nPolicy: "" (:policy report)
+                  ""\nHost Records: "" (count (:hosts report))))
+    (store-report update-plugins report)))

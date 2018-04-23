@@ -1,0 +1,45 @@
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
+import scalaz.{Reader, ReaderT}
+
+trait UserContext {
+  val user: String
+  val passwd: String
+}
+
+trait YourDBFunctionsII[T] {
+  def compute(): Reader[UserContext, T]
+  def computeII(): Reader[UserContext, T]
+}
+
+object YourDBFunctionsII extends YourDBFunctionsII[String] {
+  override def compute(): Reader[UserContext, String] = Reader {
+    in: UserContext =>
+      ???
+  }
+
+  override def computeII(): Reader[UserContext, String] = Reader {
+    in: UserContext =>
+      ???
+  }
+}
+
+class YourRoutesII {
+  import YourDBFunctionsII._
+
+  val route: Route = { requestContext =>
+    {
+      val userContext: UserContext = ??? // Extract from RequestContext
+
+      val routines = for {
+        resul1 <- compute()
+        resul2 <- computeII()
+      } yield resul2
+
+      // Execute monad composition
+      val computeResult = routines.run(userContext)
+
+      requestContext.complete(computeResult)
+    }
+  }
+}

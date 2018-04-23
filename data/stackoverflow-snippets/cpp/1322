@@ -1,0 +1,23 @@
+class B;
+
+// The real work:    
+template<class T>
+T convert(B *b) {return static_cast<T&>(*b);}
+template<class T,class U,class... Rest>
+T convert(B *b) {
+  if(U *u=dynamic_cast<U*>(b)) return *u; // converted to T
+  return convert<T,Rest...>(b);
+}
+
+// Example hierarchy:    
+struct B {virtual ~B() {}};
+struct X : B {};
+struct Y : B {};
+struct S : B {                  // convertible from other types
+  S() {}
+  S(X) {}
+  S(Y) {}
+};
+
+// Example usage:    
+S getS(B *b) {return convert<S,X,Y>(b);}

@@ -1,0 +1,67 @@
+    if(EmptyUtil.isNotNull(template.getComputeRequest()) ||
+            EmptyUtil.isNotNull(template.getComputeLimit())) {
+        containerBuilder.withResources(buildResources(template.getComputeRequest(), template.getComputeLimit()));
+    }
+
+
+private ResourceRequirements buildResources(InstanceType request, InstanceType limit){
+    _logger.info(""Building computeResources"");
+    ResourceRequirementsBuilder requirementsBuilder = new ResourceRequirementsBuilder(isValidationEnabled);
+
+    if(EmptyUtil.isNotNull(request)){
+        requirementsBuilder.withRequests(K8ComputeResourceUtil.buildCompute(request));
+    }
+
+    if(EmptyUtil.isNotNull(limit)){
+        requirementsBuilder.withLimits(K8ComputeResourceUtil.buildCompute(limit));
+    }
+
+    return requirementsBuilder.build();
+}
+
+
+
+public static Map<String, Quantity> buildCompute(InstanceType compute){
+
+    Map<String, Quantity> computeResourceMap = new HashMap<>();
+
+    if(EmptyUtil.isNotNull(compute.getCpu())) {
+        computeResourceMap.putAll(buildCpu(compute.getCpu()));
+    }
+
+    if(EmptyUtil.isNotNull(compute.getMemory())) {
+        computeResourceMap.putAll(buildMemory(compute.getMemory()));
+    }
+
+    return computeResourceMap;
+}
+
+private static Map<String, Quantity> buildCpu(Float cpu){
+    Map<String, Quantity> cpuMap = new HashMap<>();
+    try {
+        Quantity cpuQuantity = new Quantity();
+        if (EmptyUtil.isNotNull(cpu)) {
+            cpuQuantity.setAmount(String.valueOf(cpu));
+            cpuMap.put(K8Constants.CPU, cpuQuantity);
+        }
+    } catch (NumberFormatException nfe){
+        _logger.error(""Failed to convert cpu '{}'"", cpu, nfe);
+    }
+
+    return cpuMap;
+}
+
+private static Map<String, Quantity> buildMemory(Integer memory){
+    Map<String, Quantity> cpuMap = new HashMap<>();
+    try {
+        Quantity cpu = new Quantity();
+        if (EmptyUtil.isNotNull(memory)) {
+            cpu.setAmount(String.valueOf(memory));
+            cpuMap.put(K8Constants.MEMORY, cpu);
+        }
+    } catch (NumberFormatException nfe){
+        _logger.error(""Failed to convert memory '{}'"", memory, nfe);
+    }
+
+    return cpuMap;
+}

@@ -1,0 +1,21 @@
+class MyObject: public QObject {
+
+public:
+  MyObject() {
+    timerId = startTimer(60, Qt::PreciseTimer);
+    startTime = std::chrono::steady_clock::now();
+  }
+
+protected:
+  void timerEvent(QTimerEvent* event) {
+    qDebug() << (counter++);
+    if(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - startTime) / 60 >= 20) {
+       killTimer(timerId);
+    }
+    Object::timerEvent(event);
+  }
+
+private:
+  int timerId = -1, counter = 0;
+  std::chrono::steady_clock::time_point startTime;
+}

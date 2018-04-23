@@ -1,0 +1,46 @@
+package main
+
+func main() {
+    mongoDBDialInfo := &mgo.DialInfo{
+        Addrs:    []string{config.DatabaseURL},
+        Timeout:  60 * time.Second,
+        Database: config.DatabaseName,
+        Username: config.DatabaseUsername,
+        Password: config.DatabasePassword,
+    }
+
+    db, err := mgo.DialWithInfo(mongoDBDialInfo)
+
+    if err != nil {
+        log.Fatal(""Cannot Dial Mongo: "", err)
+    }
+
+    defer db.Close() 
+    db.SetMode(mgo.Monotonic, true)
+
+    phoneIndex := mgo.Index{
+        Key:        []string{""pp""},
+        Unique:     true,
+        DropDups:   true,
+        Background: true,
+        Sparse:     true,
+    }
+
+    err = db.DB(config.DatabaseName).C(""users"").EnsureIndex(phoneIndex)
+    if err != nil {
+        panic(err)
+    }
+
+    mgoAdapter := mongo.NewAdapter(db, config.DatabaseName)
+    deviceStore := mongo.NewDeviceStore(mgoAdapter)
+    userStore := mongo.NewUserStore(mgoAdapter)
+
+    loginController := controllers.NewLoginController(deviceStore)
+
+    router := mux.NewRouter()
+    router.HandleFunc(""/login"", middleware.AuthorizeUser(userStore)(http.HandlerFunc(loginController.Login)).Methods(""POST"")
+
+    if err := http.ListenAndServe("":5000"", router); err != nil {
+        log.Fatal(err)
+    }
+}

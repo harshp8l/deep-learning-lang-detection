@@ -1,0 +1,79 @@
+// [[Rcpp::plugins(cpp11)]]
+
+#include <Rcpp.h>
+#include <string>
+using namespace Rcpp;
+
+typedef std::vector<int> rowvec;
+typedef std::vector<rowvec> rowvec2d;
+
+template <typename T>
+rowvec2d rowlist(std::vector<T> x) {
+
+    std::unordered_multimap<T, int> rowmap;
+    for (int i = 0; i < x.size(); i++)
+        rowmap.insert({ x[i], i });
+
+    rowvec2d rowlst;
+
+    for (int i = 0; i < rowmap.bucket_count(); i++) {
+        if (rowmap.begin(i) != rowmap.end(i)) {
+            rowvec v(rowmap.count(i));
+            int b = 0;
+            for (auto it = rowmap.begin(i); it != rowmap.end(i); ++it, b++)
+                v[b] = it->second;
+
+            rowlst.push_back(v);
+        }
+    }
+
+    return rowlst;
+}
+
+template <typename T>
+rowvec2d tempList(rowvec2d myList, std::vector<T> v) {
+
+    rowvec2d vecOut;
+
+    if (myList.size() > 0) {
+        for (std::size_t i = 0; i < myList.size(); i++) {
+            std::vector<T> vecPass(myList[i].size());
+            for (std::size_t j = 0; j < myList[i].size(); j++)
+                vecPass[j] = v[myList[i][j]];
+
+            rowvec2d vecTemp = rowlist(vecPass);
+            for (std::size_t j = 0; j < vecTemp.size(); j++) {
+                rowvec myIndex(vecTemp[j].size());
+                for (std::size_t k = 0; k < vecTemp[j].size(); k++)
+                    myIndex[k] = myList[i][vecTemp[j][k]];
+
+                vecOut.push_back(myIndex);
+            }
+        }
+    } else {
+        vecOut = rowlist(v);
+    }
+
+    return vecOut;
+}
+
+// [[Rcpp::export]]
+rowvec2d rowlistMaster(DataFrame myDF) {
+
+    DataFrame::iterator itDF;
+    rowvec2d result;
+
+    for (itDF = myDF.begin(); itDF != myDF.end(); itDF++) {
+        switch(TYPEOF(*itDF)) {
+            case INTSXP: {
+                result = tempList(result, as<std::vector<int> >(*itDF));
+                break;
+            }
+            default: {
+                stop(""v must be of type integer"");
+            }
+        }
+    }
+
+    return result;
+}

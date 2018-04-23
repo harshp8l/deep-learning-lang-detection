@@ -1,0 +1,23 @@
+function Get-MyAdvisorToken {
+[cmdletbinding()]
+param (
+    [parameter()]$MyAdvisorApiKey,
+    [parameter()]$DomainName
+)
+
+#retrieves SaSToken from Azure Table when supplying the API KEY and DOMAIN
+$partitionKey = $DomainName #partitionKey
+$rowKey = $MyAdvisorApiKey #rowKey
+$sasReadToken = ""?sv=2017-07-29&ss=t&srt=o&sp=r&se=2018-03-06T19:37:08Z&st=2018-03-06T18:37:08Z&spr=https&sig=<removed>""
+$tableUri = ""https://$storageAccount.table.core.windows.net/$tableName(PartitionKey='$partitionKey',RowKey='$rowKey')$sasReadToken""
+
+$GMTTime = (Get-Date).ToUniversalTime().toString('R')
+$header = @{
+    'x-ms-date'    = $GMTTime;
+    Accept = 'application/json;odata=nometadata'
+}
+
+$result = Invoke-WebRequest -Uri $tableUri -Headers $header -UseBasicParsing
+$jsonResult = $result.Content | ConvertFrom-Json
+return $jsonResult
+}

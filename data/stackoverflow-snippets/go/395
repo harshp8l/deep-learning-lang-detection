@@ -1,0 +1,23 @@
+func main() {
+
+    channel := make(chan bool, 10)
+    go func() {
+        tick := time.Tick(time.Duration(1) * time.Second)
+        for {
+            select {
+            case <-tick:
+                fmt.Printf(""Producer: TICK %v\n"", time.Now())
+                channel <- true
+                }
+        }
+    }()
+
+    for {
+        select {
+        case canProcess := <-channel:
+            time.Sleep(3*  time.Second)
+            fmt.Printf(""Consumer: Completed : %v\n"")
+            fmt.Printf(""%v\n"", canProcess)
+        }
+    }
+}

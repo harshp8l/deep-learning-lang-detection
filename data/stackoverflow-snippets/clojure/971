@@ -1,0 +1,20 @@
+(ns simplify
+  (:require [clojure.core.match :refer [match]]))
+
+(defn- simplify-1 [expr]
+  (match expr
+         [::add [::const 0] a]            a
+         [::add a [::const 0]]            a
+         [::add [::const a] [::const b]]  [::const (+ a b)]
+         [::mult [::const 0] _]           [::const 0]
+         [::mult _ [::const 0]]           [::const 0]
+         [::mult a [::const 1]]           a
+         [::mult [::const 1] a]           a
+         [::mult [::const a] [::const b]] [::const (* a b)]
+         _                                expr))
+
+(defn simplify [expr]
+  (match expr
+         [::add a b ] (simplify-1  [::add (simplify a) (simplify b)])
+         [::mult a b ] (simplify-1 [::mult (simplify a) (simplify b)])
+         _                         (simplify-1 expr)))

@@ -1,0 +1,26 @@
+private static void executeSafeForMac( Runnable r ) {
+    // On non Mac systems no problem
+    if( System.getProperty(""os.name"").toLowerCase().indexOf(""mac"")<0 ) {
+        r.run();
+        return;
+    }
+
+    // On Mac we must be moar intelligent
+    Display display = Display.getDefault();
+    final Semaphore sem = new Semaphore(0);
+    Thread t = new Thread( ()->{
+        r.run();
+        sem.release(); // Can be anything.
+        display.asyncExec(()->{}); // Ensure the Event loop has one last thing to do
+    }, ""SplashScreenInteractor"" );
+    t.start();
+
+    // Okay, we do SWT event loop stuff to make the SplashScreen responsible until the  
+    // SplashScreen stuff doing Runnable has been done and the semaphore is released.
+    while( !display.isDisposed() && !sem.tryAcquire() ) {
+        if( !display.readAndDispatch() ) {
+            display.sleep();
+        }
+    }
+
+}

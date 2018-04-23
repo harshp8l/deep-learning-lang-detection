@@ -1,0 +1,58 @@
+#include <windows.h>
+#include <iostream>
+
+LRESULT CALLBACK MyWndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+    if (Msg == WM_INPUT)
+    {
+        HRAWINPUT hRawInput = reinterpret_cast<HRAWINPUT>(lParam);
+        // retrieve and process data from hRawInput as needed...
+    }
+
+    return DefWindowProc(hWnd, Msg, wParam, lParam);
+}
+
+int main()
+{
+    WNDCLASSEX wx = {};
+    wx.cbSize = sizeof(WNDCLASSEX);
+    wx.lpfnWndProc = &MyWndProc;
+    wx.hInstance = GeteModuleHandle(NULL);
+    wx.lpszClassName = TEXT(""MyRawInputWndClass"");
+
+    if (!RegisterClassEx(&wx))
+    {
+        std::cout << ""Window Class Registration failed"" << std::endl;
+        return 1;
+    }
+
+    HWND hWnd = CreateWindowEx(0, wx.lpszClassName, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, wx.hInstance, NULL);
+    if (!hWnd)
+    {
+        std::cout << ""Window Creation failed"" << std::endl;
+        return 1;
+    }
+
+    RAWINPUTDEVICE Rid = {};
+    Rid.usUsagePage = 0x01;
+    Rid.usUsage = 0x05;
+    Rid.dwFlags = 0;
+    Rid.hwndTarget = hWnd;
+
+    if (!RegisterRawInputDevices(&Rid, 1, sizeof(RAWINPUTDEVICE)))
+    {
+        std::cout << ""Device Registration failed"" << std::endl;
+        return 1;
+    }
+
+    std::cout << ""Device Registration OK"" << std::endl;
+
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    return 0;
+}

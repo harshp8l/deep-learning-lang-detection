@@ -1,0 +1,144 @@
+void CSphere2::AddVertices( void )
+{
+  #define SPHERE2_RES 72
+
+  // Create sphere using horizontal slices/circles
+  int nPointsPerCircle = SPHERE2_RES;
+  int nStackedCircles  = SPHERE2_RES;
+
+  GLfloat r          = m_Size;
+  GLfloat yAngle     = - (PI / 2.0f);  // Start at -90deg and work up to +90deg (south to north pole)
+  GLfloat yAngleStep = PI / nStackedCircles;
+
+  // Sweep angle is zero initially for pointing towards me (-Z direction)
+  GLfloat horizSweepAngle = 0;
+  GLfloat horizSweepStep  = ( 2 * PI ) / nPointsPerCircle;
+
+  // Each time we have a slice, the top and bottom radii vary..
+  GLfloat sweepRadiusTop;
+  GLfloat sweepRadiusBottom;
+
+  GLfloat xBottomPoint;
+  GLfloat zBottomPoint;
+
+  GLfloat xTopPoint;
+  GLfloat zTopPoint;
+
+  std::vector<GLfloat> vCircle_x;
+  std::vector<GLfloat> vCircle_z;
+
+  std::vector<GLfloat> vLastCircle_x;
+  std::vector<GLfloat> vLastCircle_z;
+
+  int nFace = 0;
+
+  for( int c = 0; c <= nStackedCircles + 1; c ++ )
+  {
+    // Draw a circle - note that this always uses two circles - a top and bottom circle.
+    GLfloat yBottomCircle;
+    GLfloat yTopCircle;
+
+    yTopCircle    = r * sin( yAngle + yAngleStep );
+    yBottomCircle = r * sin( yAngle );
+
+    sweepRadiusTop = r * cos( yAngle );
+
+    GLfloat xCirclePoint;
+    GLfloat zCirclePoint;
+
+    horizSweepAngle = 0;
+
+    vCircle_x.clear();
+    vCircle_z.clear();
+
+    // Now work out the position of the points around each circle - bottom points will always be the
+    //      same as the last top circle points.. 
+    for( int s = 0; s < nPointsPerCircle; s ++ )
+    {
+      zCirclePoint = sweepRadiusTop * sin( horizSweepAngle );
+      xCirclePoint = sweepRadiusTop * cos( horizSweepAngle );
+
+      vCircle_x.push_back( xCirclePoint );
+      vCircle_z.push_back( zCirclePoint );
+
+      horizSweepAngle += horizSweepStep;
+    }
+
+    if( c == 0 )
+    {
+      // First time around there is no last circle, so just use the same points..
+      vLastCircle_x = vCircle_x;
+      vLastCircle_z = vCircle_z;
+
+      // And don't add vertices until next time..
+      continue;
+    }
+
+    // Add 1 face - a triangle strip per slice..
+    AddFace();
+
+    m_Faces[ nFace ].m_DrawType = GL_TRIANGLE_STRIP;
+
+    for( int s = 1; s <= nPointsPerCircle + 1; s ++ )
+    {
+      if( s == nPointsPerCircle + 1 )
+      {
+        // Join the last bottom point with the very first top point
+        xTopPoint = vCircle_x[ 1 ];
+        zTopPoint = vCircle_z[ 1 ];
+
+        xBottomPoint = vLastCircle_x[ 0 ];
+        zBottomPoint = vLastCircle_z[ 0 ];
+      }
+      else
+      if( s == nPointsPerCircle )
+      {
+        // Join the last bottom point with the very first top point
+        xTopPoint = vCircle_x[ 0 ];
+        zTopPoint = vCircle_z[ 0 ];
+
+        xBottomPoint = vLastCircle_x[ s - 1 ];
+        zBottomPoint = vLastCircle_z[ s - 1 ];
+      }
+      else
+      {
+        xTopPoint = vCircle_x[ s ];
+        zTopPoint = vCircle_z[ s ];
+
+        xBottomPoint = vLastCircle_x[ s - 1 ];
+        zBottomPoint = vLastCircle_z[ s - 1 ];
+      }
+
+      // Calculate and add the Normal for each vertex.. Normal for a point on surface of a Sphere2 should be the unit vector going from centre
+      //      of the Sphere2 to the surface (x,y,z).
+      //
+      //      If centre of Sphere2 is 0,0,0 then N = | {x,y,z} - {0,0,0} | = | {x,y,z} |
+      glm::vec3 vNormalBottom = glm::vec3( xBottomPoint, yBottomCircle, zBottomPoint );
+      vNormalBottom = glm::normalize( vNormalBottom );
+
+      glm::vec3 vNormalTop = glm::vec3( xTopPoint, yTopCircle, zTopPoint );
+      vNormalTop = glm::normalize( vNormalTop );
+
+      // Add bottom of slice vertex..
+      m_Faces[ nFace ].AddVertexWithNormal( xBottomPoint, yBottomCircle, zBottomPoint, vNormalBottom.x, vNormalBottom.y, vNormalBottom.z );
+
+      // Add top of slice vertex, next step position..
+      m_Faces[ nFace ].AddVertexWithNormal( xTopPoint, yTopCircle, zTopPoint, vNormalTop.x, vNormalTop.y, vNormalTop.z );
+    }
+
+    // Now copy the current circle x/y positions as the last circle positions (bottom circle)..
+    vLastCircle_x = vCircle_x;
+    vLastCircle_z = vCircle_z;
+
+    int nVertexCount = m_Faces[ nFace ].m_Vertices.size();
+
+    m_Faces[ nFace ].m_SideCount = nVertexCount;
+
+    // Face colouring colours the vertices so they need to be created first..
+    m_Faces[ nFace ].SetRGB( m_RGBA.r, m_RGBA.g, m_RGBA.b );
+
+    yAngle += yAngleStep;
+
+    nFace ++;
+  }
+}

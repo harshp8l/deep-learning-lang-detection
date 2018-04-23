@@ -1,0 +1,113 @@
+import org.apache.spark._
+import org.apache.spark.rdd.RDD
+import org.apache.spark.mllib.stat.Statistics
+
+import org.apache.commons.math3.distribution.{ ExponentialDistribution, TriangularDistribution }
+
+import breeze.plot._
+import breeze.linalg._
+import breeze.numerics._
+
+object Main {
+
+    def main( args: Array[ String ] ): Unit = {
+
+        val conf = 
+            new SparkConf()
+            .setAppName( ""SO Spark"" )
+            .setMaster( ""local[*]"" )
+            .set( ""spark.driver.host"", ""localhost"" )
+
+        val sc = new SparkContext( conf )
+
+        // Create similar distributions
+        val triDist1 = new TriangularDistribution( -3, 5, 7 )
+        val triDist2 = new TriangularDistribution( -3, 7, 7 )
+
+        // Exponential distribution to show big difference
+        val expDist1 = new ExponentialDistribution( 0.6 )
+
+        // Sample data from the distributions and parallelize it
+        val n = 100000
+        val sampledTriDist1 = sc.parallelize( triDist1.sample( n ) )
+        val sampledTriDist2 = sc.parallelize( triDist2.sample( n ) )
+        val sampledExpDist1 = sc.parallelize( expDist1.sample( n ) )
+
+        // KS tests
+        val resultTriDist1 = Statistics
+            .kolmogorovSmirnovTest( sampledTriDist1, 
+                                    ""norm"", 
+                                    sampledTriDist1.mean, 
+                                    sampledTriDist1.stdev )
+
+        val resultTriDist2 = Statistics
+            .kolmogorovSmirnovTest( sampledTriDist2, 
+                                    ""norm"", 
+                                    sampledTriDist2.mean, 
+                                    sampledTriDist2.stdev )
+
+        val resultExpDist1 = Statistics
+            .kolmogorovSmirnovTest( sampledExpDist1, 
+                                    ""norm"", 
+                                    sampledExpDist1.mean, 
+                                    sampledExpDist1.stdev )
+
+        // Results
+        val statsTriDist1 = 
+            ""Tri1: ( "" + 
+            resultTriDist1.statistic + 
+            "", "" + 
+            resultTriDist1.pValue + 
+            "" )""
+
+        val statsTriDist2 = 
+            ""Tri2: ( "" + 
+            resultTriDist2.statistic + 
+            "", "" + 
+            resultTriDist2.pValue + 
+            "" )""
+
+        val statsExpDist1 = 
+            ""Exp1: ( "" + 
+            resultExpDist1.statistic + 
+            "", "" + 
+            resultExpDist1.pValue + 
+            "" )""  
+
+        println( statsTriDist1 )
+        println( statsTriDist2 )
+        println( statsExpDist1 )
+
+        // Visualize
+        val graphCanvas = Figure()
+
+        val mainPlot = 
+            graphCanvas
+            .subplot( 0 )
+
+        mainPlot.legend = true
+
+        val x = linspace( 1, n, n )      
+
+        mainPlot += plot( x, 
+                          sampledTriDist1.sortBy( x => x ).take( n ), 
+                          name = statsTriDist1 )
+
+        mainPlot += plot( x, 
+                          sampledTriDist2.sortBy( x => x ).take( n ), 
+                          name = statsTriDist2 )
+
+        mainPlot += plot( x, 
+                          sampledExpDist1.sortBy( x => x ).take( n ), 
+                          name = statsExpDist1 )
+
+        mainPlot.xlabel = ""x""
+        mainPlot.ylabel = ""sorted sample""
+
+        mainPlot.title = ""KS results for 2 Triangular and 1 Exponential Distributions""
+
+        graphCanvas.saveas( ""ks-sample.png"", 300 )
+
+        sc.stop()
+    }
+}

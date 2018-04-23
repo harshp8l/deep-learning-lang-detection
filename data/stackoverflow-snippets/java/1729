@@ -1,0 +1,61 @@
+public class UnlockFailedException extends Exception {
+
+    public UnlockFailedException(Lock lock, Key key) {
+        this(""Key "" + key.getClass().getSimpleName() + "" failed to unlock lock "" + lock.getClass().getSimpleName());
+    }
+
+    public UnlockFailedException(String message) {
+        super(message);
+    }
+}
+
+public interface  Lock {
+    public void unlock(Key key);
+}
+
+public interface Key {
+    public void unlock(FacialRecognizer lock) throws UnlockFailedException;
+    public void unlock(FingerPrintRecognizer lock) throws UnlockFailedException;
+}
+
+public class FacialRecognizer implements Lock {
+
+    @Override
+    public void unlock(Key key) {
+        key.unlock(this);
+    }
+}
+
+public class FingerPrintRecognizer implements Lock {
+
+    @Override
+    public void unlock(Key key) {
+        key.unlock(this);
+    }
+}
+
+public class FacePhoto extends Key {
+
+    @Override
+    public void unlock(FacialRecognizer lock) throws UnlockFailedException {
+        // Unlock the lock
+    }
+
+    @Override
+    public void unlock(FingerPrintRecognizer lock) throws UnlockFailedException {
+        throw new UnlockFailedException(lock, this);
+    }
+}
+
+public class FingerPrint extends Key {
+
+    @Override
+    public void unlock(FacialRecognizer lock) throws UnlockFailedException {
+        throw new UnlockFailedException(lock, this);
+    }
+
+    @Override
+    public void unlock(FingerPrintRecognizer lock) throws UnlockFailedException {
+        // Unlock the lock
+    }
+}

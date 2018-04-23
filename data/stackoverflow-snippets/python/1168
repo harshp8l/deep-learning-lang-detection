@@ -1,0 +1,155 @@
+# -*- coding: utf-8 -*-
+""""""
+Created on Sat Apr 14 00:20:43 2018
+
+@author: hafss
+""""""
+
+import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
+import numpy as np 
+
+
+step = 0.3
+px_old = [1,8,11,20,25,40, 30,5 ,2 ,1,1 ]
+py_old = [1,2,5, 4 ,2, 8 , 15,14,11,5,1 ]
+init_point = [5,4]
+init_radius = step
+
+
+px = []
+py = []
+for i in range(len(px_old)-1):
+    dx = px_old[i+1]-px_old[i]
+    dy = py_old[i+1]-py_old[i]
+    len1 = (dx*dx+dy*dy)**0.5
+    px.append(px_old[i])
+    py.append(py_old[i])
+
+    if len1 > step:
+        count = int(len1/step)
+        for ii in range(count):
+            #print px_old[i]+ 1.0*ii/count*dx
+            #print py_old[i]+ 1.0*ii/count*dy
+            px.append(px_old[i]+ 1.0*ii/count*dx    )
+            py.append(py_old[i]+ 1.0*ii/count*dy    )
+px.append(px_old[-1])
+py.append(py_old[-1])
+plt.figure()
+plt.plot(px,py,color='r')
+#plt.plot(px_old,py_old,)
+ax = plt.gca()
+minrr = 6
+def check_inner(poly_x,poly_y,a,b,x0,y0 ):
+    minrr = 5
+    for i in range(len(poly_x)):
+        x=poly_x[i]
+        y=poly_y[i]        
+        rr = ((x-x0)/a)**2+((y-y0)/b)**2
+        if rr < minrr:
+            minrr = rr
+        #if rr < 1 : 
+        #    badpoint.append([x,y])
+    return minrr 
+def draw_ellips(handle,xc,yc,a,b,color,lw):
+    ellipse = Ellipse(xy=(xc, yc), width=a*2, height=b*2, 
+                        edgecolor=color, fc='None', lw=lw)
+    handle.add_patch(ellipse)     
+def get_jumperpoint(poly_x,poly_y,sizeup,a,b,x0,y0   ):
+    badx = []
+    bady = []
+    for i in range(len(poly_x)):
+        x=poly_x[i]
+        y=poly_y[i]        
+        rr = ((x-x0)/(a+sizeup))**2+((y-y0)/(b+sizeup))**2
+        if rr < 1 :
+            badx.append(x)
+            bady.append(y)
+    xmean = np.asarray(badx).mean()
+    ymean = np.asarray(bady).mean()   
+    xmove = x0-xmean
+    ymove = y0-ymean
+    return [xmove,ymove]
+rx = init_radius
+ry = init_radius
+xc = init_point[0]
+yc = init_point[1]
+maxarea = step*step
+for iterat in range(90):
+    print ""iterate start %s (%s,%s)->(%s,%s)"" % (iterat,xc,yc,rx,ry)
+    s1 = step
+    s2 = step
+    s3 = step
+    draw_ellips(ax,xc,yc,rx,ry,'blue',0.5)
+
+    rxprev = rx 
+    ryprev = ry
+    xcprev = xc
+    ycprev = yc
+    if check_inner(px,py,rx+s1,ry+s2,xc,yc) >= 1 : 
+        rx = rx+s1
+        ry = ry+s2
+
+    # enlarge
+    if check_inner(px,py,rx+s1,ry,xc,yc) >= 1 : 
+        rx = rx+s1
+
+    if check_inner(px,py,rx,ry+s1,xc,yc) >= 1 : 
+        ry = ry+s1
+
+    #distortion
+    if check_inner(px,py,rx+s1,ry-s2,xc,yc) >= 1 and (rx+s1)*(ry-s2) > rx*ry : 
+        rx = rx+s1
+        ry = ry-s2      
+
+    if check_inner(px,py,rx-s1,ry+s2,xc,yc) >= 1 and (rx-s1)*(ry+s2) > rx*ry : 
+        rx = rx-s1
+        ry = ry+s2 
+    #shift @ enlarge (right dir )
+    if check_inner(px,py,rx+s1,ry,xc+s2,yc) >= 1 : 
+        rx = rx+s1
+        xc = xc+s2
+
+    if check_inner(px,py,rx+s1,ry,xc-s2,yc) >= 1 : 
+        rx = rx+s1
+        xc = xc-s2      
+
+    if check_inner(px,py,rx,ry+s1,xc,yc+s2) >= 1 : 
+        ry = ry+s1
+        yc = yc+s2
+
+    if check_inner(px,py,rx,ry+s1,xc,yc-s2) >= 1 : 
+        ry = ry+s1
+        yc = yc-s2      
+
+    if check_inner(px,py,rx,ry,xc,yc) < 1 : 
+        rx = rx-2*step-0.001
+        ry = ry-2*step-0.001
+        if rx < 0.001 : rx = 0.001
+        if ry < 0.001 : ry = 0.001
+        print ""reduce""
+
+    print ""iterate end   %s (%s,%s)->(%s,%s) best %s "" % (iterat,xc,yc,rx,ry,maxarea)        
+    if rx == rxprev and ry == ryprev and xcprev == xc and ycprev== yc  and check_inner(px,py,rx,ry,xc,yc) >= 1 : 
+        [jx,jy] = get_jumperpoint(px,py,step*5,rx,ry,xc,yc   )
+        print ""jump %s %s -> %s %s"" % (xc,yc,xc+jx,yc+jy)
+        xc = xc+jx
+        yc = yc+jy     
+
+    if rx*ry > maxarea    :
+        bestiter = iterat
+        bestx = xc
+        besty = yc
+        besta = rx
+        bestb = ry
+        maxarea = rx*ry
+
+
+
+print ""best iter %s  center %s %s radius %s %s"" % (bestiter,bestx,besty,besta,besty)
+
+
+draw_ellips(ax,bestx,besty,besta,bestb,'red',2) # best ellipse
+draw_ellips(ax,xc,yc,rx,ry,'green',3)  # final iter
+
+check_inner(px,py,11.8,4.3,13.6,9.4)

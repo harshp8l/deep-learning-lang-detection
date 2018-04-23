@@ -1,0 +1,17 @@
+SELECT
+    ff.ExternalId ,
+    ff.Name as Name,
+    'http://www.mysite.it/imgege.jpg' as URL,
+    CAST(CAST((
+     SELECT  
+            CASE
+                WHEN CHARINDEX('BV_FE_FAMILY', c.Color) > 0 THEN 'BV_FE_EXPAND' 
+                ELSE 'BV_FE_FAMILY'
+            END AS [@id]
+            ,c.Color AS [Value]
+     FROM #colors c
+     WHERE c.ExternalId=ff.ExternalId
+     FOR XML PATH('Attribute'),ROOT('Attributes'),TYPE
+    )  as nvarchar(MAX)) as xml)
+FROM #sample ff 
+FOR XML PATH('Product'), ROOT('Products');

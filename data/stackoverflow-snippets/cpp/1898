@@ -1,0 +1,21 @@
+struct cache {
+  using Key=std::string;
+  using Value=int;
+  using Map=std::unordered_map< Key, Value >;
+  Value get( Key const& k ) {
+    Value* r = table.read([&](Map const& m)->Value*{
+      auto it = m.find(k);
+      if (it == m.end()) return nullptr;
+      return std::addressof( it->second );
+    });
+    if (r) return *r;
+    return table.write([&](Map& m)->Value{
+      auto it = m.find(k);
+      if (it != m.end()) return it->second;
+      auto r = m.insert( std::make_pair(k, 42) ); // construct data here
+      return r.first->second;
+    });
+  }
+private:
+  mutex_guarded< std::unordered_map< Key, Value > > table;
+};

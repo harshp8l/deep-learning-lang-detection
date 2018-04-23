@@ -1,0 +1,60 @@
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import org.testng.Assert;
+import org.testng.IInvokedMethod;
+import org.testng.IInvokedMethodListener2;
+import org.testng.ITestContext;
+import org.testng.ITestNGMethod;
+import org.testng.ITestResult;
+import org.testng.annotations.Parameters;
+import org.testng.xml.XmlTest;
+
+public class CustomListen implements IInvokedMethodListener2 {
+    @Override public void beforeInvocation(IInvokedMethod invokedMethod, ITestResult testResult) {}
+    @Override public void afterInvocation(IInvokedMethod invokedMethod, ITestResult testResult) {}
+    @Override public void beforeInvocation(IInvokedMethod invokedMethod, ITestResult testResult, ITestContext context) {}
+
+    @Override
+    public void afterInvocation(IInvokedMethod invokedMethod, ITestResult testResult, ITestContext context) {
+        ITestNGMethod testNGMethod = invokedMethod.getTestMethod();
+        XmlTest currentTest = context.getCurrentXmlTest();
+        // if method invoked is setFruit
+        if (testNGMethod.isBeforeTestConfiguration() && testNGMethod.getMethodName().equals(""setFruit"")) {
+            // find the java.lang.reflect method
+            Method method = testNGMethod.getConstructorOrMethod().getMethod();
+            // Get the parameters defined setFruit
+            Parameters parameter = method.getAnnotation(Parameters.class);
+            if (parameter != null) {
+                // get the parameter names
+                String[] parameterNames = parameter.value();
+                // initiate a String array to hold the parameter values
+                String[] parameterValues = new String[parameterNames.length];
+                boolean setNewParameterValue = false;
+                // loop the parameter names to get their corresponding parameter values
+                for (int index = 0; index < parameterNames.length; index++) {
+                    // set the parameter value
+                    parameterValues[index] = currentTest.getParameter(parameterNames[index]);
+
+                    // check if parameter value set expects a global parameter value
+                    if (parameterValues[index].startsWith(""$"")) {
+                        String newParameterValue = currentTest.getParameter(parameterValues[index].substring(1));
+                        // Check if global parameter value is set
+                        Assert.assertNotNull(newParameterValue,
+                                ""Global parameter name, "" + parameterValues[index].substring(1));
+                        parameterValues[index] = newParameterValue;
+                        setNewParameterValue = true;
+                    }
+                }
+                // invoke the setFruit BeforeTest method again to set the protected members if
+                // global parameters are required
+                if (setNewParameterValue) {
+                    try {
+                        method.invoke(testResult.getInstance(), (Object[]) parameterValues);
+                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+}

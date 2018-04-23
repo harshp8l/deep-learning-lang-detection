@@ -1,0 +1,110 @@
+<################################################CODE HEADER############################################
+SCRIPT NAME       : ISO Country Code.ps1
+DESCRIPTION       : 
+RUNTIME PARAMETERS: 
+INPUT PARAMETERS  : 
+OUTPUT PARAMETERS : 
+Date                                                     Developer                                    Description 
+--------------------------------------  ----------------------------------------------    --------------------------------- 
+
+################################################CODE HEADER############################################>
+
+<################################################SAMPLE DATA############################################
+name           : Zimbabwe
+topLevelDomain : {.zw}
+alpha2Code     : ZW
+alpha3Code     : ZWE
+callingCodes   : {263}
+capital        : Harare
+altSpellings   : {ZW, Republic of Zimbabwe}
+region         : Africa
+subregion      : Eastern Africa
+population     : 14240168
+latlng         : {-20.0, 30.0}
+demonym        : Zimbabwean
+area           : 390757.0
+gini           : 
+timezones      : {UTC+02:00}
+borders        : {BWA, MOZ, ZAF, ZMB}
+nativeName     : Zimbabwe
+numericCode    : 716
+currencies     : {@{code=BWP; name=Botswana pula; symbol=P}, @{code=GBP; name=British pound; symbol=£}, @{code=CNY; name=Chinese yuan; symbol=¥}, @{code=EUR; name=Euro; 
+                 symbol=€}...}
+languages      : {@{iso639_1=en; iso639_2=eng; name=English; nativeName=English}, @{iso639_1=sn; iso639_2=sna; name=Shona; nativeName=chiShona}, @{iso639_1=nd; iso639_2=nde; 
+                 name=Northern Ndebele; nativeName=isiNdebele}}
+translations   : @{de=Simbabwe; es=Zimbabue; fr=Zimbabwe; ja=ジンバブエ; it=Zimbabwe; br=Zimbabwe; pt=Zimbabué; nl=Zimbabwe; hr=Zimbabve; fa=زیمباوه}
+flag           : https://restcountries.eu/data/zwe.svg
+regionalBlocs  : {@{acronym=AU; name=African Union; otherAcronyms=System.Object[]; otherNames=System.Object[]}}
+cioc           : ZIM
+###############################################################################################################################>
+
+# ############################
+$logFile = 'D:\03_PowerShell\PowerShell Scripts\ISO Country Code\ISOCountryCodes.log'
+Start-Transcript -Path $logFile -Append
+
+$isodate = Get-Date -Format ddMMMyyyy_HHhmmss
+
+#BUILDING FILE PATH
+$FilePath = ""D:\03_PowerShell\PowerShell Scripts\ISO Country Code\""
+
+#BUILDING JSON FILE PATH
+$JsonFileName = ""ISOCountryCode_$isodate""
+$JsonFileExtn = "".json""
+$JsonFileOutputPath = $FilePath+$JsonFileName+$JsonFileExtn
+
+#BUILDING CSV FILE PATH
+$CsvFileName = ""ISOCountryCode_$isodate""
+$CsvFileExtn = "".csv""
+
+#CSV File Path
+$CsvFileOutputPath = $FilePath+$CsvFileName+$CsvFileExtn
+
+""The Log File is placed at: - $logFile""
+""The ISO Date is: - $isodate ""
+""The Full File Path for the JSON File is: - $JsonFileOutputPath""
+""The Full File Path for the CSV File is: - $CsvFileOutputPath""
+
+#CLEAR RESULT SCREEN
+cls
+
+#INVOKE REST METHOD TO RETREIEVE DATA
+$ISOCountryCode = Invoke-RestMethod ""https://restcountries.eu/rest/v2/all""
+$ISOCountryCodeFormatted = $ISOCountryCode | Select-Object @{Name=""Country Name"";Expression={$_.""name""}} `
+                                                          ,@{Name = ""Internet Domain""; Expression={$_.""topLevelDomain""}} `
+                                                          ,@{Name = ""Alpha 2 Code""; Expression={$_.""alpha2Code""}} `
+                                                          ,@{Name = ""Alpha 3 Code""; Expression={$_.""alpha3Code""}} `
+                                                          ,@{Name = ""Capital""; Expression={$_.""capital""}} `
+                                                          ,@{Name = ""Continent""; Expression={$_.""region""}} `
+                                                          ,@{Name = ""Area (LandMass)""; Expression={$_.""area""}} `
+                                                          ,@{Name = ""Numeric Code""; Expression={$_.""numericCode""}} `
+
+<#BELOW COLUMNS AND VALUES TO BE USED AS REQUIRED
+#,@{Name = ""population""; Expression={$_.""population""}} `
+#,@{Name = ""Languages Used""; Expression={$_.""languages ""}} `
+#,@{Name = ""International Dialling Code""; Expression={$_.""callingCodes ""}} `
+#,@{Name = ""Latitude/Longitude""; Expression={$_.""latlng""}} `
+#,@{Name = ""Translations""; Expression={$_.""translations""}} 
+#,@{Name = ""Country Direction/Location""; Expression={$_.""subregion ""}} `
+#,@{Name = ""Timezones""; Expression={$_.""timezones ""}} `
+#,@{Name = ""Borders""; Expression={$_.""borders ""}}#> `
+
+#TEST THE CODE TO CONVERT RESULTSET TO JSON
+#$JsonText = $Foo1 | ConvertTo-Json
+#$JsonText
+
+$ISOCountryCodeFormatted | ft
+
+#BUILD A JSON FILE
+$text | Set-Content $JsonFileOutputPath
+
+#BUILD JSON FILE WITH HEADER > DATA > FOOTER
+$JsonHeader = '{
+  ""ISOCountryCodes"":' | Add-Content $JsonFileOutputPath
+$ISOCountryCodeFormatted | ConvertTo-Json | Add-Content $JsonFileOutputPath
+$JsonFooter = '}' | Add-Content $JsonFileOutputPath
+
+#GENERATE CSV FILE
+$ISOCountryCodeFormatted |Export-Csv $CsvFileOutputPath -encoding ""unicode"" -NoTypeInformation
+
+#END TRANSCRIPT FOR LOGGING DATA FLOW
+Stop-Transcript

@@ -1,0 +1,64 @@
+import rsa
+
+################################################
+keySize = 256
+################################################
+
+# DECLARATION IN GLOBAL SCOPE
+pubkey = None
+privkey = None
+
+def genKeys():
+    pubkey, privkey = rsa.newkeys(keySize)
+
+    with open(""public.pem"", ""w"") as pub:
+        pub.write(str(pubkey))
+
+    with open(""private.pem"", ""w"") as priv:
+        priv.write(str(privkey))
+
+    return pubkey, privkey
+
+def readKeys():
+
+      with open(""private.pem"", ""r"") as priv:
+          keydata = priv.read()
+          privkey = rsa.PrivateKey.load_pkcs1(keydata)
+          print(privkey)
+
+      with open(""public.pem"", ""r"") as pub:
+          keydata = pub.read()
+          pubkey = rsa.PublicKey.load_pkcs1(keydata)
+          print(pubkey)
+      return pubkey, privkey
+
+
+
+
+def send(message, pubkey):
+    message = message.encode('utf-8')
+    crypto = rsa.encrypt(message, pubkey)
+    return crypto
+
+def recv(crypto, privkey):
+    message = rsa.decrypt(crypto, privkey)
+    message = message.decode('utf-8')
+    return message
+
+def main():
+    # DECLARATION INSIDE THE FUNCTION
+    global pubkey, privkey; pubkey = privkey = None
+    try:
+        if (open(""private.pem"", ""r"") and open(""public.pem"", ""r"")) == True:
+
+            pubkey, privkey = readKeys()
+
+    except:
+        (pubkey, privkey) = genKeys()
+
+    cryptMessage = send('hello world', pubkey)
+    print(cryptMessage)
+    print(recv(cryptMessage, privkey))
+
+if __name__ == ""__main__"":
+    main()

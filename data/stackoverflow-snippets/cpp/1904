@@ -1,0 +1,83 @@
+#pragma once
+#include <vector>
+#include <cassert>
+
+template < typename T = size_t >
+class _range 
+{
+        const T kFrom, kEnd, kStep;
+
+    public:
+
+        ///////////////////////////////////////////////////////////
+        // Constructor 
+        ///////////////////////////////////////////////////////////
+        //
+        // INPUT:
+        //      from - Starting number of the sequence.
+        //      end - Generate numbers up to, but not including this number.
+        //      step -  Difference between each number in the sequence.     
+        //
+        // REMARKS:
+        //      Parameters must be all positive or all negative
+        //
+        _range( const T from, const T end, const T step = 1 ) 
+            : kFrom( from ), kEnd( end ), kStep( step ) 
+        {
+            assert( kStep != 0 );
+            assert( ( kFrom >= 0 && kEnd > 0 && kStep > 0 ) || ( kFrom < 0 && kEnd < 0 && kStep < 0 ) );
+        }
+
+        // Default from==0, step==1
+        _range( const T end ) 
+            : kFrom( 0 ), kEnd( end ), kStep( 1 ) 
+        {
+            assert( kEnd > 0 );
+        }
+
+    public:
+
+        class _range_iter 
+        {
+            T fVal;
+            const T kStep;
+        public:
+            _range_iter( const T v, const T step ) : fVal( v ), kStep( step ) {}
+            operator T  () const            { return fVal; }
+            operator const T & ()           { return fVal; }
+            const T operator * () const     { return fVal; }
+            const _range_iter & operator ++ ()  { fVal += kStep; return * this; }
+
+
+            bool operator == ( const _range_iter & ri ) const
+            {
+                return ! operator != ( ri );
+            }
+
+            bool operator != ( const _range_iter & ri ) const
+            {   
+                // This is a tricky part - when working with iterators
+                // it checks only once for != which must be a hit to stop;
+                // However, this does not work if increasing kStart by N times kSteps skips over kEnd
+                return fVal < 0 ? fVal > ri.fVal : fVal < ri.fVal;  
+            }                                               
+        };                                                  
+
+        const _range_iter begin()   { return _range_iter( kFrom, kStep ); }
+        const _range_iter end()     { return _range_iter( kEnd, kStep ); }
+
+    public:
+
+        // Conversion to any vector< T >
+        operator std::vector< T > ( void ) 
+        {
+            std::vector< T > retRange;
+            for( T i = kFrom; i < kEnd; i += kStep )
+                retRange.push_back( i );
+            return retRange;    // use move semantics here
+        }
+};
+
+
+// A helper to use pure range meaning _range< size_t >
+typedef _range<>    range;

@@ -1,0 +1,59 @@
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/serialization.hpp>
+
+struct MyData {
+    std::string s;
+    float values[7];
+
+  private:
+    friend class boost::serialization::access;
+    template <typename Ar>
+    void serialize(Ar& ar, unsigned) { ar & s & values; }
+};
+
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/stream.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+namespace bio = boost::iostreams;
+
+std::vector<char> to_buffer(const MyData& obj) {     
+    std::vector<char> buffer;
+
+    bio::stream<bio::back_insert_device<std::vector<char> > > os(buffer);
+
+    namespace ba = boost::archive;
+    ba::binary_oarchive oa(os, ba::archive_flags::no_header);
+
+    oa << obj;
+    return buffer;
+}
+
+void from_buffer(char* buffer, MyData& obj) {     
+    bio::stream<bio::array_source> is(buffer, 4096);
+
+    namespace ba = boost::archive;
+    ba::binary_iarchive ia(is, ba::archive_flags::no_header);
+
+    ia >> obj;
+}
+
+#include <iostream>
+#include <iomanip>
+
+static inline std::ostream& operator<<(std::ostream& os, MyData const& object) {
+    os << ""s:"" << std::quoted(object.s) << "", values:["";
+    for (float v : object.values)
+        os << "" "" << v;
+    return os << "" ]"";
+}
+
+int main() {
+    auto buffer = to_buffer(MyData { ""hello world"", { 1,2,3,4,5,6,7 } });
+
+    MyData received;
+    from_buffer(buffer.data(), received);
+
+    std::cout << ""Received: "" << received << ""\n"";
+}

@@ -1,0 +1,20 @@
+WITH MaxMin AS(
+    SELECT ItemKey, MIN(AffectedDate) AS MinDate, MAX(AffectedDate) AS MaxDate
+    FROM #Sample
+    GROUP BY ItemKey),
+WithNewColumn AS(
+    SELECT MM.ItemKey,
+           S.RecDate,
+           S.IssQty,
+           DD.[Date] AS AffectedDate,
+           S.QtyOnHand,
+           S.QtyOnHand / SUM(S.IssQty) OVER (PARTITION By MM.ItemKey ORDER BY DD.[Date]
+                                             ROWS BETWEEN 13 PRECEDING AND 1 PRECEDING) AS YourNewColumn
+    FROM MaxMin MM
+         JOIN DimDate DD ON DD.[Date] BETWEEN MM.MinDate AND MM.MaxDate AND DD.[Calendar Day] = 1
+         LEFT JOIN #Sample S ON MM.ItemKey = S.ItemKey
+                            AND DD.[Date] = S.AffectedDate)
+SELECT *
+FROM WithNewColumn
+WHERE RecDate IS NOT NULL --eliminate the NULLs (if you want to). if not, this isn't needed, nor the CTE above
+ORDER BY ItemKey, AffectedDate;

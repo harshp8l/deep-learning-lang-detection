@@ -1,0 +1,31 @@
+public static List<TestBean> getObjectsById(final String id, File input){
+    //create a processor of objects.
+    BeanListProcessor<TestBean> beanProcessor = new BeanListProcessor<TestBean>(TestBean.class){
+
+        //override the code method that creates java beans
+        @Override
+        public TestBean createBean(String[] row, Context context) {
+            if(id.equals(row[0])){ //test if the ID is what you are looking for
+                return super.createBean(row, context); //if it is, let the parser create the object
+            }
+
+            if(foundEverythingIWasLookingFor) {
+                context.stop(); //stops the parser if you found what you need.
+            }
+
+            return null; //anything else ignore the row.
+        }
+    };
+
+    //configure the parser
+    CsvParserSettings parserSettings = new CsvParserSettings();
+    parserSettings.detectFormatAutomatically(); //detects input format on the fly
+    parserSettings.setProcessor(beanProcessor); //configures the parser to use your processor created above
+
+    //parse
+    CsvParser parser = new CsvParser(parserSettings);
+    parser.parse(input, ""UTF-8""); //all rows are sent to your row processor.
+
+    //returns the instances created by the parser (i.e. the ones that have the given ID)
+    return beanProcessor.getBeans();
+}

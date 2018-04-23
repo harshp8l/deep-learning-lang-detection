@@ -1,0 +1,29 @@
+control 'Recipe windows_features.rb .NET 3.5 Features' do
+  impact 1.0
+  title 'Required .NET 3.5 Windows Features Are Installed'
+  only_if do
+    powershell_command_script = <<-EOH
+    (Get-WindowsFeature | Where Name -eq NET-Framework-Core | Select InstallState).InstallState -ne 'Removed'
+    EOH
+    command_result = powershell(powershell_command_script)
+    case command_result.stdout
+    when true, ""True\r\n"" then true
+    when false, ""False\r\n"" then false
+    else
+      raise ArgumentError, ""invalid value: #{command_result.stdout.inspect}""
+    end
+
+  end
+  describe windows_feature('WAS-NET-Environment') do
+    it { should be_installed }
+  end
+  describe windows_feature('Web-Asp-Net') do
+    it { should be_installed }
+  end
+  describe windows_feature('Web-Net-Ext') do
+    it { should be_installed }
+  end
+  describe windows_feature('Web-Mgmt-Console') do
+    it { should be_installed }
+  end
+end

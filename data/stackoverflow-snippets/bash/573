@@ -1,0 +1,21 @@
+#!/bin/bash
+
+#get the argument
+processNameToFind=""$1""
+
+#find any process lines with that name
+processLines=$(ps o pid,command | grep ""$processNameToFind"" | grep -v ""$0"" | grep -v ""grep"")
+
+#let's see if we found something
+if [ -n ""$processLines"" ]
+then
+    #we may have found multiple processes running
+    while read -r pid processName
+    do 
+        #kill it        
+        sudo kill -9 ""$pid""
+        echo ""Killed: $processName""
+    done <<< ""$processLines""
+else
+    echo ""No process was found with the name: $processNameToFind""
+fi

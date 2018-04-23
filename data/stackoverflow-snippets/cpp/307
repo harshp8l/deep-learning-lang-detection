@@ -1,0 +1,63 @@
+struct Event_WithStdMutex {
+    std::condition_variable_any cv;
+    std::atomic<bool> condition;
+    std::mutex mtx;
+
+    Event_WithStdMutex() : condition(false) {}
+
+    void wait() {
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [this]() { return condition.exchange(false); });
+    }
+
+    void notify() {
+        std::unique_lock<std::mutex> lock(mtx);
+        condition.store(true);
+        cv.notify_one();
+    }
+};
+
+struct LightMutex {
+    std::atomic_flag flag = ATOMIC_FLAG_INIT;
+    void lock() { while (flag.test_and_set(std::memory_order_acquire)); }
+    void unlock() { flag.clear(std::memory_order_release); }
+};
+
+struct Event_WithLightLock {
+    std::condition_variable_any cv;
+    std::atomic<bool> condition;
+    LightMutex mtx;
+
+    Event_WithLightLock() : condition(false) {}
+
+    void wait() {
+        std::unique_lock<LightMutex> lock(mtx);
+        cv.wait(lock, [this]() { return condition.exchange(false); });
+    }
+
+    void notify() {
+        std::unique_lock<LightMutex> lock(mtx);
+        condition.store(true);
+        cv.notify_one();
+    }
+};
+
+
+struct Event_WithTimeout {
+    std::condition_variable cv;
+    std::atomic<bool> condition;
+    std::mutex mtx;
+    std::chrono::milliseconds timeout;
+
+    Event_WithTimeout() : condition(false), timeout(10) {}
+
+    void wait() {
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait_for(lock, timeout, [this]() { return condition.exchange(false); });
+    }
+
+    void notify() {
+        condition.store(true);
+        cv.notify_one();
+    }
+};

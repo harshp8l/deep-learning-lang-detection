@@ -1,0 +1,19 @@
+final case class Decorated(x: (Any, Set[_]), rand: Double = random.nextDouble)
+extends Ordered[Decorated] {
+
+  // Calculate a rank for this element. You'll need to change this to suit your precise
+  // requirements. Here, if rand is less than 0.1 (a 10% chance), I'm adding 5 to the size;
+  // otherwise, I'll report the actual size. This allows transitive comparisons, since
+  // rand doesn't change once defined. Values are negated so bigger sets come to the fore
+  // when sorted.
+  private def rank: Int = {
+    if(rand < 0.1) -(x._2.size + 5)
+    else -x._2.size
+  }
+
+  // Compare this element with another, by their ranks.
+  override def compare(that: Decorated): Int = rank.compare(that.rank)
+}
+
+// Now sort your mapping elements as follows and convert back to tuples.
+lazy val seq = mapping.map(x => Decorated(x)).toSeq.sorted.map(_.x)

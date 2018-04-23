@@ -1,0 +1,23 @@
+import re
+def parse(infile, outfile):
+    content = infile.read()
+    for block in re.split(r""\r?\n\r?\n"", content):
+        header, *lines = re.split(r""\s+"", block)
+        total = sum(len(line) for line in lines)
+        outfile.write(""{header}\n{total}\n"".format(
+            header=header,
+            total=total,
+        ))
+
+from io import StringIO
+def test_parse(func): 
+    with open(""/tmp/a.txt"") as infile: 
+        outfile = StringIO() 
+        parse(infile, outfile) 
+        outfile.seek(0) 
+        assert outfile.readlines() == [ 
+            "">header1\n"", 
+            ""32\n"", 
+            "">header2\n"", 
+            ""24\n"", 
+        ]

@@ -1,0 +1,59 @@
+require ""observer""
+
+class Ticker          ### Periodically fetch a stock price.
+  include Observable
+  attr_accessor :sleep_time
+
+  def initialize(symbol, sleep_time)
+    @symbol = symbol
+    @sleep_time = sleep_time
+  end
+
+  def run
+    last_price = nil
+    loop do
+      price = Price.fetch(@symbol)
+      #print ""#{@symbol}, Current price: #{price}\n""
+      if price != last_price
+        changed                 # notify observers
+        last_price = price
+        Thread.new { notify_observers(price, Time.now) }
+      end
+      sleep @sleep_time
+    end
+  end
+end
+
+class Price           ### A mock class to fetch a stock price (60 - 140).
+  def self.fetch(symbol)
+    7600 + rand(800)
+  end
+end
+
+class Notification
+  attr_accessor :name, :sleep_time, :working, :mutex, :counter
+  def initialize(ticker, name, sleep_time)
+    @name = name
+    @sleep_time = sleep_time
+    @working = false
+    @mutex = Mutex.new
+    @counter = 0
+    ticker.add_observer(self)
+  end
+
+  def do_something(price)
+    puts @name + ': ' + price.to_s
+    sleep @sleep_time
+  end
+
+  def update(price, time)
+    @mutex.synchronize{
+      do_something(price)
+    }
+  end
+end
+
+ticker = Ticker.new(""MSFT"", 0.5)
+Notification.new(ticker, 'Fast notification', 0)
+Notification.new(ticker, 'Slow notification', 5)
+ticker.run

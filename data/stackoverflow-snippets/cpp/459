@@ -1,0 +1,26 @@
+#include <boost/asio.hpp>
+#include <boost/asio/high_resolution_timer.hpp>
+#include <iostream>
+
+namespace ba = boost::asio;
+using namespace std::chrono_literals;
+
+int main() {
+    ba::io_context io;
+
+    using C = ba::high_resolution_timer::clock_type;
+    ba::high_resolution_timer t(io);
+
+    auto next_wakeup = [&t, interval = 10ms] {
+        t.expires_at(C::now() + interval);
+        t.wait();
+    };
+
+    auto until = C::now() + 5s;
+    int count = 0;
+
+    do count += 1;
+    while (next_wakeup(), C::now() <= until);
+
+    std::cout << ""Timer triggered "" << count << "" times in 5s\n"";
+}

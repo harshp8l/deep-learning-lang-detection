@@ -1,0 +1,86 @@
+WITH TableDep as
+-- This table returns references where the table is used within the code for UPDATE OR INSERT
+(
+SELECT 
+owner as schemaname,
+name as packagename, 
+type as typename,
+TEXT as refcodeline,
+CASE WHEN upper(text) LIKE '%INSERT%' THEN 'INSERT'
+     WHEN upper(text) LIKE '%UPDATE%' THEN 'UPDATE'
+   WHEN upper(text) LIKE '%MERGE%' THEN 'MERGE'
+END AS opr,
+:Tablename AS Tablename,
+line refline
+FROM dba_source WHERE upper(owner) = upper(:OWNER)  
+      AND type = 'PACKAGE BODY' 
+      AND (
+            upper(text) LIKE ('%INSERT INTO '||:Tablename||'%')
+            OR 
+            upper(text) LIKE ('%UPDATE%'||:Tablename||' %')
+            OR
+            upper(text) LIKE ('%MERGE%'||:Tablename||' %')
+           )
+  ),
+ProcedureDetails as
+-- This code build all procedures within the package for references that is found in above query
+(
+SELECT 
+  owner as schemaname,
+  name as packagename, 
+  type as typename,
+  TEXT,
+  trim(REGEXP_SUBSTR(TEXT, '(PROCEDURE [[:print:]]+)\(',1,1,null,1))   as procedure_name,
+  line startline,
+  LEAD(line, 1) OVER (partition by name order by line)-1 as endline
+FROM dba_source
+WHERE owner = upper(:OWNER) 
+      AND type = 'PACKAGE BODY' 
+      AND upper(text) LIKE '%PROCEDURE%(%'
+      and exists (SELECt 1 FROM TableDep WHERE TableDep.packagename=name)
+)
+,ProcCode as
+-- This code builds procedures into one cell per program for a given package. Later to find the  effected procedures
+(
+SELECT 
+       ProcTag.packagename ,
+       ProcTag.schemaname,
+       ProcTag.typename,
+       ProcTag.PROCEDURE_NAME,
+       ProcTag.startline,
+       ProcTag.endline,
+       TO_CLOB(rtrim(xmlagg(xmlelement(e,codeline.text).extract('//text()') order by line).GetClobVal(),',')) as Procedure_Code
+FROM
+    ProcedureDetails ProcTag
+    INNER JOIN dba_source codeline ON ProcTag.packagename=codeline.name
+                                      AND ProcTag.schemaname=codeline.owner
+                                      and ProcTag.typename=codeline.type
+                                      and codeline.line between ProcTag.startline and ProcTag.endline
+--WHERE PROCEDURE_NAME='PROCEDURE TRANS_KAT_INSO'
+    group by 
+       ProcTag.packagename ,
+       ProcTag.schemaname,
+       ProcTag.typename,
+       ProcTag.PROCEDURE_NAME,
+       ProcTag.startline,
+       ProcTag.endline
+      )
+-- extract all the reference code for the given table selected with it complete procedure code.
+SELECT
+ProcHeader.Packagename, ProcHeader.schemaname, ProcHeader.typename, ProcHeader.procedure_name, ProcHeader.Procedure_Code ,ProcHeader.startline,ProcHeader.endline,ProcReference.Tablename, ProcReference.opr
+FROM 
+  ProcCode ProcHeader
+  INNER JOIN 
+        (
+          SELECT DISTINCT ProcCode.Packagename, ProcCode.schemaname, ProcCode.typename, ProcCode.procedure_name , TableDep.Tablename, TableDep.opr
+          FROM               ProcCode 
+                  INNER JOIN TableDep ON ProcCode.packagename=TableDep.packagename
+                                            AND ProcCode.schemaname=TableDep.schemaname
+                                            and ProcCode.typename=TableDep.typename
+                                            and TableDep.refline between ProcCode.startline and ProcCode.endline
+        ) ProcReference
+    ON    ProcHeader.Packagename=ProcReference.Packagename
+          AND ProcHeader.schemaname=ProcReference.schemaname
+          AND ProcHeader.typename=ProcReference.typename
+          AND ProcHeader.procedure_name=ProcReference.procedure_name
+;

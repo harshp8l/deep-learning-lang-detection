@@ -1,0 +1,26 @@
+//other imports
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.model.StatusCodes._
+
+object Endpoint {
+  val mongoClient: MongoClient = MongoClient(""mongodb://localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0"")
+  val database: MongoDatabase = mongoClient.getDatabase(""test"")
+  val collection: MongoCollection[Document] = database.getCollection(""test"")
+
+  val routes = {
+    pathPrefix(""info"") {
+      pathEndOrSingleSlash {
+        get {
+          val future  = collection.find().limit(10).toFuture()
+          onComplete(future) {
+            case Success(list) =>
+              complete(OK -> list.map(_.asJson()))
+            case Failure(e) =>
+              log.error(e)
+              complete(InternalServerError -> ""an error occurred while performing the request"")
+          }
+        }
+      }
+    }
+  }
+}

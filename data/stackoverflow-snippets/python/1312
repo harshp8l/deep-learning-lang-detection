@@ -1,0 +1,31 @@
+class Main(QMainWindow):
+
+    def start_smtp(self):
+        smtp = self.smtp_lineEdit.text()
+        port = self.port_lineEdit.text()
+        self.a_thread = Thread(smtp, port)
+        self.a_thread.login_complete.connect(self.on_login_complete)
+        self.a_thread.start()
+
+    def on_login_complete(self, status):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setText(status)
+        msg.setWindowTitle(""Login result"")
+        msg.exec_()
+
+class Thread(QThread):
+
+    # pyqtSignal arguments are the types of signal arguments
+    login_complete = pyqtSignal(str)
+
+    def __init__(self, smtp, port, parent=None):
+        super(Thread, self).__init__(parent)
+        self.smtp = smtp
+        self.port = port
+
+    def run(self):
+        # simulate some long computation here:
+        sleep(5)
+        # send result back to Main:
+        self.login_complete.emit('Success')

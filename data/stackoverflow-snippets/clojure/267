@@ -1,0 +1,27 @@
+(defn invert-many-to-many
+  ""returns a many-to-many mapping""
+  ([m] (invert-many-to-many #{} m))
+  ([to m]
+   (persistent!
+    (reduce (fn [m [k vs]]
+              (reduce (fn [m v] (assoc! m v (conj (get m v to) k))) m vs))
+            (transient {}) m))))
+
+(def many-to-many {:a #{1 2} :b #{1 3} :c #{3 4}})
+
+> (invert-many-to-many many-to-many)
+{1 #{:b :a}, 2 #{:a}, 3 #{:c :b}, 4 #{:c}}
+
+;; notice that there are no duplicates when we use a vector
+;; this is because each key appears only once
+> (invert-many-to-many [] many-to-many)
+{1 [:a :b], 2 [:a], 3 [:b :c], 4 [:c]}
+
+> (invert-many-to-one many-to-many)
+{#{1 2} #{:a}, #{1 3} #{:b}, #{4 3} #{:c}}
+
+> (invert-one-to-many many-to-many)
+{1 :b, 2 :a, 3 :c, 4 :c}
+
+> (invert-one-to-one many-to-many)
+{#{1 2} :a, #{1 3} :b, #{4 3} :c} ; this would be missing information if we had another key :d mapping to say #{1 2}

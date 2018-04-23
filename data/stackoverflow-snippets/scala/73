@@ -1,0 +1,31 @@
+import scala.concurrent._
+import scala.util._
+import scala.concurrent.ExecutionContext.Implicits.global
+
+def either1(i: Int): Future[Either[String, Int]] = Future {
+  if (i<3) Right(i*2)
+  else Left(""error 1"")
+}
+
+def either2(i: Int): Future[Either[String, Int]] = Future {
+  if (i<3) Right(i*2)
+  else Left(""error 2"")
+}
+
+val seq = Seq(1, 1, 2, 2)
+
+def recHelper(remaining: List[Int]): Future[Either[String, List[Int]]] = {
+  remaining match {
+    case Nil => Future { Right(Nil) }
+    case h :: t => for {
+      hEith <- (if (h % 2 == 0) either1(h) else either2(h))
+      res <- (hEith match {
+        case Left(s) => Future { Left(s) }
+        case Right(n) => for {
+          tEith <- recHelper(t)
+        } yield tEith.map(n :: _)
+      })
+    } yield res
+  }
+}
+recHelper(seq.toList)

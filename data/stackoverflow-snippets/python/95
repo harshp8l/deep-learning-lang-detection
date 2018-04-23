@@ -1,0 +1,22 @@
+import csv, itertools, logging
+from telethon import TelegramClient
+from telethon.tl.functions.contacts import GetContactsRequest, ImportContactsRequest
+from telethon.tl.types import InputPeerUser
+from telethon.tl.types import InputPhoneContact
+
+logger = logging.getLogger(__name__)
+
+api_id = xxx
+api_hash = 'xxx'
+
+client = TelegramClient('example', api_id, api_hash)
+client.start() # i used this for easy authentication
+if client.is_user_authorized():
+    with open('list.csv', 'r') as csv_file:
+        csv_reader = csv.reader(csv_file)
+        for line in csv_reader:
+            contact = InputPhoneContact(client_id = 0, phone = (line[0]), first_name=(line[1]), last_name=(line[2]))
+            result = client.invoke(ImportContactsRequest([contact]))
+    contacts = client(GetContactsRequest(0)) # breakpoint here
+else:
+    raise Exception('You are not successfully authorized')

@@ -1,0 +1,52 @@
+# Setup scriptblocks for switch statement and dependencies.
+# Use 'GetNewClosure' to capture variables (e.g.: $ModeComplete)
+
+$Alpha = {
+    if (!$ModeComplete) {
+        'Alpha'
+        $ModeComplete = $true
+    }
+}.GetNewClosure()
+
+$Beta = {
+    . $Alpha
+
+    if (!$ModeComplete) {
+        'Beta'
+        $ModeComplete = $true
+    }
+}.GetNewClosure()
+
+$Gamma = {
+    . $Beta
+
+    if (!$ModeComplete) {
+        'Gamma'
+        $ModeComplete = $true
+    }
+}.GetNewClosure()
+
+
+# Helper scriptblock, will execute scriptblock
+# from varible named as current switch condition
+$ExecuteCurrentMode = {
+    . (Get-Variable -Name $_ -ValueOnly)
+}
+
+# Mode
+$Mode = 'Gamma'
+
+# Switch
+switch ($Mode) {
+    'Alpha' {
+        . $ExecuteCurrentMode $_
+    }
+
+    'Beta' {
+        . $ExecuteCurrentMode $_
+    }
+
+    'Gamma' {
+        . $ExecuteCurrentMode $_
+    }
+}

@@ -1,0 +1,30 @@
+  function Update-Myself
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory = $true,
+                   Position = 0)]
+        [string]$SourcePath
+    )
+    #check that the destination file exists
+    if (Test-Path $SourcePath)
+    {
+    #The path of THIS script
+    $CurrentScript = $MyInvocation.ScriptName
+        if (!($SourcePath -eq $CurrentScript ))
+        {
+            if ($(Get-Item $SourcePath).LastWriteTimeUtc -gt $(Get-Item $CurrentScript ).LastWriteTimeUtc)
+            {
+                write-host ""Updating...""
+                Copy-Item $SourcePath $CurrentScript 
+                #If the script was updated, run it with orginal parameters
+                &$CurrentScript $script:args
+                exit
+            }
+        }
+    }
+    write-host ""No update required""
+}
+
+Update-Myself \\path\to\newest\release\of\file.ps1

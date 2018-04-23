@@ -1,0 +1,28 @@
+import concurrent.futures
+from functools import partial
+
+def dynamic_func(a, i):
+    return i, i**2 + a
+
+def make_func(a):
+    return partial(dynamic_func, a)
+
+f_dyns = [make_func(a) for a in range(10)]
+def loopfunc(i):
+    return f_dyns[i](i)
+
+
+class Test:
+    def __init__(self, myfunc):
+        self.f = myfunc
+
+    def loopfunc(self, i):
+        return self.f(i)
+
+    def run(self):
+        with concurrent.futures.ProcessPoolExecutor(3) as executor:
+            for i,r in executor.map(self.loopfunc, range(10)):
+                print(i,"":"",r)
+
+o2 = Test(make_func(1))
+o2.run()

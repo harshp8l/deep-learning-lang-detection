@@ -1,0 +1,41 @@
+public class TestObject<T> {
+
+    private T value;
+
+    private final Supplier<? extends TestObject<T>> typeSpecificConstructor;
+
+    private TestObject(T initialValue,
+                       Supplier<? extends TestObject<T>> constructor) {
+        this.value = initialValue;
+        this.typeSpecificConstructor = constructor;
+    }
+
+    protected TestObject(Supplier<? extends TestObject<T>> constructor) {
+        this.typeSpecificConstructor = constructor;
+    }
+
+    public boolean test(T valueToTest) {
+        throw new UnsupportedOperationException(
+            ""Must be implemented by subclasses"");
+    }
+
+    public static TestObject<Boolean> newInstance(boolean initialValue) {
+        return new TestObject<>(initialValue, TestObjectBoolean::new);
+    }
+
+    public static TestObject<String> newInstance(String initialValue) {
+        return new TestObject<>(initialValue, TestObjectString::new);
+    }
+
+    public TestObject<T> getSpecificType() {
+        return typeSpecificConstructor.get();
+    }
+
+    public T getValue() {
+        return value;
+    }
+
+    public void setValue(T newValue) {
+        this.value = newValue;
+    }
+}

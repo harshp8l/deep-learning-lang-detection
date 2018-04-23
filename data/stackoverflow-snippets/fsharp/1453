@@ -1,0 +1,35 @@
+open System
+open System.Collections.Generic
+open System.Drawing
+open System.IO
+
+let memoize f =
+  let cache = Dictionary()
+  fun key ->
+    match cache.TryGetValue(key) with
+    | true, value -> value
+    | _ ->
+      let value = f key
+      cache.Add(key, value)
+      value
+
+let getBrush =
+  memoize (fun name -> typeof<Brushes>.GetProperty(name).GetValue(null) :?> SolidBrush)
+
+type Circle = 
+  { X : int
+    Y : int
+    Diameter : int
+    Brush : SolidBrush } with
+  override this.ToString() = 
+    sprintf ""Circle,%d,%d,%d,%s"" this.X this.Y this.Diameter this.Brush.Color.Name
+  static member Parse(s: string) =
+    match s.Split(',') with
+    | [|""Circle"";x;y;diameter;brushName|] -> {X=int x; Y=int y; Diameter=int diameter; Brush=getBrush brushName}
+    | _ -> invalidArg ""s"" ""Cannot parse string""
+
+let writeShapesToFile fileName shapes =
+  File.WriteAllLines(fileName, Seq.map (sprintf ""%O"") shapes)
+
+let readShapesFromFile fileName =
+  File.ReadAllLines(fileName) |> Array.map Circle.Parse

@@ -1,0 +1,51 @@
+procedure TForm1.ExportaClassApp(prID : Integer; prNumBoleto, prLinhaDigitavel : String);
+const
+  cUrl         = 'http://api-link/request.php?';
+  cToken       = 'xyzwsa';
+  cTipo        = 'boleto';
+var
+  oHTTP             : TIdHTTP;
+  sToken            : String;
+  sId               : String;
+  sTipo             : String;
+  sMatricula        : String;
+  sNome_Aluno       : String;
+  sNome_Responsavel : String;
+  sDescricao        : String;
+  sNumBoleto        : String;
+  sVencimento       : String;
+  sValor            : String;
+  sLinhaDigitavel   : String;
+  sParametros       : String;
+  Url_Completa      : String;
+  sRetornoClassApp  : String;
+begin
+  sToken            := 'token='             + cToken;
+  sId               := '&id='               + IntToStr(prId);
+  sTipo             := '&tipo='             + cTipo;
+  sMatricula        := '&mat='              + '123456';
+  sNome_Aluno       := '&nome_aluno='       + TIdURI.ParamsEncode('Some Student Name');
+  sNome_Responsavel := '&nome_responsavel=' + TIdURI.ParamsEncode('Another Name');
+  sDescricao        := '&titulo='           + TIdURI.ParamsEncode('Just a test');
+  sNumBoleto        := '&numero='           + TIdURI.ParamsEncode(prNumBoleto);
+  sVencimento       := '&venc='             + '2018-04-02';
+  sValor            := '&valor='            + FloatToStr(843 * 100);
+  sLinhaDigitavel   := '&linha='            + TIdURI.ParamsEncode(prLinhaDigitavel);
+
+  sParametros  := sToken + sId + sTipo + sMatricula + sNome_Aluno + sNome_Responsavel + sDescricao + sNumBoleto + sVencimento + sValor + sLinhaDigitavel;
+  Url_Completa := cUrl + sParametros;
+
+  oHTTP := TIdHTTP.Create(nil);
+  try
+    oHTTP.Request.ContentType := edtContentType.Text;
+    oHTTP.Request.ContentEncoding := edtContentEncoding.Text;
+    sRetornoClassApp := oHTTP.Get(Url_Completa);
+  finally
+    oHTTP.Free;
+  end;
+
+  btnLimparClick(Self);
+
+  mmoEnvio.Text   := Url_Completa;
+  mmoRetorno.Text := sRetornoClassApp;
+end;

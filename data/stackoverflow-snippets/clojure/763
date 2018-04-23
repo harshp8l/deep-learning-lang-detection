@@ -1,0 +1,22 @@
+(require '[clojure.zip :as z])
+
+(def example
+  [:div {} [[:custom2 {} []]
+            [:a {} []]
+            [:custom {} []]]])
+
+(def database {:custom [[:a {} []]
+                        [:div {} [[:custom2 {} [[:p {} []]]]]]]
+               :custom2 [[:span {} [[:form {} []]]]]})
+
+(defn replace-tags [html replaces]
+  (loop [current (z/zipper
+                  identity last
+                  (fn [node items]
+                    [(first node) (second node) (vec items)])
+                  html)]
+    (if (z/end? current)
+      (z/root current)
+      (if-let [r (-> current z/node first replaces)]
+        (recur (z/remove (reduce z/insert-right current (reverse r))))
+        (recur (z/next current))))))

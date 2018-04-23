@@ -1,0 +1,20 @@
+SELECT TMP1.OrganizationHierarchyUnitLevelThreeNm
+    ,TMP1.OrganizationHierarchyUnitLevelFourNm
+    ,TotalAssets = COUNT(TMP1.LabAssetSerialNbr)
+    ,AssetsOver2YearsOld = SUM(CASE WHEN TMP1.MaxSystemCreatedOnDtm < DATEADD(d, DATEDIFF(d, 0, DATEADD(yy, -2, GETDATE())), 0) THEN 1 ELSE 0 END)
+    ,PercAssetsOver2YearsOld = SUM(CASE WHEN TMP1.MaxSystemCreatedOnDtm < DATEADD(d, DATEDIFF(d, 0, DATEADD(yy, -2, GETDATE())), 0) THEN 1 ELSE 0 END) / COUNT(TMP1.LabAssetSerialNbr)
+FROM (SELECT DISTINCT o.OrganizationHierarchyUnitLevelThreeNm, o.OrganizationHierarchyUnitLevelFourNm, a.LabAssetSerialNbr, MaxSystemCreatedOnDtm = MAX(a.SystemCreatedOnDtm)
+        FROM vw_DimLabAsset a
+        INNER JOIN vw_DimWorker w 
+            ON w.WorkerKey = a.LabAssetAssignedToWorkerKey
+        INNER JOIN vw_DimOrganizationHierarchy o 
+            ON o.OrganizationHierarchyUnitCd = w.WorkerOrganizationUnitCd
+            AND o.OrganizationHierarchyUnitLevelFourNm IS NOT NULL
+        WHERE a.LabAssetTypeNm IN ('u_cmdb_ci_prototype_system', 'u_cmdb_ci_silicon')
+            AND a.LabAssetHardwareStatus <> 'retired'
+            AND (a.LabAssetHardwareSubStatus IS NULL 
+                    OR a.LabAssetHardwareSubStatus <> 'archive')
+        GROUP BY o.OrganizationHierarchyUnitLevelThreeNm, o.OrganizationHierarchyUnitLevelFourNm, a.LabAssetSerialNbr
+        ) TMP1
+GROUP BY TMP1.OrganizationHierarchyUnitLevelThreeNm, TMP1.OrganizationHierarchyUnitLevelFourNm
+ORDER BY 1, 2

@@ -1,0 +1,26 @@
+Select q1.Artnr,q1.Description,sum(INKOMEND),sum(UITGAAND)
+from
+(
+SELECT
+  orderinhoud.Artnr,
+  orderinhoud.Description,
+  If(voorraadmutatie.waarde = 1, 
+Sum(voorraadmutatie.waarde * (orderinhoud.Amount -  Coalesce((`orderinhoud-deellevering`.aantal), 0))), 0) AS INKOMEND,
+
+  If(voorraadmutatie.waarde <> 1, Sum(voorraadmutatie.waarde * (orderinhoud.Amount -  Coalesce((`orderinhoud-deellevering`.aantal), 0))), 0) AS UITGAAND
+
+FROM
+  orderinhoud
+  RIGHT OUTER JOIN `order` ON `order`.id = orderinhoud.orderid
+  LEFT OUTER JOIN voorraadmutatie ON `order`.voorraadmutatie = voorraadmutatie.Id
+  LEFT OUTER JOIN `orderinhoud-deellevering` ON orderinhoud.orderinhoudid = `orderinhoud-deellevering`.orderinhoudid
+WHERE
+`order`.leverancierid = 22
+GROUP BY
+  orderinhoud.Artnr,
+  orderinhoud.Description,
+  `order`.deliverydatetotal,
+  `order`.leverancierid,
+  `order`.commissiecompleet,
+  `order`.voorraadmutatie    
+) q1 group by q1.Artnr,q1.Description

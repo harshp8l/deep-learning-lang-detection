@@ -1,0 +1,23 @@
+(ns filter-by-time-example
+  (:require [clj-time.coerce :as tc]
+            [clj-time.core :as t]))
+
+(def objs [{""id"" nil
+            ""date"" {""date"" ""2015-01-12T19:11:41.000Z""}
+            ""total"" nil}
+           {""id"" ""05d8d404-b3f6-46d1-a0f9-dbdab7e0261f""
+            ""date"" {""date"" ""2015-01-10T19:11:41.000Z""}
+            ""total"" {""GBP"" :57.45}}
+           {""id"" nil
+            ""date"" {""date"" ""2015-01-11T19:11:41.000Z""}
+            ""total"" nil}])
+
+(defn filter-by-day
+  [objs y m d]
+  (let [start (t/date-time y m d)
+        end (t/plus start (t/days 1))]
+    (filter #(->> (get-in % [""date"" ""date""])
+                  tc/from-string
+                  (t/within? start end)) objs)))
+
+(clojure.pprint/pprint (filter-by-day objs 2015 1 10)) ;; Returns second obj

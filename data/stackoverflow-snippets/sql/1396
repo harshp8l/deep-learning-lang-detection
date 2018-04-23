@@ -1,0 +1,9 @@
+SELECT TRUNC(s.Sales_Date, 'MONTH') AS Sales_Month
+     , EXTRACT( DAY FROM LAST_DAY( TRUNC(s.Sales_Date, 'MONTH') ) ) - CEIL( ( LAST_DAY(TRUNC(s.Sales_Date, 'MONTH')) - NEXT_DAY(TRUNC(s.Sales_Date, 'MONTH')-1, 'SUN') + 1 ) / 7 ) AS working_day_cnt
+     , s.Sales_Category, SUM(s.Sales_Value) AS Sales_Val_Monthly
+     , t.Target_Value -- Target_Month and Target_Category are superfluous
+  FROM Sales_Data s INNER JOIN Target_Data t
+    ON TO_CHAR(s.Sales_Date, 'MM') = t.Target_Month
+   AND TO_CHAR(s.Sales_Date, 'YYYY') = t.Target_Year
+   AND s.Sales_Category = t.Target_Category
+ GROUP BY TRUNC(s.Sales_Date, 'MONTH'), Sales_Category, Target_Value;

@@ -1,0 +1,18 @@
+pcl::PointCloud<pcl::PointXYZINormal>::Ptr ProjectToPlane(pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud, Eigen::Vector3f origin, Eigen::Vector3f axis_x, Eigen::Vector3f axis_y)
+    {
+        PointCloud<PointXYZINormal>::Ptr aux_cloud(new PointCloud<PointXYZINormal>);
+        copyPointCloud(*cloud, *aux_cloud);
+
+    auto normal = axis_x.cross(axis_y);
+    Eigen::Hyperplane<float, 3> plane(normal, origin);
+
+    for (auto itPoint = aux_cloud->begin(); itPoint != aux_cloud->end(); itPoint++)
+    {
+        // project point to plane
+        auto proj = plane.projection(itPoint->getVector3fMap());
+        itPoint->getVector3fMap() = proj;
+        // optional: save the reconstruction information as normals in the projected cloud
+        itPoint->getNormalVector3fMap() = itPoint->getVector3fMap() - proj;
+    }
+return aux_cloud;
+}

@@ -1,0 +1,49 @@
+public static <T extends Comparable<T>> Stream<T> foldSorted(Stream<T> left, Stream<T> right) {
+    Iterator<T> leftIterator = left.iterator();
+    Iterator<T> rightIterator = right.iterator();
+
+    Iterator<T> iterator = new Iterator<T>() {
+        private T nextLeft = getNextLeft();
+        private T nextRight = getNextRight();
+
+        private T getNextLeft() {
+            return leftIterator.hasNext() ? leftIterator.next():null;
+        }
+
+        private T getNextRight() {
+            return rightIterator.hasNext() ? rightIterator.next():null;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return nextLeft != null || nextRight != null;
+        }
+
+        @Override
+        public T next() {
+            T result = null;
+
+            if(nextLeft != null) {
+                if(nextRight != null) {
+                    if(nextLeft.compareTo(nextRight) < 0) {
+                        result = nextLeft;
+                        nextLeft = getNextLeft();
+                    } else {
+                        result = nextRight;
+                        nextRight = getNextRight();
+                    }
+                } else {
+                    result = nextLeft;
+                    nextLeft = getNextLeft();
+                }
+            } else {
+                result = nextRight;
+                nextRight = getNextRight();
+            }
+
+            return result;
+        }
+    };
+
+    return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false);
+}

@@ -1,0 +1,59 @@
+#!python3
+
+import tkinter as tk
+import time
+
+class AbstractAnimation:
+    def __init__(self, canvas, id_item, duration, _from = 0, _to = 1):
+        self.canvas = canvas
+        self.id_item = id_item
+        self._progress = 0
+        self._from = _from
+        self._to = _to
+        self.t = max(10, int(duration/(self._to -self._from)))
+
+    def start(self):
+        self.canvas.after(self.t, self.on_timeout)
+
+    def on_timeout(self):
+        if self._from <= self._progress < self._to:
+            self.interpolated(self._from, self._to, self._progress)
+            self._progress += 1
+            self.canvas.after(self.t, self.on_timeout)
+
+    def interpolated(self, _from, _to, _progress):
+        pass
+
+class Animation(AbstractAnimation):
+    def interpolated(self, _from, _to, _progress):
+        x, y = 0, 5
+        if _progress < 25:
+            self.canvas.move(self.id_item, x, y)
+        else:
+            self.canvas.move(self.id_item, x, -y)
+
+class Example(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+
+        # create a canvas
+        self.canvas = tk.Canvas(width=400, height=400)
+        self.canvas.pack()
+
+        # create a couple of movable objects
+        self._create_token(100, 100, ""green"")
+        self._create_token(200, 100, ""black"")
+
+    def _create_token(self, x, y, color):
+        self.canvas.create_rectangle(x-25, y-25, x+25, y+25, outline=color, fill=color, tags=color)
+        self.canvas.tag_bind(color, ""<ButtonPress-1>"", self.on_token_press)
+
+    def on_token_press(self,event):
+        Rx = self.canvas.find_closest(event.x, event.y)
+        animation = Animation(self.canvas, Rx, 1250, 0, 50)
+        animation.start()
+
+if __name__ == ""__main__"":
+    root = tk.Tk()
+    Example(root).pack()
+    root.mainloop()

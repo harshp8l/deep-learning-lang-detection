@@ -1,0 +1,41 @@
+import random
+
+# credit for prime factorization code goes
+# to https://stackoverflow.com/a/17000452/1222951
+def prime_factors(n):
+    gaps = [1,2,2,4,2,4,2,4,6,2,6]
+    length, cycle = 11, 3
+    f, fs, next_ = 2, [], 0
+    while f * f <= n:
+        while n % f == 0:
+            fs.append(f)
+            n /= f
+        f += gaps[next_]
+        next_ += 1
+        if next_ == length:
+            next_ = cycle
+    if n > 1: fs.append(n)
+    return fs
+
+def generate_c_and_m(n, seed=None):
+    # we need to know n's prime factors to find a suitable multiplier m
+    p_factors = set(prime_factors(n))
+
+    def is_valid_multiplier(m):
+        # m must not share any prime factors with n
+        factors = prime_factors(m)
+        return not p_factors.intersection(factors)
+
+    # if no seed was given, generate random values for c and m
+    if seed is None:
+        c = random.randint(n)
+        m = random.randint(1, 2*n)
+    else:
+        c = seed
+        m = seed
+
+    # make sure m is valid
+    while not is_valid_multiplier(m):
+        m += 1
+
+    return c, m

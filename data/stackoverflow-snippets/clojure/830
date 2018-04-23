@@ -1,0 +1,32 @@
+(ns pubsub.experiment
+  (:require [clojure.core.async :as >]))
+
+(def publisher (>/chan))
+
+(def p (>/pub publisher (constantly nil)))
+
+(def answers (>/chan))
+
+(defn consume
+  [label count]
+  (let [s (>/sub p nil (>/chan))]
+    (>/go-loop [i 0]
+      (if (> i count)
+        (>/close! s)
+        (do
+          (>/>! answers [label (>/<! s)])
+          (recur (inc i)))))))
+
+(defn -main
+  [& args]
+  (println ""running pubsub experiment"")
+  (consume :a 1)
+  (consume :b 2)
+  (consume :c 3)
+  (consume :d 4)
+  (consume :e 5)
+  (>/go-loop []
+    (println ""result: "" (>/<! answers))
+    (recur))
+  (>/<!! (>/onto-chan publisher (range 10)))
+  (System/exit 0))

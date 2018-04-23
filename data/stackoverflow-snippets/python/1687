@@ -1,0 +1,27 @@
+from scipy import stats
+import pandas as pd
+
+df = pd.read_csv(""test.csv"", sep = "","")
+
+#number of steps
+n = 12
+#percentage of the signal dismissed at the start of each step
+p = 10
+#length of the trace
+points = df.Input.count()
+#create bin_array of n steps, each step consisting of two steps with p% and 100-p%
+bin_array = [0]
+for i in range(n):
+    bin_array.extend([int((i + float(p) / 100) * points) // n, ((i + 1) * points) // n])
+
+#perform statistics on bins
+avg_in, avg_out = stats.binned_statistic(df.index, [df.Input, df.Output], 'mean', bins = bin_array)[0]
+
+#remove the values from the initial p% from each output list
+avg_in = [item for i, item in enumerate(avg_in) if i % 2]
+avg_out = [item for i, item in enumerate(avg_out) if i % 2]
+print(avg_in)
+print(avg_out)
+#Sample output
+#[64.73489552821727, 54.76841077703991, 44.807889084164074, 34.81446700507611, 24.850087873462492, 14.878445919562749, 4.894278461238032, -5.047188598203949, -15.02405780121078, -24.98881296368496, -35.01091583675023, -44.954373291681186]
+#[6.313569615309482, 7.204238578680037, 7.448781487990606, 7.6773818820770625, 7.239388791251814, 7.5633404919951595, 7.317807068931801, 7.189217102694274, 6.9391818004296795, 6.780327996876248, 6.049744190587788, 5.693360015618928]

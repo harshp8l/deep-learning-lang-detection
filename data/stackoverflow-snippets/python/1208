@@ -1,0 +1,37 @@
+groups = template.get('groups')
+
+if groups:
+    allGroups = [
+        Group(name=group['name']
+        for group in groups
+    ]
+
+Group.objects.bulk_create(allGroups)
+
+allLinks = []
+zipped_links = []
+for g, g_model in zip(groups, allGroups):
+    links = g.get('links')
+    if links:
+        link_objs = [
+            Link(group=g_model, name=link['name'])
+            for link in links
+        ]
+
+        allLinks.extend(link_objs)
+
+        zipped_links.extend(zip(links, link_objs))
+
+Link.objects.bulk_create(allLinks)                
+
+allMatchObjs = []
+for link, l_model in zipped_links:
+    matches = link.get('matches')
+    if matches:
+        matchObjs = [
+            Match(name=match['name'], link=l_model)
+            for match in matches
+        ]
+        allMatchObjs.extend(matchObjs)
+
+Match.objects.bulk_create(allMatchObjs)

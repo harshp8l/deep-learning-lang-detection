@@ -1,0 +1,22 @@
+    ticker := time.NewTicker(pollInterval)
+    defer ticker.Stop()
+
+PlaybackLoop:
+    for {
+        select {
+        case <-next:
+            if current.next != nil {
+                current = current.next
+                break PlaybackLoop
+            }
+        case <-prev:
+            if current.prev != nil {
+                current = current.prev
+            }
+            break PlaybackLoop
+        case <-done:
+            return err
+        case <-ticker.C:
+            pollForEvent()
+        }
+    }

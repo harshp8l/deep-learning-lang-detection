@@ -1,0 +1,12 @@
+Neo4j::ActiveBase.new_query
+  .match(n: {name: 'MU1'})
+  .match('(n)-[:connected_to*1..2 {status: ?}]->(sp:User)', 1)
+  .match('(sp)<-[:owner_of|house_mate]-(place:Place)-[:owner_of|house_mate]->(c:User)')
+  .where_not('(n)-[:house_mate]-(place)')
+  .break
+  .match('(place)-[tenant:owner_of|house_mate]->(u:User)')
+  .with('DISTINCT place, type(tenant) AS type, u')
+  .with(:place, tenants: 'collect({type: type, u: u})')
+  .pluck(:place,
+          owner: '[tenant IN tenants WHERE tenant.type = 'owner_of'   | [tenant.u]][0]',
+          houseMatesArray: '[tenant IN tenants WHERE tenant.type = 'house_mate' | [tenant.u]]')

@@ -1,0 +1,62 @@
+Ext.define('store.sa.saDataStore', {
+    extend: 'Ext.data.Store',
+    storeId: 'saDatastore',    
+    requires: ['model.sa.saModel'],
+    model: 'model.sa.saModel',
+    data: [{
+        address3: 'Address 3'
+    }]
+});
+
+Ext.define('model.sa.saModel', {
+    extend: 'model.common.Base',
+    fields: [{
+        name: 'address3',
+        type: 'string'
+    }]
+});
+
+Ext.define('view.sa.saDS', {
+    extend: 'Ext.Panel',
+    xtype: 'saDS',
+
+    requires: ['store.sa.saDataStore',
+        'model.sa.saModel'
+    ],
+    title: 'sapage with DATA store ',
+    width: 600,
+    height: 350,
+
+    store: {
+        type: 'saDataStore'
+    },
+    session: true,
+
+    items: [{
+        xtype: 'form',
+        items: [{
+            xtype: 'fieldset',
+            width: 1000,
+            height: 800,
+            title: 'data store',
+            items: [{
+                xtype: 'displayfield',
+                fieldLabel: 'Title',
+                name: 'address3',
+
+            }]
+        }]
+    }],
+
+    listeners: {
+        afterrender: function (component, eOpts) {
+            var store = Ext.getStore('saDatastore');
+            console.log(store);
+            if (!Ext.isEmpty(store)) {
+                var form = component.down('form');
+                form.loadRecord(store.last());
+                console.log(""data upload done "");
+            }
+        }
+    }
+});

@@ -1,0 +1,42 @@
+(ns tree
+  (:require [clojure.spec.alpha :as s]))
+
+(def tree '[SYMB1 ""a"" [SYMB2 {:k1 [SYMB1 ""b"" ""c""]} ""x""] {:k2 [""b"" ""c""]}])
+
+(s/def ::leaf string?)
+(s/def ::leafs (s/coll-of ::leaf))
+
+(s/def ::map
+  (s/and
+   map?
+   (s/conformer
+    (fn [m]
+      (let [[_ v] (first m)]
+        (s/conform (s/or
+                    :node  ::node
+                    :leafs ::leafs) v))))))
+
+(s/def ::node (s/and
+               (s/or :symbol ::symbol
+                     :leaf ::leaf
+                     :map ::map)
+               (s/conformer second)))
+
+(s/def ::symbol
+  (s/and
+   (s/cat :name
+          symbol?
+          :children
+          (s/* ::node))
+   (s/conformer (fn [parsed]
+                  (let [{:keys [name children]} parsed]
+                    (reduce
+                     (fn [acc v]
+                       (case (first v)
+                         :leafs (into acc (second v))
+                         :node  (conj acc (second v))
+                         (conj acc v)))
+                     [name]
+                     children))))))
+
+(s/conform ::node tree) ;; [SYMB1 ""a"" [SYMB2 [SYMB1 ""b"" ""c""] ""x""] ""b"" ""c""]

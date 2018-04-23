@@ -1,0 +1,17 @@
+SELECT f.id_festival AS ID,
+       CONCAT('£ ', FORMAT(f.festival_budget, 2)) AS Budget,
+       CONCAT('£ ', ROUND(SUM(CASE WHEN p.pmt_type = 'Payment IN' THEN p.pmt_amount ELSE 0 END), 2)) AS `TOTAL IN`,
+       CONCAT('£ ', ROUND(SUM(CASE WHEN p.pmt_type = 'Payment OUT' THEN p.pmt_amount ELSE 0 END), 2)) AS `TOTAL OUT`,
+       CONCAT('£ ',
+              ROUND(f.festival_budget +
+                    SUM(CASE WHEN p.pmt_type = 'Payment IN' THEN p.pmt_amount
+                             WHEN p.pmt_type = 'Payment OUT' THEN - p.pmt_amount
+                             ELSE 0
+                        END),
+                    2)
+             ) AS PROFIT
+FROM festival f INNER JOIN
+     payment p
+     ON p.id_festival = f.id_festival
+WHERE f.id_festival = 1
+GROUP BY f.id_festival;

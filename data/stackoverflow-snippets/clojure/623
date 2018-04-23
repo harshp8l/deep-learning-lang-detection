@@ -1,0 +1,16 @@
+(defmacro recur+ [& args]
+  (let [names (repeatedly (count args) gensym)]
+    `(let ~(vec (interleave names args))
+       (recur ~@names (conj ~'&loop-history [~@names])))))
+
+(defmacro loop+ [bindings & body]
+  (let [val-names (repeatedly (/ (count bindings) 2) gensym)
+        vals (take-nth 2 (rest bindings))
+        binding-lefts (take-nth 2 bindings)]
+    `(let [~@(interleave val-names vals)]
+       (loop [~@(interleave binding-lefts val-names)
+              ~'&loop-history [~(vec val-names)]]
+         ~@(clojure.walk/postwalk-replace
+            {'recur 'recur+
+             'loop 'loop+}
+            body)))))

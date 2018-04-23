@@ -1,0 +1,19 @@
+case class Wrapper[T](value: T)
+def test(): Unit = {
+  import BaseMapAvroHelpers._
+  val map: Map[Base, String] = Map(First -> ""abc"", Second -> ""xyz"")
+  val wrapper = Wrapper(map)
+  val schema = AvroSchema[Wrapper[Map[Base, String]]]
+  println(s""Schema: $schema"")
+
+  val bufOut = new ByteArrayOutputStream()
+  val out = AvroJsonOutputStream[Wrapper[Map[Base, String]]](bufOut)
+  out.write(wrapper)
+  out.flush()
+  println(s""Avro Out: ${bufOut.size}"")
+  println(bufOut.toString(""UTF-8""))
+
+  val in = AvroJsonInputStream[Wrapper[Map[Base, String]]](new ByteArrayInputStream(bufOut.toByteArray))
+  val read = in.singleEntity
+  println(s""read: $read"")
+}

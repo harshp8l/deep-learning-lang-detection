@@ -1,0 +1,11 @@
+    let pickBetweenEquallyValid results = results.[results.Length - 1]
+    let rec check customers predicates fallback = 
+        match predicates with
+        | [] -> fallback
+        | pred :: otherPreds -> 
+            let matchingCustomers = customers |> Array.filter pred
+            match matchingCustomers with
+            | [||] -> fallback
+            | [| uniqueMatch |] -> uniqueMatch.id
+            | _ -> check matchingCustomers otherPreds (pickBetweenEquallyValid matchingCustomers).id
+    check allCustomers [validEmail; validFName; validLName] (createGuest())

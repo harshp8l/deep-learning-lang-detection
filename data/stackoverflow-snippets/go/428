@@ -1,0 +1,32 @@
+// MaxUploadParts is the maximum allowed number of parts in a multi-part upload
+// on Amazon S3.
+const MaxUploadParts = 10000
+// MinUploadPartSize is the minimum allowed part size when uploading a part to
+// Amazon S3.
+const MinUploadPartSize int64 = 1024 * 1024 * 5
+// DefaultUploadPartSize is the default part size to buffer chunks of a
+// payload into.
+const DefaultUploadPartSize = MinUploadPartSize
+
+u := &Uploader{
+    PartSize:          DefaultUploadPartSize,
+    MaxUploadParts:    MaxUploadParts,
+    .......
+}
+
+func (u Uploader) UploadWithContext(ctx aws.Context, input *UploadInput, opts ...func(*Uploader)) (*UploadOutput, error) {
+   i := uploader{in: input, cfg: u, ctx: ctx}
+   .......
+
+func (u *uploader) nextReader() (io.ReadSeeker, int, error) {
+    .............
+    switch r := u.in.Body.(type) {
+    .........
+    default:
+        part := make([]byte, u.cfg.PartSize)
+        n, err := readFillBuf(r, part)
+        u.readerPos += int64(n)
+
+        return bytes.NewReader(part[0:n]), n, err
+    }
+}

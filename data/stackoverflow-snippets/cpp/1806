@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+#include <iterator>
+#include <algorithm>
+#include <boost/iterator/transform_iterator.hpp>
+
+int& deref(int*& x) { return *x; }
+
+template <class it>
+void print(it from, it to)
+{
+    std::copy(from, to, std::ostream_iterator<typename it::value_type>(std::cout, "" ""));
+    std::cout << ""\n"";
+}
+
+int main()
+{
+    std::vector<int> a {4,3,7,1};
+    std::vector<int*> b {new int(2), new int(0), new int(11), new int(-3)};
+
+    //    auto deref = [](int*& x) -> int& { return *x; };
+    //    cannot use a lambda here because it's non-copyable
+    //    and iterators must be copyable.
+
+    std::sort(std::begin(a), std::end(a));
+    std::sort(boost::make_transform_iterator(std::begin(b), &deref),
+              boost::make_transform_iterator(std::end(b), &deref));
+
+    print(std::begin(a), std::end(a));
+    print(boost::make_transform_iterator(std::begin(b), &deref),
+          boost::make_transform_iterator(std::end(b), &deref));
+
+}

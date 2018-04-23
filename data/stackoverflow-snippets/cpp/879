@@ -1,0 +1,48 @@
+#include <memory>
+#include <utility>
+
+struct Parameter
+{
+    // some constructor
+    Parameter(int, int);
+};
+
+class Optimization {
+public:
+    std::shared_ptr<Parameter> getParameter() const {
+        return m_parameter;
+    }
+
+    // original overload
+    void setParameter(const std::shared_ptr<Parameter>& parameter) {
+        m_parameter = parameter;
+    }
+
+    // rvalue overload
+    void setParameter(std::shared_ptr<Parameter>&& parameter) {
+        m_parameter = std::move(parameter);
+    }
+
+    // piecewise overload which forwards arguments
+    template<typename...Args>
+    void setParameter(std::piecewise_construct_t, Args&&...args)
+    {
+        m_parameter = std::make_shared<Parameter>(std::forward<Args>(args)...);
+    }
+
+private:
+    std::shared_ptr<Parameter> m_parameter;
+};
+
+
+int main()
+{
+    auto o = Optimization();
+
+    // original
+    o.setParameter(std::make_shared<Parameter>(1,2));
+
+    // equivalent to...
+
+    o.setParameter(std::piecewise_construct, 1, 2);
+}

@@ -1,0 +1,18 @@
+var timeConverter = func(value string) reflect.Value {
+    if v, err := time.Parse(""02/01/2006"", value); err == nil {
+        return reflect.ValueOf(v)
+    }
+    return reflect.Value{} // this is the same as the private const invalidType
+}
+
+func MyRoute(w http.ResponseWriter, r *http.Request) {
+    user := User{}
+    r.ParseForm()
+    defer r.Body.Close()
+    decoder := schema.NewDecoder()
+    decoder.RegisterConverter(time.Time{}, timeConverter)
+
+    if err := decoder.Decode(&user, r.Form); err != nil {
+        fmt.Println(err)
+    }
+}

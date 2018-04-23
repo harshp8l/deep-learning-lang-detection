@@ -1,0 +1,17 @@
+import org.apache.spark.sql.functions._
+import org.apache.spark.ml.feature.Tokenizer
+
+val tweets = spark.read.format(""csv"").load(...)
+val athletes = spark.read.format(""csv"").load(...)
+
+val tokenizer = new Tokenizer()
+tokenizer.setInputCol(""tweet"")
+tokenizer.setOutputCol(""words"")
+
+val tokenized = tokenizer.transform(tweets)
+
+val exploded = tokenized.withColumn(""word"", explode('words))
+
+val withAthlete = exploded.join(athletes, 'word === 'name)
+
+withAthlete.select(exploded(""id""), 'name).show()

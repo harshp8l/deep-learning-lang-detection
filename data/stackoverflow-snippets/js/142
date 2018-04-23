@@ -1,0 +1,86 @@
+Ext.application({
+    name: 'Fiddle',
+
+    launch: function () {
+
+        Ext.define('UserModal', {
+            extend: 'Ext.data.Model',
+            fields: ['name']
+        });
+
+        Ext.create('Ext.data.Store', {
+            storeId: 'gridStore',
+
+            fields: ['name'],
+            groupField: 'status',
+            data: [{
+                ""name"": ""Henry Watson""
+            }, {
+                ""name"": ""Lucy""
+            }, {
+                ""name"": ""Mike Brow""
+            }, {
+                ""name"": ""Mary Tempa""
+            }, {
+                ""name"": ""Beto Carlx""
+            }]
+        });
+
+        // Setting up the Grid
+        Ext.create('Ext.grid.Panel', {
+
+            title: 'Render Treen inside grid cell',
+
+            store: 'gridStore',
+
+            columns: [{
+                header: 'NAME',
+                renderer: function (val, metadata, record) {
+                    if (val === ""Beto Carlx"") {
+                        return `<ul  class=""root-tree"">
+                            <li><i class=""fa fa-minus-square""></i> <span>Beto carlx</span>
+                                <ul class=""tree-item"">
+                                  <li class=""tree-item-li"">item 1</li>
+                                  <li class=""tree-item-li"">item 1</li>
+                                </ul>
+                            </li>
+                        </ul>`
+                    }
+
+                    return val;
+                },
+                dataIndex: 'name',
+
+            }],
+            listeners: {
+                cellclick: function (grid, td, cellIndex, record, tr, rowIndex, e) {
+                    var list,
+                        styles;
+
+                    if (e.getTarget('ul.root-tree', 3)) {
+                        list = td.querySelector('ul.tree-item');
+                        var icon = td.querySelector('i.fa').classList;
+                        if (icon.contains('fa-minus-square')) {
+                            icon.remove('fa-minus-square');
+                            icon.add('fa-plus-square');
+                            list.style.display = 'none';
+                        } else {
+                            icon.remove('fa-plus-square');
+                            icon.add('fa-minus-square');
+                            list.style.display = 'block';
+                        }
+                        // styles = window.getComputedStyle(list);
+                        //  = (styles.getPropertyValue('display') === 'none' ? 'block' : 'none');
+                    } else if (e.target.className == 'tree-item-li') {
+                        alert(e.getTarget('li.tree-item-li').innerText)
+                    }
+                }
+            },
+
+            height: 300,
+
+            renderTo: document.body
+        });
+
+    }
+});

@@ -1,0 +1,32 @@
+tr = {}
+msgidline = """"
+msgstrline = """"
+
+f = File.open(""origin.txt"", ""r"")
+
+# Create a dictionary 
+f.each_line do |line|
+    if line.start_with?(""msgid"", ""msgstr"") && line.start_with?(%Q(msgid """")) == false && line.start_with?(%Q(msgstr """")) == false
+        if line.start_with?(""msgid"") == true
+            msgidline = line.scan(/""([^""]*)""/).join()
+        elsif line.start_with?(""msgstr"") == true
+            msgstrline = line.scan(/""([^""]*)""/).join()
+        end
+    end
+    tr[msgidline] = msgstrline
+end
+
+@msgidlineReference = """"
+
+new_lines = File.readlines(""end.txt"").map do |line|
+    if line.start_with?(""msgid"") == true
+      @msgidReference = line.scan(/""([^""]*)""/).join
+      @new_line = line
+    elsif line.start_with?(""msgstr"") == true 
+      msgstrtext = line.scan(/""([^""]*)""/).join
+      @new_line = %Q[msgstr ""#{tr[@msgidReference].to_s}""\n]
+    end
+    @new_line
+end
+
+File.write(""end.txt"", new_lines.join)

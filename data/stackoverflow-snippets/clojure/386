@@ -1,0 +1,35 @@
+(defn del-list [arg-list lvl]
+  ;; You don't need the do, there's an implicit do in many special forms
+  ;; like let, fn and defn
+  ;; Also you only had one thing in your do, in that case it doesn't do anything
+
+  ;; There's only one condition, so I'd use if instead of cond
+  (if (= lvl 1)
+
+    ;; And, like someone mentioned in the comments,
+    ;; what you probably want is sequential? instead of seq?
+    (remove sequential? arg-list)
+    (map #(if (sequential? %)
+            (del-list % (dec lvl)) ; dec stands for decrement
+            %)
+         arg-list)))
+
+
+;; This works
+(println (del-list '(1 2 3 (1 2 (1 2 3) 3) 1 2 3) 2))
+
+;; But this is more idiomatic (modulo specific reasons to prefer lists)
+(println (del-list [1 2 3 [1 2 [1 2 3] 3] 1 2 3] 2))
+
+;; If you change map to mapv, and wrap remove with vec it will return vectors
+(defn del-vec [arg-vec lvl]
+  (if (= lvl 1)
+    (vec (remove sequential? arg-vec))
+    (mapv #(if (sequential? %)
+             (del-vec % (dec lvl)) ; dec stands for decrement
+             %)
+          arg-vec)))
+
+(println (del-vec [1 2 3 [1 2 [1 2 3] 3] 1 2 3] 2))
+
+;; But most of the time you don't care about the specific type of sequential things

@@ -1,0 +1,37 @@
+$GLOBAL:curlExe = ""h:\powershell\esb\elastic\curl\curl.exe""
+
+function global:elasticcall {
+    param (
+        $timereceived,
+        $timesentconv,
+        $name,
+        $curlstatus,
+        $elasticoutput = ""h:\powershell\esb\elastic\elastic.txt"",
+        $elastichost = ""http://localhost:9200/newtest4/filecopy/?pretty"",
+        $elasticheader = ""content-type: application/json"",
+        $elamethod = ""POST""
+    )
+
+    $elasticdata = @{
+        timereceived = $timereceived
+        timesent     = $timesentconv
+        Filename     = $name
+        Status       = $curlstatus
+    }
+
+    $jsonelasticdata = $elasticdata | ConvertTo-Json -Compress 
+
+    $curlargs = $elastichost,
+    '-X', $elamethod,
+    '-d', $jsonelasticdata,
+    '-H', $elasticheader
+
+    write-host ""Curl arguements in the entire string : "" $curlargs
+
+    & $curlexe @curlargs
+
+    $elasticdata | Out-File $elasticoutput -Append
+
+}
+
+global:elasticcall -timereceived 'randomness' -timesentconv 'randomness2' -name 'testing spaces.txt' -curlstatus 0

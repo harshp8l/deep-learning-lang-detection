@@ -1,0 +1,13 @@
+template<std::size_t N>
+struct overload_order : overload_order<N-1> {};
+template<>
+struct overload_order<0> {};
+
+namespace details {
+  void foo(overload_order<1>, fn_string) { cout << ""string"" << endl; }
+  void foo(overload_order<0>, fn_optional_string) { cout << ""optional string"" << endl; }
+}
+template<class F>
+void foo(F&& f) {
+  foo( overload_order<!std::is_same<std::decay_t<F>, fn_optional_string>{}>{}, std::forward<F>(f) );
+}

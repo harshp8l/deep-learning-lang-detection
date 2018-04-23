@@ -1,0 +1,38 @@
+class ProductSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Product
+        fields = ('id', 'pro_name')
+
+class ProductEnquirySerializer(serializers.HyperlinkedModelSerializer):
+    productname = serializers.CharField(source='productname.pro_name')
+
+    class Meta:
+        model = ProductEnquiry
+        fields = ('id','productname','qty')
+
+    def create(self, validated_data):
+        product_data = validated_data.pop('productname', '')
+        # If you want to create a Product here; before creating a ProductEnquiry
+        product_serializer = ProductSerializer(data=product_data)
+        if product_serializer.is_valid():
+          product = product_serializer.save()
+        else:
+            raise  # Raise appropriate errors
+
+        validated_data.update({'productname_id': product.id})
+        productenquiry = ProductEnquiry.objects.create(**validated_data)
+        return productenquiry
+
+    def update(self, instance, validated_data):
+        # If you want to update the Product here; before updating the ProductEnquiry
+        product_data = validated_data.pop('productname', '')
+        product_serializer = ProductSerializer(instance=instance.productname, data=product_data)
+        if product_serializer.is_valid():
+            product = product_serializer.save()
+        else:
+            raise  # Raise appropriate errors
+
+        instance.productname_id = validated_data.get('productname_id', instance.productname_id)
+        instance.qty = validated_data.get('qty', instance.qty)
+        instance.save()
+        return instance

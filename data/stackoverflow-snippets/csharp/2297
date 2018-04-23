@@ -1,0 +1,30 @@
+    long checksum = 0;
+    final long max = 4294967296L; // 2^32
+
+    // verify the data is DWORD-aligned and add padding if needed
+    final int remainder = data.length % 4;
+    final byte[] paddedData = Arrays.copyOf(data, data.length
+            + (remainder > 0 ? 4 - remainder : 0));
+
+    for (int i = 0; i <= paddedData.length - 4; i += 4)
+    {
+        // skip the checksum field
+        if (i == this.offsetToOriginalCheckSum)
+            continue;
+
+        // take DWORD into account for computation
+        final long currentWord = (paddedData[i] & 0xff)
+                               + ((paddedData[i + 1] & 0xff) << 8)
+                               + ((paddedData[i + 2] & 0xff) << 16)
+                               + ((paddedData[i + 3] & 0xff) << 24);
+
+        checksum = (checksum & 0xffffffffL) + (currentWord & 0xffffffffL);
+
+        if (checksum > max)
+            checksum = (checksum & 0xffffffffL) + (checksum >> 32);
+    }
+
+    checksum = (checksum & 0xffff) + (checksum >> 16);
+    checksum = checksum + (checksum >> 16);
+    checksum = checksum & 0xffff;
+    checksum += data.length; // must be original data length

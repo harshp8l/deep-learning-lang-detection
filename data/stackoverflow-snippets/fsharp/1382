@@ -1,0 +1,25 @@
+override v.GetHashCode() = base.GetHashCode()
+
+override v.Equals(obj:obj) = 
+    match obj with 
+    | :? Var as v2 -> System.Object.ReferenceEquals(v,v2)
+    | _ -> false
+
+interface System.IComparable with 
+    member v.CompareTo(obj:obj) = 
+        match obj with 
+        | :? Var as v2 -> 
+            if System.Object.ReferenceEquals(v,v2) then 0 else
+            let c = compare v.Name v2.Name 
+            if c <> 0 then c else 
+#if FX_NO_REFLECTION_METADATA_TOKENS // not available on Compact Framework
+#else
+            let c = compare v.Type.MetadataToken v2.Type.MetadataToken 
+            if c <> 0 then c else 
+            let c = compare v.Type.Module.MetadataToken v2.Type.Module.MetadataToken 
+            if c <> 0 then c else 
+#endif
+            let c = compare v.Type.Assembly.FullName v2.Type.Assembly.FullName 
+            if c <> 0 then c else 
+            compare v.Stamp v2.Stamp
+        | _ -> 0

@@ -1,0 +1,31 @@
+entries = [
+    ['00000.ppm', 11],
+    ['00001.ppm', 40], ['00001.ppm', 38], ['00001.ppm', 13],
+    ['00002.ppm', 39],
+    ['00003.ppm', 4]
+]
+
+# good for most cases:
+values = dict()
+for filename, value in entries:
+    values.setdefault(filename, []).append(value)
+
+print(values['00001.ppm'])
+# [40, 38, 13]
+# not clear what you want to do with these next...
+
+# this method searches within a sorted list.
+# it will be useful if there are many items in the entries list (> ~100000) 
+# and you only need to lookup a few
+import bisect
+def find_values(entries, filename):
+    starting_search_key = [filename, -1]
+    i = bisect.bisect_left(entries, starting_search_key)
+    values = []
+    while i < len(entries) and entries[i][0] == filename:
+        values.append(entries[i][1])
+        i += 1
+    return values
+
+print(find_values(entries, '00001.ppm'))
+# [40, 38, 13]

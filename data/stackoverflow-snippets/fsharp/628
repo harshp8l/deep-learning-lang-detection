@@ -1,0 +1,65 @@
+#I __SOURCE_DIRECTORY__
+#r ""../../../packages/FSPowerPack.Core.Community/Lib/Net40/FSharp.PowerPack.dll""
+#r ""../../../packages/FSPowerPack.Linq.Community/Lib/Net40/FSharp.PowerPack.Linq.dll""
+#r ""../../../packages/FSPowerPack.Metadata.Community/Lib/Net40/FSharp.PowerPack.Metadata.dll""
+#r ""../../../packages/FSPowerPack.Parallel.Seq.Community/Lib/Net40/FSharp.PowerPack.Parallel.Seq.dll""
+#r ""../../../packages/Informedica.GenUnits.lib/lib/net45/Informedica.GenUnits.lib.dll""
+#r ""../../../packages/Informedica.GenUtils.Lib/lib/net45/Informedica.GenUtils.Lib.dll""
+#r ""../../../packages/Suave/lib/net40/Suave.dll""
+#r ""../../../packages/Suave.Testing/lib/net40/Suave.Testing.dll""
+#r ""../../../packages/Fuchu/lib/Fuchu.dll""
+#r ""System.Core.dll""
+#r ""System.dll""
+#r ""System.Numerics.dll""
+#r ""System.Runtime.Serialization.dll""
+#r ""System.Net.Http.dll""
+
+#time
+
+
+//Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
+
+
+
+open System
+open System.IO
+open System.Text
+open System.Net.Http
+
+open Suave                 // always open suave
+open Suave.Successful      // for OK-result
+open Suave.Web             // for config
+open Suave.Operators
+open Suave.Http
+open Suave.Filters
+open Suave.Json
+open System.Runtime.Serialization
+open Suave.Writers
+
+open Suave.Testing
+
+
+//[<DataContract>]
+type Bar =
+    { 
+//    [<field: DataMember(Name = ""bar"")>]
+    bar : string;
+    }
+
+
+//[<DataContract>]
+//[<CLIMutable>]
+type Foo =
+    { 
+//    [<field: DataMember(Name = ""foo"")>]
+    foo : string;
+    }
+
+let router =
+    choose  
+        [ POST >=> path ""/hello"" >=> (mapJson (fun (a:Foo) -> { Bar.bar = a.foo })) >=> setMimeType ""application/json; charset=utf-8""; 
+          path ""/bye"" >=> OK ""GOOD WHAT""] 
+
+
+runWith defaultConfig router
+|> req HttpMethod.POST ""/hello"" (Some <| new ByteArrayContent(toJson { foo = ""foo"" }))

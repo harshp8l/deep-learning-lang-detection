@@ -1,0 +1,35 @@
+; Let clojure figure out the list of numbers & accumulate the result
+(defn fact-range [n]
+  (apply * (range 1 (inc n))))
+(spyx (fact-range 4))
+
+; Classical recursion uses the stack to figure out the list of
+; numbers & accumulate the intermediate results
+(defn fact-recur [n]
+  (if (< 1 n)
+    (* n (fact-recur (dec n)))
+    1))
+(spyx (fact-recur 4))
+
+; Let clojure figure out the list of numbers; we accumulate the result
+(defn fact-doseq [n]
+  (let [result (atom 1) ]
+    (doseq [i (range 1 (inc n)) ]
+      (swap! result * i))
+    @result ))
+(spyx (fact-doseq 4))
+
+; We figure out the list of numbers & accumulate the result
+(defn fact-mutable [n]
+  (let [result (atom 1)
+        cnt    (atom 1) ]
+    (while (<= @cnt n)
+      (swap! result * @cnt)
+      (swap! cnt inc))
+    @result))
+(spyx (fact-mutable 4))
+
+(fact-range 4) => 24
+(fact-recur 4) => 24
+(fact-doseq 4) => 24
+(fact-mutable 4) => 24

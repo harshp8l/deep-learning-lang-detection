@@ -1,0 +1,22 @@
+import (
+    ""sync/atomic""
+    ""time""
+)
+
+func main() {
+    tick := time.Tick(time.Second)
+    var reentranceFlag int64
+    go func() {
+        for range tick {
+            go CheckSomeStatus()
+            go func() {
+                if atomic.CompareAndSwapInt64(&reentranceFlag, 0, 1) {
+                    defer atomic.StoreInt64(&reentranceFlag, 0)
+                } else {
+                    return
+                }
+                CheckAnotherStatus()
+            }()
+        }
+    }()
+}

@@ -1,0 +1,29 @@
+import javax.swing.*;
+import java.applet.Applet;
+import java.awt.*;
+import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
+
+class appletrunner
+{
+    public static void main(String[] args) throws Exception //This is not proper Exception handling!
+    {
+        JFrame frame = new JFrame(""test"");
+        File jar = new File(""gamepack_8614663.jar"");
+        URLClassLoader classLoader = new URLClassLoader(new URL[] {jar.toURI().toURL()}, appletrunner.class.getClassLoader());
+        Class<?> client = classLoader.loadClass(""client"");
+        Applet applet = (Applet)client.newInstance();
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                applet.stop();
+                applet.destroy();
+            }
+        });
+        frame.getContentPane().add(applet);
+        frame.pack();
+        frame.setVisible(true);
+        applet.init(); // Exception here
+        applet.start();
+    }
+}

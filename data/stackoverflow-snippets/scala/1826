@@ -1,0 +1,17 @@
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions.{rank,col}
+
+val window = Window.partitionBy(df(""city"")).orderBy(df(""month"").desc)
+
+df.withColumn(""rank"", rank().over(window))
+  .filter(col(""rank"") <= 2) 
+  .drop(""rank"")
+  .show()
++----+----------+-----+----+--------+
+|city|     month|sales|area|arealist|
++----+----------+-----+----+--------+
+|  c1|2017-11-01|   10|   A|     A,B|
+|  c1|2017-07-01|   13|   B|     A,B|
+|  c2|2017-09-01|   17|   A|     A,B|
+|  c2|2017-08-01|   11|   C|     A,B|
++----+----------+-----+----+--------+

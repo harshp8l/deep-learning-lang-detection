@@ -1,0 +1,35 @@
+declare @myTable as TABLE   (Customer varchar(50), Month int, Amount int);
+INSERT INTO @myTable (Customer, Month, Amount)
+VALUES
+    ('Tom', 1, 10),
+    ('Kate', 1, 60),
+    ('Ali', 1, 70),
+    ('Tom', 2, 50),
+    ('Kate', 2, 40),
+    ('Tom', 3, 80),
+    ('Ali', 3, 20);
+
+ select dts.Month, cts.Customer, isnull(t.Amount, 0) as Amount
+      , sum(isnull(t.Amount, 0)) over(partition by cts.Customer order by dts.Month) as CumAmt 
+  from ( select distinct customer 
+                from @myTable
+       ) cts 
+  cross join ( select distinct Month 
+                from @myTable 
+             ) dts
+  left join @myTable t
+    on t.Customer = cts.Customer 
+   and t.Month = dts.Month
+ order by dts.Month, cts.Customer;
+
+Month       Customer                                           Amount      CumAmt
+----------- -------------------------------------------------- ----------- -----------
+1           Ali                                                70          70
+1           Kate                                               60          60
+1           Tom                                                10          10
+2           Ali                                                0           70
+2           Kate                                               40          100
+2           Tom                                                50          60
+3           Ali                                                20          90
+3           Kate                                               0           100
+3           Tom                                                80          140

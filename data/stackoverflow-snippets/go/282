@@ -1,0 +1,66 @@
+//:Example #2:
+//:This will also work, but the function taking
+//:the interface needs to know about all 
+//:implementations. This defeats a bit of the
+//:decoupling from implementation that an
+//:interface offers, but if you are just using
+//:interfaces for polymorphism, it's probably
+//:an okay way to go. (opinion)
+package main;
+import ""fmt"";
+
+func main()(){
+
+    //:Will succeed:
+    var OBJ_OK *IMPLMENTS_INTERFACE_01 = 
+             &( IMPLMENTS_INTERFACE_01{} );
+    TakesInterface( OBJ_OK );
+
+    //:Will fail:
+    var NOT_OK *IMPLMENTS_INTERFACE_01 = nil;
+    TakesInterface( NOT_OK );
+}
+
+func TakesInterface( hasDoThing MyInterface ){
+
+    //:THIS WILL NOT WORK:
+    if(nil==hasDoThing){
+        panic(""[This_Error_Message_Will_Never_Happen]"");
+    }
+
+    //:TYPE SWITCH TO THE RESCUE:
+    switch v := hasDoThing.(type){
+
+        case (*IMPLMENTS_INTERFACE_01): 
+        if(nil==v){ panic(""[Nil_PTR_01]""); }
+
+        case (*IMPLMENTS_INTERFACE_02): 
+        if(nil==v){ panic(""[Nil_PTR_02]""); }
+
+        case (*IMPLMENTS_INTERFACE_03): 
+        if(nil==v){ panic(""[Nil_PTR_03]""); }
+
+        default: 
+            panic(""[UnsupportedInterface]"");
+    }
+
+    hasDoThing.DoThing();
+
+}
+
+type IMPLMENTS_INTERFACE_01 struct{};
+type IMPLMENTS_INTERFACE_02 struct{};
+type IMPLMENTS_INTERFACE_03 struct{};
+func (f *IMPLMENTS_INTERFACE_01)DoThing()(){
+    fmt.Println( ""DoingTheThing_01"" );
+}
+func (f *IMPLMENTS_INTERFACE_02)DoThing()(){
+    fmt.Println( ""DoingTheThing_02"" );
+}
+func (f *IMPLMENTS_INTERFACE_03)DoThing()(){
+    fmt.Println( ""DoingTheThing_03"" );
+}
+
+type MyInterface interface{
+    DoThing()()
+}

@@ -1,0 +1,49 @@
+$ cat test.cxx
+#include ""filters.h""
+#include ""files.h""
+#include ""modes.h""
+#include ""aes.h""
+#include ""hex.h""
+
+#include <iostream>
+
+int main()
+{
+    using namespace CryptoPP;
+    // Key and iv are stored at the head of the file
+    SecByteBlock key(16), iv(16);
+    FileSource fs(""message.enc"", false /* DO NOT Pump All */);
+
+    // Attach new filter
+    ArraySink ak(key, key.size());
+    fs.Detach(new Redirector(ak));
+    fs.Pump(16);  // Pump first 16 bytes
+
+    // Attach new filter
+    ArraySink av(iv, iv.size());
+    fs.Detach(new Redirector(av));
+    fs.Pump(16);  // Pump next 16 bytes
+
+    CTR_Mode<AES>::Decryption decryptor;
+    decryptor.SetKeyWithIV(key, key.size(), iv, iv.size());
+
+    // Detach previously attached filter, attach new filter
+    ByteQueue queue;
+    fs.Detach(new StreamTransformationFilter(decryptor, new Redirector(queue)));
+    fs.PumpAll();  // Pump remainder of bytes
+
+    std::cout << ""Key: "";
+    StringSource(key, key.size(), true, new HexEncoder(new FileSink(std::cout)));
+    std::cout << std::endl;
+
+    std::cout << ""IV: "";
+    StringSource(iv, iv.size(), true, new HexEncoder(new FileSink(std::cout)));
+    std::cout << std::endl;
+
+    std::cout << ""Message: "";
+    HexEncoder hex(new FileSink(std::cout));
+    queue.TransferTo(hex);
+    std::cout << std::endl;
+
+    return 0;
+}

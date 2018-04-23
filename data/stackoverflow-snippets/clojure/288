@@ -1,0 +1,19 @@
+(defn translate [users]
+  (letfn [(choose-translation [translations]
+            (let [applicable (filter #(= (:locale %) (get-locale))
+                                     translations)]
+              (when (= 1 (count applicable))
+                (:content (first applicable)))))
+          (translate-update [update]
+            (-> update
+                (assoc :content (or (choose-translation (:translations update))
+                                    (:content update)))
+                (dissoc :translations)))]
+    (for [user users]
+      (update user :incidents
+              (fn [incidents]
+                (for [incident incidents]
+                  (update incident :updates
+                          (fn [updates]
+                            (for [update updates]
+                              (translate-update update))))))))))

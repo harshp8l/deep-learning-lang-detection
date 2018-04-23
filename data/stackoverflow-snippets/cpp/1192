@@ -1,0 +1,56 @@
+struct T;
+extern T acquire_T();
+extern void release_T(T);
+
+class THandle
+{
+    T handle;
+public:
+    THandle() 
+      : handle(acquire_T()) {}
+    ~THandle() { release_T(handle); }
+    THandle(const THandle &) = delete;
+    THandle(THandle && other) 
+      : handle(other.handle) 
+    { other.handle = {}; }
+    THandle & operator=(const THandle &) = delete;
+    THandle & operator=(THandle && other)
+    { std::swap(handle, other.handle); }
+}
+
+class A
+{
+    std::string nameParent = ""A"";
+    std::size_t bufferSizeParent = 0;
+    THandle tParent;
+
+public:
+    A() {}
+    A(std::string tNameParent, std::size_t tBufferSizeParent) : nameParent(tNameParent), bufferSizeParent(tBufferSizeParent)
+    { }
+
+    virtual ~A() = default;
+    A(const A &) = default;
+    A(A &&) = default;
+    A & operator=(const A &) = default;
+    A & operator=(A &&) = default;
+
+    virtual string getName()                    { return nameParent; }
+    virtual void setName(const string name)     { nameParent = name; }
+};
+
+class B : public A
+{
+    std::string nameChild = ""B"";
+    std::size_t bufferSizeChild = 0;
+    THandle tChild;
+
+public:
+    B() {}
+    B(string tNameChild, string tNameParent, size_t tBufferSizeChild, size_t tBufferSizeParent) 
+    : A(tNameParent, tBufferSizeParent), nameChild(tNameChild), bufferSizeChild(tBufferSizeChild), bufferChild(std::make_unique(tBufferSizeChild))
+    { }
+
+    virtual string getName() override final             { return nameChild; }
+    virtual void setName(const string name) override final  { nameChild = name; }
+};

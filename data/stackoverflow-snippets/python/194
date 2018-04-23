@@ -1,0 +1,24 @@
+from tasks.models import Task
+from tasks.serializers import TaskSerializer
+
+from rest_framework.generics import ListAPIView
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.renderers import CoreJSONRenderer
+
+
+class CustomRendererView:
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    @property
+    def renderer_classes(self):
+        renderers = super(ListTask, self).renderer_classes
+
+        if not self.request.user.is_staff:
+            renderers = [CoreJSONRenderer]
+
+        return renderers
+
+
+class ListTask(CustomRendererView, ListAPIView):
+    queryset = Task.objects.all()
+    serializer_class = FullTaskSerializer

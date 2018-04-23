@@ -1,0 +1,30 @@
+object DF {
+
+  def main(args: Array[String]): Unit = {
+
+    val mapper: ObjectMapper = new ObjectMapper
+    mapper.registerModule(DefaultScalaModule)
+
+    val df = Seq(
+      (""ac2"", Map(""c2"" -> 1, ""b3"" -> 5))
+    ).toDF(""id"", ""map"")
+
+    df.show(false)
+    //output
+    // +---+---------------------+
+    // |id |map                  |
+    // +---+---------------------+
+    // |ac2|Map(c2 -> 1, b3 -> 5)|
+    // +---+---------------------+
+    val getByteArray = udf((map: Map[String, Int]) => mapper.writeValueAsBytes(map))
+
+    df.withColumn(""bytearray"", getByteArray($""map"")).show(false)
+
+    //output
+    // +---+---------------------+----------------------------------------------+
+    // |id |map                  |bytearray                                     |
+    // +---+---------------------+----------------------------------------------+
+    // |ac2|Map(c2 -> 1, b3 -> 5)|[7B 22 63 32 22 3A 31 2C 22 62 33 22 3A 35 7D]|
+    // +---+---------------------+----------------------------------------------+
+  }
+}

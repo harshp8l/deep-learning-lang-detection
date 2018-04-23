@@ -1,0 +1,20 @@
+SELECT patientId,
+       firstName,
+       NumAppt,
+       CASE NumAppt
+         WHEN MinAppt
+         THEN 'Least'
+         ELSE 'Most'
+       END AS category
+FROM   (
+  SELECT p.patientId,
+         p.firstName,
+         Count(a.appId)              AS NumAppt,
+         MAX(Count(a.appId)) OVER () AS MaxAppt,
+         MIN(Count(a.appId)) OVER () AS MinAppt
+  FROM   Patient p
+         LEFT OUTER JOIN Appointment a
+         ON ( p.patientID = a.patientId )
+  GROUP  BY p.patientId, p.firstName
+)
+WHERE NumAppt IN ( MinAppt, MaxAppt );

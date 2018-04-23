@@ -1,0 +1,72 @@
+package main
+
+import (
+    ""log""
+    ""time""
+
+    mgo ""gopkg.in/mgo.v2""
+    ""gopkg.in/mgo.v2/bson""
+)
+
+const (
+    databaseString = """"
+)
+
+var db DataStore
+
+type DataStore struct {
+    Session *mgo.Session
+}
+
+
+// database
+func (ds *DataStore) ConnectToDB() {
+
+    mongoDBDialInfo := &mgo.DialInfo{
+        Addrs:   []string{""localhost:27017""},
+        Timeout: 1 * time.Hour,
+    }
+
+    sess, err := mgo.DialWithInfo(mongoDBDialInfo)
+    if err != nil {
+        sess.Refresh()
+        panic(err)
+    }
+    sess.SetMode(mgo.Monotonic, true)
+    db.Session = sess
+}
+
+// J is the expected mongo return object
+type J struct {
+    ID bson.ObjectId `bson:""_id,omitempty"" json:""_id""`
+    // example data below
+    Status string `bson:""status"" json:""status""`
+}
+
+func init() {
+    db.ConnectToDB()
+}
+
+func main() {
+    colectionString := """"
+    // probably best if this was a mapped mgo struct see above
+    // var j bson.M
+
+    var j J
+
+    // your orignal code
+    // I don't know why you are using $eq couldn't you just do bson.M{""repair"":""ac""}, and bson.M{""repair"":""tv""}
+    conditions := bson.M{""name"": bson.M{""$regex"": ""me""},
+        ""$or"": []bson.M{
+            bson.M{""repair"": bson.M{""$eq"": ""ac""}},
+        },
+        ""$and"": []bson.M{
+            bson.M{""repair"": bson.M{""$eq"": ""tv""}},
+            bson.M{""phone"": bson.M{""$gte"": 1091, ""$lte"": 1100}},
+        }}
+
+    err := db.Session.DB(databaseString).C(colectionString).Find(conditions).Sort(""phone"").Limit(20).All(&j)
+    if err != nil {
+        log.Fatal(err)
+    }
+}

@@ -1,0 +1,16 @@
+private function mergeConfigs(array $configs): array
+{
+    $default = array_shift($configs);
+    return array_reduce($configs, function (array $result, array $config) {
+        foreach ($config as $key => $val) {
+            if (!isset($result[$key]) || !is_array($result[$key])) {
+                $result[$key] = $val;
+                continue;
+            }
+            $result[$key] = array_keys($result[$key]) === range(0, count($result[$key]) - 1)
+                ? array_unique(array_merge($result[$key], $val))
+                : $this->mergeConfigs([$result[$key], $val]);
+        }
+        return $result;
+    }, $default);
+}

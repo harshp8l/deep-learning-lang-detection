@@ -1,0 +1,44 @@
+def getStreak(df: DataFrame, fromDate: Long): DataFrame = {
+  val calcStreak = udf((dateList: Seq[Long]) => {
+    if (!dateList.contains(fromDate))
+      0
+    else {
+      val relevantDates = dateList.sortBy{- _ }             // Order the dates descending
+        .dropWhile(_ != fromDate)        // And drop everything until we find the starting day we are interested in
+      if (relevantDates.length == 1)     // If there's only one day left, it's a one day streak
+        1
+      else                               // Otherwise, let's count the streak length (this works if no dates are left, too - but not with only 1 day)
+        relevantDates.sliding(2)         // Take days by pairs
+          .takeWhile{twoDays => twoDays(1) == twoDays(0) - 1}   // While the pair is of consecutive days
+          .length+1                      // And the streak will be the number of consecutive pairs + 1 (the initial day of the streak)
+    }
+  })
+  df.groupBy($""downloadId"").agg(collect_list($""date"").as(""dates"")).select($""downloadId"", calcStreak($""dates"").as(""streak""))
+}
+val streaks = getStreak(relevantData, lastDate.toEpochDay)
+streaks.show()
+
++------------+--------+
+| downloadId | streak |
++------------+--------+
+|       8086 |      0 |
+|       9852 |      0 |
+|       7253 |      0 |
+|       9376 |      0 |
+|       7833 |      0 |
+|       9465 |      1 |
+|       7880 |      0 |
+|       9900 |      1 |
+|       7993 |      0 |
+|       9427 |      1 |
+|       8389 |      1 |
+|       8638 |      1 |
+|       8592 |      1 |
+|       6397 |      0 |
+|       7754 |      1 |
+|       7982 |      0 |
+|       7554 |      0 |
+|       6357 |      1 |
+|       7340 |      0 |
+|       6336 |      0 |
++------------+--------+

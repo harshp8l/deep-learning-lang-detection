@@ -1,0 +1,41 @@
+func GetID() uint64 {
+
+    appIdLock.Lock()
+    defer appIdLock.Unlock()
+
+    // Added  + os.O_CREATE to create the file if it doesn't exist.
+    f, err := os.OpenFile(idPath, os.O_RDWR + os.O_CREATE, 0666)
+    if err != nil {
+        fmt.Println(err)
+        return 0
+    }
+    defer f.Close()
+
+    // Know file content beforehand so I allocate a suitable bytes slice.
+    fileStat, err := f.Stat()
+    if err != nil {
+        fmt.Println(err)
+        return 0
+    }
+
+
+    buffer := make([]byte, fileStat.Size())
+
+    _, err = f.Read(buffer)
+    if err != nil {
+        fmt.Println(err)
+        return 0
+    }
+
+    s, _ := strconv.ParseUint(string(buffer), 10, 64)
+    s += 1
+
+    // The Magic is here ~ Writes bytes at 0 index of the file.
+    _, err = f.WriteAt([]byte(strconv.FormatUint(s, 10)), 0)
+    if err != nil {
+        fmt.Println(err)
+        return 0
+    }
+
+    return s
+}

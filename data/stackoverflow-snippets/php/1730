@@ -1,0 +1,17 @@
+$facebook_users = \App\Models\SocialLogins::join(
+    'users',
+    'users.id',
+    '=',
+    'social_logins.created_by'
+)
+->where(['users.active' => 1,'source' => 1, 'user_type' => 3])
+->whereBetween('users.created_utc',[$last_month,$today])
+->groupBy(DB::raw('date(created_utc)'))
+->selectRaw('date(created_utc) as date, count(1) as cnt')
+->orderBy('date', 'asc')
+->get();
+
+foreach ($facebook_users as $facebook_user) {
+    $date = $facebook_user->date;
+    $cnt = $facebook_user->cnt;
+}

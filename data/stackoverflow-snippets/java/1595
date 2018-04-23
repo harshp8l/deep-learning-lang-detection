@@ -1,0 +1,43 @@
+public class TaggedUnionBuilder<A, B> {
+    private final Class<A> classA;
+    private final Class<B> classB;
+
+    public TaggedUnionBuilder(Class<A> classA, Class<B> classB) {
+        this.classA = classA;
+        this.classB = classB;
+    }
+
+    TaggedUnion left(A a) {
+        return new TaggedUnion(true, a);
+    }
+
+    TaggedUnion right(B b) {
+        return new TaggedUnion(false, b);
+    }
+
+    public class TaggedUnion {
+        private final boolean isClassA;
+        private final Object  value;
+
+        private TaggedUnion(boolean isClassA, Object value) {
+            this.isClassA = isClassA;
+            this.value = value;
+        }
+
+        A left() {
+            return classA.cast(value);
+        }
+
+        B right() {
+            return classB.cast(value);
+        }
+
+        boolean isA() {
+            return isClassA;
+        }
+
+        boolean isB() {
+            return !isClassA;
+        }
+    }
+}

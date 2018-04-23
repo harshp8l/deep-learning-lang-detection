@@ -1,0 +1,19 @@
+package modules
+
+import play.api.{Configuration, Environment}
+import play.api.inject.{Binding, BuiltinModule}
+import play.api.libs.Files
+
+class MyAppModule extends BuiltinModule {
+
+  override def bindings(env: Environment, configuration: Configuration): Seq[Binding[_]] = {
+    val overrides = List(
+      bind[Files.TemporaryFileCreator].to[CustomTemporaryFileCreator]
+    )
+
+    def isOverride(binding: Binding[_]): Boolean = overrides.exists(_.key.clazz == binding.key.clazz)
+
+    overrides ++ super.bindings(env,configuration).filterNot(isOverride)
+  }
+
+}

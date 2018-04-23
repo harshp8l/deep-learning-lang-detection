@@ -1,0 +1,19 @@
+let (|Mapping|Scalar|Sequence|) (yamlNode: YamlNode) =  
+    match yamlNode.NodeType with    
+    | YamlNodeType.Mapping  -> 
+        let node = yamlNode :?> YamlMappingNode
+        let mapping = 
+            node.Children 
+            |> Seq.map (fun kvp -> 
+                let keyNode = kvp.Key :?> YamlScalarNode
+                keyNode.Value, kvp.Value) 
+            |> Map.ofSeq            
+        Mapping (node, mapping)
+    | YamlNodeType.Scalar   -> 
+        let node = yamlNode :?> YamlScalarNode
+        Scalar (node, node.Value)
+    | YamlNodeType.Sequence -> 
+        let node = yamlNode :?> YamlSequenceNode
+        Sequence (node, List.ofSeq node.Children)
+    | YamlNodeType.Alias 
+    | _ -> failwith ""¯\_(ツ)_/¯""

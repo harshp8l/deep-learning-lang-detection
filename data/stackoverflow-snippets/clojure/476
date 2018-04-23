@@ -1,0 +1,40 @@
+ (def n (atom 0))
+ (def init-len (atom 0))
+ (def final-result (atom nil))
+
+ (defprotocol StateFunction
+   (init [this])
+   (iter [this])
+   (reset [this]))
+
+ (defrecord ResultFunction [coll]
+   StateFunction
+   (init [this]
+         (let [len (count coll)]
+           (do (reset! n len)
+               (reset! init-len len)
+               (reset! bcoll coll))))
+   (iter [this]
+         (let [delta (inc (- @init-len @n))]
+           (if (nil? @final-result)
+             (loop [base coll
+                    result '()
+                    i 0]
+               (cond (>= i delta)
+                       (let [_  (swap! n dec)
+                             _ (if (zero? @n) (reset! final-result result))]
+                         result)
+                     :else
+                       (recur (rest base) (conj result (take @n base)) (inc i))))
+             @final-result)))
+   (reset [this]
+          (do (reset! n 0) (reset! init-len 0) (reset! bcoll []) (reset! final-result nil))))
+
+ (defn create-func [coll]
+   (let [my-fun (map->ResultFunction {:coll coll})]
+     (init my-fun)
+     my-fun))
+
+ (def my-fun (create-func [1 2 3 4 5 6 7 8 9]))
+ (iter my-fun) ;; gives next list of partitions, result at n = 1 is stored to avoir redo
+ (reset my-fun) ;; resets atoms, you can next init them to restart the cycle

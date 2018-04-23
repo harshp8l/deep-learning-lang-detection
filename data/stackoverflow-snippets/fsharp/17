@@ -1,0 +1,16 @@
+    services.AddAuthentication(fun options ->
+        options.DefaultScheme <- JwtBearerDefaults.AuthenticationScheme
+        options.DefaultAuthenticateScheme <- JwtBearerDefaults.AuthenticationScheme 
+        options.DefaultChallengeScheme <- JwtBearerDefaults.AuthenticationScheme
+    ).AddJwtBearer(fun options ->
+        options.TokenValidationParameters <- TokenValidationParameters (
+            ValidateAudience = false,
+            ValidateIssuer = false,
+            ValidateIssuerSigningKey = false,
+            IssuerSigningKey = SymmetricSecurityKey(Encoding.UTF8.GetBytes(""the secret that needs to be at least 16 characeters long for HmacSha256"")), 
+            ValidateLifetime = false, //validate the expiration and not before values in the token
+            ClockSkew = TimeSpan.FromMinutes(5.0), //5 minute tolerance for the expiration date
+            ValidateActor = false,
+            ValidateTokenReplay = false
+        )
+    ) |> ignore

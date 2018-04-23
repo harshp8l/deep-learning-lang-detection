@@ -1,0 +1,19 @@
+#include <memory>
+#include <boost/iterator/transform_iterator.hpp>
+#include <vector>
+
+int main ()
+{
+    auto transFunc = [](const std::unique_ptr<int>& m) -> double { return (*m) * 2; }; 
+
+    std::vector<std::unique_ptr<int>> v;
+    v.push_back(std::make_unique<int>(0));
+    v.push_back(std::make_unique<int>(1));
+    v.push_back(std::make_unique<int>(2));
+    v.push_back(std::make_unique<int>(3));
+    v.push_back(std::make_unique<int>(4));
+
+    auto first = boost::make_transform_iterator(begin(v), std::cref(transFunc));
+    auto last  = boost::make_transform_iterator(end(v), std::cref(transFunc));  
+    auto i = lower_bound(first, last, 5.);
+}

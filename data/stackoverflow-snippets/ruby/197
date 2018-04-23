@@ -1,0 +1,31 @@
+- /model/address.rb
+   class Address < ApplicationRecord
+      #any association/validations here
+
+      geocoded_by :full_street_address
+
+      #by default it will save full address to address field. 
+      reverse_geocoded_by :latitude, :longitude do |obj,results|
+        if geo = results.first
+            #customize as you want
+              obj.street  = geo.address.split(',')[0]
+              obj.city    = geo.city
+              obj.zip     = geo.postal_code
+              obj.state   = geo.state
+        end
+      end
+
+      def full_street_address
+         self.street + self.city + self.country
+      end
+   end
+
+- /model/address/with_address.rb
+   class Address::WithAddress < Address
+      after_validation :geocode
+   end
+
+- /model/address/with_lat_lng.rb
+   class Address::WithLatLng < Address
+     after_validation :reverse_geocode
+   end

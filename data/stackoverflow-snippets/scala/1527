@@ -1,0 +1,25 @@
+import play.api.libs.json._
+
+case class SomeItem(a: String, b: String)
+
+object SomeItem {
+  implicit val codec = Json.format[SomeItem]
+}
+
+case class SomeOtherItem(a: String, b: String, c: String)
+
+object SomeOtherItem {
+  implicit val codec = Json.format[SomeOtherItem]
+}
+
+// ...
+
+object PlayJson extends App {
+  def prepareResponse[T](response: T)(implicit tjs: Writes[T]): String = {
+    Json.stringify(JsObject(Map(""message"" -> Json.toJson(response))))
+  }
+
+  println(prepareResponse(SomeItem(""aa"", ""bb"")))
+  println(prepareResponse(SomeOtherItem(""aa"", ""bb"", ""cc"")))
+  // ...
+}

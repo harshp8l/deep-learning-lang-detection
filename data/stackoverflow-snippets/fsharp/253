@@ -1,0 +1,79 @@
+// A simplistic push-pipeline
+type Receiver<'T> = 'T -> bool
+type Stream<'T>   = Receiver<'T> -> unit
+
+module Stream =
+  let inline init count gen : Stream<_> =
+    fun r ->
+      let rec loop i =
+        if i < count && r (gen i) then
+          loop (i + 1)
+      loop 0
+
+  let inline sum (s : Stream<_>) : _ =
+    let mutable a = LanguagePrimitives.GenericZero<_>
+    s (fun v -> a <- a + v; true)
+    a
+
+let rnd = System.Random ()
+let gen = fun _ -> rnd.NextDouble ()
+
+let clock =
+  let sw = System.Diagnostics.Stopwatch ()
+  sw.Start ()
+  fun () -> sw.ElapsedMilliseconds
+
+open System
+
+let timeIt n a = 
+  let r                 = a ()  // Warm-up
+
+  GC.Collect (2, GCCollectionMode.Forced, true)
+
+  let inline cc g       = GC.CollectionCount g
+  let bcc0, bcc1, bcc2  = cc 0, cc 1, cc 2
+  let before            = clock ()
+
+  for i = 1 to n do
+    a () |> ignore
+
+  let after             = clock ()
+  let acc0, acc1, acc2  = cc 0, cc 1, cc 2
+
+  after - before, acc0 - bcc0, acc1 - bcc1, acc2 - bcc2, r
+
+open System.Linq
+
+[<EntryPoint>]
+let main argv =
+  let count = 10000000
+  let outers =
+    [|
+      1000000
+      10000
+      100  
+      1
+    |]
+
+  for outer in outers do
+    let inner = count / outer
+    let testCases = 
+      [|
+        ""Push stream""       , fun ()  -> Stream.init inner gen                  |> Stream.sum
+        ""LINQ""              , fun ()  -> (Enumerable.Range (0, inner)).Select(gen).Sum()
+        ""Seq.init""          , fun ()  -> Seq.init    inner gen                  |> Seq.sum
+        ""Seq comprehension"" , fun ()  -> seq { for i in 0..inner - 1 -> gen i } |> Seq.sum
+        ""Tail-recursion""    , fun ()  -> 
+          let rec loop a i =
+            if i < inner then
+              loop (a + gen i) (i + 1)
+            else
+              a
+          loop 0. 0
+      |]
+    printfn ""Using outer = %A, inner = %A, total is: %A"" outer inner count
+    for nm, a in testCases do
+      printfn ""  Running test case: %A"" nm
+      let tm, cc0, cc1, cc2, r = timeIt outer a
+      printfn ""   it took %A ms (%A, %A, %A), result is: %A"" tm cc0 cc1 cc2 r
+  0

@@ -1,0 +1,16 @@
+member x.Bind
+    (workflow: WorkflowSource<'Env, 'OldResult>,
+     selector: 'OldResult -> WorkflowSource<'Env, 'NewResult>) : WorkflowSource<'Env, 'NewResult> =
+     (fun env -> (selector (workflow env) env))
+member x.Bind
+    (workflow: Workflow<'Env, 'OldResult>,
+     selector: 'OldResult -> WorkflowSource<'Env, 'NewResult>) 
+     : Workflow<'Env, 'NewResult> =
+     fun env -> <@ selector %(workflow env) %env @>
+
+// This bind is where the trouble is
+member x.Bind
+    (workflow: WorkflowSource<'Env, 'OldResult>,
+     selector: 'OldResult -> Workflow<'Env, 'NewResult>) 
+     : Workflow<'Env, 'NewResult> =
+     fun env -> <@ %(selector (workflow %env) env) @>

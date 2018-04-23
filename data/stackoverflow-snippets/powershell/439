@@ -1,0 +1,24 @@
+#Set source Directory
+$SourcePath = ""D:\CsvFiles""
+
+#Create new subdirectory 
+$SubDir = New-Item -Path $SourcePath -Name NewCsv -ItemType Directory
+
+# Get all files with csv extension
+$CsvFiles = Get-ChildItem -Path $SourcePath -filter ""*.csv""
+
+#Loop through files
+foreach ($File in $CsvFiles)
+{
+   #Import the csv file
+   $Csv = Import-Csv -Path $File.FullName
+
+   #Create Destination Path for new csv file based on file name
+   $Des = Join-Path -Path $SubDir.FullName -ChildPath $File.Name
+
+   #remove first and last row from csv but keep column header
+   $NewCsv = $Csv | where {$_ -ne $Csv[-1] -and $_ -ne $Csv[0]}
+
+   #Save to new file
+   $NewCsv | Export-Csv -Path $Des
+}

@@ -1,0 +1,161 @@
+template <typename T, typename D = std::default_delete<T>>
+class unique_ptr_propagate_cv;
+
+namespace detail
+{
+    template <typename T, typename D>
+    std::unique_ptr<T, D> const& get_underlying_unique_ptr(unique_ptr_propagate_cv<T, D> const& object)
+    {
+        return object.ptr;
+    }
+}
+
+template <typename T, typename D>
+class unique_ptr_propagate_cv
+{
+    template <typename T_, typename D_>
+    friend std::unique_ptr<T_, D_> const& detail::get_underlying_unique_ptr<T_, D_>(unique_ptr_propagate_cv<T_, D_> const&);
+
+    using base = std::unique_ptr<T, D>;
+    base ptr;
+public:
+    template <typename...Ts>
+    unique_ptr_propagate_cv(Ts&&...args) noexcept : ptr(std::forward<Ts>(args)...) {}
+
+    using element_type           = typename base::element_type;
+    using deleter_type           = typename base::deleter_type;
+
+    using pointer                = element_type                *;
+    using pointer_const          = element_type const          *;
+    using pointer_volatile       = element_type       volatile *;
+    using pointer_const_volatile = element_type const volatile *;
+
+    using reference                = element_type                &;
+    using reference_const          = element_type const          &;
+    using reference_volatile       = element_type       volatile &;
+    using reference_const_volatile = element_type const volatile &;
+
+    pointer                get()                noexcept { return ptr.get(); }
+    pointer_const          get() const          noexcept { return ptr.get(); }
+    pointer_volatile       get()       volatile noexcept { return ptr.get(); }
+    pointer_const_volatile get() const volatile noexcept { return ptr.get(); }
+
+    pointer                operator->()                noexcept { return ptr.get(); }
+    pointer_const          operator->() const          noexcept { return ptr.get(); }
+    pointer_volatile       operator->()       volatile noexcept { return ptr.get(); }
+    pointer_const_volatile operator->() const volatile noexcept { return ptr.get(); }
+
+    reference                operator[](size_t index)                noexcept { return ptr.operator[](index); }
+    reference_const          operator[](size_t index) const          noexcept { return ptr.operator[](index); }
+    reference_volatile       operator[](size_t index)       volatile noexcept { return ptr.operator[](index); }
+    reference_const_volatile operator[](size_t index) const volatile noexcept { return ptr.operator[](index); }
+
+    reference                operator*()                noexcept { return ptr.operator*(); }
+    reference_const          operator*() const          noexcept { return ptr.operator*(); }
+    reference_volatile       operator*()       volatile noexcept { return ptr.operator*(); }
+    reference_const_volatile operator*() const volatile noexcept { return ptr.operator*(); }
+
+    template <typename T_>
+    unique_ptr_propagate_cv& operator=(T_&& rhs)
+    {
+        return static_cast<unique_ptr_propagate_cv&>(ptr.operator=(std::forward<T_>(rhs)));
+    }
+
+    decltype(auto) get_deleter()            const noexcept { return ptr.get_deleter(); }
+                   operator bool()          const noexcept { return ptr.operator bool(); }
+    decltype(auto) reset(pointer ptr = pointer()) noexcept {        get_base_nonconst().reset(ptr); }
+    decltype(auto) release()                      noexcept { return get_base_nonconst().release();  }
+
+};
+
+template <typename T>
+struct is_unique_ptr_propagate_cv : std::false_type {};
+
+template <typename T, typename D>
+struct is_unique_ptr_propagate_cv<unique_ptr_propagate_cv<T, D>> : std::true_type {};
+
+namespace detail
+{
+    inline nullptr_t const& get_underlying_unique_ptr(nullptr_t const& object)
+    {
+        return object;
+    }
+
+    template <typename T, typename D>
+    std::unique_ptr<T, D> const& get_underlying_unique_ptr(std::unique_ptr<T, D> const& object)
+    {
+        return object;
+    }
+}
+
+template <typename L, typename R
+    , ENABLE_IF(
+           is_unique_ptr_propagate_cv<remove_cvref_t<L>>::value
+        || is_unique_ptr_propagate_cv<remove_cvref_t<R>>::value
+    )
+>
+bool operator==(L&& lhs, R&& rhs) noexcept
+{
+    return detail::get_underlying_unique_ptr(std::forward<L>(lhs))
+        == detail::get_underlying_unique_ptr(std::forward<R>(rhs));
+}
+
+template <typename L, typename R
+    , ENABLE_IF(
+           is_unique_ptr_propagate_cv<remove_cvref_t<L>>::value
+        || is_unique_ptr_propagate_cv<remove_cvref_t<R>>::value
+    )
+>
+auto operator!=(L&& lhs, R&& rhs) noexcept
+{
+    return detail::get_underlying_unique_ptr(std::forward<L>(lhs))
+        != detail::get_underlying_unique_ptr(std::forward<R>(rhs));
+}
+
+template <typename L, typename R
+    , ENABLE_IF(
+           is_unique_ptr_propagate_cv<remove_cvref_t<L>>::value
+        || is_unique_ptr_propagate_cv<remove_cvref_t<R>>::value
+    )
+>
+bool operator<=(L&& lhs, R&& rhs) noexcept
+{
+    return detail::get_underlying_unique_ptr(std::forward<L>(lhs))
+        <= detail::get_underlying_unique_ptr(std::forward<R>(rhs));
+}
+
+template <typename L, typename R
+    , ENABLE_IF(
+           is_unique_ptr_propagate_cv<remove_cvref_t<L>>::value
+        || is_unique_ptr_propagate_cv<remove_cvref_t<R>>::value
+    )
+>
+bool operator>=(L&& lhs, R&& rhs) noexcept
+{
+    return detail::get_underlying_unique_ptr(std::forward<L>(lhs))
+        >= detail::get_underlying_unique_ptr(std::forward<R>(rhs));
+}
+
+template <typename L, typename R
+    , ENABLE_IF(
+           is_unique_ptr_propagate_cv<remove_cvref_t<L>>::value
+        || is_unique_ptr_propagate_cv<remove_cvref_t<R>>::value
+    )
+>
+bool operator<(L&& lhs, R&& rhs) noexcept
+{
+    return detail::get_underlying_unique_ptr(std::forward<L>(lhs))
+         < detail::get_underlying_unique_ptr(std::forward<R>(rhs));
+}
+
+template <typename L, typename R
+    , ENABLE_IF(
+           is_unique_ptr_propagate_cv<remove_cvref_t<L>>::value
+        || is_unique_ptr_propagate_cv<remove_cvref_t<R>>::value
+    )
+>
+bool operator >(L&& lhs, R&& rhs) noexcept
+{
+    return detail::get_underlying_unique_ptr(std::forward<L>(lhs))
+         > detail::get_underlying_unique_ptr(std::forward<R>(rhs));
+}

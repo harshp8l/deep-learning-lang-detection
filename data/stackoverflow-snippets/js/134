@@ -1,0 +1,29 @@
+static async create(payload) {
+    await Joi.validate(payload.foo, Joi
+      .string()
+      .required());
+
+    await Joi.validate(payload.discriminatorArray, Joi
+      .array()
+      .min(1)
+      .required());
+
+    const mapped = item => new Promise((resolve, reject) => {
+      const baz = Joi.validate(item.baz, Joi
+        .string()
+        .valid(['discriminatorValue1', 'discriminatorValue2'])
+        .required());
+
+      baz.then(resolve).catch(reject);
+
+      // and so on...
+    });
+
+    const result = await Promise
+      .all(payload.discriminatorArray.map(mapped))
+      .then(response => response)
+      .catch(err => err);
+
+    if (result.ValidationError) return new Error(result.ValidationError);
+    return payload;
+  }

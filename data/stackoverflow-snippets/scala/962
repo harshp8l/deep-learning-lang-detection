@@ -1,0 +1,16 @@
+val tupleMap = list.groupBy(identity).mapValues(_.size)
+// tupleMap: scala.collection.immutable.Map[(String, Int),Int] = Map(
+//   (b,2) -> 1, (a,2) -> 1, (c,4) -> 3, (a,1) -> 2, (b,3) -> 2
+// )
+
+val t1Map = list.groupBy(_._1).mapValues(_.size)
+// t1Map: scala.collection.immutable.Map[String,Int] = Map(b -> 3, a -> 3, c -> 3)
+
+val t1MapMax = tupleMap.groupBy(_._1._1).mapValues(_.map(_._2).max)
+// t1MapMax: scala.collection.immutable.Map[String,Int] = Map(b -> 2, a -> 2, c -> 3)
+
+val resultMap = tupleMap.filter{ case (k, v) => v == t1MapMax(k._1) }.
+  map{ case (k, v) => (k._1, k._2, v.toDouble / t1Map(k._1) ) }
+// resultMap: scala.collection.immutable.Iterable[(String, Int, Double)] = List(
+//   (c,4,1.0), (a,1,0.6666666666666666), (b,3,0.6666666666666666)
+// )

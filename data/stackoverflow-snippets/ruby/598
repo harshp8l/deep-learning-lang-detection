@@ -1,0 +1,27 @@
+class KlassesController < ApplicationController
+  before_action :fix_params, only: [:create, :update]
+...
+
+  private
+
+    def klass_params
+      params.require(:klass).permit(:name, :teacher, :day, :start, :duration)
+    end
+
+    def fix_params
+      if params[:klass].blank?
+        # parent not provided
+        return
+      end
+      start_hour = params[:klass].delete(:start_hour)
+      start_mins = params[:klass].delete(:start_mins)
+
+      if start_hour.blank? || start_mins.blank?
+        # consider handling this case
+      else
+        params[:klass][:start] = start_hour.to_i * 60 + start_mins.to_i
+      end
+    end
+
+...
+end

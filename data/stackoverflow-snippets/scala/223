@@ -1,0 +1,16 @@
+override def update(Id: String, jsValue: JsValue): Future[Option[Person]] = {
+  import utils.MongoFormats.dateTimeWriteFormat
+  execFindAndUpdate(
+    _.findAndUpdate(
+      Json.obj(""xyz_ID"" -> id),
+      Json.obj(""$set"" -> (jsValue match {
+        case o: JsObject => o + (""updatedAt"" -> Json.toJson(new DateTime()))
+        case o => o
+      })),
+      fetchNewObject = true
+    )
+  ) map { response =>
+    logger.info(s""MongoDB response: $response"")
+    response.result[Person]
+  }
+}

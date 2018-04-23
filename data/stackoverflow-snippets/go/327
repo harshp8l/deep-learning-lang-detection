@@ -1,0 +1,46 @@
+type Listing struct {                                           
+    WhitelistStatus string  `json:""whitelist_status""`           
+    Children        []Thing `json:""children""`                   
+}                                                               
+
+type T3 struct {                                                
+    Domain              string `json:""domain""`                  
+    CrosspostParentList []struct {                              
+            Domain string `json:""domain""`                       
+    } `json:""crosspost_parent_list""`                            
+}                                                               
+
+type Thing struct {
+    Kind string      `json:""kind""`
+    Data interface{} `json:""data""`
+}
+
+func (t *Thing) UnmarshalJSON(b []byte) error {
+    var step1 struct {
+            Kind string          `json:""kind""`
+            Data json.RawMessage `json:""data""` 
+    }
+
+    if err := json.Unmarshal(b, &step1); err != nil {
+            return err
+    }
+
+    var step2 interface{}
+    switch step1.Kind {
+    case ""Listing"":
+            step2 = &Listing{}
+    case ""t3"":
+            step2 = &T3{}
+    default:
+            return errors.New(""unknown kind: "" + step1.Kind) // or simply ignore
+    }
+
+    if err := json.Unmarshal(b, step2); err != nil {
+            return err
+    }
+
+    t.Kind = step1.Kind
+    t.Data = step2
+
+    return nil
+}

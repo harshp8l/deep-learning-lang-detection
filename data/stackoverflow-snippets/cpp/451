@@ -1,0 +1,70 @@
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+
+struct node
+{
+    int key;
+    node *next;
+} *head = nullptr;
+
+size_t size;
+
+void push_front( node * &head, int key )
+{
+    head = new node { key, head };
+    ++size;
+}
+
+std::ostream & display_list( node * head, std::ostream &os = std::cout  )
+{
+    os << size << "": "";
+
+    for ( const node *current = head; current; current = current->next )
+    {
+        os << current->key << ' ';
+    }
+
+    return os;
+}
+
+void del_dup( node * head )
+{
+    for ( node *first = head; first; first = first->next )
+    {
+        for ( node *current = first; current->next;  )
+        {
+            if ( current->next->key == first->key )
+            {
+                node *tmp = current->next;
+                current->next = current->next->next;
+                delete tmp;
+                --size;
+            }
+            else
+            {
+                current = current->next;
+            }
+        }
+    }
+}
+
+int main() 
+{
+    const size_t N = 10;
+
+    std::srand( ( unsigned int )std::time( nullptr ) );
+
+    for ( size_t i = 0; i < N; i++ )
+    {
+        push_front( head, std::rand() % ( int )N );
+    }
+
+    display_list( head ) << std::endl;
+
+    del_dup( head );
+
+    display_list( head ) << std::endl;
+
+    return 0;
+}

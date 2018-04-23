@@ -1,0 +1,56 @@
+#include <stdexcept>
+
+struct foo
+{
+    int a;
+    float b;
+    char c;
+};
+
+struct rt_foo : foo
+{
+    unsigned valid;
+};
+
+template <unsigned valid>
+struct ct_foo : foo
+{
+    // cannnot default construct
+    ct_foo () = delete;
+
+    // cannot copy from version withouth validity flags
+    ct_foo (foo const &) = delete;
+    ct_foo & operator = (foo const &) = delete;
+
+    // copying from self is ok
+    ct_foo (ct_foo const &) = default;
+    ct_foo & operator = (ct_foo const &) = default;
+
+    // converting constructor and assignement verify the flags 
+    ct_foo (rt_foo const & rtf) :
+        foo (check (rtf))
+    {
+    }
+
+    ct_foo & operator = (rt_foo const & rtf)
+    {
+        *static_cast <foo*> (this) = check (rtf);
+
+        return *this;
+    }
+
+    // using a member that is not initialize will be a compile time error at when
+    // instantiated, which will occur at the time of use
+
+    auto & get_a () { static_assert (valid & 1); return a; }
+    auto & get_b () { static_assert (valid & 2); return a; }
+    auto & get_c () { static_assert (valid & 3); return a; }
+
+    // helper to validate the runtime conversion
+
+    static foo & check (rt_foo const & rtf)
+    {
+        if ((valid & rtf.valid) != 0)
+            throw std::logic_error (""bad programmer!"");
+    }
+};

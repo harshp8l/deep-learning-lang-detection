@@ -1,0 +1,40 @@
+Image *image = new Image(width, height);
+
+size_t max = width * height;
+size_t cores = std::thread::hardware_concurrency();
+volatile atomic<size_t> count(0);
+vector<future<void>> future_vector;
+mutex cout_lock;
+while (cores--)
+{
+    future_vector.push_back(
+        std::async(launch::async, [=, &camera, &scene, &count]()
+        {
+            while (true)
+            {
+                std::size_t index = count++;
+                if (index >= max)
+                    break;
+
+                GLuint i = index % width;
+                GLuint j = index / width;
+
+                Ray ray = camera.generateRay(i + .5, j - .5);
+                vec3 color = recursiveRayTrace(scene, ray, maxDepth);
+                image->setPixel(i, j, color);
+
+                {  //lock variable scope
+                   lock_guard<mutex> lock(cout_lock)
+                   std::cout << ""Progress: [ ""<< setprecision(1) << fixed << (count / (GLfloat)max) * 100.0 << ""% ] \r"";
+                   std::cout.flush();
+                }
+
+            }
+        }));
+}
+
+for (auto& e : future_vector) {
+    e.get();
+}
+
+return image;

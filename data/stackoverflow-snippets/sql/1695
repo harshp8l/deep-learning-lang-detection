@@ -1,0 +1,21 @@
+declare @data table (RequestID varchar(20), CreatedDate datetime, HistoryStatus varchar(20))
+insert into @data values ('CF-0000001','8/26/2009 1:07:01 PM','For Review');
+insert into @data values ('CF-0000001','8/26/2009 1:07:01 PM','Completed');  
+insert into @data values ('CF-0000112','8/26/2009 1:07:01 PM','For Review');   
+insert into @data values ('CF-0000113','8/26/2009 1:07:01 PM','For Review');  
+insert into @data values ('CF-0000114','8/26/2009 1:07:01 PM','Completed');  
+insert into @data values ('CF-0000115','8/26/2009 1:07:01 PM','Completed');
+
+select d1.RequestID,d1.CreatedDate,d1.HistoryStatus 
+from @data d1 
+where d1.HistoryStatus = 'Completed'
+union all 
+select d2.RequestID,d2.CreatedDate,d2.HistoryStatus 
+from @data d2 
+where d2.HistoryStatus = 'For Review' 
+    and d2.RequestID not in (
+        select RequestID 
+        from @data 
+        where HistoryStatus = 'Completed' 
+            and CreatedDate = d2.CreatedDate
+    )

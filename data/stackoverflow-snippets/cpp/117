@@ -1,0 +1,19 @@
+int main(int argc, char *argv[])
+{
+    QCoreApplication a(argc, argv);
+
+    QFuture<void> future = QtConcurrent::run([]() {
+        QSoundEffect effect;
+        QEventLoop loop;
+        effect.setSource(QUrl::fromLocalFile(""C:\\piano2.wav""));
+        effect.setVolume(0.25f);
+        effect.play();
+        QObject::connect(&effect, &QSoundEffect::playingChanged, [&loop]() { qDebug() << ""finished""; loop.exit(); });
+        loop.exec();
+    });
+
+    QTextStream s(stdin);
+    QString value = s.readLine();
+
+    return a.exec();
+}

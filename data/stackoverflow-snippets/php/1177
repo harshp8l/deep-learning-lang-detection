@@ -1,0 +1,33 @@
+ur controller should be like this 
+
+ function reply(){       
+        $insert = $this->Message_model->send_message2();
+        $csrf = $this->security->get_csrf_hash();
+if($this->input->is_ajax_request())
+{
+   header(""Content-type: application/json; charset=utf-8"");
+echo json_encode(array(""data"" => $insert,'csrf'=> $csrf)); 
+}
+
+
+
+
+ur jquery should be this way
+
+var token = data.csrf;
+
+$.ajax({
+    url: '/next/ajax/request/url',
+    type: 'POST',
+    data: { new_data: 'new data to send via post', csrf_token:token },
+    cache: false,
+    success: function(data, textStatus, jqXHR) {
+        // Get new csrf token for next ajax post
+        var new_csrf_token = data.csrf     
+       //Do something with data returned from post request
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      // Handle errors here
+      console.log('ERRORS: ' + textStatus + ' - ' + errorThrown );
+    }
+});

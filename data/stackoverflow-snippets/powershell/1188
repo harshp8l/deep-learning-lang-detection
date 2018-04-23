@@ -1,0 +1,32 @@
+function SetTaskRealTimeStatus()
+{
+
+    param($setID, $pResourceGuid, $pNewStatus)
+
+
+    $url = 'http://server001/myapplication/api/resource/';
+    $urlCombined = $url +  $pResourceGuid + '/task/' + $setID + '/status/' + $pNewStatus;
+
+    Write-Host (""Sending request: $urlCombined"") ;
+
+    # Returns Guid of task history record that is created. Empty guid means db call failed
+    # Invalid inputs will return BadRequest response
+
+    #Used for PowerShell version 2.0
+
+    $WebRequest = [System.Net.WebRequest]::Create(""$urlCombined"")
+    $body = ""$pNewStatus""
+    $encodedContent = [System.Text.Encoding]::UTF8.GetBytes($body)
+    $WebRequest.Method = ""POST""
+    $WebRequest.ContentType = ""application/xml""
+    $WebRequest.UseDefaultCredentials = $true
+    $requestStream = $webRequest.GetRequestStream()
+    $requestStream.Write($encodedContent, 0, $encodedContent.length)  
+    [System.Net.WebResponse] $response = $webRequest.GetResponse();
+    $response.close()
+    $requestStream.Close()
+
+
+    #used for PowerShell Version 3.0 and above
+    #Invoke-RestMethod -Uri $urlCombined -Method Post
+}

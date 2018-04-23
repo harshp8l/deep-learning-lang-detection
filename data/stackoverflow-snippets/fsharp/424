@@ -1,0 +1,76 @@
+let addToInventory newItem inventory =
+    let newBag = inventory.Bag |> Array.append [|newItem|]
+    { inventory with Bag = newBag }
+
+let playerWantsToAutoEquip newItem =
+    // In real game, you'd pop up a yes/no question for the player to click on
+    printfn ""Do you want to auto-equip your purchase?""
+    printfn ""Actually, don't bother answering; I'll just assume you said yes.""
+    true
+
+let equipPurchasedProtection newItem (inventory,equipment) =
+    match newItem with
+    | Helmet ->
+        match equipment.Helmet with
+        | None ->
+            let newEquipment = { equipment with Helmet = Some newItem }
+            (inventory,newEquipment)
+        | Some oldHelm
+            if (playerWantsToAutoEquip newItem) then
+                let newEquipment = { equipment with Helmet = Some newItem }
+                let newInventory = inventory |> addToInventory oldHelm
+                (newInventory,newEquipment)
+            else
+                let newInventory = inventory |> addToInventory newItem
+                (newInventory,equipment)
+    | Gloves ->
+        match equipment.Hands with
+        | None ->
+            let newEquipment = { equipment with Hands = Some newItem }
+            (inventory,newEquipment)
+        | Some oldGloves
+            if (playerWantsToAutoEquip newItem) then
+                let newEquipment = { equipment with Hands = Some newItem }
+                let newInventory = inventory |> addToInventory oldGloves
+                (newInventory,newEquipment)
+            else
+                let newInventory = inventory |> addToInventory newItem
+                (newInventory,equipment)
+    | Boots ->
+        match equipment.Feet with
+        | None ->
+            let newEquipment = { equipment with Boot = Some newItem }
+            (inventory,newEquipment)
+        | Some oldBoots
+            if (playerWantsToAutoEquip newItem) then
+                let newEquipment = { equipment with Boot = Some newItem }
+                let newInventory = inventory |> addToInventory oldBoots
+                (newInventory,newEquipment)
+            else
+                let newInventory = inventory |> addToInventory newItem
+                (newInventory,equipment)
+
+let equipPurchasedWeapon newItem (inventory,equipment) =
+    // No need to match against newItem here; weapons are simpler
+    match equipment.Weapon with
+    | None ->
+        let newEquipment = { equipment with Weapon = Some newItem }
+        (inventory,newEquipment)
+    | Some oldWeapon
+        if (playerWantsToAutoEquip newItem) then
+            let newEquipment = { equipment with Weapon = Some newItem }
+            let newInventory = inventory |> addToInventory oldWeapon
+            (newInventory,newEquipment)
+        else
+            let newInventory = inventory |> addToInventory newItem
+            (newInventory,equipment)
+
+// I'll skip defining equipPurchasedConsumable since it's very similar
+
+let equipPurchasedItem gameItem (inventory,equipment) =
+    let funcToCall =
+        match gameItem with
+        | Consumable of potion -> equipPurchasedConsumable potion
+        | Weapon of weapon     -> equipPurchasedWeapon weapon
+        | Protection of armor  -> equipPurchasedProtection armor
+    (inventory,equipment) |> funcToCall

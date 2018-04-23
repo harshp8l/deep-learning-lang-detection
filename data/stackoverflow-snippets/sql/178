@@ -1,0 +1,56 @@
+ WITH aset
+ AS (
+ SELECT [Machine]
+      , [Date]
+      , [TimeStarted]
+      , TimeCompleted
+ FROM   [CEA_DBA].[dbo].[LineInteruptions]
+ WHERE  date = '2018-01-16'),
+ overlaps
+ AS (
+ SELECT a.machine
+        AS a_machine
+      , b.machine
+        AS b_machine
+      , CASE
+            WHEN a.TimeStarted <= b.TimeStarted
+            THEN a.TimeStarted
+            ELSE b.TimeStarted
+        END
+        AS timeStarted
+      , CASE
+            WHEN a.TimeCompleted >= b.TimeCompleted
+            THEN a.TimeCompleted
+            ELSE b.TimeCompleted
+        END
+        AS timeCompleted
+ FROM   aset
+      AS a
+        CROSS JOIN aset
+      AS b
+ WHERE  b.TimeStarted <= a.timeCompleted
+        AND b.timecompleted >= a.timecompleted
+        AND a.Machine <> b.Machine),
+ nonoverlaps
+ AS (
+ SELECT aset.timeStarted
+      , aset.timeCompleted
+ FROM   aset
+        LEFT OUTER JOIN overlaps
+      AS oa ON aset.Machine = oa.a_machine
+        LEFT OUTER JOIN overlaps
+      AS ob ON aset.Machine = ob.b_machine
+ WHERE  oa.a_machine IS NULL
+        AND ob.b_machine IS NULL),
+ gset
+ AS (
+ SELECT TimeStarted
+      , TimeCompleted
+ FROM     overlaps
+ UNION ALL
+ SELECT timestarted
+      , timecompleted
+ FROM   nonoverlaps)
+ SELECT SUM(DATEDIFF(hour, TimeStarted, timeCompleted))
+        AS downtime
+ FROM   gset;

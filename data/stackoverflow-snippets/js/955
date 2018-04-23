@@ -1,0 +1,19 @@
+  constructor(concurrent = 1) {
+    this.concurrent = concurrent;
+    this.taskQueue = [];
+  }
+
+  push(task) {
+    this.taskQueue.push(task);
+  }
+
+  run() {
+    let tasksPromise = Promise.resolve();
+    for (let i = 0; i < this.taskQueue.length; i += this.concurrent) {
+      const taskChunk = this.taskQueue.slice(i, i + this.concurrent));
+      const taskChunkPromises = taskChunk.map(task => new Promise(resolve => task(resolve)));
+      tasksPromise = tasksPromise.then(() => Promise.all(taskChunkPromises));
+    }
+
+    return tasksPromise;
+  }

@@ -1,0 +1,15 @@
+object Machine {
+  def main(args: Array[String]) {
+    val spark = SparkSession.builder.appName(""Movie Review Manager"").getOrCreate()
+    println(""Reading data..."")
+    val df = spark.read.format(""csv"").option(""header"", ""true"").load(""movie_data.csv"")
+    val regexTokenizer = new RegexTokenizer().setInputCol(""review"").setOutputCol(""word"").setPattern(""\\s"")
+    val remover = new StopWordsRemover().setInputCol(""word"").setOutputCol(""feature"")
+    df.show(false)   //original dataframe
+    val tokenized = regexTokenizer.transform(df)
+    tokenized.show(false)     //tokenized dataframe
+    val removed = remover.transform(tokenized)
+    removed.show(false)     //stopwords removed dataframe
+    spark.stop()
+  }
+}

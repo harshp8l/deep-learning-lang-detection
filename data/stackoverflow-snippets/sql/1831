@@ -1,0 +1,13 @@
+with data as (
+    select users.id as user_id, o.title, c.id as cert_id
+    from opportunities o
+        inner join opportunity_certificates oc on oc.opportunity_id = o.id
+        inner join certificates c on c.id = oc.certificate_id
+        inner join user_certificates uc on uc.certificate_id = c.id
+        inner join users u on u.id = uc.user_id
+    where oc.is_required = 1 and o.id = 1
+)
+select user_id, min(title) as title, max(cert_id) as num_certs
+from data
+group by user_id
+having count(cert_id) = (select max(cert_id) from data);

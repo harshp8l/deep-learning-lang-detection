@@ -1,0 +1,14 @@
+@Autowired
+private SchedulerComponentBuilder schedulerComponentBuilder;
+
+private void schedule(String uniqueKey, int ttl) {
+    try {
+        JobDetail jobDetail = schedulerComponentBuilder.getJobDetail(uniqueKey, RemoveExpiredRecordJob.class);
+        Trigger jobTrigger = schedulerComponentBuilder.getTrigger(ttl, jobDetail);
+        scheduler.scheduleJob(jobDetail,jobTrigger);
+        log.info(""Job is scheduled :: {}"", jobDetail);
+    } catch (SchedulerException e) {
+        log.error(""Filed to schedule a job {}"", e);
+        throw new RuntimeException(e);
+    }
+}

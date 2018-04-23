@@ -1,0 +1,49 @@
+module ModuleToPrepend
+  def perform(*args)
+    puts 'ModuleToPrepend#perform'
+    puts args
+    super
+  end
+end
+
+class Base
+  def self.inherited(subclass)
+    puts 'Base.inherited'
+    subclass.prepend(ModuleToPrepend) if subclass.superclass == Base
+    super
+  end
+end
+
+class Child < Base
+  def perform(*args)
+    puts 'Child#perform'
+  end
+end
+# => Base.inherited
+
+class Subchild < Child
+  def perform(*args)
+    puts 'Subchild#perform'
+    super
+  end
+end
+# => Base.inherited
+
+puts Child.ancestors
+# => [ModuleToPrepend, Child, Base, Object, Kernel, BasicObject]
+
+child = Child.new
+child.perform('arg1', 'arg2')
+# => ModuleToPrepend#perform
+# => [arg1, arg2]
+# => Child#perform
+
+puts Subchild.ancestors
+# => [Subchild, ModuleToPrepend, Child, Base, Object, Kernel, BasicObject]
+
+subchild = Subchild.new
+subchild.perform('arg1', 'arg2')
+# => Subchild#perform
+# => ModuleToPrepend#perform
+# => [arg1, arg2]
+# => Child#perform

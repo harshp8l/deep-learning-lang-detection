@@ -1,0 +1,28 @@
+import random
+from os.path import getsize
+
+# Input file path
+file_name = 'file.csv'
+# How many lines you want to select
+selection_count = 10000
+# An upper bound on the line size in bytes, not chars
+# This serves two purposes:
+#   1. It determines the margin to use from the end of the file
+#   2. It determines the closest two offsets are allowed to be and
+#      still be 100% guaranteed to be in different lines
+max_line_bytes = 40000
+
+file_size = getsize(file_name)
+# make_offset is a function that returns `selection_count` monotonically
+# increasing unique samples, at least `max_line_bytes` apart from each
+# other, in the range [0, file_size - margin). Implementation not provided.
+selection_offsets = make_offsets(selection_count, file_size, max_line_bytes)
+with open(file_name, 'rb') as file:
+    for offset in selection_offsets:
+        # Skip to each offset
+        file.seek(offset)
+        # Readout to the next full line
+        file.readline()
+        # Print the next line. You don't know the number.
+        # You also have to decode it yourself.
+        print(file.readline().decode('utf-8'), end='')

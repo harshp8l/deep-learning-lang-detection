@@ -1,0 +1,27 @@
+$action = New-ScheduledTaskAction -Execute ""java.exe"" `
+    -Argument ""-jar `""D:\Selenium\selenium-grid-extras.jar`"""" `
+    -WorkingDirectory ""D:\Selenium""
+
+$trigger = New-ScheduledTaskTrigger -AtStartup
+
+$everyMinute = New-TimeSpan -Minutes 1
+$nolimit = New-TimeSpan -Minutes 0
+$settings = New-ScheduledTaskSettingsSet `
+    -MultipleInstances IgnoreNew `
+    -RestartInterval $everyMinute `
+    -RestartCount 999 `
+    -Priority 0 `
+    -ExecutionTimeLimit $nolimit `
+    -StartWhenAvailable `
+    -DisallowHardTerminate
+
+Register-ScheduledTask `
+    -Action $action `
+    -Trigger $trigger `
+    -Settings $settings `
+    -TaskName ""Start SGE Hub"" `
+    -TaskPath ""\Selenium Grid Extras"" `
+    -Description ""At machine startup, run SGE so that the hub can process tests without a logon"" `
+    -RunLevel Highest `
+    -User ""SYSTEM"" `
+    -Force

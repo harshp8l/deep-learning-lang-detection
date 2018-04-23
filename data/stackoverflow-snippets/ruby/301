@@ -1,0 +1,16 @@
+def permission(perms)
+  @perms = perms.split('_')  #['read', 'own', 'state', 'cities']
+  @model = @perms[-1].singularize.capitalize.constantize   #City
+  @action = @perms[0].to_sym   #:read
+  @ownership = @perms[1].to_sym   #:own
+  @top_level = @perms[2]   #:state
+
+  hash_items = []
+  current_level = @top_level
+  until current_level = :user do
+    hash_items << current_level
+    current_level = current_level.reflect_on_all_associations(:has_many).first.name.to_sym
+  end   #[:state, :cities, :neighborhoods]
+
+  @hash = hash_items.reverse.inject({users: {}}) { |a, n| { n => a } } #{state: {cities: {neigborhoods: {users: {}}}}}
+end

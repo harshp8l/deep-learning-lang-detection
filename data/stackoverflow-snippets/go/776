@@ -1,0 +1,79 @@
+GoChannelPool pool = GoChannelPool.getDefaultInstance();
+final GoChannelPool.GoChannel<Integer> numberCh = pool.newChannel();
+final GoChannelPool.GoChannel<String> stringCh = pool.newChannel();
+final GoChannelPool.GoChannel<String> otherCh = pool.newChannel();
+
+ExecutorService executorService = Executors.newCachedThreadPool();
+int times;
+times = 2000;
+final CountDownLatch countDownLatch = new CountDownLatch(times * 2);
+
+final AtomicInteger numTimes = new AtomicInteger();
+final AtomicInteger strTimes = new AtomicInteger();
+final AtomicInteger defaultTimes = new AtomicInteger();
+
+final int finalTimes = times;
+executorService.submit(new Runnable() {
+    @Override
+    public void run() {
+        for (int i = 0; i < finalTimes; i++) {
+            numberCh.offer(i);
+
+            try {
+                Thread.sleep((long) (Math.random() * 10));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+});
+executorService.submit(new Runnable() {
+    @Override
+    public void run() {
+        for (int i = 0; i < finalTimes; i++) {
+            stringCh.offer(""s""+i+""e"");
+
+            try {
+                Thread.sleep((long) (Math.random() * 10));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+});
+
+int otherTimes = 3;
+for (int i = 0; i < otherTimes; i++) {
+    otherCh.offer(""a""+i);
+}
+
+for (int i = 0; i < times*2 + otherTimes; i++) {
+    pool.select(new GoChannelPool.GoSelectConsumer() {
+        @Override
+        void accept(GoChannelPool.GoChannelObject t) {
+            // The data order should be randomized.
+            System.out.println(t.data);
+
+            countDownLatch.countDown();
+
+            if (t.belongsTo(stringCh)) {
+                strTimes.incrementAndGet();
+                return;
+            }
+            else if (t.belongsTo(numberCh)) {
+                numTimes.incrementAndGet();
+                return;
+            }
+
+            defaultTimes.incrementAndGet();
+        }
+    });
+}
+countDownLatch.await(10, TimeUnit.SECONDS);
+
+/**
+The console output of data should be randomized.
+numTimes.get() should be 2000
+strTimes.get() should be 2000
+defaultTimes.get() should be 3
+*/

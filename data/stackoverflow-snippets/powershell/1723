@@ -1,0 +1,16 @@
+Import-Module PSIni
+$Ini = Get-IniContent 'Example.ini'
+
+#List the name and value of all the KPROD keys
+Write-Host ""`nKPROD Settings""
+$Ini['KPROD'].Keys | ForEach-Object { ""$_ is set to $($Ini['KPROD'].$_)"" }
+
+#Use a ForEach loop so we don't have to duplicate code to check the two other sections
+ForEach ($Section in 'KTEST','KDEV') {
+    Write-Host ""`n$Section Settings""
+
+    $Ini[$Section].Keys | ForEach-Object {
+        #Uses a ForEach-Object loop to check through all of the Keys in the current section and compare them to the same named key in the KPROD section, outputting them if they differ   
+        If ($Ini[$Section].$_ -ne $Ini['KPROD'].$_) { ""$_  is set to $($Ini[$Section].$_)"" }
+    }
+}

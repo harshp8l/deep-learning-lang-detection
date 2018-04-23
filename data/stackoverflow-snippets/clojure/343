@@ -1,0 +1,22 @@
+(defn key-val-seq?
+  ([kv-seq]
+   (and (even? (count kv-seq))
+        (every? keyword? (take-nth 2 kv-seq))))
+  ([kv-seq validation-map]
+   (and (key-val-seq? kv-seq)
+        (every? nil? (for [[k v] (partition 2 kv-seq)]
+                       (if-let [schema (get validation-map k)]
+                         (schema/check schema v)
+                         :schema/invalid))))))
+
+(def get-int-args
+  (schema/constrained
+   [schema/Any]
+   #(and (integer? (first %))
+         (key-val-seq? (rest %) {:max schema/Int :min schema/Int}))))
+
+(schema/validate get-int-args '())               ; Exception: Value does not match schema...
+(schema/validate get-int-args '(5))              ; => (5)
+(schema/validate get-int-args [5 :max 10])       ; => [5 :max 10]
+(schema/validate get-int-args [5 :max 10 :min 1]); => [5 :max 10 :min 1]
+(schema/validate get-int-args [5 :max 10 :b 1])  ; Exception: Value does not match schema...

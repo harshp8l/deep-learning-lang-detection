@@ -1,0 +1,26 @@
+class BooksSpider(scrapy.Spider):
+    name = 'books'
+    allowed_domains = ['books.toscrape.com']
+    start_urls = ['http://books.toscrape.com/']
+
+    allTitles = []
+
+    def parse(self, response):
+        books = response.xpath('//h3/a/@href').extract()
+        for book in books:
+            absolute_url = response.urljoin(book)
+            yield scrapy.Request(absolute_url, callback=self.parse_book)
+
+        # process next page
+        next_page_url = response.xpath('//a[text()=""next""]/@href').extract_first()
+        absolute_next_page_url = response.urljoin(next_page_url)
+        yield scrapy.Request(absolute_next_page_url)
+
+    def parse_book(self, response):
+        title = response.css('h1::text').extract_first()
+
+        self.allTitles.extend([ title ])
+
+        price = response.xpath('//*[@class=""price_color""]/text()').extract_first()
+
+        yield {'title':title, 'price': price}

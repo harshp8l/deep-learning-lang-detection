@@ -1,0 +1,24 @@
+(ns tst.clj.core
+  (:use clj.core
+        tupelo.test)
+  (:require
+    [clojure.java.io :as io]
+    [net.cgrand.enlive-html :as en-html]
+    [tupelo.core :as t] ))
+(t/refer-tupelo)
+
+; Discard any xml nodes of Type=""A"" or Type=""B"" (plus blank string nodes)
+(dotest
+  (let [xml-str     ""<ROOT>
+                      <Items>
+                        <Item><Type>A</Type><Note>AA1</Note></Item>
+                        <Item><Type>B</Type><Note>BB1</Note></Item>
+                        <Item><Type>C</Type><Note>CC1</Note></Item>
+                        <Item><Type>A</Type><Note>AA2</Note></Item>
+                      </Items>
+                    </ROOT>""
+        enlive-tree (->> xml-str
+                      java.io.StringReader.
+                      en-html/html-resource
+                      first)]
+       (spyx-pretty enlive-tree)))

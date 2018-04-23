@@ -1,0 +1,31 @@
+with example(id, direction) as (
+values
+    (1, 'O'),
+    (2, 'I'),
+    (3, 'I'),
+    (4, 'I'),
+    (5, 'O'),
+    (6, 'I')
+)
+
+select id, direction
+from (
+    select id, direction, sum(mark) over w
+    from (
+        select 
+            id, direction, 
+            (lag(direction, 1, 'O') over w = 'O' and direction = 'I')::int mark
+        from example
+        window w as (order by id)
+        ) s
+    window w as (order by id)
+    ) s
+where direction = 'I' and sum = 1
+order by id
+
+ id | direction 
+----+-----------
+  2 | I
+  3 | I
+  4 | I
+(3 rows)

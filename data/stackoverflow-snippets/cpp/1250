@@ -1,0 +1,22 @@
+struct X { void f(); };
+struct B1: virtual X { void f(); };
+struct B2: virtual X {};
+struct D : B1, B2 {
+    void foo() {
+        X::f(); // OK, calls X::f (qualified lookup)
+        f(); // OK, calls B1::f (unqualified lookup)
+// C++11 rules: lookup set for f in D finds nothing, proceeds to bases
+//  lookup set for f in B1 finds B1::f, and is completed
+// merge replaces the empty set, now lookup set for f in C has B1::f in B1
+//  lookup set for f in B2 finds nothing, proceeds to bases
+//    lookup for f in X finds X::f
+//  merge replaces the empty set, now lookup set for f in B2 has X::f in X
+// merge into C finds that every subobject (X) in the lookup set in B2 is a base
+// of every subobject (B1) already merged, so the B2 set is discareded
+// C is left with just B1::f found in B1
+// (if struct D : B2, B1 was used, then the last merge would *replace* C's 
+//  so far merged X::f in X because every subobject already added to C (that is X)
+//  would be a base of at least one subobject in the new set (B1), the end
+//  result would be the same: lookup set in C holds just B1::f found in B1)
+    }
+};

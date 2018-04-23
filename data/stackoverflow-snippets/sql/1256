@@ -1,0 +1,11 @@
+;WITH cte AS
+(
+    SELECT 1 as QuartersAgo, GETDATE() as DT, 
+        CAST(YEAR(DATEADD(MONTH, 3, GETDATE())) AS VARCHAR(4)) + CAST(DATEPART(QUARTER, DATEADD(MONTH, 3, GETDATE())) AS VARCHAR(1)) as FinancialQuarter
+    UNION ALL 
+    SELECT QuartersAgo + 1, DATEADD(MONTH, -3, cte.DT), 
+        CAST(YEAR(DATEADD(MONTH, 3, DATEADD(MONTH, -3, cte.DT))) AS VARCHAR(4)) + CAST(DATEPART(QUARTER, DATEADD(MONTH, 3, DATEADD(MONTH, -3, cte.DT))) AS VARCHAR(1))
+    FROM cte
+    WHERE QuartersAgo < 4
+)
+SELECT FinancialQuarter, QuartersAgo FROM cte

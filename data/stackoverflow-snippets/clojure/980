@@ -1,0 +1,24 @@
+(require '[stencil.core :as stencil])
+
+(def form ""{{#teams}}
+              <select name='winner{{id}}'>
+                <option value=''>None</option>
+                {{#champions}}
+                <option {{#selected}}selected='selected' {{/selected}}value='{{id}}'>{{name}}</option>
+                {{/champions}}
+              </select>
+           {{/teams}}"")
+
+
+(let [data {:params {""winner0"" 16, ""winner1"" 4}
+            :champions [{:name ""Soraka"", :id 16}
+                        {:name ""champ4"" :id 4}
+                        {:name ""champ5"" :id 5}]}]
+  (->> (range 2)
+       (map (fn [team-id]
+              (let [winner (get (:params data) (str ""winner"" team-id))]
+                {:id team-id
+                 :champions (map #(assoc % :selected (= (:id %) winner))
+                                 (:champions data))})))
+       (hash-map :teams)
+       (stencil/render-string form))

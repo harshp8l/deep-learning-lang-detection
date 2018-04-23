@@ -1,0 +1,18 @@
+$milk_data = collect();
+
+foreach($dup_intake as $keyI => $intake) {
+        foreach($dup_nmls as $keyN => $nml) {
+            if($intake->collection_date == $nml->sample_date && $intake->producer_id == $nml->producer_id) {
+                $na = $nml->toArray();
+                $ia = $intake->toArray();
+                $collection = array_merge($na, $ia);
+                $milk_data->push($collection);
+                $dup_nmls->forget($keyN);
+                $dup_intake->forget($keyI);
+            } else if($milk_data->contains($nml) || !$milk_data->contains($intake) && $intake->producer_id == $nml->producer_id) {
+                $milk_data->push($intake->toArray());
+            } else if($milk_data->contains($intake) || !$milk_data->contains($nml) && $intake->producer_id == $nml->producer_id ) {
+                $milk_data->push($nml->toArray());
+            }
+        }
+    }

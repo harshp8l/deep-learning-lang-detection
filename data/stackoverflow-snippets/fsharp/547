@@ -1,0 +1,31 @@
+open System
+let rnd = Random()
+rnd.NextDouble()
+
+let ret1 = List.init 100 (fun _ -> rnd.NextDouble() - 0.5)
+let ret2 = List.init 100 (fun _ -> rnd.NextDouble() - 0.5)
+
+let inline activeReturn (ret, bmkRet) = ret - bmkRet
+let excessReturns2 (pfRets: seq<float>) bmkRets =
+    Seq.zip pfRets bmkRets |> Seq.map activeReturn |> Seq.sum
+
+let var xs nmethod = 
+    match Seq.fold (fun (i, s, sumsq) x -> i + 1, s + x, sumsq + x * x) (0, 0., 0.) xs with
+    | 0, _, _ -> 0.
+    | 1, _, _ when not nmethod -> 0.
+    | n, xsum, xsumsq ->
+        // denominator is (n-1) or n
+        let d = if nmethod then float n else float n - 1.
+        (xsumsq - xsum * xsum / float n) / d
+
+let std xs nmethod = sqrt (var xs nmethod)
+let volatilty xs nmethod x = (std xs nmethod) * sqrt (x)
+
+
+let sharpeRatio2 pfRets bmkRets x  =
+    let top = excessReturns2 pfRets bmkRets
+    let bottom  = volatilty pfRets false x
+    let result = top / bottom
+    result
+
+sharpeRatio2 ret1 ret2 12.

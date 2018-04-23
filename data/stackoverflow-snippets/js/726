@@ -1,0 +1,36 @@
+makeFileRequest(url: string, formData: FormData, source: String = null) {
+return new Promise((resolve, reject) => {
+  const xhr = new XMLHttpRequest();
+
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4) {
+      if (xhr.status === 200) {
+        resolve(JSON.parse(xhr.response));
+      } else {
+        reject(xhr.response);
+      }
+    }
+  };
+//   AppService.setUploadUpdateInterval(500);
+  xhr.upload.onprogress = (event) => {
+    this.progress = Math.round(event.loaded / event.total * 100);
+   // this.userService.showPercent(this.progress);
+
+  };
+  xhr.open('POST', url);
+  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  xhr.setRequestHeader('accept', 'application/json');    
+  //xhr.setRequestHeader('utc-offset', this.UTC_OFFSET);
+  //xhr.setRequestHeader('platform', this.PLATFORM);
+  //xhr.setRequestHeader('app-version', this.APP_VERSION);
+  //xhr.setRequestHeader('version', this.VERSION);
+  // xhr.setRequestHeader('accept', this.ACCEPT);
+  //xhr.setRequestHeader('device', this.DEVICE);
+  if (localStorage.getItem('userData')) {   
+    const user = JSON.parse(localStorage.getItem('userData'));
+    // use your own bearer token
+    xhr.setRequestHeader('token', user.token); 
+    xhr.setRequestHeader('session', user.session);
+  }
+  xhr.send(formData);
+});

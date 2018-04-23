@@ -1,0 +1,13 @@
+$eMail = New-Object -TypeName Microsoft.Exchange.WebServices.Data.EmailMessage -ArgumentList $exchService
+ if($ReplyTo -ne """"){
+            LoadExtendedHexStrClass
+            $UserProperties=Get-kUserProfileProperties $ReplyTo
+            $DisplayName =$UserProperties.PreferredName
+            $FlatList= [ExtProp.BinaryConfig]::GenerateFlatList($ReplyTo,$DisplayName, $CurrentUserEmail);
+
+            $PidTagReplyRecipientEntries = new-object Microsoft.Exchange.WebServices.Data.ExtendedPropertyDefinition(0x004F,[Microsoft.Exchange.WebServices.Data.MapiPropertyType]::Binary);  
+            $PidTagReplyRecipientNames = new-object Microsoft.Exchange.WebServices.Data.ExtendedPropertyDefinition(0x0050,[Microsoft.Exchange.WebServices.Data.MapiPropertyType]::String);  
+            $eMail.SetExtendedProperty($PidTagReplyRecipientEntries,[ExtProp.BinaryConfig]::ConvertHexStringToByteArray($FlatList));
+            $eMail.SetExtendedProperty($PidTagReplyRecipientNames,$DisplayName); 
+         }
+       $eMail.SendAndSaveCopy()     

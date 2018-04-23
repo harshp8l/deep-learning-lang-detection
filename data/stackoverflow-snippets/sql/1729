@@ -1,0 +1,26 @@
+,
+FilteredAbsenceSpree AS
+(
+    SELECT
+        StudentID = A.StudentID,
+        StartingAbsenceDate = A.StartingAbsenceDate,
+        EndingAbsenceDate = MAX(N.GeneratedDate),
+        AbsenceDays = MAX(A.AbsenceDays)
+    FROM
+        AbsenceSpree AS A
+        INNER JOIN NumberedDays AS N ON A.CurrentDateNumber = N.DayNumber
+    GROUP BY
+        A.StudentID,
+        A.StartingAbsenceDate
+    HAVING
+        MAX(A.AbsenceDays) >= 3
+)
+SELECT
+    A.*
+FROM
+    Attendance AS A
+    INNER JOIN FilteredAbsenceSpree AS F ON A.StudentID = F.StudentID
+WHERE
+    A.Date BETWEEN F.StartingAbsenceDate AND F.EndingAbsenceDate
+OPTION
+    (MAXRECURSION 5000)

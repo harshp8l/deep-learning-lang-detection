@@ -1,0 +1,32 @@
+ With cte As 
+ (Select e.EventsNo, 
+    m1.MatterCode,
+    m1.ClientID,
+    m1.MatterID,
+    m1.AreaOfLaw,
+    e.EventTypes    AS DocketCode, 
+    e.EventDate,
+    e.EndDate, 
+    et.DocketDesc ,
+    Cast(e.notes AS VARCHAR(4096)) Summary ,
+    Row_Number() Over(Partition By MatterCode Order By EventDate Desc) AS rnLastOverAll,
+    Row_Number() Over(Partition By MatterCode, DocketDesc Order By EventDate Desc) As rnLastByDocDesc
+ FROM   dbo.events e 
+ INNER JOIN dbo.eventmatters em ON em.events = e.events
+ INNER JOIN dbo.matters m ON m.matters = em.matters 
+ INNER JOIN dbo.vu_LP2_DocketCodes et ON et.DocketCode = e.eventtypes 
+ RIGHT OUTER JOIN dbo.vu_lp2_matters M1 ON M1.mattercode = m.matterid 
+ WHERE e.eventkind = 'D'
+ )
+
+ Select c2.EventsNo 'DocketID',c2.MatterCode,c2.ClientID,c2.MatterID, c2.AreaOfLaw,
+ c2.DocketCode, c2.EventDate 'StartDate', c2.EndDate, c2.DocketDesc, c2.Summary
+ From cte c1
+ Inner Join cte c2 On c1.MatterCode = c2.MatterCode And c2.rnLastByDocDesc = 1  
+ And (
+  (c1.DocketDesc = 'Demand' And c2.DocketDesc In ('Demand'))
+  Or (c1.DocketDesc = 'Complaint' And c2.DocketDesc In ('Demand', 'Complaint'))
+  Or (c1.DocketDesc = 'Pre-Trial' And c2.DocketDesc In ('Demand', 'Complaint', 'Pre-Trial'))
+  Or (c1.DocketDesc = 'Post Judgment' And c2.DocketDesc In ('Demand', 'Complaint', 'Pre-Trial', 'Post Judgment'))
+  Or (c1.DocketDesc = 'Stop Collections' And c2.DocketDesc In ('Demand', 'Complaint', 'Pre-Trial', 'Post Judgment', 'Stop Collections'))
+) Where c1.rnLastOverAll = 1

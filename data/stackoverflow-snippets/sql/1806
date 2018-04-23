@@ -1,0 +1,18 @@
+Declare @Blog table (ID int, Title varchar(max))
+Insert Into @Blog values
+(1,'My Blog Title')
+
+Declare @BlogContent table (ID int,Blogid int, Content varchar(max))
+Insert Into @BlogContent values
+(1,1,'<p>My First Paragraph</p>'),
+(2,1,'<p>My Second Paragraph</p>')
+
+
+Select A.*
+      ,Content  = Stuff((Select '' +Content 
+                           From  @BlogContent 
+                           Where Blogid=A.ID 
+                           Order by ID 
+                           For XML Path(''),TYPE).value('(./text())[1]','varchar(max)')
+                        ,1,0,'') 
+ From @Blog A

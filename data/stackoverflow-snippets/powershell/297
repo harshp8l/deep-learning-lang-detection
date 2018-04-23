@@ -1,0 +1,12 @@
+ForEach  ($Computer in  $Computername) {      
+    [ADSI]$S = ""WinNT://$computer""
+    $S.children.where({$_.class -eq 'group'}) |
+    Select-Object @{Name=""Name"";    Expression={$_.name.value}},
+                  @{Name=""Members""; Expression={
+                      [ADSI]$group = ""$($_.Parent)/$($_.Name),group"" 
+                      $members = $Group.psbase.Invoke(""Members"")
+                      ($members| ForEach-Object {
+                        $_.GetType().InvokeMember(""Name"", 'GetProperty', $null, $_, $null ) | Select-String $account }) -join "";""  
+                      }} | 
+    Where-Object { $_.Members }
+}

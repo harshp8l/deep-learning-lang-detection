@@ -1,0 +1,18 @@
+SELECT  t.ES ,
+        MIN(t.TimeStamp) AS 'StartTimeStamp' ,
+        MAX(t.TimeStamp) AS 'EndTimeStamp'
+FROM    ( SELECT    * ,
+                    MAX(flag) OVER ( ORDER BY t.TimeStamp ) rn
+          FROM      ( SELECT    * ,
+                                CASE WHEN t.ES = LAG(t.ES) OVER ( ORDER BY TimeStamp )
+                                     THEN 0
+                                     ELSE t.id
+                                END flag
+                      FROM      ( SELECT    * ,
+                                            ROW_NUMBER() OVER ( ORDER BY TimeStamp ) AS id
+                                  FROM      T
+                                ) AS t
+                    ) AS t
+        ) AS t
+GROUP BY t.es ,
+        t.rn

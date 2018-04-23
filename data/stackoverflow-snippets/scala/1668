@@ -1,0 +1,21 @@
+import org.apache.spark.sql.Row
+val my_rdd = df.map{ case Row(a1: String, a2: Int) => (a1, a2)
+                   }.rdd.groupByKey().map(t => (t._1, t._2.toList))
+
+def f(iter: Iterator[(String, List[Int])]) : Iterator[Row] = {
+  var res = List[Row]();
+  while (iter.hasNext) {
+    val (keycol: String, c: List[Int]) = iter.next    
+    res = res ::: List(Row(keycol, c(0), c(1), c(2)))
+  }
+  res.iterator
+}
+
+import org.apache.spark.sql.types.{StringType, IntegerType, StructField, StructType}
+val schema = new StructType().add(
+             StructField(""Keycol"", StringType, true)).add(
+             StructField(""processcode1"", IntegerType, true)).add(
+             StructField(""processcode2"", IntegerType, true)).add(
+             StructField(""processcode3"", IntegerType, true))
+
+spark.createDataFrame(my_rdd.mapPartitions(f, true), schema).show

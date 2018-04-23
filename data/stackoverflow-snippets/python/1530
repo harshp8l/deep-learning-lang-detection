@@ -1,0 +1,25 @@
+from django.db.models import Prefetch, Count
+
+Question.objects.filter(
+    topic__follow__user=request.user
+).select_related(
+    'topic', 'created_by'
+).prefetch_relaed(
+    Prefetch(
+        'answer',
+        queryset=Answer.objects.select_related('created_by').annotate(
+            upvotes_count=Count('upvote')
+        ).prefetch_related(
+            Prefetch(
+                'comment',
+                queryset=Comment.objects.select_related('comment_by')
+            )
+        )
+    ),
+    Prefetch(
+        'comment',
+        queryset=Comment.objects.select_related('comment_by')
+    ),
+).annotate(
+    upvotes_count=Count('upvote')
+)

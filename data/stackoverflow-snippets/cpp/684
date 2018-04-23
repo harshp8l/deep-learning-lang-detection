@@ -1,0 +1,35 @@
+/** This class encapsulates a feature that can be selectively disabled/enabled by putting an
+  * ""enable_behavior_xxxx"" or ""disable_behavior_xxxx"" file into the ~/MyProgram_Settings folder.
+  */
+class ConditionalBehavior
+{
+public:
+   /** Constructor.
+     * @param bugNumber Bug-Tracker ID number associated with this bug/feature.
+     * @param defaultState If true, this beheavior will be enabled by default (i.e. if no corresponding
+     *                     file exists in ~/MyProgram_Settings).  If false, it will be disabled by default.
+     * @param switchAtVersion If specified, this feature's default-enabled state will be inverted if
+     *                        GetMyProgramVersion() returns any version number greater than this.
+     */
+   ConditionalBehavior(int bugNumber, bool defaultState, int switchAtVersion = -1)
+   {
+      if ((switchAtVersion >= 0)&&(GetMyProgramVersion() >= switchAtVersion)) _enabled = !_enabled;
+
+      std::string fn = defaultState ? ""disable"" : ""enable"";
+      fn += ""_behavior_"";
+      fn += to_string(bugNumber);
+
+      if ((IsBehaviorFlagEnabled(fn))
+        ||(IsBehaviorFlagEnabled(""enable_everything"")))
+      {
+         _enabled = !_enabled;
+         printf(""Note:  %s Behavior #%i\n"", _enabled?""Enabling"":""Disabling"", bugNumber);
+      }
+  }
+
+  /** Returns true iff this feature should be enabled. */
+  bool IsEnabled() const {return _enabled;}
+
+private:
+   bool _enabled;
+};

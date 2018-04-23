@@ -1,0 +1,31 @@
+template<typename MultiIndexContainer,std::size_t N>
+std::string static_tag_name()
+{
+ const std::type_info& i=typeid(
+    typename boost::mpl::front<
+      typename boost::multi_index::nth_index<MultiIndexContainer,N>::
+        type::tag_list
+    >::type
+  );
+  return i.name();
+}
+
+template<typename MultiIndexContainer,std::size_t... I>
+std::string tag_name(std::size_t n,std::index_sequence<I...>)
+{
+  static std::array<std::string(*)(),sizeof...(I)> a=
+    {{static_tag_name<MultiIndexContainer,I>...}};
+  return a[n]();
+}
+
+template<typename MultiIndexContainer>
+std::string tag_name(std::size_t n)
+{
+  return tag_name<MultiIndexContainer>(
+    n,std::make_index_sequence<
+      boost::mpl::size<
+        typename MultiIndexContainer::index_type_list
+      >::value
+    >{}
+  );
+}

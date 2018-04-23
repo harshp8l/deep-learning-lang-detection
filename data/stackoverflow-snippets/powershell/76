@@ -1,0 +1,32 @@
+$compinfo = import-csv .\compinfo.csv
+
+$lookupData = foreach($comp in $compinfo)
+{
+    $nslkup = [System.Net.DNS]::GetHostEntry($comp.hname)
+    $ping = (Test-Connection -ComputerName $comp.hname -Count 1 -ErrorAction SilentlyContinue)
+    if($ping)
+    {
+        $status = ""up""
+    }
+    else
+    {
+        $status = ""down""
+    }
+    if($nslkup.AddressList.IPAddressToString -eq $comp.ip)
+    {
+        $ipgood = $true
+    }
+    else
+    {
+        $ipgood = $nslkup.AddressList.IPAddressToString
+    }
+    [pscustomobject]@{
+        computerName = $comp.hname
+        expectedIp = $comp.ip
+        status = $status
+        goodIp = $ipgood
+        dnsName = $nslkup.hostname
+    }
+} 
+
+$lookupData | export-csv .\lookups.csv -NoTypeInformation

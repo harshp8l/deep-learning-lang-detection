@@ -1,0 +1,18 @@
+(defn init
+  ""init will be called once when
+   app is deployed as a servlet on
+   an app server such as Tomcat
+   put any initialization code here""
+  []
+  (let [s (qs/start (qs/initialize))
+        job (j/build
+             (j/of-type import-logs)
+             (j/with-identity (j/key ""jobs.import.1"")))
+        trigger (t/build
+                 (t/with-identity (t/key ""triggers.1""))
+                 (t/start-now)
+                 (t/with-schedule (schedule
+                                   (with-repeat-count 10)
+                                   (with-interval-in-milliseconds 1000)
+                                   )))]
+    (qs/schedule s job trigger)))

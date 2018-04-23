@@ -1,0 +1,100 @@
+package sandbox
+
+import (
+    ""testing""
+
+    ""github.com/stretchr/testify/assert""
+    ""github.com/stretchr/testify/require""
+    ""gopkg.in/yaml.v2""
+)
+
+type Properties map[string]string
+type Parameters map[string]interface{}
+
+type Requires struct {
+    Name       string     `yaml:""name,omitempty""`
+    Properties Properties `yaml:""properties,omitempty""`
+}
+
+type Module struct {
+    Name       string
+    Path       string     `yaml:""path,omitempty""`
+    Requires   []Requires `yaml:""requires,omitempty""`
+    Properties Properties `yaml:""properties,omitempty""`
+    Parameters Parameters `yaml:""parameters,omitempty""`
+}
+
+type File struct {
+    Modules []Module
+}
+
+func Test_ParseFile(t *testing.T) {
+    input := []byte(`ID: demo
+version: 0.0.5
+
+modules:
+ - name: db
+   path: mtb
+   requires:
+    - name: vi_db
+
+
+ - name: srv
+   path: srv1
+   properties:
+     LOG_LEVEL: ""info""
+     DEBUG_LOG_LEVEL : ALL
+   parameters:
+     mem: 12G
+   requires:
+     - name: db
+       properties:
+            CONFIG: '[tomcontext.xml:
+              {""service_nameDB"" : ""~{con-name}""}]'`)
+
+    tests := []struct {
+        name    string
+        wantOut Module
+    }{
+        {
+            name: ""test"",
+
+            wantOut: Module{
+                Name: ""srv"",
+                Path: ""srv1"",
+
+                Properties: Properties{
+                    ""LOG_LEVEL"":       ""info"",
+                    ""DEBUG_LOG_LEVEL"": ""ALL"",
+                },
+                Parameters: Parameters{
+                    ""mem"": ""12G"",
+                },
+                Requires: []Requires{
+                    {
+                        Name: ""db"",
+                        Properties: Properties{
+                            ""CONFIG"": `[tomcontext.xml: {""service_nameDB"" : ""~{con-name}""}]`,
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            actual, err := ParseFile(input)
+            require.NoError(t, err)
+            require.NotNil(t, actual)
+            require.Len(t, actual.Modules, 2)
+            assert.Equal(t, tt.wantOut, actual.Modules[1])
+        })
+    }
+}
+
+func ParseFile(yamlFile []byte) (File, error) {
+    var f File
+    err := yaml.Unmarshal(yamlFile, &f)
+    return f, err
+}

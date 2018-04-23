@@ -1,0 +1,56 @@
+#include <chrono>
+#include <iostream>
+#include <string>
+#include ""DemoClassHierarchy.hpp""
+
+template <typename Base, typename Derived, typename Duration>
+Duration instanceOfMeasurement(unsigned _loopCycles) {
+  auto start = std::chrono::high_resolution_clock::now();
+  volatile bool isInstanceOf = false;
+  for (unsigned i = 0; i < _loopCycles; ++i) {
+    Base *ptr = new Derived;
+    isInstanceOf = ptr->template instanceOf<Derived>();
+    delete ptr;
+  }
+  auto end = std::chrono::high_resolution_clock::now();
+  return std::chrono::duration_cast<Duration>(end - start);
+}
+
+template <typename Base, typename Derived, typename Duration>
+Duration dynamicCastMeasurement(unsigned _loopCycles) {
+  auto start = std::chrono::high_resolution_clock::now();
+  volatile bool isInstanceOf = false;
+  for (unsigned i = 0; i < _loopCycles; ++i) {
+    Base *ptr = new Derived;
+    isInstanceOf = dynamic_cast<Derived *>(ptr) != nullptr;
+    delete ptr;
+  }
+  auto end = std::chrono::high_resolution_clock::now();
+  return std::chrono::duration_cast<Duration>(end - start);
+}
+
+int main() {
+  unsigned testCycles = 10000000;
+  std::string unit = "" us"";
+  using DType = std::chrono::microseconds;
+
+  std::cout << ""InstanceOf performance(A->D)  : "" << instanceOfMeasurement<A, D, DType>(testCycles).count() << unit
+            << std::endl;
+  std::cout << ""InstanceOf performance(A->C)  : "" << instanceOfMeasurement<A, C, DType>(testCycles).count() << unit
+            << std::endl;
+  std::cout << ""InstanceOf performance(A->B)  : "" << instanceOfMeasurement<A, B, DType>(testCycles).count() << unit
+            << std::endl;
+  std::cout << ""InstanceOf performance(A->A)  : "" << instanceOfMeasurement<A, A, DType>(testCycles).count() << unit
+            << ""\n""
+            << std::endl;
+  std::cout << ""DynamicCast performance(A->D) : "" << dynamicCastMeasurement<A, D, DType>(testCycles).count() << unit
+            << std::endl;
+  std::cout << ""DynamicCast performance(A->C) : "" << dynamicCastMeasurement<A, C, DType>(testCycles).count() << unit
+            << std::endl;
+  std::cout << ""DynamicCast performance(A->B) : "" << dynamicCastMeasurement<A, B, DType>(testCycles).count() << unit
+            << std::endl;
+  std::cout << ""DynamicCast performance(A->A) : "" << dynamicCastMeasurement<A, A, DType>(testCycles).count() << unit
+            << ""\n""
+            << std::endl;
+  return 0;
+}

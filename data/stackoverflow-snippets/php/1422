@@ -1,0 +1,146 @@
+$code = <<<'CODE'
+<?php
+    // some irrelevant code.
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL,     ""http://website.com"");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    curl_setopt($ch, CURLOPT_HEADER, FALSE);
+    curl_setopt($ch, CURLOPT_POST, TRUE);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, '{""src"": ""'.$argv[1].'"",""dst"": ""'.$argv[2].'"", ""text"": ""'.$argv[3].'""}');
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            ""Content-Type: application/json"",
+            'Authorization: Basic '. base64_encode(""XXXXX:YYYYYY"")
+    ));
+    $message = curl_exec($ch);
+    curl_close($ch);
+    echo $message;
+    // some more code.  
+CODE;
+$jobFileh = tmpfile ();
+$jobFile = stream_get_meta_data ( $jobFileh ) ['uri'];
+file_put_contents($jobFile,$code);
+// $users = 300.
+$jobs = array ();
+for($i = 0, $count = count ( $users ); $i < $count; ++ $i) {
+    $jobs [] = '/usr/bin/php ' . escapeshellarg ( $jobFile ) . ' ' . escapeshellarg ( $numbers_from [$i] ['number_from'] ) . ' ' . escapeshellarg ( $users [$i] ['international_format'] ) . ' ' . escapeshellarg ( $message );
+}
+$ret = hhb_exec_multi1 ( $jobs, 100 );
+var_dump ( $ret );
+die ();
+class hhb_exec_multi1_ret {
+    public $cmd;
+    public $ret;
+    public $stdout;
+    public $stderr;
+    function __construct(array $attributes) {
+        foreach ( $attributes as $name => $val ) {
+            $this->$name = $val;
+        }
+    }
+}
+/**
+ *
+ * @param string[] $cmds
+ * @param int $max_concurrent
+ * @throws InvalidArgumentException
+ * @return hhb_exec_multi1_ret[]
+ */
+function hhb_exec_multi1(array $cmds, int $max_concurrent = 10, $finished_callback = NULL): array {
+    // TODO: more error checking, if proc_create fail, out of ram, tmpfile() fail, etc
+    {
+        // input validation
+        if ($max_concurrent < 1) {
+            throw new InvalidArgumentException ( '$max_concurrent must be above 0... and less or equal to' . PHP_INT_MAX );
+        }
+        foreach ( $cmds as $tmp ) {
+            if (! is_string ( $tmp )) {
+                throw new InvalidArgumentException ( '$cmds must be an array of strings!' );
+            }
+        }
+    }
+    $ret = array ();
+    $running = array ();
+    foreach ( $cmds as $key => $cmd ) {
+        $current = array (
+                'cmd' => $cmd,
+                'ret' => - 1,
+                'stdout' => tmpfile (),
+                'stderr' => tmpfile (),
+                'key' => $key 
+        );
+        $pipes = [ ];
+        $descriptorspec = array (
+                0 => array (
+                        ""pipe"",
+                        ""rb"" 
+                ),
+                1 => array (
+                        ""file"",
+                        stream_get_meta_data ( $current ['stdout'] ) ['uri'],
+                        ""wb"" 
+                ),
+                2 => array (
+                        ""file"",
+                        stream_get_meta_data ( $current ['stderr'] ) ['uri'],
+                        ""wb"" 
+                )  // stderr is a file to write to
+        );
+        while ( count ( $running ) >= $max_concurrent ) {
+            // echo ""."";
+            usleep ( 100 * 1000 );
+            foreach ( $running as $runningkey => $check ) {
+                $stat = proc_get_status ( $check ['proc'] );
+                if ($stat ['running']) {
+                    continue;
+                }
+                proc_close ( $check ['proc'] );
+                $check ['ret'] = $stat ['exitcode'];
+                $stdout = file_get_contents ( stream_get_meta_data ( $check ['stdout'] ) ['uri'] );
+                fclose ( $check ['stdout'] );
+                $check ['stdout'] = $stdout;
+                $stderr = file_get_contents ( stream_get_meta_data ( $check ['stderr'] ) ['uri'] );
+                fclose ( $check ['stderr'] );
+                $check ['stderr'] = $stderr;
+                $checkkey = $check ['key'];
+                unset ( $check ['key'] );
+                unset ( $check ['proc'] );
+                $tmp = ($ret [$checkkey] = new hhb_exec_multi1_ret ( $check ));
+                unset ( $running [$runningkey] );
+                if (! empty ( $finished_callback )) {
+                    $finished_callback ( $tmp );
+                }
+            }
+        }
+        $current ['proc'] = proc_open ( $cmd, $descriptorspec, $pipes );
+        fclose ( $pipes [0] ); // do it like this because we don't want the children to inherit our stdin, which is the default behaviour if [0] is not defined.
+        $running [] = $current;
+    }
+    while ( count ( $running ) > 0 ) {
+        // echo "","";
+        usleep ( 100 * 1000 );
+        foreach ( $running as $runningkey => $check ) {
+            $stat = proc_get_status ( $check ['proc'] );
+            if ($stat ['running']) {
+                continue;
+            }
+            proc_close ( $check ['proc'] );
+            $check ['ret'] = $stat ['exitcode'];
+            $stdout = file_get_contents ( stream_get_meta_data ( $check ['stdout'] ) ['uri'] );
+            fclose ( $check ['stdout'] );
+            $check ['stdout'] = $stdout;
+            $stderr = file_get_contents ( stream_get_meta_data ( $check ['stderr'] ) ['uri'] );
+            fclose ( $check ['stderr'] );
+            $check ['stderr'] = $stderr;
+            $checkkey = $check ['key'];
+            unset ( $check ['key'] );
+            unset ( $check ['proc'] );
+            $tmp = ($ret [$checkkey] = new hhb_exec_multi1_ret ( $check ));
+            unset ( $running [$runningkey] );
+            if (! empty ( $finished_callback )) {
+                $finished_callback ( $tmp );
+            }
+        }
+    }
+    return $ret;
+}

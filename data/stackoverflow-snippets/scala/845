@@ -1,0 +1,23 @@
+val ws = mock[WSClient]
+val responseBody = ""{...}""
+...
+""availableBooks"" should {
+  ""retrieve available books"" in {
+    val expectedBooks = ""BTC_DASH ETH_DASH USDT_LTC BNB_LTC"".split("" "").map(Book.fromString).map(_.get).toList
+
+    val request = mock[WSRequest]
+    val response = mock[WSResponse]
+    val json = Json.parse(responseBody)
+
+    when(ws.url(anyString)).thenReturn(request)
+    when(response.status).thenReturn(200)
+    when(response.json).thenReturn(json)
+    when(request.get()).thenReturn(Future.successful(response))
+
+    whenReady(service.availableBooks()) { books =>
+      books.size mustEqual expectedBooks.size
+
+      books.sortBy(_.string) mustEqual expectedBooks.sortBy(_.string)
+    }
+  }
+}

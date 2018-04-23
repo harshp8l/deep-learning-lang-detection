@@ -1,0 +1,23 @@
+val fileSizeRotationFunction = () => {
+  val max = 10 * 1024 * 1024 // 10 MB, but whatever you really want; I had it at our HDFS block size
+  var size: Long = max
+  (element: ByteString) =>
+    {
+      if (size + element.size > max) {
+        val path = Files.createTempFile(""out-"", "".log"")
+        size = element.size
+        Some(path)
+      } else {
+        size += element.size
+        None
+      }
+    }
+}
+
+val sizeRotatorSink: Sink[ByteString, Future[Done]] =
+  LogRotatorSink(fileSizeRotationFunction)
+
+val source = Source(files).flatMapConcat(f => FileIO.fromPath(Paths.get(f)))
+val chunking = Framing.delimiter(ByteString(""\n""), maximumFrameLength = 256, allowTruncation = true)
+
+source.via(chunking).runWith(sizeRotatorSink)

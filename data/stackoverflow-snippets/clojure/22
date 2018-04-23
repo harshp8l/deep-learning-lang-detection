@@ -1,0 +1,23 @@
+  (let [xml-str (ts/quotes->double
+                  ""<document>
+                     <sentence id='1'>
+                       <word id='1.1'>foo</word>
+                       <word id='1.2'>bar</word>
+                     </sentence>
+                     <sentence id='2'>
+                       <word id='2.1'>beyond</word>
+                       <word id='2.2'>all</word>
+                       <word id='2.3'>recognition</word>
+                     </sentence>
+                   </document>"")
+    (let [enlive-tree-lazy     (clojure.data.xml/parse (StringReader. xml-str))
+          doc-sentence-handler (fn [root-hid]
+                                 (remove-whitespace-leaves)
+                                 (let [sentence-hid  (only (find-hids root-hid [:document :sentence]))
+                                       word-hids     (hid->kids sentence-hid)
+                                       words         (mapv #(grab :value (hid->leaf %)) word-hids)
+                                       sentence-text (str/join \space words)]
+                                   sentence-text))
+          result-sentences     (proc-tree-enlive-lazy enlive-tree-lazy
+                                 [:document :sentence] doc-sentence-handler)]
+      (is= result-sentences [""foo bar"" ""beyond all recognition""])) ))

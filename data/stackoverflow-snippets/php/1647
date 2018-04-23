@@ -1,0 +1,28 @@
+$con = new PDO(""mysql:host=localhost;dbname=mis"", ""root"", """");
+
+$name = $_POST['name'];
+$transaction_status = $_POST['transaction_status'];
+$client_id = $_POST['client_id'];
+$group_id = $_POST['group_id'];
+
+try {
+    $con->exec('LOCK TABLE transaction_process WRITE');
+
+    $statement = $con->prepare(""SELECT transaction_id 
+                                      FROM transaction_process 
+                                      WHERE client_id = :clientId and group_id = :groupId"");
+    $statement->bindParam(':clientId',$client_id);
+    $statement->bindParam(':groupId',$group_id);
+    $statement->execute();
+
+    $data = $statement->fetch(PDO::FETCH_ASSOC);
+    if ($data) {
+        do_something();
+    } else {
+         do_something_else();
+    }
+
+    $con->exec('UNLOCK TABLES');
+} catch (Exception $e) {
+    // catch any exceptions ..
+}

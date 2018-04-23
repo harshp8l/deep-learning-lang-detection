@@ -1,0 +1,37 @@
+package main
+
+import (
+    ""bufio""
+    ""fmt""
+    ""os""
+    ""time""
+)
+
+func main() {
+
+    scanner := bufio.NewScanner(os.Stdin)
+    sendQ := make(chan struct{})
+
+    defer close(sendQ)
+
+    //simulate local client1 console
+    go func() {
+        for {
+            fmt.Print(""client1: "")
+            select {
+            case _, ok := <-sendQ:
+                if !ok {
+                    return
+                }
+            case <-time.After(5 * time.Second):
+                fmt.Printf(""\r\033[K"") // delete current line from right
+                fmt.Println(""client2: Hello"")
+            }
+        }
+    }()
+
+    for scanner.Scan() {
+        sendQ <- struct{}{}
+    }
+
+}

@@ -1,0 +1,103 @@
+/** A pattern that represents closed expressions
+  * that evaluate to something of type `X`.
+  */
+sealed trait Pat[X]
+case class IntPat(i: Int) extends Pat[Int]
+
+case class BinopPat[A, B, C](
+  a: Pat[A], 
+  b: Pat[B], 
+  op: (A, B) => C
+) extends Pat[C]
+
+case class FoldLeft[A, B](
+  bs: List[Pat[B]], 
+  z: Pat[A], 
+  op: PatFunc2[A, B, A]
+) extends Pat[A] {
+  /** Symbolically executes the `foldLeft`-operation */
+  def eval: Pat[A] = bs.foldLeft(z)(op.graft)
+}
+
+/** Symbolic function with two arguments of 
+  * type `V1` and `V2` that returns values 
+  * of type `R`.
+  */
+case class PatFunc2[V1, V2, R](
+  v1: Var2_1[V1, V2], 
+  v2: Var2_2[V1, V2], 
+  body: Pat2[V1, V2, R]
+) {
+  def graft(arg1: Pat[V1], arg2: Pat[V2]): Pat[R] = 
+    body.graft(Graft(v1, arg1, v2, arg2))
+}
+
+/** A pattern that represents non-closed
+  * expression with holes of two types `V1` and `V2`,
+  * which, once some patterns are plugged into the
+  * holes, evaluates to a value of type `A`.
+  */
+sealed trait Pat2[V1, V2, A] {
+  def graft(g: Graft2[V1, V2]): Pat[A]
+}
+
+case class IntPat2[V1, V2](i: Int) extends Pat2[V1, V2, Int] {
+  def graft(g: Graft2[V1, V2]): Pat[Int] = IntPat(i)
+}
+
+case class Var2_1[V1, V2](name: String) extends Pat2[V1, V2, V1] {
+  def graft(g: Graft2[V1, V2]): Pat[V1] = g(this) // no cast!
+}
+
+case class Var2_2[V1, V2](name: String) extends Pat2[V1, V2, V2] {
+  def graft(g: Graft2[V1, V2]): Pat[V2] = g(this) // no cast!
+}
+
+case class BinopPat2[V1, V2, A, B, C](
+  a: Pat2[V1, V2, A], 
+  b: Pat2[V1, V2, B], 
+  op: (A, B) => C
+) extends Pat2[V1, V2, C] {
+  def graft(g: Graft2[V1, V2]): Pat[C] = BinopPat(a graft g, b graft g, op)
+}
+
+/** Grafting operation that can fill holes of two types
+  * `V1` and `V2` in expressions with free variables of
+  * those two types.
+  */
+trait Graft2[V1, V2] {
+  def apply(v1: Var2_1[V1, V2]): Pat[V1]
+  def apply(v2: Var2_2[V1, V2]): Pat[V2]
+}
+
+object Graft {
+  /** Helper method to simplify the construction 
+    * of a `Graft2` when there are exactly two
+    * variables.
+    */
+  def apply[V1, V2](
+    v1: Var2_1[V1, V2], arg1: Pat[V1], 
+    v2: Var2_2[V1, V2], arg2: Pat[V2]
+  ): Graft2[V1, V2] = new Graft2[V1, V2] {
+    def apply(w1: Var2_1[V1, V2]): Pat[V1] = {
+      if (v1 == w1) arg1
+      else throw new NoSuchElementException(""No binding for variable "" + w1)
+    }
+    def apply(w2: Var2_2[V1, V2]): Pat[V2] = {
+      if (v2 == w2) arg2
+      else throw new NoSuchElementException(""No binding for variable "" + w2)
+    }
+  }
+}
+
+val test = FoldLeft(
+  List(IntPat(1), IntPat(2), IntPat(3)), 
+  IntPat(42), 
+  {
+    val a = Var2_1[Int, Int](""a"")
+    val b = Var2_2[Int, Int](""b"")
+    PatFunc2(a, b, BinopPat2(a, b, (_: Int) + (_: Int)))
+  }
+)
+
+println(test.eval)

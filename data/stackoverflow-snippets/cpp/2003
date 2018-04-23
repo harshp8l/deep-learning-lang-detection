@@ -1,0 +1,35 @@
+#include <tuple>
+#include <type_traits>
+
+template <typename...>
+struct arg_pack;
+
+template <std::size_t ... Is, typename ... Ts>
+struct arg_pack<std::index_sequence<Is...>, Ts...>
+ {
+   static_assert( sizeof...(Is) == sizeof...(Ts) , ""!"" );
+
+   std::tuple<Ts...>          args;
+   std::index_sequence<Is...> idx;
+ };
+
+template <typename ... Ts>
+arg_pack<std::make_index_sequence<sizeof...(Ts)>, Ts...> declArgPack ();
+
+template <typename ... Ts>
+using arg_pack_type = decltype(declArgPack<Ts...>());
+
+template <std::size_t ... Is, typename ... Ts>
+void func (arg_pack<std::index_sequence<Is...>, Ts...> && ap)
+ {
+   using unused = int[];
+
+   (void)unused { 0, (std::get<Is>(std::move(ap.args)), 0)... };
+ }
+
+int main ()
+ {
+   arg_pack_type<short, int, long, long long>  ap0;
+
+   func(std::move(ap0));
+ }

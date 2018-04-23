@@ -1,0 +1,15 @@
+[:myapp.fns/checking-invariants
+ ;; a description of the invariant
+ {:query
+  [:find ?message ?user-id
+   :in $db-before $db-after ?tx-data ?tempids ?user-id
+   :where
+   [$db-before ?user :myapp.user/id ?user-id]
+   [$db-before ?user :myapp.user/email ?email-before]
+   [$db-after ?user :myapp.user/email ?email-after]
+   [(not= ?email-before ?email-after)]
+   [(ground ""A user may not change her email"") ?message]]
+  :inputs [""user-id-12342141""]}
+ ;; the wrapped transaction
+ [[:db/add 125315815291 :myapp.user/email ""hello.world@yopmail.com""]
+  [:db/add 125315815291 :myapp.user/name ""Foo Bar""]]]

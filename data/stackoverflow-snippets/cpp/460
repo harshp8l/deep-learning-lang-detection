@@ -1,0 +1,52 @@
+#include <boost/asio.hpp>
+#include <boost/asio/high_resolution_timer.hpp>
+#include <boost/thread.hpp>
+using namespace std::chrono_literals;
+
+namespace /*static*/ {
+    auto constexpr INTERVAL = 1ms;
+    auto constexpr DURATION = 5s;
+    std::atomic_int count {0};
+
+    void on_timer_event() { ++count; }
+}
+
+namespace ba = boost::asio;
+using Timer = ba::high_resolution_timer;
+using C = Timer::clock_type;
+
+template <typename Interval>
+static void timer_chain(Timer& t, C::time_point start_point, Interval ival, int n = 0) {
+    t.expires_at(start_point + std::chrono::duration_cast<C::duration>(n * ival));
+
+    t.async_wait([=,&t](auto ec) {
+            if (!ec) {
+                on_timer_event();
+                timer_chain(t, start_point, ival, n+1);
+            }
+        });
+}
+
+#include <iostream>
+int main() {
+    ba::io_context io;
+    boost::thread_group tg;
+
+    std::list<Timer> timers;
+
+    auto const slices = 10;
+    auto const start_point = C::now();
+    auto group_interval = INTERVAL * slices;
+
+    for (auto slice = 0; slice<slices; ++slice)
+        timer_chain(timers.emplace_back(io), start_point + slice*INTERVAL, group_interval);
+
+    for (unsigned i = 0; i < std::thread::hardware_concurrency(); ++i)
+        tg.create_thread([&io] { io.run_for(DURATION); });
+
+    std::cout << ""Running on "" << tg.size() << "" threads...\n"";
+
+    tg.join_all();
+
+    std::cout << ""Event triggered "" << count << "" times in "" << (C::now() - start_point)/1ms << ""ms\n"";
+}

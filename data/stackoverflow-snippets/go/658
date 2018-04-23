@@ -1,0 +1,17 @@
+// SetStrv is a wrapper around g_settings_set_strv().
+func (v *Settings) SetStrv(name string, values []string) bool {
+    cstr1 := (*C.gchar)(C.CString(name))
+    defer C.free(unsafe.Pointer(cstr1))
+
+    // cvalues := C.make_strings(C.int(len(values) + 1))
+    cvalues := make([]*C.gchar, len(values))
+
+    for i, accel := range values {
+        cvalues[i] = (*C.gchar)(C.CString(accel))
+        defer C.free(unsafe.Pointer(cvalues[i]))
+    }
+    cvalues = append(cvalues, nil)
+
+    // C.set_string(cvalues, C.int(len(values)), nil)
+    return gobool(C.g_settings_set_strv(v.native(), cstr1, &cvalues[0]))
+}

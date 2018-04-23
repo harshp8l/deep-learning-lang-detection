@@ -1,0 +1,14 @@
+SELECT (CASE WHEN v.MID IS NULL THEN '' ELSE v.ClientNumber END) AS Client_Number,
+       COALESCE(WHEN v.MID, '') as MID,
+       (CASE WHEN v.MID IS NULL THEN '' ELSE v.MeterName END) AS Meter_Name,
+      SUM((CASE WHEN v.MID IS NULL THEN 0 v.MCF END) AS MCF,
+      SUM(CASE WHEN v.AccountPeriod = '2018-01-01' THEN v.MCF ELSE 0 END) AS January,
+      SUM(CASE WHEN v.AccountPeriod = '2018-02-01' THEN v.MCF ELSE 0 END) AS January,
+      SUM(CASE WHEN v.MID IS NULL THEN 0 ELSE v.mcf END) AS Meter_Total
+FROM Volumes v JOIN
+     CurrentMeters cm 
+     ON v.MID = cm.MID
+WHERE cm.ClientNumber = 107500
+GROUP BY (CASE WHEN v.MID IS NULL THEN '' ELSE v.ClientNumber END),
+         COALESCE(WHEN v.MID, ''),
+        (CASE WHEN v.MID IS NULL THEN '' ELSE v.MeterName END);

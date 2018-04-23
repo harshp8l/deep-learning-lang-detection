@@ -1,0 +1,31 @@
+// create a channel with a buffer of 1
+var Items = make(chan int, 1)
+var MyArray []int
+
+func main() {
+    go addItems()
+    go addItems()
+    go addItems()
+    go sendToChannel()
+    for true {
+        fmt.Println(<- Items)
+    }
+}
+
+// push a number to the array
+func addItems() {
+    for x := 0; x < 10; x++ {
+        MyArray = append(MyArray, x)
+    }
+}
+
+// push to Items and pop the array
+func sendToChannel() {
+    for true {
+        for len(MyArray) > 0 {
+            Items <- MyArray[0]
+            MyArray = MyArray[1:]
+        }
+        time.Sleep(10 * time.Second)
+    }
+}

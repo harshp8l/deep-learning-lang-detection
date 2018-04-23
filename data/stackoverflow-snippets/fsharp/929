@@ -1,0 +1,19 @@
+let echo (ws: WebSocket) =  
+    // Loop that waits for the agent and writes to web socket
+    let notifyLoop = async { 
+      while true do 
+        let! msg = inbox.Receive()
+        do! ws.send Text msg }
+
+    // Start this using cancellation token, so that you can stop it later
+    let cts = new CancellationTokenSource()
+    Async.Start(notifyLoop, cts.Token)
+
+    // The loop that reads data from the web socket
+    fun ctx -> socket {
+        let loop = ref true            
+        while !loop do
+            let! message = ws.read()
+            match message with
+            | Ping, _, _ -> do! ws.send Pong [||] true
+            | _ -> () }

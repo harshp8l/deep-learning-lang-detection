@@ -1,0 +1,28 @@
+DECLARE @AMGR_Notes TABLE (someid int identity primary key, somestring varchar(8000));
+INSERT @AMGR_Notes VALUES 
+('Phone Call: ACME Treats
+Number Called: 1 604 555-9988
+Phone Description: Old School Landline
+Subject: Buy Ice Cream
+Result: He sold me some
+Duration: 00:00:01'),
+('Phone Call: Fairview Wines & Spirits
+Number Called: 1 604  601-8000
+Phone Description: Main
+Subject: Arrange meeting
+Result: Arranged interview
+Duration: 00:00:09');
+
+SELECT 
+  t.someid,
+  [Phone Call] = MAX(CASE s.n WHEN 1 THEN here.yougo END),
+  [Subject]    = MAX(CASE s.n WHEN 2 THEN here.yougo END),
+  [Result]     = MAX(CASE s.n WHEN 3 THEN here.yougo END),
+  [Duration]   = MAX(CASE s.n WHEN 4 THEN here.yougo END)
+FROM @AMGR_Notes tt
+CROSS APPLY (VALUES (tt.someid,tt.somestring)) t(someid,s) -- target.string
+CROSS APPLY (VALUES (1,'Phone Call:'),(2,'Subject:'),(3,'Result:'),(4,'Duration:')) s(n,t) -- search.text
+CROSS APPLY (VALUES (CHARINDEX(s.t, t.s), LEN(s.t))) st(l,ln)                              -- start.location, start.length
+CROSS APPLY (VALUES (ISNULL(NULLIF(CHARINDEX(char(10), t.s, st.l+st.ln+1),0),8000))) e(ln) -- end line
+CROSS APPLY (VALUES (SUBSTRING(t.s, st.l+st.ln, e.ln-(st.l+st.ln)))) here(yougo)
+GROUP BY t.someid;

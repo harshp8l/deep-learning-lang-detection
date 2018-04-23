@@ -1,0 +1,21 @@
+arr = np.random.randint(0,256,(320,240,3), dtype=""B"") # unsigned bytes ""B"": camera likely returns 0-255 pixel values
+
+t = time()
+for _ in range(100):
+    arr2 = pickle.loads(pickle.dumps(arr))
+print(f'pickle pack, pickle unpack: {time()-t} sec')
+
+t = time()
+for _ in range(100):
+    arr2 = np.array(struct.unpack('230400B', struct.pack('230400B', *arr.flat)), dtype='B').reshape((320,240,3),)
+print(f'struct pack, struct unpack: {time()-t} sec')
+
+t = time()
+for _ in range(100):
+    arr2 = np.array(struct.unpack('230400B', arr.tobytes()), dtype='B').reshape((320,240,3),)
+print(f'numpy pack, struct unpack: {time()-t} sec')
+
+t = time()
+for _ in range(100):
+    arr2 = np.frombuffer(arr.tobytes(), dtype=""B"").reshape((320,240,3),)
+print(f'numpy pack, numpy unpack: {time()-t} sec')

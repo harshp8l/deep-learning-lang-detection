@@ -1,0 +1,14 @@
+DECLARE @NameAges varchar(8000) = 'John, Mark, Peter|23, 32, 45';
+
+WITH Splits AS (
+    SELECT S1.ItemNumber AS PipeNumber,
+           S2.ItemNumber AS CommaNumber,
+           S2.Item
+    FROM dbo.DelimitedSplit8K (REPLACE(@NameAges,' ',''), '|') S1 --As you have spaces between the delimiters I've removed these. Be CAREFUL with that
+         CROSS APPLY DelimitedSplit8K (S1.item, ',') S2)
+SELECT S1.Item AS [Name], 
+       S2.Item AS Age
+FROM Splits S1
+     JOIN Splits S2 ON S1.CommaNumber = S2.CommaNumber
+                   AND S2.PipeNumber = 2
+WHERE S1.PipeNumber = 1;

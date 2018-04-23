@@ -1,0 +1,15 @@
+unsigned startbit = offset;
+unsigned startbyte = startbit / 8;
+unsigned endbit = offset + length - 1;
+unsigned endbyte = endbit / 8;
+
+bitset<8*(sizeof(out) + 1)> align(0);
+for(unsigned byte = endbyte; byte >= startbyte; --byte) { // byte align copy
+// for(unsigned byte = startbyte; byte <= endbyte; ++byte) { // check endianess
+    align <<= 8;
+    align |= data[byte];
+}
+align >>= startbit % 8; // bit align
+align &= ((1 << length) - 1); // mask
+
+out = align.to_ullong();

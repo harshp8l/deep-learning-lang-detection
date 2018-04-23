@@ -1,0 +1,32 @@
+public function buyAction()
+  {
+        $sksku = $_REQUEST['skusky'];
+        $_sku = ""sample-"".$sksku;
+
+$id = Mage::getModel('catalog/product')->getIdBySku($_sku);
+if ($id){
+        $_catalog = Mage::getModel('catalog/product');
+        $_productId = $_catalog->getIdBySku($_sku);
+        $_product = Mage::getModel('catalog/product')->load($_productId);
+        $id = $_product->getEntityId();
+        $form_key = Mage::getSingleton('core/session')->getFormKey();
+        $params = array('form_key'=>$form_key,'qty'=>1);
+        $product = Mage::getModel('catalog/product')
+        ->setStoreId(
+        Mage::app()
+        ->getStore()
+        ->getId()
+        )
+        ->load($id);
+        $cart = Mage::helper('checkout/cart')->getCart();
+        $cart->addProduct($product, $params);
+        $cart->save();
+
+        $this->_redirect('checkout/cart');
+        Mage::getSingleton('core/session')->addSuccess('Your product has been added to cart.');
+}
+else{
+        $this->_redirectReferer();
+        Mage::getSingleton('core/session')->addError('Sorry!!! No sample color option available for this product.');
+}      
+  }

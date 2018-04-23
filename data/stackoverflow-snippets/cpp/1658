@@ -1,0 +1,49 @@
+// Safe
+std::unique_ptr<int> p = std::make_unique<int>();
+
+// Safe, but not advisable. No accessible raw pointer exists, but should use make_unique. 
+std::unique_ptr<int> p(new int());
+
+// Handle with care. No accessible raw pointer exists, but it has to be sure
+// that function_with_runtime_input() allocates the raw pointer with 'new'
+std::unique_ptr<int> p( function_with_runtime_input() );
+
+// Safe. No accessible raw pointer exists,
+// the raw pointer is created by a library, and has a custom
+// deleter to match the library's requirements
+struct FreeImageDeleter {
+    void operator() (FIBITMAP* _moribund) { FreeImage_Unload(_moribund); }
+};
+std::unique_ptr<FIBITMAP,FreeImageDeleter> p( FreeImage_Load(...) );
+
+// Dangerous. Your class method gets a raw pointer
+// as a parameter. It can not control what happens
+// with this raw pointer after the call to MyClass::setMySomething()
+// - if the caller deletes it, your'e lost.
+void MyClass::setMySomething( MySomething* something ) {
+   // m_mySomethingP is a member std::unique_ptr<Something>
+   m_mySomethingP = std::move( std::unique_ptr<Something>( something ));
+}
+
+// Dangerous. A raw pointer variable exists, which might be erroneously
+// deleted multiple times or assigned to a std::unique_ptr multiple times.
+// Don't touch iPtr after these lines!
+int* iPtr = new int();
+std::unique_ptr<int> p(iPtr);
+
+// Wrong (Undefined behaviour) and a direct consequence of the dangerous declaration above.
+// A raw pointer is assigned to a std::unique_ptr<int> twice, which means
+// that it will be attempted to delete it twice.
+// This couldn't have happened if iPtr wouldn't have existed in the first
+// place, like shown in the 'safe' examples.
+int* iPtr = new int();
+std::unique_ptr<int> p(iPtr);
+std::unique_ptr<int> p2(iPtr);
+
+
+// Wrong. (Undefined behaviour)
+// An unique pointer gets assigned a raw pointer to a stack variable.
+// Erroneous double destruction is the consequence
+int val;
+int* valPtr = &val;
+std::unique_ptr<int> p(valPtr);

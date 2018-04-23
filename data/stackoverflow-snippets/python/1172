@@ -1,0 +1,9 @@
+df.loc[:, 'minutes'] = df.apply(lambda x:x['Time'].minute + 60*x['Time'].hour, axis=1)
+df.loc[:, 'delTime'] = df.groupby('Date')['minutes'].diff()
+df.loc[(df['delTime'] <=5) & (df['delTime'] >=-5), 'delTime'] = 0
+df.loc[np.isnan(df['delTime']), 'delTime'] = 1.
+df.loc[(df['delTime']) == 0, 'delTime'] = np.nan
+df.loc[~np.isnan(df['delTime']), 'delTime'] = df['minutes']
+df = df.ffill()
+df.loc[:, 'TimeRank'] = df.groupby('Date')['delTime'].rank(method='dense')
+df.drop(['minutes', 'delTime'], inplace=True, axis=1)

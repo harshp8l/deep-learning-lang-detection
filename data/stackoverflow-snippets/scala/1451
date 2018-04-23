@@ -1,0 +1,22 @@
+df.show
++----+----+----+
+|col1|col2|col3|
++----+----+----+
+|   A|   B|   C|
+|   D|   E|   F|
+|   X|   Y|   Z|
+|   A|   N|   Z|
++----+----+----+
+
+import org.apache.spark.sql.functions._
+val query = df.columns.map(x => collect_set(col(x) ).as(x) )
+
+df.groupBy(lit(1))
+  .agg(collect_set($""col1""), query: _*)
+  .select(df.columns.map(col(_)): _* )
+  .show
++---------+------------+---------+
+|     col1|        col2|     col3|
++---------+------------+---------+
+|[A, D, X]|[B, E, Y, N]|[C, F, Z]|
++---------+------------+---------+

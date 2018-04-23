@@ -1,0 +1,46 @@
+class ComputeValue extends UserDefinedAggregateFunction {
+
+  // Each row will be of type value: Double - update_type: String
+  override def inputSchema: org.apache.spark.sql.types.StructType =
+    StructType(
+      StructField(""value"", DoubleType) ::
+        StructField(""update_type"", StringType) :: Nil)
+
+  // Another column where I will keep internal calculations
+  override def bufferSchema: StructType = StructType(
+    StructField(""value"", DoubleType) :: Nil
+  )
+
+  override def dataType: DataType = DoubleType
+
+  override def deterministic: Boolean = true
+
+  override def initialize(buffer: MutableAggregationBuffer): Unit = buffer(0) = 0.0
+
+  // This is how to update your buffer schema given an input.
+  override def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
+    buffer(0) = computeValue(buffer, input)
+  }
+
+  // This is how to merge two objects with the bufferSchema type.
+  override def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {
+    buffer1(0) = computeValue(buffer1, buffer2)
+  }
+
+  // Get the final value of your bufferSchema.
+  override def evaluate(buffer: Row): Any = {
+    buffer.getDouble(0)
+  }
+
+  private def computeValue(buffer: MutableAggregationBuffer, row: Row): Double = {
+    val updateType: String = row.getAs[String](1)
+    val prev: Double = buffer.getDouble(0)
+    val current: Double = row.getAs[Double](0)
+
+    updateType match {
+      case ""relative"" => prev + current
+      case ""absolute"" => current
+      case _ => current
+    }
+  }
+}

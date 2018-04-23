@@ -1,0 +1,11 @@
+>>> all_emails_stmnt = session.query(customerEmails.parent_id).subquery()
+>>> print(all_emails_stmnt)
+SELECT customer_emails.parent_id
+FROM customer_emails
+>>> translations_with_no_email = session.query(customerTranslations).filter(
+...     ~customerTranslations.id.in_(all_emails_stmnt))
+>>> print(translations_with_no_email)
+SELECT customer_translation.id AS customer_translation_id
+FROM customer_translation
+WHERE customer_translation.id NOT IN (SELECT customer_emails.parent_id
+FROM customer_emails)

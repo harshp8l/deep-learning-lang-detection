@@ -1,0 +1,29 @@
+func handleSymlink(path *string) (bool, error) {
+    fileInfo, err := os.Lstat(*path)
+    if os.IsNotExist(err) || err != nil {
+        return false, err
+    }
+
+    // Check path is symlink or not
+    if fileInfo.Mode()&os.ModeSymlink != 0 {
+        actualPath, err := filepath.EvalSymlinks(*path)
+        if err != nil {
+            // Extract actual path from error msg
+            apath := strings.Split(err.Error(), "":"")[0]
+            *path = strings.Split(apath, "" "")[1]
+            return false, err
+        }
+        *path = actualPath
+        return true, nil
+    }
+
+    return false, nil
+}
+
+func main() {
+    path := ""/Users/jeeva/test1""
+    result, err := handleSymlink(&path)
+    fmt.Println(""Error:"", err)
+    fmt.Println(""Result:"", result)
+    fmt.Println(""Actual Path:"", path)
+}

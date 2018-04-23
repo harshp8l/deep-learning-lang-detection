@@ -1,0 +1,37 @@
+create table employee (code int , name varchar(100), salary money, Month1 varchar(100));
+
+
+INSERT INTO employee (code, name, salary, Month1)
+VALUES
+(1   ,   'A'   ,    1000   ,   'may'),
+(2   ,   'B'   ,    1150   ,   'may'),
+(1   ,   'A'   ,    1200   ,   'June'),
+(2   ,   'B'   ,    1150   ,   'June'),
+(1    ,  'A'    ,   4000  ,    'July'),
+(2    ,  'B'     ,  3500  ,    'July')
+
+DECLARE @cols AS NVARCHAR(MAX),
+    @query  AS NVARCHAR(MAX)
+
+select @cols = STUFF((SELECT ',' + QUOTENAME(Month1) 
+                    from employee
+                    group by Month1
+                    order by Month1
+            FOR XML PATH(''), TYPE
+            ).value('.', 'NVARCHAR(MAX)') 
+        ,1,1,'')
+
+        select @cols
+
+set @query = 'SELECT code,name,' + @cols + ' from 
+             (
+                select code, name, salary,Month1
+                from employee
+            ) x
+            pivot 
+            (
+                sum(salary)
+                for month1 in (' + @cols + ')
+            ) p '
+
+execute (@query)

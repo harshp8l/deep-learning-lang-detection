@@ -1,0 +1,13 @@
+SELECT t1.shopname,
+       t1.items_sold,
+       t2.items_returned,(t1.items_sold-t2.items_returned) AS NET 
+FROM (SELECT global.shopname, COUNT(stock.sold) as items_sold
+      FROM global
+      INNER JOIN  stock ON global.id = stock.shop
+      GROUP BY shopname) t1
+INNER JOIN  (SELECT global.shopname, COUNT(stock.returned) as items_returned
+             FROM global
+             INNER JOIN  stock ON global.id = stock.shop
+             WHERE stock.datereturned > '2010-01-01'
+             GROUP BY shopname) t2
+ON t1.shopname = t2.shopname

@@ -1,0 +1,17 @@
+val allGears = spark.read.csv(allGearsFilePath)
+val allUsers = spark.read.csv(allUsersFilePath)
+val allUserItems = allUsers.crossJoin(allGears).map{case Row(x: String,y: String) => (x.toInt, y.toInt)}.persist(StorageLevel.MEMORY_AND_DISK)
+
+val gearPurchased = spark.read.csv(gearPurchaseRating)
+
+val gearShoppingUserToItem = gearPurchased.map{case Row(x: String,y: String) => (x.toInt, y.toInt)}.persist(StorageLevel.MEMORY_AND_DISK)
+val nonPurchasedGears = allUserItems.except(gearShoppingUserToItem).cache()
+
+val gearAddedToCart = spark.read.csv(gearAddToCartRating) // NOT USED
+val allUserItemToGearShoppingUnion = allUserItems.union(gearShoppingUserToItem) // NOT USED
+val allUserItemToGearShoppingIntersection = allUserItems.intersect(gearShoppingUserToItem) // NOT USED
+
+allUserItems.unpersist()
+gearShoppingUserToItem.unpersist()
+
+val out = model.predict(nonPurchasedGears)

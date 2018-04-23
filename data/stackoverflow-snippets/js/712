@@ -1,0 +1,43 @@
+public string mies()
+{
+
+
+    DataTable dt = new DataTable();
+    using (SqlConnection con = new SqlConnection(dod.conect))
+    {
+        using (SqlCommand cmd = new SqlCommand(""select miesiac from Sales.dbo.Month"", con))
+        {
+            con.Open();
+            SqlDataAdapter da = new SqlDataAdapter(cmd);
+            da.Fill(dt);
+        }
+    }
+    StringBuilder jsonString = new StringBuilder();
+    if (dt.Rows.Count > 0)
+    {
+
+         jsonString.Append(""\"""");
+        jsonString.Append(""["");
+
+        for (int j = 0; j < dt.Columns.Count; j++)
+
+        {
+            for (int i = 0; i < dt.Rows.Count; i++)
+
+                if (i < dt.Rows.Count - 1)
+
+                {
+                jsonString.Append(""'"" +  dt.Rows[i][j].ToString() + ""'"" +  "","");
+                  }
+                else if (i == dt.Rows.Count - 1)
+                {
+                    jsonString.Append(""'"" +  dt.Rows[i][j].ToString() + ""'"");
+                }
+
+        }
+        jsonString.Append(""]"");
+        jsonString.Append(""\"""");
+
+    }
+    return jsonString.ToString();
+}

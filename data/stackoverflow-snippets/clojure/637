@@ -1,0 +1,23 @@
+(defn edit-distance
+  ""['seq of char' 'seq of char']""
+  [s0 s1]
+  (let [n0 (count s0)
+        n1 (count s1)
+        distances (make-array Long/TYPE (inc n0) (inc n1))]
+    ;; I've unwinded all aget/aset calls, so they can be inlined by compiler.
+    ;; Also I'm type hinting first argument of toplevel aget/aset calls.
+    ;; The reason is explained next.
+    (doseq [^long i (range 1 (inc n0))] (aset ^longs (aget distances i) 0 i))
+    (doseq [^long j (range 1 (inc n1))] (aset ^longs (aget distances 0) j j))
+
+    (doseq [i (range 1 (inc n0)), j (range 1 (inc n1))]
+      (let [ins (aget ^longs (aget distances i) (dec j))
+            del (aget ^longs (aget distances (dec i))  j)
+            match (aget ^longs (aget distances (dec i)) (dec j))
+            min-dist (min ins del match)]
+        (cond
+          (not= match min-dist) (aset ^longs (aget distances i) j (inc min-dist))
+          (not= (nth s0 (dec i)) (nth s1 (dec j))) (aset ^longs (aget distances i) j (inc min-dist))
+          :else (aset ^longs (aget distances i) j min-dist))))
+    ;; we can leave this, since it is not placed within loop
+    (aget distances n0 n1)))

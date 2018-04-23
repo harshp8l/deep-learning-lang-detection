@@ -1,0 +1,81 @@
+// rotateMatrix.cpp : Defines the entry point for the console application.
+//
+
+#include ""stdafx.h""
+#include <iostream>
+using namespace std;
+
+void rotatematrix(int M[][3], int row, int col, int rowLen, int colLen)
+{
+    //rowLen & colLen are always the orginal matrix total length
+    // playRows & playCols are the size for the current recuision
+    // row & col are the starting position related to the original matrix(0,0)
+    int playRows = rowLen - 2*row ;
+    int playCols = colLen - 2*col;
+
+    if (playCols <= 1 || playRows <= 1)
+        return;
+
+    //row,col is the starting point pointing to the top left corner element
+    if (rowLen <= 1 || colLen <= 1) return;
+
+    int tmp = M[row][col];
+
+    //left shift the top row by one element
+    for (int j = col; j <= playCols + col - 2; ++j)
+        M[row][j] = M[row][j + 1];
+
+    // up shift the right colunm by one position
+    for (int i = row; i <= playRows + row - 2; ++i)
+        M[i][col + playCols - 1] = M[i + 1][col + playCols - 1];
+
+    //right shift the bottom row by one
+    for (int j = col + playCols - 2; j >= col; --j)
+        M[row+playRows-1][j+1] = M[row+playRows-1][j];
+
+    // down shift the left col by one
+    for (int i = row + playRows - 2; i >= row; --i)
+        M[i+1][col] = M[i][col];
+
+    M[row + 1][col] = tmp;
+
+
+    rotatematrix(M, ++row, ++col, rowLen, colLen);
+}
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+    // Test Case 1
+    /*
+    int a[4][4] = { { 1, 2, 3, 4 },
+    { 5, 6, 7, 8 },
+    { 9, 10, 11, 12 },
+    { 13, 14, 15, 16 } };
+    int R = 4, C = 4;*/
+
+    // Tese Case 2
+    int R = 3, C = 3;
+    int a[3][3] = {{1, 2, 3},
+    {4, 5, 6},
+    {7, 8, 9}
+    };
+
+    for (int i = 0; i<R; i++)
+    {
+        for (int j = 0; j<C; j++)
+            cout << a[i][j] << "" "";
+        cout << endl;
+    }
+
+    rotatematrix(a, 0, 0, 3, 3);
+
+    // Print rotated matrix
+    for (int i = 0; i<R; i++)
+    {
+        for (int j = 0; j<C; j++)
+            cout << a[i][j] << "" "";
+        cout << endl;
+    }
+
+    return 0;
+}

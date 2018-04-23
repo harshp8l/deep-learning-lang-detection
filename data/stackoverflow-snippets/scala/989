@@ -1,0 +1,18 @@
+    import org.apache.hadoop.fs._
+
+val src = new Path(""s3://trfsmallfffile/Segments/Output/*/*"")
+val dest = new Path(""s3://trfsmallfffile/Segments/FinalOutput"")
+val conf = sc.hadoopConfiguration   // assuming sc = spark context
+val fs = src.getFileSystem(conf)
+
+val file = fs.globStatus(new Path(""s3://trfsmallfffile/Segments/Output/*/*""))
+
+
+  for (urlStatus <- file) {
+    //println(""S3 FILE PATH IS ===:"" + urlStatus.getPath)
+    val partitioName=urlStatus.getPath.toString.split(""="")(1).split(""\\/"")(0).toString
+    val finalPrefix=""Fundamental.FinancialLineItem.Segments.""
+    val finalFileName=finalPrefix+partitioName+"".txt""
+    val dest = new Path(""s3://trfsmallfffile/Segments/FinalOutput""+""/""+finalFileName+ "" "")
+    fs.rename(urlStatus.getPath, dest)
+  }

@@ -1,0 +1,23 @@
+$SuccessReturnCode=@(0,3010)
+$ProcesTimeOut=3000
+$buildparam=""$($path) /t:Rebuild /m:4 /p:BuildInParallel=true""
+
+Write-Log -message ""Invoking: $myProcess $myArgs, process time-out:$ProcTimeOut seconds""
+$process = (Start-Process -FilePath $msBuildExe  -windowstyle Hidden -ArgumentList $buildparam -PassThru)
+
+    Try {
+        $process | Wait-Process -Timeout $ProcTimeOut -ErrorAction Stop
+        Write-Log -message ""Completed with return code: $($process.ExitCode)""
+            if ($SuccessReturnCode -notcontains $process.ExitCode) {
+                Write-Log -level 'error' -message 'something went wrong'
+                exit 255
+
+            }
+
+    }
+    Catch {
+        $ErrorMessage = $_.Exception.Message
+        Write-Log -level 'error' -message ""The error message was: <$($ErrorMessage)>""
+        $pwid=$process.Id.ToString()
+        taskkill.exe /PID $pwid /T /F
+    }

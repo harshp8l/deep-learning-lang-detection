@@ -1,0 +1,29 @@
+/// The resulting type
+type Output =
+    | Integer of int
+    | String of string
+
+/// tag to parser mappings
+let mappings =
+    [
+        ""int"" => (pint32 |>> Integer)
+        ""str"" => (
+                    manySatisfy (fun c -> c <> '\'')
+                    |> between (skipChar ''') (skipChar ''')
+                    |>> String
+                 )
+    ]
+    |> makeMap
+
+let myProcess : Parser<Output list> =
+    let pKeys =                     // First, we parse out the keys
+        many1Satisfy isAsciiLower   // Parse one key; keys are always ASCII strings
+        |> sepBy <| (skipChar ',')  // many keys separated by comma
+        .>> (skipChar ':')          // all this with trailing semicolon
+    let pValues = fun keys ->
+        keys                        // take the keys list
+        |> List.map                 // find the required Value parser
+                                    // (NO ERROR CHECK for bad keys)
+            (fun p -> Map.find p mappings)
+        |> allOfSepBy (skipChar ',') // they must run in order, comma-separated
+    pKeys >>= pValues

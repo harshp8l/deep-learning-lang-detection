@@ -1,0 +1,20 @@
+  trait Replacer[T <: Expression] {
+    def replace(exp: T, operation: String => String): T
+  }
+
+  object Replacer {
+    implicit val exprA: Replacer[ExpressionA] =
+      (exp: ExpressionA, operation: String => String) => exp match {
+        case OperationA(op, a, b) => OperationA(op, replace(a, operation), replace(b, operation))
+        case VariableA(name) => VariableA(operation(name))
+      }
+
+    implicit val exprB: Replacer[ExpressionB] =
+      (exp: ExpressionB, operation: String => String) => exp match {
+        case ComparisonB(op, a, b) => ComparisonB(op, replace(a, operation), replace(b, operation))
+        case OperationB(op, a, b) => OperationB(op, replace(a, operation), replace(b, operation))
+      }
+  }
+
+  def replace[T <: Expression](exp: T, operation: String => String)(implicit replacer: Replacer[T]): T =
+    replacer.replace(exp, operation)

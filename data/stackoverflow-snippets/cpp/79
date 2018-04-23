@@ -1,0 +1,20 @@
+#include <type_traits>
+#include <map>
+
+template <class Interface> class Factory {
+  template <class C, class T = void> struct enable_if_I :
+    std::enable_if<std::is_base_of<Interface, C>::value, T> {};
+  using create_fn = Interface* (*)();
+  std::map<QByteArray, create_fn, std::less<>> m_map;
+  static Factory *&instance_ref() { // assume no inline static yet
+    static Factory *m_instance;
+    return m_instance;
+  }
+  Factory(const Factory &) = delete;
+  Factory &operator=(const Factory &) = delete;
+public:
+  Factory() {
+    Q_ASSERT(!instance());
+    instance_ref() = this;
+  }
+  virtual ~Factory() { instance_ref() = {}; }

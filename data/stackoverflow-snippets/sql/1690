@@ -1,0 +1,12 @@
+select dt.id, campaign.id as LastTouchId, campaign.type as LastTouchType from (
+    select opportunity.id, max(ct.responsedate) as responsedate from opportunity
+        left join account on account.id = opportunity.account_id
+        left join (select contact.account_id, campaignmember.responsedate from
+        contact inner join campaignmember on campaignmember.id = contact.campaignmember_id) 
+        as ct on ct.account_id = account.id and ct.responsedate < opportunity.createddate
+        group by opportunity.id) as dt
+    inner join account on account.id = dt.id
+    inner join contact on contact.account_id = account.id
+    inner join campaignmember on campaignmember.id = contact.campaignmember_id and 
+    campaignmember.responsedate = dt.responsedate
+    inner join campaign on campaign.id = campaignmember.campaign_id

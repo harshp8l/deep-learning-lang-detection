@@ -1,0 +1,18 @@
+template<class Base>
+struct poly_any:private std::any{
+  Base* operator->(){ return to_base(*this); }
+  template<class X, std::enable_if<std::is_base_of<Base, std::decay_t<X>>{}, bool> =true>
+  poly_any(X&& x):
+    std::any(std::forward<X>(x)),
+    to_base([](std::any& self)->Base*{
+      return std::any_cast<std::decay_t<X>*>(&self);
+    })
+  {}
+  poly_any(poly_any const&)=default;
+  poly_any(poly_any &&)=default;
+  poly_any&operator=(poly_any const&)=default;
+  poly_any&operator=(poly_any &&)=default;
+private:
+  using to_base_t = Base*(*)(std::any&);
+  to_base_t to_base=nullptr;
+};

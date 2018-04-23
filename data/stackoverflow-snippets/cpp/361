@@ -1,0 +1,82 @@
+// DtClassA.h
+class DtClassA {
+    private:
+        int id;
+
+    public:
+        DtClassA();
+
+        // To make a dynamic_cast, we needed to define ""getId()"" as virtual.
+        virtual int getId();
+};
+
+// DtClassA.cpp
+DtClassA::DtClassA() {
+    this->id = 0;
+}
+int DtClassA::getId() {
+    return this->id;
+}
+
+// DtClassB.h
+class DtClassB: public DtClassA {
+    private:
+        bool isAlive;
+
+    public:
+        DtClassB();
+        bool getIsAlive();
+}
+
+// DtClassB.cpp
+DtClassB::DtClassB() : DtClassA() {
+    this->isAlive = true;
+}
+bool DtClassB::getIsAlive() {
+    return this->isAlive;
+}
+
+// DtClassC.h
+class DtClassC: public DtClassA {
+    private:
+        char type;
+
+    public:
+        DtClassC();
+        char getType();
+}
+
+// DtClassC.cpp
+DtClassC::DtClassC() : DtClassA() {
+    this->type = 'm';
+}
+char DtClassC::getType() {
+    return this->type;
+}
+
+// main.cpp
+int main() {
+    DtClassB ctb = DtClassB();
+    createA(ctb);
+}
+createA(DtClassA& dta) {
+    cout << dta.getId() << endl; // We can do this.
+
+    try {
+        auto dtb = dynamic_cast<ClassB &>(dta);
+    } catch (std::bad_cast &e) {
+        cout << ""Failed to cast DtClassA to DtClassB!"" << endl;
+    }
+
+    try {
+        auto dtc = dynamic_cast<ClassC &>(dta);
+    } catch (std::bad_cast &e) {
+        cout << ""Failed to cast DtClassA to DtClassC!"" << endl;
+    }
+
+    // In ""main()"" function we call this function with an instance of
+    // DtClassB, so the first try-catch will pass and the second will
+    // not.
+    // So, now, we can do this:
+    cout << dta.getIsAlive();  // getIsAlive() is an operation from DtClassB.
+}

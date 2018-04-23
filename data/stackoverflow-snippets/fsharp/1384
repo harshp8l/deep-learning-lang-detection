@@ -1,0 +1,22 @@
+let testProjects = @""src/**/*Tests.csproj""
+
+let requestedTarget = getBuildParamOrDefault ""target"" """"
+let shouldDeploy =
+    match requestedTarget with 
+    | ""Test"" | ""AcceptanceTest"" | ""Deploy"" -> true
+    | _ -> false
+
+
+// *** Define Targets ***
+Target ""BuildApp"" (fun _ ->
+    let properties =
+        if shouldDeploy
+        then [ (""DeployOnBuild"", ""true""); (""PublishProfile"",""LocalTestServer.pubxml"") ]
+        else []
+    !! @""src/**/*.csproj""
+      -- testProjects
+        |> MSBuildReleaseExt null properties ""Build""
+        |> Log ""Build-Output: ""
+)
+
+// Other targets and dependencies omitted.

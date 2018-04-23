@@ -1,0 +1,36 @@
+package main
+
+import (
+   ""fmt""
+   ""net/http""
+   ""io/ioutil""
+)  
+
+
+func GetPrice(quotes chan string, count int) {
+    for count > 0 {
+        client := &http.Client{}
+    req, _ := http.NewRequest(""GET"", ""https://postman-echo.com/get?foo1=bar1&foo2=bar2"", nil)
+    req.Header.Set(""Accept"", ""application/json"")
+    res, err := client.Do(req)
+    if err != nil {
+        panic(err)
+    }
+    defer res.Body.Close()
+    body, err := ioutil.ReadAll(res.Body)
+    quotes <- string(body)
+    count--
+}
+close(quotes)
+
+}
+
+
+func main() {
+    const max = 3
+    ch := make(chan string)
+    go GetPrice(ch, max)
+    for num := range ch {
+        fmt.Println(num)
+    }
+}

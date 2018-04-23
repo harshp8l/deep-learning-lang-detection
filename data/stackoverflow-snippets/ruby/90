@@ -1,0 +1,51 @@
+# cat nginx.conf                                                                                                                                                                                        
+user nginx nginx;                                                                                                                                                                                                     
+worker_processes 4;                                                                                                                                                                                                   
+
+events {                                                                                                                                                                                                              
+        worker_connections 1024;                                                                                                                                                                                      
+        use epoll;                                                                                                                                                                                                    
+}                                                                                                                                                                                                                     
+
+http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+
+        client_header_timeout 10m;
+        client_body_timeout 10m;
+        send_timeout 10m;
+
+        connection_pool_size 256;
+        client_header_buffer_size 1k;
+        large_client_header_buffers 4 8k;
+        request_pool_size 4k;
+
+        gzip on;
+        gzip_min_length 1100;
+        gzip_buffers 4 8k;
+        gzip_types text/plain;
+
+        output_buffers 1 32k;
+        postpone_output 1460;
+
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+
+        keepalive_timeout 75 20;
+
+        ignore_invalid_headers on;
+
+        index index.html;
+
+        client_max_body_size 100m;
+
+        passenger_root /usr/lib64/ruby/vendor_ruby/phusion_passenger/locations.ini;
+        passenger_ruby /usr/bin/ruby;
+        passenger_max_pool_size 50;
+        passenger_pool_idle_time 1200;
+        passenger_max_instances_per_app 20;
+        passenger_max_requests 1000;
+
+        include sites.d/*.conf;
+}

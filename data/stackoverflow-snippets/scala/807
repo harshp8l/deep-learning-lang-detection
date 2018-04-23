@@ -1,0 +1,28 @@
+scala> case class A(x: Int)
+// defined class A
+
+scala> val parf: PartialFunction[Int, String] = { case 0 => ""!!!"" }
+// parf: PartialFunction[Int,String] = <function1>
+
+scala> def foo(pf: PartialFunction[Int, String]): PartialFunction[A, String] = { 
+     |   case A(x) if pf.isDefinedAt(x) => pf(x)
+     | }   
+// foo: (pf: PartialFunction[Int,String])PartialFunction[A,String]
+
+scala> val parfA = foo(parf)
+// parfA: PartialFunction[A,String] = <function1>
+
+scala> parfA(A(0))
+//res0: String = !!!
+
+scala> parfA(A(1))
+// scala.MatchError: A(1) (of class A)
+//   at scala.PartialFunction$$anon$1.apply(PartialFunction.scala:254)
+//   at scala.PartialFunction$$anon$1.apply(PartialFunction.scala:252)
+//   at $anonfun$1.applyOrElse(<console>:11)
+//   at $anonfun$1.applyOrElse(<console>:11)
+//   at scala.runtime.AbstractPartialFunction.apply(AbstractPartialFunction.scala:34)
+//   at $anonfun$foo$1.applyOrElse(<console>:13)
+//   at $anonfun$foo$1.applyOrElse(<console>:13)
+//   at scala.runtime.AbstractPartialFunction.apply(AbstractPartialFunction.scala:34)
+//   ... 28 elided

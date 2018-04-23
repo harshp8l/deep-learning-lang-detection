@@ -1,0 +1,21 @@
+DECLARE @SQL nvarchar(max) = '';
+
+SELECT  @SQL += 'UPDATE '+ TABLE_NAME + -- Update clause
+        STUFF( -- Set clause start
+        (
+            SELECT ',' + COLUMN_NAME +  '= NULLIF('+ COLUMN_NAME +', ''NULL'')'
+            FROM Information_schema.Columns C
+            WHERE C.TABLE_NAME = T.TABLE_NAME
+            FOR XML PATH('')    
+        ), 1, 1, ' SET ') + -- Set clause end
+        ' WHERE ''NULL'' IN(' + -- Where clause start
+        STUFF(
+        (
+            SELECT ','+ COLUMN_NAME
+            FROM Information_schema.Columns C
+            WHERE C.TABLE_NAME = T.TABLE_NAME
+            FOR XML PATH('')    
+        ),1, 1, '')+ ');' -- Where clause end
+FROM Information_schema.Tables T;
+
+EXEC(@SQL);

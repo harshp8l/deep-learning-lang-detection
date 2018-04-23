@@ -1,0 +1,17 @@
+const fs = require('fs');
+const es = require('event-stream');
+const path = require(""path"");
+
+let lineCount = 0;
+let csvPath = path.join(__dirname, ""Database.csv"");
+fs.createReadStream(csvPath)
+    .pipe(es.split())
+    .pipe(es.mapSync((line) => {
+        lineCount += 1;
+        let filePath = path.join(__dirname, `line${lineCount}.csv`)
+        fs.writeFileSync(filePath , line);
+    }).on('error', (err) => {
+        console.log('Error while reading file.', err);
+    }).on('end', () => {
+        console.log('Read entire file.')
+    }));

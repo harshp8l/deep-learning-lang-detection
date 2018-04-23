@@ -1,0 +1,36 @@
+val ds = Seq(
+  (""a"", ""1"", """"),
+  (""b"", ""2"", ""4""),
+  (""a"", ""1"", ""3""),
+  (""b"", ""2"", ""4""),
+  (""c"", ""1"", ""3""),
+  (""a"", ""6"", ""8""),
+  (""b"", ""2"", ""4""),
+  (""a"", ""1"", ""4"")
+).toDF(""guid"", ""timestamp"", ""agt"").
+  as[(String, String, String)]
+
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
+
+val w = Window.partitionBy($""guid"")
+val w1 = Window.partitionBy($""guid"", $""timestamp"")
+val w2 = Window.partitionBy($""guid"").orderBy($""timestamp"".desc).
+  rowsBetween(Window.unboundedPreceding, 0)
+
+ds.
+  withColumn(""minimum"", min(""timestamp"").over(w)).
+  withColumn(""count"", count(""*"").over(w1)).
+  withColumn(""agt"", when($""agt"" =!= """", $""agt"")).
+  withColumn(""agtM"", last(""agt"", ignoreNulls = true).over(w2)).
+  na.fill("""", Seq(""agt"")).
+  dropDuplicates(""guid"", ""timestamp"").
+  show
+// +----+---------+---+-------+-----+----+
+// |guid|timestamp|agt|minimum|count|agtM|
+// +----+---------+---+-------+-----+----+
+// |   c|        1|  3|      1|    1|   3|
+// |   b|        2|  4|      2|    3|   4|
+// |   a|        1|   |      1|    3|   8|
+// |   a|        6|  8|      1|    1|   8|
+// +----+---------+---+-------+-----+----+

@@ -1,0 +1,65 @@
+public class MyTest {
+    @Test
+    public void testing() {
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(SubData.class, new SubDataTypeAdapter());
+        Gson gson = builder.create();
+
+        Dataclass data = new Dataclass();
+        data.key1 = ""abc"";
+        SubDataImpl subData = new SubDataImpl();
+        subData.hello = ""ttt"";
+        data.sub = subData;
+        String jsonValue = gson.toJson(data);
+        System.out.println(jsonValue);
+
+        Dataclass data2 = gson.fromJson(jsonValue, Dataclass.class);
+        System.out.println(gson.toJson(data2));
+    }
+
+    class SubDataTypeAdapter extends TypeAdapter<SubDataImpl> {
+
+        @Override
+        public void write(JsonWriter out, final SubDataImpl subData) throws IOException {
+            out.beginObject();
+            out.name(""hello"").value(subData.getHello());
+            out.endObject();
+        }
+
+        @Override
+        public SubDataImpl read(JsonReader in) throws IOException {
+            final SubDataImpl subData = new SubDataImpl();
+
+            in.beginObject();
+            while (in.hasNext()) {
+                switch (in.nextName()) {
+                    case ""hello"":
+                        subData.hello = in.nextString();
+                        break;
+                }
+            }
+            in.endObject();
+
+            return subData;
+        }
+    }
+
+    class Dataclass implements Serializable {
+        String key1;
+        SubData sub;
+    }
+
+    abstract class SubData {
+        abstract String getHello();
+    }
+
+    class SubDataImpl extends SubData implements Serializable {
+
+        String hello;
+
+        @Override
+        public String getHello() {
+            return hello;
+        }
+    }
+}

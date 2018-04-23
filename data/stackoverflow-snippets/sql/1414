@@ -1,0 +1,29 @@
+WITH dataCTE AS
+    (SELECT product_id AS 'ID', CAST(SUBSTR(price, 5) AS INT)/1000000 AS 'USD',
+    CASE WHEN (CAST(SUBSTR(price, 5) AS INT)/1000000) <= 500 THEN
+        100 ELSE 200
+        END AS 'Interval'
+    FROM data
+    WHERE kind = 3),
+groupCTE AS
+    (SELECT dataCTE.ID AS 'ID', dataCTE.USD AS 'USD', dataCTE.Interval AS 'Interval',
+    CASE WHEN dataCTE.Interval = 100 THEN 
+        CAST(dataCTE.USD AS INT)/100
+    ELSE
+        (CAST(dataCTE.USD-500 AS INT)/200)+5
+    END AS 'GroupID'
+    FROM dataCTE),
+cleanCTE AS
+    (SELECT *, CASE WHEN groupCTE.Interval = 100 THEN
+        CAST(groupCTE.GroupID *100 AS VARCHAR) 
+        || '-' || 
+        CAST((groupCTE.GroupID *100)+99 AS VARCHAR)
+    ELSE
+        CAST(((groupCTE.GroupID-5)*200)+500 AS VARCHAR) 
+        || '-' || 
+        CAST(((groupCTE.GroupID-5)*200)+500+199 AS VARCHAR) 
+    END AS 'diapason'
+    FROM groupCTE
+    INNER JOIN cat_name AS cn ON groupCTE.ID = cn.cat_id)
+SELECT *
+FROM cleanCTE;

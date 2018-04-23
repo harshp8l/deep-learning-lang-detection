@@ -1,0 +1,34 @@
+module Magic
+  def after_method(original, callback)
+    all = [*original]
+    all.each do |original|
+      m = instance_method(original)
+      define_method(original) do |*args, &block|
+        m.bind(self).(*args, &block)
+        send(callback)
+      end
+    end
+  end
+end
+
+
+class X
+  extend Magic
+  def foo
+    puts ""foo""
+  end
+
+  def bar
+    puts ""bar""
+  end
+
+  private
+  def find_article
+    puts ""DONE""
+  end
+
+  after_method [:foo, :bar], :find_article    
+end
+X.new.foo
+# foo
+# done

@@ -1,0 +1,30 @@
+type Type1 =
+    {
+        p1 : int;
+        p2 : int;
+    }
+type Type2 =
+    {
+        p1 : int;
+        p2 : int;
+    }
+type Wrapper =
+    | TOne of Type1
+    | TTwo of Type2
+
+let changeP1ToTen = function
+    | TOne of t1 -> { t1 with p1 = 10 }
+    | TTwo of t2 -> { t2 with p1 = 10 }
+
+let type1 = { p1 = 50; p2 = 80 }
+
+// Requires extra wrapping step, is that a dealbreaker?
+let newtype1 = TOne type1 |> changeP1ToTen
+
+// If that's a problem for ya, here's a function to fix it
+let iTypeToWrapper (value: 'a when 'a :> IType) =
+    match value with
+        | :? Type1 as t1 -> TOne t1
+        | :? Type2 as t2 -> TTwo t2
+
+let othernewtype1 = iTypeToWrapper type1 |> changeP1ToTen

@@ -1,0 +1,20 @@
+def getRow(x : String) : Row={    
+val columnArray = new Array[String](4)
+columnArray(0)=x.substring(0,3)
+columnArray(1)=x.substring(3,13)
+columnArray(2)=x.substring(13,18)
+columnArray(3)=x.substring(18,22)
+Row.fromSeq(columnArray)  
+}
+
+Logger.getLogger(""org"").setLevel(Level.ERROR)
+
+val spark = SparkSession.builder().master(""local"").appName(""ReadingCSV"").getOrCreate()
+
+val fruits = spark.sparkContext.textFile(""in/fruits.txt"")
+
+val schemaString = ""id,fruitName,isAvailable,unitPrice"";
+val fields = schemaString.split("","").map( field => StructField(field,StringType,nullable=true))
+val schema = StructType(fields)
+
+val df = spark.createDataFrame(fruits.map { x => getRow(x)} , schema)

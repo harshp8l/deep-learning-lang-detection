@@ -1,0 +1,8 @@
+$SiteCode = ""PS1""
+$SiteServer = ""SRVSCCM01""
+$TaskSequence = (Get-WmiObject -Namespace ""root\SMS\site_$($SiteCode)"" -Class SMS_TaskSequencePackage -ComputerName $SiteServer)
+$ImagePackage = (Get-WmiObject -Namespace ""root\SMS\site_$($SiteCode)"" -Class SMS_ImagePackage -ComputerName $SiteServer)
+$TaskPattern = ($TaskSequence.Name|%{[regex]::escape($_)}) -join '|'
+$ImagePattern = ($ImagePackage.Name|%{[regex]::escape($_)}) -join '|'
+$TaskSequence.Name|?{$_ -match $ImagePattern}
+$ImagePackage.Name|?{$_ -match $TaskPattern}

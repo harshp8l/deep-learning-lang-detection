@@ -1,0 +1,43 @@
+package main
+
+import (
+    ""fmt""
+    ""reflect""
+)
+
+type A struct {
+    Foo string
+    Bar int
+    Baz bool // to be skipped
+}
+
+type B struct {
+    Foo string
+    Bar int
+}
+
+func main() {
+    av := reflect.ValueOf(A{""hello"", 123, true})
+
+    fields := make([]reflect.StructField, 0)
+    values := make([]reflect.Value, 0)
+    for i := 0; i < av.NumField(); i++ {
+        f := av.Type().Field(i)
+        if f.Name != ""Baz"" {
+            fields = append(fields, f)
+            values = append(values, av.Field(i))
+        }
+    }
+
+    typ := reflect.StructOf(fields)
+    val := reflect.New(typ).Elem()
+    for i := 0; i < len(fields); i++ {
+        val.Field(i).Set(values[i])
+    }
+
+    btyp := reflect.TypeOf(B{})
+    bval := val.Convert(btyp)
+
+    b, ok := bval.Interface().(B)
+    fmt.Println(b, ok)
+}

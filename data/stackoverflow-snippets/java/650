@@ -1,0 +1,80 @@
+import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.TransferQueue;
+
+class Leader implements Runnable {
+    private final Follower follower;
+    private final TransferQueue<String> queue = new LinkedTransferQueue<>();
+
+    public Leader(Follower follower) {
+        this.follower = follower;
+    }
+
+    public void sendMessage(String message) throws InterruptedException {
+        queue.transfer(message);
+    }
+
+    public void run() {
+        try {
+            follower.sendMessage(""WAKE UP, SLEEPYHEAD!"");
+            while (true) {
+                String message = queue.take();
+                if (message.equals(""STOP"")) {
+                    break;
+                } else {
+                    follower.sendMessage(""SAY "" + message);
+                }
+            }
+            System.out.println(""Exiting"");
+        } catch (Exception e) {
+            // we're exiting anyway, let it go
+        }
+    }
+}
+
+class Follower implements Runnable {
+    private final TransferQueue<String> queue = new LinkedTransferQueue<>();
+
+    public void sendMessage(String message) throws InterruptedException {
+        queue.transfer(message);
+    }
+
+    public void run() {
+        try {
+            while (true) {
+                String message = queue.take();
+                if (message.equals(""STOP"")) {
+                    break;
+                } else if (message.startsWith(""SAY "")) {
+                    System.out.println(message.substring(4));
+                } else {
+                    System.out.println(""My leader gave me a message I don't understand."");
+                }
+            }
+            System.out.println(""I've been told to stop."");
+        } catch (Exception e) {
+            // we're exiting anyway, let it go
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) throws InterruptedException {
+        Follower follower = new Follower();
+        Leader leader = new Leader(follower);
+        Thread one = new Thread(leader);
+        Thread two = new Thread(follower);
+        // start the follower first
+        two.start();
+        one.start();
+
+        // tell the leader, and the leader will tell the follower
+        leader.sendMessage(""Hello, world"");
+        leader.sendMessage(""Good-bye"");
+
+        leader.sendMessage(""STOP"");
+        follower.sendMessage(""STOP"");
+        one.join();
+        two.join();
+        System.out.println(""Be seeing you."");
+    }
+}

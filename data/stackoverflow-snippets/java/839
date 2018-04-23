@@ -1,0 +1,49 @@
+version: '3'
+services:
+  postgres_test:
+      container_name: post-service-test
+      image: postgres:9-alpine
+      environment:
+        - POSTGRES_USER=${POSTGRES_USER}
+        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+        - POSTGRES_DB=${POSTGRES_DB}
+      networks:
+        - test_network
+      labels:
+        container_group: test_env
+
+
+  rabbitmq_test:
+      container_name: rabb-service-test
+      image: rabbitmq:3-management-alpine
+      environment:
+        - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+        - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      depends_on:
+        - postgres_test
+      networks:
+        - test_network
+      labels:
+        container_group: test_env 
+
+
+  application:
+    container_name: build
+    image: openjdk:8-jdk
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+   volumes:
+      - ${project_home}:/root
+   networks:
+     - test_network
+   command: /bin/bash < build_script
+
+
+networks:
+    test_network:

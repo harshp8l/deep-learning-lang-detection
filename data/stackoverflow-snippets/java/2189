@@ -1,0 +1,30 @@
+public void commitHistory(Git git) throws NoHeadException, GitAPIException, IncorrectObjectTypeException, CorruptObjectException, IOException, UnirestException 
+{
+    Iterable<RevCommit> logs = git.log().call();
+    int k = 0;
+    for (RevCommit commit : logs) {
+        String commitID = commit.getName();
+        if (commitID != null && !commitID.isEmpty())
+        {
+            LogCommand logs2 = git.log().all();
+            Repository repository = logs2.getRepository();
+            tw = new TreeWalk(repository);
+            tw.setRecursive(true);
+            RevCommit commitToCheck = commit;
+            tw.addTree(commitToCheck.getTree());
+            for (RevCommit parent : commitToCheck.getParents())
+            {
+                tw.addTree(parent.getTree());
+            }
+            while (tw.next())
+            {
+                int similarParents = 0;
+                for (int i = 1; i < tw.getTreeCount(); i++)
+                    if (tw.getFileMode(i) == tw.getFileMode(0) && tw.getObjectId(0).equals(tw.getObjectId(i)))
+                        similarParents++;
+                if (similarParents == 0) 
+                        System.out.println(""File names: "" + fileName);
+            }
+        }
+    }
+}

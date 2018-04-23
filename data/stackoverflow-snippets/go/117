@@ -1,0 +1,33 @@
+package main
+
+import (
+    ""fmt""
+    ""strings""
+    ""sync""
+)
+
+func google(string) (string, error) { return ""yes"", nil }
+
+func main() {
+    question := ""question?""
+    answers := []string{""yes"", ""no""}
+
+    scores := make(map[string]int)
+    total := 0
+
+    wg := sync.WaitGroup{}
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+
+        body, _ := google(question)
+        for _, ans := range answers {
+            count := strings.Count(body, ans)
+            total += count
+            scores[ans] += 5 // <-- This does work
+        }
+    }()
+    wg.Wait()
+
+    fmt.Println(scores, total)
+}

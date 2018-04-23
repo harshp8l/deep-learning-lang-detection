@@ -1,0 +1,22 @@
+create or replace procedure respondent
+as
+begin
+    insert /*+ ignore_row_on_dupkey_index(respondent(cycle_sample_id,entity_id) ) */
+    into respondent
+        ( cycle_sample_id
+        , entity_id
+        , create_dt
+        , create_user_id
+        , exclude_from_weighting )
+    select e.entity_id, scp.create_dt, scp.cycle_sample_id
+    from   entity e
+           join entity_survey es
+                on  e.entity_id = es.entity_id
+           join cycle sc
+                on  es.cycle_id = sc.cycle_id
+           join cycle_sample scp
+                on  sc.cycle_id = scp.cycle_id
+           join cycle_period scp
+                on  sc.cycle_id = scp.cycle_id
+    where  e.entity_id = 0
+end respondent;

@@ -1,0 +1,42 @@
+#include <chrono>
+#include <cstdint>
+#include <iomanip>
+#include <iostream>
+#include <string>
+
+class TimeMeasureGuard {
+public:
+    using clock_type = std::chrono::high_resolution_clock;
+
+private:
+    const std::string m_testName;
+    std::ostream& m_os;
+
+    clock_type::time_point started_at;
+    clock_type::time_point ended_at;
+
+public:
+    TimeMeasureGuard(const std::string& testName, std::ostream& os = std::cerr)
+        : m_testName(testName), m_os(os)
+    {
+        started_at = clock_type::now();
+    }
+
+    ~TimeMeasureGuard()
+    {
+        ended_at = clock_type::now();
+
+        // Get duration
+        const auto duration = ended_at - started_at;
+
+        // Get duration in nanoseconds
+        const auto durationNs = std::chrono::nanoseconds(duration).count();
+        // ...or in microseconds:
+        const auto durationUs
+            = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+
+        // Report total run time into 'm_os' stream
+        m_os << ""[Test "" << std::quoted(m_testName) << ""]: Total run time: ""
+             << durationNs << "" ns, "" << ""or: "" << durationUs << "" us"" << std::endl;
+    }
+};

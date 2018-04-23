@@ -1,0 +1,42 @@
+import org.apache.flink.streaming.api.functions._
+import org.apache.flink.util._
+import org.apache.flink.api.common.state._
+
+case class Status( count: Int, key: String, value: Long )
+
+class TimeCountWindowProcessFunction( count: Long, windowSize: Long ) extends ProcessFunction[Record,Record] 
+{
+    lazy val state: ValueState[Status] = getRuntimeContext
+      .getState(new ValueStateDescriptor[Status](""state"", classOf[Status]))
+
+    override def processElement( input: Record, ctx: ProcessFunction[Record,Record]#Context, out: Collector[Record] ): Unit =
+    {
+        val updated: Status = Option( state.value ) match {
+            case None => {
+                ctx.timerService().registerEventTimeTimer( ctx.timestamp + windowSize )
+                Status( 1, input.key, input.value )
+            }
+            case Some( current ) => Status( current.count + 1, input.key, input.value + current.value )    
+        }
+        if ( updated.count == count ) 
+        {
+            out.collect( Record( input.key, updated.value ) )
+            state.clear
+        }
+        else
+        {
+            state.update( updated )  
+        }        
+    }
+
+    override def onTimer( timestamp: Long, ctx: ProcessFunction[Record,Record]#OnTimerContext, out: Collector[Record] ): Unit =
+    {
+        Option( state.value ) match {
+            case None => // ignore
+            case Some( status ) => {
+                out.collect( Record( status.key, status.value ) )
+                state.clear
+            }
+        }
+    }
+}

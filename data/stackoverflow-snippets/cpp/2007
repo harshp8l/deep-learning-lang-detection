@@ -1,0 +1,17 @@
+class PyContextManager {
+   private:
+      static volatile bool python_threads_initialized;
+   public:
+      static std::mutex pyContextLock;
+      PyContextManager(/* if python_threads_initialized is false, call PyEval_InitThreads and set the variable to true */);
+      ~PyContextManager();
+};
+
+#define PY_SAFE_CONTEXT(expr)                   \
+{                                               \
+   std::unique_lock<std::mutex>(pyContextLock); \
+   PyGILState_STATE gstate;                     \
+   gstate = PyGILState_Ensure();                \
+      expr;                                     \
+   PyGILState_Release(gstate);                  \
+}

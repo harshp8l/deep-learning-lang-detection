@@ -1,0 +1,20 @@
+#!/bin/bash
+
+awk -F';' '
+    function init() {
+            # formation line to print_line
+        line = vl pdf image baseinfo  weight volume dimensjon unspsc va_2 va_3 
+            # erase ^M (\r)
+        gsub( /\r/;"""";line )
+            # print a block
+        print line
+            # initialisation variables
+        vl = pdf = image = baseinfo  = weight = volume = dimensjon = unspsc = va_2 = va_3 = "";""
+    }
+        # head/title, note that ""%12s"" format with 12 characters width
+    BEGIN { printf ( ""%12s; %s; %s; %s; %s; %s; %s; %s; %s; %s;"",""vl"",""pdf"",""image"",""baseinfo "",""weight"",""volume"",""dimensjon"",""unspsc"",""va_2"",""va_3"" ) }
+    /^VL/ { init(); ; vl = sprintf( ""%12s; %s; %s; %s; "", $3, $4, $5, $6 ) }
+    /^VX;WEIGHT;/ { weight = sprintf( ""%s; "", $3 )}
+    # .. another conditions
+    END { init() }
+' file.dat  # > outputfile.csv

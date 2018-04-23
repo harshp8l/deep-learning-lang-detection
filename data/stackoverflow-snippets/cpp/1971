@@ -1,0 +1,61 @@
+#include <vector>
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+
+struct point {
+    int x;
+    int y;
+
+    friend std::istream &operator>>(std::istream &is, point &p) {
+        return is >> p.x >> p.y;
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, point const &p) {
+        return os << ""("" << p.x << "", "" << p.y << "")"";
+    }
+};
+
+struct slope_index {
+    double slope;
+    int index;
+
+    bool operator<(slope_index const &other) const {
+        return slope < other.slope;
+    }
+
+    bool operator==(slope_index const &other) const {
+        return slope == other.slope;
+    }
+};
+
+int main() {
+    int N;
+    std::cin >> N;
+
+    // read in the points
+    std::vector<point> points;
+    std::copy_n(std::istream_iterator<point>(std::cin), N, std::back_inserter(points));
+
+    // read in the X-intercept for each point:
+    std::vector<int> Xs;
+    std::copy_n(std::istream_iterator<int>(std::cin), N, std::back_inserter(Xs));
+
+    // compute the slopes
+    std::vector<slope_index> slopes;
+    int i = 0;
+    std::transform(points.begin(), points.end(),
+        Xs.begin(),
+        std::back_inserter(slopes),
+        [&](point const &p, int currX) { return slope_index{ p.y / double(p.x - currX), i++ }; });
+
+    // find the smallest slope
+    auto v = *std::min_element(slopes.begin(), slopes.end());
+
+    // find all the lines with that slope:
+    auto pos = std::partition(slopes.begin(), slopes.end(), [&](auto const &s) { return v == s; });
+
+    // print out the results:
+    for (auto s = slopes.begin(); s != pos; ++s)
+        std::cout << points[s->index];
+}

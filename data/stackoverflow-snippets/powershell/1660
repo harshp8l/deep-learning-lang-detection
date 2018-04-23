@@ -1,0 +1,14 @@
+$location = Read-Host ""CSV Path: ""
+$Names = Import-Csv -Path $location
+
+foreach($n in $Names)
+{
+    try {
+        $Computer = [system.net.dns]::resolve($n.NAME) | Select HostName,AddressList 
+        $IP = ($Computer.AddressList).IPAddressToString
+        New-Object PSObject -Property @{IPAddress=$IP; Name=$Computer.HostName} | Export-Csv \\filepath\Working.csv -NoTypeInformation -Append
+    } catch {
+        Write-Host ""$($n.NAME) is unreachable.""
+        Write-Output $n | Export-Csv \\Filepath\Unreachable.csv -Append -Encoding ASCII
+    }
+}

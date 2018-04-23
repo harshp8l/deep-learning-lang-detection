@@ -1,0 +1,16 @@
+user> (def min-dist {:1 {:1 0 :2 4} :2 {:1 4 :2 0 :3 5} :3 {:2 5 :3 0}})
+#'user/min-dist
+user> (time
+       (->> (for [k vertexes i vertexes j vertexes]     ;; start by making a sequence of all the combinatioins of indexes
+              [i j k])
+            (reduce
+             (fn [result [i j k]]                       ;; the reducer function takes the result so far and either modifies it 
+               (let [s (+ (get-in result [i k] inf)     ;; or passes it through unchanged.
+                          (get-in result [k j] inf))]
+                 (if (> (get-in result [i j] inf) s)    ;; depending on this if expression here.
+                   (assoc-in result [i j] s)            ;; pass on the changed value
+                   result)))                            ;; pass on the original value, unchanged
+             min-dist)))                                ;; this argument is the initial value.
+                                                        ;; the ->> expression places the result of the for expression here. (as the last argument)
+""Elapsed time: 5.099 msecs""
+{:1 {:1 0, :2 4, :3 9}, :2 {:1 4, :2 0, :3 5}, :3 {:2 5, :3 0, :1 9}}

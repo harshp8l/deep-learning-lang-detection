@@ -1,0 +1,16 @@
+// eventStream: stream of case classes of type GithubEvent 
+eventStream
+   // only look at IssuesEvent
+  .filter(e => e.`type` == ""IssuesEvent"")
+   // key by the name of the repository
+  .keyBy(""repo.name"")
+   // tumbling time window of a week
+  .timeWindow(Time.days(7))
+   // apply window function
+  .apply { (key, _, vals, out: Collector[(String)]) =>
+    var count = 0;
+    for (_ <- vals) {
+      count = count + 1;
+    }
+    out.collect(s""Repo name: $key Unique issues: $count"")
+  }

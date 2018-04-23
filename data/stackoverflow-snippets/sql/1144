@@ -1,0 +1,15 @@
+WITH `project.dataset.table` AS (
+  SELECT '123456' AS sessionId, 100.00 AS revenue, ARRAY<STRUCT<hit INT64, val STRING>>[(1, 'a.html'), (2, 'b.html'), (3, 'c.html?test=AAC'), (4, 'd.html?test=CCC')] AS pagesViewed UNION ALL
+  SELECT '5555', 50.00, ARRAY<STRUCT<hit INT64, val STRING>>[(1, 'a.html'), (2, 'b.html?test=123'), (3, 'c.html'), (4, 'd.html')]
+)
+SELECT
+  (SELECT
+     ARRAY_AGG(
+       REGEXP_EXTRACT(pageViewed.val,r'\?test\=([^&]*)')
+       IGNORE NULLS ORDER BY pageViewed.hit DESC LIMIT 1)[OFFSET(0)]
+   FROM UNNEST(pagesViewed) AS pageViewed
+  ) AS TestId,
+  SUM(revenue) AS Revenue
+FROM `project.dataset.table`
+GROUP BY 1
+ORDER BY 2 DESC;

@@ -1,0 +1,17 @@
+Write-Host ""Listing Files..."" -Fore Yellow
+$AllFiles = Get-ChildItem -Recurse -File
+$CurrentFile = 0 ; $TotalFiles = $AllFiles.Count
+
+Write-Host ""Hashing Files..."" -Fore Yellow
+$AllHashes = foreach ($File in $AllFiles){
+    Write-Progress -Activity ""Hashing Files"" -Status ""$($CurrentFile)/$($TotalFiles) $($File.FullName)"" -PercentComplete (($CurrentFile++/$TotalFiles)*100)
+
+    [PSCustomObject]@{
+        File = $File.FullName
+        Hash = (Get-FileHash -LiteralPath $File.FullName -Algorithm MD5).Hash
+        LastWriteTime = $File.LastWriteTime
+        Size = $File.Length
+    }
+}
+
+$AllHashes | Export-Csv ""File.csv"" -NoTypeInformation

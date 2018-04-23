@@ -1,0 +1,6 @@
+# This will load my CSV data on a spark dataframe and will generate the requiered amount of 128MB partitions to store my raw data.
+sdf = spark.read.option('header','true').csv(file_1, sep=';', encoding='utf-8')
+# This line will redistribute the rows of each paritition according the values on a specific column. Here I'm placing all rows with the same set of values on the same partition and I'm creating 20 of them. (Sparks handle to allocate the rows so the partitions will be the same size)
+sdf_2 = sdf.repartition(20, 'TARGET_COLUMN')
+# This line will save all my 20 partitions on different csv files
+sdf_2.write.saveAsTable('CSVBuckets', format='csv', sep=';', mode='overwrite', path=output_path, header='True')

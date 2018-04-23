@@ -1,0 +1,45 @@
+def get_max_length_unique_key(self):
+    max_len_unique_key = []
+    for unique_key in self._meta.unique_together:
+        if len(unique_key) > len(max_len_unique_key):
+            max_len_unique_key = unique_key
+    return max_len_unique_key
+
+def get_db_conn(self):
+    db_cnn = DbManage(db_ip, db_port, DATABASES_USER, DATABASES_PASSWORD, self._meta.db_table)
+    db_cnn.connect()
+    return db_cnn
+
+def save(self, *args, **kwargs):
+    self.delete()
+    cnn, databasename = self.get_db_conn()
+    update_tables = self._meta.db_table
+    key_list = """"
+    values_list = """"
+    for field in self._meta.fields:
+        key_list += ""%s,"" % field.name
+        values_list += ""\'%s\',"" % str(getattr(self, field.name))
+
+    key_list = key_list[:len(key_list) - 1]
+    values_list = values_list[:len(values_list) - 1]
+
+    sql = ""insert into %s(%s) values(%s)"" % (update_tables, key_list, values_list)
+    logger.info(""insert new record to %s"" % databasename)
+    cnn.excute_sql(sql)
+    cnn.close()
+
+def delete(self, *args, **kwargs):
+    cnn = self.get_db_conn()
+    update_tables = self._meta.db_table
+    sql = ""delete from %s where "" % update_tables
+    for uk in self.get_max_length_unique_key():
+        sql += ""%s=\'%s\' and "" % (uk, getattr(self, uk))
+    sql = sql[:len(sql) - 4]
+
+    logger.info(""delete record from %s"" % update_tables)
+    cnn.excute_sql(sql)
+    cnn.close()
+    pass
+
+class Meta:
+    abstract = True

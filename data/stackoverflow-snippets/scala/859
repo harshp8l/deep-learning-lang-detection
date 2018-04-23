@@ -1,0 +1,42 @@
+trait Foo[X] {
+  def doFoo(x: X): String
+}
+
+trait Bar[X] {
+  def doBar(x: X): String
+}
+
+trait Base {
+  type W[_]
+
+  def baz[T: W](t: T): String
+}
+
+class ChildFooBar extends Base {
+
+  import ChildFooBar._
+
+  type W[X] = FooAndBar[X]
+
+
+  override def baz[T: FooAndBar](t: T): String = {
+    val foo = implicitly[Foo[T]]
+    val bar = implicitly[Bar[T]]
+    foo.doFoo(t) + bar.doBar(t)
+  }
+}
+
+object ChildFooBar {
+
+  @implicitNotFound(""The type should provide both implicit Foo and implicit Bar."")
+  case class FooAndBar[X](foo: Foo[X], bar: Bar[X])
+
+  object FooAndBar {
+    implicit def fromFooAndBar[X](implicit foo: Foo[X], bar: Bar[X]): FooAndBar[X] = FooAndBar(foo, bar)
+  }
+
+  // private is important here to avoid diversion of implicits
+  private implicit def toFoo[X](implicit fooAndBar: FooAndBar[X]): Foo[X] = fooAndBar.foo
+  private implicit def toBar[X](implicit fooAndBar: FooAndBar[X]): Bar[X] = fooAndBar.bar
+
+}

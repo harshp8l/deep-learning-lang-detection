@@ -1,0 +1,21 @@
+if @model_name == ""Style""
+  row_key_set = row.keys.to_set
+
+  if row.include? 'colors'
+    colors = row['colors'].split(';')
+    color_ids = Color.where(code: colors).pluck(:id)
+    model.style_colors.concat(color_ids.map(&:to_s))
+  end
+
+  if row_key_set >= Set['gender', 'garments']
+    @garments = row.delete('garments')
+    @gender = row.delete('gender')
+  end
+
+  @sports = row.delete('sports')
+  @decorations_packages = row.delete('decoration_packages')
+
+  model.attributes = row.to_hash.merge(active: false)
+else
+  model.attributes = row.to_hash
+end

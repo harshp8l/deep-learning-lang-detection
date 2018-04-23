@@ -1,0 +1,16 @@
+$output = foreach ($cluster in GC ""D:\Servers_List.txt"")
+{
+    #modify your querys like necessary + rename columns
+    $AGNames =  invoke-sqlcmd -Serverinstance $cluster -query ""select left(name,25) as AG from sys.availability_groups order by 1"" 
+    $LNNames =  invoke-sqlcmd -Serverinstance $cluster -query ""select left(dns_name,25) as LN from sys.availability_group_listeners order by 1"" 
+
+    #build list combination    
+    $NetworkNames=$AGNames | foreach{$AG=$_.AG; $LNNames | foreach{""{0}_{1}"" -f $AG, $_.LN}    }
+
+    #use list combination for get cluster ressources   
+    $NetworkNames | foreach{
+    Get-ClusterResource -cluster $cluster -name $_ | Get-ClusterParameter HostRecordTTL,RegisterAllProvidersIP 
+    }
+
+} 
+$output | Export-Csv 'D:\RAPIPHRTTL.csv' -NoType

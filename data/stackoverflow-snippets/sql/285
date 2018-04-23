@@ -1,0 +1,20 @@
+CriteriaBuilder cb = em.getCriteriaBuilder();
+CriteriaQuery<Member> q = cb.createQuery(Member.class);
+Root<Member> memberRoot = q.from(Member.class);
+Date theDate = nMonthsFromToday(-2);
+Predicate pred = cb.greaterThanOrEqualTo(
+    memberRoot.<Date>get(""timeStamp""), theDate);
+q.where(pred);
+TypedQuery<Member> theQuery = em.createQuery(q);
+String qStr = theQuery
+    .unwrap(org.apache.openjpa.persistence.QueryImpl.class)
+    .getQueryString();
+LOG.info(""Query: "" + qStr);
+List<Member> results = null;
+try {
+    results = theQuery.getResultList();
+} catch (Exception e) {
+    LOG.severe(e.getMessage());
+    e.printStackTrace();
+}
+return results;

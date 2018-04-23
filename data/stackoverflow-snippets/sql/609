@@ -1,0 +1,21 @@
+with t as (
+    SELECT a.Name, a.IsGhostConvey, b.AttorneyName, b.IsGhostConveyAttorney, c.InstitutionID, f.Base_CreatedDate AS 'DateLatestAccountOpened'
+    FROM Intermediary a
+    INNER JOIN Attorney b
+    ON a.Name = b.AttorneyName
+    INNER JOIN IntermediaryInstitution c
+    ON c.IntermediaryID = a.ID
+    INNER JOIN IntermediaryBranch d
+    ON d.IntermediaryID = a.Id
+    INNER JOIN Matter e
+    ON e.BranchID = d.Id
+    INNER JOIN Account f
+    ON f.MatterID = e.ID
+    )
+select t.*
+from (select t.*,
+      row_number() over (partition by name order by DateLatestAccountOpened desc) as seqnum
+      from t
+     ) t
+where seqnum = 1
+order by Name, Base_CreatedDate DESC;

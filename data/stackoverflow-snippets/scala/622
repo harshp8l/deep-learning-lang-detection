@@ -1,0 +1,102 @@
+implicit class ByteContext(private val sc: StringContext) {
+
+  /** Shortcut to the list of parts passed as separate
+    * string pieces.
+    */
+  private val parts: List[String] = sc.parts.toList
+
+  /** Parses an array of bytes from the input of a `StringContext`.
+    *
+    * Applies `preprocess` and `separate` and finally `parseByte` 
+    * to every string part.
+    * Applies `parseByte` to every vararg and interleaves the
+    * resulting bytes with the bytes from the string parts.
+    *
+    * @param preprocess a string preprocessing step applied to every string part
+    * @param separate a way to separate a preprocessed string part into substrings for individual bytes
+    * @param parseByte function used to parse a byte from a string
+    * @param args varargs passed to the `StringContext`
+    * @return parsed byte array
+    *
+    * Uses a mutable `ListBuffer` internally to accumulate
+    * the results.
+    */      
+
+  private def parseBytes(
+    preprocess: String => String, 
+    separate: String => Array[String],
+    parseByte: String => Byte
+  )(args: Any*): Array[Byte] = {
+
+    import scala.collection.mutable.ListBuffer
+    val buf = ListBuffer.empty[Byte]
+
+    def partToBytes(part: String): Unit = {
+      val preprocessed = preprocess(part)
+      if (!preprocessed.isEmpty) {
+        separate(preprocessed).foreach(s => buf += parseByte(s))
+      }
+    }
+
+    // parse all arguments, convert them to bytes,
+    // interleave them with the string-parts
+    for ((strPart, arg) <- parts.init.zip(args)) {
+      partToBytes(strPart)
+      val argAsByte = arg match {
+        case i: Int => i.toByte
+        case s: Short => s.toByte
+        case l: Long => l.toByte
+        case b: Byte => b
+        case c: Char => c.toByte
+        case str: String =>  parseByte(str)
+        case sthElse => throw new IllegalArgumentException(
+          s""Failed to parse byte array, could not convert argument to byte: '$sthElse'""
+        )
+      }
+      buf += argAsByte
+    }
+
+    // add bytes from the last part
+    partToBytes(parts.last)
+
+    buf.toArray
+  }
+
+  /** Parses comma-separated bytes in hexadecimal format (without 0x-prefix),
+    * e.g. ""7F,80,AB,CD"".
+    */
+  def hexBytes(args: Any*): Array[Byte] = parseBytes(
+    s => s.replaceAll(""^,"", """").replaceAll("",$"", """"), // ,AB,CD, -> AB,CD
+    _.split("",""),
+    s => Integer.parseInt(s, 16).toByte
+  )(args: _*)
+
+  /** Parses decimal unsigned bytes (0-255) separated by periods,
+    * e.g. ""127.0.0.1"".
+    */
+  def ip(args: Any*): Array[Byte] = parseBytes(
+    s => s.replaceAll(""^[.]"", """").replaceAll(""[.]$"", """"), // .1.1. -> 1.1
+    _.split(""[.]""),
+    s => Integer.parseInt(s, 10).toByte
+  )(args:_*)
+
+  /** Parses byte arrays from hexadecimal representation with possible 
+    * spaces, expects each byte to be represented by exactly two characters,
+    * e.g. 
+    * ""742d 6761 2e00 6f6e 6574 672e 756e 622e"".
+    */
+  def hexdump(args: Any*): Array[Byte] = parseBytes(
+    s => s.replaceAll("" "", """"),
+    _.grouped(2).toArray,
+    s => Integer.parseInt(s, 16).toByte
+  )(args: _*)
+
+  /** Parses decimal unsigned bytes (0-255) separated by commas,
+    * e.g. ""127.0.0.1"".
+    */
+  def decBytes(args: Any*): Array[Byte] = parseBytes(
+    s => s.replaceAll(""^,"", """").replaceAll("",$"", """"), // ,127, -> 127
+    _.split("",""),
+    s => Integer.parseInt(s, 10).toByte
+  )(args:_*)
+}

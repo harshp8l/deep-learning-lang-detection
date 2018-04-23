@@ -1,0 +1,20 @@
+  import ExecutionContext.Implicits.global
+
+  def doFlow(chunk: Int): Seq[Future[Int]] = {
+    (1 to 5) map { i =>
+      Future {
+        println(s""--> chunk $chunk idx $i"")
+        Thread.sleep(1000)
+        println(s""<-- chunk $chunk idx $i"")
+        0
+      }
+    }
+  }
+
+
+  val sequence: Seq[Seq[Future[Int]]] = (1 to 5) map {
+    iter => doFlow(iter)
+  }
+  val flat: Seq[Future[Int]] = sequence.flatten
+  val futureSeq = Future.sequence(flat)
+  Await.ready(futureSeq, scala.concurrent.duration.Duration.Inf)

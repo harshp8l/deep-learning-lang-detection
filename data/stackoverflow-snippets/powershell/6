@@ -1,0 +1,38 @@
+Add-Type -AssemblyName System.Speech
+
+[System.IO.MemoryStream] $memoryStream = $null;
+
+Try {
+    $memoryStream = New-Object -TypeName System.IO.MemoryStream
+    [System.Speech.Synthesis.SpeechSynthesizer] $voice = $null
+    Try {
+        $voice = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
+        $voice.SetOutputToWaveStream($memoryStream)
+
+        $voice.Speak(""Male Voice"")
+        $voice.SelectVoice(""Microsoft Zira Desktop"")
+        $voice.Speak(""Female Voice"")
+    } Finally {
+        if ($voice) {
+            $voice.Dispose()
+        }
+    }
+
+
+    # Load the saved audio and play it back
+    [System.Media.SoundPlayer] $player = $null
+    Try {
+        $memoryStream.Seek(0, [System.IO.SeekOrigin]::Begin) | Out-Null
+        $player = New-Object -TypeName System.Media.SoundPlayer($memoryStream)
+        $player.PlaySync()
+    } Finally {
+        if ($player) {
+            $player.Dispose()
+        }
+    }
+
+} Finally {
+    if ($memoryStream) {
+        $memoryStream.Dispose()
+    }
+}

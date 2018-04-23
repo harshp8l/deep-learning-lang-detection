@@ -1,0 +1,21 @@
+class joining_thread {
+public:
+    joining_thread() = default;
+    ~joining_thread() { stop(); }
+
+    bool running() const { return run_condition_.load(); }
+
+    template <typename... Args>
+    void start(Args&&... args) {
+        run_condition_ = true;
+        t_ = std::thread(std::forward<Args>(args)...);
+    }
+
+    void stop() {
+        run_condition_ = false;
+        if (t_.joinable()) t_.join();
+    }
+private:
+    std::thread t_;
+    std::atomic_bool run_condition_{false};
+};

@@ -1,0 +1,17 @@
+def process_record(t):
+    cumtime = 0
+    r = t._asdict()
+    for i in range(t.hour_diff + 1):
+        pseudo_logout = min(t.logout_time, pd.Timestamp(t.date) + pd.Timedelta(hours=t.hour + i + 1))
+        duration = (pseudo_logout - t.login_time).total_seconds() - cumtime
+        cumtime += duration
+        r['duration'] = duration
+        yield tuple(r.values())
+
+records = []
+for t in df[df['hour_diff'] > 0].itertuples():
+    for r in process_record(t):
+        records.append(r)
+split_df = pd.DataFrame(records)
+split_df = split_df.drop(0, axis=1)
+split_df.columns = df.columns

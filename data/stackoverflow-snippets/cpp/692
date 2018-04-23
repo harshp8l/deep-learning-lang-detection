@@ -1,0 +1,34 @@
+class MyClass {
+  private slots:
+   void OnPing();
+   void OnPingEnded();
+  private:
+   Process mPingProcess;
+};
+
+void MyClass::OnPing()
+{
+   connect(&mPingProcess, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(OnPingEnded()));
+#ifdef __linux__
+   mPingProcess.start(""ping"", QStringList() << ""-c"" << ""1"" << ui->ip->text());
+#else
+   mPingProcess.start(""ping"", QStringList() << ""-n"" << ""1"" << ui->ip->text());
+#endif
+}
+
+void MyClass::OnPingEnded()
+{
+    QByteArray output = mPingProcess.readAllStandardOutput();
+    if (!output.isEmpty())
+    {
+        qDebug() << output;
+        if (-1 != QString(output).indexOf(""ttl"", 0, Qt::CaseInsensitive))
+        {
+           qDebug() << ""PING OK"";
+        }
+        else
+        {
+           qDebug() << ""PING KO"";
+        }
+    }
+}

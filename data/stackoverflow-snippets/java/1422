@@ -1,0 +1,135 @@
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.WindowConstants;
+
+public class AddShapeToFrame {
+
+private static GameBoard gb;
+
+public static void main(String[] args) {
+
+    JFrame frameOne = new JFrame();
+    frameOne.setSize(new Dimension(400, 400));
+    frameOne.getContentPane().setLayout(new BorderLayout());
+    frameOne.setVisible(true);
+    frameOne.setResizable(false);
+    frameOne.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+    gb = new GameBoard(1, 1);
+    frameOne.add(gb);
+    frameOne.setVisible(true);
+
+    frameOne.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+            int keyCode = e.getKeyCode();
+            switch (keyCode) {
+                case KeyEvent.VK_UP:
+                    gb.setChecker_y(gb.getChecker_y() - 1);
+                    break;
+                case KeyEvent.VK_RIGHT:
+                    gb.setChecker_x(gb.getChecker_x() + 1);
+                    break;
+                case KeyEvent.VK_DOWN:
+                    gb.setChecker_y(gb.getChecker_y() + 1);
+                    break;
+                case KeyEvent.VK_LEFT:
+                    gb.setChecker_x(gb.getChecker_x() - 1);
+                    break;
+            }             
+        }
+
+     });
+
+    }
+
+  }
+
+  class GameBoard extends JPanel {
+
+   private int checker_x;
+   private int checker_y;
+
+   public GameBoard(int checker_x, int checker_y) {
+      this.checker_x = checker_x;
+      this.checker_y = checker_y;
+   }
+
+
+   @Override
+   protected void paintComponent(Graphics g) {
+         drawBord(g, checker_x, checker_y);
+   }
+
+
+  private void drawBord(Graphics g, int checker_x, int checker_y) {
+    boolean f;
+    //boardSquares_higth
+    int bsh = this.getHeight() / 8;
+    //boardSquares_widht
+    int bsw = this.getWidth() / 8;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if ((i + 1) % 2 == 0) {
+                f = (j + 1) % 2 == 0;
+            } else {
+                f = (j + 1) % 2 != 0;
+            }
+            if (f) {
+                g.setColor(Color.GRAY);
+            } else {
+                g.setColor(Color.WHITE);
+            }
+            int x = bsw * j;
+            int y = bsh * i;
+            g.fillRect(x, y, bsw, bsh);
+        }
+    }
+
+    g.setColor(Color.red);
+    g.fillArc(5 + (bsw * (checker_x - 1)), 5 + (bsh * (checker_y - 1)), bsw - 10, bsh - 10, 0, 360);
+}
+
+public int getChecker_x() {
+    return checker_x;
+}
+
+public void setChecker_x(int checker_x) {
+    if (checker_x <= 8) {
+        if (checker_x >= 1) {
+            this.checker_x = checker_x;
+            repaint();
+        } else {
+            System.out.println(""Invalid move"");
+        }
+
+    } else {
+        System.out.println(""Invalid move"");
+    }
+}
+
+public int getChecker_y() {
+    return checker_y;
+}
+
+public void setChecker_y(int checker_y) {
+    if (checker_y <= 8) {
+        if (checker_y >= 1) {
+            this.checker_y = checker_y;
+            repaint();
+        } else {
+            System.out.println(""Invalid move"");
+        }
+
+    } else {
+        System.out.println(""Invalid move"");
+     }
+
+    }
+
+  }

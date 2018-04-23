@@ -1,0 +1,74 @@
+Dump of assembler code for function main:
+     // Standard stack adjustment for function setup.
+   0x00000000004007e6 <+0>: push   %rbp
+   0x00000000004007e7 <+1>: mov    %rsp,%rbp
+   0x00000000004007ea <+4>: push   %rbx
+   0x00000000004007eb <+5>: sub    $0x38,%rsp
+     // Put argc in the stack at %rbp-0x34.
+   0x00000000004007ef <+9>: mov    %edi,-0x34(%rbp)
+     // Put argv in the stack at %rbp-0x40.
+   0x00000000004007f2 <+12>:    mov    %rsi,-0x40(%rbp)
+     // Construct ""a"" on the stack at %rbp-0x20.
+     // 0x4009c0 is &vt_for_A.funcs.
+   0x00000000004007f6 <+16>:    mov    $0x4009c0,%esi
+   0x00000000004007fb <+21>:    mov    %rsi,-0x20(%rbp)
+     // Check if argc is more than 2.
+     // In both cases, ""pf"" will be on the stack at %rbp-0x30.
+   0x00000000004007ff <+25>:    cmpl   $0x2,-0x34(%rbp)
+   0x0000000000400803 <+29>:    jle    0x400819 <main+51>
+     // if (argc <= 2) {
+     //   Initialize pf to { &A__func2, 0 }.
+   0x0000000000400805 <+31>:    mov    $0x4008ce,%ecx
+   0x000000000040080a <+36>:    mov    $0x0,%ebx
+   0x000000000040080f <+41>:    mov    %rcx,-0x30(%rbp)
+   0x0000000000400813 <+45>:    mov    %rbx,-0x28(%rbp)
+   0x0000000000400817 <+49>:    jmp    0x40082b <main+69>
+     // } else { [argc > 2]
+     //   Initialize pf to { 1, 0 }.
+   0x0000000000400819 <+51>:    mov    $0x1,%eax
+   0x000000000040081e <+56>:    mov    $0x0,%edx
+   0x0000000000400823 <+61>:    mov    %rax,-0x30(%rbp)
+   0x0000000000400827 <+65>:    mov    %rdx,-0x28(%rbp)
+     // }
+     // Test whether pf.ptr is even or odd:
+   0x000000000040082b <+69>:    mov    -0x30(%rbp),%rax
+   0x000000000040082f <+73>:    and    $0x1,%eax
+   0x0000000000400832 <+76>:    test   %rax,%rax
+   0x0000000000400835 <+79>:    jne    0x40083d <main+87>
+     // int (*funcaddr)(A*, int); [will be in %rax]
+     // if (is_even(pf.ptr)) {
+     //   Just do:
+     //   funcaddr = pf.ptr;
+   0x0000000000400837 <+81>:    mov    -0x30(%rbp),%rax
+   0x000000000040083b <+85>:    jmp    0x40085c <main+118>
+     // } else { [is_odd(pf.ptr)]
+     //   Compute A* a2 = (A*)((char*)&a + pf.adj); [in %rax]
+   0x000000000040083d <+87>:    mov    -0x28(%rbp),%rax
+   0x0000000000400841 <+91>:    mov    %rax,%rdx
+   0x0000000000400844 <+94>:    lea    -0x20(%rbp),%rax
+   0x0000000000400848 <+98>:    add    %rdx,%rax
+     //   Compute funcaddr =
+     //     (int(*)(A*,int)) (((char*)(a2->vptr))[pf.ptr-1]);
+   0x000000000040084b <+101>:   mov    (%rax),%rax
+   0x000000000040084e <+104>:   mov    -0x30(%rbp),%rdx
+   0x0000000000400852 <+108>:   sub    $0x1,%rdx
+   0x0000000000400856 <+112>:   add    %rdx,%rax
+   0x0000000000400859 <+115>:   mov    (%rax),%rax
+     // }
+     // Compute A* a3 = (A*)((char*)&a + pf.adj); [in %rcx]
+   0x000000000040085c <+118>:   mov    -0x28(%rbp),%rdx
+   0x0000000000400860 <+122>:   mov    %rdx,%rcx
+   0x0000000000400863 <+125>:   lea    -0x20(%rbp),%rdx
+   0x0000000000400867 <+129>:   add    %rdx,%rcx
+     // Call int r = (*funcaddr)(a3, argc);
+   0x000000000040086a <+132>:   mov    -0x34(%rbp),%edx
+   0x000000000040086d <+135>:   mov    %edx,%esi
+   0x000000000040086f <+137>:   mov    %rcx,%rdi
+   0x0000000000400872 <+140>:   callq  *%rax
+     // Standard stack cleanup for function exit.
+   0x0000000000400874 <+142>:   add    $0x38,%rsp
+   0x0000000000400878 <+146>:   pop    %rbx
+   0x0000000000400879 <+147>:   pop    %rbp
+     // Return r.
+   0x000000000040087a <+148>:   retq   
+End of assembler dump.

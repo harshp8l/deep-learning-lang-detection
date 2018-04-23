@@ -1,0 +1,8 @@
+import sqlContext.implicits._
+import org.apache.spark.sql.functions._
+val dfContentEnvelope = sqlContext.read.format(""com.databricks.spark.xml"")
+  .option(""rowTag"", ""env:ContentEnvelope"")
+  .load(""s3://trfsmallfffile/XML"")
+
+val dfContentItem = dfContentEnvelope.withColumn(""column1"", explode(dfContentEnvelope(""env:Body.env:ContentItem""))).select(""column1.*"")
+val ParentDF=dfContentItem.select($""env:Data.sr:Source._organizationId"".as(""organizationId""), $""env:Data.sr:Source._sourceId"".as(""sourceId""), $""env:Data.sr:Source"".as(""Source""))

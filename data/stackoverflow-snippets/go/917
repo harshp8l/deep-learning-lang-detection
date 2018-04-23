@@ -1,0 +1,35 @@
+type H struct {
+    w http.ResponseWriter
+    r *http.Request
+}
+
+type HF func(H)
+
+func (f HF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+        f(H{w:w, r:r})
+}
+
+func (h H) newStudent() {
+    p := studentPage{Title:""New Student""}
+    t, _ := template.ParseFiles(""new_student.html"")
+    t.Execute(h.w, p)
+}
+
+func (h H) newTeacher() {
+    p := teacherPage{Title:""New Teacher""}
+    t, _ := template.ParseFiles(""new_teacher.html"")
+    t.Execute(h.w, p)
+
+}
+
+func (h H) newClass() {
+    p := classPage{Title:""New Class""}
+    t, _ := template.ParseFiles(""new_class.html"")
+    t.Execute(h.w, p)
+}
+
+// ...
+
+http.Handle(""/students"", HF(H.newStudent))
+http.Handle(""/teachers"", HF(H.newTeacher))
+http.Handle(""/classes"", HF(H.newClass))

@@ -1,0 +1,14 @@
+case class Result(a: Int, b: Int, c: Int, c2: (java.sql.Date, Int))
+
+val joined = first.join(second.withColumnRenamed(""c"", ""c2""), Seq(""a"", ""b""))
+joined.as[Result]
+  .groupByKey(_.a)
+  .mapGroups((key, xs) => (key, xs.map(_.c2).toSeq.sortBy(_._2)))
+  .show(false)
+
+// +---+----------------------------------+            
+// |_1 |_2                                |
+// +---+----------------------------------+
+// |1  |[[2018-01-01,20], [2018-01-02,30]]|
+// |2  |[[2018-01-02,50], [2018-01-01,60]]|
+// +---+----------------------------------+

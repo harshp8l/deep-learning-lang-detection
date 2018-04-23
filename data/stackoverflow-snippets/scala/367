@@ -1,0 +1,11 @@
+val input=""[level:1,var1:name1,var2:id1][level:1,var1:name2,var2:id2][level:2,var1:add1,var2:city]""
+val groupedrdd = sc.parallelize(Seq(input)).flatMap(_.split(""]\\["").map(x => {
+  val values = x.replace(""["", """").replace(""]"", """").split("","").map(y => y.split("":"")(1))
+  (values(0), (List(values(1)), List(values(2))))
+})).reduceByKey((x, y) => (x._1 ::: y._1, x._2 ::: y._2))
+
+
+val first = groupedrdd.map(x => x._2._1).collect().toList
+//first: List[List[String]] = List(List(add1), List(name1, name2))
+val second = groupedrdd.map(x => x._2._2).collect().toList
+//second: List[List[String]] = List(List(city), List(id1, id2))

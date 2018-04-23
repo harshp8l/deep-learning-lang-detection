@@ -1,0 +1,16 @@
+(require '[clojure.spec.alpha :as s])
+
+(s/def ::coord nat-int?)
+(s/def ::x ::coord)
+(s/def ::y ::coord)
+(s/def ::xy (s/keys :req-un [::x ::y]))
+(s/def ::point (s/map-of #{:point} ::xy))
+(s/def ::username (s/and string? seq))
+(s/def ::user (s/map-of #{:user} ::username))
+
+(s/def ::vector-entry (s/or :point ::point :user ::user))
+(s/def ::my-vector (s/coll-of ::vector-entry :kind vector))
+
+(s/valid? ::point {:point {:x 0 :y 0}})
+(s/valid? ::my-vector [{:point {:x 0 :y 0}}])
+(s/valid? ::my-vector [{:point {:x 0 :y 0}} {:user ""joe""}])

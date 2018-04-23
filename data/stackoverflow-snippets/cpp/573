@@ -1,0 +1,81 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+std::map<std::string, std::string> m_mapPairs;
+int main()
+{
+    string strLine;
+    fstream myFile;
+
+
+    myFile.open(""New Text Document.txt""); //name of the file to be read
+    if (myFile.is_open())
+    {
+        static string section = """";
+        string key = """";
+        string value = """";
+
+        while (!myFile.eof())
+        {
+            getline(myFile, strLine);
+            if (strLine.find(""["") != -1)
+            {
+                int index1 = strLine.find_first_of(""["");   
+                int index2 = strLine.find_first_of(""]"");
+                section = strLine.substr(index1 + 1, index2 - 1);
+                section = section + ""|"";
+            }
+            if (strLine.find(""="") != -1)
+            {
+                int index1 = strLine.find("""");
+                int index2 = strLine.find(""="");
+                //change in following line
+                key = strLine.substr(index1, index2-1);
+            }
+            if (strLine.find(""="") != -1)
+            {
+                int index1 = strLine.find(""="");
+                //change in following line
+                value = strLine.substr(index1 + 2, strLine.size()-1);
+            }
+            if (strLine.find("";"") > -1)
+            {
+                int index1 = strLine.find("";""); 
+                string ivalue = strLine.substr(index1 + 1, 11);
+            }
+            //change in following line
+            if (key.size() != 0 && value.size() != 0)
+            {
+                std::string Thekey = section + key;
+                m_mapPairs.insert(std::pair<std::string, std::string>(Thekey, value));
+            }
+        }
+        myFile.close();
+    }
+
+    std::map<std::string, std::string>::iterator iter;      //iterating through all the keys
+    iter = m_mapPairs.begin();
+    while (iter != m_mapPairs.end())
+    {
+        std::cout << iter->first << ""\t Value: "";
+        std::cout << iter->second << std::endl;
+        iter++;
+    }
+
+    iter = m_mapPairs.find(""settings|windowWidth"");     //trying to find this key in the map but cant find it
+
+    if (iter != m_mapPairs.end())
+    {
+        std::cout << ""found ! "" << std::endl;
+    }
+    else
+    {
+        std::cout << ""NOT found: "" << std::endl;
+    }
+
+    std::cin.get();//return (0);
+}

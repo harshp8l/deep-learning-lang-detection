@@ -1,0 +1,109 @@
+package main
+
+import (
+    ""container/heap""
+    ""fmt""
+)
+
+
+
+// Something that has a score
+type Scoreable interface {
+    fmt.Stringer
+    Score() int
+}
+
+
+
+// A country has a name and a score
+type Country struct {
+    name  string
+    score int
+}
+
+// Country implements Scoreable
+func (c Country) Score() int {
+    return c.score
+}
+
+// ... and fmt.Stringer
+func (c Country) String() string {
+    return fmt.Sprintf(""%s [%d]"", c.name, c.score)
+}
+
+
+
+// A team consists of two Scoreable's and has itself a score
+type Team struct {
+    team1, team2 Scoreable
+    score        int
+}
+
+// Team implements Scoreable
+func (t Team) Score() int {
+    return t.score
+}
+
+// ... and fmt.Stringer
+func (t Team) String() string {
+    return fmt.Sprintf(""(%s + %s)"", t.team1.String(), t.team2.String())
+}
+
+
+
+// The heap will be implemented using a slice of Scoreables
+type TeamHeap []Scoreable
+
+// TeamHeap implements heap.Interface
+func (th TeamHeap) Len() int {
+    return len(th)
+}
+
+func (th TeamHeap) Less(i, j int) bool {
+    return th[i].Score() < th[j].Score()
+}
+
+func (th TeamHeap) Swap(i, j int) {
+    th[i], th[j] = th[j], th[i]
+}
+
+func (th *TeamHeap) Push(t interface{}) {
+    *th = append(*th, t.(Scoreable))
+}
+
+func (th *TeamHeap) Pop() interface{} {
+    old := *th
+    n := len(old)
+    t := old[n-1]
+    *th = old[0 : n-1]
+    return t
+}
+
+
+// The main function
+func main() {
+
+    // Create a heap and initialize it
+    teams := &TeamHeap{}
+    heap.Init(teams)
+
+    // Push the countries (NB: heap.Push(), not teams.Push())
+    heap.Push(teams, Country{""Canada"", 7})
+    heap.Push(teams, Country{""US"", 2})
+    heap.Push(teams, Country{""Germany"", 3})
+    heap.Push(teams, Country{""Korea"", 4})
+
+    // Take the two teams with lowest score and make a new team of them
+    // Repeat this until there's only one team left
+    for teams.Len() > 1 {
+        t1 := heap.Pop(teams).(Scoreable)
+        t2 := heap.Pop(teams).(Scoreable)
+        heap.Push(teams, Team{t1, t2, t1.Score() + t2.Score()})
+    }
+
+    // Print the teams that we now have in the heap
+    for teams.Len() > 0 {
+        t := heap.Pop(teams).(Team)
+        fmt.Println(t)
+    }
+}

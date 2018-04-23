@@ -1,0 +1,39 @@
+package com.example.sparkapplications
+
+import com.typesafe.config.Config
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SparkSession
+import scala.concurrent.Await
+import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import spark.jobserver.SparkJob
+import spark.jobserver.SparkJobValid
+import spark.jobserver.SparkJobValidation
+
+object FutureJob extends SparkJob{
+  override def runJob(sc: SparkContext,
+                      jobConfig: Config): Any = {
+    val session = SparkSession.builder().config(sc.getConf).getOrCreate()
+    import session.implicits._
+    val f = Future{
+      val seq = Seq(
+        Dummy(""1"", 1),
+        Dummy(""2"", 2),
+        Dummy(""3"", 3),
+        Dummy(""4"", 4),
+        Dummy(""5"", 5)
+      )
+
+      val ds = seq.toDS
+
+      ds.collect()
+    }
+
+    Await.result(f, 10 seconds)
+  }
+
+  case class Dummy(id: String, value: Long)
+  override def validate(sc: SparkContext,
+                        config: Config): SparkJobValidation = SparkJobValid
+}

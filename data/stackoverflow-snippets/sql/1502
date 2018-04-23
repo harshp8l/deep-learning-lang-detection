@@ -1,0 +1,46 @@
+    DECLARE @users TABLE (id INT, name VARCHAR(10), teamid INT)
+    INSERT INTO @users VALUES (1, 'user1', 1),(2, 'user2',2)
+    DECLARE @application TABLE (id INT, name VARCHAR(15))
+    INSERT INTO @application VALUES (1, 'application1')
+    DECLARE @applicationuser TABLE (id INT, applicationid INT, userid INT, assigneddate DATE, unassigneddate DATE)
+    INSERT INTO @applicationuser VALUES (1,1,1,'2018-03-01','2018-03-02'),(2,1,2,'2018-03-02','2018-03-03')
+
+
+    DECLARE @assignment TABLE([date] DATE,teamid INT,[value] INT)
+
+    INSERT INTO @assignment
+    SELECT [AU].assigneddate [date], [U].teamid, 1 [value]
+    FROM @applicationuser [AU] 
+    JOIN @users [U] ON [AU].userid = [U].id
+
+    INSERT INTO @assignment
+    SELECT [AU].unassigneddate, [U].teamid, 
+        CASE WHEN  LEAD(AssignedDate) OVER(ORDER BY [AU].id)=unassigneddate 
+            THEN -1
+        ELSE 
+            1
+        END         
+    FROM @applicationuser [AU] 
+    JOIN @users [U] ON [AU].userid = [U].id
+
+
+    SELECT b.[date],
+        CASE WHEN t1.teamid=1 
+            THEN 1 
+        ELSE 
+            0 
+        END AS Team1,
+        CASE WHEN t1.teamid=2 
+            THEN 1 
+        ELSE 
+            0 
+        END AS Team2,
+        total
+    FROM
+    (
+        SELECT [date],  MAX([value]) AS Total
+        FROM @assignment
+        group by [date]
+    )b
+    INNER JOIN @assignment t1 ON b.Total=t1.Value AND b.[date]=t1.[date]
+    ORDER BY b.[date]

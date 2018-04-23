@@ -1,0 +1,48 @@
+(defprotocol ^:private IExpandable
+             (^:private expand [this]))
+
+
+(extend-protocol IExpandable
+  clojure.lang.Keyword
+  (expand [k] {k ::all})
+
+  clojure.lang.IPersistentVector
+  (expand [v] (if (empty? v)
+                {}
+                (apply merge (map expand v))))
+
+  clojure.lang.IPersistentMap
+  (expand [m]
+    (assert (= (count (keys m)) 1) ""Number of keys in a selector map can't be more than 1."")
+    (let [[k v] (-> m first ((juxt key val)))]
+          {k (expand v)}))
+
+  nil
+  (expand [_] {}))
+
+
+(defn ^:private extract* [m selectors expand?]
+  (let [sels (if expand? (expand selectors) selectors)]
+    (reduce-kv (fn [res k v]
+                 (if (= v ::all)
+                   (assoc res k (m k))
+                   (assoc res k (extract* (m k) v false))))
+               {} sels)))
+
+(defn extract
+  ""Like select-keys, but can select nested keys.
+
+   Examples -
+
+   (extract [{:b {:c [:d]}} :g] {:a 1 :b {:c {:d 1 :e 2}} :g 42 :xxx 11})
+   ;=> {:g 42, :b {:c {:d 1}}}
+
+   (extract [:g] {:a 1 :b {:c {:d 1 :e 2}} :g 42 :xxx 11})
+   ;=> {:g 42}
+
+   (extract [{:b [:c]} :xxx] {:a 1 :b {:c {:d 1 :e 2}} :g 42 :xxx 11})
+   ;=> {:b {:c {:d 1, :e 2}}, :xxx 11}
+
+   Also see - exclude""
+  [selectors m]
+  (extract* m selectors true))

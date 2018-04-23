@@ -1,0 +1,20 @@
+let system = ConfigurationFactory.Default() |> System.create ""FSharpActors""
+let asyncActor =
+  spawn system ""MyActor""
+  <| fun mailbox ->
+    let rec loop() =
+      actor {
+      let! name = mailbox.Receive()
+      Akka.Dispatch.ActorTaskScheduler.RunTask(fun () ->
+      async {
+        printfn ""Hello %s"" name
+        do! Async.Sleep 5000
+        } |> Async.StartAsTask :> Threading.Tasks.Task)
+      return! loop()
+      }
+
+    loop()
+
+asyncActor <! ""Alice""
+asyncActor <! ""Bob""
+asyncActor <! ""Eve""

@@ -1,0 +1,30 @@
+package main
+
+import (
+    ""bytes""
+    ""io/ioutil""
+    ""log""
+    ""net/http""
+    ""net/http/httputil""
+)
+
+func main() {
+    director := func(req *http.Request) {
+        if req.Body != nil {
+            // read all bytes from content body and create new stream using it.
+            bodyBytes, _ := ioutil.ReadAll(req.Body)
+            req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+            // create new request for parsing the body
+            req2, _ := http.NewRequest(req.Method, req.URL.String(), bytes.NewReader(bodyBytes))
+            req2.Header = req.Header
+            req2.ParseForm()
+            log.Println(req2.Form)
+        }
+
+        req.URL.Host = ""localhost:3333""
+        req.URL.Scheme = ""http""
+    }
+    proxy := &httputil.ReverseProxy{Director: director}
+    log.Fatalln(http.ListenAndServe("":8080"", proxy))
+}

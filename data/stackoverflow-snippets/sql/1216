@@ -1,0 +1,29 @@
+WITH your_table AS (SELECT 1 id, NULL city, 'NY' state, 14228 zip, 'X71' segement_one, 5 segment_two from dual UNION ALL
+                    SELECT 2 id, 'JamesTown' city, 'NY' state, 14845 zip, 'X71' segement_one, 5 segment_two from dual)
+SELECT ID,
+       CASE WHEN ID = 1 AND NVL(city, '{null}') = LEAD(NVL(city, '{null}')) OVER (ORDER BY ID) THEN NULL
+            WHEN ID = 2  AND NVL(city, '{null}') = LAG(NVL(city, '{null}')) OVER (ORDER BY ID) THEN NULL
+            ELSE city
+       END city,
+       CASE WHEN ID = 1 AND NVL(state, '{null}') = LEAD(NVL(state, '{null}')) OVER (ORDER BY ID) THEN NULL
+            WHEN ID = 2  AND NVL(state, '{null}') = LAG(NVL(state, '{null}')) OVER (ORDER BY ID) THEN NULL
+            ELSE state
+       END state,
+       CASE WHEN ID = 1 AND NVL(zip, -99999999999) = LEAD(NVL(zip, -99999999999)) OVER (ORDER BY ID) THEN NULL
+            WHEN ID = 2  AND NVL(zip, -99999999999) = LAG(NVL(zip, -99999999999)) OVER (ORDER BY ID) THEN NULL
+            ELSE zip
+       END zip,
+       CASE WHEN ID = 1 AND NVL(segement_one, '{null}') = LEAD(NVL(segement_one, '{null}')) OVER (ORDER BY ID) THEN NULL
+            WHEN ID = 2  AND NVL(segement_one, '{null}') = LAG(NVL(segement_one, '{null}')) OVER (ORDER BY ID) THEN NULL
+            ELSE segement_one
+       END segement_one,
+       CASE WHEN ID = 1 AND NVL(segment_two, -99999999999) = LEAD(NVL(segment_two, -99999999999)) OVER (ORDER BY ID) THEN NULL
+            WHEN ID = 2  AND NVL(segment_two, -99999999999) = LAG(NVL(segment_two, -99999999999)) OVER (ORDER BY ID) THEN NULL
+            ELSE segment_two
+       END segment_two
+FROM  your_table;
+
+        ID CITY      STATE        ZIP SEGEMENT_ONE SEGMENT_TWO
+---------- --------- ----- ---------- ------------ -----------
+         1                      14228              
+         2 JamesTown            14845              

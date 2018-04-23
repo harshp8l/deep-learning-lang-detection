@@ -1,0 +1,57 @@
+#include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/phoenix.hpp>
+
+namespace qi = boost::spirit::qi;
+namespace px = boost::phoenix;
+
+//////////////////// bindables
+struct GenericDoubler {
+    template <typename T>
+    auto operator()(T const& v) const { return v * 2; }
+};
+static const px::function<GenericDoubler> s_genericDoubler;
+
+template <typename T>
+T freeGenericDouble(T const& v) { return v * 2; }
+
+BOOST_PHOENIX_ADAPT_FUNCTION(int, genericDouble_, freeGenericDouble, 1)
+
+/////////////////// raw actors
+int main() {
+    using It = std::string::const_iterator;
+    std::string const input = ""42"";
+
+    using namespace qi::labels;
+
+    for (auto rule : std::vector<qi::rule<It, int()> > { 
+                // binds
+                qi::int_ [ _val = 2*_1 ],
+                qi::int_ [ _val = px::bind([](int i) { return 2*i; }, _1) ],
+                qi::int_ [ _val = px::bind(GenericDoubler(), _1) ],
+                qi::int_ [ _val = px::bind(&freeGenericDouble<int>, _1) ],
+                qi::int_ [ _val = genericDouble_(_1) ],
+                qi::int_ [ _val = s_genericDoubler(_1) ],
+                // actors
+                qi::int_ [ ([](int const& /*attribute*/, auto& /*context*/, bool& pass) { 
+                        // context is like boost::spirit::context<boost::fusion::cons<int&, boost::fusion::nil_>, boost::fusion::vector<> >
+                        pass = false;
+                    }) ],
+                qi::int_ [ ([](int& attribute, auto& context, bool& pass) { 
+                        int& exposed = boost::fusion::at_c<0>(context.attributes);
+                        exposed = 2*attribute;
+                        pass = true;
+                    }) ],
+            }) 
+    {
+        It f = begin(input), l = end(input);
+        int data = 99;
+        if (parse(f, l, rule, data))
+            std::cout << ""Parsed: "" << data << "" "";
+        else
+            std::cout << ""Parse failed at '"" << std::string(f,l) << ""' "";
+
+        if (f != l)
+            std::cout << ""Remaining: '"" << std::string(f,l) << ""'"";
+        std::cout << '\n';
+    }
+}

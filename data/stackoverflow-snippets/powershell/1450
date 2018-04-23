@@ -1,0 +1,30 @@
+Add-Type -AssemblyName System.DirectoryServices.AccountManagement
+
+Function IsUserInGroup([string] $groupName)
+{
+    # Remove DOMAIN\ from the start of the groupName.
+    $groupName = $groupName -replace '^.*\\'
+
+
+    # Get an AD context for the current user's domain
+    $context = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext -ArgumentList 'Domain', $ENV:USERDOMAIN
+
+
+    # Find the current user account in AD, and refresh the security and distribution groups 
+    $user = [System.DirectoryServices.AccountManagement.UserPrincipal]::FindByIdentity($context, 'SAMAccountName', $env:USERNAME)
+    $userEntry = [System.DirectoryServices.DirectoryEntry] $user.GetUnderlyingObject()
+    $userEntry.RefreshCache(@('tokenGroupsGlobalAndUniversal'))
+
+
+    # Get all the security and distribution groups the user belongs to, including nested memberships
+    $usersGroupSIDs = foreach ($sid in $userEntry.Properties.tokenGroupsGlobalAndUniversal.Value)
+    {
+        New-Object System.Security.Principal.SecurityIdentifier -ArgumentList $sid, 0   
+    }
+
+
+    # Get the AD details for the group to test, and test membership
+    $group = [System.DirectoryServices.AccountManagement.GroupPrincipal]::FindByIdentity($context, 'SamAccountName', $groupName)
+
+    $usersGroupSIDs.Contains($group.Sid)
+}

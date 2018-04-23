@@ -1,0 +1,32 @@
+type Market struct {
+    MarketName string
+    Last       string
+    HighestBid string
+}
+
+type MarketList []Market
+
+func (ml *MarketList) UnmarshalJSON(b []byte) error {
+    tmp := map[string]Market{}
+    err := json.Unmarshal(b, &tmp)
+    if err != nil {
+        return err
+    }
+
+    var l MarketList
+    for k, v := range tmp {
+        v.MarketName = k
+        l = append(l, v)
+    }
+
+    *ml = l
+    return nil
+}
+
+func main() {
+    ml := MarketList{}
+    // Unmarshal directly into a []Market alias
+    _ = json.Unmarshal(jsonBytes, &ml)
+
+    fmt.Printf(""%+v\n"", ml)
+}

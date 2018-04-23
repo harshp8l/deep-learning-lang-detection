@@ -1,0 +1,42 @@
+#include <Windows.h>
+#include <Vfw.h>
+#include <string>
+#include <iostream>
+
+
+#include ""opencv2\core\core.hpp""
+#include ""opencv2\imgproc\imgproc.hpp""
+#include ""opencv2\imgcodecs\imgcodecs.hpp""
+#include ""opencv2\highgui\highgui.hpp""
+
+#include <ipp.h>
+#include <ipps.h>
+#include <ippi.h>
+
+
+
+using namespace std;
+using namespace cv;
+
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+    Mat img=imread(""d:\\MyFolder\\sample_02.jpg"");
+    Mat grayImg=img.clone();
+    cvtColor(img,grayImg,CV_BGR2GRAY);
+    Mat outImg = grayImg.clone();
+    int step = img.cols;
+    const Ipp32s kernel[9] = {-1, 0, 1, -1, 0, 1, -1, 0, 1};
+    IppiSize kernelSize = {3,3};
+    IppiSize dstRoiSize = {img.cols - kernelSize.width + 1, img.rows - kernelSize.height + 1};
+    IppiPoint anchor = {2,2};
+    int divisor = 1;
+
+    IppStatus status = ippiFilter_8u_C1R((const Ipp8u*)&grayImg.data[0], step,(Ipp8u*)&outImg.data[0], step, dstRoiSize,kernel, kernelSize, anchor,divisor);
+    namedWindow(""Source image"",CV_WINDOW_FREERATIO);
+    imshow(""Source image"", img);
+    namedWindow(""Output image"",CV_WINDOW_FREERATIO);
+    imshow(""Output image"", outImg);
+    waitKey();
+    return 0;
+}

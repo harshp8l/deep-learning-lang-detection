@@ -1,0 +1,48 @@
+class Overlord extends Actor {
+
+  var state = Map[Long, (ActorRef, Int)]() // assuming the mail id is a Long
+
+  def receive = {
+    case cmd: NewMail =>
+      val childProps = Props(new SenderActor(cmd, self))
+      val supervisor = BackoffSupervisor.props(
+        Backoff.onFailure(
+          ...
+        ).withSupervisorStrategy(
+          OneForOneStrategy(maxNrOfRetries = 3, loggingEnabled = true) {
+            case msg: MessageException =>
+              println(""caught specific message!"")
+              self ! Error(msg.cmd)
+              SupervisorStrategy.Restart
+            case ...
+          })
+      )
+      val sup = context.actorOf(supervisor)
+      state += (cmd.id -> (sup, 0))
+
+    case ProcessingDone(cmdId) =>
+      state.get(cmdId) match {
+        case Some((backoffSup, _)) =>
+          context.stop(backoffSup)
+          state -= cmdId
+        case None =>
+          println(s""${cmdId} not found"")
+      }
+
+    case Error(cmd) =>
+       val cmdId = cmd.id
+       state.get(cmdId) match {
+         case Some((backoffSup, numRetries)) =>
+           if (numRetries == 3) {
+             println(s""${cmdId} has already been retried 3 times. Giving up."")
+             context.stop(backoffSup)
+             state -= cmdId
+           } else
+             state += (cmdId -> (backoffSup, numRetries + 1))
+         case None =>
+           println(s""${cmdId} not found"")
+       }
+
+    case ...
+  }
+}

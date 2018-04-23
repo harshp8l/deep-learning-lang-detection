@@ -1,0 +1,45 @@
+#include <io.h>  
+#include <stdlib.h>  
+#include <stdio.h>  
+#include <iostream>
+
+using std::cin;
+using std::cout;
+
+int main( void )  
+{  
+   int old;  
+   FILE *DataFile;  
+
+   old = _dup( 0 );   // ""old"" now refers to ""stdin""   
+                      // Note:  file descriptor 0 == ""stdin""   
+   if( old == -1 )  
+   {  
+      perror( ""_dup( 1 ) failure"" );  
+      exit( 1 );  
+   }  
+
+   if( fopen_s( &DataFile, ""input.txt"", ""r"" ) != 0 )  
+   {  
+      puts( ""Can't open file 'data'\n"" );  
+      exit( 1 );  
+   }  
+
+   // stdin now refers to file ""data""   
+   if( -1 == _dup2( _fileno( DataFile ), 0 ) )  
+   {  
+      perror( ""Can't _dup2 stdin"" );  
+      exit( 1 );  
+   }  
+   int n;
+   cin >> n;
+   cout << n << std::endl;
+
+   _flushall();  
+   fclose( DataFile );  
+
+   // Restore original stdin 
+   _dup2( old, 0 );  
+   _flushall();  
+   system( ""pause"" );  
+}

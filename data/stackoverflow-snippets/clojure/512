@@ -1,0 +1,21 @@
+object Test {
+  def sieve(xs: Stream[Long], table: Map[Long, Vector[Long]]): Stream[Long] =
+        xs match {
+            case Stream() => xs
+            case x #:: xs = {
+              table get x match {
+              case Some(facts) =>
+                sieve(xs, facts.foldLeft(table - x) { (table, prime) =>
+                  val key = x + prime
+                  val value = table.getOrElse(key, Vector()) :+ prime
+                  table + (key -> value)
+                })
+                case None =>  {
+                     x #:: sieve(xs, table + (x*x -> Vector(x)))
+                }}}}   
+  def fromLong(start:Long) : Stream[Long] = Stream.cons(start, fromLong(start+1))
+
+  def main(args: Array[String]) {
+     sieve(fromLong(2), Map())
+  }
+}

@@ -1,0 +1,43 @@
+/**
+ * An automated Sql Escape Apostrophe before preparing an Object as Sql insert
+ * query
+ * 
+ * @param obj
+ * @return List of all field's values as string type
+ */
+public static Object escapeSql_Apostrophe(Object obj) {
+    List<Field> fields = getDeclaredFields(obj);
+    for (Field field : fields) {
+        field.setAccessible(true); // Additional line
+        String val = new String();
+        // System.out.println(""type : "" + field.getType().getSimpleName());
+        if (isPredfinedObject(field)) {
+            try {
+                val = field.get(obj) + """";
+                if (val.contains(""'"")) {
+                    val = val.replaceAll(""'"", ""''"");
+                    String type = field.getType().getSimpleName();
+                    if (type.equals(String.class.getSimpleName())) {
+                        field.set(obj, val);
+                    }
+                    if (type.equals(Character.class.getSimpleName())) {
+                        field.setChar(obj, val.charAt(0));
+                    }
+                }
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                System.out.println(field.get(obj));
+                System.out.println(getAllFieldsValues(field.get(obj)));
+                continue;
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    return obj;
+}

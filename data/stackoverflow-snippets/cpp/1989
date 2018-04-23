@@ -1,0 +1,49 @@
+#include <QtWidgets>
+
+class LineEdit: public QLineEdit {
+  private:
+    // flag: true ... last finished editing was confirmed
+    bool _confirmed;
+  public:
+    // Construction & Destruction
+    explicit LineEdit(
+      const QString &contents = QString(), QWidget *pQParent = nullptr):
+      QLineEdit(contents, pQParent),
+      _confirmed(false)
+    {
+      QObject::connect(this, &QLineEdit::returnPressed,
+        [this](){ onSigReturnPressed(); });
+    }
+    LineEdit(QWidget *pQParent): LineEdit(QString(), pQParent) { }
+    virtual ~LineEdit() = default;
+    LineEdit(const LineEdit&) = delete;
+    LineEdit& operator=(const LineEdit&) = delete;
+
+  public:
+    // returns whether last finished editing was confirmed.
+    bool isConfirmed() { return _confirmed; }
+  protected:
+    virtual void focusOutEvent(QFocusEvent *pQEvent) override
+    {
+      _confirmed = false;
+      QLineEdit::focusOutEvent(pQEvent);
+    }
+  private:
+    void onSigReturnPressed() { _confirmed = true; }
+};
+
+int main(int argc, char **argv)
+{
+  qDebug() << ""Qt Version:"" << QT_VERSION_STR;
+  QApplication app(argc, argv);
+  // setup GUI
+  LineEdit qEdit(QString::fromUtf8(""Hello World""));
+  qEdit.show();
+  // install signal handlers
+  QObject::connect(&qEdit, &LineEdit::editingFinished,
+    [&]() {
+      qDebug() << ""Edit confirmed:"" << qEdit.isConfirmed();
+    });
+  // runtime loop
+  return app.exec();
+}

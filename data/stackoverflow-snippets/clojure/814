@@ -1,0 +1,43 @@
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.Stream.Builder;
+
+public class StreamUtils {
+    static <T> Stream<T> delay(final Supplier<Stream<T>> thunk) {
+        return Stream.of((Object) null).flatMap(x -> thunk.get());
+    }
+
+    static class Partitioner<T> implements Function<T, Stream<Stream<T>>> {
+        final Function<T, ?> f;
+
+        Object prev;
+        Builder<T> sb;
+
+        public Partitioner(Function<T, ?> f) {
+            this.f = f;
+        }
+
+        public Stream<Stream<T>> apply(T t) {
+            Object tag = f.apply(t);
+            if (sb != null && prev.equals(tag)) {
+                sb.accept(t);
+                return Stream.empty();
+            }
+            Stream<Stream<T>> partition = sb == null ? Stream.empty() : Stream.of(sb.build());
+            sb = Stream.builder();
+            sb.accept(t);
+            prev = tag;
+            return partition;
+        }
+
+        Stream<Stream<T>> flush() {
+            return sb == null ? Stream.empty() : Stream.of(sb.build());
+        }
+    }
+
+    static <T> Stream<Stream<T>> partitionBy(Stream<T> in, Function<T, ?> f) {
+        Partitioner<T> partitioner = new Partitioner<>(f);
+        return Stream.concat(in.flatMap(partitioner), delay(() -> partitioner.flush()));
+    }
+}

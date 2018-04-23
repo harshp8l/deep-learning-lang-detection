@@ -1,0 +1,28 @@
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+import scala.util.Try
+
+object BigIntFormat extends Format[BigInt] {
+  override def reads(json: JsValue): JsResult[BigInt] = json match {
+    case JsNumber(n) => Try(JsSuccess(n.toBigInt)).getOrElse {
+      JsError(JsPath() -> JsonValidationError(s""error.expected.numeric(as BigInt), but got '$json'""))
+    }
+    case JsString(s) => Try(JsSuccess(BigInt(s))).getOrElse {
+      JsError(JsPath() -> JsonValidationError(s""error.expected.string(as BigInt), but got '$json'""))
+    }
+    case _ => JsError(JsPath() -> JsonValidationError(""error.expected.string""))
+  }
+
+  override def writes(o: BigInt): JsValue = JsString(o.toString)
+}
+
+case class SomethingWithBigInt(id: BigInt, str: String)
+
+object SomethingWithBigInt {
+  implicit val bigIntFormatter = BigIntFormat
+
+  implicit lazy val format: Format[SomethingWithBigInt] = ({
+    (JsPath \ ""id"").format[BigInt] and
+      (JsPath \ ""str"").format[String]
+  })(SomethingWithBigInt.apply, unlift(SomethingWithBigInt.unapply))
+}

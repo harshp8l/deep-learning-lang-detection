@@ -1,0 +1,25 @@
+(ns foo.hours
+  (:require
+   [clj-time.core :as time]
+   [clj-time.format :as timef]))
+
+(defn parse [s]
+  (timef/parse (timef/formatter ""yyyy-MM-dd HH:mm:ss"") s))
+
+(defn round-hour [time]
+  (let [m (time/minute time)
+        h (time/hour time)
+        rounded-h (if (<= 30 m) (inc h) h)]
+    (if (= 24 rounded-h) 0 rounded-h)))
+
+(comment
+
+  (def f (comp round-hour parse))
+
+  (f ""2017-08-30 09:20:48"") ;=> 9
+
+  (f ""2017-08-30 09:33:48"") ;=> 10
+
+  (f ""2017-08-30 23:39:48"") ;=> 0
+
+  )

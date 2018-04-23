@@ -1,0 +1,42 @@
+#include <sstream>
+#include <array>
+
+// For Windows Console Output
+#define VC_EXTRALEAN 
+#include <Windows.h>
+
+namespace linx {
+
+class Logger final : public Singleton {
+public:
+    enum LoggerType {
+        TypeInfo = 0,
+        TypeWarning,
+        TypeError,
+        TypeConsole
+    };
+
+private:
+    std::string _logFilename;
+    unsigned    _maxCharLength;
+
+    std::array<std::string, 4> _logTypes;
+    const std::string _unknownLogType;
+
+    // This is for Windows Console Output - Can substitue with OS type
+    HANDLE _hConsoleOutput;
+    WORD   _consoleDefualtColor;
+    // --------------------------------------------------------------- 
+
+public:
+    explicit Logger( const std::string& logFilename );
+    virtual ~Logger();
+
+    static void log( const std::string& text, LoggerType logType = TypeInfo );
+    static void log( const std::ostringstream& text, LoggerType logType = TypeInfo );
+    static void log( const char* text, LoggerType logType = TypeInfo );
+};
+
+} // namespace linx
+
+#endif // !LOGGER_H

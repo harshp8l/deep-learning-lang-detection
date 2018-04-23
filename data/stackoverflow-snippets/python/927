@@ -1,0 +1,32 @@
+from scipy.interpolate import griddata
+import pandas as pd
+import numpy as np
+
+df_polar = pd.read_csv('onescan.txt', index_col=0)
+
+# Generate polar and cartesian meshgrids
+r = pd.to_numeric(df_polar.columns)
+theta = np.deg2rad(df_polar.index)
+
+# Polar meshgrid
+rad_c, theta_c = np.meshgrid(r, theta)
+
+# Cartesian equivalents of polar co-ordinates
+X = rad_c*np.cos(theta_c)
+Y = rad_c*np.sin(theta_c)
+
+# Cartesian (x/y) meshgrid
+grid_spacing = 100.0   # You can change this
+nx = (X.max() - X.min())/grid_spacing
+ny = (Y.max() - Y.min())/grid_spacing
+x = np.arange(X.min(), X.max() + grid_spacing, grid_spacing)
+y = np.arange(Y.min(), Y.max() + grid_spacing, grid_spacing)
+grid_x, grid_y = np.meshgrid(x, y)
+
+# Interpolate from polar to cartesian grid
+new_grid = griddata(
+    (X.flatten(), Y.flatten()),
+    df_polar.values.flatten(),
+    (grid_x, grid_y),
+    method='nearest'
+)

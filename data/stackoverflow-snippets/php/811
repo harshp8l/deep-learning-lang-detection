@@ -1,0 +1,75 @@
+ALTER PROCEDURE [dbo].[sp_Uye_Insert](
+    --Uye 
+    @Result varchar(250) OUTPUT,
+    @Tckn nvarchar(11),
+    @Adi nvarchar(50),
+    @Soyadi nvarchar(50),
+    @BabaAdi nvarchar(50),
+    @AnaAdi nvarchar(50),
+    @DogumTarihi date,
+    @DogumYeri nvarchar(250),
+    @Cinsiyet char(1),
+    @OgrenimDurumId int,
+    @KurumSicil nvarchar(50),
+    @KadroUnvanId int,
+    @Eposta nvarchar(250),
+    @Telefon nvarchar(250),
+    @KanGrubu nvarchar(50),
+    @BransId int,
+    @UyeDurumId int,
+    @CreatedIpAdress nvarchar(50),
+    @KayitFormu nvarchar(max),
+    @CreatedUser int,
+
+    -- UyeKurum
+    @IlId int,
+    @IlceId int,
+    @KurumId int,
+    @BirimId int,
+
+    --UyeSosyalGuvenlik
+    @SosyalGuvenlikKurumuId int,
+    @SosyalGuvenlikSicilNumarasi int
+)
+AS
+ SET NOCOUNT ON
+BEGIN
+
+DECLARE @UyeId int 
+DECLARE @KararNoId int
+DECLARE @KararNo int
+DECLARE @KayitNo int
+DECLARE @UyeNo int
+DECLARE @Date date
+DECLARE @UyeHareketString nvarchar(max)
+
+SET @Date = GETDATE()
+SET @UyeHareketString = 'TCKN: '+@Tckn+',Adi:'+@Adi+',Soyadi:'+@Soyadi+',BabaAdi:'+@BabaAdi+',AnaAdi:'+@AnaAdi+',DogumTarihi:'+ CONVERT(VARCHAR, @DogumTarihi, 120)+',DogumYeri:'+@DogumYeri+',Cinsiyet:'+@Cinsiyet+',OgrenimDurumId:'+CONVERT(VARCHAR,@OgrenimDurumId,120)+',KurumSicil:'+@KurumSicil+',KadroUnvanId:'+CONVERT(VARCHAR,@KadroUnvanId,120)+',Eposta:'+@Eposta+',Telefon:'+@Telefon+',KanGrubu:'+@KanGrubu+',BransId:'+CONVERT(VARCHAR,@BransId,120)+',UyeDurumId:'+CONVERT(VARCHAR,@UyeDurumId,120)+',CreatedIpAdress:'+@CreatedIpAdress+',KayitFormu:'+@KayitFormu+',CreatedUser:'+CONVERT(VARCHAR,@CreatedUser,120)+',IlId:'+CONVERT(VARCHAR,@IlId,120)+',IlceId:'+CONVERT(VARCHAR,@IlceId,120)+',KurumId:'+CONVERT(VARCHAR,@KurumId,120)+',BirimId:'+CONVERT(VARCHAR,@BirimId,120)+',SosyalGuvenlikKurumuId:'+CONVERT(VARCHAR,@SosyalGuvenlikKurumuId,120)+',SosyalGuvenlikSicilNumarasi:'+CONVERT(VARCHAR,@SosyalGuvenlikSicilNumarasi,120);
+
+BEGIN TRY
+    BEGIN TRAN
+
+        SET @KararNoId = (SELECT TOP 1 Id FROM KararNo ORDER BY Id DESC)
+        SET @KararNo = (SELECT TOP 1 KararNo FROM KararNo ORDER BY Id DESC)
+        INSERT INTO Uye (TCKN,Adi,Soyadi,BabaAdi,AnaAdi,DogumTarihi,DogumYeri,Cinsiyet,OgrenimDurumuId,Eposta,Telefon,KanGrubu,UyeDurumId,CreatedIpAdress,CreatedUser,CreatedDateTime) VALUES (
+        @Tckn,@Adi,@Soyadi,@BabaAdi,@AnaAdi,@DogumTarihi,@DogumYeri,@Cinsiyet,@OgrenimDurumId,@Eposta,@Telefon,@KanGrubu,@UyeDurumId,@CreatedIpAdress,@CreatedUser,@Date);
+        Set @UyeId = SCOPE_IDENTITY()
+INSERT INTO UyeKayitNo (UyeId,UyeNo,KararNoId,UyelikBaslamaTarihi,UyeDurumId,KayitFormu,Aktif) VALUES (@UyeId,DEFAULT,@KararNoId,@Date,@UyeDurumId,@KayitFormu,1)
+        SET @KayitNo = (SELECT UyeNo FROM UyeKayitNo WHERE UyeId=@UyeId AND Aktif = 1)
+
+        INSERT INTO UyeKurum (UyeId,IlId,IlceId,KurumId,BirimId,KurumSicil,KadroUnvanId,BransId,BaslangicTarihi,Aktif) VALUES (@UyeId,@IlId,@IlceId,@KurumId,@BirimId,@KurumSicil,@KadroUnvanId,@BransId,@Date,1)
+
+        INSERT INTO UyeSosyalGuvenlik (UyeId,SosyalGuvenlikKurumuId,SosyalGuvenlikSicilNumarasi,BaslangicTarihi,Aktif) VALUES (@UyeId,@SosyalGuvenlikKurumuId,@SosyalGuvenlikSicilNumarasi,@Date,1)
+
+
+        INSERT INTO UyeHareket (UyeId,IslemYeri,UserId,HareketTarih,IlkDeger,SonDeger,Aciklama,Aktif) VALUES (@UyeId,'sp_Uye_Insert',@CreatedUser,@Date,NULL,@UyeHareketString,NULL,1)
+        Set @Result = CONVERT(varchar(10),@UyeId)+','+CONVERT(varchar(10),@KayitNo)+','+CONVERT(varchar(10),@KararNo)
+    COMMIT TRAN
+
+END TRY
+BEGIN CATCH
+    ROLLBACK TRAN
+END CATCH
+
+END 
+GO

@@ -1,0 +1,27 @@
+WITH 
+    EXPENSE AS (
+        select 1001 as Account, 'DEPT_A' as DEPT ,50000 as EXPENSE_AMT, 'Y' DIRECT_FLAG  from dual
+        union all select 1002 ,'DEPT_B',100000, 'Y'  from dual
+        union all select 1003 ,'DEPT_C',10000000, 'Y'  from dual
+        union all select 1004 ,'DEPT_D',500000, 'Y'  from dual
+        union all select 1005 ,'DEPT_E',1000, 'Y'  from dual
+        union all select 1005 ,'DEPT_E',50000 , 'N' from dual
+        union all select 1005 ,'DEPT_E',50000, 'N'  from dual
+        union all select 1005 ,'DEPT_E',50000, 'N'  from dual
+        union all select 1033 ,'DEPT_F',10000000, 'N' from dual
+        union all select 1033 ,'DEPT_F',500000, 'N'  from dual),
+    PARENT_CHILD AS (
+        select 'DEPT_A' as CHILD_DEPT,'DEPT_E' as PARENT_DEPT from dual
+        union all select 'DEPT_B','DEPT_E'  from dual
+        union all select 'DEPT_C','DEPT_F'  from dual
+        union all select 'DEPT_D','DEPT_F'  from dual
+        union all select 'DEPT_E','DEPT_G'  from dual
+        union all select 'DEPT_F','DEPT_G'  from dual
+    )
+SELECT 
+    CHILD_DEPT, PARENT_DEPT, DIRECT_FLAG, sum(EXPENSE_AMT) TOTAL_EXPENSE
+FROM 
+    PARENT_CHILD, EXPENSE
+WHERE
+    DEPT = CHILD_DEPT
+GROUP BY CHILD_DEPT, PARENT_DEPT, DIRECT_FLAG;

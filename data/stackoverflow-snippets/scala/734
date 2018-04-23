@@ -1,0 +1,19 @@
+val data1 = Array( (""a"", 0), (""a"", 1), (""a"", 1), (""a"", 1), (""a"", 0), (""a"", 1))
+val data2 = Array( (""b"", 0), (""b"", 1), (""b"", 1))
+val union = data1.union(data2)
+val df = sc.parallelize(union).toDF(""key"", ""val"")
+df.cache.createOrReplaceTempView(""kvTable"")
+spark.sql(""SET spark.sql.shuffle.partitions=2"")
+
+
+var ds = spark.sql(""""""
+   SELECT key, avg(val) as median
+FROM ( SELECT key, val, rN, (CASE WHEN cN % 2 = 0 then (cN DIV 2) ELSE (cN DIV 2) + 1 end) as m1, (cN DIV 2) + 1 as m2 
+        FROM ( 
+            SELECT key, val, row_number() OVER (PARTITION BY key ORDER BY val ) as rN, count(val) OVER (PARTITION BY key ) as cN
+            FROM kvTable
+         ) s
+    ) r
+WHERE rN BETWEEN m1 and m2
+GROUP BY key 
+"""""")

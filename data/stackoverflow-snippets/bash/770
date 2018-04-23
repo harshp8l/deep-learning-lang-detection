@@ -1,0 +1,23 @@
+#!/bin/bash
+$1 & # executes a program in background which is provided as an argument
+pid=$! # stores executed process id in pid
+
+# check whether process is still running
+# The ""[^[]"" excludes the grep from finding itself in the ps output
+if ps | grep ""$pid[^[]"" >/dev/null
+then
+    echo ""success (running)""  # process is still running
+else
+    # If the process is already terminated, then there are 2 cases:
+    # 1) the process executed and stop successfully
+    # 2) it is terminated abnormally
+
+    if wait $pid # check if process executed successfully or not
+    then
+        echo ""success (ran)""
+    else
+        echo ""failed (returned $?)"" # process terminated abnormally
+    fi
+fi
+
+# Note: The above script will detect if a process started successfully or not. If process is running when we check, but later it terminates abnormally then this script will not detect this.

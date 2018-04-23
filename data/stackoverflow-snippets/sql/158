@@ -1,0 +1,21 @@
+SELECT id,
+       HISTORY
+FROM   (
+  SELECT Col_Old_ID,
+         Col_new_id,
+         MAX(
+           SUBSTR( SYS_CONNECT_BY_PATH( Col_Old_ID, ',' ), 2 )
+             || ',' || Col_New_ID
+         ) OVER (
+           PARTITION BY CONNECT_BY_ROOT( Col_Old_ID )
+           ORDER BY     CONNECT_BY_ISLEAF DESC
+         ) As history,
+         CONNECT_BY_ISLEAF AS leaf
+  FROM   table_name
+  START WITH Col_Old_ID NOT IN ( SELECT Col_New_Id FROM table_name )
+  CONNECT BY PRIOR Col_New_ID = Col_Old_ID
+)
+UNPIVOT ( id FOR col_type IN ( Col_Old_Id, Col_New_Id ) )
+WHERE col_type = 'COL_OLD_ID'
+OR    leaf = 1
+ORDER BY id

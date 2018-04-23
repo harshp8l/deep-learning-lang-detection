@@ -1,0 +1,53 @@
+bool Train :: isValid() const
+{
+  Car *current = m_head;
+  Car *traverse;
+
+  //iterates over the linked list
+  while(current->getNext() != NULL)
+  {
+    traverse = current->getNext();
+
+    //checks the cargo sequence for OXIDIZER adjacent to COMBUSTIBLE
+    // Need to check both ways, -O-C- and -C-O-
+    if((current->getType() == OXIDIZER && traverse->getType() == COMBUSTIBLE) || 
+       (current->getType() == COMBUSTIBLE && traverse->getType() == OXIDIZER)){
+      return false;
+    }
+
+    //checks the 3 COMBUSTIBLE in a row, just sub in COMBUSTIBLE inside
+    if(current->getType() == COMBUSTIBLE && traverse->getType() == COMBUSTIBLE){
+      //Need the inner conditional to make sure traverse isnt the 
+      //end of the train
+      if(traverse->getNext() != NULL && traverse->getNext()->getType() == COMBUSTIBLE){
+         return false;
+       }
+    }
+
+  //check the 5 BIOLOGICAL cars in a row
+  if(current->getType() == BIOLOGICAL && traverse->getType() == BIOLOGICAL)
+  {
+     int count = 2; //already counted the first two in conditional above
+     while(traverse->getNext() != NULL && count < 5)
+     {
+      traverse = traverse->getNext();
+      if(traverse->getType() == BIOLOGICAL)
+        count++; 
+      else
+        break;
+     }
+
+   if(count == 5)//if 5 biologicals were counted in a row, return false
+     return false;
+  }
+
+  // checks if BIOLOGICAL only have one RADIOACTIVE on one side.
+  if(current->getType() == RADIOACTIVE && traverse->getType() == BIOLOGICAL) 
+    if(traverse->getNext() != NULL && traverse->getNext()->getType() == RADIOACTIVE)
+      return false
+
+    current = traverse; //continue iterating through train
+  }
+
+  return true;//passes everything, train should be good
+}

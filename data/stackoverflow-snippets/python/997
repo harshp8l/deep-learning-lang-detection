@@ -1,0 +1,25 @@
+# Do not convert input to integers yet
+first_color = input(""Input first color: "")
+second_color = input(""Input second color: "")
+generate = int(input(""Enter the number of colors: ""))
+
+def get_colors_from_input(color1, color2, n):
+    # Extract color coordinates
+    r1, g1, b1 = [int(x, 16)
+                  for x in [color1[i:i+2] for i in range(2, 8, 2)]]
+    r2, g2, b2 = [int(x, 16)
+                  for x in [color2[i:i+2] for i in range(2, 8, 2)]]
+
+    # Build the coordinate-wise distribution
+    # We could have used `range`, but using floats prevents some rounding errors
+    dec_cols = zip(
+        [int(r1 + x * (r2 - r1) / (n + 1)) for x in range(n + 2)],
+        [int(g1 + x * (g2 - g1) / (n + 1)) for x in range(n + 2)],
+        [int(b1 + x * (b2 - b1) / (n + 1)) for x in range(n + 2)])
+
+    # Format back the coordinates to strings.
+    # We used a small hack with `str.replace` to make sure coordinates have two digits
+    return ['0x' + ''.join(hex(x).replace('x', '')[-2:]
+                             for x in color) for color in dec_cols]
+
+print(*get_colors_from_input(first_color, second_color, generate))

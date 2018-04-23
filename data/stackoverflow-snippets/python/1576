@@ -1,0 +1,51 @@
+try:
+    import tkinter as tk
+except:
+    import Tkinter as tk
+
+import time
+
+#Create an array containing our stock items
+#Each item is a dictionary with price and name fields
+stock_items = []
+stock_items.append({'price':2.0,'name':'Item 1'})
+stock_items.append({'price':1.5,'name':'Item 2'})
+stock_items.append({'price':5,'name':'Item 3'})
+stock_items.append({'price':7,'name':'Item 4'})
+
+class Till(tk.Frame):
+    def __init__(self,master=None,**kw):
+        tk.Frame.__init__(self,master=master,**kw)
+        self.price_string=tk.StringVar()
+        tk.Label(self,text=""Price: "").grid(row=0,column=0)
+        tk.Label(self,textvariable=self.price_string).grid(row=0,column=1)
+        self.items = []
+        #For each stock item, create an IntVar, a checkbox and keep record of the price/name
+        for idx,item in enumerate(stock_items):
+            new_item = {}
+            new_item['var'] = tk.IntVar()
+            new_item['check'] = tk.Checkbutton(self,
+                                                  text=item['name'],
+                                                  variable=new_item['var'],
+                                                  command=self.recalculate)
+            new_item['check'].grid(row=idx+1)
+            new_item['name'] = item['name']
+            new_item['price'] = item['price']
+            self.items.append(new_item)
+
+
+    #Recalculate is called when ever a checkbox is checked/unchecked
+    def recalculate(self):
+        total_price = 0
+        #Go through each item and if it is selected add its price to the total
+        for item in self.items:
+            if item['var'].get():
+                total_price += item['price']
+        #Display out total price
+        self.price_string.set('£/$ {:.2f}'.format(total_price))
+
+
+if __name__ == '__main__':
+    root = tk.Tk()
+    Till(root).grid()
+    root.mainloop()

@@ -1,0 +1,39 @@
+class Root:
+    def __init__(self):
+        self.children = []
+        self.__previous_children = []
+
+    def save(self):
+        diff = [c for c in self.__previous_children if c not in self.children]
+        if len(diff) == 0 and len(self.__previous_children) == len(self.children):
+            return
+        for child in diff:
+            child.root = None
+        self.__previous_children = self.children.copy()
+        for child in self.children:
+            child.root = self
+
+class Child:
+    def __init__(self):
+        self.__root = None
+
+    @property
+    def root(self):
+        return self.__root
+
+    @root.setter
+    def root(self, root):
+        if self.__root == root:
+            return
+        if self.__root is not None:
+            try:
+                self.__root.children.remove(self)
+                self.__root.save()
+            except:
+                pass
+        self.__root = root
+        if root is None:
+            return
+        if self not in root.children:
+            root.children.append(self)
+            root.save()

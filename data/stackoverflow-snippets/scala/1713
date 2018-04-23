@@ -1,0 +1,25 @@
+class RateLimiter(semaphore: Semaphore) {
+  def runBlocking[T](action: => Future[T]): Future[T] = {
+    semaphore.acquire()
+    val started = try {
+      action
+    }
+    catch {
+      case NonFatal(th) => {
+        semaphore.release()
+        throw th
+      }
+    }
+
+    started.andThen {
+      case _ => semaphore.release()
+    }(ExecutionContext.Implicits.global)
+  }
+}
+
+val rateLimiter = new RateLimiter(new Semaphore(20))
+val tasks = (1 to 100)
+val futures: Seq[Future[Int]] = tasks.map(i => rateLimiter.runBlocking(Future{
+    i * 2
+  }(ExecutionContext.Implicits.global)))
+futures.foreach(f => Await.result(f, Duration.Inf))

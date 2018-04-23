@@ -1,0 +1,39 @@
+// store discriminator in DB
+// use it to deserialize and dispatch with predefined function
+def deserializeAndHandle(discriminator: String, json: String): Unit = discriminator match {
+  case ""my.package.A"" => decode[my.package.A](json).map(handlerForA)
+  case ""my.package.B"" => decode[my.package.B](json).map(handlerForB)
+  case ""my.package.C"" => decode[my.package.C](json).map(handlerForC)
+  case _              => 
+}
+
+deserializeAndHandle(discriminator, json)
+
+// store discriminator in DB
+// use it to deserialize to Object which can be pattern-matched later
+def deserializeToObject(discriminator: String, json: String): Option[Any] = discriminator match {
+  case ""my.package.A"" => decode[my.package.A](json).toOption
+  case ""my.package.B"" => decode[my.package.B](json).toOption
+  case ""my.package.C"" => decode[my.package.C](json).toOption
+  case _              => None
+}
+
+deserializeToObject(discriminator, json) map {
+  case a : A => ...
+  case b : B => ...
+  case c : C => ...
+} getOrElse ???
+
+// wrap unrelated types with sealed trait to make it sum type
+// use sum type support of Circe
+sealed trait Envelope
+final case class EnvelopeA(a: A) extends Envelope
+final case class EnvelopeB(b: B) extends Envelope
+final case class EnvelopeA(c: C) extends Envelope
+def deserializeEnveloped(json): Option[Envelope] = decode[Envelope](json).toOption
+
+deserializeEnveloped(json) map {
+  case EnvelopeA(a) => ...
+  case EnvelopeB(b) => ...
+  case EnvelopeC(c) => ...
+} getOrElse ???

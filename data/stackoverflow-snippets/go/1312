@@ -1,0 +1,22 @@
+func (r *Runner) Execute() {
+    pipelineChan := makePipeline(r.pipelines)
+
+    for cnt := 0; cnt < len(r.pipelines); cnt++{
+        //recieve from channel
+        p := <- pipelineChan
+        //do something with the result 
+    }
+}
+
+func makePipeline(pipelines []pipelineType) <-chan pipelineType{
+    pipelineChan := make(chan pipelineType)
+
+    go func(){
+        for _, p := range pipelines {
+           go func(p pipelineType){
+              pipelineChan <- executePipeline(p)
+           }(p)
+        }
+    }()
+    return pipelineChan
+}

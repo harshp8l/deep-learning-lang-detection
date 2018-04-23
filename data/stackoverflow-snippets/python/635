@@ -1,0 +1,30 @@
+class cleanItems:
+    def __init__(self, string):
+        self.string = string
+        self.cols = self.getColumnWidths()
+
+    def getColumnWidths(self):
+        ''' Get the length of every column '''
+        rx = re.compile(r'^(NAME\s+)(ID\s+)(EDUCATION\s+)(YEAR\s+)', re.M)
+        match = rx.search(data)
+        if match:
+            return [len(group) for group in match.groups()]
+
+    def getEntries(self):
+        rx = re.compile(r'^[ -]+$', re.M)
+        for record in rx.split(self.string):
+            # discard empty lines and the header
+            lines = [line for line in record.split('\n') if line.strip()]
+            if len(lines) > 1:
+                matrix = [[line[sum(self.cols[0:i]):sum(self.cols[0:i+1])] 
+                            for i in range(len(self.cols))] 
+                            for line in lines]
+
+                result = {'name': matrix[0][0].strip(), 'id': matrix[0][1].strip(), 
+                            'town': matrix[1][0].strip(), 'school': [matrix[i][2].strip() for i in range(len(matrix))],
+                            'years': [matrix[i][3].strip() for i in range(len(matrix))]}
+                yield result
+
+ci = cleanItems(data)
+for record in ci.getEntries():
+    print(record)

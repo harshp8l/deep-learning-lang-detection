@@ -1,0 +1,29 @@
+<#
+.description
+Get the PATH environment variables from Machine, User, and
+Process locations, and update the current Powershell
+process's PATH variable to contain all values from each of
+them. Call it after updating the Machine or User PATH value
+(which may happen automatically during say installing
+software) so you don't have to launch a new Powershell
+process to get them.
+#>
+function Update-EnvironmentPath {
+    [CmdletBinding()] Param()
+    $oldPath = $env:PATH
+    $machinePath = [Environment]::GetEnvironmentVariable(""PATH"", ""Machine"") -split "";""
+    $userPath    = [Environment]::GetEnvironmentVariable(""PATH"", ""User"")    -split "";""
+    $processPath = [Environment]::GetEnvironmentVariable(""PATH"", ""Process"") -split "";""
+    $env:PATH = ($machinePath + $userPath + $processPath | Select-Object -Unique) -join "";""
+    Write-EventLogWrapper -message ""Updated PATH environment variable`r`n`r`nNew value: $($env:PATH -replace ';', ""`r`n"")`r`n`r`nOld value: $($oldPath -replace ';', ""`r`n"")""
+}
+
+# Install Chocolatey itself:
+Invoke-WebRequest https://chocolatey.org/install.ps1 -UseBasicParsing | Invoke-Expression
+# NOTE: Chocolatey changes the system %PATH%, so we have to get the latest update here:
+Update-EnvironmentPath
+# Configure Chocolatey to not require confirmation when installing packages:
+choco.exe feature enable --name=allowGlobalConfirmation --yes
+
+# Install the package we care about
+choco.exe install urlrewrite

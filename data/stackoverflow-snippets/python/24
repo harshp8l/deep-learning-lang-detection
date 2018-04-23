@@ -1,0 +1,30 @@
+import numpy as np
+from collections import Counter
+
+A = np.random.randint(0, 10, (2000, 2000))
+MAX_LOOKUP = 2**24
+
+def map_count(A):
+    d = dict(zip(*np.unique(A.ravel(), return_counts=True)))
+    return np.vectorize(d.get)(A)
+
+def map_count2(A):
+    d = Counter(A.ravel())
+    return np.vectorize(d.get)(A)
+
+def bs(A):
+    _, inv, cts = np.unique(A, return_inverse=True, return_counts=True)
+    return cts[inv].reshape(A.shape)
+
+def pp(a):
+    mn, mx = a.min(), a.max()
+    span = mx-mn+1
+    if span > MAX_LOOKUP:
+        raise RuntimeError('values spread to wide')
+    a = a - mn
+    return np.bincount(a.ravel(), None, span)[a]
+
+%timeit map_count(A)   # 1.9 s ± 24.2 ms per loop
+%timeit map_count2(A)  # 3 s ± 33.1 ms per loop
+%timeit bs(A)          # 887 ms ± 20 ms per loop
+%timeit pp(A)          # 149 ms ± 6.32 ms per loop

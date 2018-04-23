@@ -1,0 +1,22 @@
+## Q:\Test\2017\08\24\SO_45870618.ps1
+$FileIn  = '.\FileIn.Csv'
+$FileOut = '.\FileOut.Csv'
+
+$Csv = Import-Csv $FileIn
+$Csv
+
+$CsvNew = ForEach ($Row in $Csv) {
+    If (!($Row.ComputerName)){
+        If ($Last) {$Row.ComputerName = $Last}
+    }
+    $Last = $Row.ComputerName
+    ForEach ($line in ($Row.Results -Split('\r?\n')) ){
+        If ($line -NotMatch '^\s*KB\d+\s+is'){
+            [PSCustomObject]@{ComputerName = $Last.Trim()
+                              Results = $line}
+        }
+    }
+}
+""------------""
+$CsvNew 
+$CsvNew | Export-Csv $FileOut -NoTypeInformation

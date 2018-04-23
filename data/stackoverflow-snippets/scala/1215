@@ -1,0 +1,31 @@
+trait Block[U] {
+  def map(df: DataFrame, params: U): DataFrame
+}
+
+trait BlockFactory[T <: Block[U], U] {
+  def create(): T
+}
+
+class ParseURL extends Block[(String, Column)] {
+  override def map(df: DataFrame, params: (String, Column)): DataFrame = ???
+}
+
+object ParseURL extends BlockFactory[ParseURL, (String, Column)] {
+  override def create(): ParseURL = new ParseURL
+}
+
+
+class Pipeline(df: DataFrame) {
+  //      ...
+  def copy(newDf: DataFrame) = new Pipeline(newDf)
+
+  //      ...
+
+  def map[T <: Block[U] : ClassTag, U](blockFactory: BlockFactory[T, U], d: U): Pipeline = {
+    val block: T = blockFactory.create()
+    this.copy(block.map(df, d))
+  }
+
+
+  //      ...
+}

@@ -1,0 +1,20 @@
+sealed trait MyOption[T] {
+
+  def fold[B](n: => B, s: T => B): B //fundamental combinator
+
+  //functionality
+  import MyOption._
+  final def isEmpty                                      = fold(true, _ => false)
+  final def flatMap[B](f: A => MyOption[B]): MyOption[B] = fold(empty, f)
+  final def map[B](f: A => B): MyOption[B]               = fold(empty, f andThen nonEmpty)
+}
+
+object MyOption {
+  //These are effectively the constructors
+  def empty[A]: MyOption[A] = new MyOption[A] {
+    override final def fold[B](n: => B, s: A => B): B = n 
+  }
+  def nonEmpty[A](a: A): MyOption[A] = new MyOption[A] {
+    override final def fold[B](n: => B, s: A => B): B = s(a) 
+  }
+} 

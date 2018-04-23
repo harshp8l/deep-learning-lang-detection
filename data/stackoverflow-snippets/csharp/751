@@ -1,0 +1,58 @@
+CREATE DATABASE YourDatabase;
+GO
+ALTER DATABASE YourDatabase SET ENABLE_BROKER;
+GO
+USE YourDatabase;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[user_log](
+    [user_log_id] [bigint] NOT NULL,
+    [user_name] [nvarchar](100) NULL,
+    [action_type_id] [int] NULL,
+    [document_type_id] [int] NULL,
+    [document_id] [nvarchar](20) NULL,
+    [description] [nvarchar](200) NULL,
+    [action_date] [datetime] NULL,
+    [seen] [bit] NULL,
+    CONSTRAINT [PK_user_log] PRIMARY KEY CLUSTERED 
+    (
+    [user_log_id] ASC
+    )
+);
+GO
+INSERT INTO dbo.user_log(user_log_id, user_name, action_date, seen)
+    VALUES(1,'test', '2018-04-15T00:00:00', 1);
+GO
+CREATE proc [dbo].[ManageUserLog]
+(
+    @user_name nvarchar(100) = null,
+    @action_type_id int = null,
+    @document_type_id int = null,
+    @date_from datetime = null,
+    @date_to datetime = null,
+    @seen bit = null
+    )
+as
+begin
+    select user_log_id,
+                [user_name],
+                --dbo.GetActionTypeByID(action_type_id) as action_type,
+                --dbo.GetDocumentTypeByID(document_type_id) as document_type,
+                document_id,
+                [description],
+                action_date,
+                seen
+        from dbo.user_log
+        where (@user_name is null or [user_name] = @user_name)
+          and (@action_type_id is null or action_type_id = @action_type_id)
+          and (@document_type_id is null or document_type_id = @document_type_id)
+          and (action_date between @date_from and @date_to)
+          and (seen = @seen)
+end
+GO
+
+GRANT EXEC ON dbo.ManageUserLog TO public;
+GO

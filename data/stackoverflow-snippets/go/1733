@@ -1,0 +1,20 @@
+func checkPermissions(h http.Handler) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        authCheck := true //implement the actual checking
+
+        if authCheck {
+            w.WriteError(w, 400, ""error"")
+            return
+        }
+
+        h.ServeHttp(w, r)
+    }
+}
+
+func main() {
+    r := mux.NewRouter()
+    r.HandleFunc(""/"", HomeHandler)
+    r.HandleFunc(""/products"", ProductsHandler)
+    r.HandleFunc(""/articles"", ArticlesHandler)
+    http.Handle(""/"", checkPermissions(r))
+}

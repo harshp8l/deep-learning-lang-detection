@@ -1,0 +1,13 @@
+WITH VTE AS (
+    SELECT INSCRIP,COMPETENCE,CONVERT(date,reading_date) AS Reading_date
+    FROM (VALUES('00183938',201801,'20180102'),
+                ('00183938',201802,'20180201'),
+                ('00183946',201709,'20170901'),
+                ('00183946',201710,'20171001'),
+                ('00183946',201711,'20171101')) V(INSCRIP,COMPETENCE,reading_date))
+SELECT COMPETENCE,
+       LEAD(Reading_Date) OVER (/*PARTITION BY LOCALE*/ ORDER BY Reading_Date) AS next_lecture,
+       DATEDIFF(DAY,Reading_date, LEAD(Reading_Date) OVER (/*PARTITION BY LOCALE*/ ORDER BY Reading_Date)) AS ReadingDate,
+       INSCRIP
+FROM VTE
+ORDER BY Reading_date ASC

@@ -1,0 +1,18 @@
+public static <T, U> Function<T, U> makeSerializable(
+        Class<T> targetType, // MyObject
+        Class<U> returnType, // String
+        String methodName) throws Throwable {
+
+    MethodHandles.Lookup lookup = MethodHandles.lookup();
+    MethodType methodType = MethodType.methodType(returnType, targetType);
+    Function<T, U> fun = (Function<T, U>) LambdaMetafactory.altMetafactory(
+            lookup,
+            ""apply"",
+            MethodType.methodType(Function.class),
+            methodType,
+            lookup.findVirtual(targetType, methodName, MethodType.methodType(returnType)),
+            methodType,
+            1) // this signals for serialization 
+            .getTarget().invokeExact();
+    return fun;
+}

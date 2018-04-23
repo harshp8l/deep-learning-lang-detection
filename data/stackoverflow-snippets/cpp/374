@@ -1,0 +1,75 @@
+#ifndef PROMISE_H
+#define PROMISE_H
+
+#include <QtConcurrent/QtConcurrentRun>
+#include <QFutureWatcher>
+
+class PromiseInterface
+{
+public:
+    virtual ~PromiseInterface() = default;
+    virtual void finished(int id) = 0;
+};
+
+class Watcher : public QObject
+{
+    Q_OBJECT
+    int _id;
+    PromiseInterface * _promise;
+
+public slots:
+    void finished()
+    {
+       _promise->finished(_id);
+       deleteLater();
+    }
+
+public:
+    Watcher(int id, PromiseInterface * promise)
+        : _id(id),
+          _promise(promise)
+    {}
+};
+
+template <typename T>
+class Promise : public PromiseInterface
+{
+    friend class Watcher;
+    void finished(int id) override
+    {
+        _resolved++;
+        _results[id] = _watchers[id]->result();
+        delete _watchers[id];
+
+        if(_resolved == _results.size())
+        {
+            if(_callback != nullptr)
+            {
+                _callback(_results);
+            }
+        }
+    }
+    QList<QFutureWatcher<T> *> _watchers;
+    QVector<T> _results;
+    void (*_callback)(QVector<T>);
+    int _resolved;
+public:
+    Promise(QList<QFuture<T>> futures)
+    {
+        _resolved = 0;
+        _callback = nullptr;
+        _results.resize(futures.size());
+
+        int i=0;
+        for(auto f : futures)
+        {
+            QFutureWatcher<T> * watcher = new QFutureWatcher<T>();
+            watcher->setFuture(f);
+            QObject::connect(watcher, &QFutureWatcher<T>::finished, new Watcher(i++, this), &Watcher::finished);
+            _watchers.append(watcher);
+        }
+    }
+    void then(void (*callback)(QVector<T>)) { _callback = callback; }
+};
+
+#endif // PROMISE_H

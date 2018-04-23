@@ -1,0 +1,22 @@
+function search_book
+{
+    echo ""4) search_book""
+    read -p ""Title: "" title
+    read -p ""Author: "" author
+
+    searchtitle=` grep -i ""^$title"" BooksDB.txt | cut -d: -f 1 `
+    searchauthor=` grep -i ""^[^:]+:$author"" BooksDB.txt | cut -d: -f 2 `
+    #Data does not compute to true if two variables are filled and exist if not typed fully
+    if [[ $searchtitle == $title ]] || [[ $searchauthor == $author ]]
+    then
+    recordcount=`grep -iE ""^$title"" BooksDB.txt | grep -iEc ""^[^:]+:$author"" `
+    echo ""Found $recordcount records""
+    echo
+    grep -iE ""^$title"" BooksDB.txt | grep -iE ""^[^:]+:$author"" |\
+        awk -F: 'BEGIN{print ""Title:Author:Price:Available Copies:Sold Copies\n""}
+        {print $1"":""$2"":$""$3"":""$4"":""$5}' | column -s "":"" -t
+    echo
+    else
+    echo ""No Books found.""
+    fi
+}

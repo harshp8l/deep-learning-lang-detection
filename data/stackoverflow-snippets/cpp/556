@@ -1,0 +1,114 @@
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+
+struct equation
+{
+    equation(std::string              const & line,
+             std::string              const & base,
+             std::vector<std::string> const & dependencies)
+        : line(line), base(base), dependencies(dependencies) {}
+
+    void print() const {
+        std::cout << ""Equation => ["" << line 
+                  << ""]; Base => ["" << base 
+                  << ""]; Deps => ["";
+        for(int i = 0; i < dependencies.size(); ++i)
+            std::cout << dependencies[i] << "", "";
+        std::cout << ""]\n"";
+    }
+
+    std::string line;
+    std::string base;
+    std::vector<std::string> dependencies;
+};
+
+std::vector<std::string> tokenize(const char* str)
+{
+    std::vector<std::string> result;
+    char plus = '+', star = '*', equals = '=';
+    do {
+        const char* begin = str;
+        while( *str != equals
+            && *str != plus
+            && *str != star
+            && *str          ) str++;
+        result.push_back(std::string(begin, str));
+    } while (0 != *str++);
+    return result;
+}
+
+std::vector<equation> read(std::set<std::string> & all_bases)
+{
+    std::ifstream file(""in.txt"");  // read input file
+    // throw error if file could not be opened
+    if(! file) throw std::runtime_error(""Could not open file"");
+
+    std::string line;
+    std::vector<equation> equations;
+    while(getline(file, line))
+    {
+        //de-structure the line
+        std::vector<std::string> tokens = tokenize(line.c_str());
+
+        // since '=' would be the first seperator, we find base at [0]
+        std::string base = tokens[0];
+        all_bases.insert(base);
+
+        // now remove the first element, all that is left is dependencies
+        tokens.erase(tokens.begin());
+
+        equations.push_back(equation(line, base, tokens));
+    }
+    return equations;
+}
+
+bool is_dependent(equation              const & equation,
+                  std::set<std::string> const & all_bases)
+{
+    std::vector<std::string> deps = equation.dependencies;
+    for(int j = 0; j < deps.size(); ++j)
+    {
+        std::string item = deps[j];
+        if (all_bases.find(item) != all_bases.end())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void segregate(std::vector<equation> const & equations,
+               std::set<std::string> const & all_bases,
+               std::vector<equation>       & dependent,
+               std::vector<equation>       & independent)
+{
+    for(int i = 0; i < equations.size(); ++i)
+    {
+        if (is_dependent(equations[i], all_bases))
+            dependent.push_back(equations[i]); // here you can push in your desired vector
+        else
+            independent.push_back(equations[i]);
+    }
+}
+
+int main()
+{
+    std::set<std::string> all_bases;
+    std::vector<equation> equations = read(all_bases);
+
+    std::vector<equation> dependent;
+    std::vector<equation> independent;
+
+    segregate(equations, all_bases, dependent, independent);
+
+    std::cout << ""Dependent Equations :\n"";
+    for(int i = 0; i < dependent.size(); ++i) dependent[i].print();
+
+    std::cout << ""\n\nIndependent Equations :\n"";
+    for(int i = 0; i < independent.size(); ++i) independent[i].print();
+
+    return 0;
+}

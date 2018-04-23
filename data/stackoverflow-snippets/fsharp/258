@@ -1,0 +1,31 @@
+open System
+open System.Threading
+
+type Args = { Thread1: Thread; Thread2: Thread }
+
+let threadProc (args: obj) =
+    let args = args :?> Args
+
+    printfn ""\n\nCurrent Thread: %s"" Thread.CurrentThread.Name
+
+    if Thread.CurrentThread.Name = ""Thread 1"" && args.Thread2.ThreadState <> ThreadState.Unstarted then
+        args.Thread2.Join ()
+
+    Thread.Sleep(4000)
+    Console.WriteLine( ""\n\nCurrent thread: {0}"", Thread.CurrentThread.Name )
+    Console.WriteLine(""Thread 1: {0}"", args.Thread1.ThreadState)
+    Console.WriteLine(""Thread 2: {0}\n"", args.Thread2.ThreadState)
+
+let thread1 = new Thread(ParameterizedThreadStart(threadProc))
+thread1.Name <- ""Thread 1""
+
+let thread2 = new Thread(ParameterizedThreadStart(threadProc))
+thread2.Name <- ""Thread 2""
+
+let main () =
+    let args = { Thread1 = thread1; Thread2 = thread2 }
+    thread1.Start(args)
+    thread2.Start(args)
+    System.Console.ReadKey () |> ignore
+
+do main ()

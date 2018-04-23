@@ -1,0 +1,24 @@
+  ...
+  import org.apache.poi.poifs.filesystem.DirectoryEntry;
+  import org.apache.poi.poifs.filesystem.DocumentEntry;
+  import org.apache.poi.poifs.filesystem.DocumentInputStream;
+  import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+
+  public static void main(final String[] args) throws FileNotFoundException, IOException, NoPropertySetStreamException,
+                  MarkUnsupportedException, UnexpectedPropertySetTypeException {
+      try (final FileInputStream fs = new FileInputStream(""src/test/word_template.doc"");
+        final POIFSFileSystem poifs = new POIFSFileSystem(fs)) {
+        final DirectoryEntry dir = poifs.getRoot();
+        final DocumentEntry siEntry = (DocumentEntry) dir.getEntry(SummaryInformation.DEFAULT_STREAM_NAME);
+        try (final DocumentInputStream dis = new DocumentInputStream(siEntry)) {
+          final PropertySet ps = new PropertySet(dis);
+          final SummaryInformation si = new SummaryInformation(ps);
+          // Read word doc (not docx) metadata.
+          System.out.println(si.getLastAuthor());
+          System.out.println(si.getAuthor());
+          System.out.println(si.getKeywords());
+          System.out.println(si.getSubject());
+          // ...
+        }
+      }
+    }

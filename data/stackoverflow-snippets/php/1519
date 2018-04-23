@@ -1,0 +1,35 @@
+public static function get_zone_matching_package( $package ) {
+$id = $package['contents'];
+    foreach ($id as $product) {
+        $new_id = $product['product_id'];
+    }
+    // Product ID Get
+    $product_id = $new_id;
+    $product_name = get_the_title( $product_id );
+    $explode_product = explode("" "",$product_name);
+    $all_zones = orig_get_all_zones();
+    // We have all zones loaded now
+    foreach ($all_zones as $key => $zone) {
+            $extracted_zone = $zone['zone_name'];
+            $zone_id = $zone['zone_id'];
+            if(in_array($extracted_zone,$explode_product)) {
+                $set_zone_id = $zone_id;
+                break;
+            }
+    }
+
+    $country          = strtoupper( wc_clean( $package['destination']['country'] ) );
+    $state            = strtoupper( wc_clean( $package['destination']['state'] ) );
+    $postcode         = wc_normalize_postcode( wc_clean( $package['destination']['postcode'] ) );
+    $cache_key        = WC_Cache_Helper::get_cache_prefix( 'shipping_zones' ) . 'wc_shipping_zone_' . md5( sprintf( '%s+%s+%s', $country, $state, $postcode ) );
+    $matching_zone_id = wp_cache_get( $cache_key, 'shipping_zones' );
+    $matching_zone_id = false;
+    if ( false === $matching_zone_id ) {
+        $data_store       = WC_Data_Store::load( 'shipping-zone' );
+        $matching_zone_id = $data_store->get_zone_id_from_package( $package );
+        $matching_zone_id = $zone_id;
+        wp_cache_set( $cache_key, $matching_zone_id, 'shipping_zones' );
+    }
+
+    return new WC_Shipping_Zone( $matching_zone_id ? $matching_zone_id : 0 );
+}

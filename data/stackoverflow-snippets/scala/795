@@ -1,0 +1,44 @@
+import scala.annotation.tailrec
+
+def filter[T](l: List[T])(f: T => Boolean): List[T] = {
+
+  val tailField = classOf[::[_]].getDeclaredField(""tl"")
+  tailField.setAccessible(true)
+
+  /* Appends a value in constant time by 
+   * force-overriding the tail element of the first cons 
+   * of the list `as`. If `as` is `Nil`, returns a new cons.
+   *
+   * @return the last cons of the new list
+   */
+  def forceAppend[A](as: List[A], lastCons: List[A], a: A): (List[A], List[A]) = as match {
+    case Nil => {
+      val newCons = a :: Nil
+      (newCons, newCons) // not the same as (a :: Nil, a :: Nil) in this case!!!
+    }
+    case _ => {
+      val newLast = a :: Nil
+      tailField.set(lastCons, newLast)
+      (as, newLast)
+    }
+  }
+
+  @tailrec
+  def filterAcc[T](l: List[T], f: T => Boolean, acc: List[T], lastCons: List[T]): List[T] = {
+    l match {
+      case List() => acc
+      case h :: t => if (f(h)) {
+        val (nextAcc, nextLastCons) = forceAppend(acc, lastCons, h) 
+        filterAcc(t, f, nextAcc, nextLastCons)
+      } else {
+        filterAcc(t, f, acc, lastCons)
+      }
+    }
+  }
+  filterAcc(l, f, Nil, Nil)
+}
+
+val list = List(""hello"", ""world"", ""blah"", ""foo"", ""bar"", ""baz"")
+val filtered = filter(list)(_.contains('o'))
+
+println(filtered)

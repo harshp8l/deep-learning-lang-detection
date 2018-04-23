@@ -1,0 +1,14 @@
+JavaPairInputDStream<String, String> directKafkaStream = KafkaUtils.createDirectStream(ssc, String.class,
+                String.class, StringDecoder.class, StringDecoder.class, kafkaParams, topics);
+
+JavaDStream<String> inputJsonStream = directKafkaStream.map(rdd -> {
+    return rdd._2;
+});
+
+inputJsonStream.foreachRDD(inputRDD -> {
+    SparkSession spark = JavaSparkSessionSingleton.getInstance(inputRDD.context().getConf());
+    List<String> strings = inputRDD.collect();
+    strings.forEach(x -> {
+        Dataset<Row> inputDataset = spark.read().option(""multiLine"",true).option(""mode"", ""PERMISSIVE"").json(inputRDD);
+        inputDataset.printSchema();
+});

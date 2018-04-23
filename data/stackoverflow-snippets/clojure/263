@@ -1,0 +1,32 @@
+(defrecord CapslockWarningLogger [impl])
+
+(extend CapslockWarningLogger
+  Logger
+  (decorate-logger :impl
+                   {:warn (fn [{:keys [impl]} s]
+                            (warn impl (clojure.string/upper-case s)))}))
+
+(defrecord SelectiveDebugLogger [ignored impl])
+
+(extend SelectiveDebugLogger
+  Logger
+  (decorate-logger :impl
+                   {:debug (fn [{:keys [impl ignored]} s]
+                             (when-not (ignored s)
+                               (debug impl s)))}))
+
+(def logger
+  (->SelectiveDebugLogger #{""ignored""}
+                          (->CapslockWarningLogger
+                            println-logger)))
+
+(info logger ""something"")
+; Info: something
+; => nil
+
+(warn logger ""something else"")
+; Warn: SOMETHING ELSE
+; => nil
+
+(debug logger ""ignored"")
+; => nil
