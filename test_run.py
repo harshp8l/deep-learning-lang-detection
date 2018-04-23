@@ -89,4 +89,4 @@ for key in class_count:
     class_success[key] = 0
   print "{}:\t\t{}/{} ({})".format(key, class_success[key], class_count[key], class_success[key] * 1.0 / class_count[key] * 1.0)
 
-print "Sum of Suared Error: {}".format(sum_sq_error)
+print "Sum of Squared Error: {}".format(sum_sq_error)
