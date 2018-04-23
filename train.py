@@ -53,7 +53,7 @@ for i in range(0, len(filter_sizes)):
     flatten = Flatten()(pool)
     convs.append(flatten)
 
-if len(filter_sizes)>1:
+if len(filter_sizes) > 1:
     out = Concatenate()(convs)
 else:
     out = convs[0]

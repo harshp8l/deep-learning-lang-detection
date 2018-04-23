@@ -6,6 +6,12 @@ import precision_recall
 import sys
 import os
 import shutil
+import math
+
+def sq_error(vector1, vector2):
+  if len(vector1) != len(vector2):
+    raise ValueError("vectors not of the same size")
+  return sum(math.pow(vector1[i] - vector2[i], 2) for i in range(0, len(vector1)))
 
 def interpret_result(yhati, threshold=0.5):
   """
@@ -17,11 +23,16 @@ def interpret_result(yhati, threshold=0.5):
     if yhati[i] > threshold:
       return defs.langs[i]
 
-print 'usage: test_run.py [folder to copy failed files]'
+print 'usage: test_run.py [model file] [folder to copy failed files]'
 
 folderName = None
+modelFile = './save_tmp.h5'
+
 if len(sys.argv) > 1:
-  folderName = sys.argv[1]
+  modelFile = sys.argv[1]
+
+if len(sys.argv) > 2:
+  folderName = sys.argv[2]
   if not os.path.exists(folderName):
     os.mkdir(folderName)
 
@@ -31,7 +42,7 @@ X, Y, Z = data_helper.get_input_and_labels(data_helper.test_root_folder,
                                         max_files=1000)
 
 x = np.array(X)
-model = keras.models.load_model('./save_tmp.h5')
+model = keras.models.load_model(modelFile)
 y_hat = model.predict(x)
 
 success = 0
@@ -39,6 +50,7 @@ class_success = {}
 class_count = {}
 expecteds = []
 predicteds = []
+sum_sq_error = 0
 for i in range(0, len(y_hat)):
   yi = Y[i]
   y_hati = y_hat[i]
@@ -46,7 +58,7 @@ for i in range(0, len(y_hat)):
   predicted = interpret_result(y_hati)
   expecteds.append(yi)
   predicteds.append(y_hati)
-
+  sum_sq_error += sq_error(yi, y_hati)
   if expected not in class_count:
     class_count[expected] = 1
   else:
@@ -77,3 +89,4 @@ for key in class_count:
     class_success[key] = 0
   print "{}:\t\t{}/{} ({})".format(key, class_success[key], class_count[key], class_success[key] * 1.0 / class_count[key] * 1.0)
 
+print "Sum of Suared Error: {}".format(sum_sq_error)
