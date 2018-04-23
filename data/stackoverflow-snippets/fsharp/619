@@ -1,18 +1,18 @@
-let artifactsDir = environVarOrDefault ""ARTIFACT_DIR"" (currentDirectory @@ ""artifacts"")
+let artifactsDir = environVarOrDefault "ARTIFACT_DIR" (currentDirectory @@ "artifacts")
 
 let nunitOptions nUnit3Defaults =
 { NUnit3Defaults with
     TimeOut = TimeSpan.MaxValue
     WorkingDir  = artifactsDir }
 
-Target ""TestCoverage"" (fun _ ->
-    let filters = """"
+Target "TestCoverage" (fun _ ->
+    let filters = ""
 
-    !! (buildDir @@ ""/*.UnitTests.dll"")
+    !! (buildDir @@ "/*.UnitTests.dll")
         |> DotCoverNUnit3 (fun p -> 
             { p with
-                Output = artifactsDir @@ ""NUnitDotCover.snapshot""
+                Output = artifactsDir @@ "NUnitDotCover.snapshot"
                 Filters = filters }) nunitOptions
 
-    tracefn ""##teamcity[importData type='dotNetCoverage' tool='dotcover' path='%s']"" (artifactsDir @@ ""NUnitDotCover.snapshot"") 
+    tracefn "##teamcity[importData type='dotNetCoverage' tool='dotcover' path='%s']" (artifactsDir @@ "NUnitDotCover.snapshot") 
 )

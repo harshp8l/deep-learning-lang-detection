@@ -6,14 +6,14 @@ function Write-Host
         [Parameter(Mandatory=$true, 
                ValueFromPipelineByPropertyName=$true)] 
         [ValidateNotNullOrEmpty()] 
-        [Alias(""LogContent"")] 
+        [Alias("LogContent")] 
         [string]$Message, 
         [Parameter(Mandatory=$false)] 
         [Alias('LogPath')] 
         [string]$Path='c:\LogFile.log',       #creating Log file with current date
         [Parameter(Mandatory=$false)] 
-        [ValidateSet(""Error"",""Warn"",""Info"")] 
-        [string]$Level=""Info"", 
+        [ValidateSet("Error","Warn","Info")] 
+        [string]$Level="Info", 
         [Parameter(Mandatory=$false)] 
         [switch]$NoClobber 
     ) 
@@ -27,13 +27,13 @@ function Write-Host
     {
         # If the file already exists and NoClobber was specified, do not write to the log. 
         if ((Test-Path $Path) -AND $NoClobber) { 
-            Write-Error ""Log file $Path already exists, and you specified NoClobber. Either delete the file or specify a different name."" 
+            Write-Error "Log file $Path already exists, and you specified NoClobber. Either delete the file or specify a different name." 
             Return 
         } 
 
         # If attempting to write to a log file in a folder/path that doesn't exist create the file including the path. 
         elseif (!(Test-Path $Path)) { 
-            Write-Verbose ""Creating $Path."" 
+            Write-Verbose "Creating $Path." 
             $NewLogFile = New-Item $Path -Force -ItemType File 
             } 
 
@@ -42,7 +42,7 @@ function Write-Host
         } 
 
         # Format Date for our Log File 
-        $FormattedDate = Get-Date -Format ""yyyy-MM-dd HH:mm:ss""            
+        $FormattedDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss"            
 
         # Write message to error, warning, or verbose pipeline and specify $LevelText 
         switch ($Level) { 
@@ -61,7 +61,7 @@ function Write-Host
             } 
 
         # Write log entry to $Path 
-        ""$FormattedDate $LevelText $Message"" | Out-File -FilePath $Path -Append 
+        "$FormattedDate $LevelText $Message" | Out-File -FilePath $Path -Append 
     } 
     End 
     { 

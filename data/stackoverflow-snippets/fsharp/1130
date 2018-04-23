@@ -83,21 +83,21 @@ let main argv =
 
     let trimmers =
         [|
-            ""Daystate""      , adapt Daystate.trim
-            ""kaefer""        , adapt kaefer.skipFirstAndLast
-            ""Petr""          , adapt Petr.trim
-            ""NonIdiomatic""  , NonIdiomatic.trim
+            "Daystate"      , adapt Daystate.trim
+            "kaefer"        , adapt kaefer.skipFirstAndLast
+            "Petr"          , adapt Petr.trim
+            "NonIdiomatic"  , NonIdiomatic.trim
         |]
 
 
 #if DEBUG
     let functionalTestCases =
         [|
-            Functional []               , ""empty""       , []
-            Functional []               , ""singleton""   , [1]
-            Functional []               , ""duoton""      , [1;2]
-            Functional [2]              , ""triplet""     , [1;2;3]
-            Functional [2;3]            , ""quartet""     , [1;2;3;4]
+            Functional []               , "empty"       , []
+            Functional []               , "singleton"   , [1]
+            Functional []               , "duoton"      , [1;2]
+            Functional [2]              , "triplet"     , [1;2;3]
+            Functional [2;3]            , "quartet"     , [1;2;3;4]
         |]
 
     let performanceMeasurements = [||]
@@ -106,10 +106,10 @@ let main argv =
 
     let performanceMeasurements =
         [|
-            ""small""   , 10
-            ""big""     , 1000
-            ""bigger""  , 100000
-//            ""huge""    , 10000000
+            "small"   , 10
+            "big"     , 1000
+            "bigger"  , 100000
+//            "huge"    , 10000000
         |] |> Array.map (fun (name, size) -> MeasurePerformance (size, (factor / size))  , name       , [for x in 1..size -> x])
 #endif
 
@@ -120,9 +120,9 @@ let main argv =
         |] |> Array.concat
 
 
-    use tsv = File.CreateText (""result.tsv"")
+    use tsv = File.CreateText ("result.tsv")
 
-    tsv.WriteLine (sprintf ""TRIMMER\tTESTCASE\tSIZE\tHINT\tRUNS\tMEMORY_BEFORE\tMEMORY_AFTER\tGC_TIME\tRUN_TIME"")
+    tsv.WriteLine (sprintf "TRIMMER\tTESTCASE\tSIZE\tHINT\tRUNS\tMEMORY_BEFORE\tMEMORY_AFTER\tGC_TIME\tRUN_TIME")
 
     for trimName, trim in trimmers do
         for testKind, testCaseName, testCase in testCases do
@@ -130,16 +130,16 @@ let main argv =
             | Functional expected ->
                 let actual = trim 0 testCase
                 if actual = expected then
-                    printfn ""SUCCESS: Functional test of %s trim on testcase %s successful"" trimName testCaseName
+                    printfn "SUCCESS: Functional test of %s trim on testcase %s successful" trimName testCaseName
                 else
-                    printfn ""FAILURE: Functional test of %s trim on testcase %s failed"" trimName testCaseName
+                    printfn "FAILURE: Functional test of %s trim on testcase %s failed" trimName testCaseName
             | MeasurePerformance (size,testRuns) ->
 
                 let hint    = min size maxHint
 
                 let before  = GC.GetTotalMemory(true)
 
-                printfn ""MEASURE: Running performance measurement on %s trim using testcase %s..."" trimName testCaseName
+                printfn "MEASURE: Running performance measurement on %s trim using testcase %s..." trimName testCaseName
 
                 let timeMe () =
                     for x in 1..testRuns do
@@ -152,8 +152,8 @@ let main argv =
                     ignore <| GC.GetTotalMemory(true)
                 let _, MilliSeconds msGC = time timeMe
 
-                printfn ""...%d ms (%d runs), %d (before) %d (after) %d ms (GC)"" ms testRuns before after msGC
+                printfn "...%d ms (%d runs), %d (before) %d (after) %d ms (GC)" ms testRuns before after msGC
 
-                tsv.WriteLine (sprintf ""%s\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d"" trimName testCaseName size hint testRuns before after msGC ms)
+                tsv.WriteLine (sprintf "%s\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d" trimName testCaseName size hint testRuns before after msGC ms)
 
     0

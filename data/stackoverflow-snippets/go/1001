@@ -3,10 +3,10 @@ func (a *API) Notifications(in *empty.Empty, stream
     ctx := stream.Context()
     _, ok := user.FromContext(ctx)
     if !ok {
-        return grpc.Errorf(codes.Unauthenticated, ""user not found"")
+        return grpc.Errorf(codes.Unauthenticated, "user not found")
     }
 
-    pubsub := a.redisClient.Subscribe(""notifications"")
+    pubsub := a.redisClient.Subscribe("notifications")
     defer pubsub.Close()
 
     // I can not build the code, so I assume the msg in your code Message struct
@@ -15,9 +15,9 @@ func (a *API) Notifications(in *empty.Empty, stream
         for {
             msg, err := pubsub.ReceiveMessage()
             if err != nil {
-                grpclog.Warningf(""Notifications: pubsub error: %v"", err)
+                grpclog.Warningf("Notifications: pubsub error: %v", err)
                 close(c)
-                return grpc.Errorf(codes.Internal, ""pubsub error %v"", err)
+                return grpc.Errorf(codes.Internal, "pubsub error %v", err)
             }
             c<- msg
         }
@@ -32,14 +32,14 @@ func (a *API) Notifications(in *empty.Empty, stream
                 notification := &pb.Notification{}
                 err = json.Unmarshal([]byte(msg.Payload), notification)
                 if err != nil {
-                    grpclog.Warningf(""Notifications: parse error: %v"", err)
+                    grpclog.Warningf("Notifications: parse error: %v", err)
                     continue
                 }
                 if err := stream.Send(notification); err != nil {
-                    grpclog.Warningf(""Notifications: %v"", err)
+                    grpclog.Warningf("Notifications: %v", err)
                     return err
                 }
-                grpclog.Infof(""Notifications: send msg %v"", notification)
+                grpclog.Infof("Notifications: send msg %v", notification)
             case <- ctx.Done():
                 // do exit logic. some how close the pubsub, so next 
                 // ReceiveMessage() return an error

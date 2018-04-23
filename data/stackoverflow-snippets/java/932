@@ -11,8 +11,8 @@ public class JmxListAll {
         /*
          1. JMXServiceURL.
         */
-        String jmxHost = ""localhost:9000""; // exactly like  jconsole localhost:9026
-        String url = ""service:jmx:rmi:///jndi/rmi://"" + jmxHost + ""/jmxrmi"";
+        String jmxHost = "localhost:9000"; // exactly like  jconsole localhost:9026
+        String url = "service:jmx:rmi:///jndi/rmi://" + jmxHost + "/jmxrmi";
         JMXServiceURL serviceURL = new JMXServiceURL(url);
 
         /*
@@ -24,28 +24,28 @@ public class JmxListAll {
         /*
          3. Walk through the domains and their objects
          */
-        System.out.println(""\n     Now we have a look at "" + serverConnection.getMBeanCount() + "" mbeans!"");
+        System.out.println("\n     Now we have a look at " + serverConnection.getMBeanCount() + " mbeans!");
         int objectCount = 0;
         for (String domain : serverConnection.getDomains()) {
-            System.out.println(""\n***********************************************************************************"");
-            System.out.println(""DOMAIN: "" + domain);
+            System.out.println("\n***********************************************************************************");
+            System.out.println("DOMAIN: " + domain);
 
             // query all the beans for this domain using a wildcard filter
-            for (ObjectName objectName : serverConnection.queryNames(new ObjectName(domain + "":*""), null)) {
-                System.out.println(""    objectName "" + ++objectCount + "": "" + objectName);
+            for (ObjectName objectName : serverConnection.queryNames(new ObjectName(domain + ":*"), null)) {
+                System.out.println("    objectName " + ++objectCount + ": " + objectName);
                 MBeanInfo info = serverConnection.getMBeanInfo(objectName);
                 for (MBeanAttributeInfo attr : info.getAttributes()) {
-                    System.out.print(""        attr: "" + attr.getDescription());
+                    System.out.print("        attr: " + attr.getDescription());
                     try {
                         String val = serverConnection.getAttribute(objectName, attr.getName()).toString();
-                        System.out.println("" -> "" + abbreviate(val));
+                        System.out.println(" -> " + abbreviate(val));
                     } catch (Exception e) {
-                        System.out.println("" FAILED: "" + e);
+                        System.out.println(" FAILED: " + e);
                     }
                 }
 
                 for (MBeanOperationInfo op : info.getOperations()) {
-                    System.out.println(""        op: "" + op.getName());
+                    System.out.println("        op: " + op.getName());
                 }
             }
         }
@@ -53,7 +53,7 @@ public class JmxListAll {
 
     static String abbreviate(String text) {
         if (text != null && text.length() > 42) {
-            return text.substring(0, 42) + ""..."";
+            return text.substring(0, 42) + "...";
         } else {
             return text;
         }

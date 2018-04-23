@@ -11,15 +11,15 @@ public class ChasePdfParser {
     private static Logger logger = LoggerFactory.getLogger(ChasePdfParser.class);
 
     private static int FOR_TAX_YEAR = 2017;
-    private static String YEAR_EXTENSION = ""/"" + FOR_TAX_YEAR;
-    private static DateTimeFormatter check = DateTimeFormatter.ofPattern(""MM/dd/uuuu"");
-    private static List<String> exclusions = new ArrayList<>(Arrays.asList(""Payment Thank You"", ""AUTOMATIC PAYMENT""));
+    private static String YEAR_EXTENSION = "/" + FOR_TAX_YEAR;
+    private static DateTimeFormatter check = DateTimeFormatter.ofPattern("MM/dd/uuuu");
+    private static List<String> exclusions = new ArrayList<>(Arrays.asList("Payment Thank You", "AUTOMATIC PAYMENT"));
 
     public static List<ChaseRecord> parse(String data) {
         List<ChaseRecord> l = new ArrayList<>();
-        for (String line : data.split(""\n"")) {
+        for (String line : data.split("\n")) {
             if (line.isEmpty()) continue;
-            String[] split = line.split(""\\s"");
+            String[] split = line.split("\\s");
             if (split == null || split.length == 0) continue;
             String test = split[0];
             if (!isMMDD(test)) continue;
@@ -29,13 +29,13 @@ public class ChasePdfParser {
             cr.date = extractDate(test);
             try {
                 String last = split[split.length - 1];
-                last = last.replaceAll("","", """");
+                last = last.replaceAll(",", "");
                 cr.amt = Double.parseDouble(last);
             } catch (NumberFormatException e) {
                 e.printStackTrace();
             }
-            cr.desc = String.join("" "", Arrays.copyOfRange(split, 1, split.length - 1));
-            cr.desc = cr.desc.replaceAll(""\\s\\s+"", "" "");
+            cr.desc = String.join(" ", Arrays.copyOfRange(split, 1, split.length - 1));
+            cr.desc = cr.desc.replaceAll("\\s\\s+", " ");
             l.add(cr);
         }
         return l;
@@ -81,10 +81,10 @@ public class ChasePdfParser {
 
         @Override
         public String toString() {
-            return ""ChaseRecord{"" +
-                    ""date="" + date +
-                    "", desc='"" + desc + '\'' +
-                    "", amt="" + amt +
+            return "ChaseRecord{" +
+                    "date=" + date +
+                    ", desc='" + desc + '\'' +
+                    ", amt=" + amt +
                     '}';
         }
     }

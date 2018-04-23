@@ -1,7 +1,7 @@
 Add-PSsnapin VMware.VimAutomation.Core
 
 # HTML formatting
-$head = @""
+$head = @"
 <style>
 BODY{background-color:white;}
 TABLE{border-width: 1px;border-style: solid;border-color: black;border-collapse: collapse;}
@@ -11,16 +11,16 @@ TD{border-width: 1px;padding: 5px;border-style: solid;border-color: black;foregr
 .blue{background-color:#e0eaf1}
 .red{background-color:#ffd7de}
 </style>
-""@
+"@
 
 Connect-VIServer -Server ****** -User ***** -Password *****
 
 # Main section of check
-Write-Host ""Checking VMs for for snapshots""
+Write-Host "Checking VMs for for snapshots"
 $date = Get-Date
 $datefile = Get-Date -UFormat '%m-%d-%Y-%H%M%S'
 
-$filename = ""C:\Temp\snaps_older_than_3\"" + $datefile + "".htm""
+$filename = "C:\Temp\snaps_older_than_3\" + $datefile + ".htm"
 
 # Convert the selection to an XML object
 [xml]$xmlObject = Get-VM |
@@ -30,7 +30,7 @@ $filename = ""C:\Temp\snaps_older_than_3\"" + $datefile + "".htm""
           @{Name='Age';Expression={(New-TimeSpan -Start $_.Created -End $date).Days}} |
       ConvertTo-Html -Fragment
 
-# Parse XML object and set colour class according to value in last column (""Age"")
+# Parse XML object and set colour class according to value in last column ("Age")
 for($i=1;$i -le $xmlObject.table.tr.count-1;$i++) {
     if(($xmlObject.table.tr[$i].td[-1] -as [int]) -lt 3) {
         $xmlObject.table.tr[$i].ChildNodes[($xmlObject.table.tr[$i].ChildNodes.Count-1)].SetAttribute('class','green')
@@ -42,26 +42,26 @@ for($i=1;$i -le $xmlObject.table.tr.count-1;$i++) {
 }
 
 # Define body and append the modified XML object
-$body = @""
+$body = @"
 <H2>VM Snapshot Report </H2>
 $($xmlObject.innerxml)
-""@
+"@
 
 # Convert to HTML and save the file
 ConvertTo-Html -Head $head -Body $body |
       Out-File $filename
 
-Write-Host "" Complete "" -ForegroundColor Green
-Write-Host ""Your snapshot report has been saved to:"" $filename
+Write-Host " Complete " -ForegroundColor Green
+Write-Host "Your snapshot report has been saved to:" $filename
 
-$SMTPServer = ""******""
+$SMTPServer = "******"
 $SMTPPort = 25
-$username = ""******""
+$username = "******"
 
 #Define the receiver of the report
-$to = ""******""
-$subject = ""VM Snapshot Report""
-$body = ""VM Snapshot Report""
+$to = "******"
+$subject = "VM Snapshot Report"
+$body = "VM Snapshot Report"
 $attachment = New-Object Net.Mail.Attachment($filename)
 $message = New-Object System.Net.Mail.MailMessage
 $message.Subject = $subject
@@ -74,4 +74,4 @@ $smtp.EnableSSL = $false
 #$smtp.Credentials = New-Object System.Net.NetworkCredential($Username, $Password);
 $smtp.Send($message)
 
-Write-Host ""Mail Sent""
+Write-Host "Mail Sent"

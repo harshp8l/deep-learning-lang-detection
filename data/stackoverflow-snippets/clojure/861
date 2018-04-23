@@ -19,12 +19,12 @@
 (defn parse-line [l]
   (let [[command left-top right-bottom]
         (-> l
-            (string/replace ""turn off"" ""turn-off"")
-            (string/replace ""turn on"" ""turn-on"")
-            (string/replace ""through "" """")
-            (string/split #"" ""))
+            (string/replace "turn off" "turn-off")
+            (string/replace "turn on" "turn-on")
+            (string/replace "through " "")
+            (string/split #" "))
         parse-coordinates (fn [s]
-                            (let [parts (string/split s #"","")]
+                            (let [parts (string/split s #",")]
                               (map #(Integer/parseInt %) parts)))
         [left top] (parse-coordinates left-top)
         [right bottom] (parse-coordinates right-bottom)]
@@ -41,10 +41,10 @@
 
 (defn process-line [grid command left top right bottom]
   (let [operation (case command
-                    ""turn-off"" #(set-grid! grid %1 %2 -1)
-                    ""turn-on""  #(set-grid! grid %1 %2 1)
-                    ""toggle""   #(toggle-grid! grid %1 %2)
-                    (throw (Exception. ""unrecognized command"")))]
+                    "turn-off" #(set-grid! grid %1 %2 -1)
+                    "turn-on"  #(set-grid! grid %1 %2 1)
+                    "toggle"   #(toggle-grid! grid %1 %2)
+                    (throw (Exception. "unrecognized command")))]
   (loop [^long i left
          ^long j top]
     (if (<= i ^long right)
@@ -57,7 +57,7 @@
   (count (filter pos? grid)))
 
 (defn the-answer []
-  (with-open [rdr (-> ""input-day6.txt""
+  (with-open [rdr (-> "input-day6.txt"
                       io/resource
                       io/reader)]
     (let [grid (make-grid)]

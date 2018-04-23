@@ -3,7 +3,7 @@ class Program
     static void Main(string[] args)
     {
         // this is slow, only do this once per expression
-        var evaluator = new PolicyExpressionEvaluator(""Policy.Premium * 1.05"");
+        var evaluator = new PolicyExpressionEvaluator("Policy.Premium * 1.05");
 
         // this is fairly fast
 
@@ -13,7 +13,7 @@ class Program
         var policy2 = new Policy() { Premium = 150, Year = 2016 };
         var result2 = evaluator.Evaluate(policy2);
 
-        Console.WriteLine($""Policy 1: {result1}, Policy 2: {result2}"");
+        Console.WriteLine($"Policy 1: {result1}, Policy 2: {result2}");
     }
 
 }
@@ -26,8 +26,8 @@ public class Policy
 class PolicyExpressionEvaluator
 {
     const string 
-        ParamName = ""Policy"",
-        ResultName = ""result"";
+        ParamName = "Policy",
+        ResultName = "result";
 
     public PolicyExpressionEvaluator(string expression)
     {
@@ -35,7 +35,7 @@ class PolicyExpressionEvaluator
         var resultVariable = new Variable<double>(ResultName);
         var daRoot = new DynamicActivity()
         {
-            Name = ""DemoExpressionActivity"",
+            Name = "DemoExpressionActivity",
             Properties =
             {
                 new DynamicActivityProperty() { Name = ParamName, Type = typeof(InArgument<Policy>) },
@@ -68,12 +68,12 @@ internal static class CSharpExpressionTools
     {
         // See https://docs.microsoft.com/en-us/dotnet/framework/windows-workflow-foundation/csharp-expressions
         string activityName = dynamicActivity.Name;
-        string activityType = activityName.Split('.').Last() + ""_CompiledExpressionRoot"";
-        string activityNamespace = string.Join(""."", activityName.Split('.').Reverse().Skip(1).Reverse());
+        string activityType = activityName.Split('.').Last() + "_CompiledExpressionRoot";
+        string activityNamespace = string.Join(".", activityName.Split('.').Reverse().Skip(1).Reverse());
         TextExpressionCompilerSettings settings = new TextExpressionCompilerSettings
         {
             Activity = dynamicActivity,
-            Language = ""C#"",
+            Language = "C#",
             ActivityName = activityType,
             ActivityNamespace = activityNamespace,
             RootNamespace = null,
@@ -89,7 +89,7 @@ internal static class CSharpExpressionTools
         var results = new TextExpressionCompiler(settings).Compile();
         if (results.HasErrors)
         {
-            throw new Exception(""Compilation failed."");
+            throw new Exception("Compilation failed.");
         }
 
         // attach compilation result to live activity

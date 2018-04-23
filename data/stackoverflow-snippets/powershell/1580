@@ -1,15 +1,15 @@
 $shadowStorageList = @();
-$volumeList = Get-WmiObject Win32_Volume -Property SystemName,DriveLetter,DeviceID,Capacity,FreeSpace -Filter ""DriveType=3"" | select @{n=""DriveLetter"";e={$_.DriveLetter.ToUpper()}},DeviceID,@{n=""CapacityGB"";e={([math]::Round([int64]($_.Capacity)/1GB,2))}},@{n=""FreeSpaceGB"";e={([math]::Round([int64]($_.FreeSpace)/1GB,2))}} | Sort DriveLetter;
+$volumeList = Get-WmiObject Win32_Volume -Property SystemName,DriveLetter,DeviceID,Capacity,FreeSpace -Filter "DriveType=3" | select @{n="DriveLetter";e={$_.DriveLetter.ToUpper()}},DeviceID,@{n="CapacityGB";e={([math]::Round([int64]($_.Capacity)/1GB,2))}},@{n="FreeSpaceGB";e={([math]::Round([int64]($_.FreeSpace)/1GB,2))}} | Sort DriveLetter;
 $shadowStorages = gwmi Win32_ShadowStorage -Property AllocatedSpace,DiffVolume,MaxSpace,UsedSpace,Volume |
-                Select @{n=""Volume"";e={$_.Volume.Replace(""\\"",""\"").Replace(""Win32_Volume.DeviceID="","""").Replace(""`"""","""")}},
-                @{n=""DiffVolume"";e={$_.DiffVolume.Replace(""\\"",""\"").Replace(""Win32_Volume.DeviceID="","""").Replace(""`"""","""")}},
-                @{n=""AllocatedSpaceGB"";e={([math]::Round([int64]($_.AllocatedSpace)/1GB,2))}},
-                @{n=""MaxSpaceGB"";e={([math]::Round([int64]($_.MaxSpace)/1GB,2))}},
-                @{n=""UsedSpaceGB"";e={([math]::Round([int64]($_.UsedSpace)/1GB,2))}}
+                Select @{n="Volume";e={$_.Volume.Replace("\\","\").Replace("Win32_Volume.DeviceID=","").Replace("`"","")}},
+                @{n="DiffVolume";e={$_.DiffVolume.Replace("\\","\").Replace("Win32_Volume.DeviceID=","").Replace("`"","")}},
+                @{n="AllocatedSpaceGB";e={([math]::Round([int64]($_.AllocatedSpace)/1GB,2))}},
+                @{n="MaxSpaceGB";e={([math]::Round([int64]($_.MaxSpace)/1GB,2))}},
+                @{n="UsedSpaceGB";e={([math]::Round([int64]($_.UsedSpace)/1GB,2))}}
 
 # Create an array of Customer PSobject
 foreach($shStorage in $shadowStorages) {
-    $tmpDriveLetter = """";
+    $tmpDriveLetter = "";
     foreach($volume in $volumeList) {
         if($shStorage.DiffVolume -eq $volume.DeviceID) {
             $tmpDriveLetter = $volume.DriveLetter;

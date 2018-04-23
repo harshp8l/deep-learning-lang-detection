@@ -25,7 +25,7 @@ object FallbackFuture {
 
   final case class Irrecoverable[T](future: Future[T]) extends FallbackFuture[T](future) {
     override def value: T = {
-      def except = throw new IllegalAccessException(""Required future did not compelete before timeout"")
+      def except = throw new IllegalAccessException("Required future did not compelete before timeout")
       if (future.isCompleted) future.value.flatMap(_.toOption).getOrElse(except)
       else except
     }
@@ -115,7 +115,7 @@ object FallbackFuture {
       Try {
         Await.ready(Future.sequence(futureSeq), timeout)
       } recover {
-        case _: TimeoutException => logger.warn(""Call timed out"")
+        case _: TimeoutException => logger.warn("Call timed out")
         case NonFatal(ex) => throw ex
       }
       fn

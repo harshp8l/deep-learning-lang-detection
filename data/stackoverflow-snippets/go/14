@@ -1,13 +1,13 @@
     func decodeValueByType(index int, row spanner.Row, value interface{}) {
             err := row.Column(index, value)
             if err != nil {
-                log.Println(""Failed to extract value, err = %s"", err)
+                log.Println("Failed to extract value, err = %s", err)
             }
         }
 
     func prepareParquetWriter(md *[]string, parquetType string, columnNames []string, index int) {
         if len(*md) < len(columnNames) {
-            *md = append(*md, fmt.Sprintf(""name=%s, type=%s"", columnNames[index], parquetType))
+            *md = append(*md, fmt.Sprintf("name=%s, type=%s", columnNames[index], parquetType))
         }
     }
 
@@ -19,30 +19,30 @@ func extractDataByType(types map[string]string, rows []spanner.Row) ([][]string,
         var vals []string
         for i := 0; i < row.Size(); i++ {
             switch types[columnNames[i]] {
-            case ""STRING(MAX)"":
+            case "STRING(MAX)":
                 var value spanner.NullString
                 decodeValueByType(i, row, &value)
-                prepareParquetWriter(&md, ""UTF8"", columnNames, i)
-                vals = append(vals, fmt.Sprintf(""%v"", value))
-            case ""TIMESTAMP"":
+                prepareParquetWriter(&md, "UTF8", columnNames, i)
+                vals = append(vals, fmt.Sprintf("%v", value))
+            case "TIMESTAMP":
                 var value spanner.NullTime
                 decodeValueByType(i, row, &value)
-                prepareParquetWriter(&md, ""TIMESTAMP_MILLIS"", columnNames, i)
-                vals = append(vals, fmt.Sprintf(""%v"", value))
-            case ""INT64"":
+                prepareParquetWriter(&md, "TIMESTAMP_MILLIS", columnNames, i)
+                vals = append(vals, fmt.Sprintf("%v", value))
+            case "INT64":
                 var value spanner.NullInt64
                 decodeValueByType(i, row, &value)
-                prepareParquetWriter(&md, ""INT64"", columnNames, i)
-                vals = append(vals, fmt.Sprintf(""%v"", value))
-            case ""BOOL"":
+                prepareParquetWriter(&md, "INT64", columnNames, i)
+                vals = append(vals, fmt.Sprintf("%v", value))
+            case "BOOL":
                 var value spanner.NullBool
                 decodeValueByType(i, row, &value)
-                prepareParquetWriter(&md, ""BOOLEAN"", columnNames, i)
-                vals = append(vals, fmt.Sprintf(""%v"", value))
+                prepareParquetWriter(&md, "BOOLEAN", columnNames, i)
+                vals = append(vals, fmt.Sprintf("%v", value))
             }
         }
         formattedRows = append(formattedRows, vals)
     }
-    log.Println(""parquet format: %s"", md)
+    log.Println("parquet format: %s", md)
     return formattedRows, md
 }

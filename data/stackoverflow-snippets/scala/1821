@@ -11,7 +11,7 @@ val df = Seq(
   (300, 4, 10),
   (300, 5, 20),
   (300, 6, 60)
-).toDF(""ID"", ""MonthPrior"", ""Amount"")
+).toDF("ID", "MonthPrior", "Amount")
 
 import org.apache.spark.sql.functions._
 
@@ -21,11 +21,11 @@ def arrayToMap = udf(
 )
 
 // Aggregate columns into arrays and apply arrayToMap UDF to create map column
-val df2 = df.groupBy(""ID"").agg(
-  collect_list(col(""MonthPrior"")).as(""MonthList""),
-  collect_list(col(""Amount"")).as(""AmountList"")
+val df2 = df.groupBy("ID").agg(
+  collect_list(col("MonthPrior")).as("MonthList"),
+  collect_list(col("Amount")).as("AmountList")
 ).select(
-  col(""ID""), arrayToMap(col(""MonthList""), col(""AmountList"")).as(""MthAmtMap"")
+  col("ID"), arrayToMap(col("MonthList"), col("AmountList")).as("MthAmtMap")
 )
 
 // UDF to sum map values for keys from 1 thru n (0 for all)
@@ -36,10 +36,10 @@ def sumMapValues = udf(
 )
 
 // Apply sumMapValues UDF to the map column
-val df3 = df2.withColumn( ""Amount1Mth"", sumMapValues(col(""MthAmtMap""), lit(1)) ).
-  withColumn( ""Amount1to3Mth"", sumMapValues(col(""MthAmtMap""), lit(3)) ).
-  withColumn( ""Amount_AllMonths"", sumMapValues(col(""MthAmtMap""), lit(0)) ).
-  select( col(""ID""), col(""Amount1Mth""), col(""Amount1to3Mth""), col(""Amount_AllMonths"") )
+val df3 = df2.withColumn( "Amount1Mth", sumMapValues(col("MthAmtMap"), lit(1)) ).
+  withColumn( "Amount1to3Mth", sumMapValues(col("MthAmtMap"), lit(3)) ).
+  withColumn( "Amount_AllMonths", sumMapValues(col("MthAmtMap"), lit(0)) ).
+  select( col("ID"), col("Amount1Mth"), col("Amount1to3Mth"), col("Amount_AllMonths") )
 
 df3.show
 +---+----------+-------------+----------------+

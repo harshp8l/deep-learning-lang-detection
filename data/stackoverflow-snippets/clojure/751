@@ -1,22 +1,22 @@
-private val eval = Clojure.`var`(""clojure.core"", ""eval"")
+private val eval = Clojure.`var`("clojure.core", "eval")
 
-val whitelist = listOf(""+"", ""-"", ""*"", ""/"", ""="") //example
+val whitelist = listOf("+", "-", "*", "/", "=") //example
 
 init {
-  val wh = whitelist.joinToString("" "", ""["", ""]"") { ""\""$it\"""" }
-  eval(""""""
+  val wh = whitelist.joinToString(" ", "[", "]") { "\"$it\"" }
+  eval("""
     (let [wh (vec (map symbol $wh))]
       (doseq [n (all-ns) :let [n (ns-name n)]]
-        (if (= (str n) ""clojure.core"")
+        (if (= (str n) "clojure.core")
           (doseq [[k _] (ns-map n) :when (not (some (fn [x] (= x k)) wh))]
             (ns-unmap n k))
           (remove-ns n))))
-  """""")
+  """)
 }
 
 fun eval(code: String): Any? =
   try {
-    eval.invoke(Clojure.read(""(do $code)""))
+    eval.invoke(Clojure.read("(do $code)"))
   }catch(e: Exception) {
     e.printStackTrace()
     null

@@ -10,7 +10,7 @@ class Converter {
      */
     public static function wordsToNumber(string $input)
     {
-        static $delims = "" \-,.!?:;\\/&\(\)\[\]"";
+        static $delims = " \-,.!?:;\\/&\(\)\[\]";
         static $tokens = [
             'zero'        => ['val' => '0', 'power' => 1],
             'a'           => ['val' => '1', 'power' => 1],
@@ -84,17 +84,17 @@ class Converter {
                     $check = $last ?? $part;
 
                     if ((float)$stack->top() < 20 && (float)$part < 20 ?? (float)$part < $stack->top() ) { //пропускаем спец числительные
-                        return $stack->top().(isset($parts[$idx - $stack->count()]['suffix']) ? $parts[$idx - $stack->count()]['suffix'] : '')."" "".$mutate(array_slice($parts, $idx));
+                        return $stack->top().(isset($parts[$idx - $stack->count()]['suffix']) ? $parts[$idx - $stack->count()]['suffix'] : '')." ".$mutate(array_slice($parts, $idx));
                     }
                     if (isset($powers[$check]) && $powers[$check] <= $arr['power'] && $arr['power'] <= 10) { //но добавляем степени (сотни, тысячи, миллионы итп)
-                        return $stack->top().(isset($parts[$idx - $stack->count()]['suffix']) ? $parts[$idx - $stack->count()]['suffix'] : '')."" "".$mutate(array_slice($parts, $idx));
+                        return $stack->top().(isset($parts[$idx - $stack->count()]['suffix']) ? $parts[$idx - $stack->count()]['suffix'] : '')." ".$mutate(array_slice($parts, $idx));
                     }
                     if ($stack->top() > $part) {
                         if ($last >= 1000) {
                             $sum += $stack->pop();
                             $stack->push($part);
                         } else {
-                            // twenty one -> ""20 1"" -> ""20 + 1""
+                            // twenty one -> "20 1" -> "20 + 1"
                             $stack->push($stack->pop() + (float) $part);
                         }
                     } else {
@@ -120,7 +120,7 @@ class Converter {
                 $item = $tokens[$maybeNumPart];
                 if (isset($prepared[$idx+1])) {
                     $maybeDelim = $prepared[$idx+1];
-                    if ($maybeDelim === "" "") {
+                    if ($maybeDelim === " ") {
                         $item['delim'] = $maybeDelim;
                         unset($prepared[$idx + 1]);
                     } elseif ($item['power'] == null && !isset($tokens[$maybeDelim])) {
@@ -179,6 +179,6 @@ $testStrings = [
 $converter = new Converter();
 foreach ($testStrings as $input => $expected) {
     $output = $converter::wordsToNumber($input);
-    echo $input.""\t=>\t"".$output.""\n"";
-    if ($output != $expected) { die(""words to number conversion failed!"");}
+    echo $input."\t=>\t".$output."\n";
+    if ($output != $expected) { die("words to number conversion failed!");}
 }

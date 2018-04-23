@@ -2,14 +2,14 @@
   (doall (mapcat
            #(let [n (rand-int 2)]
               (if (zero? n)
-                [(str ""aaa/"" %) (str %)]
+                [(str "aaa/" %) (str %)]
                 [(str %)]))
            (range len))))
 
 (defn still-need-copied [doc-names]
   (let [last-segment  (fn [doc-name] 
-                        (last (clojure.string/split doc-name #""/"")))
-        by-position   (group-by #(.contains % ""/"") doc-names)
+                        (last (clojure.string/split doc-name #"/")))
+        by-position   (group-by #(.contains % "/") doc-names)
         top           (set (get by-position false))
         nested        (set (map #(last-segment %) (get by-position true)))
         needs-copied  (clojure.set/difference nested top)]
@@ -17,7 +17,7 @@
 
 (defn still-need-copied-2 [doc-names]
   (->> doc-names
-       (group-by #(last (clojure.string/split % #""/"")))
+       (group-by #(last (clojure.string/split % #"/")))
        (keep #(when (== 1 (count (val %))) (first (val %))))))
 
 (def data-100k (generate-data 100000))
@@ -27,7 +27,7 @@ user> (let [_ (time (dorun (still-need-copied data-100k)))
             _ (time (dorun (still-need-copied-2 data-100k)))
             _ (time (dorun (still-need-copied data-1m)))
             _ (time (dorun (still-need-copied-2 data-1m)))])
-""Elapsed time: 714.929641 msecs""
-""Elapsed time: 243.918466 msecs""
-""Elapsed time: 7094.333425 msecs""
-""Elapsed time: 2329.75247 msecs""
+"Elapsed time: 714.929641 msecs"
+"Elapsed time: 243.918466 msecs"
+"Elapsed time: 7094.333425 msecs"
+"Elapsed time: 2329.75247 msecs"

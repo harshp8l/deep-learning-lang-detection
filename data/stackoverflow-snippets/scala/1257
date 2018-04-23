@@ -3,16 +3,16 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql._
 
 
-val df = Seq((0, ""a""),(1, ""b""),(2, ""c""),(3, ""a""),(4, ""a""),(5, ""c""),(6,""c""),(7,""d""),(8,""b""))
-            .toDF(""id"", ""category"")
+val df = Seq((0, "a"),(1, "b"),(2, "c"),(3, "a"),(4, "a"),(5, "c"),(6,"c"),(7,"d"),(8,"b"))
+            .toDF("id", "category")
 val indexer = new StringIndexer()
-                   .setInputCol(""category"")
-                   .setOutputCol(""categoryIndex"")
+                   .setInputCol("category")
+                   .setOutputCol("categoryIndex")
                    .fit(df)
 
 val indexed = indexer.transform(df)
 
-val categoriesIndecies = indexed.select(""category"",""categoryIndex"").distinct
+val categoriesIndecies = indexed.select("category","categoryIndex").distinct
 val categoriesMap: scala.collection.Map[String,Double] = categoriesIndecies.map(x=>(x(0).toString,x(1).toString.toDouble)).collectAsMap()
 
 def getCategoryIndex(catMap: scala.collection.Map[String,Double], expectedValue: Double) = udf((columnValue: String) =>
@@ -21,7 +21,7 @@ if (catMap(columnValue) == expectedValue) 1 else 0)
 
 val newDf:DataFrame =categoriesMap.keySet.toSeq.foldLeft[DataFrame](indexed)(
      (acc,c) => 
-          acc.withColumn(c,getCategoryIndex(categoriesMap,categoriesMap(c))($""category""))
+          acc.withColumn(c,getCategoryIndex(categoriesMap,categoriesMap(c))($"category"))
      )
 
 newDf.show

@@ -1,19 +1,19 @@
 $xml = New-Object System.Xml.XmlDocument
 $nsMngr = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
-$nsMngr.AddNamespace(""ns"",""http://schemas.microsoft.com/sqlserver/reporting/2016/02/mobilereportpackage"")
-$nsMngr.AddNamespace(""mrp"",""http://schemas.microsoft.com/sqlserver/reporting/2016/02/mobilereportpublisher"")
+$nsMngr.AddNamespace("ns","http://schemas.microsoft.com/sqlserver/reporting/2016/02/mobilereportpackage")
+$nsMngr.AddNamespace("mrp","http://schemas.microsoft.com/sqlserver/reporting/2016/02/mobilereportpublisher")
 $unzippedList | % {
-         $FileName=($_.DirectoryName + ""\metadata.xml"");
+         $FileName=($_.DirectoryName + "\metadata.xml");
          $xml.Load($FileName);
-         $xml.SelectNodes(""//ns:dataSet"",$nsMngr) | 
+         $xml.SelectNodes("//ns:dataSet",$nsMngr) | 
             % {
-                $ref=$_.Attributes[""name""].Value;
+                $ref=$_.Attributes["name"].Value;
                 $ds = Get-SharedDataSet($ref);
-                $_.Attributes[""mrp:Server""].Value=$srvURL;
-                $_[""id""].InnerText=$ds.ItemID;
-                $_[""path""].InnerText=$ds.DataSetPath
+                $_.Attributes["mrp:Server"].Value=$srvURL;
+                $_["id"].InnerText=$ds.ItemID;
+                $_["path"].InnerText=$ds.DataSetPath
               };
          $newContent = $xml.InnerXml;
          Set-Content -Path $FileName -Value $newContent
         }
-Write-Host ""Mobile Reports: All metadata.xml re-mapped""
+Write-Host "Mobile Reports: All metadata.xml re-mapped"

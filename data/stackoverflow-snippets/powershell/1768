@@ -1,29 +1,29 @@
 $USBWhiteList = @( #Add wildcard items here, if a USB matches one it will be wiped.
-    ""USB0*""
-    ""*WIPE""
+    "USB0*"
+    "*WIPE"
 )
 
 Enum EventNames{ Changed = 1 ; Inserted = 2 ; Removed = 3 ; Docking = 4 } #Names for events
 Register-WmiEvent -Class win32_VolumeChangeEvent -SourceIdentifier volumeChange -ErrorAction SilentlyContinue #register the event
 do{
-    Write-Host ""Monitoring for Disk events..."" -Fore Yellow
+    Write-Host "Monitoring for Disk events..." -Fore Yellow
     $Event = Wait-Event -SourceIdentifier volumeChange #wait for a disk event
     $EventType = [EventNames]$Event.SourceEventArgs.NewEvent.EventType #get the type of the event
-    Write-Host ""Drive $($EventType), Processing..."" -Fore Yellow -NoNewline
+    Write-Host "Drive $($EventType), Processing..." -Fore Yellow -NoNewline
     $Volume = Get-Volume -DriveLetter $Event.SourceEventArgs.NewEvent.DriveName -ErrorAction SilentlyContinue #get the volume details
     $IsMatch = ($USBWhiteList|? {$Volume.FileSystemLabel -like $_}).Count -gt 0 #does it match our whitelist?
     if (($EventType -eq [EventNames]::Inserted) -and $IsMatch){ #if a disk was inserted which matches the whitelist...
-        Write-Host ""Volume $($Volume.DriveLetter): '$($Volume.FileSystemLabel)', Found, Wiping!"" -Fore Green
+        Write-Host "Volume $($Volume.DriveLetter): '$($Volume.FileSystemLabel)', Found, Wiping!" -Fore Green
         Start-Job -ScriptBlock { param ($Volume) #Perform the wipe inside a job
             $Disk = Get-Partition -DriveLetter $Volume.DriveLetter | Get-Disk
             Clear-Disk -Number $Disk.Number -RemoveData -Confirm:$false
             New-Partition -DiskNumber $Disk.Number -UseMaximumSize -IsActive -DriveLetter $Volume.DriveLetter
             Format-Volume -FileSystem NTFS -DriveLetter $Volume.DriveLetter -Confirm:$false
             Add-Type -AssemblyName 'System.Windows.Forms' #warn (globally) when it is finished, don't need to run wait/recieve job.
-            [System.Windows.Forms.MessageBox]::Show(""Finished Wiping Disk $($Volume.DriveLetter)"",""Please Remove Disk"")
+            [System.Windows.Forms.MessageBox]::Show("Finished Wiping Disk $($Volume.DriveLetter)","Please Remove Disk")
         } -ArgumentList $Volume | Out-Null
     } else {
-        Write-Host ""Ignoring"" -Fore Red
+        Write-Host "Ignoring" -Fore Red
     }
     Remove-Event -SourceIdentifier volumeChange
 } while (1) #this should be modified to quit after x disks or something, the below commands won't get exec'd - could also use a Try/Finally and Ctrl+C the script.

@@ -1,12 +1,12 @@
 ; -*- mode: clojure; -*-
 >; vim: filetype=clojure
 
-(riemann.repl/start-server! {:port 5557 :host ""0.0.0.0""}) ;; this is only safe in a docker container
+(riemann.repl/start-server! {:port 5557 :host "0.0.0.0"}) ;; this is only safe in a docker container
 
 
 ; Listen on the local interface over TCP (5555), UDP (5555), and websockets
 ; (5556)
-(let [host ""0.0.0.0""]
+(let [host "0.0.0.0"]
   (tcp-server {:host host})
   (ws-server  {:host host}))
 
@@ -17,13 +17,13 @@
 
 (let [index (tap :index (index))]
   (streams
-   (where (service ""log"")
+   (where (service "log")
           (fixed-event-window 3
                              (smap
                               (fn [events]
-                                (let [count-of-failures (count (filter #(= ""error"" (:type %)) events))
+                                (let [count-of-failures (count (filter #(= "error" (:type %)) events))
                                       new-event (assoc (first events)
-                                                       :status ""Failure""
+                                                       :status "Failure"
                                                        :metric  count-of-failures
                                                        :ttl 300
                                                        :total-fail (> count-of-failures 2))]                                      
@@ -32,37 +32,37 @@
                                        (let [now (clj-time.core/now)]
                                          (and (<= 0 (clj-time.core/hour now) 17)
                                               (<= 2 (clj-time.core/day-of-week now) 6)
-                                              (= (:status event) ""Failure"")
+                                              (= (:status event) "Failure")
                                               (:total-fail event))))
                                      (throttle 1 200
-                                               #(println ""emailing about"" %)
+                                               #(println "emailing about" %)
                                                index)))))))
 
 (tests
   (deftest index-test
-    (let [workday (clj-time.format/parse ""2142-01-01T00:00:00.000Z"")
-          weekend (clj-time.format/parse ""2142-01-03T00:00:00.000Z"")]
+    (let [workday (clj-time.format/parse "2142-01-01T00:00:00.000Z")
+          weekend (clj-time.format/parse "2142-01-03T00:00:00.000Z")]
       (let [index-after-events (with-redefs [clj-time.core/now (constantly workday)]
-                                 (inject! [{:service ""log""
-                                            :type    ""error""
+                                 (inject! [{:service "log"
+                                            :type    "error"
                                             :time    42}
-                                           {:service ""log""
-                                            :type    ""error""
+                                           {:service "log"
+                                            :type    "error"
                                             :time    43}
-                                           {:service ""log""
-                                            :type    ""error""
+                                           {:service "log"
+                                            :type    "error"
                                             :time    44}]))]
         (is (= index-after-events
-               {:index [{:service ""log"", :type ""error"", :time 42, :status ""Failure"", :metric 3, :ttl 300, :total-fail true}]})))
+               {:index [{:service "log", :type "error", :time 42, :status "Failure", :metric 3, :ttl 300, :total-fail true}]})))
       (let [index-after-events (with-redefs [clj-time.core/now (constantly weekend)]
-                                 (inject! [{:service ""log""
-                                            :type    ""error""
+                                 (inject! [{:service "log"
+                                            :type    "error"
                                             :time    42}
-                                           {:service ""log""
-                                            :type    ""error""
+                                           {:service "log"
+                                            :type    "error"
                                             :time    43}
-                                           {:service ""log""
-                                            :type    ""error""
+                                           {:service "log"
+                                            :type    "error"
                                             :time    44}]))]
         (is (= index-after-events
                {:index []}))))))

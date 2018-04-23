@@ -1,13 +1,13 @@
 package main
 
 import (
-    ""context""
-    ""fmt""
-    ""time""
+    "context"
+    "fmt"
+    "time"
 )
 
 func interruptable_call(sleep time.Duration) <-chan time.Time {
-    fmt.Println(""sleeping for "", sleep*time.Second)
+    fmt.Println("sleeping for ", sleep*time.Second)
     time.Sleep(sleep * time.Second)
     return time.After(0 * time.Second)
 }
@@ -16,16 +16,16 @@ func A(ctx context.Context) int {
     for {
         select {
         case <-ctx.Done():
-            fmt.Println(""func done"")
+            fmt.Println("func done")
             return 1
         case <-interruptable_call(2):
-            fmt.Println(""blocking"")
+            fmt.Println("blocking")
         case <-interruptable_call(3):
-            fmt.Println(""blocking"")
+            fmt.Println("blocking")
         case <-interruptable_call(4):
-            fmt.Println(""blocking"")
+            fmt.Println("blocking")
         case <-interruptable_call(5):
-            fmt.Println(""blocking"")
+            fmt.Println("blocking")
         }
     }
     return 0
@@ -34,12 +34,12 @@ func A(ctx context.Context) int {
 func main() {
     ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
     defer cancel()
-    fmt.Println(""go A"")
+    fmt.Println("go A")
     go A(ctx)
-    fmt.Println(""go A done"")
+    fmt.Println("go A done")
     select {
     case <-ctx.Done():
-        fmt.Println(""main done"")
+        fmt.Println("main done")
         break
     }
 }

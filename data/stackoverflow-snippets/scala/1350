@@ -4,7 +4,7 @@ object CdrToMongoReactiveStream {
     Source
       .fromIterator(() => Iterator.continually(RandomCdr(msisdnLength,timeRange)))
       .throttle(throughput,1.second,1,ThrottleMode.shaping)
-      .named(""randomCdrThrottledSource"")
+      .named("randomCdrThrottledSource")
   }
 
   def cdrJsonParseFlow : Flow[RandomCdr,String,NotUsed]= {
@@ -12,7 +12,7 @@ object CdrToMongoReactiveStream {
 
     Flow[RandomCdr]
       .map((cdr: RandomCdr) => cdr.toJson.toString())
-      .named(""cdrJsonParseFlow"")
+      .named("cdrJsonParseFlow")
   }
 
   def mongodbBulkSink(collection : MongoCollection[Document], bulkSize : Int) : Sink[String,NotUsed] = {
@@ -31,6 +31,6 @@ object CdrToMongoReactiveStream {
     val f = randomCdrThrottledSource(msisdnLength,timeRange,throughput)
       .via(cdrJsonParseFlow).runWith(mongodbBulkSink(collection,bulkSize))
 
-    logger.info(""Generated random data"")
+    logger.info("Generated random data")
   }
 }

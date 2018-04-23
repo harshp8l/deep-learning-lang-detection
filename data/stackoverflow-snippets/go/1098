@@ -1,23 +1,23 @@
 package main
 
 import (
-    ""fmt""
-    ""syscall""
-    ""unsafe""
+    "fmt"
+    "syscall"
+    "unsafe"
 
-    ""golang.org/x/sys/windows""
+    "golang.org/x/sys/windows"
 )
 
 // String returns a human-friendly display name of the hotkey
-// such as ""Hotkey[Id: 1, Alt+Ctrl+O]""
+// such as "Hotkey[Id: 1, Alt+Ctrl+O]"
 var (
-    user32                  = windows.NewLazySystemDLL(""user32.dll"")
-    procSetWindowsHookEx    = user32.NewProc(""SetWindowsHookExW"")
-    procCallNextHookEx      = user32.NewProc(""CallNextHookEx"")
-    procUnhookWindowsHookEx = user32.NewProc(""UnhookWindowsHookEx"")
-    procGetMessage          = user32.NewProc(""GetMessageW"")
-    procTranslateMessage    = user32.NewProc(""TranslateMessage"")
-    procDispatchMessage     = user32.NewProc(""DispatchMessageW"")
+    user32                  = windows.NewLazySystemDLL("user32.dll")
+    procSetWindowsHookEx    = user32.NewProc("SetWindowsHookExW")
+    procCallNextHookEx      = user32.NewProc("CallNextHookEx")
+    procUnhookWindowsHookEx = user32.NewProc("UnhookWindowsHookEx")
+    procGetMessage          = user32.NewProc("GetMessageW")
+    procTranslateMessage    = user32.NewProc("TranslateMessage")
+    procDispatchMessage     = user32.NewProc("DispatchMessageW")
     keyboardHook            HHOOK
 )
 
@@ -127,10 +127,10 @@ func Start() {
     keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL,
         (HOOKPROC)(func(nCode int, wparam WPARAM, lparam LPARAM) LRESULT {
             if nCode == 0 && wparam == WM_KEYDOWN {
-                fmt.Println(""key pressed:"")
+                fmt.Println("key pressed:")
                 kbdstruct := (*KBDLLHOOKSTRUCT)(unsafe.Pointer(lparam))
                 code := rune(kbdstruct.VkCode)
-                fmt.Printf(""%q"", code)
+                fmt.Printf("%q", code)
             }
             return CallNextHookEx(keyboardHook, nCode, wparam, lparam)
         }), 0, 0)

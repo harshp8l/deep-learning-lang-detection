@@ -1,8 +1,8 @@
-$inputXML = @""
+$inputXML = @"
 XAML
-""@       
+"@       
 
-$inputXML = $inputXML -replace 'mc:Ignorable=""d""','' -replace ""x:N"",'N'  -replace '^<Win.*', '<Window'
+$inputXML = $inputXML -replace 'mc:Ignorable="d"','' -replace "x:N",'N'  -replace '^<Win.*', '<Window'
 
 [void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
 [xml]$XAML = $inputXML
@@ -11,26 +11,26 @@ $reader=(New-Object System.Xml.XmlNodeReader $xaml)
 try {
     $Form=[Windows.Markup.XamlReader]::Load( $reader )
 } catch { 
-    Write-Host ""Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed.""
+    Write-Host "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
 }
 
-$xaml.SelectNodes(""//*[@Name]"") | %{Set-Variable -Name ""WPF$($_.Name)"" -Value $Form.FindName($_.Name)}
+$xaml.SelectNodes("//*[@Name]") | %{Set-Variable -Name "WPF$($_.Name)" -Value $Form.FindName($_.Name)}
 
 Function Get-FormVariables
 {
     if ($global:ReadmeDisplay -ne $true) {
-        Write-host ""If you need to reference this display again, run Get-FormVariables"" -ForegroundColor Yellow; $global:ReadmeDisplay=$true
+        Write-host "If you need to reference this display again, run Get-FormVariables" -ForegroundColor Yellow; $global:ReadmeDisplay=$true
     }
-    write-host ""Found the following interactable elements from our form"" -ForegroundColor Cyan
+    write-host "Found the following interactable elements from our form" -ForegroundColor Cyan
     get-variable WPF*
 }
 
 Get-FormVariables
 
-#Updates the XAML thing named ""label1""
-$WPFlabel1.Text = ""This is the starting value!""
+#Updates the XAML thing named "label1"
+$WPFlabel1.Text = "This is the starting value!"
 
 $WPFbutton1.Add_Click({
-$WPFlabel1.Text = ""This is the updated value!""
+$WPFlabel1.Text = "This is the updated value!"
 })
 $Form.ShowDialog() | out-null

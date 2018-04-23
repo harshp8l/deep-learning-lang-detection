@@ -1,14 +1,14 @@
 package buildeasy
 
 import (
-        ""os/exec""
+        "os/exec"
 )
 
 
 // Builder represents an instance which carries information
 // for building a project using command line interface.
 type Builder struct {
-        // Manager is a name of the package manager (""npm"", ""pip"")
+        // Manager is a name of the package manager ("npm", "pip")
         Manager string
         Cmd     string
         Args    []string
@@ -27,16 +27,16 @@ var (
         // More fields and values can be added.
         // This technique goes hand-in-hand with
         // `wrapBuilder` function below, which is
-        // a technique called ""functional options""
+        // a technique called "functional options"
         // which is considered a cleanest approach in
         // building API methods.
         // https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis
         NodeConfig = &Builder{
-                Manager: ""npm"",
+                Manager: "npm",
                 Postfn:  zipAndCopyTo,
         }
         PythonConfig = &Builder{
-                Manager: ""pip"",
+                Manager: "pip",
                 Postfn:  zipAndCopyTo,
         }
 )
@@ -65,7 +65,7 @@ func wrapBuilder(original *Builder, wrapperfn func(*Builder)) error {
         wrapperfn(original)
         return nil
     }
-    return errors.New(""Original Builder is nil"")
+    return errors.New("Original Builder is nil")
 }
 
 func New(manager Manager) *Builder {
@@ -81,17 +81,17 @@ func New(manager Manager) *Builder {
 // notice that it doesn't matter what this Builder is for.
 // All information is contained in it already.
 func (b *Builder) Install(pkg string) ([]byte, error) {
-    b.Cmd = ""install""
+    b.Cmd = "install"
 
     // if package is provided, push its name to the args list
-    if pkg != """" {
+    if pkg != "" {
         b.Args = append([]string{pkg}, b.Args...)
     }
 
-    // This emits ""npm install [pkg] [args...]""
+    // This emits "npm install [pkg] [args...]"
     cmd := exec.Command(b.Manager, (append([]string{b.Cmd}, b.Args...))...)
     // default to executing in the current directory
-    cmd.Dir = ""./""
+    cmd.Dir = "./"
 
     combined, err := cmd.CombinedOutput()
     if err != nil {
@@ -104,8 +104,8 @@ func (b *Builder) Install(pkg string) ([]byte, error) {
 
 func (b *Builder) Build(path string) error {
     // so default the path to a temp folder
-    if path == """" {
-        path = ""path/to/my/temp""
+    if path == "" {
+        path = "path/to/my/temp"
     }
 
     // maybe prep the source directory?
@@ -114,12 +114,12 @@ func (b *Builder) Build(path string) error {
     }
 
     // Now you can use Install here
-    output, err := b.Install("""")
+    output, err := b.Install("")
     if err != nil {
         return err
     }
 
-    log.Printf(""%s"", output)
+    log.Printf("%s", output)
 
     // Now zip and copy to where you want
     if err := b.Postfn(path); err != nil {

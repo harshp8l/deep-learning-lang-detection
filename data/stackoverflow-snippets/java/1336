@@ -1,11 +1,11 @@
-String input = ""<CD>\n""
-        + ""    <TITLE>Empire Burlesque</TITLE>\n""
-        + ""    <ARTIST>Bob Dylan</ARTIST>\n""
-        + ""    <COUNTRY>USA</COUNTRY>\n""
-        + ""    <COMPANY>Columbia</COMPANY>\n""
-        + ""    <PRICE>10.90</PRICE>\n""
-        + ""    <YEAR>1985</YEAR>\n""
-        + ""</CD>"";
+String input = "<CD>\n"
+        + "    <TITLE>Empire Burlesque</TITLE>\n"
+        + "    <ARTIST>Bob Dylan</ARTIST>\n"
+        + "    <COUNTRY>USA</COUNTRY>\n"
+        + "    <COMPANY>Columbia</COMPANY>\n"
+        + "    <PRICE>10.90</PRICE>\n"
+        + "    <YEAR>1985</YEAR>\n"
+        + "</CD>";
 XMLInputFactory inputFactory = XMLInputFactory.newInstance();
 inputFactory.setProperty(XMLInputFactory.IS_COALESCING, Boolean.TRUE);
 XMLStreamReader reader = inputFactory.createXMLStreamReader(new ByteArrayInputStream(input.getBytes()));
@@ -28,15 +28,15 @@ while (reader.hasNext()) {
             text = reader.getText();
             break;
         case XMLStreamConstants.END_ELEMENT:
-            String suffix = reader.getName().getLocalPart() + "">"";
+            String suffix = reader.getName().getLocalPart() + ">";
             if (hasChildren) {
                 // element group
-                VBox vbox = new VBox(new Text(""<"" + suffix));
+                VBox vbox = new VBox(new Text("<" + suffix));
                 for (Node n : currentChildren.get(depth)) {
                     VBox.setMargin(n, insets);
                 }
                 vbox.getChildren().addAll(currentChildren.get(depth));
-                vbox.getChildren().add(new Text(""</"" + suffix));
+                vbox.getChildren().add(new Text("</" + suffix));
                 currentChildren.get(depth - 1).add(vbox);
             } else {
                 // text element
@@ -50,7 +50,7 @@ while (reader.hasNext()) {
                     private final Text measureElement = new Text();
 
                     {
-                        measureElement.setFont(Font.font(""monospaced""));
+                        measureElement.setFont(Font.font("monospaced"));
                     }
 
                     @Override
@@ -62,7 +62,7 @@ while (reader.hasNext()) {
                 };
                 listener.changed(null, null, text);
                 textField.textProperty().addListener(listener);
-                HBox hbox = new HBox(new Text('<' + suffix), textField, new Text(""</"" + suffix));
+                HBox hbox = new HBox(new Text('<' + suffix), textField, new Text("</" + suffix));
                 currentChildren.get(depth - 1).add(hbox);
                 hasChildren = true;
                 text = null;
@@ -74,4 +74,4 @@ while (reader.hasNext()) {
 }
 
 VBox root = (VBox) currentChildren.get(0).get(0);
-root.getStyleClass().add(""xml-editor"");
+root.getStyleClass().add("xml-editor");

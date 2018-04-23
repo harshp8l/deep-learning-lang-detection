@@ -4,13 +4,13 @@ join_arrays(){
 # works best with indexed arrays where order is important but index value is not.
   local A_;
   while (( $# > 1 )); do
-    A_+=""\""\${$1[@]}\"" "";
+    A_+="\"\${$1[@]}\" ";
     shift;
   done
-  eval ""$1=($A_)"";
+  eval "$1=($A_)";
 }
 # This works by building and running an array assignment command
-# join_array a1 a2 a3 becomes a3=(""${a1[@]"" ""$a2[@]"" ); 
+# join_array a1 a2 a3 becomes a3=("${a1[@]" "$a2[@]" ); 
 
 merge_arrays(){
 # <array> [<array> ...] <destination array>
@@ -22,14 +22,14 @@ merge_arrays(){
   while (( $# > 1 )); do
     B_=`declare -p $1`;
     B_=${B_#*=??};
-    A_+=${B_::-2}"" "";
+    A_+=${B_::-2}" ";
     shift;
   done
-  eval ""$1=($A_)"";
+  eval "$1=($A_)";
 }
 # this crops the output of declare -p for each array
 # then joining them into a single large assignment.
-# try putting ""echo"" in front of the eval to see the result.
+# try putting "echo" in front of the eval to see the result.
 
 
 dump_arrays(){
@@ -42,7 +42,7 @@ dump_arrays(){
   while (( $# > 0 )); do
     B_=`declare -p $1`;
     B_=${B_#*=??};
-    printf ""%s "" ""${B_::-2}"";
+    printf "%s " "${B_::-2}";
     shift;
   done
 }
@@ -51,10 +51,10 @@ dump_arrays(){
 
 # The data sets, first the pair of indexed arrays:
 declare -a array1=( 5 10 15 );
-declare -a array2=( 20 25 ""30 30"" );
+declare -a array2=( 20 25 "30 30" );
 # then the set of assoc arrays:
 declare -a array3=( [5]=true [10]=true [15]=true );
-declare -a array4=( [20]=true [25]=true [""30 30""]=true );
+declare -a array4=( [20]=true [25]=true ["30 30"]=true );
 
 # show them:
 declare -p array1 array2 array3 array4;
@@ -64,6 +64,6 @@ declare -a joined;
 declare -A merged;
 
 # the common way to join 2 indexed arrays' values:
-echo ""joining array1+array2 using array expansion/assignment:"";
-joined=( ""${array1[@]}"" ""${array2[@]}"" );
+echo "joining array1+array2 using array expansion/assignment:";
+joined=( "${array1[@]}" "${array2[@]}" );
 declare -p joined;

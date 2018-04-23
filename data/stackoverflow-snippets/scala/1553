@@ -8,29 +8,29 @@ class Handler(requests: List[RequestMsg]) extends Actor {
 
   def receive = {
     case r: RequestMsg =>
-      val sendRequestActor = context.actorOf(Props(new SendRequest(r)), ""Send_Request"".concat(getActorNumber))
+      val sendRequestActor = context.actorOf(Props(new SendRequest(r)), "Send_Request".concat(getActorNumber))
       (sendRequestActor ? Request).pipeTo(self)
 
     case s: SuccessResponse =>
-      println(s""response: $s"")
+      println(s"response: $s")
       results = results :+ s
       if (results.size == requests.size)
         become(done)
 
     case akka.actor.Status.Failure(f) =>
-      println(""a request failed or timed out"")
+      println("a request failed or timed out")
       results = results :+ RequestTimeout
       if (results.size == requests.size)
         become(done)
 
     case m =>
-      println(s""Unhandled message received while processing requests: $m"")
+      println(s"Unhandled message received while processing requests: $m")
       sender ! NotDone
   }
 
   def done: Receive = {
     case GetResponses =>
-      println(""sending responses"")
+      println("sending responses")
       sender ! results
   }
 }

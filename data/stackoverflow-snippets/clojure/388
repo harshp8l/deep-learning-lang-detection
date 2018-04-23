@@ -2,17 +2,17 @@
 (let [tuple-set   (td/find  :let    [$ (live-db)]
                             :find   [?name ?loc] ; <- shape of output tuples
                             :where  {:person/name ?name :location ?loc} ) ]
-  (is (= tuple-set #{ [""James Bond""     ""London""]
-                      [""M""              ""London""]
-                      [""Dr No""          ""Caribbean""]
-                      [""Honey Rider""    ""Caribbean""] } )))
+  (is (= tuple-set #{ ["James Bond"     "London"]
+                      ["M"              "London"]
+                      ["Dr No"          "Caribbean"]
+                      ["Honey Rider"    "Caribbean"] } )))
 ; we do the retraction...
 (td/transact *conn*
-  (td/retract-entity [:person/name ""Dr No""] ))
+  (td/retract-entity [:person/name "Dr No"] ))
 ; ...and now he's gone!
 (let [tuple-set   (td/find  :let    [$ (live-db)]
                             :find   [?name ?loc]
                             :where  {:person/name ?name :location ?loc} ) ]
-  (is (= tuple-set #{ [""James Bond""     ""London""]
-                      [""M""              ""London""]
-                      [""Honey Rider""    ""Caribbean""] } )))
+  (is (= tuple-set #{ ["James Bond"     "London"]
+                      ["M"              "London"]
+                      ["Honey Rider"    "Caribbean"] } )))

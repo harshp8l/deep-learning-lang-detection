@@ -26,8 +26,8 @@ function Get-RemoteRegistryProgram
         )
 
         $nodes = @(
-            ""Software\Microsoft\Windows\CurrentVersion\Uninstall"",
-            ""Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall""
+            "Software\Microsoft\Windows\CurrentVersion\Uninstall",
+            "Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
         )
     }
     process
@@ -61,9 +61,9 @@ function Get-RemoteRegistryProgram
                                 $displayname = $registry.OpenSubKey($node).OpenSubKey($key).GetValue('DisplayName')
 
                                 #Modified by James
-                                if(($displayname) -like ""*$SoftwareName*"")
+                                if(($displayname) -like "*$SoftwareName*")
                                 {
-                                    $displayname + ""`t"" + $computer >> c:\scripts\sysaidServers.txt
+                                    $displayname + "`t" + $computer >> c:\scripts\sysaidServers.txt
                                 }
 
                                 <# Modified by James
@@ -114,14 +114,14 @@ function Get-Servers
     param ([Parameter( Mandatory=$true)][string]$SaveFile)
 
     #Variables
-    [array]$MyDomains=""DomainA.com"",""DomainB.com"",""DomainC.com"",""DomainD.com""
-    [array]$MySearchBase=""dc=DomainA,dc=com"",""dc=DomainB,dc=com"",""dc=DomainC,dc=com"",""dc=DomainD,dc=com""
+    [array]$MyDomains="DomainA.com","DomainB.com","DomainC.com","DomainD.com"
+    [array]$MySearchBase="dc=DomainA,dc=com","dc=DomainB,dc=com","dc=DomainC,dc=com","dc=DomainD,dc=com"
 
 
     for($i=0; $i -lt $MyDomains.Count; $i++)
     {
         #I only want servers running Windows Server OS
-        $MyServers = Get-ADComputer -Filter 'OperatingSystem -like ""Windows*Server*""' -Properties Name -SearchBase $($MySearchBase[$i]) -Server $($MyDomains[$i]) | Format-Table Name -HideTableHeaders | out-string
+        $MyServers = Get-ADComputer -Filter 'OperatingSystem -like "Windows*Server*"' -Properties Name -SearchBase $($MySearchBase[$i]) -Server $($MyDomains[$i]) | Format-Table Name -HideTableHeaders | out-string
         #Remove all whitespace and export to txt file
         $MyServers.Trim() -replace (' ', '') >> $SaveFile
     }
@@ -136,14 +136,14 @@ function CheckServerSoftware
         {
             $computer = $_.ToString()
             Get-RemoteRegistryProgram -ComputerName $computer.Trim() $SoftwareName
-            Write-Output """"
+            Write-Output ""
         }
     }
 }
 
 #Path to where our exported server list is
-$SaveFile = ""c:\scripts\servers.txt""
-$SoftwareName = ""SysAid""
+$SaveFile = "c:\scripts\servers.txt"
+$SoftwareName = "SysAid"
 
 #If the file already exists, remove it
 Remove-Item $SaveFile

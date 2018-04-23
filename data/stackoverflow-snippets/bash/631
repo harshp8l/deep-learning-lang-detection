@@ -4,8 +4,8 @@ set -e
 
 if [ $# -lt 1 ] ; then
     # >&2 sends diagnostics to standard error
-    echo ""Usage: $0 [<Serial#> | <Socket#>] "" >&2
-    echo ""      Example:  $0 GESC637005W1 "" >&2
+    echo "Usage: $0 [<Serial#> | <Socket#>] " >&2
+    echo "      Example:  $0 GESC637005W1 " >&2
     exit 1
 fi
 
@@ -14,20 +14,20 @@ die () {
     rc=$1
     shift
     # include $0 in all diagnostic messages
-    echo ""$0: $@"" >&2
-    exit ""$rc""
+    echo "$0: $@" >&2
+    exit "$rc"
 }
 
-_socket=""$(/opt/Allure/socketdata ""$1"" |awk -F '[(/: ]'+ '{print $10}')""
-[ $_socket = ""400"" ] || die 200 ""Serial number $1 not found (socket $_socket)""
+_socket="$(/opt/Allure/socketdata "$1" |awk -F '[(/: ]'+ '{print $10}')"
+[ $_socket = "400" ] || die 200 "Serial number $1 not found (socket $_socket)"
 
 # Create a temporary file for this script
 t=$(mktemp -t screenshot.XXXXXXXXXX) || exit
 # Remove the temporary file on regular or error exit or signal
 trap 'rm -f $t' EXIT ERROR HUP INT TERM
 
-scp -P$_socket support@localhost:/srv/samba/share/clarity-client/client-apps/digital-poster/screens/screenshot.png ""$t"" ||
-die 201 ""401 scp1 failed $?""
+scp -P$_socket support@localhost:/srv/samba/share/clarity-client/client-apps/digital-poster/screens/screenshot.png "$t" ||
+die 201 "401 scp1 failed $?"
 
-scp ""$t"" support@172.24.16.37:/opt/digital_media/dm_content/screenshots/""$1"".png ||
-die 202 ""402 scp2 failed $?""
+scp "$t" support@172.24.16.37:/opt/digital_media/dm_content/screenshots/"$1".png ||
+die 202 "402 scp2 failed $?"

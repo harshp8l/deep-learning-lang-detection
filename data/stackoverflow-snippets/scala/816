@@ -10,31 +10,31 @@ import scala.io.StdIn
 object DownloadServer {
   def main(args: Array[String]) {
 
-    implicit val system = ActorSystem(""my-system"")
+    implicit val system = ActorSystem("my-system")
     implicit val materializer = ActorMaterializer()
     implicit val ec = system.dispatcher
 
     val route =
-      path(""hello"") {
+      path("hello") {
         get {
           complete( HttpEntity( ContentTypes.`text/html(UTF-8)`,
-            ""Hello from Akka-HTTP!""
+            "Hello from Akka-HTTP!"
           ) )
         }
       } ~
-      path(""download"") {
+      path("download") {
         post {
           formField('filename) { filename: String =>
             complete( HttpEntity( ContentTypes.`application/octet-stream`,
-              FileIO.fromPath(Paths.get(s""src/main/resources/$filename""), 100000)
+              FileIO.fromPath(Paths.get(s"src/main/resources/$filename"), 100000)
             ) )
           }
         }
       }
 
-    val bindingFuture = Http().bindAndHandle(route, ""localhost"", 8080)
+    val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
 
-    println(s""Server online at http://localhost:8080/\nPress RETURN to stop..."")
+    println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
     StdIn.readLine()
 
     bindingFuture

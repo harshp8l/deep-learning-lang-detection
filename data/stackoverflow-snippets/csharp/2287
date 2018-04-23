@@ -29,7 +29,7 @@ public class PolymorphismSchemaFilter<T> : ISchemaFilter
         };
 
         //schemaRegistry.Definitions[typeof(T).Name]; does not work correctly in SwashBuckle
-        var parentSchema = new Schema { Ref = ""#/definitions/"" + typeof(T).Name };
+        var parentSchema = new Schema { Ref = "#/definitions/" + typeof(T).Name };
 
         model.AllOf = new List<Schema> { parentSchema, clonedSchema };
 
@@ -42,7 +42,7 @@ public class PolymorphismDocumentFilter<T> : IDocumentFilter
 {
     private static void RegisterSubClasses(ISchemaRegistry schemaRegistry, Type abstractType)
     {
-        const string discriminatorName = ""discriminator"";
+        const string discriminatorName = "discriminator";
 
         var parentSchema = schemaRegistry.Definitions[abstractType.Name];
 
@@ -51,7 +51,7 @@ public class PolymorphismDocumentFilter<T> : IDocumentFilter
         parentSchema.Required = new List<string> { discriminatorName };
 
         if (!parentSchema.Properties.ContainsKey(discriminatorName))
-            parentSchema.Properties.Add(discriminatorName, new Schema { Type = ""string"" });
+            parentSchema.Properties.Add(discriminatorName, new Schema { Type = "string" });
 
         //register all subclasses
         var derivedTypes = abstractType.Assembly

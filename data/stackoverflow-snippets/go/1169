@@ -1,23 +1,23 @@
 package main
 
 import (
-    ""fmt""
-    ""log""
-    ""net/http""
-    ""sync""
-    ""time""
+    "fmt"
+    "log"
+    "net/http"
+    "sync"
+    "time"
 )
 
 func main() {
 
-    addr := ""127.0.0.1:2074""
+    addr := "127.0.0.1:2074"
 
     srv := http.Server{
         Addr: addr,
         Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-            log.Println(""hit "", r.URL.String())
+            log.Println("hit ", r.URL.String())
             <-time.After(time.Second)
-            log.Println(""done "", r.URL.String())
+            log.Println("done ", r.URL.String())
         }),
     }
     fail(unblock(srv.ListenAndServe))
@@ -30,19 +30,19 @@ func main() {
     {
         wg := sync.WaitGroup{}
         wg.Add(len(jobs))
-        log.Printf(""starting %v jobs\n"", len(jobs))
+        log.Printf("starting %v jobs\n", len(jobs))
         for _, job := range jobs {
             go func(job int) {
                 defer wg.Done()
-                http.Get(fmt.Sprintf(""http://%v/job/%v"", addr, job))
+                http.Get(fmt.Sprintf("http://%v/job/%v", addr, job))
             }(job)
         }
         wg.Wait()
-        log.Printf(""done %v jobs\n"", len(jobs))
+        log.Printf("done %v jobs\n", len(jobs))
     }
 
     log.Println()
-    log.Println(""================="")
+    log.Println("=================")
     log.Println()
 
     // case 2
@@ -53,7 +53,7 @@ func main() {
         wg.Add(len(jobs))
         in := make(chan string)
         limit := make(chan bool, 3)
-        log.Printf(""starting %v jobs\n"", len(jobs))
+        log.Printf("starting %v jobs\n", len(jobs))
         go func() {
             for url := range in {
                 limit <- true
@@ -65,14 +65,14 @@ func main() {
             }
         }()
         for _, job := range jobs {
-            in <- fmt.Sprintf(""http://%v/job/%v"", addr, job)
+            in <- fmt.Sprintf("http://%v/job/%v", addr, job)
         }
         wg.Wait()
-        log.Printf(""done %v jobs\n"", len(jobs))
+        log.Printf("done %v jobs\n", len(jobs))
     }
 
     log.Println()
-    log.Println(""================="")
+    log.Println("=================")
     log.Println()
 
     // case 2: rewrite
@@ -80,15 +80,15 @@ func main() {
     // that triggers 6 // concurrent get queries
     {
         wait, add := parallel(6)
-        log.Printf(""starting %v jobs\n"", len(jobs))
+        log.Printf("starting %v jobs\n", len(jobs))
         for _, job := range jobs {
-            url := fmt.Sprintf(""http://%v/job/%v"", addr, job)
+            url := fmt.Sprintf("http://%v/job/%v", addr, job)
             add(func() {
                 http.Get(url)
             })
         }
         wait()
-        log.Printf(""done %v jobs\n"", len(jobs))
+        log.Printf("done %v jobs\n", len(jobs))
     }
 }
 

@@ -7,10 +7,10 @@ def take(n: Int) = udf((xs: Seq[String]) => xs.take(n))
 
 model
   .approxNearestNeighbors(
-    daily_content_transformed.alias(""left""),
-    daily_content_transformed.alias(""right""))
-  .groupBy($""datasetA.id"" as ""cookieId"")
+    daily_content_transformed.alias("left"),
+    daily_content_transformed.alias("right"))
+  .groupBy($"datasetA.id" as "cookieId")
   // Collect pairs (dist, id)
-  .agg(collect_list(struct($""distCol"", $""datasetB.id"" as ""id"") as ""NN""))
+  .agg(collect_list(struct($"distCol", $"datasetB.id" as "id") as "NN"))
   // Sort by dist, drop dist and take n
-  .withColumn(""NN"" take(n)(sort_array($""NN"", false).getItem(""id"")))
+  .withColumn("NN" take(n)(sort_array($"NN", false).getItem("id")))

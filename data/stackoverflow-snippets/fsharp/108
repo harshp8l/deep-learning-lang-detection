@@ -1,16 +1,16 @@
-#r ""../../packages/FSharp.Compiler.Service.17.0.1/lib/net45/FSharp.Compiler.Service.dll""
+#r "../../packages/FSharp.Compiler.Service.17.0.1/lib/net45/FSharp.Compiler.Service.dll"
 open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
 do 
-    let file = ""TestFileName.fsx""
+    let file = "TestFileName.fsx"
     let checker = SourceCodeServices.FSharpChecker.Create()
 
     let code = 
-        """"""
-let testStr = ""x""
+        """
+let testStr = "x"
 testStr.
-""""""
+"""
     async{  
         let! options, _ = checker.GetProjectOptionsFromScript(file,code)
         let! parseRes,checkAnser = checker.ParseAndCheckFileInProject(file, 0, code, options)                               
@@ -22,19 +22,19 @@ testStr.
                 checkRes.GetDeclarationListInfo(
                     Some parseRes,  // ParsedFileResultsOpt
                     3 ,             // line                   
-                    ""testStr."" ,    // lineText
+                    "testStr." ,    // lineText
                     partialName,    // PartialLongName
                     ( fun _ -> [] ) // getAllSymbols: (unit -> AssemblySymbol list) 
                     )
 
             if Seq.isEmpty decls.Items then 
-                printfn ""*no declarations found*"" 
+                printfn "*no declarations found*" 
             else
                 decls.Items 
                 |> Seq.sortBy (fun d -> d.Name) 
                 |> Seq.truncate 10 
-                |> Seq.iter (fun d -> printfn ""decl: %s"" d.Name)
+                |> Seq.iter (fun d -> printfn "decl: %s" d.Name)
 
 
-        | _ -> failwithf ""*Parsing did not finish... ""        
+        | _ -> failwithf "*Parsing did not finish... "        
         } |> Async.RunSynchronously

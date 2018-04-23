@@ -20,14 +20,14 @@ implicit class StreamTakeWithinTime[Out, Mat](src: Source[Out, Mat]) {
       }
 }
 
-implicit val actorSystem = ActorSystem(""test"")
+implicit val actorSystem = ActorSystem("test")
 implicit val actorMaterializer = ActorMaterializer()
 
 var delay = 0
 def tick = {
   delay += 500
   Thread.sleep(delay)
-  ""tick""
+  "tick"
 }
 
 val maxIdleTime = 2.seconds
@@ -39,11 +39,11 @@ val pipeline = Source
       override def next(): String = tick
   })
   .map { s =>
-    println(""Long processing function..."")
+    println("Long processing function...")
     Thread.sleep(3000)
     s
   }
   .takeWithinTime(maxIdleTime)
 
 val res = Await.result(pipeline.runForeach(println), 30.seconds)
-println(""done"")
+println("done")

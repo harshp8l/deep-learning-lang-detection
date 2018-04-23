@@ -2,12 +2,12 @@
                  [object[]]$fileObj
                 )
 
-            $storageAccountName = ""XXX""
+            $storageAccountName = "XXX"
 
-            $tableName=""XXX""
+            $tableName="XXX"
 
             # Get the storage key for the storage account
-            $StorageAccountKey = ""XXX""
+            $StorageAccountKey = "XXX"
 
             # Get a storage context
             $ctx = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
@@ -15,34 +15,34 @@
             foreach($fo in $fileObj){
              Write-Host $fo.filepath
              $csv = Import-CSV $fo.filepath
-              $cArray=$fo.Cols.split("","")
+              $cArray=$fo.Cols.split(",")
         $table = Get-AzureStorageTable -Name $fo.tableName -Context $ctx -ErrorAction Ignore
               [Microsoft.WindowsAzure.Storage.Table.TableBatchOperation]$batchOperation = New-Object -TypeName Microsoft.WindowsAzure.Storage.Table.TableBatchOperation
 
 if($table)
 {
-Write-Host ""table not null""
+Write-Host "table not null"
 }
 else
 {
-Write-Host ""table is null""
+Write-Host "table is null"
 }
 if($table.CloudTable)
 {
-Write-Host ""CloudTable not null""
+Write-Host "CloudTable not null"
 }
 else
 {
-Write-Host ""CloudTable is null""
+Write-Host "CloudTable is null"
 }
 
 foreach($line in $csv)
                 {
 
-                Write-Host ""$($line.partitionkey), $($line.rowKey)""
+                Write-Host "$($line.partitionkey), $($line.rowKey)"
                 $entity = New-Object -TypeName Microsoft.WindowsAzure.Storage.Table.DynamicTableEntity -ArgumentList $line.partitionkey, $line.rowKey 
                     foreach($c in $cArray){
-                 Write-Host ""$c,$($line.$c)""
+                 Write-Host "$c,$($line.$c)"
                     $entity.Properties.Add($c,$line.$c)
              $batchOperation.Insert($entity)
 
@@ -50,11 +50,11 @@ foreach($line in $csv)
              }
 if($batchOperation)
 {
-Write-Host ""batchOperation not null""
+Write-Host "batchOperation not null"
 }
 else
 {
-Write-Host ""batchOperation is null""
+Write-Host "batchOperation is null"
 }
     $table.CloudTable.ExecuteBatch($batchOperation)
             }

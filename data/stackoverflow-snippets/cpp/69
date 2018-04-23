@@ -52,16 +52,16 @@ namespace asdl
     using ast::type_variant;
     using ast::field_vec;
 
-    x3::rule<class module,      ast::Module     > const module      = ""module"";
-    x3::rule<class definitions, ast::Type       > const definitions = ""definitions"";
-    x3::rule<class type,        type_variant    > const type        = ""type"";
-    x3::rule<class fields,      field_vec       > const fields      = ""fields"";
-    x3::rule<class field,       ast::Field      > const field       = ""field"";
-    x3::rule<class product,     ast::Product    > const product     = ""product"";
-    x3::rule<class sum,         ast::Sum        > const sum         = ""sum"";
-    x3::rule<class constructor, ast::Constructor> const constructor = ""constructor"";
+    x3::rule<class module,      ast::Module     > const module      = "module";
+    x3::rule<class definitions, ast::Type       > const definitions = "definitions";
+    x3::rule<class type,        type_variant    > const type        = "type";
+    x3::rule<class fields,      field_vec       > const fields      = "fields";
+    x3::rule<class field,       ast::Field      > const field       = "field";
+    x3::rule<class product,     ast::Product    > const product     = "product";
+    x3::rule<class sum,         ast::Sum        > const sum         = "sum";
+    x3::rule<class constructor, ast::Constructor> const constructor = "constructor";
 
-    template <typename T> static auto as = [](auto p) { return x3::rule<struct tag, T> {""as""} = p; };
+    template <typename T> static auto as = [](auto p) { return x3::rule<struct tag, T> {"as"} = p; };
 
     auto const alpha           = '_' | ascii::upper | ascii::lower;
     auto const alpha_num       = alpha | ascii::digit;
@@ -69,11 +69,11 @@ namespace asdl
     auto const con_id          = as<std::string>(x3::lexeme[ascii::upper >> *alpha_num]);
     auto const id              = typ_id | con_id;
 
-    auto const module_def      = ""module"" >> id >> '{' >> *definitions >> '}';
+    auto const module_def      = "module" >> id >> '{' >> *definitions >> '}';
     auto const definitions_def = typ_id >> '=' >> type;
     auto const type_def        = product | sum;
     auto const product_def     = fields;
-    auto const sum_def         = constructor % '|' >> -(""attributes"" >> fields);
+    auto const sum_def         = constructor % '|' >> -("attributes" >> fields);
     auto const constructor_def = con_id >> -fields;
     auto const fields_def      = '(' >> field % ',' >> ')';
     auto const field_def       = typ_id >> -(ascii::char_('?') | ascii::char_('*')) >> -id;
@@ -90,5 +90,5 @@ namespace asdl
 
 int main() {
     asdl::ast::Module mod;
-    asdl::parse("""", mod);
+    asdl::parse("", mod);
 }

@@ -10,7 +10,7 @@ Function Copy-FilesBitsTransfer(
         $clientFileTime = Get-Item $sourcePath | select LastWriteTime -ExpandProperty LastWriteTime
 
         if (!(Test-Path -Path $destinationPath\$itemName)){
-            Start-BitsTransfer -Source $sourcePath -Destination $destinationPath -Description ""$sourcePath >> $destinationPath"" -DisplayName ""Copy Template file"" -Confirm:$false
+            Start-BitsTransfer -Source $sourcePath -Destination $destinationPath -Description "$sourcePath >> $destinationPath" -DisplayName "Copy Template file" -Confirm:$false
             if (!$?){
                 return $false
             }
@@ -20,7 +20,7 @@ Function Copy-FilesBitsTransfer(
 
             if ($serverFileTime -lt $clientFileTime)
             {
-                Start-BitsTransfer -Source $sourcePath -Destination $destinationPath -Description ""$sourcePath >> $destinationPath"" -DisplayName ""Copy Template file"" -Confirm:$false
+                Start-BitsTransfer -Source $sourcePath -Destination $destinationPath -Description "$sourcePath >> $destinationPath" -DisplayName "Copy Template file" -Confirm:$false
                 if (!$?){
                     return $false
                 }
@@ -29,7 +29,7 @@ Function Copy-FilesBitsTransfer(
     }
     else{ #Item Is a directory
         if ($createRootDirectory){
-            $destinationPath = ""$destinationPath\$itemName""
+            $destinationPath = "$destinationPath\$itemName"
             if (!(Test-Path -Path $destinationPath -PathType Container)){
                 if (Test-Path -Path $destinationPath -PathType Leaf){ #In case item is a file, delete it.
                     Remove-Item -Path $destinationPath
@@ -42,7 +42,7 @@ Function Copy-FilesBitsTransfer(
 
             }
         }
-        Foreach ($fileOrDirectory in (Get-Item -Path ""$sourcePath\*""))
+        Foreach ($fileOrDirectory in (Get-Item -Path "$sourcePath\*"))
         {
             $status = Copy-FilesBitsTransfer $fileOrDirectory $destinationPath $true
             if (!$status){

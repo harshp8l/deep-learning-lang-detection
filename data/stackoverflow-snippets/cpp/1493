@@ -50,14 +50,14 @@ struct connection : std::enable_shared_from_this<connection> {
 
     void write_loop() {
         ba::async_write(_s, ba::buffer(_tx.front()), [this,self=shared_from_this()](error_code ec, size_t n) {
-                if (s_verbose) std::cout << ""Tx: "" << n << "" bytes ("" << ec.message() << "")"" << std::endl;
+                if (s_verbose) std::cout << "Tx: " << n << " bytes (" << ec.message() << ")" << std::endl;
                 if (!ec && dequeue()) write_loop();
             });
     }
 
     void read_loop() {
-        ba::async_read_until(_s, _rx, ""\n"", [this,self=shared_from_this()](error_code ec, size_t n) {
-                if (s_verbose) std::cout << ""Rx: "" << n << "" bytes ("" << ec.message() << "")"" << std::endl;
+        ba::async_read_until(_s, _rx, "\n", [this,self=shared_from_this()](error_code ec, size_t n) {
+                if (s_verbose) std::cout << "Rx: " << n << " bytes (" << ec.message() << ")" << std::endl;
                 do_echo();
                 if (!ec)
                     read_loop();
@@ -107,7 +107,7 @@ struct server {
         auto session = std::make_shared<connection>(_acc.get_io_context());
         _acc.async_accept(session->_s, [this,session](error_code ec) {
              auto ep = ec? tcp::endpoint{} : session->_s.remote_endpoint();
-             std::cout << ""Accept from "" << ep << "" ("" << ec.message() << "")"" << std::endl;
+             std::cout << "Accept from " << ep << " (" << ec.message() << ")" << std::endl;
 
              if (!ec) {
                  auto n = reg_connection(*session);
@@ -115,7 +115,7 @@ struct server {
                  session->start();
                  accept_loop();
 
-                 broadcast(""player #"" + std::to_string(n) + "" has entered the game\n"");
+                 broadcast("player #" + std::to_string(n) + " has entered the game\n");
              }
 
         });
@@ -126,7 +126,7 @@ struct server {
 };
 
 int main(int argc, char** argv) {
-    s_verbose = argc>1 && argv[1] == ""-v""s;
+    s_verbose = argc>1 && argv[1] == "-v"s;
 
     ba::io_context ioc;
 
@@ -136,8 +136,8 @@ int main(int argc, char** argv) {
 
     std::this_thread::sleep_for(1s);
 
-    auto n = s.broadcast(""random global event broadcast\n"");
-    std::cout << ""Global event broadcast reached "" << n << "" active subscribers\n"";
+    auto n = s.broadcast("random global event broadcast\n");
+    std::cout << "Global event broadcast reached " << n << " active subscribers\n";
 
     std::this_thread::sleep_for(2s);
     s.stop(); // active connections will continue

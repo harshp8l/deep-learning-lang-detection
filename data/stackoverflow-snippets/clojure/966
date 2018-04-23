@@ -23,16 +23,16 @@
 
 (defonce server (atom nil))
 
-(deftemplate page (io/resource ""index.html"") []
+(deftemplate page (io/resource "index.html") []
              [:body] (if is-dev? inject-devmode-html identity))
 
 (defroutes routes
-           (resources ""/"")
-           (resources ""/react"" {:root ""react""})
-           (GET ""/*"" req (page)))
+           (resources "/")
+           (resources "/react" {:root "react"})
+           (GET "/*" req (page)))
 
 (defn authenticated? [name pass]
-  (= [name pass] [(System/getenv ""AUTH_USER"") (System/getenv ""AUTH_PASS"")]))
+  (= [name pass] [(System/getenv "AUTH_USER") (System/getenv "AUTH_PASS")]))
 
 (def drawbridge-handler
   (-> (drawbridge/ring-handler)
@@ -48,7 +48,7 @@
 
 (defn wrap-http [handler]
   (fn [req]
-    (let [handler (if (= ""/repl"" (:uri req))
+    (let [handler (if (= "/repl" (:uri req))
                     (wrap-basic-authentication drawbridge-handler authenticated?)
                     (if is-dev?
                       (-> handler
@@ -60,7 +60,7 @@
 
 (defn run-web-server [& [port]]
   (let [port (Integer. (or port (env :port) 10555))]
-    (println (format ""Starting web server on port %d."" port))
+    (println (format "Starting web server on port %d." port))
     (reset! server
             (run-server (wrap-http #'routes) {:port port :join? false})
             )))

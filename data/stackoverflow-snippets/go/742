@@ -1,18 +1,18 @@
 func printType(prefix string, t reflect.Type, visited map[reflect.Type]bool) {
 
     // Print the name of this type with opening ( for description.
-    fmt.Printf(""%s ("", t)
+    fmt.Printf("%s (", t)
 
     // Traverse elements, adding to description as we go.
 elems:
     for {
         switch t.Kind() {
         case reflect.Ptr:
-            fmt.Print(""ptr to "")
+            fmt.Print("ptr to ")
         case reflect.Slice:
-            fmt.Print(""slice of "")
+            fmt.Print("slice of ")
         case reflect.Array:
-            fmt.Printf(""array with %d elements of "", t.Len())
+            fmt.Printf("array with %d elements of ", t.Len())
         default:
             break elems
         }
@@ -23,23 +23,23 @@ elems:
     // In the case of a struct, we print the names of the fields and recurse.
     switch t.Kind() {
     case reflect.Struct:
-        fmt.Printf(""struct with %d fields)\n"", t.NumField())
+        fmt.Printf("struct with %d fields)\n", t.NumField())
         if visited[t] {
             // Don't blow up on recursive type definition.
             break
         }
         visited[t] = true
-        prefix += ""    ""
+        prefix += "    "
         for i := 0; i < t.NumField(); i++ {
             f := t.Field(i)
-            fmt.Print(prefix, f.Name, "" "")
+            fmt.Print(prefix, f.Name, " ")
             printType(prefix, f.Type, visited)
         }
     default:
-        fmt.Printf(""%s)\n"", t.Kind())
+        fmt.Printf("%s)\n", t.Kind())
     }
 }
 
 func main() {
-    printType("""", reflect.TypeOf(Parent{}), make(map[reflect.Type]bool))
+    printType("", reflect.TypeOf(Parent{}), make(map[reflect.Type]bool))
 }

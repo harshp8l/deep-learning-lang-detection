@@ -1,28 +1,28 @@
 # Powershell script to recursively convert image formats
 # Tested with ImageMagick v7
 # Configuration
-$srcfolder = ""C:\Program Files\ImageMagick\rktest""
+$srcfolder = "C:\Program Files\ImageMagick\rktest"
 # Make sure the destination folder exists
-$destfolder = ""C:\Program Files\ImageMagick\rktest\converted""
+$destfolder = "C:\Program Files\ImageMagick\rktest\converted"
 #This ps1 file will add copy files to designated folder
 #Do NOT use Mogrify or the original images will be deleted
-$im_convert_exe = ""convert -density 300""
+$im_convert_exe = "convert -density 300"
 # with VECTOR files the density setting should come BEFORE the vector format
 # is specified or the image will be blurry.
 # for example - for vector files place -density option immediately after the convert.exe
 # command in the im_convert_exe definition.  This way it will be set before any 
 # vector format is specified.
 # change src_filter to the format of the source files
-$src_filter = ""*.eps""
+$src_filter = "*.eps"
 
 # change dest_ext to the format of the destination files
-$dest_ext = ""png""
+$dest_ext = "png"
 # the colorspace option prevents RGB errors
 # If your image is black and white - the threshold option can be used to make sure output is only black and white.
-# for example, add the ""-threshold 40%"" option to assure there are no grays in the output
-# To process RGB images in IM7, set colorspace to RGB ""-colorspace sRGB""
-$options = ""-colorspace gray -threshold 40% -depth 8 -alpha off""
-$logfile = ""C:\temp\convert.log""
+# for example, add the "-threshold 40%" option to assure there are no grays in the output
+# To process RGB images in IM7, set colorspace to RGB "-colorspace sRGB"
+$options = "-colorspace gray -threshold 40% -depth 8 -alpha off"
+$logfile = "C:\temp\convert.log"
 $fp = New-Item -ItemType file $logfile -force
 $count=0
 foreach ($srcitem in $(Get-ChildItem $srcfolder -include $src_filter -recurse))
@@ -42,7 +42,7 @@ foreach ($srcitem in $(Get-ChildItem $srcfolder -include $src_filter -recurse))
     }
 
     # Perform the conversion by calling an external tool
-    $cmdline =  $im_convert_exe + "" `"""" + $srcname  + ""`"""" + $options + "" `"""" + $destname + ""`"" "" 
+    $cmdline =  $im_convert_exe + " `"" + $srcname  + "`"" + $options + " `"" + $destname + "`" " 
     #echo $cmdline
     invoke-expression -command $cmdline
 
@@ -50,7 +50,7 @@ foreach ($srcitem in $(Get-ChildItem $srcfolder -include $src_filter -recurse))
     $destitem = Get-item $destname
 
     # Show and record information comparing the input and output files
-    $info = [string]::Format( ""{0} `t {1} `t {2} `t {3} `t {4} `t {5}"", $count, 
+    $info = [string]::Format( "{0} `t {1} `t {2} `t {3} `t {4} `t {5}", $count, 
     $partial, $srcname, $destname, $srcitem.Length ,  $destitem.Length)
     echo $info
     Add-Content $fp $info

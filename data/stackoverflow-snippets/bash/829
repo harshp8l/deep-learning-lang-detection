@@ -2,60 +2,60 @@
 #Usage is propertyReplacer <CONFIG_FOLDER_PATH> <CONFIG_FILE_2ND_PRIORITY> <CONFIG_FILE_1ST_PRIORITY>
 function propertyReplacer() {
 
-  filePathToAct=""$1""
-  propertiesFilePath=""$2""
-  propertiesSecureFilePath=""$3""
+  filePathToAct="$1"
+  propertiesFilePath="$2"
+  propertiesSecureFilePath="$3"
 
   declare -A keyValues
 
   while IFS='=' read -r key value; do
-    if [  ""$key"" == """" ]; then
+    if [  "$key" == "" ]; then
       continue
-    elif [[  ""$key"" =~ ^#.*$ ]]; then
+    elif [[  "$key" =~ ^#.*$ ]]; then
       continue
     else
-      echo $key "" --> "" $value
+      echo $key " --> " $value
       keyValues[$key]=$value
     fi
-  done < ""$propertiesFilePath""
+  done < "$propertiesFilePath"
 
-  if [ ! -f ""$propertiesSecureFilePath"" ]; then
+  if [ ! -f "$propertiesSecureFilePath" ]; then
     continue
   else
     while IFS='=' read -r key value; do
-      if [  ""$key"" == """" ]; then
+      if [  "$key" == "" ]; then
         continue
-      elif [[  ""$key"" =~ ^#.*$ ]]; then
+      elif [[  "$key" =~ ^#.*$ ]]; then
         continue
       else
-        echo $key "" --> "" $value
+        echo $key " --> " $value
         keyValues[$key]=$value
       fi
-    done < ""$propertiesSecureFilePath""
+    done < "$propertiesSecureFilePath"
   fi
 
   for key in ${!keyValues[@]}; do
     envProp=${key//[@]/}
-    if [  ""$(eval echo '$'$envProp)"" == """" ]; then
-      echo ""Environment key not exist"" $envProp
+    if [  "$(eval echo '$'$envProp)" == "" ]; then
+      echo "Environment key not exist" $envProp
     else
       value=$(eval echo '$'$envProp)
-      echo ""From Environment "" $envProp "" --> ""$value 
+      echo "From Environment " $envProp " --> "$value 
       keyValues[$key]=$value
     fi
   done 
 
 
-find ""$filePathToAct"" | while read -r resultFileName; do
-  if [ ! -f ""$resultFileName"" ]; then
+find "$filePathToAct" | while read -r resultFileName; do
+  if [ ! -f "$resultFileName" ]; then
     continue
   else
-    echo ""Acting on the file $resultFileName""
+    echo "Acting on the file $resultFileName"
 
     for key in ${!keyValues[@]}; do
-      value=$(echo ""${keyValues[${key}]}"" | sed 's/\//\\\//g')
-      echo ""sed -i 's/$key/$value/g' $resultFileName ""
-      eval ""sed -i 's/$key/$value/g' $resultFileName ""
+      value=$(echo "${keyValues[${key}]}" | sed 's/\//\\\//g')
+      echo "sed -i 's/$key/$value/g' $resultFileName "
+      eval "sed -i 's/$key/$value/g' $resultFileName "
     done 
   fi
 done 

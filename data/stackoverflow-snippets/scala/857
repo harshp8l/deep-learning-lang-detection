@@ -16,17 +16,17 @@ surname: String
 )
 
 implicit val PersonFormat: OFormat[Person] = (
-  (__ \ ""_id"").format[BSONObjectID] and
-    (__ \ ""name"").format[String] and
-    (__ \ ""surname"").format[String]
+  (__ \ "_id").format[BSONObjectID] and
+    (__ \ "name").format[String] and
+    (__ \ "surname").format[String]
 )(Person.apply, unlift(Person.unapply))
 
 val driver = new reactivemongo.api.MongoDriver
-val connection = driver.connection(List(""localhost""))
-val db = connection.db(""test"")
-val coll = db.collection[JSONCollection](""persons"")
+val connection = driver.connection(List("localhost"))
+val db = connection.db("test")
+val coll = db.collection[JSONCollection]("persons")
 coll.drop(false)
 
 val id = BSONObjectID.generate()
-Await.ready(coll.insert(Person(id, ""Joe"", ""Cocker"")), Duration.Inf)
+Await.ready(coll.insert(Person(id, "Joe", "Cocker")), Duration.Inf)
 Await.ready(coll.find(Json.obj()).one[Person] map { op => assert(op.get.id == id, {}) }, Duration.Inf)

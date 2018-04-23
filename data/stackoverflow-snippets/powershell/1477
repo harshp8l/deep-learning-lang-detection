@@ -4,27 +4,27 @@ foreach ( $p in $Pool )
 {
     $app_pool = $p.Name
 
-        $apps = (Get-WebConfigurationProperty ""/system.applicationHost/sites/site/application[`
-            @applicationPool='$app_pool']"" ""machine/webroot/apphost"" -name path).ItemXPath 
+        $apps = (Get-WebConfigurationProperty "/system.applicationHost/sites/site/application[`
+            @applicationPool='$app_pool']" "machine/webroot/apphost" -name path).ItemXPath 
 
     $site = ''
     foreach ($s in $apps) {
-        $name = $s -replace ""\/system.applicationHost\/sites\/site\[\@name='"", """"
-        $name = $name -replace ""' and \@id='\d{1,10}'\]\/application\[\@path='"", """"
-        $name = $name -replace ""'\]"",""""
+        $name = $s -replace "\/system.applicationHost\/sites\/site\[\@name='", ""
+        $name = $name -replace "' and \@id='\d{1,10}'\]\/application\[\@path='", ""
+        $name = $name -replace "'\]",""
         if($site -eq ''){
             $site = $name
         }
         else{
-            $site = $site + "", "" + $name
+            $site = $site + ", " + $name
         }
     }
 
-    if($site -eq """")
+    if($site -eq "")
     {
-        $site = ""NotFound""
+        $site = "NotFound"
     }
 
     $timing = Get-ItemProperty IIS:\\AppPools\$app_pool -name recycling.periodicRestart.schedule.collection
-    Write-Host ""$($compName)|$($app_pool)|$($p.state)|$($timing.value)|$($site)""
+    Write-Host "$($compName)|$($app_pool)|$($p.state)|$($timing.value)|$($site)"
 }

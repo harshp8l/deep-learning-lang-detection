@@ -10,16 +10,16 @@ module Api =
     open System.Threading.Tasks
 
     let app = 
-        choose [ GET >=> choose [ path ""/hello"" >=> OK ""Hello GET""
-                                  path ""/goodbye"" >=> OK ""Good bye GET"" ]
-                 POST >=> choose [ path ""/hello"" >=> OK ""Hello POST""
-                                   path ""/goodbye"" >=> OK ""Good bye POST"" ] ]
+        choose [ GET >=> choose [ path "/hello" >=> OK "Hello GET"
+                                  path "/goodbye" >=> OK "Good bye GET" ]
+                 POST >=> choose [ path "/hello" >=> OK "Hello POST"
+                                   path "/goodbye" >=> OK "Good bye POST" ] ]
 
     let withCtx (ctx : IOwinContext) webpart =
         async {
             let request =
                 { HttpRequest.empty with
-                    headers = ctx.Request.Headers |> List.ofSeq |> List.map (fun kvp -> kvp.Key, kvp.Value |> String.concat "","")
+                    headers = ctx.Request.Headers |> List.ofSeq |> List.map (fun kvp -> kvp.Key, kvp.Value |> String.concat ",")
                     host = ctx.Request.Host.Value 
                     ``method`` = HttpMethod.parse ctx.Request.Method
                     url = ctx.Request.Uri }
@@ -28,7 +28,7 @@ module Api =
                 ctx.Response.StatusCode <- r.response.status.code
                 match r.response.content with
                 | Bytes bs -> ctx.Response.Write bs
-                | _ -> failwith ""Not supported"")
+                | _ -> failwith "Not supported")
             return res
         }
 

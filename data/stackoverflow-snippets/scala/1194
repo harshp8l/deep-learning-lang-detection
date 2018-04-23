@@ -4,11 +4,11 @@ import org.apache.spark.sql.functions.udf
 
 // Sample points
 val points = Seq(Vectors.dense(1,0), Vectors.dense(2,-3), Vectors.dense(0.5, -1), Vectors.dense(1.5, -1.5))    
-val df = points.map(Tuple1.apply).toDF(""features"")
+val df = points.map(Tuple1.apply).toDF("features")
 
 // K-means
 val kmeans = new KMeans()
-  .setFeaturesCol(""features"")
+  .setFeaturesCol("features")
   .setK(2)
 val kmeansModel = kmeans.fit(df)
 
@@ -25,7 +25,7 @@ kmeansModel.clusterCenters foreach println
 // UDF that calculates for each point distance from each cluster center
 val distFromCenter = udf((features: Vector, c: Int) => Vectors.sqdist(features, kmeansModel.clusterCenters(c)))
 
-val distancesDF = predictedDF.withColumn(""distanceFromCenter"", distFromCenter($""features"", $""prediction""))
+val distancesDF = predictedDF.withColumn("distanceFromCenter", distFromCenter($"features", $"prediction"))
 distancesDF.show(false)
 /*
 +----------+----------+------------------+

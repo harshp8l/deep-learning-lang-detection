@@ -2,8 +2,8 @@
 // APP error definition
 //
 type appError struct {
-    Code     int    `json:""code""`
-    Message  string `json:""message""`
+    Code     int    `json:"code"`
+    Message  string `json:"message"`
 }
 
 //
@@ -18,7 +18,7 @@ func jsonAppErrorReporterT(errType gin.ErrorType) gin.HandlerFunc {
         c.Next()
         detectedErrors := c.Errors.ByType(errType)
 
-        log.Println(""Handle APP error"")
+        log.Println("Handle APP error")
         if len(detectedErrors) > 0 {
             err := detectedErrors[0].Err
             var parsedError *appError
@@ -28,7 +28,7 @@ func jsonAppErrorReporterT(errType gin.ErrorType) gin.HandlerFunc {
             default:
                 parsedError = &appError{ 
                   code: http.StatusInternalServerError,
-                  message: ""Internal Server Error""
+                  message: "Internal Server Error"
                 }
             }
             // Put the error into response
@@ -45,7 +45,7 @@ func jsonAppErrorReporterT(errType gin.ErrorType) gin.HandlerFunc {
 //  Report Error in app
 //
 func fetchSingleHostGroup(c *gin.Context) {
-    hostgroupID := c.Param(""id"")
+    hostgroupID := c.Param("id")
 
     hostGroupRes, err := getHostGroupResource(hostgroupID)
 
@@ -63,6 +63,6 @@ func fetchSingleHostGroup(c *gin.Context) {
 func main() {
     router := gin.Default()
     router.Use(JSONAppErrorReporter())
-    router.GET(""/hostgroups/:id"", fetchSingleHostGroup)
-    router.Run("":3000"")
+    router.GET("/hostgroups/:id", fetchSingleHostGroup)
+    router.Run(":3000")
 }

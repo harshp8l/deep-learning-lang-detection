@@ -25,12 +25,12 @@ class ActorA(dbActor: ActorRef) extends Actor {
       targets = targets + (requestId -> s)
       createIssue(requestId).mapTo[Tuple2[Long, Long]].pipeTo(self) // <-- use pipeTo
     case ids: Tuple2[Long, Long] =>
-      println(s""Sending $ids to dbActor"")
+      println(s"Sending $ids to dbActor")
       dbActor ! ids
     case r: ResponseSignal =>
-      println(s""Received from dbActor: $r"")
+      println(s"Received from dbActor: $r")
       val target = targets.get(r.requestId)
-      println(s""In actorA, sending to: $target"")
+      println(s"In actorA, sending to: $target")
       target.foreach(_ ! r)
       targets = targets - r.requestId
   }
@@ -40,12 +40,12 @@ class DbActor extends Actor {
   def receive = {
     case (requestId: Long, issueId: Long) =>
       val response = ResponseSignal(requestId, issueId)
-      println(s""In dbActor, sending $response to $sender"")
+      println(s"In dbActor, sending $response to $sender")
       sender ! response
   }
 }
 
-val system = ActorSystem(""jiratest"")
+val system = ActorSystem("jiratest")
 implicit val ec = system.dispatcher
 
 val dbActor = system.actorOf(Props[DbActor])
@@ -54,7 +54,7 @@ val jiraActor = system.actorOf(Props(new ActorA(dbActor)))
 val requestId = 2L
 
 def createIssue(requestId: Long): Future[(Long, Long)] = {
-  println(s""Creating an issue ID for requestId[$requestId]"")
+  println(s"Creating an issue ID for requestId[$requestId]")
   Future((requestId, 99L))
 }
 
@@ -65,5 +65,5 @@ def createFeedback(): Future[Long] = {
 }
 
 createFeedback().onComplete { x =>
-  println(s""Done: $x"")
+  println(s"Done: $x")
 }

@@ -1,45 +1,45 @@
 function get_mimetype(){
-  file --mime-type ""$1"" | sed 's/.*: //'
+  file --mime-type "$1" | sed 's/.*: //'
 }
 declare -a attachments
-attachments=(""A_PTDIFF.CVS"" ""A_PTMISS.CVS"" ""A_PTNPOS.CVS"" ""A_PTRCON.CVS"")
+attachments=("A_PTDIFF.CVS" "A_PTMISS.CVS" "A_PTNPOS.CVS" "A_PTRCON.CVS")
 
 {
-  boundary=""--random$$string--""
+  boundary="--random$$string--"
   # You were missing a space after '%s\n'
   # Also, I'm breaking this into multiple arguments for legibility
   printf '%s\n' \
-          ""From: jrpng"" \
-          ""To: tom@gmail.com"" \
-          ""Subject: Test new Bash script"" \
-          ""Mime-Version: 1.0"" \
-          ""Content-Type: multipart/mixed; boundary=\""$boundary\"""" \
-          ""X-Comment: # notice the empty line after this one"" \
-          """" \
-          ""--${boundary}"" \
-          ""Content-Type: text/plain; charset=\""US-ASCII\"""" \
-          ""Content-Transfer-Encoding: 7bit"" \
-          ""Content-Disposition: inline"" \
-          ""X-Comment: # these headers are all superfluous really"" \
-          ""X-Comment: # (default is text/plain us-ascii 7bit inline)"" \
-          ""X-Comment: # but the next empty line is important"" \
-          """" \
-          ""The reports are attached to this email as requested"" \
-          """"
+          "From: jrpng" \
+          "To: tom@gmail.com" \
+          "Subject: Test new Bash script" \
+          "Mime-Version: 1.0" \
+          "Content-Type: multipart/mixed; boundary=\"$boundary\"" \
+          "X-Comment: # notice the empty line after this one" \
+          "" \
+          "--${boundary}" \
+          "Content-Type: text/plain; charset=\"US-ASCII\"" \
+          "Content-Transfer-Encoding: 7bit" \
+          "Content-Disposition: inline" \
+          "X-Comment: # these headers are all superfluous really" \
+          "X-Comment: # (default is text/plain us-ascii 7bit inline)" \
+          "X-Comment: # but the next empty line is important" \
+          "" \
+          "The reports are attached to this email as requested" \
+          ""
 
-  for file in ""${attachments[@]}""; do
-      [ ! -f ""$file"" ] &&
-          echo ""Attachment $file not found, omitting file""  >&2 && 
+  for file in "${attachments[@]}"; do
+      [ ! -f "$file" ] &&
+          echo "Attachment $file not found, omitting file"  >&2 && 
           continue
-      mimetype=$(get_mimetype ""$file"")
+      mimetype=$(get_mimetype "$file")
       printf '%s\n' \
-          ""--${boundary}"" \
-          ""Content-Type: $mimetype"" \
-          ""Content-Transfer-Encoding: base64"" \
-          ""Content-Disposition: attachment; filename=\""$file\"""" \
-          """"
-      base64 ""$file""
+          "--${boundary}" \
+          "Content-Type: $mimetype" \
+          "Content-Transfer-Encoding: base64" \
+          "Content-Disposition: attachment; filename=\"$file\"" \
+          ""
+      base64 "$file"
       echo
   done
-  printf '%s\n' ""--${boundary}--""
+  printf '%s\n' "--${boundary}--"
 } | /usr/lib/sendmail -t -oi

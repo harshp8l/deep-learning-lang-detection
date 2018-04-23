@@ -3,14 +3,14 @@ open Suave
 open Suave.Sockets
 open Suave.Sockets.Control
 
-path ""/byte-stream"" >=> (fun ctx ->
+path "/byte-stream" >=> (fun ctx ->
 
   let write (conn, _) = socket {
     use ms = new MemoryStream()
     ms.Write([| 1uy; 2uy; 3uy |], 0, 3)
     ms.Seek(0L, SeekOrigin.Begin) |> ignore
     // do things here
-    let! (_,conn) = asyncWriteLn (sprintf ""Content-Length: %d\r\n"" ms.Length) conn
+    let! (_,conn) = asyncWriteLn (sprintf "Content-Length: %d\r\n" ms.Length) conn
     let! conn = flush conn
     do! transferStream conn ms
     return conn

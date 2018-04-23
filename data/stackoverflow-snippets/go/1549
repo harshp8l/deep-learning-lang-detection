@@ -1,17 +1,17 @@
 package main
 
 import (
-    ""io""
-    ""time""
+    "io"
+    "time"
 
-    ""github.com/gin-gonic/gin""
-    ""github.com/mattn/go-colorable""
+    "github.com/gin-gonic/gin"
+    "github.com/mattn/go-colorable"
 )
 
 func main() {
     gin.DefaultWriter = colorable.NewColorableStderr()
     r := gin.Default()
-    r.GET(""/stream"", func(c *gin.Context) {
+    r.GET("/stream", func(c *gin.Context) {
         chanStream := make(chan int, 10)
         go func() {
             defer close(chanStream)
@@ -22,7 +22,7 @@ func main() {
         }()
         c.Stream(func(w io.Writer) bool {
             if msg, ok := <-chanStream; ok {
-                c.SSEvent(""message"", msg)
+                c.SSEvent("message", msg)
                 return true
             }
             return false

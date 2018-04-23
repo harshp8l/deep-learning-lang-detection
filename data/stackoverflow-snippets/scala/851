@@ -1,24 +1,24 @@
 val testDf = sc.parallelize(
-  Seq((1, 2, ""x"", Array(1, 2, 3, 4)),
-    (3, 4, ""y"", Array(1, 2, 3)),
-    (5,6, ""z"", Array(1)))
-).toDF(""one"", ""two"", ""X"", ""Array"")
+  Seq((1, 2, "x", Array(1, 2, 3, 4)),
+    (3, 4, "y", Array(1, 2, 3)),
+    (5,6, "z", Array(1)))
+).toDF("one", "two", "X", "Array")
 
 testDf
- .withColumn(""id"",monotonically_increasing_id())
- .withColumn(""tmp"", explode($""Array""))
- .groupBy($""id"")
+ .withColumn("id",monotonically_increasing_id())
+ .withColumn("tmp", explode($"Array"))
+ .groupBy($"id")
  .agg(
-   collect_list($""one"").as(""cl_one""),
-   collect_list($""two"").as(""cl_two""),
-   collect_list($""X"").as(""cl_X""),
-   first($""Array"").as(""Array"")
+   collect_list($"one").as("cl_one"),
+   collect_list($"two").as("cl_two"),
+   collect_list($"X").as("cl_X"),
+   first($"Array").as("Array")
 )
 .select(
-   $""cl_one"".as(""one""),
-   $""cl_two"".as(""two""),
-   $""cl_X"".as(""X""),
-   $""Array""
+   $"cl_one".as("one"),
+   $"cl_two".as("two"),
+   $"cl_X".as("X"),
+   $"Array"
  )
 .show()
 

@@ -1,22 +1,22 @@
 /* max difference cannot span more than 2 buckets */
-spark.sql(""set max_diff=0.001"")
+spark.sql("set max_diff=0.001")
 var dec_count = 3
 var bucket_size = scala.math.pow(10,-1 * dec_count)
 
-var songs_buckets = songs.orderBy(col(""artist_familiarity"")).withColumn(""bucket"", round(col(""artist_familiarity""), dec_count))
+var songs_buckets = songs.orderBy(col("artist_familiarity")).withColumn("bucket", round(col("artist_familiarity"), dec_count))
 
 /*
 tuples in adjacent buckets can have very close `artist_familiarity`.
 add id to avoid duplicate pairs or tuples paired with themselves.
 */
-songs_buckets = songs_buckets.withColumn(""bucket2"", $""bucket"" - bucket_size).withColumn(""id"", monotonically_increasing_id())
+songs_buckets = songs_buckets.withColumn("bucket2", $"bucket" - bucket_size).withColumn("id", monotonically_increasing_id())
 
-songs_buckets.createOrReplaceTempView(""songs_buckets"")
+songs_buckets.createOrReplaceTempView("songs_buckets")
 
-var tmp = sql(""SELECT s1.title as t1, s2.title as t2, s1.artist_familiarity as f1, s2.artist_familiarity as f2, s1.id as id1, s2.id as id2 FROM songs_buckets s1 JOIN songs_buckets s2 ON s1.bucket = s2.bucket OR s1.bucket = s2.bucket2"")
+var tmp = sql("SELECT s1.title as t1, s2.title as t2, s1.artist_familiarity as f1, s2.artist_familiarity as f2, s1.id as id1, s2.id as id2 FROM songs_buckets s1 JOIN songs_buckets s2 ON s1.bucket = s2.bucket OR s1.bucket = s2.bucket2")
 
-tmp.createOrReplaceTempView(""tmp"")
+tmp.createOrReplaceTempView("tmp")
 
-var result = sql(""SELECT t1, t2 FROM tmp WHERE id1 < id2 and f2 - f1 <= ${max_diff}"")
+var result = sql("SELECT t1, t2 FROM tmp WHERE id1 < id2 and f2 - f1 <= ${max_diff}")
 
 result.show()

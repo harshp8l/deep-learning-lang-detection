@@ -9,10 +9,10 @@ function Compare-Hashtable {
         [string[]] $path = @(),
         [boolean] $trackpath = $True
     )
-    write-host ""Path received as: $path""
+    write-host "Path received as: $path"
     function New-Result($Path, $LValue, $Side, $RValue) {
         New-Object -Type PSObject -Property @{
-            key    = $Path -Join ""/""
+            key    = $Path -Join "/"
             lvalue = $LValue
             rvalue = $RValue
             side   = $Side
@@ -22,12 +22,12 @@ function Compare-Hashtable {
     $Left.Keys | ForEach-Object {
         $NewPath = $Path + $_
         if ($trackpath ) {
-            write-host ""Working on Path: "" $NewPath
+            write-host "Working on Path: " $NewPath
         }
 
         if ($Left.ContainsKey($_) -and !$Right.ContainsKey($_)) {
-            write-host ""Right key not matched. Report path as: $NewPath""
-            New-Result $NewPath $Left[$_] ""<="" $Null
+            write-host "Right key not matched. Report path as: $NewPath"
+            New-Result $NewPath $Left[$_] "<=" $Null
         }
         else {
             if ($Left[$_] -is [hashtable] -and $Right[$_] -is [hashtable] ) {
@@ -36,7 +36,7 @@ function Compare-Hashtable {
             else {
                 $LValue, $RValue = $Left[$_], $Right[$_]
                 if ($LValue -ne $RValue) {
-                    New-Result $NewPath $LValue ""!="" $RValue
+                    New-Result $NewPath $LValue "!=" $RValue
                 }
              }
 
@@ -45,7 +45,7 @@ function Compare-Hashtable {
     $Right.Keys | ForEach-Object {
         $NewPath = $Path + $_
         if (!$Left.ContainsKey($_) -and $Right.ContainsKey($_)) {
-            New-Result $NewPath $Null ""=>"" $Right[$_]
+            New-Result $NewPath $Null "=>" $Right[$_]
 
         }
     }

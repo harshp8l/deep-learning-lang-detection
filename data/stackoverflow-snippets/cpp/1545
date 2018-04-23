@@ -10,8 +10,8 @@ using namespace std;
 #define MAXL   32   /*    (don't skimp on buffer size)       */
 #define MAXW  256   /* max chars in buf, word len, no. words */
 
-#define SENTOUT ""TF4_1.txt""       /* sentence out filename   */
-#define STATOUT ""TF4_2.txt""       /* statistics out filename */
+#define SENTOUT "TF4_1.txt"       /* sentence out filename   */
+#define STATOUT "TF4_2.txt"       /* statistics out filename */
 
 typedef struct {       /* struct to associate word and count */
     char word[MAXL];
@@ -20,31 +20,31 @@ typedef struct {       /* struct to associate word and count */
 
 int main (void) {
 
-    char buf[MAXC] = """",                /* buffer to hold line */
+    char buf[MAXC] = "",                /* buffer to hold line */
         *p = buf;                       /* pointer to buffer */
-    const char *delim = "" ,./?!:();"";   /* strtok delimiters */
+    const char *delim = " ,./?!:();";   /* strtok delimiters */
     int wcount = 0;                     /* word count */
-    wstat wstats[MAXW] = {{"""", 0}};     /* word stats array */
+    wstat wstats[MAXW] = {{"", 0}};     /* word stats array */
 
     /* prompt for input */
-    cout << ""enter sentence (words 16 char or less): "";
+    cout << "enter sentence (words 16 char or less): ";
     if (!(cin.get (buf, MAXC, '\n'))) { /* validate input */
-        cerr << ""error: invalid input or user canceled.\n"";
+        cerr << "error: invalid input or user canceled.\n";
         return 1;
     }
-    cout << buf << ""\n"";                /* output to stdout (optional) */
+    cout << buf << "\n";                /* output to stdout (optional) */
     ofstream f(SENTOUT, ios::trunc);    /* open TF4_1.txt for writing */
     if (!f.is_open()) {                 /* validate file open for writing */
-        cerr << ""error: file open failed '"" << SENTOUT << ""'.\n"";
+        cerr << "error: file open failed '" << SENTOUT << "'.\n";
         return 1;
     }
-    f << buf << ""\n"";                   /* write sentence to TF4_1.txt */
+    f << buf << "\n";                   /* write sentence to TF4_1.txt */
     f.close();                          /* close TF4_1.txt */
 
     /* tokenize input */
     for (p = strtok (p, delim); p; p = strtok (NULL, delim)) {
         int seen = 0;                   /* flag if word already seen */
-        char lccopy[MAXL] = """",         /* array for lower-case copy */
+        char lccopy[MAXL] = "",         /* array for lower-case copy */
             *rp = p,                    /* read-pointer to token */
             *wp = lccopy;               /* write-pointer for copy */
         while (*rp)                     /* iterate over each char */
@@ -60,7 +60,7 @@ int main (void) {
             strcpy (wstats[wcount].word, lccopy);   /* copy to wstats */
             wstats[wcount++].count++;   /* increment count for word */
             if (wcount == MAXW) {       /* protect array bounds */
-                cerr << ""maximum words reached: "" << MAXW << ""\n"";
+                cerr << "maximum words reached: " << MAXW << "\n";
                 break;
             }
         }
@@ -68,16 +68,16 @@ int main (void) {
 
     f.open (STATOUT, ios::trunc);       /* open TF4_2.txt */
     if (!f.is_open()) {                 /* validate file open for writing */
-        cerr << ""error: file open failed '"" << STATOUT << ""'.\n"";
+        cerr << "error: file open failed '" << STATOUT << "'.\n";
         return 1;
     }
     for (int i = 0; i < wcount; i++) {  /* loop over stored word stats */
         /* output to stdout (optional) */
-        cout << "" "" << left << setw(16) << wstats[i].word << 
-                ""   "" << wstats[i].count << ""\n"";
+        cout << " " << left << setw(16) << wstats[i].word << 
+                "   " << wstats[i].count << "\n";
         /* output to TF4_2.txt */
-        f << "" "" << left << setw(16) << wstats[i].word << 
-            ""   "" << wstats[i].count << ""\n"";
+        f << " " << left << setw(16) << wstats[i].word << 
+            "   " << wstats[i].count << "\n";
     }
     f.close();                          /* close TF4_2.txt */
 }

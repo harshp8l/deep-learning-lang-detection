@@ -57,7 +57,7 @@
 (defn log-unprocessed [title vls]
   (if (and show-unprocessed
            (seq vls))
-    (println (str ""Unprocessed "" title "": "" vls))))
+    (println (str "Unprocessed " title ": " vls))))
 
 ;;; parse nessus report
 (defn parse-xref [xref]
@@ -122,7 +122,7 @@
 
 ;;; insert nessus records into db
 (defn mk-host-rec [scan-id host]
-  (let [[id err] (db/get-sequence-nextval ""host_seq"")]
+  (let [[id err] (db/get-sequence-nextval "host_seq")]
     (if (nil? err)
       (assoc (util/build-map host nessus-host-keys)
         :ipv4 (:host_ip host)
@@ -139,21 +139,21 @@
     (recur (rest p))))
 
 (defn insert-host-patch [id host]
-  (let [p-keys (filter #(re-find #""patch_summary_*"" %) (map name (keys host)))
+  (let [p-keys (filter #(re-find #"patch_summary_*" %) (map name (keys host)))
         recs (map (fn [s]
-                    {:id (first (db/get-sequence-nextval ""patch_seq""))
+                    {:id (first (db/get-sequence-nextval "patch_seq"))
                      :host_id id
-                     :summary ((keyword (str ""patch_summary_txt_"" s)) host)
-                     :cve_num ((keyword (str ""patch_summary_cve_num_"" s)) host)
-                     :cves ((keyword (str ""patch_summary_cves_"" s)) host)})
+                     :summary ((keyword (str "patch_summary_txt_" s)) host)
+                     :cve_num ((keyword (str "patch_summary_cve_num_" s)) host)
+                     :cves ((keyword (str "patch_summary_cves_" s)) host)})
                   (filter seq
-                          (map #(second (re-find #""patch_summary_txt_(.*)"" %))
+                          (map #(second (re-find #"patch_summary_txt_(.*)" %))
                                p-keys)))]
     (insert-patches recs)
     (util/remove-keys host (map keyword p-keys))))
 
 (defn mk-item-rec [host-id item]
-  (let [[id err] (db/get-sequence-nextval ""item_seq"")]
+  (let [[id err] (db/get-sequence-nextval "item_seq")]
     (assoc (util/build-map item nessus-item-keys)
       :host_id host-id
       :id id)))
@@ -161,7 +161,7 @@
 (defn insert-item [host-id item]
   (let [rec (mk-item-rec host-id item)
         not-done (keys (util/remove-keys item used-nessus-item-keys))]
-    (log-unprocessed ""Item Keys"" not-done)
+    (log-unprocessed "Item Keys" not-done)
     (db/insert-nessus-report-item rec)
     (:plugin_id item)))
 
@@ -169,7 +169,7 @@
   (let [rec (util/build-map (:plugin_details item) nessus-plugin-keys)
         not-used (keys (util/remove-keys (:plugin_details item)
                                           used-nessus-plugin-keys))]
-    (log-unprocessed ""Plugin Keys"" not-used)
+    (log-unprocessed "Plugin Keys" not-used)
     (assoc rec
       :vuln_publication_date (util/from-nessus-date
                               (:vuln_publication_date rec))
@@ -182,7 +182,7 @@
 
 (defn insert-xref [plugin-id xrefs]
   (when (seq xrefs)
-    (let [xref {:id (first (db/get-sequence-nextval ""xref_seq""))
+    (let [xref {:id (first (db/get-sequence-nextval "xref_seq"))
                 :plugin_id plugin-id
                 :xref (:xref (first xrefs))}]
       (db/insert-nessus-xref xref)
@@ -190,7 +190,7 @@
 
 (defn insert-see-also [plugin-id see-also]
   (when (seq see-also)
-    (let [sa {:id (first (db/get-sequence-nextval ""ref_seq""))
+    (let [sa {:id (first (db/get-sequence-nextval "ref_seq"))
               :plugin_id plugin-id
               :reference (:see_also (first see-also))}]
       (db/insert-nessus-ref sa)
@@ -220,7 +220,7 @@
           items (:items host)]
       (if (nil? err)
         (let [host2 (insert-host-patch (:id h-rec) host)]
-          (log-unprocessed ""Host Keys"" (keys (util/remove-keys
+          (log-unprocessed "Host Keys" (keys (util/remove-keys
                                               host2 used-nessus-host-keys)))
           (insert-items (:id h-rec) items plugin-set))
         plugin-set))
@@ -243,7 +243,7 @@
    :entered_dt (util/to-sql-date)})
 
 (defn store-report [update-plugins report]
-  (let [[id err] (db/get-sequence-nextval ""nscan_seq"")
+  (let [[id err] (db/get-sequence-nextval "nscan_seq")
         scan-rec (mk-scan-record id report)]
     (if (nil? err)
       (let [[v e] (db/insert-nessus-scan scan-rec)]
@@ -257,7 +257,7 @@
 
 (defn process-nessus-report [update-plugins filename]
   (let [report (parse-file filename)]
-    (println (str ""Report: "" (:report_name report)
-                  ""\nPolicy: "" (:policy report)
-                  ""\nHost Records: "" (count (:hosts report))))
+    (println (str "Report: " (:report_name report)
+                  "\nPolicy: " (:policy report)
+                  "\nHost Records: " (count (:hosts report))))
     (store-report update-plugins report)))

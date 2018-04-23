@@ -6,14 +6,14 @@ object playground extends App {
 
   import org.apache.spark.sql.functions._
 
-  val pattern = ""135322,121200"" // Pattern you want to search for
+  val pattern = "135322,121200" // Pattern you want to search for
 
   // udf declaration
   val coder: ((String, String) => Boolean) = (caseCol: String, pattern: String) =>
     {
       var result = true
-      val splitPattern = pattern.split("","")
-      val splitCaseCol = caseCol.split("","")
+      val splitPattern = pattern.split(",")
+      val splitCaseCol = caseCol.split(",")
       var foundAtIndex = -1
 
       for (i <- 0 to splitPattern.length - 1) {
@@ -38,9 +38,9 @@ object playground extends App {
   val udfFilter = udf(coder)
 
   //reading the input file
-  val df = sparkSession.read.option(""delimiter"", ""\t"").option(""header"", ""true"").csv(""output.txt"")
+  val df = sparkSession.read.option("delimiter", "\t").option("header", "true").csv("output.txt")
 
   //calling the function and aggregating
-  df.filter(udfFilter(col(""Case""), lit(pattern))).agg(lit(pattern), sum(""Freq"")).toDF(""pattern"",""sum"").show
+  df.filter(udfFilter(col("Case"), lit(pattern))).agg(lit(pattern), sum("Freq")).toDF("pattern","sum").show
 
 }

@@ -32,7 +32,7 @@ public class SignatureDecoder
             return null;
         }
 
-        // Get scramble function from script, e.g. "".signature=Aq(""
+        // Get scramble function from script, e.g. ".signature=Aq("
         final String func = getSignFunction();
         if (func == null)
         {
@@ -44,9 +44,9 @@ public class SignatureDecoder
             return null;
         }
         String var = null;
-        String vs = """";
-        final String ident = ""[$A-Za-z0-9_]+"";
-        final String varPat = ""("" + ident + "")\\."" + ident + ""\\([ ]*"" + fs[1];
+        String vs = "";
+        final String ident = "[$A-Za-z0-9_]+";
+        final String varPat = "(" + ident + ")\\." + ident + "\\([ ]*" + fs[1];
         final Pattern vpt = Pattern.compile(varPat);
         final Matcher vmt = vpt.matcher(fs[0]);
         if (vmt.find(0))
@@ -55,10 +55,10 @@ public class SignatureDecoder
             vs = getVarDef(js, var);
         }
 
-        final String extract = vs + ""\n"" + fs[0];
+        final String extract = vs + "\n" + fs[0];
 
         final ScriptEngineManager mgr = new ScriptEngineManager();
-        final ScriptEngine jsEngine = mgr.getEngineByName(""JavaScript"");
+        final ScriptEngine jsEngine = mgr.getEngineByName("JavaScript");
         try
         {
             jsEngine.eval(extract);
@@ -116,12 +116,12 @@ public class SignatureDecoder
             }
             catch (final UnknownHostException e)
             {
-                System.err.println(""Cannot access script at  "" + jsUrl);
+                System.err.println("Cannot access script at  " + jsUrl);
                 return false;
             }
             catch (final IOException e)
             {
-                System.err.println(""Error loading script from  "" + jsUrl);
+                System.err.println("Error loading script from  " + jsUrl);
                 e.printStackTrace();
                 return false;
             }
@@ -190,7 +190,7 @@ public class SignatureDecoder
     {
         String res = null;
 
-        final String varPat = ""var[ ]+"" + var.replace(""$"", ""\\$"") + ""[ ]*="";
+        final String varPat = "var[ ]+" + var.replace("$", "\\$") + "[ ]*=";
 
         final Pattern pt = Pattern.compile(varPat);
         final Matcher mt = pt.matcher(script);
@@ -208,17 +208,17 @@ public class SignatureDecoder
     {
         String res[] = null;
 
-        final String funcDollar = func.replace(""$"", ""\\$"");
+        final String funcDollar = func.replace("$", "\\$");
 
-        final String paramPat = ""[ ]*\\(([^\\)]+)\\)"";
-        String funcPat = ""function[ ]+"" + funcDollar + paramPat;
+        final String paramPat = "[ ]*\\(([^\\)]+)\\)";
+        String funcPat = "function[ ]+" + funcDollar + paramPat;
 
         Pattern pt = Pattern.compile(funcPat);
         Matcher mt = pt.matcher(js);
         boolean ok = mt.find(0);
         if (!ok)
         {
-            funcPat = funcDollar + ""=function"" + paramPat;
+            funcPat = funcDollar + "=function" + paramPat;
             pt = Pattern.compile(funcPat);
             mt = pt.matcher(js);
             ok = mt.find(0);
@@ -246,7 +246,7 @@ public class SignatureDecoder
 
         // Pattern 1
         String func = null;
-        String funcPat = ""\\.signature=([^\\(]+)\\("";
+        String funcPat = "\\.signature=([^\\(]+)\\(";
         Pattern pt = Pattern.compile(funcPat);
         Matcher mt = pt.matcher(js);
         if (mt.find(0))
@@ -257,7 +257,7 @@ public class SignatureDecoder
         // Pattern 2
         if (func == null)
         {
-            funcPat = ""\\(\\\""signature\\\"",([^\\(]+)\\("";
+            funcPat = "\\(\\\"signature\\\",([^\\(]+)\\(";
         }
         pt = Pattern.compile(funcPat);
         mt = pt.matcher(js);
@@ -269,7 +269,7 @@ public class SignatureDecoder
         // Pattern 3
         if (func == null)
         {
-            final int pos = js.indexOf(""set(\""alr\"",\""yes\"")"");
+            final int pos = js.indexOf("set(\"alr\",\"yes\")");
             if (pos >= 0)
             {
                 int pos1 = pos;
@@ -283,15 +283,15 @@ public class SignatureDecoder
                     pos2++;
                 }
                 final String js1 = js.substring(pos1 + 1, pos2);
-                // d.set(""alr"",""yes"");c&&(b||(b=""signature""),d.set(b,WK(c)));return d};
-                final String ident = ""[a-zA-Z0-9]+"";
-                funcPat = ""("" + ident + "")\\.set\\(\\\""alr\\\"",\\\""yes\\\""\\);"";
+                // d.set("alr","yes");c&&(b||(b="signature"),d.set(b,WK(c)));return d};
+                final String ident = "[a-zA-Z0-9]+";
+                funcPat = "(" + ident + ")\\.set\\(\\\"alr\\\",\\\"yes\\\"\\);";
                 pt = Pattern.compile(funcPat);
                 mt = pt.matcher(js1);
                 if (mt.find(0))
                 {
                     final String obj = mt.group(1);
-                    final String funcPat2 = obj + ""\\.set\\(("" + ident + ""|\\\""signature\\\""),("" + ident + "")\\("" + ident + ""\\)\\)"";
+                    final String funcPat2 = obj + "\\.set\\((" + ident + "|\\\"signature\\\"),(" + ident + ")\\(" + ident + "\\)\\)";
                     final Pattern pt2 = Pattern.compile(funcPat2);
                     final Matcher mt2 = pt2.matcher(js1);
                     func = null;
@@ -308,23 +308,23 @@ public class SignatureDecoder
     // Test
     public static void main(String args[])
     {
-        final String rawSignature = ""C98C987F29D5CC5C651A6FB867EFC316D09CDF015983.E7C61471A1569DEE963C2FB55B025B2FE63CD32929929"";
-        final String expRes = ""923DC36EF2B520B59BF2C369EED9651A17416C7E.38C510FDC90D613CFE768BF6A156C5CC5D92F785"";
-        final String jsUrl = ""http://s.ytimg.com/yts/jsbin/player-vflI0cIzU/de_DE/base.js"";
+        final String rawSignature = "C98C987F29D5CC5C651A6FB867EFC316D09CDF015983.E7C61471A1569DEE963C2FB55B025B2FE63CD32929929";
+        final String expRes = "923DC36EF2B520B59BF2C369EED9651A17416C7E.38C510FDC90D613CFE768BF6A156C5CC5D92F785";
+        final String jsUrl = "http://s.ytimg.com/yts/jsbin/player-vflI0cIzU/de_DE/base.js";
 
         final String signature = new SignatureDecoder().decode(jsUrl, rawSignature);
 
-        System.out.println(""\nExpected:  "" + expRes);
-        System.out.println(""Evaluated: "" + signature);
+        System.out.println("\nExpected:  " + expRes);
+        System.out.println("Evaluated: " + signature);
 
-        System.out.print(""Test "");
+        System.out.print("Test ");
         if (signature != null && expRes.equals(signature))
         {
-            System.out.println(""OK"");
+            System.out.println("OK");
         }
         else
         {
-            System.out.println(""FAILED"");
+            System.out.println("FAILED");
         }
 
     }

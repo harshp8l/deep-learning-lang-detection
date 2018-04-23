@@ -2,14 +2,14 @@ param(
 [string]$uri,
 [string]$uri3
 )
-$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes((""{0}:{1}"" -f 'test','XXX')))
-$result = Invoke-RestMethod -Method GET -Uri $uri -Headers @{Authorization=(""Basic {0}"" -f $base64AuthInfo)}
-$result3 = Invoke-RestMethod -Method GET -Uri $uri3 -Headers @{Authorization=(""Basic {0}"" -f $base64AuthInfo)}
+$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f 'test','XXX')))
+$result = Invoke-RestMethod -Method GET -Uri $uri -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+$result3 = Invoke-RestMethod -Method GET -Uri $uri3 -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
 foreach($bd in $result.value){
- $detailbuild=Invoke-RestMethod -Method GET -Uri ""$($bd.url)?api-version=2.0"" -Headers @{Authorization=(""Basic {0}"" -f $base64AuthInfo)}
+ $detailbuild=Invoke-RestMethod -Method GET -Uri "$($bd.url)?api-version=2.0" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
   $detailbuild.queue=$result3
   $bdJson=$detailbuild| ConvertTo-JSON -Depth 20
-  $updateDefUrl=""$($bd.url)?api-version=2.0""
+  $updateDefUrl="$($bd.url)?api-version=2.0"
   Write-Host $bdJson
- $resultUpdaet= Invoke-RestMethod -Method PUT -Uri $updateDefUrl -Headers @{Authorization=(""Basic {0}"" -f $base64AuthInfo)} -ContentType ""application/json"" -Body $bdJson
+ $resultUpdaet= Invoke-RestMethod -Method PUT -Uri $updateDefUrl -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -ContentType "application/json" -Body $bdJson
 }

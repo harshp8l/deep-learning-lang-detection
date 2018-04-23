@@ -2,9 +2,9 @@ Function Write-ColorOutput
 {  
     Param($DiskInfo)
 
-    Write-Host""""
+    Write-Host""
 
-    Write-Host -NoNewLine ""OS Version: ""
+    Write-Host -NoNewLine "OS Version: "
 
     Get-CimInstance Win32_OperatingSystem | Select-Object  Caption | ForEach{ $_.Caption }
 
@@ -12,11 +12,11 @@ Function Write-ColorOutput
 
     Get-PhysicalDisk | Select-Object $env:computername, FriendlyName, SerialNumber, MediaType, OperationalStatus, HealthStatus | Format-Table -AutoSize | Out-String | Write-Host -ForegroundColor Green
 
-    Write-Host""""
+    Write-Host""
 
     # Display the headers.
-    Write-host ""SystemName DeviceID VolumeName         Size(GB)  FreeSpace(GB) %FreeSpace(GB)  Date""
-    Write-host ""---------- -------- -----------        --------  ------------  --------------  ----------------""
+    Write-host "SystemName DeviceID VolumeName         Size(GB)  FreeSpace(GB) %FreeSpace(GB)  Date"
+    Write-host "---------- -------- -----------        --------  ------------  --------------  ----------------"
 
     # Display the data.
     ForEach ($D in $DiskInfo)
@@ -32,11 +32,11 @@ Function Write-ColorOutput
         $Date = $D.Date.ToString().PadRight(20).Remove(19)
 
         If ($D.PercentFS -ge 50)
-         {Write-Host ""$PSComputerName    $($DeviceID)    $($VolumeName)$($SizeGB)     $($FSGB)         $($PFS)          $($Date)"" -ForegroundColor Green}
+         {Write-Host "$PSComputerName    $($DeviceID)    $($VolumeName)$($SizeGB)     $($FSGB)         $($PFS)          $($Date)" -ForegroundColor Green}
         ElseIf (($D.PercentFS -lt 50) -and ($D.PercentFS -GE 40))
-         {Write-Host ""$PSComputerName    $($DeviceID)    $($VolumeName)$($SizeGB)     $($FSGB)         $($PFS)          $($Date)"" -ForegroundColor Yellow}
+         {Write-Host "$PSComputerName    $($DeviceID)    $($VolumeName)$($SizeGB)     $($FSGB)         $($PFS)          $($Date)" -ForegroundColor Yellow}
         Else 
-         {Write-Host ""$PSComputerName    $($DeviceID)    $($VolumeName)$($SizeGB)     $($FSGB)         $($PFS)          $($Date)"" -ForegroundColor Red} 
+         {Write-Host "$PSComputerName    $($DeviceID)    $($VolumeName)$($SizeGB)     $($FSGB)         $($PFS)          $($Date)" -ForegroundColor Red} 
 
     }
 
@@ -47,15 +47,15 @@ Function Write-ColorOutput
 
     $DiskInfo = Get-WMIObject win32_logicalDisk -ComputerName $env:computername | Select-Object PSComputerName, DeviceID, Size, VolumeName,
 
-        @{name=""SizeGB""; expression={""{0:N2}"" -f ($_.Size/1gb)}},
-        @{Name=""FreeSpaceGB""; expression={""{0:N2}"" -f ($_.FreeSpace/1gb)}},
-        @{Name=""PercentFS""; expression={""{0:N2}%"" -f(($_.FreeSpace/$_.size)*100)}},
-        @{name=""Date""; expression={$(Get-Date -Format ""g"")}} 
+        @{name="SizeGB"; expression={"{0:N2}" -f ($_.Size/1gb)}},
+        @{Name="FreeSpaceGB"; expression={"{0:N2}" -f ($_.FreeSpace/1gb)}},
+        @{Name="PercentFS"; expression={"{0:N2}%" -f(($_.FreeSpace/$_.size)*100)}},
+        @{name="Date"; expression={$(Get-Date -Format "g")}} 
         #$ErrorActionPreference= 'silentlycontinue'
 
 
 
  If (!$PassThru) {Write-ColorOutput -DiskInfo $DiskInfo} Else {Write-Output $DiskInfo}
 
- Write-Host""""
- Write-Host""""
+ Write-Host""
+ Write-Host""

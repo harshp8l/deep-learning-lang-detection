@@ -13,9 +13,9 @@ object Deserializer {
   ): (Any, List[Any]) = {
     import scala.reflect.runtime.{universe => ru}
 
-    // println(""Trying to deserialize "" + tpe + "" from "" + flattened)
+    // println("Trying to deserialize " + tpe + " from " + flattened)
 
-    // println(""Constructor alternatives: "")
+    // println("Constructor alternatives: ")
     // val constructorAlternatives = tpe.
     //   member(ru.termNames.CONSTRUCTOR).
     //   asTerm.
@@ -33,7 +33,7 @@ object Deserializer {
       (h, t)
     } else {
       val args_rems: List[(Any, List[Any])] = argsTypes.scanLeft(
-        ((""throwaway-sentinel-in-deserializeRecHelper"": Any), flattened)
+        (("throwaway-sentinel-in-deserializeRecHelper": Any), flattened)
       ) { 
         case ((_, remFs), t) => 
         deserializeRecHelper(remFs, t)
@@ -46,7 +46,7 @@ object Deserializer {
       val classMirror = runtimeMirror.reflectClass(tpe.typeSymbol.asClass)
       val cons = classMirror.reflectConstructor(consSymb)
 
-      // println(""Build constructor arguments array for "" + tpe + "" : "" + args)
+      // println("Build constructor arguments array for " + tpe + " : " + args)
 
       val obj = cons.apply(args:_*)
       (obj, remaining)
@@ -61,7 +61,7 @@ object Deserializer {
 
     require(
       rem.isEmpty, 
-      ""Superfluous arguments remained after deserialization: "" + rem
+      "Superfluous arguments remained after deserialization: " + rem
     )
 
     a.asInstanceOf[A]

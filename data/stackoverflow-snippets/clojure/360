@@ -7,37 +7,37 @@
             [hickory.zip :as hkz]))
 
 (defn is-highlightable?
-  ""Return true if the node is of a type that this program can
+  "Return true if the node is of a type that this program can
   highlight. Specifically, is the node wrapped in a :pre tag,
-  tagged as :code and does it include a language name.""
+  tagged as :code and does it include a language name."
   [node]
   (let [is-pre (= (:tag node) :pre)
         fc (first (:content node))  ; Get inside the <pre> tag.
         has-code (= (:tag fc) :code)
         has-class (get-in fc [:attrs :class])
         has-language (when has-class
-                       (.startsWith has-class ""language-""))]
+                       (.startsWith has-class "language-"))]
     (and is-pre has-code has-class has-language)))
 
     (defn hilight-node
-      ""Return a highlighted version of the source code in the node.""
+      "Return a highlighted version of the source code in the node."
       [node]
       (let [fc (first (:content node))        ; Get inside the <pre> tag.
             lang (get-in fc [:attrs :class])
-            language (str/replace lang ""language-"" """")
+            language (str/replace lang "language-" "")
             cntnt (first (:content fc))
             hili (cly/highlight cntnt (keyword language) :html)
             frag (hkc/parse-fragment hili)
             hck-hili (hkc/as-hickory (first frag))
-            new-node {:type :element :attrs {:class (str ""lang-"" language)}
+            new-node {:type :element :attrs {:class (str "lang-" language)}
                       :tag  :div :content [hck-hili]}]
         new-node))
 
       (defn edit-html-tree
-        ""Take a zipper, a function that matches a pattern in the tree,
+        "Take a zipper, a function that matches a pattern in the tree,
          and a function that edits the current location in the tree.  Examine the tree
          nodes in depth-first order, determine whether the matcher matches, and if so
-         apply the editor.""
+         apply the editor."
         [zipper matcher editor]
         (loop [loc zipper]
           (if (zip/end? loc)
@@ -49,8 +49,8 @@
               (recur (zip/next loc))))))
 
       (defn hilight-syntax
-        ""Return a version of the input HTML where the code listings have
-        been syntax highlighted.""
+        "Return a version of the input HTML where the code listings have
+        been syntax highlighted."
         [html-in]
         (hkr/hickory-to-html (edit-html-tree
                                (hkz/hickory-zip (hkc/as-hickory (hkc/parse html-in)))

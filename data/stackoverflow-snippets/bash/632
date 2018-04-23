@@ -1,7 +1,7 @@
 #!/bin/bash
 # use a loop to reduce duplication of ssh options etc
 while read -r server mounts; do
-    ssh ""$server"" df -m --no-sync $mounts </dev/null
+    ssh "$server" df -m --no-sync $mounts </dev/null
 done <<\____SERVER__MOUNTS |
     server1 /dev/md10 /dev/md11
     server2 /dev/md12 /dev/md13
@@ -9,26 +9,26 @@ ____SERVER__MOUNTS
 # sed -e /^Filesystem/d inlined into Awk below
 sort |
 # pipe into awk
-awk 'BEGIN { print ""UDS:\nserver1 & server2""
+awk 'BEGIN { print "UDS:\nserver1 & server2"
         # Maybe use printf here too
-        print ""Mounted on         Free space   Disk usage   Use%   Disk state""
-        fmt=""%-18s %8i %12i %6s %-2s""
+        print "Mounted on         Free space   Disk usage   Use%   Disk state"
+        fmt="%-18s %8i %12i %6s %-2s"
     }
     function status(num) {
         # Awk conveniently ignores any trailing string
         # so you can compare 95% to 95 numerically
-        if (num > 95) result=""CRITICAL""
-        else if (num > 90) result=""WARNING""
-        else result=""OK""
+        if (num > 95) result="CRITICAL"
+        else if (num > 90) result="WARNING"
+        else result="OK"
         return(result)
     }
     ! /^Filesystem/ {
-        printf fmt ""\n"", $6, $4, $3, $5, status($5)
+        printf fmt "\n", $6, $4, $3, $5, status($5)
 
         # EdmCoff''s hack, too lazy to change to legible variable names
         # adapted to defer division until we know the final value of n
         a+=$2;b+=$3;c+=$4;dd+=$5;n++
     }
     END { d=dd/n;
-        printf ""\n"" fmt ""%%\n"",
-     ""Grand total:"", c, b, int(d), status(d) }'
+        printf "\n" fmt "%%\n",
+     "Grand total:", c, b, int(d), status(d) }'

@@ -1,6 +1,6 @@
 ;; (c) 2016 Stefan Kamphausen
 ;; Released under the Eclipse Public License 
-(def ^:const ^:private signing-algorithm ""HmacSHA1"")
+(def ^:const ^:private signing-algorithm "HmacSHA1")
 
 (defn- get-signing-key* [secret]
   (SecretKeySpec. (.getBytes secret) signing-algorithm))
@@ -15,7 +15,7 @@
   (let [mac (get-mac (get-signing-key secret))]
     ;; MUST use .doFinal which resets mac so that it can be
     ;; reused!
-    (str ""sha1=""
+    (str "sha1="
          (Hex/encodeHexString (.doFinal mac (.getBytes s))))))
 
 (defn- validate-string [^String s signature secret]
@@ -32,16 +32,16 @@
 
 (defn- valid-github? [secrets request]
   (let [body (body-as-string request)
-        signature (get-in request [:headers ""x-hub-signature""])]
-    (log/debug ""Found signature"" signature)
+        signature (get-in request [:headers "x-hub-signature"])]
+    (log/debug "Found signature" signature)
     (cond
       ;; only care about post
       (not (= :post (:request-method request)))
-      ""no-validation-not-a-post""
+      "no-validation-not-a-post"
 
       ;; No secrets defined, no need to validate
       (not (seq secrets))
-      ""no-validation-no-secrets""
+      "no-validation-no-secrets"
 
       ;; we have no signature but secrets are defined -> fail
       (and (not signature) (seq secrets))
@@ -53,8 +53,8 @@
 
 (def default-invalid-response
   {:status  400
-   :headers {""Content-Type"" ""text/plain""}
-   :body    ""Invalid X-Hub-Signature in request.""})
+   :headers {"Content-Type" "text/plain"}
+   :body    "Invalid X-Hub-Signature in request."})
 
 (defn wrap-github-validation
   {:arglists '([handler] [handler options])}
@@ -66,7 +66,7 @@
     (fn [request]
       (if-let [v (valid-github? secs request)]
         (do
-          (log/debug ""Request validation OK:"" v)
+          (log/debug "Request validation OK:" v)
           (handler (assoc request
                           :validation {:valid true
                                        :validation v}
@@ -75,5 +75,5 @@
                           :body (io/input-stream (.getBytes body)))))
 
         (do
-          (log/warn ""Request invalid! Returning"" invalid-response)
+          (log/warn "Request invalid! Returning" invalid-response)
 invalid-response)))))

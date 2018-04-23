@@ -7,12 +7,12 @@ Function Get-MacFromVm {
         [string[]]
         $Name
     )
-    Function MacAddress {(1..4 | ForEach {'{0:x2}' -f (Get-Random -Min 0 -Max 255)}) -Join "":""}
+    Function MacAddress {(1..4 | ForEach {'{0:x2}' -f (Get-Random -Min 0 -Max 255)}) -Join ":"}
     Function Get-VM {[cmdletbinding()] Param ($Name) [pscustomobject]@{Name = $Name; MacAddress = (MacAddress)}}
     ForEach ($Item in $Name) {
-        If ($PSCmdlet.ShouldProcess($Item, ""Getting the mac address"")) {
+        If ($PSCmdlet.ShouldProcess($Item, "Getting the mac address")) {
             Get-VM $item -PipelineVariable vm |
-            Select-Object @{n=""Name""; e={$vm.Name}}, @{n=""ClientId""; e={$_.MacAddress -replace "":"",""-""}}
+            Select-Object @{n="Name"; e={$vm.Name}}, @{n="ClientId"; e={$_.MacAddress -replace ":","-"}}
         }
     }
 }

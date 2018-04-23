@@ -1,12 +1,12 @@
 package main
 
 import (
-    ""flag""
-    ""io""
-    ""log""
-    ""os""
+    "flag"
+    "io"
+    "log"
+    "os"
 
-    ""github.com/rjeczalik/notify""
+    "github.com/rjeczalik/notify"
 )
 
 const (
@@ -19,8 +19,8 @@ var (
 )
 
 func init() {
-    flag.StringVar(&pipePath, ""pipe"", """", ""/path/to/named_pipe to read from"")
-    flag.StringVar(&filePath, ""file"", ""out.txt"", ""/path/to/output file"")
+    flag.StringVar(&pipePath, "pipe", "", "/path/to/named_pipe to read from")
+    flag.StringVar(&filePath, "file", "out.txt", "/path/to/output file")
     log.SetOutput(os.Stderr)
 }
 
@@ -33,22 +33,22 @@ func main() {
 
     // The usual stuff: checking wether the named pipe exists etc
     if p, err = os.Open(pipePath); os.IsNotExist(err) {
-        log.Fatalf(""Named pipe '%s' does not exist"", pipePath)
+        log.Fatalf("Named pipe '%s' does not exist", pipePath)
     } else if os.IsPermission(err) {
-        log.Fatalf(""Insufficient permissions to read named pipe '%s': %s"", pipePath, err)
+        log.Fatalf("Insufficient permissions to read named pipe '%s': %s", pipePath, err)
     } else if err != nil {
-        log.Fatalf(""Error while opening named pipe '%s': %s"", pipePath, err)
+        log.Fatalf("Error while opening named pipe '%s': %s", pipePath, err)
     }
     // Yep, there and readable. Close the file handle on exit
     defer p.Close()
 
     // Do the same for the output file
     if f, err = os.OpenFile(filePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); os.IsNotExist(err) {
-        log.Fatalf(""File '%s' does not exist"", filePath)
+        log.Fatalf("File '%s' does not exist", filePath)
     } else if os.IsPermission(err) {
-        log.Fatalf(""Insufficient permissions to open/create file '%s' for appending: %s"", filePath, err)
+        log.Fatalf("Insufficient permissions to open/create file '%s' for appending: %s", filePath, err)
     } else if err != nil {
-        log.Fatalf(""Error while opening file '%s' for writing: %err"", filePath, err)
+        log.Fatalf("Error while opening file '%s' for writing: %err", filePath, err)
     }
     // Again, close the filehandle on exit
     defer f.Close()
@@ -85,7 +85,7 @@ func main() {
             // Some user or process has removed the named pipe,
             // so we have nothing left to read from.
             // We should inform the user and quit.
-            log.Fatalf(""Named pipe '%s' was removed. Quitting"", pipePath)
+            log.Fatalf("Named pipe '%s' was removed. Quitting", pipePath)
         }
     }
 }

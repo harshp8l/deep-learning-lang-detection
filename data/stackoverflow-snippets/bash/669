@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 [[ $1 ]] || {
-  echo ""Usage: rsync -P --exclude=exclude-file ... | $0 exclude-file"" >&2
+  echo "Usage: rsync -P --exclude=exclude-file ... | $0 exclude-file" >&2
   exit 1
 }
 
@@ -19,18 +19,18 @@ last_slow_time=0
 filename=
 too_slow_count=0
 while IFS=$'\n' read -r -d $'\r' -a pieces; do
-  for piece in ""${pieces[@]}""; do
+  for piece in "${pieces[@]}"; do
     case $piece in
-      ""sending incremental file list"") continue ;;
+      "sending incremental file list") continue ;;
       [[:space:]]*)
-        read -r size pct rate time <<<""$piece""
-        if is_too_slow ""$rate""; then
+        read -r size pct rate time <<<"$piece"
+        if is_too_slow "$rate"; then
           if (( last_slow_time == SECONDS )); then
             continue # ignore multiple slow results in less than a second
           fi
           last_slow_time=$SECONDS
           if (( ++too_slow_count > 3 )); then
-            echo ""$filename"" >>""$exclude_file""
+            echo "$filename" >>"$exclude_file"
             exit 1
           fi
         else

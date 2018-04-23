@@ -4,16 +4,16 @@ if __name__ == '__main__':
 
     libname = '/tmp/libpyerr.so'
 
-    print(""-- [step 1] compile code"")
-    code = ['#include <Python.h>\n', 'PyObject *raise_error(PyObject *module)','{','    PyErr_SetString(PyExc_ValueError, ""Ooops."");','    return NULL;','}']
+    print("-- [step 1] compile code")
+    code = ['#include <Python.h>\n', 'PyObject *raise_error(PyObject *module)','{','    PyErr_SetString(PyExc_ValueError, "Ooops.");','    return NULL;','}']
     cmd = 'echo \'%s\' | gcc -I/usr/include/python2.7 -shared -fPIC -o %s -xc - '%(' '.join(code), libname)
-    assert os.system(cmd)==0, ""compilation failed""
-    print(""\n"".join(code))
+    assert os.system(cmd)==0, "compilation failed"
+    print("\n".join(code))
 
-    print(""\n-- [step 2] load library"")
+    print("\n-- [step 2] load library")
     libc = ctypes.cdll.LoadLibrary(libname)
     libc.raise_error.restype  = ctypes.py_object
     libc.raise_error.argtypes = []
 
-    print(""\n-- [step 3] call raise_error()"")
+    print("\n-- [step 3] call raise_error()")
     libc.raise_error()

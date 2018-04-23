@@ -1,10 +1,10 @@
 case class kv(k: String, v: String)
 
 val df = Seq(
-  (1, Array(kv(""k1"", ""v1""), kv(""k2"", ""v2""), kv(""k3"", ""v3"")), ""c_1""),
-  (2, Array(kv(""k1"", ""v1""), kv(""k3"", ""v3""), kv(""k5"", ""v5"")), ""c_2""),
-  (3, Array(kv(""k2"", ""v2""), kv(""k4"", ""v4"")), ""c_1"")
-).toDF(""id"", ""d"", ""c"")
+  (1, Array(kv("k1", "v1"), kv("k2", "v2"), kv("k3", "v3")), "c_1"),
+  (2, Array(kv("k1", "v1"), kv("k3", "v3"), kv("k5", "v5")), "c_2"),
+  (3, Array(kv("k2", "v2"), kv("k4", "v4")), "c_1")
+).toDF("id", "d", "c")
 // +---+---------------------------+---+
 // |id |d                          |c  |
 // +---+---------------------------+---+
@@ -14,15 +14,15 @@ val df = Seq(
 // +---+---------------------------+---+
 
 // Assemble a list of distinct c_*
-val cList = df.select($""c"").map(_.getString(0)).collect.toList.distinct
+val cList = df.select($"c").map(_.getString(0)).collect.toList.distinct
 // cList: List[String] = List(c_1, c_2)
 
-df.withColumn(""key_value"", explode($""d"")).
-  groupBy($""key_value"").agg(
-    collect_list($""id"").as(""total_occ""),
-    cList.map(x => collect_list(when($""c"" === x, $""id"")).as(s""${x}_occ"")): _*
+df.withColumn("key_value", explode($"d")).
+  groupBy($"key_value").agg(
+    collect_list($"id").as("total_occ"),
+    cList.map(x => collect_list(when($"c" === x, $"id")).as(s"${x}_occ")): _*
   ).
-  orderBy($""key_value"").
+  orderBy($"key_value").
   show
 
 // +---------+---------+-------+-------+

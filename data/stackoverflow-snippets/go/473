@@ -1,23 +1,23 @@
 package main
 
 import (
-    ""fmt""
-    ""golang.org/x/crypto/ssh""
-    ""io""
-    ""log""
+    "fmt"
+    "golang.org/x/crypto/ssh"
+    "io"
+    "log"
 )
 
 var escapePrompt = []byte{'$', ' '}
 
 func main() {
     config := &ssh.ClientConfig{
-        User: ""dummy"",
+        User: "dummy",
         Auth: []ssh.AuthMethod{
-            ssh.Password(""dummy""),
+            ssh.Password("dummy"),
         },
         HostKeyCallback: ssh.InsecureIgnoreHostKey(),
     }
-    client, err := ssh.Dial(""tcp"", ""127.0.0.1:22"", config)
+    client, err := ssh.Dial("tcp", "127.0.0.1:22", config)
     if err != nil {
         panic(err)
     }
@@ -26,7 +26,7 @@ func main() {
     session, err := client.NewSession()
 
     if err != nil {
-        log.Fatalf(""unable to create session: %s"", err)
+        log.Fatalf("unable to create session: %s", err)
     }
     defer session.Close()
 
@@ -36,7 +36,7 @@ func main() {
         ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
     }
 
-    if err := session.RequestPty(""xterm"", 80, 40, modes); err != nil {
+    if err := session.RequestPty("xterm", 80, 40, modes); err != nil {
         log.Fatal(err)
     }
 
@@ -48,30 +48,30 @@ func main() {
     if err != nil {
         panic(err)
     }
-    if err := session.Start(""/bin/sh""); err != nil {
+    if err := session.Start("/bin/sh"); err != nil {
         log.Fatal(err)
     }
     readUntil(r, escapePrompt) //ignore the shell output
 
-    write(w, ""ls -lhav"")
+    write(w, "ls -lhav")
 
     out, err := readUntil(r, escapePrompt)
 
-    fmt.Printf(""ls output: %s\n"", *out)
+    fmt.Printf("ls output: %s\n", *out)
 
-    write(w, ""whoami"")
+    write(w, "whoami")
 
     out, err = readUntil(r, escapePrompt)
 
-    fmt.Printf(""whoami: %s\n"", *out)
+    fmt.Printf("whoami: %s\n", *out)
 
-    write(w, ""exit"")
+    write(w, "exit")
 
     session.Wait()
 }
 
 func write(w io.WriteCloser, command string) error {
-    _, err := w.Write([]byte(command + ""\n""))
+    _, err := w.Write([]byte(command + "\n"))
     return err
 }
 

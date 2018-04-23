@@ -1,8 +1,8 @@
 // the dataset
 val kvs = Seq(
-  (Seq(""sid2"", ""sid5""), ""value1""),
-  (Seq(""sid2""), ""value2""),
-  (Seq(""sid6""), ""value3"")).toDF(""key"", ""value"")
+  (Seq("sid2", "sid5"), "value1"),
+  (Seq("sid2"), "value2"),
+  (Seq("sid6"), "value3")).toDF("key", "value")
 scala> kvs.show
 +------------+------+
 |         key| value|
@@ -13,13 +13,13 @@ scala> kvs.show
 +------------+------+
 
 val intersect = udf { (ss: Seq[String], ts: Seq[String]) => ss intersect ts }
-val solution = kvs.as(""left"")
-  .join(kvs.as(""right""))
-  .where(size(intersect($""left.key"", $""right.key"")) > 0)
-  .select($""left.key"", $""right.value"")
-  .groupBy(""key"")
-  .agg(collect_set(""value"") as ""values"")
-  .dropDuplicates(""values"")
+val solution = kvs.as("left")
+  .join(kvs.as("right"))
+  .where(size(intersect($"left.key", $"right.key")) > 0)
+  .select($"left.key", $"right.value")
+  .groupBy("key")
+  .agg(collect_set("value") as "values")
+  .dropDuplicates("values")
 scala> solution.show
 +------------+----------------+
 |         key|          values|

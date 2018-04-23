@@ -1,8 +1,8 @@
-val modelPath = ""/path/to/zip/file""
-val dataPath = ""/path/to/test/data""
+val modelPath = "/path/to/zip/file"
+val dataPath = "/path/to/test/data"
 
 // Import data
-val dfStarWars = spark.read.option(""header"", ""true"").csv(dataPath)
+val dfStarWars = spark.read.option("header", "true").csv(dataPath)
 // Import MOJO model
 val mojo = MojoModel.load(modelPath)
 val easyModel = new EasyPredictModelWrapper(mojo)
@@ -11,8 +11,8 @@ val easyModel = new EasyPredictModelWrapper(mojo)
 val dfScore = dfStarWars.map {
   x =>
     val r = new RowData
-    r.put(""height"", x.getAs[String](1))
-    r.put(""mass"", x.getAs[String](2))
+    r.put("height", x.getAs[String](1))
+    r.put("mass", x.getAs[String](2))
     val score = easyModel.predictBinomial(r).classProbabilities
     (x.getAs[String](0), score(1))
-}.toDF(""name"", ""isHumanScore"")
+}.toDF("name", "isHumanScore")

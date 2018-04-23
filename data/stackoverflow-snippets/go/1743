@@ -1,11 +1,11 @@
 package main
 
 import (
-    ""fmt""
-    ""log""
-    ""net/http""
+    "fmt"
+    "log"
+    "net/http"
 
-    ""github.com/gorilla/mux""
+    "github.com/gorilla/mux"
 )
 
 var (
@@ -15,22 +15,22 @@ var (
 )
 
 func devDbSeed(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintln(w, ""devDbSeed"")
+    fmt.Fprintln(w, "devDbSeed")
     return
 }
 
 func main() {
     r = mux.NewRouter()
-    devRouter = r.PathPrefix(""/api/v1/dev"").Subrouter()
+    devRouter = r.PathPrefix("/api/v1/dev").Subrouter()
 
     // mwAuthorize and mwAuthenticate basically work the same
     mw := []func(http.Handler) http.Handler{mwAuthenticate, mwAuthorize}
 
     // development endpoints
-    devRouter.Handle(""/db/seed"", use(http.HandlerFunc(devDbSeed), mw...)).Name(""foo"")
+    devRouter.Handle("/db/seed", use(http.HandlerFunc(devDbSeed), mw...)).Name("foo")
 
     // Send all requests into the mux router
-    err = http.ListenAndServe("":9000"", r)
+    err = http.ListenAndServe(":9000", r)
     if err != nil {
         log.Fatal(err)
     }
@@ -62,19 +62,19 @@ func mwAuthenticate(next http.Handler) http.Handler {
 func authorize(r *http.Request) (isAuthorized bool) {
     isAuthorized = false
 
-    handlerName := ""UNKNOWN""
+    handlerName := "UNKNOWN"
     if route := mux.CurrentRoute(r); route != nil {
         routeName := route.GetName()
-        if routeName != """" {
+        if routeName != "" {
             handlerName = routeName
         }
     }
 
     log.Println(handlerName)
     switch handlerName {
-    case ""USERS_CREATE"":
+    case "USERS_CREATE":
         // route-specific authorization
-        log.Println(""USERS_CREATE"")
+        log.Println("USERS_CREATE")
         break
     default:
         break

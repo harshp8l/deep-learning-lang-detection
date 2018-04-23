@@ -2,26 +2,26 @@ Function Invoke-CmdCommand{
     param(
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [ValidateScript({(Test-Path $_.Trim('""').Trim(''''))})]
+        [ValidateScript({(Test-Path $_.Trim('"').Trim(''''))})]
         [string]$Executable,
         [string]$Parameters = '',
         [switch]$CmdEscape
     )
     BEGIN{
-        Write-Verbose ""Start '$($MyInvocation.Mycommand.Name)'"" 
+        Write-Verbose "Start '$($MyInvocation.Mycommand.Name)'" 
         $nl = [Environment]::NewLine
         $exitCode = 0
         $cmdOutput = [string]::Empty
         # next line wrap string in quotes if there is a space in the path
-        #$Executable = (Format-WithDoubleQuotes $Executable -Verbose:$([bool]($PSCmdlet.MyInvocation.BoundParameters[""Verbose""].IsPresent)))
-        $command = ""{0} {1}"" -f $Executable, $Parameters
-        Write-Verbose ""COMMAND: $command""
-        $terminatePrompt = ""/C"" # https://ss64.com/nt/cmd.html
+        #$Executable = (Format-WithDoubleQuotes $Executable -Verbose:$([bool]($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)))
+        $command = "{0} {1}" -f $Executable, $Parameters
+        Write-Verbose "COMMAND: $command"
+        $terminatePrompt = "/C" # https://ss64.com/nt/cmd.html
         $comSpec = $env:ComSpec
 
         if($CmdEscape.IsPresent){
-            $command = ""`""$command`""""
-            Write-Verbose ""ESCAPED COMMAND: $command""
+            $command = "`"$command`""
+            Write-Verbose "ESCAPED COMMAND: $command"
         }        
     }
     PROCESS{
@@ -34,10 +34,10 @@ Function Invoke-CmdCommand{
         $exitCode = $cmdResult[$cmdResult.length-1]
 
         if($exitCode -ne 0){
-          Write-Host ""FAILED with ExitCode: $exitCode; ERROR executing the command:$nl$command$nl"" -ForegroundColor Red
-          Write-Host ""ERROR executing the command:$nl$command"" -ForegroundColor Yellow
+          Write-Host "FAILED with ExitCode: $exitCode; ERROR executing the command:$nl$command$nl" -ForegroundColor Red
+          Write-Host "ERROR executing the command:$nl$command" -ForegroundColor Yellow
         }else{
-            Write-Host ""SUCCESSFULLY executed the command:$nl$command$nl""
+            Write-Host "SUCCESSFULLY executed the command:$nl$command$nl"
         }        
     }
     END{
@@ -46,6 +46,6 @@ Function Invoke-CmdCommand{
         }else{
             Write-Output -NoEnumerate $cmdOutput
         }
-        Write-Verbose ""End '$($MyInvocation.Mycommand.Name)'""        
+        Write-Verbose "End '$($MyInvocation.Mycommand.Name)'"        
     }
 }

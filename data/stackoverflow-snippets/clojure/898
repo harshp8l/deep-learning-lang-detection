@@ -1,22 +1,22 @@
 (moving-time-window 30 ;; seconds
   (smap (fn [events]
           (let [in (or (->> events
-                            (filter #(= (:service %) ""event-received""))
+                            (filter #(= (:service %) "event-received"))
                             count)
                        0)
                 out (or (->> events
-                             (filter #(= (:service %) ""event-sent""))
+                             (filter #(= (:service %) "event-sent"))
                              count)
                         0)
                 flow-rate (float (if (> in 0) (/ out in) 0))]
-            {:service ""flow rate""
+            {:service "flow rate"
              :metric flow-rate
-             :host ""All""
-             :state (if (< flow-rate 0.99) ""WARNING"" ""OK"")
+             :host "All"
+             :state (if (< flow-rate 0.99) "WARNING" "OK")
              :time (:time (last events))
              :ttl default-interval}))
-        (tag [""some"" ""tags"" ""here""] index)
+        (tag ["some" "tags" "here"] index)
         (where (and
                 (< (:metric event) 0.9)
-                (= (:environment event) ""production""))
+                (= (:environment event) "production"))
                (throttle 1 3600 send-to-slack))))

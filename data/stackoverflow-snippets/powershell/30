@@ -8,7 +8,7 @@ $attributeListItem = [ordered]@{}
 Import-Module ActiveDirectory
 
 #Get an AD User and request objectClass
-$aDObj = Get-ADUser ""MyAccountName"" -Properties objectClass
+$aDObj = Get-ADUser "MyAccountName" -Properties objectClass
 
 #get all class names 
 $nextClass = $aDObj.ObjectClass
@@ -16,7 +16,7 @@ $nextClass = $aDObj.ObjectClass
 $allClasses = Do
 {
     $currentClass = $nextClass
-    $nextClass = Get-ADObject -SearchBase ""$((Get-ADRootDSE).SchemaNamingContext)"" -Filter {lDAPDisplayName -eq $nextClass} -properties subClassOf | Select-Object -ExpandProperty subClassOf
+    $nextClass = Get-ADObject -SearchBase "$((Get-ADRootDSE).SchemaNamingContext)" -Filter {lDAPDisplayName -eq $nextClass} -properties subClassOf | Select-Object -ExpandProperty subClassOf
     $currentClass
 }
 While($currentClass -ne $nextClass)
@@ -27,19 +27,19 @@ $mandatoryAndOptionalAttributes = 'MayContain','MustContain','systemMayContain',
 ForEach ($class in $allClasses)
 {
 
-    $classInfo = Get-ADObject -SearchBase ""$((Get-ADRootDSE).SchemaNamingContext)"" -Filter {lDAPDisplayName -eq $class} -properties $mandatoryAndOptionalAttributes 
+    $classInfo = Get-ADObject -SearchBase "$((Get-ADRootDSE).SchemaNamingContext)" -Filter {lDAPDisplayName -eq $class} -properties $mandatoryAndOptionalAttributes 
 
     ForEach ($mandatoryAndOptionalAttribute in $mandatoryAndOptionalAttributes)
     {
 
         foreach ($classAttribute in $classInfo.$mandatoryAndOptionalAttribute)
         {
-            $attributeListItem.""Mandatory/Optional Attribute"" = $mandatoryAndOptionalAttribute
-            $attributeListItem.""Class"" = $classInfo.Name
-            $attributeListItem.""Class Attribute"" = $classAttribute
+            $attributeListItem."Mandatory/Optional Attribute" = $mandatoryAndOptionalAttribute
+            $attributeListItem."Class" = $classInfo.Name
+            $attributeListItem."Class Attribute" = $classAttribute
             $attributeList.add((New-Object PSObject -Property $attributeListItem)) | out-null
         }
     }
 }
 
-$attributeList | out-gridview -title (""All Class Attributes: "" + $attributeList.count)
+$attributeList | out-gridview -title ("All Class Attributes: " + $attributeList.count)

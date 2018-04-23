@@ -2,8 +2,8 @@ $Global: Listener = [HashTable]::Synchronized(@{})
 $Global: CnQueue = [System.Collections.Queue]::Synchronized((New - Object System.collections.queue))
 $Global: space = [RunSpaceFactory]::CreateRunspace()
 $space.Open()
-$space.SessionStateProxy.setVariable(""CnQueue"", $CnQueue)
-$space.SessionStateProxy.setVariable(""Listener"", $Listener)
+$space.SessionStateProxy.setVariable("CnQueue", $CnQueue)
+$space.SessionStateProxy.setVariable("Listener", $Listener)
 $Global: newPowerShell = [PowerShell]::Create()
 $newPowerShell.Runspace = $space
 $Timer = New - Object Timers.Timer
@@ -14,13 +14,13 @@ Register - ObjectEvent - SourceIdentifier MonitorClientConnection - InputObject 
         $client = $CnQueue.Dequeue()
         $newRunspace = [RunSpaceFactory]::CreateRunspace()
         $newRunspace.Open()
-        $newRunspace.SessionStateProxy.setVariable(""client"", $client)
+        $newRunspace.SessionStateProxy.setVariable("client", $client)
         $newPowerShell = [PowerShell]::Create()
         $newPowerShell.Runspace = $newRunspace
         $process = {
             $stream = $client.GetStream();
             $reader = New - Object System.IO.StreamReader $stream
-            [console]::WriteLine(""Inside Processing"")
+            [console]::WriteLine("Inside Processing")
             # You have client here so do whatever you want to do here.
             # This is a separate thread so if you write blocking code here, it will not impact any other part of the program
         }
@@ -29,16 +29,16 @@ Register - ObjectEvent - SourceIdentifier MonitorClientConnection - InputObject 
     }
 }
 $listener = {
-    $Listener['listener'] = New - Object System.Net.Sockets.TcpListener(""127.0.0.1"", ""1234"")
-    $Listener['listener'].Start()[console]::WriteLine(""Listening on :1234"")
+    $Listener['listener'] = New - Object System.Net.Sockets.TcpListener("127.0.0.1", "1234")
+    $Listener['listener'].Start()[console]::WriteLine("Listening on :1234")
     while ($true) {
         $c = $Listener['listener'].AcceptTcpClient()
         If($c - ne $Null) {
-            [console]::WriteLine(""{0} >> Accepted Client "" - f(Get - Date).ToString())
+            [console]::WriteLine("{0} >> Accepted Client " - f(Get - Date).ToString())
             $CnQueue.Enqueue($c)
         }
         Else {
-            [console]::WriteLine(""Shutting down"")
+            [console]::WriteLine("Shutting down")
             Break
         }
     }

@@ -6,17 +6,17 @@
  //END OF REFERENCES
 
  //Exchange Shell Command:
- //Get-ADPermission -identity ""<AD Distinguished Name>"" | where {($_.ExtendedRights -like ""*Send*"") -and ($_.IsInherited -eq $false) -and -not ($_.User -like ""NT AUTHORITY\SELF"")} | Format-Table -AutoSize
+ //Get-ADPermission -identity "<AD Distinguished Name>" | where {($_.ExtendedRights -like "*Send*") -and ($_.IsInherited -eq $false) -and -not ($_.User -like "NT AUTHORITY\SELF")} | Format-Table -AutoSize
 
- string groupSAMAccountName = ""YOUR_GROUP_NAME"";
+ string groupSAMAccountName = "YOUR_GROUP_NAME";
  GroupPrincipal pGroup = GroupPrincipal.FindByIdentity(new PrincipalContext(ContextType.Domain), IdentityType.SamAccountName, groupSAMAccountName);
  DirectoryEntry deGroup = pGroup.GetUnderlyingObject() as DirectoryEntry;
 
  //Extended Rights Reference - https://technet.microsoft.com/en-us/library/ff405676.aspx
  //Exchange right: allows sending mail as the mailbox.
- Guid exRight_SendAs = new Guid(""{ab721a54-1e2f-11d0-9819-00aa0040529b}""); //GUID has 54
+ Guid exRight_SendAs = new Guid("{ab721a54-1e2f-11d0-9819-00aa0040529b}"); //GUID has 54
  //Exchange right: allows sending to a mailbox.
- Guid exRight_SendTo = new Guid(""{ab721a55-1e2f-11d0-9819-00aa0040529b}""); //GUID has 55
+ Guid exRight_SendTo = new Guid("{ab721a55-1e2f-11d0-9819-00aa0040529b}"); //GUID has 55
 
  ActiveDirectorySecurity ads = deGroup.ObjectSecurity;
  AuthorizationRuleCollection rules = ads.GetAccessRules(true, true, typeof(SecurityIdentifier));
@@ -38,17 +38,17 @@
   //Just because an entry has ALLOW Send-As, doesn't mean that's your EFFECTIVE ACCESS... you don't know if another entry of another membership you belong to has DENY.
  foreach(ActiveDirectoryAccessRule ar in exRight_SendTo_Rules)
  {
-    string friendlyName = """";
+    string friendlyName = "";
     try
     {
         friendlyName = ar.IdentityReference.Translate(typeof(NTAccount)).Value;
     }
     catch
     {
-        friendlyName = ""[Unable to resolve] SID "" + ar.IdentityReference.Value;
+        friendlyName = "[Unable to resolve] SID " + ar.IdentityReference.Value;
     }
 
-    string ar_Result = string.Format(@""Identity={0}, User={1}, Deny={2}, Inherited={3}"", 
+    string ar_Result = string.Format(@"Identity={0}, User={1}, Deny={2}, Inherited={3}", 
                 pGroup.DistinguishedName,
                 friendlyName, 
                 (ar.AccessControlType == AccessControlType.Deny).ToString(), 

@@ -7,9 +7,9 @@ import slick.driver.H2Driver.api._
 
 case class Supplier1(id:Int,name:String)
 
-class Suppliers1(tag:Tag) extends Table[Supplier1](tag,""SUPPLIERS"") {
-  def id:Rep[Int] = column[Int](""SUP_ID"",O.PrimaryKey,O.AutoInc)
-  def name:Rep[String] = column[String](""NAME"")
+class Suppliers1(tag:Tag) extends Table[Supplier1](tag,"SUPPLIERS") {
+  def id:Rep[Int] = column[Int]("SUP_ID",O.PrimaryKey,O.AutoInc)
+  def name:Rep[String] = column[String]("NAME")
 
   def * = (id,name) <> 
     (Supplier1.tupled,Supplier1.unapply)
@@ -17,28 +17,28 @@ class Suppliers1(tag:Tag) extends Table[Supplier1](tag,""SUPPLIERS"") {
 
 case class Coffee1(id:Int,name:String,suppId:Int)
 
-class Coffees1(tag:Tag) extends Table[Coffee1](tag,""COFFEES""){
-  def id:Rep[Int] = column[Int](""C_ID"",O.PrimaryKey,O.AutoInc)
-  def name:Rep[String] = column[String](""COFFEE_NAME"")
-  def suppId:Rep[Int] = column[Int](""SUP_ID"")
+class Coffees1(tag:Tag) extends Table[Coffee1](tag,"COFFEES"){
+  def id:Rep[Int] = column[Int]("C_ID",O.PrimaryKey,O.AutoInc)
+  def name:Rep[String] = column[String]("COFFEE_NAME")
+  def suppId:Rep[Int] = column[Int]("SUP_ID")
 
 
   def * = (id,name,suppId) <> (Coffee1.tupled,Coffee1.unapply)
 
-  def supplier = foreignKey(""supp_fk"", suppId, TableQuery[Suppliers])(_.id)
+  def supplier = foreignKey("supp_fk", suppId, TableQuery[Suppliers])(_.id)
 }
 
 object HelloSlick1 extends App{
-val db = Database.forConfig(""h2mem1"")
+val db = Database.forConfig("h2mem1")
 val suppliers = TableQuery[Suppliers1]
 val coffees = TableQuery[Coffees1]
 val setUpF = (suppliers.schema ++ coffees.schema).create
 val insertSupplier = suppliers returning suppliers.map(_.id)
-//val tx =  (insertSupplier += Supplier1(0,""SUPP 1"")).flatMap(id=>(coffees += Coffee1(0,""COF"",id))).transactionally
+//val tx =  (insertSupplier += Supplier1(0,"SUPP 1")).flatMap(id=>(coffees += Coffee1(0,"COF",id))).transactionally
 val tx = for{
-   supId  <- insertSupplier += Supplier1(0,""SUPP 1"")
+   supId  <- insertSupplier += Supplier1(0,"SUPP 1")
 
-  cId <- coffees += Coffee1(0,""COF"",supId)
+  cId <- coffees += Coffee1(0,"COF",supId)
 } yield ()
 tx.transactionally
 

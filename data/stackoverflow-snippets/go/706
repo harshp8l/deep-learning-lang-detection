@@ -8,15 +8,15 @@ func writerToConnPtr(w http.ResponseWriter) uintptr {
     val := reflect.Indirect(ptrVal)
 
     // http.conn
-    valconn := val.FieldByName(""conn"")
+    valconn := val.FieldByName("conn")
     val1 := reflect.Indirect(valconn)
 
     // net.TCPConn
-    ptrRwc := val1.FieldByName(""rwc"").Elem()
+    ptrRwc := val1.FieldByName("rwc").Elem()
     rwc := reflect.Indirect(ptrRwc)
 
     // net.Conn
-    val1conn := rwc.FieldByName(""conn"")
+    val1conn := rwc.FieldByName("conn")
     val2 := reflect.Indirect(val1conn)
 
     return val2.Addr().Pointer()
@@ -36,11 +36,11 @@ func ConnStateListener(c net.Conn, cs http.ConnState) {
 
     switch cs {
     case http.StateNew:
-        log.Printf(""CONN Opened: 0x%x\n"", connPtr)
+        log.Printf("CONN Opened: 0x%x\n", connPtr)
         conns[connPtr] = c
 
     case http.StateClosed:
-        log.Printf(""CONN Closed: 0x%x\n"", connPtr)
+        log.Printf("CONN Closed: 0x%x\n", connPtr)
         delete(conns, connPtr)
     }
 }
@@ -53,7 +53,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
     // Requests can access connections by pointer from the responseWriter object
     conn, ok := conns[connPtr]
     if !ok {
-        log.Printf(""error: no matching connection found"")
+        log.Printf("error: no matching connection found")
         return
     }
 

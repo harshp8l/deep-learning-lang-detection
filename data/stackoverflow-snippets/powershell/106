@@ -6,15 +6,15 @@ $date = (Get-Date -f yyyy-MM-dd)
 
 $Permissions = ForEach ($Mailbox in (Get-Mailbox -ResultSize Unlimited )) { 
     ForEach ($Folder in 'Contents','Calendar','Inbox'){
-        Get-MailboxFolderPermission -identity ""$($Mailbox.Name):\$($Folder)"" -ErrorAction SilentlyContinue | 
-          Where-Object {$_.User -notlike ""Default"" -and $_.User -notlike ""Anonymous"" -and $_.AccessRights -notlike ""None"" -and $_.AccessRights } | 
-            Select @{N=""Mailbox"";E={$Mailbox.SamAccountName}}, 
-                   @{N=""Folder"";E={$_.FolderName}}, 
-                   @{N=""User With Access"";E={$_.User}}, 
-                   @{N=""Access"";E={$_.AccessRights}}
+        Get-MailboxFolderPermission -identity "$($Mailbox.Name):\$($Folder)" -ErrorAction SilentlyContinue | 
+          Where-Object {$_.User -notlike "Default" -and $_.User -notlike "Anonymous" -and $_.AccessRights -notlike "None" -and $_.AccessRights } | 
+            Select @{N="Mailbox";E={$Mailbox.SamAccountName}}, 
+                   @{N="Folder";E={$_.FolderName}}, 
+                   @{N="User With Access";E={$_.User}}, 
+                   @{N="Access";E={$_.AccessRights}}
     }
 }
 
 #Export to Desktop
 
-$Permissions | Sort User | Export-Csv ""$env:USERPROFILE\Desktop\ExchangePermissions-$Date.csv"" -NoTypeInformation
+$Permissions | Sort User | Export-Csv "$env:USERPROFILE\Desktop\ExchangePermissions-$Date.csv" -NoTypeInformation

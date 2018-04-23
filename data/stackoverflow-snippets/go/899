@@ -1,39 +1,39 @@
 package main
 
 import (
-    ""flag""
-    ""fmt""
-    ""os""
-    ""io""
-    ""path/filepath""
-    ""log""
-    ""encoding/json""
-    //""time""
+    "flag"
+    "fmt"
+    "os"
+    "io"
+    "path/filepath"
+    "log"
+    "encoding/json"
+    //"time"
 
-    metav1 ""k8s.io/apimachinery/pkg/apis/meta/v1""
-    ""k8s.io/client-go/kubernetes""
-    ""k8s.io/client-go/tools/clientcmd""
-    ""k8s.io/client-go/discovery""
-    ""k8s.io/client-go/dynamic""
-    ""k8s.io/apimachinery/pkg/util/yaml""
-    ""k8s.io/apimachinery/pkg/runtime""
-    ""k8s.io/apimachinery/pkg/runtime/schema""
-    ""k8s.io/apimachinery/pkg/api/meta""
-    ""k8s.io/apimachinery/pkg/apis/meta/v1/unstructured""
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    "k8s.io/client-go/kubernetes"
+    "k8s.io/client-go/tools/clientcmd"
+    "k8s.io/client-go/discovery"
+    "k8s.io/client-go/dynamic"
+    "k8s.io/apimachinery/pkg/util/yaml"
+    "k8s.io/apimachinery/pkg/runtime"
+    "k8s.io/apimachinery/pkg/runtime/schema"
+    "k8s.io/apimachinery/pkg/api/meta"
+    "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 )
 
 func main() {
     var kubeconfig *string
-    if home := homeDir(); home != """" {
-        kubeconfig = flag.String(""kubeconfig"", filepath.Join(home, "".kube"", ""config""), ""(optional) absolute path to the kubeconfig file"")
+    if home := homeDir(); home != "" {
+        kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
     } else {
-        kubeconfig = flag.String(""kubeconfig"", """", ""absolute path to the kubeconfig file"")
+        kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
     }
     flag.Parse()
 
     // use the current context in kubeconfig
-    config, err := clientcmd.BuildConfigFromFlags("""", *kubeconfig)
+    config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
     if err != nil {
         panic(err.Error())
     }
@@ -44,7 +44,7 @@ func main() {
         panic(err.Error())
     }
 
-    f,err := os.Open(""namespace.yaml"")
+    f,err := os.Open("namespace.yaml")
     if err!=nil {
         log.Fatal(err)
     }
@@ -67,11 +67,11 @@ func main() {
             }
             log.Fatal(err)
         }
-        fmt.Println(""raw: "",string(ext.Raw))
+        fmt.Println("raw: ",string(ext.Raw))
         versions := &runtime.VersionedObjects{}
         //_, gvk, err := objectdecoder.Decode(ext.Raw,nil,versions)
         obj, gvk, err := unstructured.UnstructuredJSONScheme.Decode(ext.Raw,nil,versions)
-        fmt.Println(""obj: "",obj)
+        fmt.Println("obj: ",obj)
 
         // https://github.com/kubernetes/apimachinery/blob/master/pkg/api/meta/interfaces.go
         mapping, err := restmapper.RESTMapping(gvk.GroupKind(), gvk.Version)
@@ -116,11 +116,11 @@ func main() {
             log.Fatal(err)
         }
         unstruct.Object = blob.(map[string]interface{})
-        fmt.Println(""unstruct:"",unstruct)
-        ns := ""default""
-        if md,ok := unstruct.Object[""metadata""]; ok {
+        fmt.Println("unstruct:",unstruct)
+        ns := "default"
+        if md,ok := unstruct.Object["metadata"]; ok {
             metadata := md.(map[string]interface{})
-            if internalns,ok := metadata[""namespace""]; ok {
+            if internalns,ok := metadata["namespace"]; ok {
                 ns = internalns.(string)
             }
         }
@@ -130,15 +130,15 @@ func main() {
         if err != nil {
             log.Fatal(err)
         }
-        fmt.Println(""unstruct response:"",us)
+        fmt.Println("unstruct response:",us)
 
 
     }
 }
 
 func homeDir() string {
-    if h := os.Getenv(""HOME""); h != """" {
+    if h := os.Getenv("HOME"); h != "" {
         return h
     }
-    return os.Getenv(""USERPROFILE"") // windows
+    return os.Getenv("USERPROFILE") // windows
 }

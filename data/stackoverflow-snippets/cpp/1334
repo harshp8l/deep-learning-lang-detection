@@ -1,9 +1,9 @@
-#include ""client.h""
+#include "client.h"
 
 Client::Client(QObject *parent) : QObject(parent)
 {
-    qRegisterMetaType<PeerData>(""PeerData"");
-    qRegisterMetaType<QHostAddress>(""QHostAddress"");
+    qRegisterMetaType<PeerData>("PeerData");
+    qRegisterMetaType<QHostAddress>("QHostAddress");
 
     m_socket = nullptr;
     m_size = 0;
@@ -79,7 +79,7 @@ void Client::UDPReadyRead()
 
         //Test the header used in this udp broadcast, you can freely change this value,
         //but do for both client and server
-        if (QLatin1String(data) == QLatin1Literal(""TEST""))
+        if (QLatin1String(data) == QLatin1Literal("TEST"))
             emit peerFound(peer_address);
     }
 }
@@ -94,10 +94,10 @@ void Client::UDPWrite()
         if (address.protocol() == QAbstractSocket::IPv4Protocol)
         {
             address.setAddress(address.toIPv4Address());
-            QStringList list = address.toString().split(""."");
-            list.replace(3, ""255"");
+            QStringList list = address.toString().split(".");
+            list.replace(3, "255");
 
-            QString currentbroadcast = list.join(""."");
+            QString currentbroadcast = list.join(".");
 
             QHostAddress address = QHostAddress(QHostAddress(currentbroadcast).toIPv4Address());
 
@@ -105,7 +105,7 @@ void Client::UDPWrite()
         }
     }
 
-    QByteArray datagram = QString(""TEST"").toLatin1();
+    QByteArray datagram = QString("TEST").toLatin1();
 
     foreach (const QHostAddress &address, broadcast)
         m_udp_socket->writeDatagram(datagram, address, m_udp_port);
@@ -123,7 +123,7 @@ void Client::searchPeersEnd()
 
 void Client::timeout()
 {
-    emit error(""Operation timed out"");
+    emit error("Operation timed out");
     stop();
 }
 

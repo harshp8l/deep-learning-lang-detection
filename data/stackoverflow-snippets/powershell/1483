@@ -1,8 +1,8 @@
 $computerName = [Net.Dns]::GetHostName()  # i.e., local computer
-$computer = [ADSI] ""WinNT://$computerName,Computer""
+$computer = [ADSI] "WinNT://$computerName,Computer"
 $childObjects = $computer.Children
 foreach ( $childObject in $childObjects ) {
-  if ( $childObject.Class -eq ""User"" ) {
+  if ( $childObject.Class -eq "User" ) {
     if ( $childObject.PasswordAge[0] -gt 0 ) {
       $pwdLastSet = (Get-Date).AddSeconds(-$childObject.PasswordAge[0])
     }
@@ -10,7 +10,7 @@ foreach ( $childObject in $childObjects ) {
       $pwdLastSet = $null
     }
     $childObject | Select-Object `
-      @{Name=""AdsPath"";         Expression={$_.AdsPath}},
-      @{Name=""PasswordLastSet""; Expression={$pwdLastSet}}
+      @{Name="AdsPath";         Expression={$_.AdsPath}},
+      @{Name="PasswordLastSet"; Expression={$pwdLastSet}}
   }
 }

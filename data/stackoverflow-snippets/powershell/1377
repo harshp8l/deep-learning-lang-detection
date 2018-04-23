@@ -1,13 +1,13 @@
-$FolderPath = ""C:\Test""  
+$FolderPath = "C:\Test"  
 
-$Pattern = ""(?i)(?<=\b^test\b)\s+(\w+)\S+""                     
+$Pattern = "(?i)(?<=\b^test\b)\s+(\w+)\S+"                     
 $Results =@{}                                                                                 
 
     Get-ChildItem -Recurse $FolderPath -File |                                              
     ForEach-Object {                                                                                         
         $str = Get-Content $_.FullName                                                          
         $Line =  [regex]::matches($str,$Pattern) | % { $_.Value } | Sort-Object | Get-Unique
-        $Line = $Line.Trim().ToUpper() -Replace '[\r\n]+', ' ' -Replace "";"",'' | Sort-Object | Get-Unique # Cleaning up data in array
+        $Line = $Line.Trim().ToUpper() -Replace '[\r\n]+', ' ' -Replace ";",'' | Sort-Object | Get-Unique # Cleaning up data in array
         $Results[$_.FullName] = $Line
     }
-    $Results.GetEnumerator() | Select @{L=""Folder"";E={$_.Key}}, @{L=""Matches"";E={$_.Value}} | Export-Csv -NoType -Path <Path to save CSV>
+    $Results.GetEnumerator() | Select @{L="Folder";E={$_.Key}}, @{L="Matches";E={$_.Value}} | Export-Csv -NoType -Path <Path to save CSV>

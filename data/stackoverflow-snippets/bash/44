@@ -1,9 +1,9 @@
 #!/bin/bash
 
 multimatch() {
-    filename=""$1"" # Filename is first parameter
-    shift # move it out of the way that ""$@"" is useful
-    strings=( ""$@"" ) # search strings into an array
+    filename="$1" # Filename is first parameter
+    shift # move it out of the way that "$@" is useful
+    strings=( "$@" ) # search strings into an array
 
     declare -a matches # Array to keep track which strings already match
 
@@ -15,8 +15,8 @@ multimatch() {
     while IFS= read -r line; do # Read file linewise
         foundmatch=0 # Flag to indicate whether this line matched anything
         for ((i=0;i<${#strings[@]};i++)); do # Loop through strings indexes
-            if [ ""${matches[$i]}"" -eq 0 ]; then # If no previous line matched this string yet
-                string=""${strings[$i]}"" # fetch the string
+            if [ "${matches[$i]}" -eq 0 ]; then # If no previous line matched this string yet
+                string="${strings[$i]}" # fetch the string
                 if [[ $line = *$string* ]]; then # check if it matches
                     matches[$i]=1   # mark that we have found this
                     foundmatch=1    # set the flag, we need to check whether we have something left
@@ -25,27 +25,27 @@ multimatch() {
         done
         # If we found something, we need to check whether we
         # can stop looking
-        if [ ""$foundmatch"" -eq 1 ]; then
+        if [ "$foundmatch" -eq 1 ]; then
             somethingleft=0 # Flag to see if we still have unmatched strings
             for ((i=0;i<${#matches[@]};i++)); do
-                if [ ""${matches[$i]}"" -eq 0 ]; then
+                if [ "${matches[$i]}" -eq 0 ]; then
                     somethingleft=1 # Something is still outstanding
                     break # no need check whether more strings are outstanding
                 fi
             done
             # If we didn't find anything unmatched, we have everything
-            if [ ""$somethingleft"" -eq 0 ]; then return 0; fi
+            if [ "$somethingleft" -eq 0 ]; then return 0; fi
         fi
-    done < ""$filename""
+    done < "$filename"
 
     # If we get here, we didn't have everything in the file
     return 1
 }
 
 multimatch_regex() {
-    filename=""$1"" # Filename is first parameter
-    shift # move it out of the way that ""$@"" is useful
-    regexes=( ""$@"" ) # Regexes into an array
+    filename="$1" # Filename is first parameter
+    shift # move it out of the way that "$@" is useful
+    regexes=( "$@" ) # Regexes into an array
 
     declare -a matches # Array to keep track which regexes already match
 
@@ -57,8 +57,8 @@ multimatch_regex() {
     while IFS= read -r line; do # Read file linewise
         foundmatch=0 # Flag to indicate whether this line matched anything
         for ((i=0;i<${#strings[@]};i++)); do # Loop through strings indexes
-            if [ ""${matches[$i]}"" -eq 0 ]; then # If no previous line matched this string yet
-                regex=""${regexes[$i]}"" # Get regex from array
+            if [ "${matches[$i]}" -eq 0 ]; then # If no previous line matched this string yet
+                regex="${regexes[$i]}" # Get regex from array
                 if [[ $line =~ $regex ]]; then # We use the bash regex operator here
                     matches[$i]=1   # mark that we have found this
                     foundmatch=1    # set the flag, we need to check whether we have something left
@@ -67,31 +67,31 @@ multimatch_regex() {
         done
         # If we found something, we need to check whether we
         # can stop looking
-        if [ ""$foundmatch"" -eq 1 ]; then
+        if [ "$foundmatch" -eq 1 ]; then
             somethingleft=0 # Flag to see if we still have unmatched strings
             for ((i=0;i<${#matches[@]};i++)); do
-                if [ ""${matches[$i]}"" -eq 0 ]; then
+                if [ "${matches[$i]}" -eq 0 ]; then
                     somethingleft=1 # Something is still outstanding
                     break # no need check whether more strings are outstanding
                 fi
             done
             # If we didn't find anything unmatched, we have everything
-            if [ ""$somethingleft"" -eq 0 ]; then return 0; fi
+            if [ "$somethingleft" -eq 0 ]; then return 0; fi
         fi
-    done < ""$filename""
+    done < "$filename"
 
     # If we get here, we didn't have everything in the file
     return 1
 }
 
-if multimatch ""filename"" string1 string2 string3; then
-    echo ""file has all strings""
+if multimatch "filename" string1 string2 string3; then
+    echo "file has all strings"
 else
-    echo ""file miss one or more strings""
+    echo "file miss one or more strings"
 fi
 
-if multimatch_regex ""filename"" ""regex1"" ""regex2"" ""regex3""; then
-    echo ""file match all regular expressions""
+if multimatch_regex "filename" "regex1" "regex2" "regex3"; then
+    echo "file match all regular expressions"
 else
-    echo ""file does not match all regular expressions""
+    echo "file does not match all regular expressions"
 fi

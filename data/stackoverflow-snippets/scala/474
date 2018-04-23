@@ -31,8 +31,8 @@ class princomp:
         self.std=std
         self.prefix=prefix
         self.cols = [self.prefix+str(i) for i in list(range(1,self.n+1))]
-        self.inputcol = ""std_features""
-        self.outputcol = ""pca_features""
+        self.inputcol = "std_features"
+        self.outputcol = "pca_features"
         self.vars = 'all'
         self.model = PCA(k=self.n,inputCol=self.inputcol,outputCol=self.outputcol)
         self.components = sqlContext.createDataFrame(pd.DataFrame([0]))
@@ -105,13 +105,13 @@ class princomp:
         return self.result
     # CORE methods
     def vectorizedf(inputdf,vars='all'):
-        """"""Returns the input spark dataframe with an additional column of dense vector features""""""
+        """Returns the input spark dataframe with an additional column of dense vector features"""
         if vars=='all':
             myfeatures = inputdf.columns
         else:
             myfeatures=vars
 
-        assembler = VectorAssembler(inputCols = myfeatures,outputCol=""features"")
+        assembler = VectorAssembler(inputCols = myfeatures,outputCol="features")
         assembled = assembler.transform(inputdf)
 
         as_dense = udf(
@@ -119,23 +119,23 @@ class princomp:
             VectorUDT()
         )
 
-        df_dense = assembled.withColumn(""features1"", as_dense(assembled.features))
-        df_dense2 = df_dense.drop(""features"")
-        df_dense3 = df_dense2.withColumnRenamed(""features1"",""features"")
+        df_dense = assembled.withColumn("features1", as_dense(assembled.features))
+        df_dense2 = df_dense.drop("features")
+        df_dense3 = df_dense2.withColumnRenamed("features1","features")
         return df_dense3
     def outputcompfile(self,filewlocation):
-        """""" Outputs the loading of principal components to the file specified""""""
+        """ Outputs the loading of principal components to the file specified"""
         df = self.components
         df.to_csv(filewlocation,index=False)
-        print (""Component matrix is now available at the location : ""+filewlocation)
+        print ("Component matrix is now available at the location : "+filewlocation)
     def identity(self):
-        """""" Outputs an identity matrix in the form of features column in a dataframe""""""
+        """ Outputs an identity matrix in the form of features column in a dataframe"""
         iden = np.identity(len(self.vars)).tolist()
         rddi = sc.parallelize(iden)
         df_identity = rddi.map(lambda line:Row(std_features=Vectors.dense(line))).toDF()
         return df_identity
     def fit(self,inputdf,myfeatures):
-        """""" Fits the input dataframe in a PCA model with the given features """"""
+        """ Fits the input dataframe in a PCA model with the given features """
         start_time = time.time()      # Start Timer
         if myfeatures=='all':
             self.vars = inputdf.columns
@@ -160,14 +160,14 @@ class princomp:
         df_identity = self.identity()
         components = model1.transform(df_identity)
         components = components.withColumnRenamed('pca_features','components')
-        edf_rdd = components.select(""components"").rdd.map(lambda x: tuple(x.components.toArray().tolist()))
+        edf_rdd = components.select("components").rdd.map(lambda x: tuple(x.components.toArray().tolist()))
         edf_pandas = edf_rdd.toDF(self.cols).toPandas()
         comp_ind = sqlContext.createDataFrame([Row(industries=self.vars)])
-        comp_ind_pandas = comp_ind.select(explode(comp_ind.industries).alias(""Variable"")).toPandas()
+        comp_ind_pandas = comp_ind.select(explode(comp_ind.industries).alias("Variable")).toPandas()
         self.components = pd.concat([comp_ind_pandas,edf_pandas],axis=1)
         # Compute and standardize projections if self.std = True
         if self.std:
-            projections1=self.scalemeanstd(df_features,inputcol = ""pca_features"",outputcol = ""projections"")
+            projections1=self.scalemeanstd(df_features,inputcol = "pca_features",outputcol = "projections")
         else:
             projections1 = df_features.withColumnRenamed('pca_features','projections')
         # Prepare data for output
@@ -175,7 +175,7 @@ class princomp:
         drop_list = ['features','std_features','pca_features']
         projections2 = projections1.select([c for c in projections1.columns if c not in drop_list])
         l = ['x.'+c for c in inputdf.columns]
-        cst = '['+"","".join(l)+']'
+        cst = '['+",".join(l)+']'
         final_df = projections1.rdd.map(lambda x: tuple(eval(cst))+tuple(x.projections.toArray().tolist())).toDF(inputdf.columns+self.cols)
         self.result = final_df
-        print(""PCA fitting took a total of %s seconds "" % (time.time() - start_time))
+        print("PCA fitting took a total of %s seconds " % (time.time() - start_time))

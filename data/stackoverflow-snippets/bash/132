@@ -1,22 +1,22 @@
 #!/bin/bash
 
-srchpath=""${1:-.}""      ## search path (default .)
-daterng=""${2:-30}""      ## date range (default 30)
+srchpath="${1:-.}"      ## search path (default .)
+daterng="${2:-30}"      ## date range (default 30)
 
-test -d ""$srchpath"" || {    ## validate search path
-    printf ""error: path not found '%s'.\n"" ""$srchpath""
+test -d "$srchpath" || {    ## validate search path
+    printf "error: path not found '%s'.\n" "$srchpath"
     exit 1
 }
-test ""$daterng"" -eq ""$daterng"" 2>/dev/null || { ## validate range
-    printf ""error: non-integer range entered '%s'.\n"" ""$daternd""
+test "$daterng" -eq "$daterng" 2>/dev/null || { ## validate range
+    printf "error: non-integer range entered '%s'.\n" "$daternd"
     exit 1
 }
-d=$(date -d""5 days ago"" +%s)    ## get 5 days ago
+d=$(date -d"5 days ago" +%s)    ## get 5 days ago
 
 for ((i = 1; i <= daterng; i++)); do    ## loop over days in range
-    dt=""$(date -d@$((d - i * 86400)) +%Y%m%d)""  ## get date yyyymmdd
-    fn=""$dt.tar.gz""     ## form filename yyyymmdd.tar.gz
-    echo ""tar -czf $fn \$(find $srchpath -type f -name *$dt*)"" ## echo command
+    dt="$(date -d@$((d - i * 86400)) +%Y%m%d)"  ## get date yyyymmdd
+    fn="$dt.tar.gz"     ## form filename yyyymmdd.tar.gz
+    echo "tar -czf $fn \$(find $srchpath -type f -name *$dt*)" ## echo command
     ## recursively compress matching files (no spaces allowed in name)
-    tar -czf ""$fn"" $(find ""$srchpath"" -type f -name *""$dt""*) 2>/dev/null
+    tar -czf "$fn" $(find "$srchpath" -type f -name *"$dt"*) 2>/dev/null
 done

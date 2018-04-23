@@ -12,7 +12,7 @@ namespace Parser {
 
     rule<struct list_, token> item;
 
-    auto quoted   = lexeme [ '""' >> *('\\' >> char_ | ~char_('""')) >> '""' ];
+    auto quoted   = lexeme [ '"' >> *('\\' >> char_ | ~char_('"')) >> '"' ];
     auto bare     = lexeme [ +(graph-','-'}') ];
 
     auto list     = '{' >> (item % ',') >> '}';
@@ -25,8 +25,8 @@ namespace Parser {
 
 int main() {
     for (std::string const input : {
-            R""({one, ""five, six""})"",
-            R""({one, {2, ""three four""}, ""five, six"", {""seven, eight""}})"",
+            R"({one, "five, six"})",
+            R"({one, {2, "three four"}, "five, six", {"seven, eight"}})",
         })
     {
         auto f = input.begin(), l = input.end();
@@ -35,15 +35,15 @@ int main() {
         bool ok = phrase_parse(f, l, Parser::list, x3::space, parsed);
 
         if (ok) {
-            std::cout << ""Parsed: "" << parsed.size() << "" elements\n"";
+            std::cout << "Parsed: " << parsed.size() << " elements\n";
             for (auto& el : parsed) {
-                std::cout << "" - "" << std::quoted(el, '\'') << ""\n"";
+                std::cout << " - " << std::quoted(el, '\'') << "\n";
             }
         } else {
-            std::cout << ""Parse failed\n"";
+            std::cout << "Parse failed\n";
         }
 
         if (f != l)
-            std::cout << ""Remaining unparsed: "" << std::quoted(std::string{f, l}) << ""\n"";
+            std::cout << "Remaining unparsed: " << std::quoted(std::string{f, l}) << "\n";
     }
 }

@@ -15,19 +15,19 @@ let obs () =
     do       
        let inpc = not :> INotifyPropertyChanged
        inpc.PropertyChanged 
-       |> Observable.add (fun p -> printfn ""Hit %s!"" p.PropertyName)       
+       |> Observable.add (fun p -> printfn "Hit %s!" p.PropertyName)       
 
        async {
             for i in [0 .. 10] do
                 do! Async.Sleep 100
-                printfn ""Raising""
-                not.RaisePropertyChanged <| sprintf ""%d"" i
+                printfn "Raising"
+                not.RaisePropertyChanged <| sprintf "%d" i
             mre.Set () |> ignore
        } |> Async.Start
 
-       printfn ""Exiting block""
+       printfn "Exiting block"
 
-    GC.Collect() // Force a collection, to ""cleanup""
+    GC.Collect() // Force a collection, to "cleanup"
     mre.WaitOne() |> ignore
 
 let signals () =
@@ -37,30 +37,30 @@ let signals () =
 
     do
        not 
-       |> Signal.Subscription.create (fun v -> printfn ""Hit %d!"" v)
+       |> Signal.Subscription.create (fun v -> printfn "Hit %d!" v)
        |> ignore // throw away subscription handle
 
        async {
             for i in [0 .. 10] do
                 do! Async.Sleep 100 
-                printfn ""Setting""
+                printfn "Setting"
                 not.Value <- i                
             mre.Set () |> ignore
        } |> Async.Start
 
-       printfn ""Exiting block""
+       printfn "Exiting block"
 
-    GC.Collect() // Force a collection, to ""cleanup""
+    GC.Collect() // Force a collection, to "cleanup"
     mre.WaitOne() |> ignore
 
 
 [<STAThread>]
 [<EntryPoint>]
 let main _ =
-    printfn ""Using observable""
+    printfn "Using observable"
     obs ()
 
-    printfn ""Using signals""
+    printfn "Using signals"
     signals ()
 
     1

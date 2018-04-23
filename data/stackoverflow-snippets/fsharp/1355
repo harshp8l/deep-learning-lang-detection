@@ -1,14 +1,14 @@
   let knows target (details : Knows) source =
     client.Cypher
-      .Match(""(s:Person)"", ""(t:Person)"")
+      .Match("(s:Person)", "(t:Person)")
       .Where(fun s -> s.Twitter = source.Twitter)
       .AndWhere(fun t -> t.Twitter = target.Twitter)
-      .CreateUnique(""s-[:knows {knowsData}]->t"")
-      .WithParam(""knowsData"", details)
+      .CreateUnique("s-[:knows {knowsData}]->t")
+      .WithParam("knowsData", details)
       .Return(fun s t -> s.As<Person>(),t.As<Person>())
 
   let pAfollowers =
     client.Cypher
-      .Match(""n<-[:follows]-e"")
-      .Where(fun n -> n.Twitter = ""tA"")
+      .Match("n<-[:follows]-e")
+      .Where(fun n -> n.Twitter = "tA")
       .Return(fun (e : Cypher.ICypherResultItem) n -> e.As<Person>().Name,n.As<Person>().Name)

@@ -1,10 +1,10 @@
-$service = new-object -ComObject(""Schedule.Service"")
+$service = new-object -ComObject("Schedule.Service")
                         # connect to the local machine.
 
                         $service.Connect()
-                        $rootFolder = $service.GetFolder(""\"")
+                        $rootFolder = $service.GetFolder("\")
                         $TaskDefinition = $service.NewTask(0)
-                        $TaskDefinition.RegistrationInfo.Description = ""$TaskDescr""
+                        $TaskDefinition.RegistrationInfo.Description = "$TaskDescr"
                         $TaskDefinition.Settings.Enabled = $true
                         $TaskDefinition.Settings.AllowDemandStart = $true
                         $TaskDefinition.Settings.StartWhenAvailable = $true
@@ -13,17 +13,17 @@ $service = new-object -ComObject(""Schedule.Service"")
                         $TaskDefinition.Settings.MultipleInstances=2
                         $taskdefinition.Settings.WakeToRun=$true
                         $triggers = $TaskDefinition.Triggers
-                        $trigger = $triggers.Create(1) # Creates a ""One time"" trigger
-                        $trigger.StartBoundary = $TaskStartTime.ToString(""yyyy-MM-dd'T'HH:mm:ss"")
+                        $trigger = $triggers.Create(1) # Creates a "One time" trigger
+                        $trigger.StartBoundary = $TaskStartTime.ToString("yyyy-MM-dd'T'HH:mm:ss")
                         $time_interval=New-TimeSpan -Minutes $interval
                         $time_interval=$time_interval.TotalSeconds
-                        $trigger.Repetition.Interval= ""PT""+""$time_interval""+""S""
+                        $trigger.Repetition.Interval= "PT"+"$time_interval"+"S"
                         $trigger.Enabled = $true
                         $TaskDefinition.Principal.RunLevel =1
                         $Action = $TaskDefinition.Actions.Create(0)
-                        $action.Path = ""$TaskCommand""
-                        $action.Arguments = ""$TaskArg""
+                        $action.Path = "$TaskCommand"
+                        $action.Arguments = "$TaskArg"
                         # In Task Definition,
-                        #   6 indicates ""the task will not execute when it is registered unless a time-based trigger causes it to execute on registration.""
-                        #   5 indicates ""Indicates that a Local System, Local Service, or Network Service account is being used as a security context to run the task.In this case, its the SYSTEM""
-                        $rootFolder.RegisterTaskDefinition(""$TaskName"",$TaskDefinition,6,""System"",$null,5) | Out-Null
+                        #   6 indicates "the task will not execute when it is registered unless a time-based trigger causes it to execute on registration."
+                        #   5 indicates "Indicates that a Local System, Local Service, or Network Service account is being used as a security context to run the task.In this case, its the SYSTEM"
+                        $rootFolder.RegisterTaskDefinition("$TaskName",$TaskDefinition,6,"System",$null,5) | Out-Null

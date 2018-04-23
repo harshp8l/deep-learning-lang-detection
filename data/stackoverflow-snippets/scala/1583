@@ -1,21 +1,21 @@
     **I have the same problem and I am not able to fix**
 
 
-    name := ""SentimentAnalyser""
+    name := "SentimentAnalyser"
 
-    version := ""0.1""
+    version := "0.1"
 
-    scalaVersion := ""2.11.11""
+    scalaVersion := "2.11.11"
 
 
 
-    libraryDependencies += ""org.apache.spark"" % ""spark-core_2.11"" % ""2.2.0""
+    libraryDependencies += "org.apache.spark" % "spark-core_2.11" % "2.2.0"
 
     // https://mvnrepository.com/artifact/org.apache.spark/park-streaming-twitter_2.11
 
     // https://mvnrepository.com/artifact/org.apache.spark/spark-streaming_2.11
-    libraryDependencies += ""org.apache.spark"" % ""spark-streaming-twitter_2.11"" % ""2.0.0""
-    libraryDependencies += ""org.apache.spark"" % ""spark-streaming_2.11"" % ""2.2.0""
+    libraryDependencies += "org.apache.spark" % "spark-streaming-twitter_2.11" % "2.0.0"
+    libraryDependencies += "org.apache.spark" % "spark-streaming_2.11" % "2.2.0"
 
     package com
 
@@ -28,23 +28,23 @@
       def main(args: Array[String]): Unit = {
 
         if(args.length<4){
-          System.out.print(""Enter Consumer Key (API Key) Consumer Secret (API Secret)Access Token Access Token Secret"")
+          System.out.print("Enter Consumer Key (API Key) Consumer Secret (API Secret)Access Token Access Token Secret")
           System.exit(1);
         }
 
         val Array(customer_key,customer_secrect,access_token,access_token_secret)=args.take(4)
 
-        System.setProperty(""twiteer4j.oauth.consumerKey"",customer_key)
-        System.setProperty(""twiteer4j.oauth.customerSecret"",customer_secrect)
-        System.setProperty(""twiteer4j.oauth.accessToken"",access_token)
-        System.setProperty(""twiteer4j.oauth.accessTokenSecret"",access_token_secret)
+        System.setProperty("twiteer4j.oauth.consumerKey",customer_key)
+        System.setProperty("twiteer4j.oauth.customerSecret",customer_secrect)
+        System.setProperty("twiteer4j.oauth.accessToken",access_token)
+        System.setProperty("twiteer4j.oauth.accessTokenSecret",access_token_secret)
 
-        val conf=new SparkConf().setAppName(""Sentiment"").setMaster(""local"")
+        val conf=new SparkConf().setAppName("Sentiment").setMaster("local")
         val scc=new StreamingContext(conf,Seconds(30))
         //Dstream
         val stream=TwitterUtils.createStream(scc,None)
 
-        val hashTag=stream.flatMap(status=>{status.getText.split("" "").filter(_.startsWith(""#""))})
+        val hashTag=stream.flatMap(status=>{status.getText.split(" ").filter(_.startsWith("#"))})
 
         val topHashTag60=hashTag.map((_,1)).reduceByKeyAndWindow(_+_,Seconds(60))
           .map{case (topic,count)=>(topic,count)}.transform(_.sortByKey(false))
@@ -55,14 +55,14 @@
 
         topHashTag60.foreachRDD(rdd=>{
           val topList=rdd.take(10)
-          println(""Popular topic in last 60 sec (%s total)"".format(rdd.count()))
-          topList.foreach{case (count,tag)=>println(""%s (%s tweets)"".format(tag,count))}
+          println("Popular topic in last 60 sec (%s total)".format(rdd.count()))
+          topList.foreach{case (count,tag)=>println("%s (%s tweets)".format(tag,count))}
         })
 
         topHashTag10.foreachRDD(rdd=>{
           val topList=rdd.take(10)
-          println(""Popular topic in last 10 sec (%s total)"".format(rdd.count()))
-          topList.foreach{case (count,tag)=>println(""%s (%s tweets)"".format(tag,count))}
+          println("Popular topic in last 10 sec (%s total)".format(rdd.count()))
+          topList.foreach{case (count,tag)=>println("%s (%s tweets)".format(tag,count))}
         })
 
 
@@ -94,7 +94,7 @@ spark-submit --class com.Sentiment  /root/Desktop/SentimentAnalyser.jar XX XX XX
 ERROR:
 17/10/29 01:22:24 INFO BlockManager: Initialized BlockManager: BlockManagerId(driver, 192.168.46.132, 34179, None)
 17/10/29 01:22:27 WARN StreamingContext: spark.master should be set as local[n], n > 1 in local mode if you have receivers to get data, otherwise Spark jobs will not get resources to process the received data.
-Exception in thread ""main"" java.lang.NoClassDefFoundError: org/apache/spark/streaming/twitter/TwitterUtils$
+Exception in thread "main" java.lang.NoClassDefFoundError: org/apache/spark/streaming/twitter/TwitterUtils$
         at com.Sentiment$.main(Sentiment.scala:26)
         at com.Sentiment.main(Sentiment.scala)
         at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)

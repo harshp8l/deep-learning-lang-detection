@@ -1,11 +1,11 @@
-// After ""jumping"" the trampoline we either have a result (Done)
-//  or we need to ""jump"" again (Next)
+// After "jumping" the trampoline we either have a result (Done)
+//  or we need to "jump" again (Next)
 type result<'T> =
   | Done    of  'T
   | Next    of  (unit -> result<'T>)
 
 let coEval3 (e : expr) (env : value env) (cont : int -> answer) (econt : exn -> answer) : answer =
-  // ""Jumps"" once producing either a result or a new ""jump""
+  // "Jumps" once producing either a result or a new "jump"
   let rec jump (e : expr) (env : value env) (cont : int -> result<answer>) (econt : exn -> result<answer>) () : result<answer> =
     match e with
     | CstI i -> cont i
@@ -13,19 +13,19 @@ let coEval3 (e : expr) (env : value env) (cont : int -> answer) (econt : exn -> 
     | Var x  -> 
       match lookup env x with
       | Int i -> cont i
-      | _     -> Abort ""coEval2 Var"" |> Done
+      | _     -> Abort "coEval2 Var" |> Done
     | Prim(ope, e1, e2) -> 
       jump e1 env 
         (fun i1 ->
           jump e2 env 
             (fun i2 ->
             match ope with
-            | ""*"" -> cont(i1 * i2)
-            | ""+"" -> cont(i1 + i2)
-            | ""-"" -> cont(i1 - i2)
-            | ""="" -> cont(if i1 = i2 then 1 else 0)
-            | ""<"" -> cont(if i1 < i2 then 1 else 0)
-            | _   -> Abort ""unknown primitive"" |> Done) econt |> Next) econt |> Next
+            | "*" -> cont(i1 * i2)
+            | "+" -> cont(i1 + i2)
+            | "-" -> cont(i1 - i2)
+            | "=" -> cont(if i1 = i2 then 1 else 0)
+            | "<" -> cont(if i1 < i2 then 1 else 0)
+            | _   -> Abort "unknown primitive" |> Done) econt |> Next) econt |> Next
     | Let(x, eRhs, letBody) -> 
       jump eRhs env (fun xVal -> 
                         let bodyEnv = (x, Int xVal) :: env 
@@ -47,7 +47,7 @@ let coEval3 (e : expr) (env : value env) (cont : int -> answer) (econt : exn -> 
             let fBodyEnv = (x, Int xVal) :: (f, fClosure) :: fDeclEnv
             jump fBody fBodyEnv cont econt |> Next)
             econt |> Next
-        | _ -> raise (Failure ""eval Call: not a function"")
+        | _ -> raise (Failure "eval Call: not a function")
     | Raise exn -> econt exn
     | TryWith (e1, exn, e2) -> 
       let econt1 thrown =

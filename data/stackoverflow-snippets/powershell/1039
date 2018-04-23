@@ -12,28 +12,28 @@ function Register-Dll
     param (
         [ValidateScript({ Test-Path -Path $_ -PathType 'Leaf' })]       
         [Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipeLineByPropertyName=$true)]
-        [Alias(""FullName"")]
+        [Alias("FullName")]
         [string[]]$Path,
-        [Alias(""u"")]
+        [Alias("u")]
         [switch]$Unregister
         )
     begin {
         if ($Unregister)
         {
-            $regflag = ""-u ""
+            $regflag = "-u "
         }
         else
         {
-            $regflag = """"
+            $regflag = ""
         }
         [int]$NumFailed=0
         $RegExitCodes = @{
-            0=""SUCCESS"";
-            1=""FAIL_ARGS - Invalid Argument"";
-            2=""FAIL_OLE - OleInitialize Failed"";
-            3=""FAIL_LOAD - LoadLibrary Failed"";
-            4=""FAIL_ENTRY - GetProcAddress failed"";
-            5=""FAIL_REG - DllRegisterServer or DllUnregisterServer failed."";
+            0="SUCCESS";
+            1="FAIL_ARGS - Invalid Argument";
+            2="FAIL_OLE - OleInitialize Failed";
+            3="FAIL_LOAD - LoadLibrary Failed";
+            4="FAIL_ENTRY - GetProcAddress failed";
+            5="FAIL_REG - DllRegisterServer or DllUnregisterServer failed.";
         }
     }
     process {
@@ -41,12 +41,12 @@ function Register-Dll
         {
             try
             {
-                $regsvrp = Start-Process regsvr32.exe -ArgumentList ""/s $regflag <code>$p</code>"" -Wait -NoNewWindow -PassThru
+                $regsvrp = Start-Process regsvr32.exe -ArgumentList "/s $regflag <code>$p</code>" -Wait -NoNewWindow -PassThru
 
                 if($regsvrp.ExitCode -ne 0)
                 {
                     $NumFailed++
-                    Write-Error ""regsvr32 $regflag for $p exited with error $($regsvrp.ExitCode) - $($RegExitCodes[$regsvrp.ExitCode])""
+                    Write-Error "regsvr32 $regflag for $p exited with error $($regsvrp.ExitCode) - $($RegExitCodes[$regsvrp.ExitCode])"
                 }
             } catch {
                 $NumFailed++
@@ -59,13 +59,13 @@ function Register-Dll
         {
             if ($Unregister)
             {
-                $mode = ""unregister""
+                $mode = "unregister"
             }
             else
             {
-                $mode = ""register""
+                $mode = "register"
             }
-            Write-Error ""Failed to $mode $NumFailed dll's, see previous errors for detail""
+            Write-Error "Failed to $mode $NumFailed dll's, see previous errors for detail"
         }
     }
 }

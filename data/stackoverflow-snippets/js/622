@@ -3,14 +3,14 @@ _write( data, encoding, doneFn ) {
         this.getSocket(),
         /* This below code should better be handled within method this.getSocket so we won't need to use Promise.race */
         new Promise((resolve, reject) => {
-            setTimeout( reject, 1000, Object.assign( new Error( `timeout on trying to connect w/ ${this.address}` ), { code: ""ECONNREFUSED"" } ) );
+            setTimeout( reject, 1000, Object.assign( new Error( `timeout on trying to connect w/ ${this.address}` ), { code: "ECONNREFUSED" } ) );
         }),
     ] )
         .then( socket => {
             return socket && new Promise( ( resolve, reject ) => {
-                socket.once( ""error"", reject );
+                socket.once( "error", reject );
                 socket.write( data, encoding, () => {
-                    socket.removeListener( ""error"", reject );
+                    socket.removeListener( "error", reject );
 
                     resolve();
                 } );
@@ -21,12 +21,12 @@ _write( data, encoding, doneFn ) {
             const { address } = this;
 
             switch ( error.code ) {
-                case ""EPIPE"" :
-                case ""ECONNRESET"" :
+                case "EPIPE" :
+                case "ECONNRESET" :
                     Log( `lost connection w/ ${address.id}` );
                     break;
 
-                case ""ECONNREFUSED"" :
+                case "ECONNREFUSED" :
                     Log( `failed to connect w/ ${address.id}` );
                     break;
             }

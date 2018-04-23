@@ -36,25 +36,25 @@ object PlayWsErrorHandling extends App {
 
     httpRequest(wsClient) map {
       case Left(errorResponse) =>
-        println(s""handle application level error: $errorResponse"")
+        println(s"handle application level error: $errorResponse")
         // ...
 
       case Right(goodResponse) =>
-        println(s""handle application level good response $goodResponse"")
+        println(s"handle application level good response $goodResponse")
         // ...
 
     } recover { // handle failed futures (futures with exceptions inside)
       case parsingError: JsonParseException =>
-        println(s""Attempt recovery from parsingError"")
+        println(s"Attempt recovery from parsingError")
         // ...
 
       case networkingError: IOException =>
-        println(s""Attempt recovery from networkingError"")
+        println(s"Attempt recovery from networkingError")
         // ...
     }
 
   def httpRequest(wsClient: StandaloneWSClient): Future[Either[ErrorResponse, MyResponseClass]] =
-    wsClient.url(""http://www.example.com"").get() map { response ⇒
+    wsClient.url("http://www.example.com").get() map { response ⇒
 
       if (response.status >= 400) // application level error
         Left(response.body[JsValue].as[ErrorResponse])
@@ -63,8 +63,8 @@ object PlayWsErrorHandling extends App {
 
     } andThen { // exceptions thrown inside Future
       case Failure(exception) => exception match {
-        case parsingError: JsonParseException => println(s""Log parsing error: $parsingError"")
-        case networkingError: IOException => println(s""Log networking errors: $networkingError"")
+        case parsingError: JsonParseException => println(s"Log parsing error: $parsingError")
+        case networkingError: IOException => println(s"Log networking errors: $networkingError")
       }
     }
 }

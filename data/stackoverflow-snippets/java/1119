@@ -15,20 +15,20 @@ public void doFilter(ServletRequest servletRequest, ServletResponse servletRespo
     HttpServletRequest request = (HttpServletRequest) servletRequest;
     HttpServletResponse response = (HttpServletResponse) servletResponse;
     UserDaoImpl dao = new UserDaoImpl();
-    String login = request.getParameter(""login"");
-    String password = request.getParameter(""password"");
+    String login = request.getParameter("login");
+    String password = request.getParameter("password");
     int id = dao.findByLogin(login, password);
 
     User user = dao.findById(id);
 
     HttpSession session = request.getSession();
 
-    if (nonNull(session) && nonNull(session.getAttribute(""user""))) {
-        User role = (User) session.getAttribute(""user"");
+    if (nonNull(session) && nonNull(session.getAttribute("user"))) {
+        User role = (User) session.getAttribute("user");
         moveToMenu(request, response, role.getRole());
     } else if (dao.userIsExist(login, password)) {
         User.ROLE role = dao.getRoleByLoginPassword(login, password);
-        request.getSession().setAttribute(""user"", user);
+        request.getSession().setAttribute("user", user);
         moveToMenu(request, response, role);
     } else {
         moveToMenu(request, response, User.ROLE.UNKNOWN);
@@ -37,10 +37,10 @@ public void doFilter(ServletRequest servletRequest, ServletResponse servletRespo
 
 private void moveToMenu(HttpServletRequest req, HttpServletResponse res, User.ROLE role) throws ServletException, IOException {
     if (role.equals(User.ROLE.ADMIN)) {
-        req.getRequestDispatcher(""/WEB-INF/view/adminPage.jsp"").forward(req, res);
+        req.getRequestDispatcher("/WEB-INF/view/adminPage.jsp").forward(req, res);
     } else if (role.equals(User.ROLE.USER)) {
-        req.getRequestDispatcher(""/WEB-INF/view/userPage.jsp"").forward(req, res);
+        req.getRequestDispatcher("/WEB-INF/view/userPage.jsp").forward(req, res);
     } else {
-        req.getRequestDispatcher(""/WEB-INF/view/index.jsp"").forward(req, res);
+        req.getRequestDispatcher("/WEB-INF/view/index.jsp").forward(req, res);
     }
 }

@@ -1,15 +1,15 @@
   (GET
-    ""/download/:id""
+    "/download/:id"
     [:as request]
     :header-params [{x-http-request-id :- X-Http-Request-Id nil}]
-    :path-params [id :- (describe String ""The encoded id of the image"")]
-    :summary ""Download the image bytes""
-    :description ""This endpoint responds 307 - Temporary Redirect to a cacheable presigned S3 URL for the actual bytes.""
+    :path-params [id :- (describe String "The encoded id of the image")]
+    :summary "Download the image bytes"
+    :description "This endpoint responds 307 - Temporary Redirect to a cacheable presigned S3 URL for the actual bytes."
     (let [http-response (->> request
                              walk/keywordize-keys
                              util/extract-base-url
                              (transform/generate-resource-url (util/decode-key id))
                              status/temporary-redirect)
           expire-time (-> 3 hours from-now coerce/to-date ring-time/format-date)]
-      (log/infof ""x-http-request-id is %s"" x-http-request-id)
-      (response/header http-response ""Expires"" expire-time)))
+      (log/infof "x-http-request-id is %s" x-http-request-id)
+      (response/header http-response "Expires" expire-time)))

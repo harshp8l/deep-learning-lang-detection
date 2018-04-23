@@ -6,45 +6,45 @@ $One = 1
 
 Set-Location $Remote 
 
-filter timestamp {""$(Get-Date -Format g): $_""} 
+filter timestamp {"$(Get-Date -Format g): $_"} 
 
 if ($Target -eq $null) { 
     $TotalA = $Source | Measure | Select-Object -ExpandProperty Count 
-    echo ""Total Number of Files to be Copied= $TotalA"" 
-    echo ""---------------------------------------------------------------"" 
-    Write-Output ""$Local Folder Empty"" | timestamp | Out-File -Encoding Ascii -append ""D:\Mitek\DCS Stuff\Display PC Scripts\test\log.txt"" 
-    Start-BitsTransfer -Source $Remote\*.* -Destination $Local -Description ""Copying $TotalA Files"" 
-    Rename-Item -Path ""C:\test\RemoteComplete.bat"" -NewName ""Remote.bat"" 
+    echo "Total Number of Files to be Copied= $TotalA" 
+    echo "---------------------------------------------------------------" 
+    Write-Output "$Local Folder Empty" | timestamp | Out-File -Encoding Ascii -append "D:\Mitek\DCS Stuff\Display PC Scripts\test\log.txt" 
+    Start-BitsTransfer -Source $Remote\*.* -Destination $Local -Description "Copying $TotalA Files" 
+    Rename-Item -Path "C:\test\RemoteComplete.bat" -NewName "Remote.bat" 
     exit 
 
 } Else { 
 
 if ($Target -ne $null){ 
-Compare-Object $Source $Target -Property Name -PassThru | Where-Object {$_.SideIndicator -eq ""=>""} | % { 
+Compare-Object $Source $Target -Property Name -PassThru | Where-Object {$_.SideIndicator -eq "=>"} | % { 
 
 if(-not $_.FullName.PSIsContainer) { 
-    Write-Output ""Removed From $Local"" | timestamp | Out-File -Encoding Ascii -append ""D:\Mitek\DCS Stuff\Display PC Scripts\test\log.txt"" 
+    Write-Output "Removed From $Local" | timestamp | Out-File -Encoding Ascii -append "D:\Mitek\DCS Stuff\Display PC Scripts\test\log.txt" 
     Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue}}}} 
 
 $Differences = Compare-Object -ReferenceObject $Source -DifferenceObject $Target -Property LastWriteTime -PassThru 
 
 if ($Differences -ne $null) { 
     $TotalB=$Differences | Group-Object Name | Select -ExpandProperty Group | Sort-Object Name | Measure | Select-Object -ExpandProperty Count 
-    echo ""Total Number of Files to be Copied= $TotalB"" 
-    Write-Output ""Copied to $Local"" | timestamp | Out-File -Encoding Ascii -append ""D:\Mitek\DCS Stuff\Display PC Scripts\test\log.txt"" 
+    echo "Total Number of Files to be Copied= $TotalB" 
+    Write-Output "Copied to $Local" | timestamp | Out-File -Encoding Ascii -append "D:\Mitek\DCS Stuff\Display PC Scripts\test\log.txt" 
         do { 
             $Tar = Get-ChildItem -Path $Local -File 
             $Src = Get-ChildItem -Path $Remote -File 
             $Diffs = Compare-Object -ReferenceObject $Src -DifferenceObject $Tar -Property LastWriteTime -PassThru 
             $ListB=$Diffs | Group-Object Name | Select -ExpandProperty Group | Sort-Object Name | Select-Object -First 1 
                 if ($ListB -ne $null) { 
-                    echo ""---------------------------------------------------------------"" 
+                    echo "---------------------------------------------------------------" 
                     $Rmn=$Diffs | Group-Object Name | Select -ExpandProperty Group | Sort-Object Name | Measure | Select-Object -ExpandProperty Count 
                     $RemainB = $Rmn - $One 
-                    Start-BitsTransfer -Source $ListB -Destination $Local -Description ""$RemainB Files Remain     Copying - $List"" }} 
+                    Start-BitsTransfer -Source $ListB -Destination $Local -Description "$RemainB Files Remain     Copying - $List" }} 
             Until ($ListB -eq $null) 
-    Rename-Item -Path ""C:\test\RemoteComplete.bat"" -NewName ""Remote.bat"" 
+    Rename-Item -Path "C:\test\RemoteComplete.bat" -NewName "Remote.bat" 
 
 } Else { 
 
-Write-Output ""$Local and $Remote are Equal"" | timestamp | Out-File -Encoding Ascii -append ""D:\Mitek\DCS Stuff\Display PC Scripts\test\log.txt""} 
+Write-Output "$Local and $Remote are Equal" | timestamp | Out-File -Encoding Ascii -append "D:\Mitek\DCS Stuff\Display PC Scripts\test\log.txt"} 

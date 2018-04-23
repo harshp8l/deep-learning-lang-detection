@@ -1,25 +1,25 @@
 func UploadStreamImage(w http.ResponseWriter, r *http.Request) {
-    file, handler, err := r.FormFile(""file"")
+    file, handler, err := r.FormFile("file")
     if err != nil {
-        log_errors("" error on upload"", err.Error(), w)
-        fmt.Println(""Error Uploading Image"")
+        log_errors(" error on upload", err.Error(), w)
+        fmt.Println("Error Uploading Image")
         return
     }
     defer file.Close()
 
     // Suggestion: You can calculate the file size from bytes.
     // instead getting it from form; since after resize image will change
-    imgSize, err := strconv.Atoi(r.FormValue(""imgsize""))
+    imgSize, err := strconv.Atoi(r.FormValue("imgsize"))
     if err != nil {
-        println(""Error converting to integer"")
-        log_errors(""Error converting to integer"", err.Error(), w)
+        println("Error converting to integer")
+        log_errors("Error converting to integer", err.Error(), w)
         return
     }
 
     img, err := imaging.Decode(file)
     if err != nil {
-        print(""Imaging Open error"")
-        log_errors(""Error decoding"", err.Error(), w)
+        print("Imaging Open error")
+        log_errors("Error decoding", err.Error(), w)
         return
     }
 
@@ -38,7 +38,7 @@ func UploadStreamImage(w http.ResponseWriter, r *http.Request) {
     } else if imgSize >= 401 && imgSize < 900 {
         height = int(float64(heightImg) * .68)
         width = int(float64(widthImg) * .68)
-        println(""Middle Image"")
+        println("Middle Image")
     } else if imgSize >= 900 && imgSize < 1300 {
         height = int(float64(heightImg) * .45)
         width = int(float64(widthImg) * .45)
@@ -54,7 +54,7 @@ func UploadStreamImage(w http.ResponseWriter, r *http.Request) {
     err = imaging.Encode(&buf, new_img, imaging.JPEG)
     if err != nil {
         log.Println(err)
-        log_errors("" error encoding file"", err.Error(), w)
+        log_errors(" error encoding file", err.Error(), w)
         return
     }
 
@@ -62,7 +62,7 @@ func UploadStreamImage(w http.ResponseWriter, r *http.Request) {
     fileSize := buf.Len()
     path := handler.Filename
     params := &s3.PutObjectInput{
-        Bucket: aws.String(""bucket name""),
+        Bucket: aws.String("bucket name"),
         Key:    aws.String(path),
         Body:   bytes.NewReader(buf.Bytes()),
 
@@ -72,10 +72,10 @@ func UploadStreamImage(w http.ResponseWriter, r *http.Request) {
 
     resp, err := svc.PutObject(params)
     if err != nil {
-        fmt.Printf(""bad response: %s"", err)
-        log_errors(""error in putObject"", err.Error(), w)
+        fmt.Printf("bad response: %s", err)
+        log_errors("error in putObject", err.Error(), w)
         return
     }
 
-    fmt.Println(""Done"", resp)
+    fmt.Println("Done", resp)
 }

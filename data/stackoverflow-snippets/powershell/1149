@@ -5,7 +5,7 @@ $vm.ExtensionData.Guest.Net | select -Property @{N='VM';E={$vm.Name}},
 @{N='Tools';E={$vm.ExtensionData.Guest.ToolsRunningStatus}},
 @{N='NicType';E={[string]::Join(',',(Get-NetworkAdapter -Vm $vm | Select-Object -ExpandProperty Type))}},
 @{N='VLAN';E={[string]::Join(',',(Get-NetworkAdapter -Vm $vm | Select-Object -ExpandProperty NetworkName))}},
-@{N='IP';E={[string]::Join(',',($vm.Guest.IPAddress | Where {($_.Split(""."")).length -eq 4}))}},
+@{N='IP';E={[string]::Join(',',($vm.Guest.IPAddress | Where {($_.Split(".")).length -eq 4}))}},
 @{N='Gateway';E={[string]::Join(',',($vm.ExtensionData.Guest.IpStack.IpRouteConfig.IpRoute | %{if($_.Gateway.IpAddress){$_.Gateway.IpAddress}}))}},
 @{N='Subnet Mask';E={
             $dec = [Convert]::ToUInt32($(('1' * $_.IpConfig.IpAddress[0].PrefixLength).PadRight(32, '0')), 2)
@@ -16,7 +16,7 @@ $vm.ExtensionData.Guest.Net | select -Property @{N='VM';E={$vm.Name}},
                 } )
             [String]::Join('.', $DottedIP) 
         }},
-@{N=""DNS"";E={[string]::Join(',',($vm.ExtensionData.Guest.IpStack.DnsConfig.IpAddress))}},
+@{N="DNS";E={[string]::Join(',',($vm.ExtensionData.Guest.IpStack.DnsConfig.IpAddress))}},
 @{N='MAC';E={[string]::Join(',',$_.MacAddress)}}
   }
 } | ft -AutoSize | Out-String -Width 4096 | Out-File C:\temp\VM-GetSomeInfo.txt

@@ -1,18 +1,18 @@
 type MakeString = 
   static member Make<'T>(o:'T) =
     match box o with
-    | :? float as f -> sprintf ""Float: %A"" f
+    | :? float as f -> sprintf "Float: %A" f
     | o ->
-        if typeof<'T>.Name = ""FSharpOption`1"" then
+        if typeof<'T>.Name = "FSharpOption`1" then
           let tys = typeof<'T>.GetGenericArguments()
-          typeof<MakeString>.GetMethod(""MakeOption"")
+          typeof<MakeString>.GetMethod("MakeOption")
             .MakeGenericMethod(tys).Invoke(null, [| o |]) :?> string
         else
-          failwith ""Unknown""
+          failwith "Unknown"
 
   static member MakeOption<'T>(o:option<'T>) =
     match o with
-    | None -> ""None""
-    | Some v -> ""Some "" + MakeString.Make(v)
+    | None -> "None"
+    | Some v -> "Some " + MakeString.Make(v)
 
 MakeString.Make(Some 3.14)

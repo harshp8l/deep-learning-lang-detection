@@ -20,14 +20,14 @@ namespace detail { struct LatencyCriticalLock {
 private:
    std::mutex mutex;
    template <typename T> static T check(T i) {
-      return (i != nil) ? i : throw std::runtime_error(""LatencyCrticalLock init() failed"");
+      return (i != nil) ? i : throw std::runtime_error("LatencyCrticalLock init() failed");
    }
    void init() {
       if (processInfo != nil) return;
-      auto const NSProcessInfo = check(objc_getClass(""NSProcessInfo""));
-      processInfo = check(objc_msgSend((id)NSProcessInfo, sel_getUid(""processInfo"")));
-      reason = check(objc_msgSend((id)objc_getClass(""NSString""), sel_getUid(""alloc"")));
-      reason = check(objc_msgSend(reason, sel_getUid(""initWithUTF8String:""), ""LatencyCriticalLock""));
+      auto const NSProcessInfo = check(objc_getClass("NSProcessInfo"));
+      processInfo = check(objc_msgSend((id)NSProcessInfo, sel_getUid("processInfo")));
+      reason = check(objc_msgSend((id)objc_getClass("NSString"), sel_getUid("alloc")));
+      reason = check(objc_msgSend(reason, sel_getUid("initWithUTF8String:"), "LatencyCriticalLock"));
    }
 }; }
 
@@ -50,7 +50,7 @@ public:
          /* Start activity that tells App Nap to mind its own business: */
          /* NSActivityUserInitiatedAllowingIdleSystemSleep */
          /* | NSActivityLatencyCritical */
-         d.activity = objc_msgSend(d.processInfo, sel_getUid(""beginActivityWithOptions:reason:""),
+         d.activity = objc_msgSend(d.processInfo, sel_getUid("beginActivityWithOptions:reason:"),
                                    0x00FFFFFFULL | 0xFF00000000ULL, d.reason);
          assert(d.activity != nil);
       }
@@ -64,7 +64,7 @@ public:
       assert(d.count > 0);
       if (d.count == 1) {
          assert(d.activity != nil);
-         objc_msgSend(d.processInfo, sel_getUid(""endActivity:""), d.activity);
+         objc_msgSend(d.processInfo, sel_getUid("endActivity:"), d.activity);
          d.activity = nil;
          locked = false;
       }

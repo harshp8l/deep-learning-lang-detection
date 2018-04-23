@@ -3,9 +3,9 @@
 setlocal
 :: Prepare the pass-thru arguments, by:
 ::  ^-escaping cmd.exe metachacters.
-::   \-escaping "" chars. and doubling ' chars for PowerShell.
+::   \-escaping " chars. and doubling ' chars for PowerShell.
 (set args=%*)
-if not %1.==. (set args=%args:""=\""%)
+if not %1.==. (set args=%args:"=\"%)
 if not %1.==. (set args=%args:'=''%)
 if not %1.==. (set args=%args:&=^&%)
 if not %1.==. (set args=%args:|=^|%)
@@ -15,7 +15,7 @@ if not %1.==. (set args=%args:>=^>%)
 :: The PowerShell command then reads this file and executes it with Invoke-Expression
 :: as a script block to which the pass-thru arguments are passed.
 :: NOTE: This file is assumed to be UTF-8-encoded.
-powershell -NoProfile -Command ""Invoke-Expression ('& { ' + [io.file]::ReadAllText(\""""%~f0\"""") + '} %args%')""
+powershell -NoProfile -Command "Invoke-Expression ('& { ' + [io.file]::ReadAllText(\""%~f0\"") + '} %args%')"
 goto :eof
   * The batch-file code ends with the line above and ignores everything below.
   * Everything up to the end of this PowerShell comment block is generic code.

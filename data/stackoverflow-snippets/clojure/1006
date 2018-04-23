@@ -1,7 +1,7 @@
 (defn make-generator 
-  ""Takes a probability distribution, in the form of a map 
+  "Takes a probability distribution, in the form of a map 
   from values to the desired likelihood of that value appearing in the output.
-  Normalizes the probabilities and returns a nullary producer fn with that distribution.""
+  Normalizes the probabilities and returns a nullary producer fn with that distribution."
   [p-distribution]  
   (let[sum-probs (reduce + (vals p-distribution))
        normalized (reduce #(update-in %1 [%2] / sum-probs) p-distribution (keys p-distribution) )]
@@ -11,9 +11,9 @@
               normalized))))
 
 (defn markov-chain 
-  ""Takes a series of states, returns a producer fn.
+  "Takes a series of states, returns a producer fn.
   Each call, the process changes to the next state in the series with probability :p-switch,
-  and produces a value from the :producer of the current state.""
+  and produces a value from the :producer of the current state."
   [states]
   (let[cur-state (atom (first states))
        next-states (atom (cycle states))]
@@ -24,8 +24,8 @@
       ((:producer @cur-state)))))
 
 
-(def my-states [{:p-switch 0.02 :producer (make-generator {\A 1 \C 1 \G 1 \T 1})  :name ""std""}
-                {:p-switch 0.04 :producer (make-generator {\A 1 \C 4 \G 4 \T 1})  :name ""cpg""}])
+(def my-states [{:p-switch 0.02 :producer (make-generator {\A 1 \C 1 \G 1 \T 1})  :name "std"}
+                {:p-switch 0.04 :producer (make-generator {\A 1 \C 4 \G 4 \T 1})  :name "cpg"}])
 
 
 (defn create-genome [n]

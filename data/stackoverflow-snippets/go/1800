@@ -1,5 +1,5 @@
 func CreateModel(c echo.Context) error {
-    fmt.Println(""====> Entry CreateModel function"")
+    fmt.Println("====> Entry CreateModel function")
     //var results []dataStruct
     var Success bool = false
 
@@ -10,16 +10,16 @@ func CreateModel(c echo.Context) error {
     col := Db.C(db.TrainingDataCollection)
     var results dataStructList // <--- use the type that implements the interface
     if err := col.Find(nil).All(&results); err != nil { // <-- pass a pointer to results
-        fmt.Println(""ERROR WHILE GETTING THE TRAINING DATA"")
+        fmt.Println("ERROR WHILE GETTING THE TRAINING DATA")
     } else {
-        //fmt.Println(""Results All: "", results)
+        //fmt.Println("Results All: ", results)
         Success = true
     }
 
-    fmt.Println(""============="", results)
+    fmt.Println("=============", results)
 
     //Initialises a new KNN classifier
-    cls := knn.NewKnnClassifier(""euclidean"", ""linear"", 2)
+    cls := knn.NewKnnClassifier("euclidean", "linear", 2)
 
     //Do a training-test split
     trainData, testData := base.InstancesTrainTestSplit(results, 0.55) // <-- this will work because results if of type dataStructList, which implements the base.FixedDataGrid interface.
@@ -38,7 +38,7 @@ func CreateModel(c echo.Context) error {
     confusionMat, err := evaluation.GetConfusionMatrix(testData, predictions)
 
     if err != nil {
-        panic(fmt.Sprintf(""Unable to get confusion matrix: %s"", err.Error()))
+        panic(fmt.Sprintf("Unable to get confusion matrix: %s", err.Error()))
     }
 
     fmt.Println(evaluation.GetSummary(confusionMat))

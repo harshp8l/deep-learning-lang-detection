@@ -1,13 +1,13 @@
 $jobs=@()
 foreach ($script in $scripts)
 {
-    $sb = [scriptblock]::create(""$script $(&{$args} @jobArgs)"")
+    $sb = [scriptblock]::create("$script $(&{$args} @jobArgs)")
     $jobs += Start-Job -ScriptBlock $sb
 }
 
 while ($hasRunningJobs -gt 0)
 {
-    $runningJobs = $jobs | Where-Object {$_.State -eq ""Running""} | measure
+    $runningJobs = $jobs | Where-Object {$_.State -eq "Running"} | measure
     $hasRunningJobs = $runningJobs.Count
 
     foreach ($job in $jobs)
@@ -15,9 +15,9 @@ while ($hasRunningJobs -gt 0)
         $outvar = Receive-Job -Job $job
         if ($outvar)
         {
-            $outvar -split ""`n"" | %{ UpdateStatusTable $_} 
+            $outvar -split "`n" | %{ UpdateStatusTable $_} 
         }
     }
 }
 
-Write-Host ""All scripts done.""
+Write-Host "All scripts done."

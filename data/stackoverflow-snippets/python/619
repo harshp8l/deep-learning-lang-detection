@@ -52,12 +52,12 @@ def read_dir_changes(dir_handle, size_or_buf, overlapped):
 
 def handle_results(results):
     for item in results:
-        print(""    {} {:d}"".format(item, len(item[1])))
+        print("    {} {:d}".format(item, len(item[1])))
         _action, _ = item
         if _action == FILE_ACTION_ADDED:
-            print(""    found!"")
+            print("    found!")
         if _action == FILE_ACTION_REMOVED:
-            print(""    deleted!"")
+            print("    deleted!")
 
 
 def esc_pressed():
@@ -67,7 +67,7 @@ def esc_pressed():
 def monitor_dir_sync(dir_handle):
     idx = 0
     while True:
-        print(""Index: {:d}"".format(idx))
+        print("Index: {:d}".format(idx))
         idx += 1
         results = read_dir_changes(dir_handle, BUF_SIZE, None)
         handle_results(results)
@@ -81,7 +81,7 @@ def monitor_dir_async(dir_handle):
     overlapped = pywintypes.OVERLAPPED()
     overlapped.hEvent = win32event.CreateEvent(None, False, 0, None)
     while True:
-        print(""Index: {:d}"".format(idx))
+        print("Index: {:d}".format(idx))
         idx += 1
         read_dir_changes(dir_handle, buffer, overlapped)
         rc = win32event.WaitForSingleObject(overlapped.hEvent, ASYNC_TIMEOUT)
@@ -90,10 +90,10 @@ def monitor_dir_async(dir_handle):
             results = win32file.FILE_NOTIFY_INFORMATION(buffer, bufer_size)
             handle_results(results)
         elif rc == win32event.WAIT_TIMEOUT:
-            #print(""    timeout..."")
+            #print("    timeout...")
             pass
         else:
-            print(""Received {:d}. Exiting"".format(rc))
+            print("Received {:d}. Exiting".format(rc))
             break
         if esc_pressed():
             break
@@ -110,11 +110,11 @@ def monitor_dir(dir_name, async=False):
 
 
 def main():
-    print(""Python {:s} on {:s}\n"".format(sys.version, sys.platform))
+    print("Python {:s} on {:s}\n".format(sys.version, sys.platform))
     async = True
-    print(""Attempting {}ynchronous mode using a buffer {:d} bytes long..."".format(""As"" if async else ""S"", BUF_SIZE))
-    monitor_dir("".\\test"", async=async)
+    print("Attempting {}ynchronous mode using a buffer {:d} bytes long...".format("As" if async else "S", BUF_SIZE))
+    monitor_dir(".\\test", async=async)
 
 
-if __name__ == ""__main__"":
+if __name__ == "__main__":
     main()

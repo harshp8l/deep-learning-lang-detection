@@ -9,30 +9,30 @@ let (comment : Parser<_>), commentRef = createParserForwardedToRef ()
 
 /// Skips any character not beginning of comment end marker */.
 let skipCommentChar : Parser<_> = 
-    notFollowedBy (skipString ""*/"") >>. skipAnyChar
+    notFollowedBy (skipString "*/") >>. skipAnyChar
 
 /// Skips anx mix of nested comments or comment characters.
 let commentContent : Parser<_> =
     skipMany (choice [ comment; skipCommentChar ])
 
 // Skips C-style multiline comment /*...*/ with arbitrary nesting depth.
-do commentRef := between (skipString ""/*"") (skipString ""*/"") commentContent
+do commentRef := between (skipString "/*") (skipString "*/") commentContent
 
 
 /// Prints the strings p skipped over on the console.
 let printSkipped p = 
-    p |> withSkippedString (printfn ""Skipped: \""%s\"" Matched: \""%A\"""")
+    p |> withSkippedString (printfn "Skipped: \"%s\" Matched: \"%A\"")
 
 [
-    ""/*simple comment*/""
-    ""/** special / * / case **/""
-    ""/*testing /*multiple*/ /*nested*/ comments*/ not comment anymore""
-    ""/*not closed properly/**/""
+    "/*simple comment*/"
+    "/** special / * / case **/"
+    "/*testing /*multiple*/ /*nested*/ comments*/ not comment anymore"
+    "/*not closed properly/**/"
 ]
 |> List.iter (fun s ->
-    printfn ""Test Case: \""%s\"""" s
-    run (printSkipped comment) s |> printfn ""Result: %A\n""
+    printfn "Test Case: \"%s\"" s
+    run (printSkipped comment) s |> printfn "Result: %A\n"
 )
 
-printfn ""Press any key to exit...""
+printfn "Press any key to exit..."
 Console.ReadKey true |> ignore

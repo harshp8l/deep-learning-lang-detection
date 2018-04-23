@@ -1,22 +1,22 @@
-cat_cols = [""cat_1"", ""cat_2"", ""cat_3""]
-num_cols = [""num_1"", ""num_2"", ""num_3"", ""num_4""]
+cat_cols = ["cat_1", "cat_2", "cat_3"]
+num_cols = ["num_1", "num_2", "num_3", "num_4"]
 
-indexers = [StringIndexer(inputCol = c, outputCol=""{0}_indexed"".format(c)) for c in cat_cols]
+indexers = [StringIndexer(inputCol = c, outputCol="{0}_indexed".format(c)) for c in cat_cols]
 
-encoders = [StringIndexer(inputCol = indexer.getOutputCol(), outputCol = ""{0}_encoded"".format(indexer.getOutputCol())) 
+encoders = [StringIndexer(inputCol = indexer.getOutputCol(), outputCol = "{0}_encoded".format(indexer.getOutputCol())) 
 for indexer in indexers]
 
-assemblerCat = VectorAssembler(inputCols = [encoder.getOutputCol() for encoder in encoders], outputCol = ""cat"")
+assemblerCat = VectorAssembler(inputCols = [encoder.getOutputCol() for encoder in encoders], outputCol = "cat")
 
 pipelineCat = Pipeline(stages = indexers + encoders + [assemblerCat])
 df = pipelineCat.fit(df).transform(df)
 
-assemblerNum = VectorAssembler(inputCols = num_cols, outputCol = ""num"")
+assemblerNum = VectorAssembler(inputCols = num_cols, outputCol = "num")
 
 pipelineNum = Pipeline(stages = [assemblerNum])
 df = pipelineNum.fit(df).transform(df)
 
-assembler = VectorAssembler(inputCols = [""cat"", ""num""], outputCol = ""features"")
+assembler = VectorAssembler(inputCols = ["cat", "num"], outputCol = "features")
 
 pipeline = Pipeline(stages = [assembler])
 df = pipeline.fit(df).transform(df)

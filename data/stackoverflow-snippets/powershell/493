@@ -12,14 +12,14 @@ workflow ShutDownStartByTagasdf
         $Shutdown
         )
 
-    $connectionName = ""AzureRunAsConnection"";
+    $connectionName = "AzureRunAsConnection";
 
     try
     {
-        # Get the connection ""AzureRunAsConnection ""
+        # Get the connection "AzureRunAsConnection "
         $servicePrincipalConnection=Get-AutomationConnection -Name $connectionName        
 
-        # ""Logging in to Azure...""
+        # "Logging in to Azure..."
         $null = Add-AzureRmAccount `
             -ServicePrincipal `
             -TenantId $servicePrincipalConnection.TenantId `
@@ -30,7 +30,7 @@ workflow ShutDownStartByTagasdf
 
         if (!$servicePrincipalConnection)
         {
-            $ErrorMessage = ""Connection $connectionName not found.""
+            $ErrorMessage = "Connection $connectionName not found."
             throw $ErrorMessage
         } else{
             Write-Error -Message $_.Exception
@@ -40,11 +40,11 @@ workflow ShutDownStartByTagasdf
 
     $result_array = @()
 
-    $vms = Find-AzureRmResource -TagName $TagName -TagValue $TagValue | where {$_.ResourceType -like ""Microsoft.Compute/virtualMachines""}
+    $vms = Find-AzureRmResource -TagName $TagName -TagValue $TagValue | where {$_.ResourceType -like "Microsoft.Compute/virtualMachines"}
 
     Foreach -Parallel ($vm in $vms) {
         if($Shutdown){
-            # Write-Output ""Stopping $($vm.Name)"";
+            # Write-Output "Stopping $($vm.Name)";
             $StopRtn = Stop-AzureRmVm -Name $vm.Name -ResourceGroupName $vm.ResourceGroupName -Force;
             $objOut = New-Object -TypeName psobject -Property @{
                 VM = $vm.Name
@@ -52,7 +52,7 @@ workflow ShutDownStartByTagasdf
             }
         }
         else {
-            # Write-Output ""Starting $($vm.Name)""; 
+            # Write-Output "Starting $($vm.Name)"; 
             $StartRtn = Start-AzureRmVm -Name $vm.Name -ResourceGroupName $vm.ResourceGroupName;
             $objOut = New-Object -TypeName psobject -Property @{
                 VM = $vm.Name

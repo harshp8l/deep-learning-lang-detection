@@ -17,21 +17,21 @@ class MyMacro(p1: String, p2: Int) extends scala.annotation.StaticAnnotation {
 
 case class Params(p1: String, p2: Int) {
   def update(name: String, value: Any): Params = name match {
-    case ""p1"" => copy(p1 = value.asInstanceOf[String])
-    case ""p2"" => copy(p2 = value.asInstanceOf[Int])
+    case "p1" => copy(p1 = value.asInstanceOf[String])
+    case "p2" => copy(p2 = value.asInstanceOf[Int])
     case _ => ???
   }
 }
 
 object Params {
-  private val paramsNames = List(""p1"", ""p2"")
+  private val paramsNames = List("p1", "p2")
 
   def extractParams(tree: Stat): Params = {
     val args: immutable.Seq[Term.Arg] = tree.asInstanceOf[Term.New].templ.parents.head.asInstanceOf[Term.Apply].args
 
     args.zipWithIndex.foldLeft(Params(null, 0))((acc, argAndIndex) => argAndIndex._1 match {
-      case q""${Lit(value)}"" => acc.update(paramsNames(argAndIndex._2), value)
-      case q""${Term.Arg.Named(name, Lit(value))}"" => acc.update(name.value, value)
+      case q"${Lit(value)}" => acc.update(paramsNames(argAndIndex._2), value)
+      case q"${Term.Arg.Named(name, Lit(value))}" => acc.update(name.value, value)
     })
   }
 }

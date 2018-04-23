@@ -1,4 +1,4 @@
-scala> val df = spark.read.json(""/Users/pavithranrao/Desktop/test.json"")
+scala> val df = spark.read.json("/Users/pavithranrao/Desktop/test.json")
 
 scala> df.printSchema
 root
@@ -9,9 +9,9 @@ root
  |    |    |    |-- element: struct (containsNull = true)
  |    |    |    |    |-- name: string (nullable = true)
 
-scala> val oneDF = df.select(col(""data""), explode(col(""data""))).toDF(""data"", ""element"").select(col(""data""), col(""element.parent""))
+scala> val oneDF = df.select(col("data"), explode(col("data"))).toDF("data", "element").select(col("data"), col("element.parent"))
 scala> oneDF.show
-""""""
+"""
 +--------------------+--------------------+
 |                data|              parent|
 +--------------------+--------------------+
@@ -20,9 +20,9 @@ scala> oneDF.show
 |[[20180218,Wrappe...|          [[Client]]|
 |[[20180218,Wrappe...|                  []|
 +--------------------+--------------------+
-""""""
+"""
 
-scala> val twoDF = oneDF.select(col(""data""), explode(col(""parent""))).toDF(""data"", ""names"")
+scala> val twoDF = oneDF.select(col("data"), explode(col("parent"))).toDF("data", "names")
 scala> twoDF.printSchema
 root
  |-- data: array (nullable = true)
@@ -35,7 +35,7 @@ root
  |    |-- name: string (nullable = true)
 
 scala> twoDF.show
-""""""
+"""
 +--------------------+--------+
 |                data|   names|
 +--------------------+--------+
@@ -44,12 +44,12 @@ scala> twoDF.show
 |[[20180218,Wrappe...|[Market]|
 |[[20180218,Wrappe...|[Client]|
 +--------------------+--------+
-""""""
+"""
 
 scala> import org.apache.spark.sql.functions.length
 
 // Extract names struct that is Empty
-scala> twoDF.select(length(col(""names.name"")) === 0).show
+scala> twoDF.select(length(col("names.name")) === 0).show
 +------------------------+
 |(length(names.name) = 0)|
 +------------------------+
@@ -60,7 +60,7 @@ scala> twoDF.select(length(col(""names.name"")) === 0).show
 +------------------------+
 
 // Extract names strcut that doesn't have Market
-scala> twoDF.select(!col(""names.name"").contains(""Market"")).show()
+scala> twoDF.select(!col("names.name").contains("Market")).show()
 +----------------------------------+
 |(NOT contains(names.name, Market))|
 +----------------------------------+
@@ -72,7 +72,7 @@ scala> twoDF.select(!col(""names.name"").contains(""Market"")).show()
 
 // Combining these two
 
-scala> val ansDF = twoDF.select(""data"").filter(!col(""names.name"").contains(""Market"") || length(col(""names.name"")) === 0)
+scala> val ansDF = twoDF.select("data").filter(!col("names.name").contains("Market") || length(col("names.name")) === 0)
 scala> ansDF.printSchema
 
 // Schema same as input df

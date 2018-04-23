@@ -6,9 +6,9 @@ private IEnumerable<String> GetGroupsOfUser( String userName )
     using ( var ldapConnection = OpenLdapConnection() )
     {
         // Configuration (should work for an AD with default settings):
-        // MemberOfAttributeKey => ""memberOf""
-        // UserFilterDn => ""DC=domain1,DC=domain2,DC=domain3""
-        // UserFilter => ""(&(objectCategory=person)(sAMAccountName={0}))""
+        // MemberOfAttributeKey => "memberOf"
+        // UserFilterDn => "DC=domain1,DC=domain2,DC=domain3"
+        // UserFilter => "(&(objectCategory=person)(sAMAccountName={0}))"
         // ProtocolVersion => 3
 
 
@@ -23,11 +23,11 @@ private IEnumerable<String> GetGroupsOfUser( String userName )
         // Check if the response is valid
         var searchResponse = ldapConnection.SendRequest( searchRequest ) as SearchResponse;
         if ( searchResponse?.Entries?.Count != 1 )
-            throw new DirectoryException( ""Invalid search response received from the directory."" );
+            throw new DirectoryException( "Invalid search response received from the directory." );
 
         var entry = searchResponse.Entries[0];
         if ( !entry.Attributes.Contains( SecurityConfiguration.LdapConfiguration.MemberOfAttributeKey ) )
-            Logger.Warn( ""Entry does not contain a member of attribute."" );
+            Logger.Warn( "Entry does not contain a member of attribute." );
         else
             for ( var index = 0; index < entry.Attributes[SecurityConfiguration.LdapConfiguration.MemberOfAttributeKey]
                                                 .Count; index++ )
@@ -35,7 +35,7 @@ private IEnumerable<String> GetGroupsOfUser( String userName )
                 // Extract the group name
                 var groupName = entry.Attributes[SecurityConfiguration.LdapConfiguration.MemberOfAttributeKey][index]
                                         .ToString();
-                var name = groupName.Substring( 3, Math.Min( groupName.IndexOf( "","", StringComparison.InvariantCultureIgnoreCase ) - 3, groupName.Length - 3 ) );
+                var name = groupName.Substring( 3, Math.Min( groupName.IndexOf( ",", StringComparison.InvariantCultureIgnoreCase ) - 3, groupName.Length - 3 ) );
                 groupNames.Add( name );
             }
     }

@@ -1,10 +1,10 @@
 #!/bin/bash
-ERROR="" ""
+ERROR=" "
 declare -a install
 declare -a options=('php' 'phpmyadmin' 'php-mysqlnd' 'php-opcache' 'mariadb-server' 'sendmail')
 
 ############### HERE's THE NEW BIT #################
-declare -a choices=( ""${options[@]//*/+}"" )
+declare -a choices=( "${options[@]//*/+}" )
 ####################################################
 
 #===  FUNCTION  ========================================================================
@@ -15,11 +15,11 @@ declare -a choices=( ""${options[@]//*/+}"" )
 function ACTIONS() {
 
     for ((i = 0; i < ${#options[*]}; i++)); do
-        if [[ ""${choices[i]}"" == ""+"" ]]; then
+        if [[ "${choices[i]}" == "+" ]]; then
             install+=(${options[i]})
         fi
     done
-    echo ""${install[@]}""
+    echo "${install[@]}"
 }
 
 #===  FUNCTION  ========================================================================
@@ -28,30 +28,30 @@ function ACTIONS() {
 # PARAMETER  1:
 #=======================================================================================
 function MENU() {
-    echo ""Which packages would you like to be installed?""
+    echo "Which packages would you like to be installed?"
     echo
-    for NUM in ""${!options[@]}""; do
-        echo ""[""""${choices[NUM]:- }""""]"" $((NUM + 1))"") ${options[NUM]}""
+    for NUM in "${!options[@]}"; do
+        echo "[""${choices[NUM]:- }""]" $((NUM + 1))") ${options[NUM]}"
     done
-    echo ""$ERROR""
+    echo "$ERROR"
 }
 
 #Clear screen for menu
 clear
 
 #Menu loop
-while MENU && read -e -p ""Select the desired options using their number (again to uncheck, ENTER when done): "" -n2 SELECTION && [[ -n ""$SELECTION"" ]]; do
+while MENU && read -e -p "Select the desired options using their number (again to uncheck, ENTER when done): " -n2 SELECTION && [[ -n "$SELECTION" ]]; do
     clear
-    if [[ ""$SELECTION"" == *[[:digit:]]* && $SELECTION -ge 1 && $SELECTION -le ${#options[@]} ]]; then
+    if [[ "$SELECTION" == *[[:digit:]]* && $SELECTION -ge 1 && $SELECTION -le ${#options[@]} ]]; then
         ((SELECTION--))
-        if [[ ""${choices[SELECTION]}"" == ""+"" ]]; then
-            choices[SELECTION]=""""
+        if [[ "${choices[SELECTION]}" == "+" ]]; then
+            choices[SELECTION]=""
         else
-            choices[SELECTION]=""+""
+            choices[SELECTION]="+"
         fi
-        ERROR="" ""
+        ERROR=" "
     else
-        ERROR=""Invalid option: $SELECTION""
+        ERROR="Invalid option: $SELECTION"
     fi
 done
 

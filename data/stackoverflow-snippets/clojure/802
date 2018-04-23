@@ -9,9 +9,9 @@
 
 (defn json-get [request]
   (response/ok 
-    {""task""  1 
-     ""success""  false  
-     ""files"" [{""type""  ""log"" ""sha256""  ""adef5c"" ""url""  ""s3://url""}]}))
+    {"task"  1 
+     "success"  false  
+     "files" [{"type"  "log" "sha256"  "adef5c" "url"  "s3://url"}]}))
 
 (defn json-post [request]
   (let [bpdy (:body request)]
@@ -19,14 +19,14 @@
     (response/ok bpdy)))
 
 (compojure/defroutes handler_
- (compojure/GET ""/get"" request json-get)
- (compojure/POST ""/post"" request json-post))
+ (compojure/GET "/get" request json-get)
+ (compojure/POST "/post" request json-post))
 
 (defn wrap-nocache [handler]
   (fn [request]
     (-> request
         handler
-        (assoc-in [:headers ""Pragma""] ""no-cache""))))
+        (assoc-in [:headers "Pragma"] "no-cache"))))
 
 (def handler 
   (-> #'handler_ wrap-nocache wrap-reload wrap-json-response wrap-json-body ) )

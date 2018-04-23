@@ -1,13 +1,13 @@
 package ssh
 
 import (
-    ""bufio""
-    ""io""
-    ""log""
-    ""net""
-    ""strings""
+    "bufio"
+    "io"
+    "log"
+    "net"
+    "strings"
 
-    ""golang.org/x/crypto/ssh""
+    "golang.org/x/crypto/ssh"
 )
 
 type Connection struct {
@@ -24,7 +24,7 @@ func Connect(addr, user, password string) (*Connection, error) {
         HostKeyCallback: ssh.HostKeyCallback(func(hostname string, remote net.Addr, key ssh.PublicKey) error { return nil }),
     }
 
-    conn, err := ssh.Dial(""tcp"", addr, sshConfig)
+    conn, err := ssh.Dial("tcp", addr, sshConfig)
     if err != nil {
         return nil, err
     }
@@ -46,7 +46,7 @@ func (conn *Connection) SendCommands(cmds ...string) ([]byte, error) {
         ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
     }
 
-    err = session.RequestPty(""xterm"", 80, 40, modes)
+    err = session.RequestPty("xterm", 80, 40, modes)
     if err != nil {
         return []byte{}, err
     }
@@ -77,14 +77,14 @@ func (conn *Connection) SendCommands(cmds ...string) ([]byte, error) {
             *output = append(*output, b)
 
             if b == byte('\n') {
-                line = """"
+                line = ""
                 continue
             }
 
             line += string(b)
 
-            if strings.HasPrefix(line, ""[sudo] password for "") && strings.HasSuffix(line, "": "") {
-                _, err = in.Write([]byte(conn.password + ""\n""))
+            if strings.HasPrefix(line, "[sudo] password for ") && strings.HasSuffix(line, ": ") {
+                _, err = in.Write([]byte(conn.password + "\n"))
                 if err != nil {
                     break
                 }
@@ -92,7 +92,7 @@ func (conn *Connection) SendCommands(cmds ...string) ([]byte, error) {
         }
     }(in, out, &output)
 
-    cmd := strings.Join(cmds, ""; "")
+    cmd := strings.Join(cmds, "; ")
     _, err = session.Output(cmd)
     if err != nil {
         return []byte{}, err

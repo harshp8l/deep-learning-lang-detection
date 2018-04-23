@@ -1,20 +1,20 @@
-var database = client.GetDatabase(""database"");            
-var collection = database.GetCollection<BsonDocument>(""collection"");
+var database = client.GetDatabase("database");            
+var collection = database.GetCollection<BsonDocument>("collection");
 
 var options = new ChangeStreamOptions { FullDocument = ChangeStreamFullDocumentOption.UpdateLookup };
 
 // Aggregation Pipeline
 var addFields = new BsonDocument { 
-                    { ""$addFields"", new BsonDocument { 
-                       { ""tmpfields"", new BsonDocument { 
-                         { ""$objectToArray"", 
-                           ""$updateDescription.updatedFields"" } 
+                    { "$addFields", new BsonDocument { 
+                       { "tmpfields", new BsonDocument { 
+                         { "$objectToArray", 
+                           "$updateDescription.updatedFields" } 
                        } } 
                  } } };
 var match = new BsonDocument { 
-                { ""$match"", new BsonDocument { 
-                  { ""tmpfields.k"", new BsonDocument { 
-                    { ""$nin"", new BsonArray{""LastModified"", ""Unwanted""} } 
+                { "$match", new BsonDocument { 
+                  { "tmpfields.k", new BsonDocument { 
+                    { "$nin", new BsonArray{"LastModified", "Unwanted"} } 
             } } } } };
 
 var pipeline = new[] { addFields, match };

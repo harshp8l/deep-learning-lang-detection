@@ -7,25 +7,25 @@ int wmain(int argc, wchar_t **argv)
 {
     if (argc < 2)
     {
-        wprintf(L""Usage: \""%s\"" path\n"", argv[0]);
+        wprintf(L"Usage: \"%s\" path\n", argv[0]);
         return -1;
     }
 
     int len = wcslen(argv[1]);
     if (len >= MAX_PATH)
     {
-        wprintf(L""Path is too long\n"");
+        wprintf(L"Path is too long\n");
         return -1;
     }
 
     wchar_t path[MAX_PATH+1] = {};
     wcscpy(path, argv[1]);
     if ((len > 0) && (path[len-1] != L'\\'))
-        wcscat(path, L""\\"");
+        wcscat(path, L"\\");
 
     wchar_t searchMask[MAX_PATH+2] = {};
     wcscpy(searchMask, path);
-    wcscat(searchMask, L""*"");
+    wcscat(searchMask, L"*");
 
     WIN32_FIND_DATA FindData;
     HANDLE hSearch = FindFirstFileW(searchMask, &FindData);
@@ -33,10 +33,10 @@ int wmain(int argc, wchar_t **argv)
     {
         if (GetLastError() != ERROR_FILE_NOT_FOUND)
         {
-            wprintf(L""Error looking for first file\n"");
+            wprintf(L"Error looking for first file\n");
             return -1;
         }
-        wprintf(L""No files found\n"");
+        wprintf(L"No files found\n");
     }
     else
     {
@@ -45,14 +45,14 @@ int wmain(int argc, wchar_t **argv)
         {
             wcscpy(filePath, path);
             wcscat(filePath, FindData.cFileName);
-            wprintf(L""Path %s\n"", filePath);
+            wprintf(L"Path %s\n", filePath);
         }
         while (FindNextFileW(hSearch, &FindData));
 
         if (GetLastError() != ERROR_NO_MORE_FILES)
         {
             FindClose(hSearch);
-            wprintf(L""Error looking for next file\n"");
+            wprintf(L"Error looking for next file\n");
             return -1;
         }
 

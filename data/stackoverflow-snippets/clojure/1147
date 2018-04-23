@@ -5,9 +5,9 @@ keytool -genkeypair \
         -keyalg RSA -keysize 2048 \
         -alias root \
         -ext bc:c \
-        -dname ""$ROOT_CN""
+        -dname "$ROOT_CN"
 
-echo ""CA Key""
+echo "CA Key"
 keytool -genkeypair \
         -keystore $SSL_DIR/$KS_NAME \
         -alias ca \
@@ -15,25 +15,25 @@ keytool -genkeypair \
         -keypass $PASSWORD \
         -keyalg RSA -keysize 2048 \
         -storepass $PASSWORD \
-        -dname ""$CA_CN""
+        -dname "$CA_CN"
 
-echo ""Server Key""
+echo "Server Key"
 keytool -genkeypair \
         -keystore $SSL_DIR/$KS_NAME \
         -alias server \
         -keypass $PASSWORD \
         -storepass $PASSWORD \
         -keyalg RSA -keysize 2048 \
-        -dname ""$SERVER_CN""
+        -dname "$SERVER_CN"
 
-echo ""Root Cert""
+echo "Root Cert"
 keytool -keystore $SSL_DIR/$KS_NAME \
         -storepass $PASSWORD \
         -alias root \
         -exportcert \
         -rfc > $SSL_DIR/root.pem
 
-echo ""CA Cert""
+echo "CA Cert"
 keytool -storepass $PASSWORD \
         -keystore $SSL_DIR/$KS_NAME \
         -certreq \
@@ -44,14 +44,14 @@ keytool -storepass $PASSWORD \
                             -ext BC=0 \
                             -rfc > $SSL_DIR/ca.pem
 
-echo ""Import CA cert""
+echo "Import CA cert"
 keytool -keystore $SSL_DIR/$KS_NAME \
         -storepass $PASSWORD \
         -importcert \
         -alias ca \
         -file $SSL_DIR/ca.pem
 
-echo ""Server Cert""
+echo "Server Cert"
 keytool -storepass $PASSWORD \
         -keystore $SSL_DIR/$KS_NAME \
         -certreq \
@@ -63,7 +63,7 @@ keytool -storepass $PASSWORD \
 
 
 
-echo ""Import Server Cert""
+echo "Import Server Cert"
 cat $SSL_DIR/root.pem $SSL_DIR/ca.pem $SSL_DIR/server.pem | \
     keytool -keystore $SSL_DIR/$KS_NAME \
             -storepass $PASSWORD \

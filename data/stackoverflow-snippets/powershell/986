@@ -4,9 +4,9 @@
 # 3. Results will be saved to the $file variable (default is c:\tools\results.csv)
 
 #File Paths
-$file=""C:\tools\results.csv"";
-$computerfile=""C:\tools\computers.txt"";
-$computerfoldername=""\c`$\ProgramData\Autodesk\AdLM\"";
+$file="C:\tools\results.csv";
+$computerfile="C:\tools\computers.txt";
+$computerfoldername="\c`$\ProgramData\Autodesk\AdLM\";
 
 # Create empty computers array
 $computers = @() 
@@ -14,44 +14,44 @@ $computers = @()
 
 ForEach ($system in (Get-Content $computerfile)) {
 # Append computers with \\computer\foldername
-$computers += ""\\"" + $system + $computerfoldername
+$computers += "\\" + $system + $computerfoldername
 }
- write-host ""========================================================="" -foreground ""red""
- write-host ""MULTI-HTML FILE PARSING AND APPENDING TO CSV SCRIPT ""
- write-host ""Script Executing at ""  (Get-Date).ToString()
+ write-host "=========================================================" -foreground "red"
+ write-host "MULTI-HTML FILE PARSING AND APPENDING TO CSV SCRIPT "
+ write-host "Script Executing at "  (Get-Date).ToString()
  #folders in which html files are kept
 
 
 
-write-host ""Folders To Parse""
+write-host "Folders To Parse"
 for ($i = 0; $i -lt $computers.Count ; $i++) {
   write-host $computers[$i]
 
 }
 
-write-host ""Initializing Script"";
+write-host "Initializing Script";
 
 # Create new Internet Explorer Object
-$ie = new-object -com ""InternetExplorer.Application""
+$ie = new-object -com "InternetExplorer.Application"
 
 # Iterate through each \\computer\folder in the list
 for ($i = 0; $i -lt $computers.Count ; $i++) {
 
-write-host """"
-write-host ""==========================================""
-write-host """"
-write-host ""COMPUTER/FOLDER"" + $computers[$i] -foreground ""yellow""
-write-host """"
+write-host ""
+write-host "=========================================="
+write-host ""
+write-host "COMPUTER/FOLDER" + $computers[$i] -foreground "yellow"
+write-host ""
 
 # Get HTML files within current \\computer\folder
 Get-ChildItem $computers[$i] *.html  |
 ForEach-Object {
 # For each HTML file within current \\computer\folder
  $innerfile = $computers[$i] + $_.BaseName + $_.Extension
- write-host ""==========================================""
+ write-host "=========================================="
 
 
-write-host ""Fetching"" + $innerfile
+write-host "Fetching" + $innerfile
 # The easiest way to accomodate for slowness of IE
 Start-Sleep -Seconds 1
 # open current HTML file
@@ -60,7 +60,7 @@ $ie.Navigate($innerfile)
 Start-Sleep -Seconds 1
 $doc = $ie.Document
 
-write-host ""IE Initiated for file "" + $innerfile ;
+write-host "IE Initiated for file " + $innerfile ;
 # Get all <tr> elements in teh HTML file.
 $trs=$doc.getElementsByTagName('tr')
 $requestcodeflag=0;
@@ -70,8 +70,8 @@ foreach ($table in $trs) {
         $machine=$innerfile;
         # Product Key    
         Try {
-            if ($table.innertext.Substring(0,8) -eq ""Product:"") {
-                write-host ""Parsed Product ID "" + $table.innertext.Substring(8)
+            if ($table.innertext.Substring(0,8) -eq "Product:") {
+                write-host "Parsed Product ID " + $table.innertext.Substring(8)
                 $product=$table.innertext.Substring(8);
             }
         }
@@ -80,8 +80,8 @@ foreach ($table in $trs) {
 
         # Serial number
         Try {
-             if ($table.innertext.Substring(0,14) -eq ""Serial number:"") {
-                write-host ""Parsed Serial Number  "" + $table.innertext.Substring(14)
+             if ($table.innertext.Substring(0,14) -eq "Serial number:") {
+                write-host "Parsed Serial Number  " + $table.innertext.Substring(14)
                 $serialno=$table.innertext.Substring(14);
             }
         }
@@ -91,8 +91,8 @@ foreach ($table in $trs) {
 
         # Product Key
         Try {
-            if ($table.innertext.Substring(0,12) -eq ""Product key:"") {
-                write-host ""Parsed Product Key  "" + $table.innertext.Substring(12)
+            if ($table.innertext.Substring(0,12) -eq "Product key:") {
+                write-host "Parsed Product Key  " + $table.innertext.Substring(12)
                 $productkey=$table.innertext.Substring(12);
             }
         }
@@ -100,11 +100,11 @@ foreach ($table in $trs) {
 
 
         # Request code 2
-        if($requestcodeflag -eq ""1"") {
+        if($requestcodeflag -eq "1") {
         Try {
             $requestcodeflag=2;
-            $requestcode= $requestcode + "" | "" + $table.innertext;
-            write-host ""Parsed 2nd Request Code  "" +  $table.innertext
+            $requestcode= $requestcode + " | " + $table.innertext;
+            write-host "Parsed 2nd Request Code  " +  $table.innertext
             }
         Catch{}
         }
@@ -112,8 +112,8 @@ foreach ($table in $trs) {
 
         # Request code 1st
         Try{
-            if ($table.innertext.Substring(0,13) -eq ""Request code:"") {
-                write-host ""Parsed Request Code  "" +  $table.innertext.Substring(13)
+            if ($table.innertext.Substring(0,13) -eq "Request code:") {
+                write-host "Parsed Request Code  " +  $table.innertext.Substring(13)
                 $requestcode=$table.innertext.Substring(13);
                 $requestcodeflag=1;
             }
@@ -125,14 +125,14 @@ foreach ($table in $trs) {
 
 
 
-write-host ""Writing to CSV file "" + $file
-$NewLine = ""{0},{1},{2},{3},{4}"" -f $machine,$product,$serialno,$productkey,$requestcode
+write-host "Writing to CSV file " + $file
+$NewLine = "{0},{1},{2},{3},{4}" -f $machine,$product,$serialno,$productkey,$requestcode
 $NewLine | add-content -path $file
 }
 }
 $ie.Quit()
-write-host ""==========================================""
-write-host ""Data is  appended to csv file"" + $file
-write-host ""Executed Thank You ""
-write-host ""==========================================""
-write-host """"
+write-host "=========================================="
+write-host "Data is  appended to csv file" + $file
+write-host "Executed Thank You "
+write-host "=========================================="
+write-host ""

@@ -1,7 +1,7 @@
 user=`whoami` #checks which user logged in
-if [ ""$user"" != ""spark"" ]
+if [ "$user" != "spark" ]
 then
-    echo ""You must be spark to run this script""
+    echo "You must be spark to run this script"
     #exit 1
 fi
 
@@ -15,28 +15,28 @@ fi
 
 case $ENV in
     'IQA')
-    HOSTS=""19.928.282.26 19.928.282.27 19.928.282.20 19.928.282.31""
+    HOSTS="19.928.282.26 19.928.282.27 19.928.282.20 19.928.282.31"
     ;;
 'DEV')
-    HOSTS=""19.928.282.226 19.928.282.27 319.928.282.250 19.928.522.232""
+    HOSTS="19.928.282.226 19.928.282.27 319.928.282.250 19.928.522.232"
     ;;
 'STAGE')
-    HOSTS=""19.928.282.286 19.928.282.24 319.928.282.255 19.928.522.233""
+    HOSTS="19.928.282.286 19.928.282.24 319.928.282.255 19.928.522.233"
     ;;
 'PERF')
-    HOSTS=""19.928.282.225 19.928.282.25 319.928.282.260 19.928.522.236""
+    HOSTS="19.928.282.225 19.928.282.25 319.928.282.260 19.928.522.236"
     ;;
 'PRODNA')
-    HOSTS=""19.928.282.26 19.928.285.27 56.928.282.45 19.928.522.90""
+    HOSTS="19.928.282.26 19.928.285.27 56.928.282.45 19.928.522.90"
     ;;
 'PRODEU')
-    HOSTS=""19.928.282.276 19.928.282.56 319.928.282.254 19.928.522.245""
+    HOSTS="19.928.282.276 19.928.282.56 319.928.282.254 19.928.522.245"
     ;;
 *)
-        echo ""You must specify a valid environment... IQA, DEV, STAGE, PERF, PRODN or PRODEU""
+        echo "You must specify a valid environment... IQA, DEV, STAGE, PERF, PRODN or PRODEU"
         exit 1
 esac
-output_dir=""/tmp/${id}""
+output_dir="/tmp/${id}"
 
 if [ ! -d ${output_dir} ]
 then
@@ -46,44 +46,44 @@ fi
 
 case $id in
     'javaversion')
-        echo ""Grabbing the details of $id""
+        echo "Grabbing the details of $id"
         for HOST in ${HOSTS}
         do
-            echo ""Java version of $HOST"": > $output_dir/${HOST}_java_list.txt
-                  ssh ${user}@${HOST} ""java -version 2>&1 >/dev/null | grep \""java version\"" | awk \""{print $3}\"""" >> $output_dir/${HOST}_java_list.txt
+            echo "Java version of $HOST": > $output_dir/${HOST}_java_list.txt
+                  ssh ${user}@${HOST} "java -version 2>&1 >/dev/null | grep \"java version\" | awk \"{print $3}\"" >> $output_dir/${HOST}_java_list.txt
                   zip -r ${id}.zip ${output_dir}
                   done
         ;;
     'sparkversion')
-        echo ""Grabbing the details of $id""
+        echo "Grabbing the details of $id"
         for HOST in ${HOSTS}
         do
-         ssh ${user}@${HOST} ""spark-submit --version""  > $output_dir/${HOST}_sparkversion.txt  2>&1
+         ssh ${user}@${HOST} "spark-submit --version"  > $output_dir/${HOST}_sparkversion.txt  2>&1
          zip -r ${id}.zip ${output_dir}
         done
         ;;
     'condalist')
-        echo ""Grabbing the details of $id""
+        echo "Grabbing the details of $id"
         for HOST in ${HOSTS}
         do
-            echo ""Anaconda version for $HOST:"" > $output_dir/${HOST}_conda_list.txt
-            ssh ${user}@${HOST} ""/opt/anaconda/bin/conda list"" >> $output_dir/${HOST}_conda_list.txt
+            echo "Anaconda version for $HOST:" > $output_dir/${HOST}_conda_list.txt
+            ssh ${user}@${HOST} "/opt/anaconda/bin/conda list" >> $output_dir/${HOST}_conda_list.txt
             zip -r ${id}.zip ${output_dir}
             ls -latr $output_dir/${HOST}_conda_list.txt
         done
 
         ;;
     'piplist')
-        echo ""Grabbing the details of $id""
+        echo "Grabbing the details of $id"
         for HOST in ${HOSTS}
         do
-            echo ""PIP information for $HOST:"" > $output_dir/${HOST}_pip_list.txt
-            ssh ${user}@${HOST} ""/opt/anaconda/bin/pip list 2> /dev/null"" >> $output_dir/${HOST}_pip_list.txt
+            echo "PIP information for $HOST:" > $output_dir/${HOST}_pip_list.txt
+            ssh ${user}@${HOST} "/opt/anaconda/bin/pip list 2> /dev/null" >> $output_dir/${HOST}_pip_list.txt
              zip -r ${id}.zip ${output_dir}
         done
         ;;
     *)
-        echo ""Invalid value for id.  Valid values are javaversion, sparkversion, condalist, piplist""
+        echo "Invalid value for id.  Valid values are javaversion, sparkversion, condalist, piplist"
         exit 1
         ;;
 esac

@@ -1,10 +1,10 @@
 val df = Seq(
-  (1, ""CS"", 0, Seq(0.1, 0.2, 0.4, 0.5)),
-  (4, ""Ed"", 0, Seq(0.4, 0.8, 0.3, 0.6)),
-  (7, ""CS"", 0, Seq(0.2, 0.5, 0.4, 0.7)),
-  (101, ""CS"", 1, Seq(0.5, 0.7, 0.3, 0.8)),
-  (5, ""CS"", 1, Seq(0.4, 0.2, 0.6, 0.9))
-).toDF(""id"", ""dept"", ""test"", ""array"")
+  (1, "CS", 0, Seq(0.1, 0.2, 0.4, 0.5)),
+  (4, "Ed", 0, Seq(0.4, 0.8, 0.3, 0.6)),
+  (7, "CS", 0, Seq(0.2, 0.5, 0.4, 0.7)),
+  (101, "CS", 1, Seq(0.5, 0.7, 0.3, 0.8)),
+  (5, "CS", 1, Seq(0.4, 0.2, 0.6, 0.9))
+).toDF("id", "dept", "test", "array")
 
 
 val dropElements = udf(
@@ -13,11 +13,11 @@ val dropElements = udf(
 )
 
 df
-  .withColumn(""index_to_drop"", row_number().over(Window.partitionBy($""dept"").orderBy($""id"")))
-  .withColumn(""index_to_drop"", when($""test"" === 1, $""index_to_drop""))
-  .withColumn(""indices_to_drop"", collect_list($""index_to_drop"").over(Window.partitionBy($""dept"")))
-  .withColumn(""array"", dropElements($""array"", $""indices_to_drop""))
-  .select($""id"", $""dept"", $""test"", $""array"")
+  .withColumn("index_to_drop", row_number().over(Window.partitionBy($"dept").orderBy($"id")))
+  .withColumn("index_to_drop", when($"test" === 1, $"index_to_drop"))
+  .withColumn("indices_to_drop", collect_list($"index_to_drop").over(Window.partitionBy($"dept")))
+  .withColumn("array", dropElements($"array", $"indices_to_drop"))
+  .select($"id", $"dept", $"test", $"array")
   .show()
 
 

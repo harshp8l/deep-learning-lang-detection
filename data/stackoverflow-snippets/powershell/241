@@ -19,14 +19,14 @@ param (
 
 
  $storage = Get-AzureRmStorageAccount -ResourceGroupName $WebStorgaeResourceGroupName -Name $StorageAccountName 
- Write-Output ( ""========================== Storage Account Context Object ==========================="")
+ Write-Output ( "========================== Storage Account Context Object ===========================")
  Write-Output ( $storage.Context )
  $now = Get-Date
 
  ######################################################################
  #Set SAS Token to get access to Container
  $SAStoken = New-AzureStorageContainerSASToken -Name $AppBackupContainerName -Context $storage.Context -Permission rwdl -StartTime $now.AddHours(-1) -ExpiryTime $now.AddMonths(1) -FullUri 
- Write-Output ( ""======== Use this SAS token if prompted for manual submission Storage Account URL =========="")
+ Write-Output ( "======== Use this SAS token if prompted for manual submission Storage Account URL ==========")
  Write-Output ( $SAStoken )
 
  ######################################################################
@@ -37,7 +37,7 @@ param (
  # Wait 20 seconds and check the status of the backup
  Start-Sleep 20
  $status = ($backup | Get-AzureRmWebAppBackup).BackupStatus
- Write-Host ""The backup status is $status"" -foreground ""Yellow""
+ Write-Host "The backup status is $status" -foreground "Yellow"
 
  Return $status
 
@@ -46,14 +46,14 @@ param (
 #############################################
 
 $properties = @{
-            'connectionName' = ""AzureRunAsConnection"";
-            'myResourceGroupName' = ""{your_webapp_Resource_group_here}""; 
-            'mySubscriptionName' = ""{your subscription name}""; 
+            'connectionName' = "AzureRunAsConnection";
+            'myResourceGroupName' = "{your_webapp_Resource_group_here}"; 
+            'mySubscriptionName' = "{your subscription name}"; 
             'date' = ( get-date ).ToString('MM/dd/yyyy');
             'StorageAccountName' = '{your_storage_account_name}'; 
             'AppBackupContainerName' = '{your_backup_containername_in_storage_account}'; 
-            'WebStorgaeResourceGroupName' = ""{your_storage_account_resource_group}"";       #Pull from the JSON file
-            'ResourceGroupLocation' = ""East US"";         #Please change this to actual if you prefer to use it.
+            'WebStorgaeResourceGroupName' = "{your_storage_account_resource_group}";       #Pull from the JSON file
+            'ResourceGroupLocation' = "East US";         #Please change this to actual if you prefer to use it.
        }
 $configObject = New-Object –TypeName PSObject –Prop $properties
 Write-Output $configObject
@@ -65,6 +65,6 @@ Get-AzureRmContext).Subscription
 Select-AzureRMSubscription -SubscriptionName $configObject.mySubscriptionName 
 $ArchiveStatus = getArchiveStorageHandle -StorageAccountName $configObject.StorageAccountName -AppBackupContainerName $configObject.AppBackupContainerName  -webappName $Resource.ResourceName -WebStorgaeResourceGroupName $configObject.WebStorgaeResourceGroupName -appRGname $configObject.myResourceGroupName
 
-if( $ArchiveStatus -Match ""Succeeded""){ 
-  Write-Host ""HURRAY! Archival Completed Successfully!!""
+if( $ArchiveStatus -Match "Succeeded"){ 
+  Write-Host "HURRAY! Archival Completed Successfully!!"
 }

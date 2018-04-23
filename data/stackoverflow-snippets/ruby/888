@@ -1,14 +1,14 @@
 records = csv_data.flat_map do |row|
   row
-    # {""id""=>1, ""foo_1""=>""a"", ""bar_1""=>""b"", ""foo_2""=>""c"", ""bar_2""=>""d""}
-    .reject { |key, value| key == ""id"" }
-    # {""foo_1""=>""a"", ""bar_1""=>""b"", ""foo_2""=>""c"", ""bar_2""=>""d""}
-    .group_by { |key, value| key.split(""_"")[0] }
-    # {""foo""=>[[""foo_1"", ""a""], [""foo_2"", ""c""]], ""bar""=>[[""bar_1"", ""b""], [""bar_2"", ""d""]]}
+    # {"id"=>1, "foo_1"=>"a", "bar_1"=>"b", "foo_2"=>"c", "bar_2"=>"d"}
+    .reject { |key, value| key == "id" }
+    # {"foo_1"=>"a", "bar_1"=>"b", "foo_2"=>"c", "bar_2"=>"d"}
+    .group_by { |key, value| key.split("_")[0] }
+    # {"foo"=>[["foo_1", "a"], ["foo_2", "c"]], "bar"=>[["bar_1", "b"], ["bar_2", "d"]]}
     .map { |tag, key_values| [tag].product(key_values.map(&:last)) } 
-    # [[[""foo"", ""a""], [""foo"", ""c""]], [[""bar"", ""b""], [""bar"", ""d""]]]
+    # [[["foo", "a"], ["foo", "c"]], [["bar", "b"], ["bar", "d"]]]
     .transpose
-    # [[[""foo"", ""a""], [""bar"", ""b""]], [[""foo"", ""c""], [""bar"", ""d""]]]
-    .map { |pairs| {""id"" => row[""id""]}.merge(pairs.to_h) }
-    # [{""id""=>1, ""foo""=>""a"", ""bar""=>""b""}, {""id""=>1, ""foo""=>""c"", ""bar""=>""d""}]
+    # [[["foo", "a"], ["bar", "b"]], [["foo", "c"], ["bar", "d"]]]
+    .map { |pairs| {"id" => row["id"]}.merge(pairs.to_h) }
+    # [{"id"=>1, "foo"=>"a", "bar"=>"b"}, {"id"=>1, "foo"=>"c", "bar"=>"d"}]
 end

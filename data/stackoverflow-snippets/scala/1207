@@ -1,17 +1,17 @@
 import org.apache.spark.sql.functions.{coalesce, col, lit, when}
 
 val df = Seq(
-  (1, ""US"", ""1""), (2, ""FR"", ""1""), (4, ""DE"", ""1""),
-  (5, ""DE"", ""2""), (3, ""DE"", ""3"")
-).toDF(""id"", ""COUNTRY"", ""MONTH"")
+  (1, "US", "1"), (2, "FR", "1"), (4, "DE", "1"),
+  (5, "DE", "2"), (3, "DE", "3")
+).toDF("id", "COUNTRY", "MONTH")
 
 val rules = Seq(
-  (""COUNTRY"", ""US"", 5), (""COUNTRY"", ""FR"", 15), (""MONTH"", ""3"", 2)
-).toDF(""COLUMN"", ""VALUE"", ""PRIO"")
+  ("COUNTRY", "US", 5), ("COUNTRY", "FR", 15), ("MONTH", "3", 2)
+).toDF("COLUMN", "VALUE", "PRIO")
 
 
 val prio = coalesce(rules.as[(String, String, Int)].collect.map {
   case (c, v, p) => when(col(c) === v, p)
 } :+ lit(20): _*)
 
-df.withColumn(""PRIO"", prio)
+df.withColumn("PRIO", prio)

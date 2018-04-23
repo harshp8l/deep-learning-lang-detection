@@ -1,16 +1,16 @@
 import spark.implicits._
 //load the xml from s3
 val df = spark.sqlContext.read
-  .format(""com.databricks.spark.xml"")
-  .option(""rowTag"", ""COLUMNS"")
-  .option(""valueTag"", ""bvalue"")
-  .load(""path to s3"")
+  .format("com.databricks.spark.xml")
+  .option("rowTag", "COLUMNS")
+  .option("valueTag", "bvalue")
+  .load("path to s3")
 
 //explode the array 
-val allvalue = df.select(explode($""COLUMN"").as(""column"")).select(""column.*"")
+val allvalue = df.select(explode($"COLUMN").as("column")).select("column.*")
 
 //collect require column as a map
-val schema = allvalue.select(""_ID"", ""_DATA_TYPE"")
+val schema = allvalue.select("_ID", "_DATA_TYPE")
     .rdd.map(x=>(x.getString(0), x.getString(1))).collectAsMap()
 
 //print the output

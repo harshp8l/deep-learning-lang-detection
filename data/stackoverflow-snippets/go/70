@@ -1,23 +1,23 @@
   package main
 
-  import ""net/http""
-  import ""net/http/httputil""
-  import ""net/url""
-  import ""net/http/httptest""
-  import ""fmt""
-  import ""log""
-  import ""bytes""
-  import ""io/ioutil""
+  import "net/http"
+  import "net/http/httputil"
+  import "net/url"
+  import "net/http/httptest"
+  import "fmt"
+  import "log"
+  import "bytes"
+  import "io/ioutil"
 
   func main() {
     backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         b, err := ioutil.ReadAll(r.Body)
         if err != nil {
-            http.Error(w, fmt.Sprintf(""ioutil.ReadAll: %s"", err), 500)
+            http.Error(w, fmt.Sprintf("ioutil.ReadAll: %s", err), 500)
             return
         }
         // expecting to see hoge=fuga
-        fmt.Fprintf(w, ""this call was relayed by the reverse proxy, body: %s"", string(b))
+        fmt.Fprintf(w, "this call was relayed by the reverse proxy, body: %s", string(b))
     }))
     defer backendServer.Close()
 
@@ -32,13 +32,13 @@
             // read out body into a slice
             body, err := ioutil.ReadAll(r.Body)
             if err != nil {
-                http.Error(w, fmt.Sprintf(""Error reading body: %s"", err), 500)
+                http.Error(w, fmt.Sprintf("Error reading body: %s", err), 500)
                 return
             }
 
             // inspect current body here
             if err := r.ParseForm(); err != nil {
-                http.Error(w, fmt.Sprintf(""ParseForm: %s"", err), 500)
+                http.Error(w, fmt.Sprintf("ParseForm: %s", err), 500)
                 return
             }
 
@@ -52,16 +52,16 @@
 
     resp, err := http.Post(
         frontendProxy.URL,
-        ""application/x-www-form-urlencoded"",
-        bytes.NewBufferString(""hoge=fuga""))
+        "application/x-www-form-urlencoded",
+        bytes.NewBufferString("hoge=fuga"))
     if err != nil {
-        log.Fatalf(""http.Post: %s"", err)
+        log.Fatalf("http.Post: %s", err)
     }
 
     b, err := ioutil.ReadAll(resp.Body)
     if err != nil {
-        log.Fatalf(""ioutil.ReadAll: %s"", err)
+        log.Fatalf("ioutil.ReadAll: %s", err)
     }
 
-    fmt.Printf(""%s"", b)
+    fmt.Printf("%s", b)
   }

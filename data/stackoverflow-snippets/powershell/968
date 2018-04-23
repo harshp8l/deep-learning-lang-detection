@@ -1,10 +1,10 @@
 ### Watches a directory for new files and fires off the batch file to push to connection
 
-$remotePath = ""/data""
-$localPath = ""C:\pathTo\watchfolder""
+$remotePath = "/data"
+$localPath = "C:\pathTo\watchfolder"
 $watcher = New-Object System.IO.FileSystemWatcher
 $watcher.Path = $localPath
-$watcher.Filter  = ""*.csv""
+$watcher.Filter  = "*.csv"
 $watcher.IncludeSubdirectories = $True
 $watcher.EnableRaisingEvents = $True
 
@@ -13,18 +13,18 @@ Register-ObjectEvent $watcher Created -SourceIdentifier FileCreated -Action {
     try
     {
         $localFilePath = $event.SourceEventArgs.FullPath
-        Write-Host ""Local path: $localFilePath""
+        Write-Host "Local path: $localFilePath"
 
-        $assemblyPath = ""C:\Program Files (x86)\WinSCP""
-        Add-Type -Path (Join-Path $assemblyPath ""WinSCPnet.dll"")
+        $assemblyPath = "C:\Program Files (x86)\WinSCP"
+        Add-Type -Path (Join-Path $assemblyPath "WinSCPnet.dll")
 
         # Setup session options
         $sessionOptions = New-Object WinSCP.SessionOptions -Property @{
             Protocol = [WinSCP.Protocol]::Sftp
-            HostName = ""example.com""
-            UserName = ""username""
-            Password = ""password""
-            SshHostKeyFingerprint = ""ssh-rsa 2048 xx:xx:xx:xx:xx:xx:xx:xx:...""
+            HostName = "example.com"
+            UserName = "username"
+            Password = "password"
+            SshHostKeyFingerprint = "ssh-rsa 2048 xx:xx:xx:xx:xx:xx:xx:xx:..."
         }
 
         $session = New-Object WinSCP.Session
@@ -34,23 +34,23 @@ Register-ObjectEvent $watcher Created -SourceIdentifier FileCreated -Action {
             $remoteFilePath =
                 [WinSCP.RemotePath]::TranslateLocalPathToRemote(
                     $localFilePath, $localPath, $remotePath)
-            Write-Host ""Remote path: $remoteFilePath""
+            Write-Host "Remote path: $remoteFilePath"
 
             # Connect
             $session.Open($sessionOptions)
 
             # Check if corresponding remote directory exists, if not, create it
-            $i = $remoteFilePath.LastIndexOf(""/"")
+            $i = $remoteFilePath.LastIndexOf("/")
             $remoteDirPath = $remoteFilePath.SubString(0, $i)
             if (($remoteDirPath.Length -gt 0) -and !$session.FileExists($remoteDirPath))
             {
-                Write-Host ""New subdirectory, creating $remoteDirPath on server""
+                Write-Host "New subdirectory, creating $remoteDirPath on server"
                 $session.CreateDirectory($remoteDirPath)
             }
 
             $session.PutFiles($localFilePath, $remoteFilePath).Check()
 
-            Write-Host ""Upload of $localFilePath succeeded""
+            Write-Host "Upload of $localFilePath succeeded"
         }
         finally
         {
@@ -61,7 +61,7 @@ Register-ObjectEvent $watcher Created -SourceIdentifier FileCreated -Action {
     } #end of first try 
     catch
     {
-        Write-Host ""Error: $($_.Exception.Message)""
+        Write-Host "Error: $($_.Exception.Message)"
     }
 } #end of action
 

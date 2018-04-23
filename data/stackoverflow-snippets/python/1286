@@ -3,23 +3,23 @@
 def connect_to_sftp(host, port, username, password, sftp_key, auth_type):
     try:
         transport = paramiko.Transport((host, port))
-        if auth_type == ""key_and_pass"":
+        if auth_type == "key_and_pass":
             sftp_key = paramiko.RSAKey.from_private_key_file(sftp_key)
             transport.start_client(event=None, timeout=15)
             transport.get_remote_server_key()
             transport.auth_publickey(username, sftp_key, event=None)
             transport.auth_password(username, password, event=None)
             #transport.connect(username = username, password = password, pkey = sftp_key)
-        elif auth_type == ""key_only"":
+        elif auth_type == "key_only":
             sftp_key = paramiko.RSAKey.from_private_key_file(sftp_key)
             transport.connect(username = username, pkey = sftp_key)
-        elif auth_type == ""user_pass"":
+        elif auth_type == "user_pass":
             transport.connect(username = username, password = password)
         else:
             ## Do your own error handling :)
-            print ""uh-oh!""
+            print "uh-oh!"
         sftp = paramiko.SFTPClient.from_transport(transport)   
     except Exception, e:
         ## Do your own error handling :)
-        print ""uh-oh!""
+        print "uh-oh!"
     return sftp, transport

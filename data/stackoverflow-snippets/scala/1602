@@ -9,7 +9,7 @@ public WebsocketRoutes(final ActorSystem actorSystem, final ActorRef connectionM
 }
 
 public Route handleWebsocket() {
-    return path(PathMatchers.segment(compile(""router_v\\d+"")).slash(PathMatchers.segment(""websocket"")).slash(PathMatchers.segment(compile(""[^\\\\/\\s]+""))), (version, routerId) ->
+    return path(PathMatchers.segment(compile("router_v\\d+")).slash(PathMatchers.segment("websocket")).slash(PathMatchers.segment(compile("[^\\\\/\\s]+"))), (version, routerId) ->
             handleWebSocketMessages(createWebsocketFlow(routerId))
     );
 }
@@ -19,7 +19,7 @@ private Flow<Message, Message, NotUsed> createWebsocketFlow(final String routerI
     final ActorRef connection = actorSystem.actorOf(WebsocketConnectionActor.props(connectionManager));
 
     final Source<Message, NotUsed> source = Source.<RouterWireMessage.Outbound>actorRef(5, OverflowStrategy.fail())
-            .map((outbound) -> (Message) TextMessage.create(new String(outbound.message, ""utf-8"")))
+            .map((outbound) -> (Message) TextMessage.create(new String(outbound.message, "utf-8")))
             .throttle(5, FiniteDuration.create(1, TimeUnit.SECONDS), 10, ThrottleMode.shaping())
             .mapMaterializedValue(destinationRef -> {
                 connection.tell(new RouterConnected(routerId, destinationRef), ActorRef.noSender());

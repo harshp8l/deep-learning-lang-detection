@@ -5,28 +5,28 @@ background_pid=
 main_cmd=
 
 function update_file_name() {
-    trap ""update_file_name"" USR1 # re-establish
+    trap "update_file_name" USR1 # re-establish
 
-    file_name=$(date +""%Y-%m-%d-%H-%M-%S.log"")
-    echo ""update file name $file_name""
+    file_name=$(date +"%Y-%m-%d-%H-%M-%S.log")
+    echo "update file name $file_name"
 
     cat < ./logger > $file_name &
     # after establish the new, check should kill the old
     if [ x$background_pid != x ];then
-        echo ""will kill the old $background_pid current is $$""
+        echo "will kill the old $background_pid current is $$"
         kill -TERM $background_pid
     fi
     background_pid=$!
 }
-trap ""update_file_name"" USR1
+trap "update_file_name" USR1
 
 function clean() {
-    echo ""perform clean...""
+    echo "perform clean..."
     kill -TERM $!
     kill -TERM $main_cmd
     rm logger
 }
-trap ""clean"" EXIT
+trap "clean" EXIT
 
 
 # create logger fifo

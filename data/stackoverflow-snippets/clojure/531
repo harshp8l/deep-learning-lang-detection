@@ -17,7 +17,7 @@ jmethodID readM, varM, varQualM, // defined on 'clojure.java.api.Clojure'
 bool create_vm() {
   // Configuration options for the JVM
   JavaVMOption opts = {
-    .optionString =  ""-Djava.class.path=./clojure-1.8.0.jar"",
+    .optionString =  "-Djava.class.path=./clojure-1.8.0.jar",
   };
   JavaVMInitArgs args = {
     .version = JNI_VERSION_1_6,
@@ -29,7 +29,7 @@ bool create_vm() {
   // Make the VM
   int rv = JNI_CreateJavaVM(&jvm, (void**)&env, &args);
   if (rv < 0 || !env) {
-    printf(""Unable to Launch JVM %d\n"",rv);
+    printf("Unable to Launch JVM %d\n",rv);
     return false;
   }
   return true;
@@ -38,20 +38,20 @@ bool create_vm() {
 // Lookup the classes and objects we need to interact with Clojure.
 void load_methods() {
 
-  clojure    = (*env)->FindClass(env, ""clojure/java/api/Clojure"");
-  readM      = (*env)->GetStaticMethodID(env, clojure, ""read"", ""(Ljava/lang/String;)Ljava/lang/Object;"");
-  varM       = (*env)->GetStaticMethodID(env, clojure, ""var"",  ""(Ljava/lang/Object;)Lclojure/lang/IFn;"");
-  varQualM   = (*env)->GetStaticMethodID(env, clojure, ""var"",  ""(Ljava/lang/Object;Ljava/lang/Object;)Lclojure/lang/IFn;"");
+  clojure    = (*env)->FindClass(env, "clojure/java/api/Clojure");
+  readM      = (*env)->GetStaticMethodID(env, clojure, "read", "(Ljava/lang/String;)Ljava/lang/Object;");
+  varM       = (*env)->GetStaticMethodID(env, clojure, "var",  "(Ljava/lang/Object;)Lclojure/lang/IFn;");
+  varQualM   = (*env)->GetStaticMethodID(env, clojure, "var",  "(Ljava/lang/Object;Ljava/lang/Object;)Lclojure/lang/IFn;");
 
-  ifn        = (*env)->FindClass(env, ""clojure/lang/IFn"");
-  invoke[0]  = (*env)->GetMethodID(env, ifn, ""invoke"", ""()Ljava/lang/Object;"");
-  invoke[1]  = (*env)->GetMethodID(env, ifn, ""invoke"", ""(Ljava/lang/Object;)Ljava/lang/Object;"");
-  invoke[2]  = (*env)->GetMethodID(env, ifn, ""invoke"", ""(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"");
+  ifn        = (*env)->FindClass(env, "clojure/lang/IFn");
+  invoke[0]  = (*env)->GetMethodID(env, ifn, "invoke", "()Ljava/lang/Object;");
+  invoke[1]  = (*env)->GetMethodID(env, ifn, "invoke", "(Ljava/lang/Object;)Ljava/lang/Object;");
+  invoke[2]  = (*env)->GetMethodID(env, ifn, "invoke", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
   // Obviously we could keep going here. The Clojure API has 'invoke' for up to 20 arguments...
 
-  longClass  = (*env)->FindClass(env, ""java/lang/Long"");
-  longValueM = (*env)->GetMethodID(env, longClass, ""longValue"", ""()J"");
-  longC      = (*env)->GetMethodID(env, longClass, ""<init>"",    ""(J)V"");
+  longClass  = (*env)->FindClass(env, "java/lang/Long");
+  longValueM = (*env)->GetMethodID(env, longClass, "longValue", "()J");
+  longC      = (*env)->GetMethodID(env, longClass, "<init>",    "(J)V");
 }
 
 // call the 'invoke' function of the right arity on 'IFn'.

@@ -18,10 +18,10 @@ namespace Parser {
 
     rule<struct item_, ast::value> item;
 
-    auto quoted   = lexeme [ '""' >> *('\\' >> char_ | ~char_('""')) >> '""' ];
+    auto quoted   = lexeme [ '"' >> *('\\' >> char_ | ~char_('"')) >> '"' ];
     auto bare     = lexeme [ +(graph-','-'}') ];
 
-    auto list     = x3::rule<struct list_, ast::list> {""list"" }
+    auto list     = x3::rule<struct list_, ast::list> {"list" }
                   = '{' >> (item % ',') >> '}';
 
     auto item_def = list | double_ | quoted | bare;
@@ -41,15 +41,15 @@ struct pretty_printer {
     void operator()(double v)            { _os << v; }
     void operator()(std::string s)       { _os << std::quoted(s); }
     void operator()(ast::list const& l)  {
-        _os << ""{\n"";
+        _os << "{\n";
         _indent += 2;
         for (auto& item : l) {
-            _os << std::setw(_indent) << """";
+            _os << std::setw(_indent) << "";
             operator()(item);
-           _os << "",\n"";
+           _os << ",\n";
         }
         _indent -= 2;
-        _os << std::setw(_indent) << """" << ""}"";
+        _os << std::setw(_indent) << "" << "}";
     }
 };
 
@@ -57,8 +57,8 @@ int main() {
     pretty_printer print{std::cout};
 
     for (std::string const input : {
-            R""({one, ""five, six""})"",
-            R""({one, {2, ""three four""}, ""five, six"", {""seven, eight""}})"",
+            R"({one, "five, six"})",
+            R"({one, {2, "three four"}, "five, six", {"seven, eight"}})",
         })
     {
         auto f = input.begin(), l = input.end();
@@ -67,14 +67,14 @@ int main() {
         bool ok = phrase_parse(f, l, Parser::item, x3::space, parsed);
 
         if (ok) {
-            std::cout << ""Parsed: "";
+            std::cout << "Parsed: ";
             print(parsed);
-            std::cout << ""\n"";
+            std::cout << "\n";
         } else {
-            std::cout << ""Parse failed\n"";
+            std::cout << "Parse failed\n";
         }
 
         if (f != l)
-            std::cout << ""Remaining unparsed: "" << std::quoted(std::string{f, l}) << ""\n"";
+            std::cout << "Remaining unparsed: " << std::quoted(std::string{f, l}) << "\n";
     }
 }

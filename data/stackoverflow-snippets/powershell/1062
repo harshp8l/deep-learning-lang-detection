@@ -5,8 +5,8 @@ $EventFilter = @{
 }
 # PropertySelector for the Correlation id (the InstanceId) and task name
 [string[]]$PropertyQueries = @(
-    'Event/EventData/Data[@Name=""InstanceId""]'
-    'Event/EventData/Data[@Name=""TaskName""]'
+    'Event/EventData/Data[@Name="InstanceId"]'
+    'Event/EventData/Data[@Name="TaskName"]'
 )
 $PropertySelector = New-Object System.Diagnostics.Eventing.Reader.EventLogPropertySelector @(,$PropertyQueries)
 # Loop through the start events
@@ -18,7 +18,7 @@ $TaskInvocations = foreach($StartEvent in Get-WinEvent -FilterHashtable $EventFi
     [pscustomobject]@{
         TaskName = $TaskName
         StartTime = $StartEvent.TimeCreated
-        EndTime = $(Get-WinEvent -FilterXPath ""*[System[(EventID=102)] and EventData[Data[@Name=""""InstanceId""""] and Data=""""{$InstanceId}""""]]"" -LogName 'Microsoft-Windows-TaskScheduler/Operational' -ErrorAction SilentlyContinue).TimeCreated
+        EndTime = $(Get-WinEvent -FilterXPath "*[System[(EventID=102)] and EventData[Data[@Name=""InstanceId""] and Data=""{$InstanceId}""]]" -LogName 'Microsoft-Windows-TaskScheduler/Operational' -ErrorAction SilentlyContinue).TimeCreated
     }
 }
 $TaskInvocations

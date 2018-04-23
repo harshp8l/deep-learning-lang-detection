@@ -36,24 +36,24 @@ time_printer<T> print_time(T fun) { return {fun}; }
 
 int main()
 {
-    // Build a vector of strings generated starting from ""Lorem Ipsum""
+    // Build a vector of strings generated starting from "Lorem Ipsum"
     const auto shuffled = []() {
         static const std::wstring lorem[] = {
-            L""Lorem ipsum dolor sit amet, consectetuer adipiscing elit."",
-            L""Maecenas porttitor congue massa. Fusce posuere, magna sed"",
-            L""pulvinar ultricies, purus lectus malesuada libero,"",
-            L""sit amet commodo magna eros quis urna."",
-            L""Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus."",
-            L""Pellentesque habitant morbi tristique senectus et netus et"",
-            L""malesuada fames ac turpis egestas. Proin pharetra nonummy pede."",
-            L""Mauris et orci. [*** add more chars to prevent SSO ***]""
+            L"Lorem ipsum dolor sit amet, consectetuer adipiscing elit.",
+            L"Maecenas porttitor congue massa. Fusce posuere, magna sed",
+            L"pulvinar ultricies, purus lectus malesuada libero,",
+            L"sit amet commodo magna eros quis urna.",
+            L"Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus.",
+            L"Pellentesque habitant morbi tristique senectus et netus et",
+            L"malesuada fames ac turpis egestas. Proin pharetra nonummy pede.",
+            L"Mauris et orci. [*** add more chars to prevent SSO ***]"
         };
 
         std::vector<std::wstring> v;
         auto const kTestIterationCount = ITERATION_COUNT;
         v.reserve(std::size(lorem) * kTestIterationCount);
         for (int i = 0;  i < kTestIterationCount;  ++i) {
-            auto const suffix = L"" (#"" + std::to_wstring(i) + L"")"";
+            auto const suffix = L" (#" + std::to_wstring(i) + L")";
             for (auto const& s: lorem) {
                 v.push_back(s + suffix);
             }
@@ -66,10 +66,10 @@ int main()
     // name, function
     using comparator = std::pair<const char *, std::function<bool(const std::wstring&,const std::wstring&)>>;
     static const comparator comparators[] = {
-        {"" default"", [](const auto& a, const auto& b){return a < b;} },
-        {""std_less"", std::less<std::wstring>{} },
-        {""  wcscmp"", [](const auto& a, const auto& b){return std::wcscmp(a.c_str(), b.c_str()) < 0;} },
-        {"" wmemcmp"", [](const auto& a, const auto& b){return std::wmemcmp(a.data(), b.data(), std::min(a.size(), b.size())) < 0;;} }
+        {" default", [](const auto& a, const auto& b){return a < b;} },
+        {"std_less", std::less<std::wstring>{} },
+        {"  wcscmp", [](const auto& a, const auto& b){return std::wcscmp(a.c_str(), b.c_str()) < 0;} },
+        {" wmemcmp", [](const auto& a, const auto& b){return std::wmemcmp(a.data(), b.data(), std::min(a.size(), b.size())) < 0;;} }
     };
 
     static const auto passes = 3u;
@@ -80,7 +80,7 @@ int main()
     for (auto i = 0u;  i < inputs.size();  ++i) {
         auto pass = i % ncomp;
         auto round = i / ncomp + 1;
-        std::cout << comparators[pass].first << "" round "" << round << "": ""
+        std::cout << comparators[pass].first << " round " << round << ": "
                   << print_time([&]{std::sort(inputs[i].begin(), inputs[i].end(), comparators[pass].second);})
                   << std::endl;
     }

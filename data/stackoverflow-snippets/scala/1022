@@ -1,18 +1,18 @@
 import spark.implicits._
 import functions._
 
-// we'll use this window to attach the ""previous"" gender to each record
-val globalWindow = Window.orderBy(""SN"")
+// we'll use this window to attach the "previous" gender to each record
+val globalWindow = Window.orderBy("SN")
 
-// we'll use this window to compute ""cumulative sum"" of 
+// we'll use this window to compute "cumulative sum" of 
 // an indicator column that would be 1 only if gender changed
 val upToThisRowWindow = globalWindow.rowsBetween(Long.MinValue, 0)
 
 val result = df
-  .withColumn(""prevGender"", lag(""gender"", 1) over globalWindow) // add previous record's gender
-  .withColumn(""shouldIncrease"", when($""prevGender"" =!= $""gender"", 1) otherwise 0) // translate to 1 or 0
-  .withColumn(""section"", (sum(""shouldIncrease"") over upToThisRowWindow) + lit(1)) // cumulative sum
-  .drop(""prevGender"", ""shouldIncrease"") // drop helper columns
+  .withColumn("prevGender", lag("gender", 1) over globalWindow) // add previous record's gender
+  .withColumn("shouldIncrease", when($"prevGender" =!= $"gender", 1) otherwise 0) // translate to 1 or 0
+  .withColumn("section", (sum("shouldIncrease") over upToThisRowWindow) + lit(1)) // cumulative sum
+  .drop("prevGender", "shouldIncrease") // drop helper columns
 
 result.show()
 // +---+---+------+------+-------+

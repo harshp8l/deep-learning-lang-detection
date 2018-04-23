@@ -1,24 +1,24 @@
 function search_book
 {
-    echo ""4) search_book""
-    read -p ""Title: "" title
-    read -p ""Author: "" author
+    echo "4) search_book"
+    read -p "Title: " title
+    read -p "Author: " author
 
-    #searchtitle=` grep -i ""^$title:$author:*"" BooksDB.txt | cut -d: -f 1 `
+    #searchtitle=` grep -i "^$title:$author:*" BooksDB.txt | cut -d: -f 1 `
 ###by using awk instead you only look for a title in the title column
     searchtitle=`awk -F':' -v t=$title 'BEGIN{IGNORECASE = 1} $1 ~ t {print $1}' BooksDB.txt`
-    #searchauthor=` grep -i ""^$title:$author:*"" BooksDB.txt | cut -d: -f 2 `
+    #searchauthor=` grep -i "^$title:$author:*" BooksDB.txt | cut -d: -f 2 `
     searchauthor=`awk -F':' -v a=$author 'BEGIN{IGNORECASE = 1} $2 ~ a {print $2}' BooksDB.txt`
-    #If both searchtitle and searchauthor vars are empty, just say ""No Books found.""
+    #If both searchtitle and searchauthor vars are empty, just say "No Books found."
     if [[ ! -z $searchtitle ]] && [[ ! -z $searchauthor ]]
     then
-    recordcount=`awk -F':' -v t=""$title"" -v a=""$author"" 'BEGIN{IGNORECASE = 1} $1 ~ t && $2 ~ a {cnt++} END {print cnt}' BooksDB.txt`
-    echo ""Found $recordcount records""
+    recordcount=`awk -F':' -v t="$title" -v a="$author" 'BEGIN{IGNORECASE = 1} $1 ~ t && $2 ~ a {cnt++} END {print cnt}' BooksDB.txt`
+    echo "Found $recordcount records"
     echo
-    awk -F':' -v t=""$title"" -v a=""$author"" 'BEGIN{IGNORECASE = 1; print ""Title:Author:Price:Available Copies:Sold Copies\n""}; $1 ~ t && $2 ~ a {print $0}' BooksDB.txt | column -s "":"" -t
+    awk -F':' -v t="$title" -v a="$author" 'BEGIN{IGNORECASE = 1; print "Title:Author:Price:Available Copies:Sold Copies\n"}; $1 ~ t && $2 ~ a {print $0}' BooksDB.txt | column -s ":" -t
     echo
     else
-    echo ""No Books found.""
+    echo "No Books found."
     fi
 
 }

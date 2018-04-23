@@ -1,18 +1,18 @@
 package main
 
 import (
-    ""bytes""
-    ""fmt""
-    ""log""
-    ""regexp""
-    ""sort""
+    "bytes"
+    "fmt"
+    "log"
+    "regexp"
+    "sort"
 )
 
 var (
-    rlt = []byte(""@#lt#@"")
-    rgt = []byte(""@#gt#@"")
-    lt  = []byte(""&lt;"")
-    gt  = []byte(""&gt;"")
+    rlt = []byte("@#lt#@")
+    rgt = []byte("@#gt#@")
+    lt  = []byte("&lt;")
+    gt  = []byte("&gt;")
 )
 
 // used for sorting strings by length
@@ -31,10 +31,10 @@ func (s ByLength) Less(i, j int) bool {
 func main() {
     s := `<Shop>
     <ShopName>Fresh Fruit <Fruit Shop></ShopName>
-    <ShopName attr=""val1"">Fresh Fruit <Shop test></ShopName>
+    <ShopName attr="val1">Fresh Fruit <Shop test></ShopName>
 </Shop>`
 
-    r1, err := regexp.Compile(""</([^<>]*)>"")
+    r1, err := regexp.Compile("</([^<>]*)>")
     if err != nil {
         log.Fatal(err)
     }
@@ -59,14 +59,14 @@ func main() {
 
     for _, name := range names {
         // replace only exact start tags
-        out = bytes.Replace(out, []byte(fmt.Sprintf(""<%s>"", name)), []byte(fmt.Sprintf(""@#lt#@%s@#gt#@"", name)), -1)
+        out = bytes.Replace(out, []byte(fmt.Sprintf("<%s>", name)), []byte(fmt.Sprintf("@#lt#@%s@#gt#@", name)), -1)
 
         // replace start tags with attributes
-        r3, err := regexp.Compile(fmt.Sprintf(""<%s( [^<>=]+=\""[^<>]+)>"", name))
+        r3, err := regexp.Compile(fmt.Sprintf("<%s( [^<>=]+=\"[^<>]+)>", name))
         if err != nil {
             // handle error
         }
-        out = r3.ReplaceAll(out, []byte(fmt.Sprintf(""@#lt#@%s$1@#gt#@"", name)))
+        out = r3.ReplaceAll(out, []byte(fmt.Sprintf("@#lt#@%s$1@#gt#@", name)))
     }
 
     out = bytes.Replace(out, []byte{'<'}, lt, -1)

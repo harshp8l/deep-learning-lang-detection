@@ -1,14 +1,14 @@
 package main
 
 import (
-    ""log""
-    ""text/template""
-    ""gopkg.in/yaml.v2""
-    ""os""
+    "log"
+    "text/template"
+    "gopkg.in/yaml.v2"
+    "os"
 )
 
 type File struct {
-    TypeVersion string `yaml:""_type-version""`
+    TypeVersion string `yaml:"_type-version"`
     Dependency  []Dependency
 }
 
@@ -22,7 +22,7 @@ type Dependency struct {
 type Install map[string]string
 
 var data = `
-_type-version: ""1.0.0""
+_type-version: "1.0.0"
 dependency:
   - name: ui
     type: runner
@@ -43,24 +43,24 @@ func main() {
 
     err := yaml.Unmarshal([]byte(data), &f)
     if err != nil {
-        log.Fatalf(""error: %v"", err)
+        log.Fatalf("error: %v", err)
     }
 
    const t = `
 #!/bin/bash
 
 {{range .Dependency}}
-echo ""type is {{.Type}}""
-echo ""cwd is {{.CWD}}""
+echo "type is {{.Type}}"
+echo "cwd is {{.CWD}}"
 {{range .Install}}
-echo ""install {{.name}}""
+echo "install {{.name}}"
 {{end}}
 {{end}}
 `
 
-    tt := template.Must(template.New("""").Parse(t))
+    tt := template.Must(template.New("").Parse(t))
     err = tt.Execute(os.Stdout, f)
     if err != nil {
-        log.Println(""executing template:"", err)
+        log.Println("executing template:", err)
     }
 }

@@ -2,17 +2,17 @@ Function Encode-Base64Url([string]$MsgIn)
 {
     $InputBytes =  [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($MsgIn))
 
-    # ""Url-Safe"" base64 encodeing
-    $InputBytes = $InputBytes.Replace('+', '-').Replace('/', '_').Replace(""="", """")
+    # "Url-Safe" base64 encodeing
+    $InputBytes = $InputBytes.Replace('+', '-').Replace('/', '_').Replace("=", "")
     return $InputBytes
 }
 
-Add-Type -Path ""C:\path\to\AE.Net.Mail.dll"" # We are using AE.Net.Mail to create our message. https://github.com/andyedinborough/aenetmail
+Add-Type -Path "C:\path\to\AE.Net.Mail.dll" # We are using AE.Net.Mail to create our message. https://github.com/andyedinborough/aenetmail
 Add-Type -AssemblyName System.IO
 Add-Type -AssemblyName System.Text.Encoding
 
-$ToEmail = ""someone@somewhere.com""
-$FromEmail = ""a.person@gmail.com""
+$ToEmail = "someone@somewhere.com"
+$FromEmail = "a.person@gmail.com"
 #  From https://gist.github.com/LindaLawton/55115de5e8b366be3969b24884f30a39
 #  Setup:
 #
@@ -35,9 +35,9 @@ $FromEmail = ""a.person@gmail.com""
 #    Copy the authencation code and run the following script.  
 #      note: AuthorizationCode can only be used once you will need to save the refresh token returned to you.  
 
-$ClientID = ""Your Client ID""
-$secret = ""Your Client Secret""
-$RedirectURI = ""urn:ietf:wg:oauth:2.0:oob""
+$ClientID = "Your Client ID"
+$secret = "Your Client Secret"
+$RedirectURI = "urn:ietf:wg:oauth:2.0:oob"
 $AuthorizationCode = 'Your Authorization Code'
 
 $tokenParams = @{
@@ -48,7 +48,7 @@ $tokenParams = @{
       redirect_uri=$RedirectURI
     }
 
-$token = Invoke-WebRequest -Uri ""https://accounts.google.com/o/oauth2/token"" -Method POST -Body $tokenParams | ConvertFrom-Json
+$token = Invoke-WebRequest -Uri "https://accounts.google.com/o/oauth2/token" -Method POST -Body $tokenParams | ConvertFrom-Json
 
 # Use refresh token to get new access token
 # The access token is used to access the api by sending the access_token parm with every request. 
@@ -62,7 +62,7 @@ $RefreshTokenParams = @{
       grant_type='refresh_token';
     }
 
-$RefreshedToken = Invoke-WebRequest -Uri ""https://accounts.google.com/o/oauth2/token"" -Method POST -Body $refreshTokenParams | ConvertFrom-Json
+$RefreshedToken = Invoke-WebRequest -Uri "https://accounts.google.com/o/oauth2/token" -Method POST -Body $refreshTokenParams | ConvertFrom-Json
 
 $AccessToken = $RefreshedToken.access_token
 
@@ -74,8 +74,8 @@ $Msg = New-Object AE.Net.Mail.MailMessage
 $Msg.To.Add($To)
 $Msg.ReplyTo.Add($From) # Important so email doesn't bounce 
 $Msg.From = $From
-$Msg.Subject = ""Sent through the Gmail API using Powershell""
-$Msg.Body = ""Hello, world from Gmail API using Powershell!""
+$Msg.Subject = "Sent through the Gmail API using Powershell"
+$Msg.Body = "Hello, world from Gmail API using Powershell!"
 
 $MsgSW = New-Object System.IO.StringWriter
 $Msg.Save($MsgSW)
@@ -83,9 +83,9 @@ $Msg.Save($MsgSW)
 $EncodedEmail = Encode-Base64Url $MsgSW
 
 # Found this gem here: https://github.com/thinkAmi/PowerShell_misc/blob/master/gmail_api/gmail_sender.ps1
-$Content = @{ ""raw"" = $EncodedEmail; } | ConvertTo-Json
+$Content = @{ "raw" = $EncodedEmail; } | ConvertTo-Json
 
-$Result = Invoke-RestMethod -Uri ""https://www.googleapis.com/gmail/v1/users/me/messages/send?access_token=$AccessToken"" -Method POST -ErrorAction Stop -Body $Content -ContentType ""Application/Json""
+$Result = Invoke-RestMethod -Uri "https://www.googleapis.com/gmail/v1/users/me/messages/send?access_token=$AccessToken" -Method POST -ErrorAction Stop -Body $Content -ContentType "Application/Json"
 
 if($Result)
 {
@@ -93,5 +93,5 @@ if($Result)
 }
 else
 {
-    Write-Host ""Error sending email""
+    Write-Host "Error sending email"
 }

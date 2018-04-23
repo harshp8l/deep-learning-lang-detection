@@ -33,28 +33,28 @@ get_key_path() {
 }
 
 get_password() {
-    if [ ! -x ""$(command -v openssl)"" ]; then
-        echo ""Error: OpenSSL is not installed or not accessible in the current path.  Please install it and try again."" >&2
+    if [ ! -x "$(command -v openssl)" ]; then
+        echo "Error: OpenSSL is not installed or not accessible in the current path.  Please install it and try again." >&2
         exit 1
     fi
 
     KEY_PATH=$(get_key_path $1)
 
     if [ ! -d $KEY_PATH ]; then
-        echo ""Error: KEY_PATH directory $KEY_PATH not found.  Please check permissions and try again."" >&2
+        echo "Error: KEY_PATH directory $KEY_PATH not found.  Please check permissions and try again." >&2
         exit 1
     fi
 
     # Create a PKCS8 version of the public key in the current directory if one does not already exist
     if [ ! -z id_rsa.pub.pem ]; then
-        if [ ! -x ""$(command -v ssh-keygen)"" ]; then
-            echo ""ssh-keygen is needed to generate a PKCS8 version of your public key.  Please install it and try again."" >&2
+        if [ ! -x "$(command -v ssh-keygen)" ]; then
+            echo "ssh-keygen is needed to generate a PKCS8 version of your public key.  Please install it and try again." >&2
         fi
 
         ssh-keygen -f $KEY_PATH/id_rsa.pub -e -m PKCS8 > id_rsa.pub.pem
 
         if [ ! -f id_rsa.pub.pem ]; then
-            echo ""Failed to create PKCS8 version of the public key.  Please check permissions and try again."" >&2
+            echo "Failed to create PKCS8 version of the public key.  Please check permissions and try again." >&2
             exit 1
         fi
     fi
@@ -67,18 +67,18 @@ get_password() {
 }
 
 set_password() {
-    echo ""Enter your Password:"" >&2
+    echo "Enter your Password:" >&2
     stty -echo
     read PASSWORD
     stty echo
-    echo ""Confirm your Password:"" >&2
+    echo "Confirm your Password:" >&2
     stty -echo
     read CPASSWORD
     stty echo
     if [ $PASSWORD == $CPASSWORD ]; then
         echo $PASSWORD | openssl rsautl -encrypt -pubin -inkey id_rsa.pub.pem -out pass.enc
     else
-        echo ""Error: passwords do not match.  Please try again."" >&2
+        echo "Error: passwords do not match.  Please try again." >&2
         exit 1
     fi
 }
@@ -86,11 +86,11 @@ set_password() {
 get_abs_filename() {
   # $1 : relative filename
   filename=$1
-  parentdir=$(dirname ""${filename}"")
+  parentdir=$(dirname "${filename}")
 
-  if [ -d ""${filename}"" ]; then
-      echo ""$(cd ""${filename}"" && pwd)""
-  elif [ -d ""${parentdir}"" ]; then
-    echo ""$(cd ""${parentdir}"" && pwd)/$(basename ""${filename}"")""
+  if [ -d "${filename}" ]; then
+      echo "$(cd "${filename}" && pwd)"
+  elif [ -d "${parentdir}" ]; then
+    echo "$(cd "${parentdir}" && pwd)/$(basename "${filename}")"
   fi
 }

@@ -5,15 +5,15 @@ import java.util.List;
 public class ToJson {
 
     public static void main(String[] args) {
-        String sqlQuery = ""INSERT INTO myTable (ID, CITY, STATE, LAT_N, LONG_W) VALUES (13, 'Phoenix', 'AZ', 33, 112); |\r\n"" +
-                ""INSERT INTO myTable (ID, CITY, STATE, LAT_N, LONG_W) VALUES (44, 'Denver', 'CO', 40, 105); |\r\n"" +
-                ""INSERT INTO myTable (ID, CITY, STATE, LAT_N, LONG_W) VALUES (66, 'Caribou', 'ME', 47, 68); |"";
+        String sqlQuery = "INSERT INTO myTable (ID, CITY, STATE, LAT_N, LONG_W) VALUES (13, 'Phoenix', 'AZ', 33, 112); |\r\n" +
+                "INSERT INTO myTable (ID, CITY, STATE, LAT_N, LONG_W) VALUES (44, 'Denver', 'CO', 40, 105); |\r\n" +
+                "INSERT INTO myTable (ID, CITY, STATE, LAT_N, LONG_W) VALUES (66, 'Caribou', 'ME', 47, 68); |";
 
         //REMOVE UNNEEDED STUFF
-        String trimUnwanted = sqlQuery.replaceAll(""INSERT INTO myTable \\(ID, CITY, STATE, LAT_N, LONG_W\\) VALUES \\("", """")
-                .replaceAll(""'"", """")
-                .replaceAll(""\\);"", """"); 
-        System.out.println(""afterTrim: "" + trimUnwanted);
+        String trimUnwanted = sqlQuery.replaceAll("INSERT INTO myTable \\(ID, CITY, STATE, LAT_N, LONG_W\\) VALUES \\(", "")
+                .replaceAll("'", "")
+                .replaceAll("\\);", ""); 
+        System.out.println("afterTrim: " + trimUnwanted);
         /*
         afterTrim: 13, Phoenix, AZ, 33, 112 |
         44, Denver, CO, 40, 105 |
@@ -21,19 +21,19 @@ public class ToJson {
          */
 
         //SEPARATE INTO SEPARATE QUERIES
-        String[] choppedUpText = trimUnwanted.split(""\\|"");
-        System.out.println(""Chopped up text >>"");
+        String[] choppedUpText = trimUnwanted.split("\\|");
+        System.out.println("Chopped up text >>");
         Arrays.stream(choppedUpText).forEach(System.out::println);
 
         //SEPARATE EACH QUERY INTO AN OBJECT, AND ADD TO LIST
         List<Address> list = new ArrayList<>();
         Arrays.stream(choppedUpText).forEach(s -> {
-            System.out.println(""adding -> ""+ s);
-            list.add(new Address(s.split("","")) ); //remember to do your error checking!
+            System.out.println("adding -> "+ s);
+            list.add(new Address(s.split(",")) ); //remember to do your error checking!
         }) ;
 
-        String jsonStart = ""{\n     \""fields\"": "" ;
-        String jsonEnd = ""\n\n}"";
+        String jsonStart = "{\n     \"fields\": " ;
+        String jsonEnd = "\n\n}";
 
         //THE ACTUAL RESULT
         String json = jsonStart + list.toString() + jsonEnd;
@@ -63,12 +63,12 @@ class Address {
     @Override
     public String toString() {
         //prints out in correct format
-        return "" {\n"" +
-                ""        \""ID\"": \""""+ ID+ ""\"",\n"" +
-                ""        \""CITY\"": \""""+ CITY+ ""\"",\n"" +
-                ""        \""STATE\"": \""""+ STATE+ ""\"",\n"" +
-                ""        \""LAT_N\"": \""""+ LAT_N+ ""\"",\n"" +
-                ""        \""LONG_W\"": \""""+ LONG_W+ ""\""\n"" +
-                ""    }"";
+        return " {\n" +
+                "        \"ID\": \""+ ID+ "\",\n" +
+                "        \"CITY\": \""+ CITY+ "\",\n" +
+                "        \"STATE\": \""+ STATE+ "\",\n" +
+                "        \"LAT_N\": \""+ LAT_N+ "\",\n" +
+                "        \"LONG_W\": \""+ LONG_W+ "\"\n" +
+                "    }";
     }
 }

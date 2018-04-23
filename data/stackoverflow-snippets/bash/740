@@ -33,7 +33,7 @@
 #   10. --compare ARG1 ARG2
 #
 # This example does not show how to implement best match which would
-# mean accepting an option like ""--com"" (because it is the best unique
+# mean accepting an option like "--com" (because it is the best unique
 # match to --compare). That could be added but i am not convinced
 # that it is worth the overhead.
 #
@@ -46,7 +46,7 @@
 # Simple error function that prints the line number of the caller and
 # highlights the message in red.
 function _err() {
-    echo -e ""\033[31;1mERROR:\033[0;31m:${BASH_LINENO[0]} $*\033[0m""
+    echo -e "\033[31;1mERROR:\033[0;31m:${BASH_LINENO[0]} $*\033[0m"
     exit 1
 }
 
@@ -62,17 +62,17 @@ VERBOSE=0
 OPT_CACHE=()
 while (( $# )) || (( ${#OPT_CACHE[@]} )) ; do
     if (( ${#OPT_CACHE[@]} > 0 )) ; then
-        OPT=""${OPT_CACHE[0]}""
+        OPT="${OPT_CACHE[0]}"
         if (( ${#OPT_CACHE[@]} > 1 )) ; then
             OPT_CACHE=(${OPT_CACHE[@]:1})
         else
             OPT_CACHE=()
         fi
     else
-        OPT=""$1""
+        OPT="$1"
         shift
     fi
-    case ""$OPT"" in
+    case "$OPT" in
         # Handle the case of multiple short arguments in a single
         # string:
         #  -abc ==> -a -b -c
@@ -80,7 +80,7 @@ while (( $# )) || (( ${#OPT_CACHE[@]} )) ; do
             for (( i=1; i<${#OPT}; i++ )) ; do
                 # Note that the leading dash is added here.
                 CHAR=${OPT:$i:1}
-                OPT_CACHE+=(""-$CHAR"")
+                OPT_CACHE+=("-$CHAR")
             done
             ;;
         -h|--help)
@@ -95,13 +95,13 @@ while (( $# )) || (( ${#OPT_CACHE[@]} )) ; do
             # Can be specified multiple times but we only accept the
             # last one.
             # Can accept: --file foo and --file=foo
-            if [ -z ""${OPT##*=*}"" ] ; then
-                FILE=""${OPT#*=}""
+            if [ -z "${OPT##*=*}" ] ; then
+                FILE="${OPT#*=}"
             else
-                FILE=""$1""
+                FILE="$1"
                 shift
             fi
-            [[ -z ""$FILE"" ]] && _err ""Missing argument for '$OPT'.""
+            [[ -z "$FILE" ]] && _err "Missing argument for '$OPT'."
             ;;
         -c|--compare)
             # Can be specified multiple times but we only accept the
@@ -115,25 +115,25 @@ while (( $# )) || (( ${#OPT_CACHE[@]} )) ; do
             # you decide that you will always use a comma as the
             # separator, that is fine until one of the arguments
             # contains a comma.
-            CARG1=""$1""
-            CARG2=""$2""
+            CARG1="$1"
+            CARG2="$2"
             shift 2
-            [[ -z ""$CARG1"" ]] &&  _err ""Missing both arguments for '$OPT'.""
-            [[ -z ""$CARG2"" ]] &&  _err ""Missing second argument for '$OPT'.""
+            [[ -z "$CARG1" ]] &&  _err "Missing both arguments for '$OPT'."
+            [[ -z "$CARG2" ]] &&  _err "Missing second argument for '$OPT'."
             CARGS=()
-            CARGS+=(""$CARG1"")
-            CARGS+=(""$CARG2"")
+            CARGS+=("$CARG1")
+            CARGS+=("$CARG2")
             ;;
         -*)
-            _err ""Unrecognized option '$OPT'.""
+            _err "Unrecognized option '$OPT'."
             ;;
         *)
-            _err ""Unrecognized argument '$OPT'.""
+            _err "Unrecognized argument '$OPT'."
             ;;
     esac
 done
 
-echo ""COMPARE : ${CARGS[@]}""
-echo ""FILE    : ${FILE}""
-echo ""HELP    : ${HELP}""
-echo ""VERBOSE : ${VERBOSE}""
+echo "COMPARE : ${CARGS[@]}"
+echo "FILE    : ${FILE}"
+echo "HELP    : ${HELP}"
+echo "VERBOSE : ${VERBOSE}"

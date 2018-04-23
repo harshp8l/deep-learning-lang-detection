@@ -2,7 +2,7 @@ open System
 open System.Text.RegularExpressions
 open System.Linq.Expressions
 
-let printfRegex = Regex(@""^(?<text>[^%]*)((?<placeholder>%(%|((0|-|\+| )?([0-9]+)?(\.[0-9]+)?b|c|s|d|i|u|x|X|o|e|E|f|F|g|G|M|O|A|\+A|a|t)))(?<text>[^%]*))*$"", RegexOptions.ExplicitCapture ||| RegexOptions.Compiled)
+let printfRegex = Regex(@"^(?<text>[^%]*)((?<placeholder>%(%|((0|-|\+| )?([0-9]+)?(\.[0-9]+)?b|c|s|d|i|u|x|X|o|e|E|f|F|g|G|M|O|A|\+A|a|t)))(?<text>[^%]*))*$", RegexOptions.ExplicitCapture ||| RegexOptions.Compiled)
 
 type PrintfExpr =
 | K of Expression
@@ -14,7 +14,7 @@ let sprintf' (c:System.Globalization.CultureInfo) (f:Printf.StringFormat<'a>) : 
     let cultureExpr = Expression.Constant(c) :> Expression
 
     let m = printfRegex.Match(f.Value)
-    let prefix = m.Groups.[""text""].Captures.[0].Value
+    let prefix = m.Groups.["text"].Captures.[0].Value
 
     let inputTypes = 
         let rec loop t = 
@@ -23,7 +23,7 @@ let sprintf' (c:System.Globalization.CultureInfo) (f:Printf.StringFormat<'a>) : 
                 dom :: loop rng
             else
                 if t <> typeof<string> then
-                    failwithf ""Unexpected return type: %A"" t
+                    failwithf "Unexpected return type: %A" t
                 []
         ref(loop typeof<'a>)
 
@@ -34,36 +34,36 @@ let sprintf' (c:System.Globalization.CultureInfo) (f:Printf.StringFormat<'a>) : 
 
     let exprs =
         K(Expression.Constant(prefix)) ::
-        [for i in 0 .. m.Groups.[""placeholder""].Captures.Count - 1 do
-            let ph = m.Groups.[""placeholder""].Captures.[i].Value
-            let text = m.Groups.[""text""].Captures.[i+1].Value
+        [for i in 0 .. m.Groups.["placeholder"].Captures.Count - 1 do
+            let ph = m.Groups.["placeholder"].Captures.[i].Value
+            let text = m.Groups.["text"].Captures.[i+1].Value
             // TODO: handle flags, width, precision, other placeholder types, etc.
-            if ph = ""%%"" then yield K(Expression.Constant(""%"" + text))
+            if ph = "%%" then yield K(Expression.Constant("%" + text))
             else
                 match ph with
-                | ""%f"" -> 
+                | "%f" -> 
                     let t = pop() 
                     if t <> typeof<float> && t <> typeof<float32> then
-                        failwithf ""Unexpected type for %%f placeholder: %A"" t
+                        failwithf "Unexpected type for %%f placeholder: %A" t
                     let e = Expression.Variable t
-                    yield F(e, Expression.Call(e, t.GetMethod(""ToString"", [| typeof<System.Globalization.CultureInfo> |]), [cultureExpr]))
-                | ""%s"" ->
+                    yield F(e, Expression.Call(e, t.GetMethod("ToString", [| typeof<System.Globalization.CultureInfo> |]), [cultureExpr]))
+                | "%s" ->
                     let t = pop() 
                     if t <> typeof<string> then
-                        failwithf ""Unexpected type for %%s placeholder: %A"" t
+                        failwithf "Unexpected type for %%s placeholder: %A" t
                     let e = Expression.Variable t
                     yield F(e, e)
                 | _ -> 
-                    failwithf ""unhandled placeholder: %s"" ph
+                    failwithf "unhandled placeholder: %s" ph
                 yield K (Expression.Constant text)]
 
     let innerExpr = 
-        Expression.Call(typeof<string>.GetMethod(""Concat"", [|typeof<string[]>|]), Expression.NewArrayInit(typeof<string>, exprs |> Seq.map (fun (K e | F(_,e)) -> e)))
+        Expression.Call(typeof<string>.GetMethod("Concat", [|typeof<string[]>|]), Expression.NewArrayInit(typeof<string>, exprs |> Seq.map (fun (K e | F(_,e)) -> e)))
         :> Expression
 
     let funcConvert = 
         typeof<FuncConvert>.GetMethods()    
-        |> Seq.find (fun mi -> mi.Name = ""ToFSharpFunc"" && mi.GetParameters().[0].ParameterType.GetGenericTypeDefinition() = typedefof<Converter<_,_>>)
+        |> Seq.find (fun mi -> mi.Name = "ToFSharpFunc" && mi.GetParameters().[0].ParameterType.GetGenericTypeDefinition() = typedefof<Converter<_,_>>)
 
     let body =
         List.foldBack (fun pe (e:Expression) ->
@@ -77,4 +77,4 @@ let sprintf' (c:System.Globalization.CultureInfo) (f:Printf.StringFormat<'a>) : 
 
     Expression.Lambda(body, [||]).Compile().DynamicInvoke() :?> 'a
 
-sprintf' (Globalization.CultureInfo.GetCultureInfo ""fr-FR"") ""%s %f > %f"" ""It worked!"" 1.5f -12.3
+sprintf' (Globalization.CultureInfo.GetCultureInfo "fr-FR") "%s %f > %f" "It worked!" 1.5f -12.3

@@ -1,11 +1,11 @@
 # Create an FTPWebRequest object to handle the connection to the FTP server
 clear
-$sourceuri = ""ftp://192.168.1.4/ROOT/CobianBackups""
+$sourceuri = "ftp://192.168.1.4/ROOT/CobianBackups"
 $ftprequest = [System.Net.FtpWebRequest]::Create($sourceuri)
 
 # Set the request's network credentials for an authenticated connection
-$username = ""admin"" #Change username when done
-$password = ""xxx""
+$username = "admin" #Change username when done
+$password = "xxx"
 $ftprequest.Credentials = New-Object System.Net.NetworkCredential($username,$password)
 
 [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { return $true } #ignore unsigned SSL cert, UNSECURE! Get signed SSL
@@ -26,13 +26,13 @@ $reader = New-Object IO.StreamReader $ftpresponse.GetResponseStream()
     $dirlist = $reader.ReadToEnd()
     $reader.Close()
 
-echo ""raw output:""
+echo "raw output:"
 $dirlist
 
-$dateArray = $dirlist | Select-String -Pattern ""((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Sep)\s(s|\d)\d\s\d{2}:\d{2})"" | % {$_.Matches} |  % {[datetime]::parseexact($_.Value, 'MMM dd HH:mm', $null)} | Sort-Object
+$dateArray = $dirlist | Select-String -Pattern "((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Sep)\s(s|\d)\d\s\d{2}:\d{2})" | % {$_.Matches} |  % {[datetime]::parseexact($_.Value, 'MMM dd HH:mm', $null)} | Sort-Object
 
-echo ""DateTime Sorted:""
+echo "DateTime Sorted:"
 $dateArray
 
-echo ""Last file:""
+echo "Last file:"
 $dateArray[-1]

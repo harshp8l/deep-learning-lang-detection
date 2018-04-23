@@ -2,20 +2,20 @@
 type tokenSource struct{ token *oauth2.Token }
 
 func (t *tokenSource) Token() (*oauth2.Token, error) {
-    fmt.Println(""TokenSource!"", t.token)
+    fmt.Println("TokenSource!", t.token)
     return t.token, nil
 }
 
 func handleCallback(w http.ResponseWriter, r *http.Request) {
 
-    state := r.FormValue(""state"")
+    state := r.FormValue("state")
     if state != oauthStateString {
-        fmt.Printf(""invalid oauth state, expected '%s', got '%s'\n"", oauthStateString, state)
-        http.Redirect(w, r, ""/"", http.StatusTemporaryRedirect)
+        fmt.Printf("invalid oauth state, expected '%s', got '%s'\n", oauthStateString, state)
+        http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
         return
     }
 
-    code := r.FormValue(""code"")
+    code := r.FormValue("code")
 
     // Create a tokenSource and fill in our application Bearer token
     ts := &tokenSource{
@@ -36,12 +36,12 @@ func handleCallback(w http.ResponseWriter, r *http.Request) {
     // myConfig defined previously and in the usual way. Look at the examples.
     token, err := myConfig.Exchange(ctx, code)
     if err != nil {
-        fmt.Printf(""Code exchange failed with '%s'\n"", err)
-        http.Redirect(w, r, ""/"", http.StatusTemporaryRedirect)
+        fmt.Printf("Code exchange failed with '%s'\n", err)
+        http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
         return
     }
 
-    fmt.Printf(""token: %+v"", token)
+    fmt.Printf("token: %+v", token)
 
     // token can now be used.
 }

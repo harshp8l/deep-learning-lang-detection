@@ -2,22 +2,22 @@
 
 ## endcode string on stdin to 2-digit hex using key
 xor() {
-    local key=""$1""
+    local key="$1"
     local length=${#key}
     while read -r -N1 byte
     do
         char=${key:$((i % length)):1}
         ((i++))
-        printf -v byteval ""%d"" ""'$byte""
-        printf -v charval ""%d"" ""'$char""
-        printf ""%02x"" $((byteval ^ charval))
+        printf -v byteval "%d" "'$byte"
+        printf -v charval "%d" "'$char"
+        printf "%02x" $((byteval ^ charval))
     done
-    echo""""
+    echo""
 }
 
 ## decode 2-digit hex string to text using key
 decode() {
-    local key=""$1""
+    local key="$1"
     local length=${#key}
     local res=
     local out=
@@ -25,35 +25,35 @@ decode() {
     do
         char=${key:$((i % length)):1}
         ((i++))
-        printf -v byteval ""%d"" ""0x$byte""
-        printf -v charval ""%d"" ""'$char""
+        printf -v byteval "%d" "0x$byte"
+        printf -v charval "%d" "'$char"
         res=$((byteval ^ charval))
-        printf -v out ""\\\x%02x"" $((byteval ^ charval))
-        if [ ""$res"" -gt '0' ]; then
+        printf -v out "\\\x%02x" $((byteval ^ charval))
+        if [ "$res" -gt '0' ]; then
             printf $out
         else
-            printf "" ""
+            printf " "
         fi
     done
-    echo""""
+    echo""
 }
 
-[ -z ""$1"" ] && {    ## validate key given
-    printf ""error: insufficient input - key\n""
+[ -z "$1" ] && {    ## validate key given
+    printf "error: insufficient input - key\n"
     exit 1
 }
-key=""$1""
+key="$1"
 
 read -r line        ## read input string on stdin
-[ -z ""$line"" ] && { ## validate input string provided
-    printf ""error: no string input on stdin.\n""
+[ -z "$line" ] && { ## validate input string provided
+    printf "error: no string input on stdin.\n"
     exit 1
 }
 
-printf ""original: %s\n"" ""$line""         ## output original string
+printf "original: %s\n" "$line"         ## output original string
 
-encoded=$(xor ""$key"" <<<$line)          ## encode and output encoded string
-printf ""encoded : %s\n"" ""$encoded""
+encoded=$(xor "$key" <<<$line)          ## encode and output encoded string
+printf "encoded : %s\n" "$encoded"
 
-decoded=$(decode ""$key"" <<<""$encoded"")  ## decode and output decoded string
-printf ""decoded : %s\n"" ""$decoded""
+decoded=$(decode "$key" <<<"$encoded")  ## decode and output decoded string
+printf "decoded : %s\n" "$decoded"

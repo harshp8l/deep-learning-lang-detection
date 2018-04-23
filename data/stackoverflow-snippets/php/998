@@ -1,5 +1,5 @@
 <?php
-    $conn = new mysqli(""127.0.0.1"", ""root"", """", ""db"");
+    $conn = new mysqli("127.0.0.1", "root", "", "db");
 
     if(isset($_POST['submit'])) {
         $null1 = NULL;
@@ -9,20 +9,20 @@
         $title = isset($_POST['title']) ? $_POST['title'] : '';
         $email = isset($_POST['email']) ? $_POST['email'] : '';
 
-        $stmt = $conn->prepare(""INSERT INTO Posts (Image_1, Image_2, Image_3, Image_4, title, email ) VALUES (?,?,?,?,?,?);"");
-        $stmt->bind_param(""bbbbss"", $null1, $null2, $null3, $null4, $title, $email );
+        $stmt = $conn->prepare("INSERT INTO Posts (Image_1, Image_2, Image_3, Image_4, title, email ) VALUES (?,?,?,?,?,?);");
+        $stmt->bind_param("bbbbss", $null1, $null2, $null3, $null4, $title, $email );
 
         for($i = 0; $i < count( $_FILES['images1']['tmp_name'] ); $i++) {
             if(!empty($_FILES['images1']['tmp_name'][$i])) {
                 $target_file = $_FILES['images1']['tmp_name'][$i];
 
-                $fp = fopen($target_file, ""r"");
+                $fp = fopen($target_file, "r");
                 while (!feof($fp)) {
                     $stmt->send_long_data($i, fread($fp, 8192));
                 }
                 fclose($fp);
                 unlink($_FILES['images1']['tmp_name'][$i]);
-                echo ""Uploading image blob success!<br/>\n"";
+                echo "Uploading image blob success!<br/>\n";
             }
         }
 
@@ -32,12 +32,12 @@
     }
 ?>
 
-<form action="""" method=""post"" enctype=""multipart/form-data"">
- <input type=""text"" name=""title"" value=""this is the title""/><br/>
- <input type=""text"" name=""email"" value=""john@yahoo.com""/><br/>
- <input type=""file"" name=""images1[]"" value=""""/><br/>
- <input type=""file"" name=""images1[]"" value=""""/><br/>
- <input type=""file"" name=""images1[]"" value=""""/><br/>
- <input type=""file"" name=""images1[]"" value=""""/><br/><br/>
- <input type=""submit"" name=""submit"" value=""Upload Data""/>
+<form action="" method="post" enctype="multipart/form-data">
+ <input type="text" name="title" value="this is the title"/><br/>
+ <input type="text" name="email" value="john@yahoo.com"/><br/>
+ <input type="file" name="images1[]" value=""/><br/>
+ <input type="file" name="images1[]" value=""/><br/>
+ <input type="file" name="images1[]" value=""/><br/>
+ <input type="file" name="images1[]" value=""/><br/><br/>
+ <input type="submit" name="submit" value="Upload Data"/>
 </form>

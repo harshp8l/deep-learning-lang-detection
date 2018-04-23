@@ -1,23 +1,23 @@
 $OfflineFilesSyncControlFlagSyncOut = 0x00000004
 $OfflineFilesSyncControlCrKeepLatest = 0x30000000
 $OfflineFilesTransitionFlagConsole = 0x00000002
-$offlineCache = ([WmiClass]""\\.\root\cimv2:Win32_OfflineFilesCache"")
+$offlineCache = ([WmiClass]"\\.\root\cimv2:Win32_OfflineFilesCache")
     $offlineCache.Enable($true)
     $offlineCache.TransitionOnline([System.IO.Path]::GetDirectoryName($filesToSync[0]),$OfflineFilesTransitionFlagConsole)
 
     $observer = New-Object System.Management.ManagementOperationObserver
 
-    Register-ObjectEvent -InputObject $observer -EventName ""Progress"" -Action {
+    Register-ObjectEvent -InputObject $observer -EventName "Progress" -Action {
         param ($o,$e)
-        Write-Host ""Progress $($e.Current) of $($e.Upperbound) Result $($e.Message)""
+        Write-Host "Progress $($e.Current) of $($e.Upperbound) Result $($e.Message)"
     }
 
-    Register-ObjectEvent -InputObject $observer -EventName ""Completed"" -Action {
+    Register-ObjectEvent -InputObject $observer -EventName "Completed" -Action {
        param($o,$e)
-       Write-Host ""Progress $($e.Current) of $($e.Upperbound) Result $($e.Message)""
+       Write-Host "Progress $($e.Current) of $($e.Upperbound) Result $($e.Message)"
     }
 
-    $params = $offlineCache.GetMethodParameters(""Synchronize"")
+    $params = $offlineCache.GetMethodParameters("Synchronize")
     $params.Paths = $filesToSync
     $params.Flags = $OfflineFilesSyncControlFlagSyncOut+$OfflineFilesSyncControlCrKeepLatest
-    $offlineCache.InvokeMethod($observer,""Synchronize"",$params,$null)
+    $offlineCache.InvokeMethod($observer,"Synchronize",$params,$null)

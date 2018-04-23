@@ -2,10 +2,10 @@
 with open('/root/nix_bsd_mac_inventory-master/SucessfullIp.txt') as f:
   ips = set(line.rstrip() for line in f)
 
-password_list = [""password1"",""password2""]
+password_list = ["password1","password2"]
 
 ##Reading Unique Ip's values 
-with open(""/root/nix_bsd_mac_inventory-master/Unique.txt"") as fp:
+with open("/root/nix_bsd_mac_inventory-master/Unique.txt") as fp:
     for line in fp:
             line = line.rstrip()
             ## Comparing unique ip's if ip is already has scanned
@@ -16,32 +16,32 @@ with open(""/root/nix_bsd_mac_inventory-master/Unique.txt"") as fp:
                 for password in password_list:
                     if try_password(password):
                         print ('Sucessfull Completed Ip: ' +line)
-                        f6 = open(""/root/nix_bsd_mac_inventory-master/SucessfullIp.txt"",""a"")
-                        f6.write(""\n""+line)
+                        f6 = open("/root/nix_bsd_mac_inventory-master/SucessfullIp.txt","a")
+                        f6.write("\n"+line)
                         f6.close()
                         break
                     else:
-                        print ""Unsuccessfull for {}"".format(password) ## dont break and check others
+                        print "Unsuccessfull for {}".format(password) ## dont break and check others
 
 ## Extracted function to use password
 ## This could perhaps be optimized by extracting repetative tasks (depends on usage/performance)
 def try_password(password):
-    f3 = open(""/root/nix_bsd_mac_inventory-master/inventory.cfg"", ""w"")
-    print ""Processing Ip: "" + line
+    f3 = open("/root/nix_bsd_mac_inventory-master/inventory.cfg", "w")
+    print "Processing Ip: " + line
 
     ##here we are giving credentials                
-    write_string = ""[device42_access]""  + ""\n"" +
-          ""base_url = https://1.8.0.3""  + ""\n"" +
-          ""username = uname""  + ""\n"" +
-          ""secret = abcd""  + ""\n"" +
-          ""[discover]""  + ""\n"" +
-          ""cpu= true""  + ""\n"" +
-          ""hardware = true""  + ""\n"" +
-          ""memory = true""  + ""\n"" +
-          ""[access]""+ ""\n"" +
-          ""credentials = username:{}""
+    write_string = "[device42_access]"  + "\n" +
+          "base_url = https://1.8.0.3"  + "\n" +
+          "username = uname"  + "\n" +
+          "secret = abcd"  + "\n" +
+          "[discover]"  + "\n" +
+          "cpu= true"  + "\n" +
+          "hardware = true"  + "\n" +
+          "memory = true"  + "\n" +
+          "[access]"+ "\n" +
+          "credentials = username:{}"
     f3.write(write_string.format(password))
     f3.close()
-    p = subprocess.Popen([""./d42_linux_autodisc_v620""], stdout=subprocess.PIPE) ##This script will require inventory.cfg file created above
+    p = subprocess.Popen(["./d42_linux_autodisc_v620"], stdout=subprocess.PIPE) ##This script will require inventory.cfg file created above
     p1 = str(p.communicate())
     return '1 devices were successfully added/updated' in p1

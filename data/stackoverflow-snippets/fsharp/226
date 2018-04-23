@@ -1,16 +1,16 @@
 let poperator: Parser<_,_> =
-    let f c = (isAsciiIdContinue c || isAnyOf [|' ';'\t';'\n';'\""';'(';')';'{';'}';'[';']'|] c) = false
+    let f c = (isAsciiIdContinue c || isAnyOf [|' ';'\t';'\n';'\"';'(';')';'{';'}';'[';']'|] c) = false
     (many1Satisfy f .>> spaces)
     >>= fun token ->
         match dict_operator.TryGetValue token with
         | true, x -> preturn x
-        | false, _ -> fail ""unknown operator""
+        | false, _ -> fail "unknown operator"
 
 let rec led poperator term left (prec,asoc,m) =
     match asoc with
     | Associativity.Left | Associativity.None -> tdop poperator term prec |>> m left
     | Associativity.Right -> tdop poperator term (prec-1) |>> m left
-    | _ -> failwith ""impossible""
+    | _ -> failwith "impossible"
 
 and tdop poperator term rbp =
     let rec f left =

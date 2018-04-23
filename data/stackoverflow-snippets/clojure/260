@@ -1,32 +1,32 @@
 (defn protocol-fn-matches?
-  ""Returns the protocol function definition
-   if it matches the desired name and arglist.""
+  "Returns the protocol function definition
+   if it matches the desired name and arglist."
   [[name arglist :as def] desired-name desired-arglist]
   (when (and (= name desired-name)
              (= (count arglist) (count desired-arglist)))
     def))
 
 (defn genarglist
-  ""Takes an arglist and generates a new one with unique symbol names.""
+  "Takes an arglist and generates a new one with unique symbol names."
   [arglist]
   (mapv (fn [arg]
           (gensym (str arg)))
         arglist))
 
 (defn get-decorator-definitions
-  ""Generates the protocol functions for a decorator,
+  "Generates the protocol functions for a decorator,
    defaulting to forwarding to the implementation if
-   a function is not overwritten.""
+   a function is not overwritten."
   [protocol-symbol impl fs]
   (let [protocol-var (or (resolve protocol-symbol)
-                         (throw (Exception. (str ""Unable to resolve protocol: "" protocol-symbol))))
+                         (throw (Exception. (str "Unable to resolve protocol: " protocol-symbol))))
         protocol-ns (-> protocol-var meta :ns)
         protocol (var-get protocol-var)]
     (for [{:keys [name arglists]} (vals (:sigs protocol))
           arglist arglists]
       (or (some #(protocol-fn-matches? % name arglist) fs)
           (let [arglist (genarglist arglist) ; Generate unique names to avoid collision
-                forwarded-args (rest arglist) ; Drop the ""this"" arg
+                forwarded-args (rest arglist) ; Drop the "this" arg
                 f (symbol (str protocol-ns) (str name))] ; Get the function in the protocol namespace
             `(~name ~arglist
                (~f ~impl ~@forwarded-args)))))))

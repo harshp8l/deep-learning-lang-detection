@@ -1,7 +1,7 @@
 import-module ActiveDirectory
 $username = Read-Host -prompt 'Username'
 $dn = Get-ADUSER $username -properties * | SELECT -expand DistinguishedName
-$results = Get-ADCOMPUTER -LDAPFilter ""(ManagedBy=$dn)"" -properties * | SELECT CN,ManagedBy
+$results = Get-ADCOMPUTER -LDAPFilter "(ManagedBy=$dn)" -properties * | SELECT CN,ManagedBy
 $results | Out-Host
 $cn = Read-Host -prompt 'Choose a computerName from above'
 
@@ -12,7 +12,7 @@ $destination = '\\' + $cn + '\C$\Users\' + $username + '\Downloads'
 Copy-Item -Recurse -Filter *.* -path $source -destination $destination -Force
 
 #move to psTools directory for remote Install, you will need this directory
-#tied into your  dir ""C:\\psTools"" for example
+#tied into your  dir "C:\\psTools" for example
 
 
 cd \psTools
@@ -31,12 +31,12 @@ $username = $using:username
 $searchTerm = 'Java'
 
 #Setup for uninstall
-$app = Get-WMIObject -Class Win32_Product -Filter ""Name LIKE '%$searchTerm%'""
+$app = Get-WMIObject -Class Win32_Product -Filter "Name LIKE '%$searchTerm%'"
 IF ($app -eq $null) {
     WRITE-HOST 'Currently no programs containing' $searchTerm 'in their name.'
 } ELSE {
     $app.uninstall()
-    $app = Get-WMIObject -Class Win32_Product -Filter ""Name LIKE '%$searchTerm%'""
+    $app = Get-WMIObject -Class Win32_Product -Filter "Name LIKE '%$searchTerm%'"
     IF ($app -eq $null) {
         WRITE-HOST 'Successfully deleted all programs containing' $searchTerm '.'
     } ELSE {
@@ -57,7 +57,7 @@ Start-Sleep -s 60
 
 
 #Reset variable so we can see if install was successful or not
-$app = Get-WMIObject -Class Win32_Product -Filter ""Name LIKE '%$searchTerm%'""
+$app = Get-WMIObject -Class Win32_Product -Filter "Name LIKE '%$searchTerm%'"
 IF ($app -ne $null) {
     WRITE-HOST 'You have successfully installed' $searchTerm'.'
 } else {

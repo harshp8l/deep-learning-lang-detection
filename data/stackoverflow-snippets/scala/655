@@ -8,8 +8,8 @@ import scala.util.Try
 object Test extends App {
 
   // create spark session and sql context
-  val builder: Builder = SparkSession.builder.appName(""testAvroSpark"")
-  val sparkSession: SparkSession = builder.master(""local[1]"").getOrCreate()
+  val builder: Builder = SparkSession.builder.appName("testAvroSpark")
+  val sparkSession: SparkSession = builder.master("local[1]").getOrCreate()
   val sc: SparkContext = sparkSession.sparkContext
   val sqlContext: SQLContext = sparkSession.sqlContext
 
@@ -17,7 +17,7 @@ object Test extends App {
 
   // path of your csv file
   val path: String =
-    ""sample.csv""
+    "sample.csv"
 
   // read csv file and skip firs two lines
 
@@ -28,7 +28,7 @@ object Test extends App {
   val csvRdd: RDD[(String, String, String, String)] =
     sc.parallelize(csvString).flatMap(r =>
       Try {
-        val row: Array[String] = r.split("" "")
+        val row: Array[String] = r.split(" ")
         CsvRow(row(0), row(1), row(2), row(3))
       }.toOption)
       .map(csvRow => (csvRow.date, csvRow.time, csvRow.location, csvRow.timezone))
@@ -37,7 +37,7 @@ object Test extends App {
 
   // make data frame
   val df: DataFrame =
-    csvRdd.toDF(""date"", ""time"", ""location"", ""timezone"")
+    csvRdd.toDF("date", "time", "location", "timezone")
 
   // display dataf frame
   df.show()

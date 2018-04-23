@@ -7,20 +7,20 @@ function get-groups {
 function Get-LocalGroupMembers { 
    param( 
    [parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)] 
-    [Alias(""Name"")] 
+    [Alias("Name")] 
     [string]$ComputerName, 
-    [string]$GroupName = ""Administrators"" 
+    [string]$GroupName = "Administrators" 
    ) 
 
 begin {} 
 
 process { 
-    $ComputerName = $ComputerName.Replace(""`$"", '') 
+    $ComputerName = $ComputerName.Replace("`$", '') 
     $arr = @() 
-    $wmi = Get-WmiObject -ComputerName $ComputerName -Query ""SELECT * FROM Win32_GroupUser WHERE GroupComponent=`""Win32_Group.Domain='$ComputerName',Name='$GroupName'`"""" 
+    $wmi = Get-WmiObject -ComputerName $ComputerName -Query "SELECT * FROM Win32_GroupUser WHERE GroupComponent=`"Win32_Group.Domain='$ComputerName',Name='$GroupName'`"" 
         if ($wmi -ne $null)  { 
             foreach ($item in $wmi) { 
-                $arr += ($item.PartComponent.Substring($item.PartComponent.IndexOf(',') + 1).Replace('Name=', '').Replace(""`"""", '')) 
+                $arr += ($item.PartComponent.Substring($item.PartComponent.IndexOf(',') + 1).Replace('Name=', '').Replace("`"", '')) 
             } 
         } 
 
@@ -31,12 +31,12 @@ process {
 end{} 
 }
 
-$sPC = ""Server2008R2""
+$sPC = "Server2008R2"
 $a = 1
-$adapterInfo = Get-CimInstance -query ""Select * From 
-Win32_NetworkAdapterConfiguration Where IPenabled = 'TRUE'"" -ComputerName $sPC
-$serialNumber = Get-CimInstance -query ""Select * From Win32_Bios"" -ComputerName $sPC
-$shares = Get-CimInstance -query ""Select * From Win32_Share"" -ComputerName $sPC
+$adapterInfo = Get-CimInstance -query "Select * From 
+Win32_NetworkAdapterConfiguration Where IPenabled = 'TRUE'" -ComputerName $sPC
+$serialNumber = Get-CimInstance -query "Select * From Win32_Bios" -ComputerName $sPC
+$shares = Get-CimInstance -query "Select * From Win32_Share" -ComputerName $sPC
 
 $localGroups = get-groups $sPC
 $myObject = New-Object -TypeName PSObject
@@ -47,7 +47,7 @@ $myObject | Add-Member -MemberType NoteProperty -Name Description -Value $adapte
 $adapterInfo | ForEach-Object {
    $_.IPAddress |
       ForEach-Object {
-         $myObject | Add-Member -MemberType NoteProperty -Name ""IPAddress$($a)"" -Value $_
+         $myObject | Add-Member -MemberType NoteProperty -Name "IPAddress$($a)" -Value $_
          $a++
       }
 }
@@ -55,19 +55,19 @@ $adapterInfo | ForEach-Object {
 $myObject | Add-Member -MemberType NoteProperty -Name SerialNumber -Value $serialNumber.SerialNumber
 
 foreach ($share in $shares) {
-   if ($share.Name -ne ""C$"" -and
-       $share.Name -ne ""D$"" -and 
-       $share.Name -ne ""ADMIN$"" -and 
-       $share.Name -ne ""IPC$"") {
-          $myObject | Add-Member -MemberType NoteProperty -Name ""Share $($share.Name)"" -Value $share.Path
+   if ($share.Name -ne "C$" -and
+       $share.Name -ne "D$" -and 
+       $share.Name -ne "ADMIN$" -and 
+       $share.Name -ne "IPC$") {
+          $myObject | Add-Member -MemberType NoteProperty -Name "Share $($share.Name)" -Value $share.Path
     }   
 }
 
 foreach ($group in $localGroups) {
-   $members = ((Get-LocalGroupMembers -ComputerName $sPC -GroupName $group.Name).Members) -join ""; ""
+   $members = ((Get-LocalGroupMembers -ComputerName $sPC -GroupName $group.Name).Members) -join "; "
       if ($members.Length -ne 0) {
-         $myObject | Add-Member -MemberType NoteProperty -Name ""$($group.Name) Members"" -Value $members
+         $myObject | Add-Member -MemberType NoteProperty -Name "$($group.Name) Members" -Value $members
       }
 }
 
-$myObject | Export-Csv -Path ""<Path  to Folder>\$($sPC).csv"" -NoTypeInformation
+$myObject | Export-Csv -Path "<Path  to Folder>\$($sPC).csv" -NoTypeInformation

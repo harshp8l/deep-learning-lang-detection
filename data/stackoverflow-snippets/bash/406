@@ -1,22 +1,22 @@
 #!/bin/bash
 
-prefix=${1:-""out.""}                        # first optional argument: output file prefix
+prefix=${1:-"out."}                        # first optional argument: output file prefix
 max_size=${2:-$(( 1024 * 1024 * 100 ))}    # 2nd optional argument: size in bytes
 
 cur_size=0                                 # running count: size of current chunk
 file_num=1                                 # current numeric suffix; starting at 1
-exec >""$prefix$file_num""                   # open first output file
+exec >"$prefix$file_num"                   # open first output file
 
 while IFS= read -r -d $'\x02' piece; do    # as long as there's new input...
-  printf '%s\x02' ""$piece""                 # write it to our current output file      
+  printf '%s\x02' "$piece"                 # write it to our current output file      
   cur_size=$(( cur_size + ${#piece} + 1 )) # add its length to our counter
   if (( cur_size > max_size )); then       # if our counter is over our maximum size...
     (( ++file_num ))                       # increment the file counter
-    exec >""$prefix$file_num""               # open a new output file
+    exec >"$prefix$file_num"               # open a new output file
     cur_size=0                             # and reset the output size counter
   fi
 done
 
 if [[ $piece ]]; then  # if the end of input had content without a \x02 after it...
-  printf '%s' ""$piece"" # ...write that trailing content to our output file.
+  printf '%s' "$piece" # ...write that trailing content to our output file.
 fi

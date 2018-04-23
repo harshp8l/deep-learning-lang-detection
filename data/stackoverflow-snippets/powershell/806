@@ -1,9 +1,9 @@
 $limit = 90
-$testpath = ""C:\test""
-$resultpath = ""c:\test""
-$admins = ""moh@test.com""
-$from = ""moh@test.com""
-$smtpserver = ""smtp.office365.com""
+$testpath = "C:\test"
+$resultpath = "c:\test"
+$admins = "moh@test.com"
+$from = "moh@test.com"
+$smtpserver = "smtp.office365.com"
 
 Get-ChildItem -Path $testpath -Recurse | 
     Where-Object {$_.fullname.length -gt $limit} | 
@@ -15,22 +15,22 @@ Get-ChildItem -Path $testpath -Recurse |
         }
     } |
     ForEach-Object {
-        Out-File -FilePath ""$resultpath\Longfiles of $($_.owner -replace ""\\"",""-"").txt"" -Append -InputObject ""$($_.namelength) - $($_.fullname)""
+        Out-File -FilePath "$resultpath\Longfiles of $($_.owner -replace "\\","-").txt" -Append -InputObject "$($_.namelength) - $($_.fullname)"
     }
-Get-ChildItem $resultpath -Filter ""longfiles of *"" | ForEach-Object {
-    if ($_.name -match ""Longfiles\sof\s(.+)\.txt"") {
-        $user = $matches[1] -replace ""-"", ""\""
+Get-ChildItem $resultpath -Filter "longfiles of *" | ForEach-Object {
+    if ($_.name -match "Longfiles\sof\s(.+)\.txt") {
+        $user = $matches[1] -replace "-", "\"
         $ntacc = New-Object System.Security.Principal.NTAccount($user)
         $sid = $ntacc.Translate([System.Security.Principal.SecurityIdentifier])
-        $aduser = [ADSI]""LDAP://<SID=$sid>""
+        $aduser = [ADSI]"LDAP://<SID=$sid>"
         $email = $aduser.Properties.mail
         if ($email) {
             $mailparams = @{
                 'Attachments' = $_.fullname
-                'Body' = ""Please change the filenames of the files listed in the attached file to shorter!""
+                'Body' = "Please change the filenames of the files listed in the attached file to shorter!"
                 'From' = $from
                 'SmtpServer' = $smtpserver
-                'Subject' = ""System notice""
+                'Subject' = "System notice"
                 'To' = $email
                 'cc' = $admins
             }
@@ -38,15 +38,15 @@ Get-ChildItem $resultpath -Filter ""longfiles of *"" | ForEach-Object {
         } else {
             $mailparams = @{
                 'Attachments' = $_.fullname
-                'Body' = ""email coudn't be sent to owner""
+                'Body' = "email coudn't be sent to owner"
                 'From' = $from
                 'SmtpServer' = $smtpserver
-                'Subject' = ""System notice""
+                'Subject' = "System notice"
                 'To' = $admins
             }
             Send-MailMessage @mailparams
         }
     } else {
-        Write-Host ""Some error with file $_""
+        Write-Host "Some error with file $_"
     }
 }

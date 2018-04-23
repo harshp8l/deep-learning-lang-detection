@@ -7,21 +7,21 @@ val df = Seq(
   (1, 0, 1, 0.27, 2),
   (0, 1, 1, 0.3, 2),
   (1, 1, 1, 0.4, 3)
-).toDF(""A"", ""B"", ""C"", ""rate"", ""total"")
+).toDF("A", "B", "C", "rate", "total")
 
-val oneChannelDF = df.filter($""total"" === 1)
-val twoChannelDF = df.filter($""total"" === 2)
+val oneChannelDF = df.filter($"total" === 1)
+val twoChannelDF = df.filter($"total" === 2)
 
-val channels = df.columns.filter(v => !(v.contains(""rate"") || v.contains(""total"")))
+val channels = df.columns.filter(v => !(v.contains("rate") || v.contains("total")))
 // channels: Array[String] = Array(A, B, C)
 
 val ratesMap = channels.foldLeft( Map[String, Double]() ){ (acc, c) =>
-  acc + (c -> oneChannelDF.select(""rate"").where(col(c) === 1).head.getDouble(0))
+  acc + (c -> oneChannelDF.select("rate").where(col(c) === 1).head.getDouble(0))
 }
 // ratesMap: scala.collection.immutable.Map[String,Double] = Map(A -> 0.1, B -> 0.11, C -> 0.12)
 
 val probsDF = channels.foldLeft( twoChannelDF ){ (acc, c) =>
-  acc.withColumn( ""prob_"" + c, col(c) * ratesMap.getOrElse(c, 0.0) )
+  acc.withColumn( "prob_" + c, col(c) * ratesMap.getOrElse(c, 0.0) )
 }
 
 probsDF.show

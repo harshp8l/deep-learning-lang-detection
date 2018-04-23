@@ -1,27 +1,27 @@
 val dfX = Seq(
-  (""a"", ""ma"", ""a1"", ""a2"", ""a3""),
-  (""b"", ""mb"", null, null, null),
-  (""null"", ""mc"", ""c1"", null, ""c3"")
-).toDF(""xx"", ""mm"", ""xx1"", ""xx2"", ""xx3"")
+  ("a", "ma", "a1", "a2", "a3"),
+  ("b", "mb", null, null, null),
+  ("null", "mc", "c1", null, "c3")
+).toDF("xx", "mm", "xx1", "xx2", "xx3")
 
 val dfY = Seq(
-  (""nd"", ""d"", ""d1"", null),
-  (""ne"", ""e"", ""e1"", ""e2""),
-  (""nf"", ""f"", null, null)
-).toDF(""nn"", ""yy"", ""yy1"", ""yy2"")
+  ("nd", "d", "d1", null),
+  ("ne", "e", "e1", "e2"),
+  ("nf", "f", null, null)
+).toDF("nn", "yy", "yy1", "yy2")
 
 val dfZ = Seq(
-  (""g"", null, ""g1"", ""g2"", ""qg""),
-  (""h"", ""ph"", null, null, null),
-  (""i"", ""pi"", null, null, ""qi"")
-).toDF(""zz"", ""pp"", ""zz1"", ""zz2"", ""qq"")
+  ("g", null, "g1", "g2", "qg"),
+  ("h", "ph", null, null, null),
+  ("i", "pi", null, null, "qi")
+).toDF("zz", "pp", "zz1", "zz2", "qq")
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.IntegerType
 
 val dfList = List(dfX, dfY, dfZ)
-val dfColMap = Map(dfX -> ""xx"", dfY -> ""yy"", dfZ -> ""zz"")
+val dfColMap = Map(dfX -> "xx", dfY -> "yy", dfZ -> "zz")
 
 def createCount(row: Row, keyCol: String, checkCols: Seq[String]): Int = {
   if (row.isNullAt(row.fieldIndex(keyCol))) 0 else {
@@ -34,7 +34,7 @@ def createCount(row: Row, keyCol: String, checkCols: Seq[String]): Int = {
 
 val dfCountList = dfList.map{ df =>
   val keyCol = dfColMap(df)
-  val colPattern = s""$keyCol\\d+"".r
+  val colPattern = s"$keyCol\\d+".r
   val checkCols = df.columns.map( c => c match {
     case colPattern() => Some(c)
     case _ => None
@@ -43,7 +43,7 @@ val dfCountList = dfList.map{ df =>
   val rddWithCount = df.rdd.map{ case r: Row =>
     Row.fromSeq(r.toSeq ++ Seq(createCount(r, keyCol, checkCols)))
   }
-  spark.createDataFrame(rddWithCount, df.schema.add(""count"", IntegerType))
+  spark.createDataFrame(rddWithCount, df.schema.add("count", IntegerType))
 }
 
 dfCountList(0).show

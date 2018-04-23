@@ -8,41 +8,41 @@ RandomForestRegressor}
 
 object RandomForest {
    def main(args: Array[String]): Unit = {
-     val sparkSess = org.apache.spark.sql.SparkSession.builder().master(""local[*]"").appName(""car_mpg"").getOrCreate()
+     val sparkSess = org.apache.spark.sql.SparkSession.builder().master("local[*]").appName("car_mpg").getOrCreate()
      import sparkSess.implicits._
-     val carData = sparkSess.read.format(""csv"").option(""header"",""true"").option(""InterScema"",""true"")
-  .csv(""D:\\testData\\mpg.csv"").toDF(""mpg"",""cylinders"",""displacement"",""hp"",""weight"",""acceleration"",""model_year"",""origin"",""car_name"")
+     val carData = sparkSess.read.format("csv").option("header","true").option("InterScema","true")
+  .csv("D:\\testData\\mpg.csv").toDF("mpg","cylinders","displacement","hp","weight","acceleration","model_year","origin","car_name")
   .map(data => LabeledPoint(data(0).toString.toDouble, Vectors.dense(Array(data(1).toString.toDouble,
     data(2).toString.toDouble, data(3).toString.toDouble, data(4).toString.toDouble, data(5).toString.toDouble))))
 
-val carData_df = carData.toDF(""label"",""features"")
+val carData_df = carData.toDF("label","features")
 
 val featureIndexer = new VectorIndexer()
-  .setInputCol(""features"").setOutputCol(""indexedFeatures"").fit(carData)
+  .setInputCol("features").setOutputCol("indexedFeatures").fit(carData)
 
 val Array(training) = carData_df.randomSplit(Array(0.7))
 
 val randomReg = new RandomForestRegressor()
-    .setLabelCol(""label"").setFeaturesCol(""features"")
+    .setLabelCol("label").setFeaturesCol("features")
 
 val model = new Pipeline()
   .setStages(Array(featureIndexer,randomReg)).fit(training)
 
-val testData = sparkSess.read.format(""csv"").option(""header"",""true"").option(""InterScema"",""true"")
-  .csv(""D:\\testData\\testData.csv"")
-  .toDF(""mpg"",""cylinders"",""displacement"",""hp"",""weight"",""acceleration"",""model_year"",""origin"",""car_name"")
+val testData = sparkSess.read.format("csv").option("header","true").option("InterScema","true")
+  .csv("D:\\testData\\testData.csv")
+  .toDF("mpg","cylinders","displacement","hp","weight","acceleration","model_year","origin","car_name")
   .map(data => LabeledPoint(data(0).toString.toDouble,
     Vectors.dense(data(1).toString.toDouble,data(2).toString.toDouble,
       data(3).toString.toDouble, data(4).toString.toDouble, data(5).toString.toDouble)))
 
 val predictions = model.transform(testData)
-predictions.select(""prediction"",""Label"",""Features"").show()
+predictions.select("prediction","Label","Features").show()
 
-val rmse = new RegressionEvaluator().setLabelCol(""label"")
-  .setPredictionCol(""prediction"").setMetricName(""rmse"").evaluate(predictions)
-println(""Root Mean Squared Error :\n"" + rmse)
+val rmse = new RegressionEvaluator().setLabelCol("label")
+  .setPredictionCol("prediction").setMetricName("rmse").evaluate(predictions)
+println("Root Mean Squared Error :\n" + rmse)
 
 val treeModels = model.stages(1).asInstanceOf[RandomForestRegressionModel]
-println(""Learned Regression tree models :\n"" + treeModels.toDebugString)
+println("Learned Regression tree models :\n" + treeModels.toDebugString)
 
 sparkSess.stop()

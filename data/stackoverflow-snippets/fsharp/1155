@@ -22,7 +22,7 @@ type AsyncApiActionInvoker() =
 
     override this.InvokeActionAsync(actionContext, cancellationToken) =
         if actionContext = null then
-            raise <| ArgumentNullException(""actionContext"")
+            raise <| ArgumentNullException("actionContext")
 
         let actionDescriptor = actionContext.ActionDescriptor
         Contract.Assert(actionDescriptor <> null)
@@ -30,7 +30,7 @@ type AsyncApiActionInvoker() =
         let returnType = actionDescriptor.ReturnType
         // For now, throw if the result is an IHttpActionResult.
         if typeof<IHttpActionResult>.IsAssignableFrom(returnType) then
-            raise <| InvalidOperationException(""IHttpResult is not supported when returning an Async"")
+            raise <| InvalidOperationException("IHttpResult is not supported when returning an Async")
 
         if returnType.IsGenericType && returnType.GetGenericTypeDefinition() = typedefof<Async<_>> then
             let controllerContext = actionContext.ControllerContext
@@ -40,7 +40,7 @@ type AsyncApiActionInvoker() =
             let innerReturnType = returnType.GetGenericArguments().[0]
             let converter = AsyncApiActionInvoker.GetResultConverter(innerReturnType, actionDescriptor)
             this.GetType()
-                .GetMethod(""StartAsTask"", BindingFlags.NonPublic ||| BindingFlags.Static)
+                .GetMethod("StartAsTask", BindingFlags.NonPublic ||| BindingFlags.Static)
                 .MakeGenericMethod(innerReturnType)
                 .Invoke(null, [| computation; converter; controllerContext; cancellationToken |])
                 |> unbox

@@ -20,7 +20,7 @@ class RequestHandlers extends FSM[State, StateData] {
 
   def curTime = {
     val time = (System.currentTimeMillis() - startTime) / 1000f
-    f""[$time%3.2f]""
+    f"[$time%3.2f]"
   }
 
   startWith(Waiting, StateData.empty)
@@ -30,14 +30,14 @@ class RequestHandlers extends FSM[State, StateData] {
       //use nextStateData rather than stateData !
       nextStateData match {
         case StateData(queue) =>
-          queue.foreach(x => println(s""$curTime processing ${x.a} ""))
+          queue.foreach(x => println(s"$curTime processing ${x.a} "))
           Thread.sleep(2000L)
       }
   }
 
   when(Active) {
     case Event(msg: Msg, _) =>
-      println(s""$curTime at Active $msg"")
+      println(s"$curTime at Active $msg")
       // we've just processed old data
       // drop the old queue and create a new one with the new message
       goto(Waiting) using StateData.single(msg)
@@ -46,7 +46,7 @@ class RequestHandlers extends FSM[State, StateData] {
     case Event(msg: Msg, StateData(oldQueue)) =>
       // add an event to the queue and check if it is time to process
       val newQueue = oldQueue :+ msg
-      println(s""$curTime at Idle $msg, newQueue = $newQueue"")
+      println(s"$curTime at Idle $msg, newQueue = $newQueue")
       if (newQueue.size == 2) {
         goto(Active) using StateData(newQueue)
       }

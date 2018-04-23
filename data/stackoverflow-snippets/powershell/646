@@ -5,7 +5,7 @@ Function Check-Ping()
     (
          [string]$HostName
     )
-    $PingStatus=Get-WmiObject -Query ""Select * from Win32_PingStatus where Address='$HostName'""
+    $PingStatus=Get-WmiObject -Query "Select * from Win32_PingStatus where Address='$HostName'"
     Return $PingStatus
 }
 
@@ -20,13 +20,13 @@ Function Get-SQLInstances()
     $Status=Check-Ping($SQLServerName)
     if($Status.StatusCode -ne 0)
     {
-        Return ""The Server Is Not Reachable""
+        Return "The Server Is Not Reachable"
     }
     elseif($Status.StatusCode -eq 0)
     {
         $Reg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $SQLServerName)
-        $RegKey = $Reg.OpenSubKey(""SOFTWARE\\Microsoft\\Microsoft SQL Server"")
-        $Instances=$regKey.GetValue(""installedinstances"")
+        $RegKey = $Reg.OpenSubKey("SOFTWARE\\Microsoft\\Microsoft SQL Server")
+        $Instances=$regKey.GetValue("installedinstances")
         Return $Instances        
      }
 }
@@ -41,52 +41,52 @@ Param
   [string]$TSQLfilePath
 
 )
-    $Assembly=[reflection.assembly]::LoadWithPartialName(""Microsoft.SqlServer.Smo"") 
+    $Assembly=[reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.Smo") 
     $Instances=Get-SQLInstances($MachineName)  
     $TSQL=Get-Content $TSQLfilePath
     foreach($Instance in $Instances)
     {
-        $SQLServiceStatus=Get-Service -ComputerName $MachineName | Where-Object {$_.displayname -like ""SQL Server (""+$Instance+"")""}
-        if($SQLServiceStatus.Status -eq ""Running"")
+        $SQLServiceStatus=Get-Service -ComputerName $MachineName | Where-Object {$_.displayname -like "SQL Server ("+$Instance+")"}
+        if($SQLServiceStatus.Status -eq "Running")
         {
-            if($Instance -eq ""MSSQLSERVER"")
+            if($Instance -eq "MSSQLSERVER")
             {
                 $SQLServer=$MachineName
             }
             Else
             {
-                $SQLServer=$MachineName+""\""+$Instance
+                $SQLServer=$MachineName+"\"+$Instance
             }
             $SQLServerObject = new-Object Microsoft.SqlServer.Management.Smo.Server($SQLServer)
             $DatabaseObject = New-Object Microsoft.SqlServer.Management.Smo.Database
-            $DatabaseObject = $SQLServerObject.Databases.Item(""Master"")##The TSQL Script Runs in Master Database
+            $DatabaseObject = $SQLServerObject.Databases.Item("Master")##The TSQL Script Runs in Master Database
             $OutPutDataSet = $DatabaseObject.ExecuteWithResults($TSQL)
             for($t=0;$t -lt $OutPutDataSet.Tables.Count;$t++)
             {
-                $OutString+=""<Table Border=2>""
-                $OutString+=""<Tr>""
+                $OutString+="<Table Border=2>"
+                $OutString+="<Tr>"
                 foreach($Column in $OutPutDataSet.Tables[$t].Columns) 
                 { 
-                    $OutString+=""<Th>""
+                    $OutString+="<Th>"
                     $OutString+=$Column.ColumnName
-                    $OutString+=""</Th>""
+                    $OutString+="</Th>"
                 }     
-                $OutString+=""</Tr>""                   
+                $OutString+="</Tr>"                   
                 for($i=0;$i -lt $OutPutDataSet.Tables[$t].Rows.Count;$i++)
                 {
-                    $OutString+=""<Tr>""
+                    $OutString+="<Tr>"
                     for($j=0;$j -lt $OutPutDataSet.Tables[$t].Columns.Count;$j++)
                     {
 
-                        $OutString+=""<Td>""                               
+                        $OutString+="<Td>"                               
                         $OutString+=$($OutPutDataSet.Tables[$t].Rows[$i][$j])
-                        $OutString+=""</Td>""
+                        $OutString+="</Td>"
                     }
-                    $OutString+=""</Tr>""                
+                    $OutString+="</Tr>"                
                 }
-                $OutString+=""</Table>""
-                $OutString+=""</Br>""
-                $OutString+=""</Br>""
+                $OutString+="</Table>"
+                $OutString+="</Br>"
+                $OutString+="</Br>"
             }
         }
     }
@@ -105,18 +105,18 @@ Param
 [String]$TSQL
 )
 
-$Out+=""<Html>""
-$Out+=""<Title>Run TSQL and Return HTML FIle</Title>"" ## Modify 'TiTle' Tag as per your Required
-$Out+=""<Head><style>body {background-color:lightgray} H3{color:blue}H1{color:green}table, td, th {border: 1px solid green;}th {background-color: green;color: white;}</style></Head>"" ## Modify 'Head' Tag as per your Required
-$Out+=""<Body><H1 Align='Center'>Run TSQL and Return HTML File</H1></Br></Br>"" ## Modify 'Body' Tag as per your Required
+$Out+="<Html>"
+$Out+="<Title>Run TSQL and Return HTML FIle</Title>" ## Modify 'TiTle' Tag as per your Required
+$Out+="<Head><style>body {background-color:lightgray} H3{color:blue}H1{color:green}table, td, th {border: 1px solid green;}th {background-color: green;color: white;}</style></Head>" ## Modify 'Head' Tag as per your Required
+$Out+="<Body><H1 Align='Center'>Run TSQL and Return HTML File</H1></Br></Br>" ## Modify 'Body' Tag as per your Required
 ForEach($ServerName in Get-Content $InputFile)
 {
-    $Out+=""<H3 align='center'>--------------$ServerName--------------</H3>"" ## Modify 'header Text' Tag as per your Required
-    $Out+=""</Br>""   
+    $Out+="<H3 align='center'>--------------$ServerName--------------</H3>" ## Modify 'header Text' Tag as per your Required
+    $Out+="</Br>"   
     $Out+=Run-TSQL -MachineName $ServerName -TSQLfilePath $TSQL
 
 }
-$Out+=""</Body></Html>""
+$Out+="</Body></Html>"
 Set-Content -Value $Out -Path $OutputFile
 }
 
@@ -126,4 +126,4 @@ a. -InputFile (.txt file each server in a List withOut Instance Name)
 b. -OutputFile (.Html File to which Output need to be sent)
 c. -TSQL (.sql file which Contains the Script to Run)
 #>
-Get-HTMLOut -InputFile "".\Servers.txt"" -OutputFile .\Status.Html -TSQL '.\TSQL Script.sql'
+Get-HTMLOut -InputFile ".\Servers.txt" -OutputFile .\Status.Html -TSQL '.\TSQL Script.sql'

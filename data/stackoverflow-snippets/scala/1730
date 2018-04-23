@@ -5,10 +5,10 @@ import org.apache.spark.streaming.akka.{ActorReceiver, AkkaUtils}
 
 class Helloer extends ActorReceiver {
   override def preStart() = {
-    println("""")
-    println(""=== Helloer is starting up ==="")
-    println(s""=== path=${context.self.path} ==="")
-    println("""")
+    println("")
+    println("=== Helloer is starting up ===")
+    println(s"=== path=${context.self.path} ===")
+    println("")
   }
   def receive = {
     // store() method allows us to store the message so Spark Streaming knows about it
@@ -20,7 +20,7 @@ class Helloer extends ActorReceiver {
 
 // Create a common actor system
 object CreateActorSystem {
-  lazy val as = _root_.akka.actor.ActorSystem(""ActorSystemSpark"")
+  lazy val as = _root_.akka.actor.ActorSystem("ActorSystemSpark")
 }
 
 object StreamingApp {
@@ -30,16 +30,16 @@ object StreamingApp {
     // Configuration for a Spark application.
     // Used to set various Spark parameters as key-value pairs.
     val driverPort = 7777
-    val driverHost = ""localhost""
+    val driverHost = "localhost"
     val conf = new SparkConf()
-      .setMaster(""local[*]"") // run locally with as many threads as CPUs
-      .setAppName(""Spark Streaming with Scala and Akka"") // name in web UI
-      .set(""spark.logConf"", ""true"")
-      .set(""spark.driver.port"", driverPort.toString)
-      .set(""spark.driver.host"", driverHost)
+      .setMaster("local[*]") // run locally with as many threads as CPUs
+      .setAppName("Spark Streaming with Scala and Akka") // name in web UI
+      .set("spark.logConf", "true")
+      .set("spark.driver.port", driverPort.toString)
+      .set("spark.driver.host", driverHost)
     val ssc = new StreamingContext(conf, Seconds(10))
 
-    val actorName = ""helloer""
+    val actorName = "helloer"
 
     // This is the integration point (from Spark's side) between Spark Streaming and Akka system
     // It's expected that the actor we're now instantiating will `store` messages (to close the integration loop)
@@ -48,7 +48,7 @@ object StreamingApp {
     val actorStream = AkkaUtils.createStream[String](ssc, Props[Helloer](), actorName, actorSystemCreator = () => CreateActorSystem.as)
 
     // describe the computation on the input stream as a series of higher-level transformations
-    actorStream.reduce(_ + "" "" + _).print()
+    actorStream.reduce(_ + " " + _).print()
 
     // Custom receiver
     import pl.japila.spark.streaming.CustomReceiverInputDStream
@@ -72,15 +72,15 @@ object StreamingApp {
     val actorSystem = CreateActorSystem.as
 
     //Get the actor from the path. There is no nedd o akka.remote
-    val helloer = actorSystem.actorSelection(""/user/Supervisor0/helloer"")
+    val helloer = actorSystem.actorSelection("/user/Supervisor0/helloer")
 
-    helloer ! ""Hello""
-    helloer ! ""from""
-    helloer ! ""Spark Streaming""
-    helloer ! ""with""
-    helloer ! ""Scala""
-    helloer ! ""and""
-    helloer ! ""Akka""
+    helloer ! "Hello"
+    helloer ! "from"
+    helloer ! "Spark Streaming"
+    helloer ! "with"
+    helloer ! "Scala"
+    helloer ! "and"
+    helloer ! "Akka"
 
     import java.util.concurrent.TimeUnit.MINUTES
     ssc.awaitTerminationOrTimeout(timeout = MINUTES.toMillis(1))

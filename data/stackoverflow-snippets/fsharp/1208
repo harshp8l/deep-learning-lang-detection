@@ -1,10 +1,10 @@
-#r @""c:\Project\FAKE.Deploy\bin\FAKE\tools\FakeLib.dll""
+#r @"c:\Project\FAKE.Deploy\bin\FAKE\tools\FakeLib.dll"
 
 open Fake
 open System
 open System.IO
 
-let targetDirectory = @""c:\Project\Service""
+let targetDirectory = @"c:\Project\Service"
 let runScript file =
     if File.Exists file then
         let result, messages =
@@ -17,48 +17,48 @@ let runScript file =
             (if msg.IsError then traceError else traceImportant) msg.Message
 
         if not result then
-            failwithf ""MyProc.exe returned with a non-zero exit code""
+            failwithf "MyProc.exe returned with a non-zero exit code"
     else
-        traceImportant <| sprintf ""File %s is not found"" file
+        traceImportant <| sprintf "File %s is not found" file
 
 // *** Define Targets ***
 
-Target ""EnsureDirectory"" (fun () ->
-    trace <| sprintf "" --- Ensure that directory '%s' is exist --- "" targetDirectory
+Target "EnsureDirectory" (fun () ->
+    trace <| sprintf " --- Ensure that directory '%s' is exist --- " targetDirectory
     CreateDir targetDirectory
 )
 
-Target ""UninstallService"" (fun () ->
-    trace "" --- Uninstall service --- ""
-    targetDirectory @@ ""uninstall.bat""
+Target "UninstallService" (fun () ->
+    trace " --- Uninstall service --- "
+    targetDirectory @@ "uninstall.bat"
     |> runScript
 )
 
-Target ""CleanDirectory"" (fun () ->
-    trace "" --- Clean target directory --- ""
+Target "CleanDirectory" (fun () ->
+    trace " --- Clean target directory --- "
     CleanDir targetDirectory
 )
 
-Target ""CopyFiles"" (fun () ->
-    trace "" --- Copy new files --- ""
-    XCopy (__SOURCE_DIRECTORY__ @@ ""content"") targetDirectory
+Target "CopyFiles" (fun () ->
+    trace " --- Copy new files --- "
+    XCopy (__SOURCE_DIRECTORY__ @@ "content") targetDirectory
 )
 
-Target ""InstallService"" (fun () ->
-    trace "" --- Install service --- ""
-    targetDirectory @@ ""install.bat""
+Target "InstallService" (fun () ->
+    trace " --- Install service --- "
+    targetDirectory @@ "install.bat"
     |> runScript
 )
 
-Target ""Deploy"" DoNothing
+Target "Deploy" DoNothing
 
 // *** Define Dependencies ***
-""EnsureDirectory""
-  ==> ""UninstallService""
-  ==> ""CleanDirectory""
-  ==> ""CopyFiles""
-  ==> ""InstallService""
-  ==> ""Deploy""
+"EnsureDirectory"
+  ==> "UninstallService"
+  ==> "CleanDirectory"
+  ==> "CopyFiles"
+  ==> "InstallService"
+  ==> "Deploy"
 
 // *** Start Build ***
-RunParameterTargetOrDefault ""target"" ""Deploy""
+RunParameterTargetOrDefault "target" "Deploy"

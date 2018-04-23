@@ -1,16 +1,16 @@
 class LambdaParser extends RegexParsers {
 
-  def varName: Parser[String] = """"""[a-z|A-Z]+"""""".r
+  def varName: Parser[String] = """[a-z|A-Z]+""".r
 
-  def variable(ctx: List[String]): Parser[Var] = varName ^? ({ case name if ctx.contains(name) => Var(ctx.indexOf(name)) }, { name => s""no var in scope with name $name"" })
+  def variable(ctx: List[String]): Parser[Var] = varName ^? ({ case name if ctx.contains(name) => Var(ctx.indexOf(name)) }, { name => s"no var in scope with name $name" })
 
-  def scope(v: String, ctx: List[String]): Parser[LambdaExp] = ((""."" ~> exp(v :: ctx))) ^^ { case bod => bod }
+  def scope(v: String, ctx: List[String]): Parser[LambdaExp] = (("." ~> exp(v :: ctx))) ^^ { case bod => bod }
 
-  def lam(ctx: List[String]): Parser[Lam] = ((""λ"" ~> varName) >> { v => scope(v, ctx) }) ^^ { scope => Lam(scope) }
+  def lam(ctx: List[String]): Parser[Lam] = (("λ" ~> varName) >> { v => scope(v, ctx) }) ^^ { scope => Lam(scope) }
 
   def app(ctx: List[String]): Parser[App] = (exp(ctx) ~ exp(ctx)) ^^ { case f ~ a => App(f, a) }
 
-  def exp(ctx: List[String]): Parser[LambdaExp] = (""("" ~> exp(ctx) <~ "")"") | (""("" ~> app(ctx) <~ "")"") |
+  def exp(ctx: List[String]): Parser[LambdaExp] = ("(" ~> exp(ctx) <~ ")") | ("(" ~> app(ctx) <~ ")") |
     variable(ctx) | lam(ctx)
 
 }

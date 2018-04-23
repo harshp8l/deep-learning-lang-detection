@@ -12,7 +12,7 @@ case class TokenExtractAction @Inject()(parser: BodyParsers.Default)(
 
   def transform[A](request: Request[A]): Future[TokenExtractRequest[A]] = Future.successful {
     val token = request.headers.get(Conf.REST_AUTH_HEADER)
-    new TokenExtractRequest(token, Some(TokenTool.decodeToken(token.getOrElse(""invalid_token"")).plaintext), request)
+    new TokenExtractRequest(token, Some(TokenTool.decodeToken(token.getOrElse("invalid_token")).plaintext), request)
   }
 }
 
@@ -35,7 +35,7 @@ case class PermissionCheckActionIndividual @Inject()(authSystem: AuthSystem)(imp
   implicit val timeout: akka.util.Timeout = 5.seconds
 
   def filter[A](input: UserRequest[A]): Future[Option[Result]] = {
-    val token                = input.headers.get(Conf.REST_AUTH_HEADER).orElse(Some(""invalid token""))
+    val token                = input.headers.get(Conf.REST_AUTH_HEADER).orElse(Some("invalid token"))
     val authorizer: ActorRef = authSystem.authorizer
     // verify sig and check user validity
     val res = authorizer ? CheckUserValidityFromToken(token)
@@ -44,7 +44,7 @@ case class PermissionCheckActionIndividual @Inject()(authSystem: AuthSystem)(imp
       case true =>
         Future(None)
       case false =>
-        Future(Some(Forbidden(""Not permitted"")))
+        Future(Some(Forbidden("Not permitted")))
     }
   }
 }

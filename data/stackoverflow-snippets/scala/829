@@ -1,20 +1,20 @@
 import org.apache.spark.ml.fpm._
 
 val dataset = spark.createDataset(Seq(
-   ""a b e"",""b c e"", ""a b"", ""a b e"", ""a b d e"", 
-   ""a e c f"", ""a b f e"", ""a f c e"",
-   ""c d w x"", ""c x p d"", ""p q c d"", ""c p d r a"",
-   ""a c b d"", ""c d p q"", ""c r p d""
-)).map(t => t.split("" "")).toDF(""items"")
-val fpgrowth = new FPGrowth().setItemsCol(""items"").
+   "a b e","b c e", "a b", "a b e", "a b d e", 
+   "a e c f", "a b f e", "a f c e",
+   "c d w x", "c x p d", "p q c d", "c p d r a",
+   "a c b d", "c d p q", "c r p d"
+)).map(t => t.split(" ")).toDF("items")
+val fpgrowth = new FPGrowth().setItemsCol("items").
   setMinSupport(0.3).setMinConfidence(0.5)
 val model = fpgrowth.fit(dataset)
 val rules = model.associationRules
 
-val exampleShoppingCart = Array(""a"", ""b"", ""c"", ""d"")
+val exampleShoppingCart = Array("a", "b", "c", "d")
 val proposals = rules.rdd.map{ rule => 
-  val antecedent = rule.getAs[Seq[String]](""antecedent"")
-  val consequent = rule.getAs[Seq[String]](""consequent"")
+  val antecedent = rule.getAs[Seq[String]]("antecedent")
+  val consequent = rule.getAs[Seq[String]]("consequent")
   if (antecedent.forall(exampleShoppingCart.contains)) {
     consequent.toSet
   } else {
@@ -25,8 +25,8 @@ val proposals = rules.rdd.map{ rule =>
 val nonTrivialProposals = proposals.filterNot(exampleShoppingCart.contains)
 
 println(
-  ""Your shopping cart: "" + exampleShoppingCart.mkString("","") + 
-  ""; You might also be interested in: "" + nonTrivialProposals
+  "Your shopping cart: " + exampleShoppingCart.mkString(",") + 
+  "; You might also be interested in: " + nonTrivialProposals
 )
 
 // Output:

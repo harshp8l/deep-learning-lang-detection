@@ -1,20 +1,20 @@
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 
-val df1 = Seq((1, ""a""), (2, ""a""), (3, ""a"")).toDF(""Col A"", ""Col B"")
-val df2 = Seq((1, ""b""), (2, ""b"")).toDF(""Col A"", ""Col B"")
-val df3 = Seq((2, ""c""), (3, ""c"")).toDF(""Col A"", ""Col B"")
+val df1 = Seq((1, "a"), (2, "a"), (3, "a")).toDF("Col A", "Col B")
+val df2 = Seq((1, "b"), (2, "b")).toDF("Col A", "Col B")
+val df3 = Seq((2, "c"), (3, "c")).toDF("Col A", "Col B")
 
 val dfs = Seq(df2, df3)
-val bs = (0 to dfs.size).map(i => s""Col B $i"")
+val bs = (0 to dfs.size).map(i => s"Col B $i")
 
 dfs.foldLeft(df1)(
-  (acc, df) => acc.join(df, Seq(""Col A""), ""fullouter"")
-).toDF(""Col A"" +: bs: _*).select($""Col A"", array(bs map col: _*)).map {
+  (acc, df) => acc.join(df, Seq("Col A"), "fullouter")
+).toDF("Col A" +: bs: _*).select($"Col A", array(bs map col: _*)).map {
   case Row(a: Int, bs: Seq[_]) => 
     // Drop nulls and concat
-    (a, bs.filter(_ != null).map(_.toString).mkString("",""))
-}.toDF(""Col A"", ""Col B"").show
+    (a, bs.filter(_ != null).map(_.toString).mkString(","))
+}.toDF("Col A", "Col B").show
 
 // +-----+-----+ 
 // |Col A|Col B|

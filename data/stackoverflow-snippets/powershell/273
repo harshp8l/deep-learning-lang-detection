@@ -1,11 +1,11 @@
 $limit_result_size = 10
 
-$group_name = Get-ADGroup -Filter {GroupCategory -eq ""Distribution""} -Properties Name, Members -ResultSetSize:$limit_result_size | Select-object name
+$group_name = Get-ADGroup -Filter {GroupCategory -eq "Distribution"} -Properties Name, Members -ResultSetSize:$limit_result_size | Select-object name
 
 ForEach ($name in $group_name.name) {
-    If ((![String]::IsNullOrEmpty(""$name"")) -And (""$name"" -notlike 'index')) {
-        $count_members = Get-ADGroupMember -Identity ""$name"" | Measure-Object | Select-Object Count
-        Write-Output ""The AD group $name has $($count_members.Count) members.`n""
+    If ((![String]::IsNullOrEmpty("$name")) -And ("$name" -notlike 'index')) {
+        $count_members = Get-ADGroupMember -Identity "$name" | Measure-Object | Select-Object Count
+        Write-Output "The AD group $name has $($count_members.Count) members.`n"
         For($counter = 0; $counter -lt $count_members.Count; $counter++) {
             $person = Get-ADGroup -Filter {Name -eq $name} -Properties Name, Members | Select-Object Name, @{N='Members';E={$_.Members[$counter]}}
             $person.Members = $person.Members | Select-String '(?<=CN=)[0-9a-zA-Z\s]+' -AllMatches | % { $_.Matches } | % { $_.Value }
@@ -15,13 +15,13 @@ ForEach ($name in $group_name.name) {
                                                             email      = $person_details.mail
                                                       }
             If ([String]::IsNullOrEmpty($($person_additional_details.email))) {
-                $person_additional_details.psobject.properties[""email""].value = '<empty>'
+                $person_additional_details.psobject.properties["email"].value = '<empty>'
             }
 
         # For user to see the written data
-        Write-Output ""AD Group: $($person_additional_details.group_name) `
+        Write-Output "AD Group: $($person_additional_details.group_name) `
 AD User: $($person_additional_details.user_name) `
-Users`'s email: $($person_additional_details.email)`n""
+Users`'s email: $($person_additional_details.email)`n"
 
         # writing into the CSV file
         $person_additional_details | export-csv -NoTypeInformation -Append -Path '<your_path>\log.csv'

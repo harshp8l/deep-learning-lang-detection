@@ -5,9 +5,9 @@ foreach($report in (($reports | Where-Object{$_.datasourcename -eq $datasourceNa
 
         $fileExt = $reportExtension.trim('*')
 
-        $status = Set-SSRSDataSourceInfoNative -ReportName ($report.trim($fileext)) -reportPath $documentLibrary -DataSourceName $datasourceName -DataSourcePath ""$dataSourceTarget/$datasourceName""  -reportWebService $webservice
+        $status = Set-SSRSDataSourceInfoNative -ReportName ($report.trim($fileext)) -reportPath $documentLibrary -DataSourceName $datasourceName -DataSourcePath "$dataSourceTarget/$datasourceName"  -reportWebService $webservice
 
-        write-output ""The following $report datasource was updated to $datasourcename""
+        write-output "The following $report datasource was updated to $datasourcename"
 
     }  
 
@@ -34,29 +34,29 @@ function set-SSRSDataSourceInfoNative
     $f = $ReportName.ToLower()
     try
     {
-        $dataSources = $reportProxy.GetItemDataSources(""$reportpath/$reportname"")
+        $dataSources = $reportProxy.GetItemDataSources("$reportpath/$reportname")
     }
     catch
     {
-        ""Error was $_""
+        "Error was $_"
         $line = $_.InvocationInfo.ScriptLineNumber
-        ""Error was in Line $line""
-        ""ReportName: $reportname""
-        ""ReportPath: $reportpath""
+        "Error was in Line $line"
+        "ReportName: $reportname"
+        "ReportPath: $reportpath"
     }
     $proxyNameSpace = $dataSources.gettype().Namespace
     $dc = $reportProxy.GetDataSourceContents($DataSourcePath)
     if ($dc)
     { 
         $d = $dataSources | Where-Object {$_.name -like $DataSourceName }
-        $newDataSource = New-Object (""$proxyNameSpace.DataSource"")
+        $newDataSource = New-Object ("$proxyNameSpace.DataSource")
         $newDataSource.Name = $datasourcename
-        $newDataSource.Item = New-Object (""$proxyNamespace.DataSourceReference"")
+        $newDataSource.Item = New-Object ("$proxyNamespace.DataSourceReference")
         $newDataSource.Item.Reference = $DatasourcePath 
         $d.item = $newDataSource.item
-        $reportProxy.SetItemDataSources(""$reportpath/$f"", $d)
-        $set = ($reportproxy.GetItemDataSources(""$reportPath/$f"")).name
-        write-verbose ""$reportname set to data source $set""
+        $reportProxy.SetItemDataSources("$reportpath/$f", $d)
+        $set = ($reportproxy.GetItemDataSources("$reportPath/$f")).name
+        write-verbose "$reportname set to data source $set"
         $returnobj = 'success'
     }
     $returnobj

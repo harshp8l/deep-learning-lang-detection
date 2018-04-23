@@ -35,7 +35,7 @@ object PlayJson {
 
 
   object CompoundFormat {
-    final val discriminatorKey = ""$type$""
+    final val discriminatorKey = "$type$"
 
     private case class UnsafeFormatWrapper[U, R <: U : ClassTag](format: OFormat[R]) extends OFormat[U] {
       def typeName: String = {
@@ -69,12 +69,12 @@ object PlayJson {
     override def reads(json: JsValue): JsResult[A] = {
       val jsObject = json.asInstanceOf[JsObject]
       val name = jsObject(discriminatorKey).asInstanceOf[JsString].value
-      val innerFormat = innerFormatsByName.getOrElse(name, throw new RuntimeException(s""Unknown child type $name""))
+      val innerFormat = innerFormatsByName.getOrElse(name, throw new RuntimeException(s"Unknown child type $name"))
       innerFormat.reads(jsObject)
     }
 
     override def writes(o: A): JsObject = {
-      val innerFormat = innerFormatsByClass.getOrElse(o.getClass, throw new RuntimeException(s""Unknown child type ${o.getClass}""))
+      val innerFormat = innerFormatsByClass.getOrElse(o.getClass, throw new RuntimeException(s"Unknown child type ${o.getClass}"))
       innerFormat.writes(o)
     }
 
@@ -100,12 +100,12 @@ object PlayJson {
     val rules0 = Rules(1, List(
       OnlyDuringWorkHours(Some(1)),
       MaxLeadTime(Some(2), 2),
-      MaxDuration(Some(3), ""Abc"")
+      MaxDuration(Some(3), "Abc")
     ))
 
     val json = Json.toJsObject(rules0)
-    println(s""encoded: '$json'"")
+    println(s"encoded: '$json'")
     val rulesDecoded = Json.fromJson[Rules](json)
-    println(s""decoded: $rulesDecoded"")
+    println(s"decoded: $rulesDecoded")
   }
 }

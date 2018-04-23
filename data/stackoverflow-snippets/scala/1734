@@ -1,18 +1,18 @@
        import spark.implicits._
-       val fields = ""col1,col2"".split("","")
+       val fields = "col1,col2".split(",")
 
 
-       val exprToSelect = df.columns.filter(c => fields.contains(c)).map(c => s""someUDFThatReturnsAStructTypeOfStringAndString(${c}) as ${c}_parsed"") ++ df.columns
+       val exprToSelect = df.columns.filter(c => fields.contains(c)).map(c => s"someUDFThatReturnsAStructTypeOfStringAndString(${c}) as ${c}_parsed") ++ df.columns
 
-       val exprToFilter = df.columns.filter(c => fields.contains(c)).map(c => s""length(${c}_parsed.String1) > 1"").reduce(_ + "" OR "" + _) //error
-       val exprToFilter2 = df.columns.filter(c => fields.contains(c)).map(c => s""(length(${c}_parsed.String1) < 1)"").reduce(_ + "" AND "" + _) //valid
-       val exprToSelectValid = df.columns.filter(c => fields.contains(c)).map(c => s""${c}_parsed.String2 as ${c}"") ++ df.columns.filterNot(c => fields.contains(c)) //valid
-       val exprToSelectInValid = Array(""concat("" + df.columns.filter(c => fields.contains(c)).map(c => s""${c}_parsed.String1"").mkString("", "") + "") as String1"") ++ df.columns 
+       val exprToFilter = df.columns.filter(c => fields.contains(c)).map(c => s"length(${c}_parsed.String1) > 1").reduce(_ + " OR " + _) //error
+       val exprToFilter2 = df.columns.filter(c => fields.contains(c)).map(c => s"(length(${c}_parsed.String1) < 1)").reduce(_ + " AND " + _) //valid
+       val exprToSelectValid = df.columns.filter(c => fields.contains(c)).map(c => s"${c}_parsed.String2 as ${c}") ++ df.columns.filterNot(c => fields.contains(c)) //valid
+       val exprToSelectInValid = Array("concat(" + df.columns.filter(c => fields.contains(c)).map(c => s"${c}_parsed.String1").mkString(", ") + ") as String1") ++ df.columns 
 
-       val parsedDF = df.select(exprToSelect.map { c => expr(s""$c"")}: _ *)
+       val parsedDF = df.select(exprToSelect.map { c => expr(s"$c")}: _ *)
 
        val validDF = parsedDF.filter(exprToFilter2)
-                             .select(exprToSelectValid.map { c => expr(s""$c"")}: _ *)
+                             .select(exprToSelectValid.map { c => expr(s"$c")}: _ *)
 
        val errorDF  =  parsedDF.filter(exprToFilter)
-                               .select(exprToSelectInValid.map { c => expr(s""$c"")}: _ *)
+                               .select(exprToSelectInValid.map { c => expr(s"$c")}: _ *)

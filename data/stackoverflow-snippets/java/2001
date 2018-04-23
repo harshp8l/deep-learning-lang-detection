@@ -1,22 +1,22 @@
-String range = request.getHeader(""Range"") ;
-RandomAccessFile file = new RandomAccessFile(path , ""r"") ;
+String range = request.getHeader("Range") ;
+RandomAccessFile file = new RandomAccessFile(path , "r") ;
                     if(range != null) {
-                        range = range.trim().substring(""range="".length()) ;
-                        String [] index = range.split(""-"") ;
+                        range = range.trim().substring("range=".length()) ;
+                        String [] index = range.split("-") ;
                         byte [] buffer = new byte[2048] ;
                         DataOutputStream dos = new DataOutputStream(response.getOutputStream()) ;
                         if(index.length > 1) {
                             long start = Long.parseLong(index[0]) ;
                             long end = Long.parseLong(index[1]) ;
                             long contentLength = end - start + 1 ;
-                            System.out.println(""start: "" + start);
-                            System.out.println(""end: "" + end);
+                            System.out.println("start: " + start);
+                            System.out.println("end: " + end);
                             if(start < file.length() && end < file.length() && end > start) {
                                 response.setContentType(type);
                                 response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
-                                response.setHeader(""Accept-Ranges"", ""bytes"");
+                                response.setHeader("Accept-Ranges", "bytes");
                                 response.setContentLengthLong(contentLength);
-                                response.setHeader(""Content-Range"", new StringBuilder(""bytes "").append(start).append(""-"").append(end).append(""/"").append(file.length()).toString());
+                                response.setHeader("Content-Range", new StringBuilder("bytes ").append(start).append("-").append(end).append("/").append(file.length()).toString());
                                 file.seek(start);
                                 long bytesleft = contentLength ; 
                                 while(file.getFilePointer() <= end) {
@@ -43,14 +43,14 @@ RandomAccessFile file = new RandomAccessFile(path , ""r"") ;
                             long start = Long.parseLong(index[0]) ;
                             long end = file.length() - 1 ;
                             long contentLength = end - start + 1 ;
-                            System.out.println(""start: "" + start);
-                            System.out.println(""end: "" + end);
+                            System.out.println("start: " + start);
+                            System.out.println("end: " + end);
                             if(start < file.length()) {
                                 response.setContentType(type);
                                 response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
-                                response.setHeader(""Accept-Ranges"", ""bytes"");
+                                response.setHeader("Accept-Ranges", "bytes");
                                 response.setContentLengthLong(contentLength);
-                                response.setHeader(""Content-Range"", new StringBuilder(""bytes "").append(start).append(""-"").append(end).append(""/"").append(file.length()).toString());
+                                response.setHeader("Content-Range", new StringBuilder("bytes ").append(start).append("-").append(end).append("/").append(file.length()).toString());
                                 file.seek(start);
                                 long bytesleft = contentLength ; 
                                 while(file.getFilePointer() <= end) {

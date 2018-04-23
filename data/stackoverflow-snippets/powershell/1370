@@ -9,13 +9,13 @@ New-Item C:\Temp\$HostIP\Results -ItemType Directory
 
 $b64 = Get-Content C:\Temp\$HostIP\$file.txt -Raw
 Write-Host
-$results = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String(""$b64"")) 
+$results = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String("$b64")) 
 $results | Out-File C:\Temp\$HostIP\Results\unicode_$file.txt
 
 $ec64 = Get-Content C:\Temp\$HostIP\Results\unicode_$file.txt
-$eb64 = $ec64|%{$_.split('""')[1]}
+$eb64 = $ec64|%{$_.split('"')[1]}
 
-$data = [System.Convert]::FromBase64String(""$eb64"")
+$data = [System.Convert]::FromBase64String("$eb64")
 $ms = New-Object IO.MemoryStream
 $ms.Write($data, 0, $data.Length)
 $ms.Seek(0,0) | Out-Null
@@ -26,16 +26,16 @@ $t = $sr.readtoend()
 $t | Out-File C:\Temp\$HostIP\Results\decompressed_$file.txt
 
 $dcb64 = Get-Content C:\Temp\$HostIP\Results\decompressed_$file.txt
-$dc64 = $dcb64|%{$_.split('""')[1]}
+$dc64 = $dcb64|%{$_.split('"')[1]}
 
-$utf = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(""$dc64""))
+$utf = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("$dc64"))
 $utf | Out-File C:\Temp\$HostIP\Results\utf8_$file.txt
 
-$asc = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String(""$dc64""))
+$asc = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String("$dc64"))
 $asc | Out-File C:\Temp\$HostIP\Results\ascii_$file.txt
 
-$utf8 = ""C:\Temp\$HostIP\Results\utf8_$file.txt""
-$ascii = ""C:\Temp\$HostIP\Results\ascii_$file.txt""
+$utf8 = "C:\Temp\$HostIP\Results\utf8_$file.txt"
+$ascii = "C:\Temp\$HostIP\Results\ascii_$file.txt"
 
-(Get-Content ""$utf8"") -replace ""`0"", """" | Set-Content ""C:\Temp\$HostIP\Results\utf8_no-null_$file.txt""
-(Get-Content ""$ascii"") -replace ""`0"", """" | Set-Content ""C:\Temp\$HostIP\Results\ascii_no-null_$file.txt""
+(Get-Content "$utf8") -replace "`0", "" | Set-Content "C:\Temp\$HostIP\Results\utf8_no-null_$file.txt"
+(Get-Content "$ascii") -replace "`0", "" | Set-Content "C:\Temp\$HostIP\Results\ascii_no-null_$file.txt"

@@ -1,13 +1,13 @@
 (defn -main
   [& args]
-  (let [neo4j-conn (nr/connect ""http://localhost:7777/db/data/"")]
-    (cypher/tquery neo4j-conn ""MATCH n OPTIONAL MATCH n-[r]-() DELETE n, r"")
+  (let [neo4j-conn (nr/connect "http://localhost:7777/db/data/")]
+    (cypher/tquery neo4j-conn "MATCH n OPTIONAL MATCH n-[r]-() DELETE n, r")
     (doseq [page (range 1 6)
             :let [data (parse-string (stackoverflow-get-questions page))
-                  questions (data ""items"")
-                  has-more (data ""has_more"")
-                  question-ids (map #(%1 ""question_id"") questions)
-                  answers ((parse-string (stackoverflow-get-answers question-ids)) ""items"")]]
+                  questions (data "items")
+                  has-more (data "has_more")
+                  question-ids (map #(%1 "question_id") questions)
+                  answers ((parse-string (stackoverflow-get-answers question-ids)) "items")]]
       (doseq [q questions]
         (import-question q neo4j-conn))
       (doseq [a answers]

@@ -3,13 +3,13 @@ import java.io._
 
 def loadModel(rName: String): Model = {
   db.withConnection { implicit c =>
-    val result = SQL""""""
+    val result = SQL"""
         SELECT r_model
         FROM MODELS
         WHERE r_name=${rName}
-      """""".as(SqlParser.byteArray(""r_model"").single)
+      """.as(SqlParser.byteArray("r_model").single)
 
-    Logger.info(s""result ${result.getClass} => $result"")
+    Logger.info(s"result ${result.getClass} => $result")
     deserialize[Model](result)
   }
 }
@@ -30,29 +30,29 @@ def deserialize[T](byteArray: Array[Byte]): T = {
 def testLoadModel(): Unit = {
   db.withConnection { implicit c =>
     val createRes = SQL(
-      """"""
+      """
         |DROP TABLE   IF EXISTS MODELS;
         |
         |CREATE TABLE MODELS(
         | r_name  VARCHAR(50) PRIMARY KEY NOT NULL,
         | r_model  VARBINARY NOT NULL
         |         );
-      """""".
+      """.
         stripMargin).execute()
-    Logger.info(s""Create result = $createRes"")
-    val rName = ""rName""
-    val m0 = Model(42, ""Abc"")
+    Logger.info(s"Create result = $createRes")
+    val rName = "rName"
+    val m0 = Model(42, "Abc")
     val ser0 = serialize(m0)
 
     val insertRes = SQL(
-      """"""
+      """
         | insert into MODELS values ({r_name},{r_model})
-      """"""
-        .stripMargin).on(""r_name"" -> rName, ""r_model"" -> ser0).executeInsert()
-    Logger.info(s""Insert result = $insertRes"")
+      """
+        .stripMargin).on("r_name" -> rName, "r_model" -> ser0).executeInsert()
+    Logger.info(s"Insert result = $insertRes")
 
     val m1 = loadModel(rName)
-    Logger.info(s""m0 = $m0"")
-    Logger.info(s""m1 = $m1"")
+    Logger.info(s"m0 = $m0")
+    Logger.info(s"m1 = $m1")
   }
 }

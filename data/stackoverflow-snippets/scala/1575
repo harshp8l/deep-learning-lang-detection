@@ -7,7 +7,7 @@ object Runtime {
     val t0 = System.nanoTime()
     val result = block    // call-by-name
     val t1 = System.nanoTime()
-    println(""Elapsed time: "" + (t1 - t0) + "" ns"")
+    println("Elapsed time: " + (t1 - t0) + " ns")
     result
   }
 
@@ -16,26 +16,26 @@ object Runtime {
         val tb = ToolBox(mirror).mkToolBox()
         val data = Array(1, 2, 3)
 
-        println(s""Data before function applied on it: '${data.toList}"")
-        val function = ""def apply(x: Int): Int = x + 2""
-        println(s""Function: '$function'"")
-        println(""#######################"")
+        println(s"Data before function applied on it: '${data.toList}")
+        val function = "def apply(x: Int): Int = x + 2"
+        println(s"Function: '$function'")
+        println("#######################")
 
         // Function with tb.eval
-        println("".... with tb.eval"")
-        val functionWrapper = ""object FunctionWrapper { "" + function + ""}""
+        println(".... with tb.eval")
+        val functionWrapper = "object FunctionWrapper { " + function + "}"
         // This takes around 1sec!
         val functionSymbol = time { tb.define(tb.parse(functionWrapper).asInstanceOf[tb.u.ImplDef])}
 
         // This takes around 0.5 sec!
-        val result = time {data.map(x => tb.eval(q""$functionSymbol.apply($x)""))}
-        println(s""Data after function applied on it: '${result.toList}'"")
+        val result = time {data.map(x => tb.eval(q"$functionSymbol.apply($x)"))}
+        println(s"Data after function applied on it: '${result.toList}'")
 
-        println("".... without tb.eval"")
-        val func = time {tb.eval(q""$functionSymbol.apply _"").asInstanceOf[Int => Int]}
+        println(".... without tb.eval")
+        val func = time {tb.eval(q"$functionSymbol.apply _").asInstanceOf[Int => Int]}
         // This takes around 0.5 sec!
         val result2 = time {data.map(func)}
-        println(s""Data after function applied on it: '${result2.toList}'"")
+        println(s"Data after function applied on it: '${result2.toList}'")
 
     }
 }

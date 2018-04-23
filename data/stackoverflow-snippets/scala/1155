@@ -1,13 +1,13 @@
 var tarFiles: Array[String] = Array()
-val tar_path = path + ""millionsongsubset.tar.gz""
+val tar_path = path + "millionsongsubset.tar.gz"
 
 //TODO: add all your tar.gz files in main folder path to tarFiles array
 //should add here as many tar.gz files as wanted containing the
 //hdf5 files for the songs
 tarFiles = tarFiles :+ tar_path
-//tarFiles = tarFiles :+ (path+""A.tar.gz"")
-//tarFiles = tarFiles :+ (path+""B.tar.gz"")
-//tarFiles = tarFiles :+ (path+""C.tar.gz"")
+//tarFiles = tarFiles :+ (path+"A.tar.gz")
+//tarFiles = tarFiles :+ (path+"B.tar.gz")
+//tarFiles = tarFiles :+ (path+"C.tar.gz")
 
 //This reads all tar.gz files in tarFiles list, and for each .h5
 //file within, it extracts each song's list of features.
@@ -19,12 +19,12 @@ var allHDF5 = sc.parallelize(tarFiles).flatMap(path => {
     var i = 0
     while (entry != null) {
         var outputFile:File = new File(entry.getName());
-        if (!entry.isDirectory() && entry.getName.contains("".h5"")) {
+        if (!entry.isDirectory() && entry.getName.contains(".h5")) {
             var byteFile = Array.ofDim[Byte](entry.getSize.toInt)
             tar.read(byteFile);
             res = byteFile :: res
             if(i%100==0) {
-              println(""Read "" + i + "" files"")
+              println("Read " + i + " files")
             }
             i = i+1
 
@@ -44,6 +44,6 @@ var allHDF5 = sc.parallelize(tarFiles).flatMap(path => {
      features
   })
 
-  println(""Extracted songs from tar.gz, showing 5 examples"")
-  allHDF5.take(5).foreach(x => { x.foreach(y => print(y+"" ""))
+  println("Extracted songs from tar.gz, showing 5 examples")
+  allHDF5.take(5).foreach(x => { x.foreach(y => print(y+" "))
                        println()})

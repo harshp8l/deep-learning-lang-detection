@@ -12,21 +12,21 @@ func main() {
     db, err := mgo.DialWithInfo(mongoDBDialInfo)
 
     if err != nil {
-        log.Fatal(""Cannot Dial Mongo: "", err)
+        log.Fatal("Cannot Dial Mongo: ", err)
     }
 
     defer db.Close() 
     db.SetMode(mgo.Monotonic, true)
 
     phoneIndex := mgo.Index{
-        Key:        []string{""pp""},
+        Key:        []string{"pp"},
         Unique:     true,
         DropDups:   true,
         Background: true,
         Sparse:     true,
     }
 
-    err = db.DB(config.DatabaseName).C(""users"").EnsureIndex(phoneIndex)
+    err = db.DB(config.DatabaseName).C("users").EnsureIndex(phoneIndex)
     if err != nil {
         panic(err)
     }
@@ -38,9 +38,9 @@ func main() {
     loginController := controllers.NewLoginController(deviceStore)
 
     router := mux.NewRouter()
-    router.HandleFunc(""/login"", middleware.AuthorizeUser(userStore)(http.HandlerFunc(loginController.Login)).Methods(""POST"")
+    router.HandleFunc("/login", middleware.AuthorizeUser(userStore)(http.HandlerFunc(loginController.Login)).Methods("POST")
 
-    if err := http.ListenAndServe("":5000"", router); err != nil {
+    if err := http.ListenAndServe(":5000", router); err != nil {
         log.Fatal(err)
     }
 }

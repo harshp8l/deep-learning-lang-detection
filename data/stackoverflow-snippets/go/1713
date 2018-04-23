@@ -1,8 +1,8 @@
 /****** MIT License **********
 Copyright (c) 2017 Zonkiie
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the ""Software""), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED ""AS IS"", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ***************************/
 
 package main
@@ -12,31 +12,31 @@ package main
 /// http://stackoverflow.com/questions/29435783/gorm-golang-orm-associations
 
 import (
-    ""github.com/jinzhu/gorm""
-    _ ""github.com/jinzhu/gorm/dialects/sqlite""
-    ""fmt""
-    ""reflect""
-    ""regexp""
-    ""encoding/json""
-    ""encoding/xml""
-    //""strconv""
-    ""os""
-    ""flag""
-    ""strings""
+    "github.com/jinzhu/gorm"
+    _ "github.com/jinzhu/gorm/dialects/sqlite"
+    "fmt"
+    "reflect"
+    "regexp"
+    "encoding/json"
+    "encoding/xml"
+    //"strconv"
+    "os"
+    "flag"
+    "strings"
 )
 
 type rs struct {
-    //Parent    *rs `gorm:""ForeignKey:ID;AssociationForeignKey:ParentID""`
-    Childs  []*rs   `gorm:""ForeignKey:ID;AssociationForeignKey:ParentID"" walkrec:""true""`
+    //Parent    *rs `gorm:"ForeignKey:ID;AssociationForeignKey:ParentID"`
+    Childs  []*rs   `gorm:"ForeignKey:ID;AssociationForeignKey:ParentID" walkrec:"true"`
     ID  int64
-    ParentID    int64   `gorm:""column:ParentID""`
+    ParentID    int64   `gorm:"column:ParentID"`
     Value   string
-    Sub []rs_sub    `gorm:""ForeignKey:ID;AssociationForeignKey:Rs_ID"" walkrec:""true""`
+    Sub []rs_sub    `gorm:"ForeignKey:ID;AssociationForeignKey:Rs_ID" walkrec:"true"`
 }
 
 type rs_sub struct {
     ID  int64
-    Rs_ID   int64   `gorm:""column:rs_id""`
+    Rs_ID   int64   `gorm:"column:rs_id"`
     Value   string
 }
 
@@ -44,17 +44,17 @@ var db *gorm.DB
 
 func populateDb(db *gorm.DB) {
 
-    rs1 := rs{ID: 1, ParentID: 0, Value: ""root""}
+    rs1 := rs{ID: 1, ParentID: 0, Value: "root"}
     db.Save(&rs1)
-    rs2 := rs{ID: 2, ParentID: 1, Value: ""Child1""}
+    rs2 := rs{ID: 2, ParentID: 1, Value: "Child1"}
     db.Save(&rs2)
-    rs3 := rs{ID: 3, ParentID: 2, Value: ""Child2""}
+    rs3 := rs{ID: 3, ParentID: 2, Value: "Child2"}
     db.Save(&rs3)
-    rs4 := rs{ID: 4, ParentID: 3, Value: ""Child3""}
+    rs4 := rs{ID: 4, ParentID: 3, Value: "Child3"}
     db.Save(&rs4)
-    rs5 := rs{ID: 5, ParentID: 3, Value: ""Child4""}
+    rs5 := rs{ID: 5, ParentID: 3, Value: "Child4"}
     db.Save(&rs5)
-    rs_s := rs_sub{ID:1, Rs_ID:4, Value: ""SubChild1""}
+    rs_s := rs_sub{ID:1, Rs_ID:4, Value: "SubChild1"}
     db.Save(&rs_s)
 }
 
@@ -65,7 +65,7 @@ func PStdErr(format string, args ...interface{}) {
 func JsonMarshal(data interface{}) string {
     b, err := json.Marshal(data)
     if err != nil {
-        return ""Error""
+        return "Error"
     }
     return string(b[:])
 }
@@ -73,17 +73,17 @@ func JsonMarshal(data interface{}) string {
 func XmlMarshal(data interface{}) string {
     b, err := xml.Marshal(data)
     if err != nil {
-        return ""Error""
+        return "Error"
     }
     return string(b[:])
 }
 
 func InitDB() *gorm.DB {
-db, err := gorm.Open(""sqlite3"", "":memory:"")
+db, err := gorm.Open("sqlite3", ":memory:")
 if err != nil {
-    panic(""failed to connect database"")
+    panic("failed to connect database")
 }
-db.Exec(""DROP TABLE IF EXISTS rs;"")
+db.Exec("DROP TABLE IF EXISTS rs;")
 
     db.SingularTable(true)
 
@@ -101,7 +101,7 @@ return db
 // The struct must be fully tagged, we don't recognize automatically related IDs and so on.
 // The function works only with not combined keys.
 // Every field which should be fetched must be tagged with:
-// walkrec:""true"" gorm:""ForeignKey:ID;AssociationForeignKey:ForeignKey""
+// walkrec:"true" gorm:"ForeignKey:ID;AssociationForeignKey:ForeignKey"
 // See: http://stackoverflow.com/questions/24537525/reflect-value-fieldbyname-causing-panic
 // See: http://stackoverflow.com/questions/34493062/how-to-reflect-struct-recursive-in-golang
 func fetchRec(db *gorm.DB, data interface{}) {
@@ -131,22 +131,22 @@ func fetchRec(db *gorm.DB, data interface{}) {
             var re *regexp.Regexp
             var matches []string
 
-            if ref.Field(i).CanAddr() && strings.EqualFold(ref.Type().Field(i).Tag.Get(""walkrec""), ""true"") {
-                gormflags := ref.Type().Field(i).Tag.Get(""gorm"")
-                if gormflags == """" {
-                    panic(""No gorm flags found!"")
+            if ref.Field(i).CanAddr() && strings.EqualFold(ref.Type().Field(i).Tag.Get("walkrec"), "true") {
+                gormflags := ref.Type().Field(i).Tag.Get("gorm")
+                if gormflags == "" {
+                    panic("No gorm flags found!")
                 } else {
                     re = regexp.MustCompile(`\bForeignKey:([a-zA-Z0-9_,]+)\b`)
                     matches = re.FindStringSubmatch(gormflags)
                     if len(matches) == 2 {
                         IDFieldRaw = matches[1]
-                        IDFields = strings.Split(IDFieldRaw, "","")
+                        IDFields = strings.Split(IDFieldRaw, ",")
                     }
                     re = regexp.MustCompile(`\bAssociationForeignKey:([a-zA-Z0-9_,]+)\b`)
                     matches = re.FindStringSubmatch(gormflags)
                     if len(matches) == 2 {
                         RefFieldRaw = matches[1]
-                        RefFields = strings.Split(RefFieldRaw, "","")
+                        RefFields = strings.Split(RefFieldRaw, ",")
                     }
                 }
                 if len(IDFields) == 0 { continue }
@@ -160,7 +160,7 @@ func fetchRec(db *gorm.DB, data interface{}) {
                         fetchRec(db, ref.Field(i).Addr().Interface())
                     }
                 } else {
-                    panic(""AssociationForeignKey empty!"")
+                    panic("AssociationForeignKey empty!")
                 }
             }
         }
@@ -168,7 +168,7 @@ func fetchRec(db *gorm.DB, data interface{}) {
 }
 
 func getParams() (id int) {
-    flag.IntVar(&id, ""id"", 1, ""the id to fetch"")
+    flag.IntVar(&id, "id", 1, "the id to fetch")
     flag.Parse()
     return
 }
@@ -190,9 +190,9 @@ func main() {
     db = InitDB()
     defer db.Close()
     id := getParams()
-    PStdErr(""Loading data with ID %d\n"", id)
+    PStdErr("Loading data with ID %d\n", id)
     rs, found := fetch(db, id)
     if found {
-        fmt.Print(XmlMarshal(rs) + ""\n"")
+        fmt.Print(XmlMarshal(rs) + "\n")
     }
 }

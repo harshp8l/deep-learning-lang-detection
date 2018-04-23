@@ -1,4 +1,4 @@
-$code = @""
+$code = @"
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -18,7 +18,7 @@ public class RegistryKeyEx
     #region P/Invoke Declarations
     // This declaration is intended to be used for the last write time only. int is used
     // instead of more convenient types so that dummy values of 0 reduce verbosity.
-    [DllImport(""advapi32.dll"", EntryPoint = ""RegQueryInfoKey"", CallingConvention = CallingConvention.Winapi, SetLastError = true)]
+    [DllImport("advapi32.dll", EntryPoint = "RegQueryInfoKey", CallingConvention = CallingConvention.Winapi, SetLastError = true)]
     extern private static int RegQueryInfoKey(
         SafeRegistryHandle hkey,
         int lpClass,
@@ -46,7 +46,7 @@ public class RegistryKeyEx
     /// <summary>
     /// Creates and initializes a new RegistryKeyInfo object from the provided RegistryKey object.
     /// </summary>
-    /// <param name=""key"">RegistryKey component providing a handle to the key.</param>
+    /// <param name="key">RegistryKey component providing a handle to the key.</param>
     public RegistryKeyEx(RegistryKey key)
     {
         Key = key;
@@ -55,8 +55,8 @@ public class RegistryKeyEx
     /// <summary>
     /// Creates and initializes a new RegistryKeyInfo object from a registry key path string.
     /// </summary>
-    /// <param name=""parent"">Parent key for the key being loaded.</param>
-    /// <param name=""keyName"">Path to the registry key.</param>
+    /// <param name="parent">Parent key for the key being loaded.</param>
+    /// <param name="keyName">Path to the registry key.</param>
     public RegistryKeyEx(RegistryKey parent, string keyName)
         : this(parent.OpenSubKey(keyName))
     { }
@@ -65,7 +65,7 @@ public class RegistryKeyEx
     /// </summary>
     private void SetLastWriteTime()
     {
-        Debug.Assert(Key != null, ""RegistryKey component must be initialized"");
+        Debug.Assert(Key != null, "RegistryKey component must be initialized");
         GCHandle pin = new GCHandle();
         long lastWriteTime = 0;
         try
@@ -89,34 +89,34 @@ public class RegistryKeyEx
         }
     }
 }
-""@
+"@
 
 $type = Add-Type -TypeDefinition $code -Language CSharp
 
 $devices = Get-Item HKLM:\SYSTEM\ControlSet001\Enum\USBSTOR\*
 
 $result = foreach($device in $devices) {
-    Write-Verbose -Verbose ""New device: $($device.PSPath)""
+    Write-Verbose -Verbose "New device: $($device.PSPath)"
 
-    Write-Verbose -Verbose ""GetClass""
+    Write-Verbose -Verbose "GetClass"
     foreach($classname in $device.GetSubKeyNames()) {
         $class = $device.OpenSubKey($class)
 
         if($class -eq $null) { 
-            Write-Verbose -Verbose ""Class is null"" 
+            Write-Verbose -Verbose "Class is null" 
             continue
         }
 
-        Write-Verbose -Verbose ""GetInstance""
+        Write-Verbose -Verbose "GetInstance"
         foreach($instancename in $class.GetSubKeyNames()) {
             $instance = $class.OpenSubKey($instancename)
 
             if($instance -eq $null) {
-                Write-Verbose -Verbose ""Instance is null""
+                Write-Verbose -Verbose "Instance is null"
                 continue
             }
 
-            Write-Verbose -Verbose ""RegistryKeyEx""
+            Write-Verbose -Verbose "RegistryKeyEx"
             $keyEx = New-Object RegistryKeyEx $instance
 
             [pscustomobject]@{

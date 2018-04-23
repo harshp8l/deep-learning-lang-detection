@@ -1,7 +1,7 @@
 public class XmlXPathDocument : XmlDocument
 {
-    public const string XmlNamespaceUri = ""http://www.w3.org/2000/xmlns/"";
-    public const string XmlNamespacePrefix = ""xmlns"";
+    public const string XmlNamespaceUri = "http://www.w3.org/2000/xmlns/";
+    public const string XmlNamespacePrefix = "xmlns";
 
     internal List<Tuple<string, string>> _discriminantAttributes = new List<Tuple<string, string>>();
 
@@ -70,7 +70,7 @@ public class XmlXPathDocument : XmlDocument
         int index = 0;
         do
         {
-            newPrefix = ""ns"" + index;
+            newPrefix = "ns" + index;
             if (XPathNamespaceManager.LookupNamespace(newPrefix) == null)
                 break;
 
@@ -113,7 +113,7 @@ public class XmlXPathDocument : XmlDocument
             return false;
 
         bool changed = false;
-        foreach (XmlNode node in SelectNodes(""//node()""))
+        foreach (XmlNode node in SelectNodes("//node()"))
         {
             var xelement = node as IXmlXPathNode;
             if (xelement == null)
@@ -272,9 +272,9 @@ public class XmlXPathElement : XmlElement, IXmlXPathNode
     private static string GetAttEscapedValue(string value)
     {
         if (value.IndexOf('\'') >= 0)
-            return ""=\"""" + value.Replace(""\"""", ""&quot;"") + ""\"""";
+            return "=\"" + value.Replace("\"", "&quot;") + "\"";
 
-        return ""='"" + value + ""'"";
+        return "='" + value + "'";
     }
 
     private string GetDiscriminantAttributeXPath()
@@ -294,10 +294,10 @@ public class XmlXPathElement : XmlElement, IXmlXPathNode
             if (disc != null)
             {
                 string newPrefix = OwnerDocument.GetPrefix(NamespaceURI);
-                string name = Name + ""[@"" + disc.Name + GetAttEscapedValue(disc.Value) + ""]"";
+                string name = Name + "[@" + disc.Name + GetAttEscapedValue(disc.Value) + "]";
                 if (newPrefix != null)
                 {
-                    name = newPrefix + "":"" + name;
+                    name = newPrefix + ":" + name;
                 }
                 return name;
             }
@@ -315,10 +315,10 @@ public class XmlXPathElement : XmlElement, IXmlXPathNode
         {
             if (sb.Length > 0)
             {
-                sb.Append("" and "");
+                sb.Append(" and ");
             }
 
-            sb.Append(""@"");
+            sb.Append("@");
             sb.Append(att.Name);
             sb.Append(GetAttEscapedValue(att.Value));
             OwnerDocument.GetPrefix(att.NamespaceURI);
@@ -328,7 +328,7 @@ public class XmlXPathElement : XmlElement, IXmlXPathNode
         if (text.Length == 0)
             return null;
 
-        return ""["" + text + ""]"";
+        return "[" + text + "]";
     }
 
     private string GetXPath(XmlNodeList parentNodes)
@@ -341,7 +341,7 @@ public class XmlXPathElement : XmlElement, IXmlXPathNode
         string newPrefix = OwnerDocument.GetPrefix(NamespaceURI);
         if (newPrefix != null)
         {
-            name = newPrefix + "":"" + LocalName;
+            name = newPrefix + ":" + LocalName;
         }
 
         if (parentNodes.Count == 1)
@@ -368,7 +368,7 @@ public class XmlXPathElement : XmlElement, IXmlXPathNode
         {
             if (sameName[i] == this)
             {
-                byIndex = name + ""["" + (i + 1) + ""]"";
+                byIndex = name + "[" + (i + 1) + "]";
                 continue;
             }
 
@@ -403,7 +403,7 @@ public class XmlXPathElement : XmlElement, IXmlXPathNode
             string newPrefix = OwnerDocument.GetPrefix(NamespaceURI);
             if (newPrefix != null)
             {
-                name = newPrefix + "":"" + name;
+                name = newPrefix + ":" + name;
             }
             return name;
         }
@@ -411,12 +411,12 @@ public class XmlXPathElement : XmlElement, IXmlXPathNode
         string expr = GetXPath(ParentNode.ChildNodes);
         if (ParentNode is XmlXPathElement parent)
         {
-            expr = parent.XPathExpression + ""/"" + expr;
+            expr = parent.XPathExpression + "/" + expr;
         }
 
         if (ParentNode.NodeType == XmlNodeType.Document)
         {
-            expr = ""/"" + expr;
+            expr = "/" + expr;
         }
         return expr;
     }
@@ -437,7 +437,7 @@ public class XmlXPathText : XmlText, IXmlXPathNode
     internal static string GetTextXPathExpression(XmlNode node)
     {
         if (node.ParentNode is IXmlXPathNode element)
-            return element.XPathExpression + ""/text()"";
+            return element.XPathExpression + "/text()";
 
         return null;
     }

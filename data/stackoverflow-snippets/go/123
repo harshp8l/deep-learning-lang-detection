@@ -1,11 +1,11 @@
 package sandbox
 
 import (
-    ""encoding/json""
-    ""errors""
-    ""reflect""
-    ""strings""
-    ""testing""
+    "encoding/json"
+    "errors"
+    "reflect"
+    "strings"
+    "testing"
 )
 
 type Person struct {
@@ -41,7 +41,7 @@ func (p *Person) UnmarshalJSON(data []byte) error {
     }
 
     if len(missing) > 0 {
-        return errors.New(""missing fields: "" + strings.Join(missing, "", ""))
+        return errors.New("missing fields: " + strings.Join(missing, ", "))
     }
 
     if len(m) > 0 {
@@ -51,7 +51,7 @@ func (p *Person) UnmarshalJSON(data []byte) error {
         }
         // TODO: consider sorting the output to get deterministic errors:
         // sort.Strings(extra)
-        return errors.New(""unknown fields: "" + strings.Join(extra, "", ""))
+        return errors.New("unknown fields: " + strings.Join(extra, ", "))
     }
 
     return nil
@@ -63,29 +63,29 @@ func TestJSONDecoder(t *testing.T) {
         err      string
         expected Person
     }{
-        ""Empty object"": {
+        "Empty object": {
             in:       `{}`,
-            err:      ""missing fields: Name, City"",
+            err:      "missing fields: Name, City",
             expected: Person{},
         },
-        ""Name missing"": {
-            in:       `{""City"": ""Berlin""}`,
-            err:      ""missing fields: Name"",
-            expected: Person{City: ""Berlin""},
+        "Name missing": {
+            in:       `{"City": "Berlin"}`,
+            err:      "missing fields: Name",
+            expected: Person{City: "Berlin"},
         },
-        ""Age missing"": {
-            in:       `{""Name"": ""Friedrich""}`,
-            err:      ""missing fields: City"",
-            expected: Person{Name: ""Friedrich""},
+        "Age missing": {
+            in:       `{"Name": "Friedrich"}`,
+            err:      "missing fields: City",
+            expected: Person{Name: "Friedrich"},
         },
-        ""Unknown field"": {
-            in:       `{""Name"": ""Friedrich"", ""City"": ""Berlin"", ""Test"": true}`,
-            err:      ""unknown fields: Test"",
-            expected: Person{Name: ""Friedrich"", City: ""Berlin""},
+        "Unknown field": {
+            in:       `{"Name": "Friedrich", "City": "Berlin", "Test": true}`,
+            err:      "unknown fields: Test",
+            expected: Person{Name: "Friedrich", City: "Berlin"},
         },
-        ""OK"": {
-            in:       `{""Name"": ""Friedrich"", ""City"": ""Berlin""}`,
-            expected: Person{Name: ""Friedrich"", City: ""Berlin""},
+        "OK": {
+            in:       `{"Name": "Friedrich", "City": "Berlin"}`,
+            expected: Person{Name: "Friedrich", City: "Berlin"},
         },
     }
 
@@ -95,16 +95,16 @@ func TestJSONDecoder(t *testing.T) {
             r := strings.NewReader(c.in)
             err := json.NewDecoder(r).Decode(&actual)
             switch {
-            case err != nil && c.err == """":
-                t.Errorf(""Expected no error but go %v"", err)
-            case err == nil && c.err != """":
-                t.Errorf(""Did not return expected error %v"", c.err)
+            case err != nil && c.err == "":
+                t.Errorf("Expected no error but go %v", err)
+            case err == nil && c.err != "":
+                t.Errorf("Did not return expected error %v", c.err)
             case err != nil && err.Error() != c.err:
-                t.Errorf(""Expected error %q but got %v"", c.err, err)
+                t.Errorf("Expected error %q but got %v", c.err, err)
             }
 
             if !reflect.DeepEqual(c.expected, actual) {
-                t.Errorf(""\nWant: %+v\nGot:  %+v"", c.expected, actual)
+                t.Errorf("\nWant: %+v\nGot:  %+v", c.expected, actual)
             }
         })
     }

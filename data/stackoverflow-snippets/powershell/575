@@ -1,21 +1,21 @@
 function OutputMembers {
     param([string] $groupDn)
 
-    foreach ($m in ([ADSI](""LDAP://"" + $groupDn)).member) {
-        $member = [ADSI](""LDAP://"" + $m)
+    foreach ($m in ([ADSI]("LDAP://" + $groupDn)).member) {
+        $member = [ADSI]("LDAP://" + $m)
         $member.objectClass
-        if ($member.objectClass -eq ""group"") {
+        if ($member.objectClass -eq "group") {
             #this member is a group so pull the members of that group
             OutputMembers $member.distinguishedName
         } else {
-            #""msDS-PrincipalName"" is not loaded by default, so we have to tell it to get it
-            $member.Invoke(""GetInfoEx"", @(""msDS-PrincipalName""), 0)
-            if ([string]::IsNullOrEmpty($member.""msDS-PrincipalName"")) {
+            #"msDS-PrincipalName" is not loaded by default, so we have to tell it to get it
+            $member.Invoke("GetInfoEx", @("msDS-PrincipalName"), 0)
+            if ([string]::IsNullOrEmpty($member."msDS-PrincipalName")) {
                 #member is on a trusted domain, so we have to go look it up
                 $sid = New-Object System.Security.Principal.SecurityIdentifier ($member.objectSid[0], 0)
                 $sid.Translate([System.Security.Principal.NTAccount]).value
             } else {
-                $member.""msDS-PrincipalName""
+                $member."msDS-PrincipalName"
             }
         }
     }

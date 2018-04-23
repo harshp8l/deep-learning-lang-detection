@@ -1,13 +1,13 @@
 (defn db->chan [ch {:keys [sql db-spec]} ]
-  ""Put db hash-maps onto ch.""
-  (println ""starting reader thread..."")
+  "Put db hash-maps onto ch."
+  (println "starting reader thread...")
   (let [
         row-count           (atom 0)  ; For state on rows
         row-fn (fn[r] (do (>!! ch r)
                          ;; everything below is just for printing to stdout
                          (swap! row-count inc)
                          (when (zero? (mod @row-count 100))
-                           (println ""Fetched "" @row-count "" rows.""))))]
+                           (println "Fetched " @row-count " rows."))))]
     (with-open [conn (j/connection db-spec)]
       (j/atomic conn
                 (with-open [cursor (j/fetch-lazy conn sql)]

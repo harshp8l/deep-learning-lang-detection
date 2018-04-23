@@ -4,11 +4,11 @@ func handlerTest(w http.ResponseWriter, r *http.Request) {
     done := make(chan error, 2)
 
     work := func(url, name string) {
-        log.Infof(ctx, ""%s begin ..."", name)
+        log.Infof(ctx, "%s begin ...", name)
         client := urlfetch.Client(ctx)
         req, err := http.NewRequest(http.MethodGet, url, nil)
         if err != nil {
-            log.Errorf(ctx, ""%s failed:  %v"", name, err)
+            log.Errorf(ctx, "%s failed:  %v", name, err)
             done <- err
             return
         }
@@ -16,20 +16,20 @@ func handlerTest(w http.ResponseWriter, r *http.Request) {
         _, err = client.Do(req)
         done <- err
         if err != nil {
-            log.Errorf(ctx, ""%s failed:  %v"", name, err)
+            log.Errorf(ctx, "%s failed:  %v", name, err)
             return
         }
         cancel()
-        log.Infof(ctx, ""%s over ..."", name)
+        log.Infof(ctx, "%s over ...", name)
     }
-    go work(""go1"", ""http://APP_NAME.appspot.com/testwait5s"")
-    go work(""go2"", ""http://APP_NAME.appspot.com/testwait10s"")
+    go work("go1", "http://APP_NAME.appspot.com/testwait5s")
+    go work("go2", "http://APP_NAME.appspot.com/testwait10s")
 
     for i := 0; i < cap(done); i++ {
         if err := <-done; err == nil {
-            log.Infof(ctx, ""executed without errors"")
+            log.Infof(ctx, "executed without errors")
             return
         }
     }
-    log.Error(ctx, ""both computations have failed"")
+    log.Error(ctx, "both computations have failed")
 }

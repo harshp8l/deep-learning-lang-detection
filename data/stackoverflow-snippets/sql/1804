@@ -1,20 +1,20 @@
 # CHECKS WITHIN INTERVAL, ENDPOINT OVERLAP, OR COVERS ENTIRE INTERVAL
-$checkSQL = ""SELECT COUNT(*) As RecordCount
+$checkSQL = "SELECT COUNT(*) As RecordCount
              FROM missions 
              WHERE ((:st_param BETWEEN starttime AND endtime) OR 
                     (:et_param BETWEEN starttime AND endtime))
                AND (startdate = :st_date) 
-             HAVING COUNT(*) > 1"";
+             HAVING COUNT(*) > 1";
 
 $dupe = $conn->prepare($checkSQL);    
 $dupe->execute(array(':st_param' => $starttime, ':et_param' => $endtime, 
                      ':st_date' => $startdate));
 
-$apnSQL = ""INSERT INTO missions (startdate, starttime, endtime, description)
-           VALUES (? , ? , ?, ?)"";
+$apnSQL = "INSERT INTO missions (startdate, starttime, endtime, description)
+           VALUES (? , ? , ?, ?)";
 
 if ($dupe->fetchColumn() > 0) {
-     echo ""Detta är en dubbelbokning!"";
+     echo "Detta är en dubbelbokning!";
 } else  {
      $res = $conn->prepare($apnSQL);
 

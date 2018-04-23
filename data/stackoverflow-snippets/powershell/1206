@@ -2,18 +2,18 @@ $Product = Get-CimInstance -ClassName Win32_Product | Where-Object {$_.Vendor -m
 $Group = $Product | Group-Object -Property Vendor
 $result = foreach ($Vendor in $Group) {
     $Products = foreach ($item in $Vendor.Group) {
-        ""$($item.Caption);$($item.Version)""
+        "$($item.Caption);$($item.Version)"
     }
     $Products = $Products -join ','
-    ""$($Vendor.Name),$Products""
+    "$($Vendor.Name),$Products"
 }
 
 $HeaderLength = ($result | ForEach-Object {($_ -split ',').Count} | Sort-Object -Descending)[0]-1
-$Header = ""Vendor,""
+$Header = "Vendor,"
 $x = 1
 $Header += do {
     $x++
-    ""Caption;Version,""
+    "Caption;Version,"
 } until ($x -eq $HeaderLength)
 
 $Header | Out-File -FilePath $env:TEMP\strange.csv

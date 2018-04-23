@@ -12,20 +12,20 @@ import scala.concurrent.{Await, Future}
 
 object TestApp extends App {
 
-  implicit val system = ActorSystem(""MyAkkaSystem"")
+  implicit val system = ActorSystem("MyAkkaSystem")
   implicit val materializer = ActorMaterializer()
 
   val awesomeHttpReq = Http().singleRequest(
     HttpRequest(
       method = HttpMethods.GET,
-      uri = Uri(""http://localhost:9000/streaming-json"")
+      uri = Uri("http://localhost:9000/streaming-json")
     )
   )
 
   val a = Source.fromFuture(awesomeHttpReq).flatMapConcat {
     case HttpResponse(status, _, entity, _) =>
       entity.withoutSizeLimit.getDataBytes
-        .via(Framing delimiter (ByteString(""\n""), Int.MaxValue))
+        .via(Framing delimiter (ByteString("\n"), Int.MaxValue))
   } map { bytes =>
     bytes decodeString StandardCharsets.UTF_8
   }
@@ -33,7 +33,7 @@ object TestApp extends App {
   val b: Future[Vector[String]] = a
     .takeWithin(50 second)
     .runWith(Sink.fold(Vector.empty[String])((a, b) => {
-      println(s""adding $b"")
+      println(s"adding $b")
       a :+ b
     }))
 

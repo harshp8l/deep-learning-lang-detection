@@ -1,5 +1,5 @@
 def checkIntData=udf((columnData: String) => {
-  var status = ""GOOD""
+  var status = "GOOD"
   try{
     columnData.toInt
   } catch {
@@ -7,21 +7,21 @@ def checkIntData=udf((columnData: String) => {
       if(columnData == null) {
         // Do nothing. This is fine
       } else if(columnData.length == 0) {
-        status = ""ERROR""
+        status = "ERROR"
       } else {
-        status = ""BAD""
+        status = "BAD"
       }
     }
   }
   status
 })
 
-val seqData = Seq((""x"","""","""",""0""),("""",null,"""",""3""),("""",""a"","""",""z""),(""x"",""1"",""x"",""""))
-val df = seqData.toDF(""col1"",""col2"",""col3"",""col4"")
-val colsToCheck = df.select(""col2"",""col4"").columns
+val seqData = Seq(("x","","","0"),("",null,"","3"),("","a","","z"),("x","1","x",""))
+val df = seqData.toDF("col1","col2","col3","col4")
+val colsToCheck = df.select("col2","col4").columns
 var newdf = df
 // Iterate over the columns you want to check inside the dataframe. Each checked column will add a new status column to newdf
 colsToCheck.map{column =>
-  newdf = newdf.withColumn(column+""Status"", checkIntData(newdf(column)))
+  newdf = newdf.withColumn(column+"Status", checkIntData(newdf(column)))
 }
 newdf.show()

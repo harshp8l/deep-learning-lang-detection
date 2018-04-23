@@ -21,9 +21,9 @@ import org.springframework.web.util.WebUtils;
 @Component
 public class RequestLoggingFilter extends OncePerRequestFilter {
 
-    public static final String DEFAULT_AFTER_MESSAGE_PREFIX = ""After request ["";
+    public static final String DEFAULT_AFTER_MESSAGE_PREFIX = "After request [";
 
-    public static final String DEFAULT_AFTER_MESSAGE_SUFFIX = ""]"";
+    public static final String DEFAULT_AFTER_MESSAGE_SUFFIX = "]";
 
     private final boolean includeQueryString = true;
     private final boolean includeClientInfo = true;
@@ -37,8 +37,8 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
     private final String afterMessageSuffix = DEFAULT_AFTER_MESSAGE_SUFFIX;
 
     /**
-     * The default value is ""false"" so that the filter may log a ""before"" message
-     * at the start of request processing and an ""after"" message at the end from
+     * The default value is "false" so that the filter may log a "before" message
+     * at the start of request processing and an "after" message at the end from
      * when the last asynchronously dispatched thread is exiting.
      */
     @Override
@@ -75,7 +75,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
     private String createMessage(final HttpServletRequest request, final String prefix, final String suffix) {
         final StringBuilder msg = new StringBuilder();
         msg.append(prefix);
-        msg.append(""uri="").append(request.getRequestURI());
+        msg.append("uri=").append(request.getRequestURI());
 
         if (includeQueryString) {
             final String queryString = request.getQueryString();
@@ -87,20 +87,20 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         if (includeClientInfo) {
             final String client = request.getRemoteAddr();
             if (StringUtils.hasLength(client)) {
-                msg.append("";client="").append(client);
+                msg.append(";client=").append(client);
             }
             final HttpSession session = request.getSession(false);
             if (session != null) {
-                msg.append("";session="").append(session.getId());
+                msg.append(";session=").append(session.getId());
             }
             final String user = request.getRemoteUser();
             if (user != null) {
-                msg.append("";user="").append(user);
+                msg.append(";user=").append(user);
             }
         }
 
         if (includeHeaders) {
-            msg.append("";headers="").append(new ServletServerHttpRequest(request).getHeaders());
+            msg.append(";headers=").append(new ServletServerHttpRequest(request).getHeaders());
         }
 
         if (includeHeaders) {
@@ -113,9 +113,9 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
                     try {
                         payload = new String(buf, 0, length, wrapper.getCharacterEncoding());
                     } catch (final UnsupportedEncodingException ex) {
-                        payload = ""[unknown]"";
+                        payload = "[unknown]";
                     }
-                    msg.append("";payload="").append(payload);
+                    msg.append(";payload=").append(payload);
                 }
             }
         }

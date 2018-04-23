@@ -1,23 +1,23 @@
 val df1 = Seq(
   (1, 100.1, 10),
   (2, 200.2, 20)
-).toDF(""pk"", ""col1"", ""col2"")
+).toDF("pk", "col1", "col2")
 
 val df2 = Seq(
-  (1, ""a1"", ""b1""),
-  (1, ""c1"", ""d1""),
-  (2, ""a2"", ""b2"")
-).toDF(""pk"", ""str_col1"", ""str_col2"")
+  (1, "a1", "b1"),
+  (1, "c1", "d1"),
+  (2, "a2", "b2")
+).toDF("pk", "str_col1", "str_col2")
 
 def combineLists = udf(
   (a: Seq[String], b: Seq[String]) => a ++ b
 )
 
-val df3 = df1.join(df2, Seq(""pk"")).
-  groupBy(df1(""pk""), df1(""col1""), df1(""col2"")).agg(
-    combineLists(collect_list(df2(""str_col1"")), collect_list(df2(""str_col2""))).alias(""arr_col"")
+val df3 = df1.join(df2, Seq("pk")).
+  groupBy(df1("pk"), df1("col1"), df1("col2")).agg(
+    combineLists(collect_list(df2("str_col1")), collect_list(df2("str_col2"))).alias("arr_col")
   ).
-  select(df1(""pk""), df1(""col1""), df1(""col2""), col(""arr_col""))
+  select(df1("pk"), df1("col1"), df1("col2"), col("arr_col"))
 
 df3.show
 +---+-----+----+----------------+

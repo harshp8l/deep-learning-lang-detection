@@ -21,13 +21,13 @@ public class Scrape {
         try{
             for(String url : urls) {
                 //Create new Chromedriver, set file download path, allow the download popup to be automatically accepted,and merge the properties into chromedriver
-                System.setProperty(""webdriver.chrome.driver"", ""/Users/damienbell/chromedriver"");
-                String downloadFilepath = ""/Users/damienbell/automation-testing"";
+                System.setProperty("webdriver.chrome.driver", "/Users/damienbell/chromedriver");
+                String downloadFilepath = "/Users/damienbell/automation-testing";
 
                 ChromeOptions options = new ChromeOptions();
-                options.addArguments(""--test-type"");
-                //options.addArguments(""--headless"");
-                options.addArguments(""--disable-extensions"");
+                options.addArguments("--test-type");
+                //options.addArguments("--headless");
+                options.addArguments("--disable-extensions");
 
                 //Instantiate above options in driverService
                 ChromeDriverService driverService = ChromeDriverService.createDefaultService();
@@ -35,25 +35,25 @@ public class Scrape {
 
 
                 Map<String, Object> commandParams = new HashMap<>();
-                commandParams.put(""cmd"", ""Page.setDownloadBehavior"");
+                commandParams.put("cmd", "Page.setDownloadBehavior");
 
                 Map<String, Object> params = new HashMap<String, Object>();
-                params.put(""behavior"", ""allow"");
-                params.put(""downloadPath"", downloadFilepath);
-                params.put(""cmd"", ""Page.setDownloadBehavior"");
+                params.put("behavior", "allow");
+                params.put("downloadPath", downloadFilepath);
+                params.put("cmd", "Page.setDownloadBehavior");
 
 
-                commandParams.put(""params"", params);
+                commandParams.put("params", params);
                 ObjectMapper om = new ObjectMapper();
                 CloseableHttpClient httpClient = HttpClients.createDefault();
                 String command = null;
                 try{
                     command = om.writeValueAsString(commandParams);
                 }catch(JsonProcessingException jpe){ jpe.printStackTrace(); }
-                String postURL = driverService.getUrl().toString() + ""/session/"" + driver.getSessionId() + ""/chromium/send_command"";
+                String postURL = driverService.getUrl().toString() + "/session/" + driver.getSessionId() + "/chromium/send_command";
                 HttpPost postRequest = new HttpPost(postURL);
-                postRequest.addHeader(""content-type"", ""application/json"");
-                postRequest.addHeader(""accept"", ""*.*"");
+                postRequest.addHeader("content-type", "application/json");
+                postRequest.addHeader("accept", "*.*");
                 try{
                     postRequest.setEntity(new StringEntity(command));
                     httpClient.execute(postRequest);
@@ -62,23 +62,23 @@ public class Scrape {
                 catch (IOException ioe) { ioe.printStackTrace(); }
 
 
-                driver.get(""https://x.atlassian.net/secure/Dashboard.jspa?selectPageId=11502"");
+                driver.get("https://x.atlassian.net/secure/Dashboard.jspa?selectPageId=11502");
                 Thread.sleep(3000);  // Let the user actually see something!
-                ((ChromeDriver) driver).findElementById(""menu-sign-in"").click();
+                ((ChromeDriver) driver).findElementById("menu-sign-in").click();
                 Thread.sleep(3000);
-                ((ChromeDriver) driver).findElementById(""google-signin-button"").click();
+                ((ChromeDriver) driver).findElementById("google-signin-button").click();
                 Thread.sleep(3000);
-                ((ChromeDriver) driver).findElementById(""identifierId"").sendKeys(""email@email.com"");
+                ((ChromeDriver) driver).findElementById("identifierId").sendKeys("email@email.com");
                 Thread.sleep(700);
-                ((ChromeDriver) driver).findElementById(""identifierNext"").click();
+                ((ChromeDriver) driver).findElementById("identifierNext").click();
                 Thread.sleep(2000);
-                driver.findElement(By.cssSelector(""input[name=password]"")).sendKeys(Secret.getPassword());
+                driver.findElement(By.cssSelector("input[name=password]")).sendKeys(Secret.getPassword());
                 Thread.sleep(600);
-                ((ChromeDriver) driver).findElementById(""passwordNext"").click();
+                ((ChromeDriver) driver).findElementById("passwordNext").click();
                 Thread.sleep(10000);
                 driver.get(url);
                 Thread.sleep(56000);
-                File[] files = new File(""/Users/user/automation-testing"").listFiles(new FileFilter() {
+                File[] files = new File("/Users/user/automation-testing").listFiles(new FileFilter() {
                     @Override
                     public boolean accept(File path) {
                         if (path.isFile()) {
@@ -87,13 +87,13 @@ public class Scrape {
                             return true;
                         }
                         else{
-                            System.out.println(""Failure"");
+                            System.out.println("Failure");
                         }
                         return false;
                     }
                 });
                 driver.quit();
             }
-        }catch( java.lang.InterruptedException inter ){ System.err.println(""Thread.sleep broke something, wtf""); inter.printStackTrace(); }
+        }catch( java.lang.InterruptedException inter ){ System.err.println("Thread.sleep broke something, wtf"); inter.printStackTrace(); }
     }
 }

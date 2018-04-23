@@ -34,7 +34,7 @@
 $test_run = $true;
 If ($test_run) {
     Write-Warning -message 'Test run ENABLED - for actual DELETION set $test_run to $false' -verbose;
-    ""`n"";""`n"";
+    "`n";"`n";
 }
 
 
@@ -46,14 +46,14 @@ If ($test_run) {
 # $server_name = '<server>';
 
 # Profiles that contain file newer than 90 days will be exempted from deletion
-$time_definition=@{'1m'=""-0""};
+$time_definition=@{'1m'="-0"};
 
 # TODO: test for more periods - not tested yet!
-# e.g more time frames - $time_definition=@{'1m'=""-30""; '3m'=""-90""; '6m'=""-180""; '12m'=""-360""; '18m'=""-540""}
+# e.g more time frames - $time_definition=@{'1m'="-30"; '3m'="-90"; '6m'="-180"; '12m'="-360"; '18m'="-540"}
 
 # running script path
 $current_path = (Resolve-Path .\).Path;
-$log_file = ""$($current_path)\delete_files.log"";
+$log_file = "$($current_path)\delete_files.log";
 
 $folder_to_cleanse = 'E:\t\temp_profiles\'; #'C:\prg'
 
@@ -69,7 +69,7 @@ $excluded_directories.Add('NetworkService')  | Out-null;
 # Extensions excluded from date validation - these files will not influence the date check 
 # (will be deleted too if all others are found older)
 $excluded_file_types = [System.Collections.ArrayList]@();
-#$excluded_file_types.Add(""*.bat"", ""*.cmd"", ""*.ps1"") | Out-null;
+#$excluded_file_types.Add("*.bat", "*.cmd", "*.ps1") | Out-null;
 
 $profile_directories = [System.Collections.ArrayList]@();
 
@@ -82,8 +82,8 @@ $newer_file_exist = $Null;
 $files_to_delete = $Null;
 
 # If previous log file exists delete it (only during test run)
-If ((Test-Path -Path ""$log_file"") -and ($test_run)) {
-    Write-Verbose ""Deleting previous log file $log_file."" -verbose;
+If ((Test-Path -Path "$log_file") -and ($test_run)) {
+    Write-Verbose "Deleting previous log file $log_file." -verbose;
     Remove-Item $log_file
 }
 
@@ -92,7 +92,7 @@ $profile_directories = Get-ChildItem -Path $folder_to_cleanse -exclude $excluded
 
 # if $profile_directories found to be deleted => exit
 If ([String]::IsNullOrEmpty($profile_directories)) {
-    Write-Warning -message ""No profile directories to delete.  Exiting."" -verbose;
+    Write-Warning -message "No profile directories to delete.  Exiting." -verbose;
     Exit;
 }
 
@@ -100,13 +100,13 @@ If ([String]::IsNullOrEmpty($profile_directories)) {
 # for all periods defined in time_definition
 ForEach ($profile in $profile_directories) {
     ForEach ($time in $time_definition.GetEnumerator()) {
-        Write-Verbose -message ""Now processing the following profile: $folder_to_cleanse$profile."" -verbose;
-        $test_current_pathPath = Test-Path -Path ""$folder_to_cleanse$profile"";
+        Write-Verbose -message "Now processing the following profile: $folder_to_cleanse$profile." -verbose;
+        $test_current_pathPath = Test-Path -Path "$folder_to_cleanse$profile";
         If ($test_current_pathPath) {
             # check if any newer than $time_definition are present within the profile structure
             # LastAccesstime can be empty! It is better, less issues, to use LastWriteTime.  If you must use LastAccessTime use a check for ::IsNullOrEmpty
             # LastWriteTime must be greater than current day - $time.Name (e.g. -90 days)
-            $newer_file_exist += Get-ChildItem -Path ""$folder_to_cleanse$profile"" -recurse -Force -exclude $excluded_file_types | Where-Object {$_.PSIsContainer -eq $FALSE} | where {($_.LastWriteTime).ToString('yyyy-MM-dd') -gt (get-date).adddays($time_definition.$($time.Name)).ToString('yyyy-MM-dd')};
+            $newer_file_exist += Get-ChildItem -Path "$folder_to_cleanse$profile" -recurse -Force -exclude $excluded_file_types | Where-Object {$_.PSIsContainer -eq $FALSE} | where {($_.LastWriteTime).ToString('yyyy-MM-dd') -gt (get-date).adddays($time_definition.$($time.Name)).ToString('yyyy-MM-dd')};
         }
 
         # if any new file than the limit found the whole profile directory will be skipped (testing if $newer_file_exist $null)
@@ -114,7 +114,7 @@ ForEach ($profile in $profile_directories) {
             # add the top directory into excluded directory
             $excluded_directories.Add($profile) | Out-null;
             $newer_file_exist=$Null;
-            Write-Verbose -message ""The profile $profile will be excluded from deletion process."" -verbose;
+            Write-Verbose -message "The profile $profile will be excluded from deletion process." -verbose;
             continue;
         }
     }
@@ -125,7 +125,7 @@ $profiles_with_path = Get-ChildItem -Path $folder_to_cleanse -exclude $excluded_
 
 # perhaps all $directories are now excluded?
 If ([String]::IsNullOrEmpty($profiles_with_path)) {
-    Write-Warning -message ""No directories to delete all probably filtered.  Exiting."" -verbose;
+    Write-Warning -message "No directories to delete all probably filtered.  Exiting." -verbose;
     Exit;
 }
 
@@ -142,22 +142,22 @@ ForEach ($dir in $profiles_with_path) {
 # **********************************************************
 # Messages for the user
 # **********************************************************
-Write-Verbose -message ""List of profiles to be deleted:"" -verbose;
+Write-Verbose -message "List of profiles to be deleted:" -verbose;
 ForEach ($profile_to_delete in $profiles_with_path) {
-    Write-Verbose -message ""$profile_to_delete`n"" -verbose;
+    Write-Verbose -message "$profile_to_delete`n" -verbose;
 }
-Write-Verbose -message ""The total count of non-excluded profile directories: $($profiles_with_path.Count)"" -verbose;
+Write-Verbose -message "The total count of non-excluded profile directories: $($profiles_with_path.Count)" -verbose;
 
-Write-Verbose -message ""==========================`n`n"" -verbose;
+Write-Verbose -message "==========================`n`n" -verbose;
 
-Write-Verbose -message ""List of excluded directories:`n"" -verbose;
+Write-Verbose -message "List of excluded directories:`n" -verbose;
 ForEach ($excluded_profile in $excluded_directories) {
-    Write-Verbose -message ""$folder_to_cleanse$excluded_profile`n"" -verbose;
+    Write-Verbose -message "$folder_to_cleanse$excluded_profile`n" -verbose;
 }
-Write-Verbose -message ""Total count of excluded directories: $($excluded_directories.Count)"" -verbose;
+Write-Verbose -message "Total count of excluded directories: $($excluded_directories.Count)" -verbose;
 
-Write-Verbose -message ""==========================`n`n"" -verbose;
-Write-Verbose -message ""Total directory count (both to be deleted and excluded): $($($profiles_with_path.Count)+ $($excluded_directories.Count))`n"" -verbose;
+Write-Verbose -message "==========================`n`n" -verbose;
+Write-Verbose -message "Total directory count (both to be deleted and excluded): $($($profiles_with_path.Count)+ $($excluded_directories.Count))`n" -verbose;
 
 # **********************************************************
 # Test run or actual deletion process
@@ -167,7 +167,7 @@ If ($test_run) {
         $file | Out-file -Encoding 'Unicode' -FilePath $log_file -Append # >> $log_file
     }
     Write-Verbose 'This number of files would be deleted:' -verbose;
-    Write-Verbose ""Found $($files_to_delete.Count) files marked for deletion."" -verbose;
+    Write-Verbose "Found $($files_to_delete.Count) files marked for deletion." -verbose;
 } Else {
     $files_deleted = 0;
         # delete files
@@ -177,7 +177,7 @@ If ($test_run) {
                 Remove-Item $file -Force -ErrorAction SilentlyContinue
                 If ($? -eq $true) {
                     $files_deleted ++;
-                    #Write-Verbose -Verbose ""$File deleted successfully!""
+                    #Write-Verbose -Verbose "$File deleted successfully!"
                 }
             }
         }
@@ -187,8 +187,8 @@ If ($test_run) {
             Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue
             If ($? -eq $true) {
                 $directories_deleted ++;
-                #Write-Verbose -Verbose ""$File deleted successfully!""
+                #Write-Verbose -Verbose "$File deleted successfully!"
             }
         }
-Return ""Total files to be deleted: $($files_to_delete.count)"",""Total files Deleted: $files_deleted"", ""Total Directories deleted: $directories_deleted""
+Return "Total files to be deleted: $($files_to_delete.count)","Total files Deleted: $files_deleted", "Total Directories deleted: $directories_deleted"
 }

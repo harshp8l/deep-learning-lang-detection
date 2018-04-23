@@ -12,9 +12,9 @@ ForEach($CaseFolder in (GCI L:\Case* -Directory))
     ForEach($Folder in (GCI $CaseFolder -Directory)){
         $ACL = Get-Acl $Folder
         # Remove access for any user other than Administrators, the Creator/Owner, and the local SYSTEM account
-        $ACL.Access | ?{$_.IdentityReference -notmatch ""Administrators|Creator owner|system""}|%{$ACL.RemoveAccessRule($_)|Out-Null}
+        $ACL.Access | ?{$_.IdentityReference -notmatch "Administrators|Creator owner|system"}|%{$ACL.RemoveAccessRule($_)|Out-Null}
         # Add the department back
-        $ACE = New-Object New-Object System.Security.Accesscontrol.FileSystemAccessRule ($FolderGroup[($Folder.Name)], ""Modify"", ""ContainerInherit,ObjectInherit"", ""None"", ""Allow"")
+        $ACE = New-Object New-Object System.Security.Accesscontrol.FileSystemAccessRule ($FolderGroup[($Folder.Name)], "Modify", "ContainerInherit,ObjectInherit", "None", "Allow")
         $ACL.AddAccessRule($ACE)
 
         # Apply the modified ACL to the directory
@@ -23,10 +23,10 @@ ForEach($CaseFolder in (GCI L:\Case* -Directory))
 
     $ACL = Get-Acl $CaseFolder
     # Remove access for any user other than Administrators, the Creator/Owner, and the local SYSTEM account
-    $ACL.Access | ?{$_.IdentityReference -notmatch ""Administrators|Creator owner|system""}|%{$ACL.RemoveAccessRule($_)|Out-Null}
+    $ACL.Access | ?{$_.IdentityReference -notmatch "Administrators|Creator owner|system"}|%{$ACL.RemoveAccessRule($_)|Out-Null}
     # Add the admin and root ACE's
-    $AdminACE = New-Object New-Object System.Security.Accesscontrol.FileSystemAccessRule ('case_admin', ""FullControl"", ""ContainerInherit,ObjectInherit"", ""None"", ""Allow"")
-    $RootACE = New-Object New-Object System.Security.Accesscontrol.FileSystemAccessRule ('case_root', ""Read,Traverse"", ""None"", ""None"", ""Allow"")
+    $AdminACE = New-Object New-Object System.Security.Accesscontrol.FileSystemAccessRule ('case_admin', "FullControl", "ContainerInherit,ObjectInherit", "None", "Allow")
+    $RootACE = New-Object New-Object System.Security.Accesscontrol.FileSystemAccessRule ('case_root', "Read,Traverse", "None", "None", "Allow")
     $ACL.AddAccessRule($AdminACE)
     $ACL.AddAccessRule($RootACE)
 

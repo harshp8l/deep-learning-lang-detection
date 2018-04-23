@@ -1,14 +1,14 @@
 $fmcourse = $_POST['fm_courses'];
-    $student_id = $_POST[""id""];
-    $batch_id = $_POST[""name""];
+    $student_id = $_POST["id"];
+    $batch_id = $_POST["name"];
     delete_enrollments( $student_id, $batch_id );
 
     foreach($fmcourse as $fmc) {
         $course_id = $fmc;
 
         if( record_exists( $student_id, $course_id, $batch_id ) == FALSE ) {
-            $stmt = mysqli_prepare($conn, ""INSERT INTO enrollments (enrollment_id, student_id, course_id, batch_id, is_deleted, joining_date) VALUES( NULL, ?, ?, ?, 0, NOW() );"");
-            $is_binded = mysqli_stmt_bind_param($stmt, ""iii"", $student_id, $course_id, $batch_id);
+            $stmt = mysqli_prepare($conn, "INSERT INTO enrollments (enrollment_id, student_id, course_id, batch_id, is_deleted, joining_date) VALUES( NULL, ?, ?, ?, 0, NOW() );");
+            $is_binded = mysqli_stmt_bind_param($stmt, "iii", $student_id, $course_id, $batch_id);
             $is_exec = mysqli_stmt_execute($stmt);
             mysqli_stmt_close($stmt);
         }
@@ -19,8 +19,8 @@ $fmcourse = $_POST['fm_courses'];
 
     function undelete_enrollment($student_id,  $course_id, $batch_id) {
         global $conn;
-        $stmt = mysqli_prepare($conn, ""UPDATE enrollments SET is_deleted = 0, joining_date = NOW() WHERE student_id= ? AND course_id = ? AND batch_id = ?"");
-        $is_binded = mysqli_stmt_bind_param($stmt, ""iii"", $student_id, $course_id,$batch_id);
+        $stmt = mysqli_prepare($conn, "UPDATE enrollments SET is_deleted = 0, joining_date = NOW() WHERE student_id= ? AND course_id = ? AND batch_id = ?");
+        $is_binded = mysqli_stmt_bind_param($stmt, "iii", $student_id, $course_id,$batch_id);
         $is_exec = mysqli_stmt_execute($stmt);
         mysqli_stmt_close($stmt);
         return $is_exec;
@@ -29,8 +29,8 @@ $fmcourse = $_POST['fm_courses'];
     function record_exists( $student_id,  $course_id, $batch_id ) {
         global $conn;
 
-        $stmt = mysqli_prepare($conn, ""SELECT COUNT(enrollment_id) as total FROM enrollments WHERE student_id= ? AND course_id = ? AND batch_id = ?"");
-        $is_binded = mysqli_stmt_bind_param($stmt, ""iii"", $student_id, $course_id, $batch_id);
+        $stmt = mysqli_prepare($conn, "SELECT COUNT(enrollment_id) as total FROM enrollments WHERE student_id= ? AND course_id = ? AND batch_id = ?");
+        $is_binded = mysqli_stmt_bind_param($stmt, "iii", $student_id, $course_id, $batch_id);
         $is_exec = mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
         $record = mysqli_fetch_assoc($result);
@@ -40,8 +40,8 @@ $fmcourse = $_POST['fm_courses'];
 
     function delete_enrollments( $student_id, $batch_id ) {
         global $conn;
-        $stmt = mysqli_prepare($conn, ""UPDATE enrollments SET is_deleted = 1 WHERE student_id = ? AND batch_id =?;"");
-        $is_binded = mysqli_stmt_bind_param($stmt, ""ii"", $student_id, $batch_id);
+        $stmt = mysqli_prepare($conn, "UPDATE enrollments SET is_deleted = 1 WHERE student_id = ? AND batch_id =?;");
+        $is_binded = mysqli_stmt_bind_param($stmt, "ii", $student_id, $batch_id);
         $is_exec = mysqli_stmt_execute($stmt);
         mysqli_stmt_close($stmt);
         return $is_exec;

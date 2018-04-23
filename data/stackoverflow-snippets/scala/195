@@ -1,4 +1,4 @@
-  implicit val actorSystem = ActorSystem(""test-actor-system"")
+  implicit val actorSystem = ActorSystem("test-actor-system")
   implicit val streamMaterializer = ActorMaterializer()
   implicit val ec = actorSystem.dispatcher
 
@@ -7,7 +7,7 @@
     .plainSource(consumerSettings, subscription)
     .map(_.value())
 
-  val tick = Source.tick(50 millis, 30 seconds, ""Timeout"")
+  val tick = Source.tick(50 millis, 30 seconds, "Timeout")
 
   val source = GraphDSL.create(consumer, tick)(Keep.both) { implicit b ⇒
     (r1, r2) ⇒
@@ -19,9 +19,9 @@
 
   Source
     .fromGraph(source)
-    .takeWhile(el => el != ""Timeout"")
+    .takeWhile(el => el != "Timeout")
     .runForeach(msg => println(msg))
   .onComplete{
-    case Success(_) => println(""Stream ended"")
-    case Failure(error) => println(""There was an error"")
+    case Success(_) => println("Stream ended")
+    case Failure(error) => println("There was an error")
   }

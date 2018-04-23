@@ -2,13 +2,13 @@ class ReadOnlyAttrs(type):
     def __new__(metacls, name, bases, namespace, **kw):
         def get_setter(attr):
             def setter(self, value):
-                if getattr(self, ""_initialized"", False): 
-                    raise ValueError(""Can't set ""  + attr)
-                setattr(self, ""_"" + attr, value)
+                if getattr(self, "_initialized", False): 
+                    raise ValueError("Can't set "  + attr)
+                setattr(self, "_" + attr, value)
             return setter
 
-        slots = namespace.get(""__slots__"", [])
-        slots.append(""initialized"")
+        slots = namespace.get("__slots__", [])
+        slots.append("initialized")
         def __new__(cls, *args, **kw):
             self = object.__new__(cls)  # for production code that could have an arbitrary hierarchy, this needs to be done more carefully
             for attr, value in kw.items():
@@ -16,15 +16,15 @@ class ReadOnlyAttrs(type):
             self.initialized = True
             return self
 
-        namespace[""__new__""] = __new__
+        namespace["__new__"] = __new__
         real_slots = []
         for attr in slots:
-            real_slots.append(""_"" + attr)
+            real_slots.append("_" + attr)
             namespace[attr] = property(
-                (lambda attr: lambda self: getattr(self, ""_"" + attr))(attr), # Getter. Extra lambda needed to create an extra closure containing each attr
+                (lambda attr: lambda self: getattr(self, "_" + attr))(attr), # Getter. Extra lambda needed to create an extra closure containing each attr
                 get_setter(attr)
             )
-        namespace[""__slots__""] = real_slots
+        namespace["__slots__"] = real_slots
         cls = super().__new__(metacls, name, bases, namespace, **kw)
         del cls.__slots__
         return cls

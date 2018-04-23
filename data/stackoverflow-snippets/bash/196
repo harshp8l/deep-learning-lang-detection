@@ -3,15 +3,15 @@
 declare -A whitelisted_files
 
 # If our default readlink isn't the GNU one, but we have GNU readlink installed
-# as ""greadlink"", use it.
+# as "greadlink", use it.
 if command -v greadlink >/dev/null 2>&1; then
-  readlink() { greadlink ""$@""; }
+  readlink() { greadlink "$@"; }
 fi
 
 whitelist_file() {
   local arg
   for arg; do
-    whitelisted_files[""$(readlink -m -- ""$arg"")""]=1
+    whitelisted_files["$(readlink -m -- "$arg")"]=1
   done
 }
 
@@ -22,10 +22,10 @@ rm() {
       [[ $arg = -- ]] && { sigil_seen=1; continue; }
       [[ $arg = -* ]] && continue
     fi
-    if [[ ${whitelisted_files[""$(readlink -m -- ""$arg"")""]} ]]; then
-      read -p ""File $arg is whitelisted; really remove?"" confirm
+    if [[ ${whitelisted_files["$(readlink -m -- "$arg")"]} ]]; then
+      read -p "File $arg is whitelisted; really remove?" confirm
       [[ $confirm = [Yy]* ]] || return 1
     fi
   done
-  command rm ""$@""
+  command rm "$@"
 }

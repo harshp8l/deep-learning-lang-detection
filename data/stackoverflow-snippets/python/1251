@@ -4,41 +4,41 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlQueryModel
 from PyQt5.QtWidgets import QApplication, QTableView
 
-db_file = ""test.db""
+db_file = "test.db"
 
 
 def create_connection(file_path):
-    db = QSqlDatabase.addDatabase(""QSQLITE"")
+    db = QSqlDatabase.addDatabase("QSQLITE")
     db.setDatabaseName(file_path)
     if not db.open():
-        print(""Cannot establish a database connection to {}!"".format(file_path))
+        print("Cannot establish a database connection to {}!".format(file_path))
         return False
     return True
 
 
 def fill_tables():
     q = QSqlQuery()
-    q.exec_(""DROP TABLE IF EXISTS Manufacturers;"")
-    q.exec_(""CREATE TABLE Manufacturers (Company TEXT, Country TEXT);"")
-    q.exec_(""INSERT INTO Manufacturers VALUES ('VW', 'Germany');"")
-    q.exec_(""INSERT INTO Manufacturers VALUES ('Honda' , 'Japan');"")
+    q.exec_("DROP TABLE IF EXISTS Manufacturers;")
+    q.exec_("CREATE TABLE Manufacturers (Company TEXT, Country TEXT);")
+    q.exec_("INSERT INTO Manufacturers VALUES ('VW', 'Germany');")
+    q.exec_("INSERT INTO Manufacturers VALUES ('Honda' , 'Japan');")
 
-    q.exec_(""DROP TABLE IF EXISTS Cars;"")
-    q.exec_(""CREATE TABLE Cars (Company TEXT, Model TEXT, Year INT);"")
-    q.exec_(""INSERT INTO Cars VALUES ('Honda', 'Civic', 2009);"")
-    q.exec_(""INSERT INTO Cars VALUES ('VW', 'Golf', 2013);"")
-    q.exec_(""INSERT INTO Cars VALUES ('VW', 'Polo', 1999);"")
+    q.exec_("DROP TABLE IF EXISTS Cars;")
+    q.exec_("CREATE TABLE Cars (Company TEXT, Model TEXT, Year INT);")
+    q.exec_("INSERT INTO Cars VALUES ('Honda', 'Civic', 2009);")
+    q.exec_("INSERT INTO Cars VALUES ('VW', 'Golf', 2013);")
+    q.exec_("INSERT INTO Cars VALUES ('VW', 'Polo', 1999);")
 
 
 class SqlQueryModel_editable(QSqlQueryModel):
-    """"""a subclass of QSqlQueryModel where individual columns can be defined as editable
-    """"""
+    """a subclass of QSqlQueryModel where individual columns can be defined as editable
+    """
     def __init__(self, editables):
-        """"""editables should be a dict of format: 
+        """editables should be a dict of format: 
         {INT editable_column_nr : (STR update query to be performed when changes are made on this column
                                    INT model's column number for the filter-column (used in the where-clause),
                                    )} 
-        """"""
+        """
         super().__init__()
         self.editables = editables
 
@@ -64,7 +64,7 @@ class SqlQueryModel_editable(QSqlQueryModel):
         return QSqlQueryModel.setData(self, index, value, role)
 
     def setFilter(self, myfilter):
-        text = (self.query().lastQuery() + "" WHERE "" + myfilter)
+        text = (self.query().lastQuery() + " WHERE " + myfilter)
         self.setQuery(text)
 
 
@@ -77,10 +77,10 @@ if __name__ == '__main__':
 
     view = QTableView()
 
-    editables = {1 : (""UPDATE Manufacturers SET Country = '{}' WHERE Company = '{}'"", 2)}
+    editables = {1 : ("UPDATE Manufacturers SET Country = '{}' WHERE Company = '{}'", 2)}
     model = SqlQueryModel_editable(editables)
     query = '''
-        SELECT (comp.company || "" "" || cars.model) as Car,
+        SELECT (comp.company || " " || cars.model) as Car,
                 comp.Country,
                 cars.company,
                 (CASE WHEN cars.Year > 2000 THEN 'yes' ELSE 'no' END) as this_century
@@ -89,7 +89,7 @@ if __name__ == '__main__':
         '''
     q = QSqlQuery(query)
     model.setQuery(q)
-    model.setFilter(""cars.Company = 'VW'"")
+    model.setFilter("cars.Company = 'VW'")
     view.setModel(model)
     view.hideColumn(2)
     view.show()

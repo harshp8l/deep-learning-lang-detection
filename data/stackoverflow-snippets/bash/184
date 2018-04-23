@@ -1,5 +1,5 @@
 <?php 
-echo ""My showmail.php script"";
+echo "My showmail.php script";
 
 // This is the format for opening the email connection:
 //
@@ -11,50 +11,50 @@ http://digitalageinstitute.com/showmail.php?fromdate=01%20January%202009&todate=
 // This line above, entered into a browsers address bar will execute this script (named showmail.php), 
 // from the servers root (www.digitalageinstitute.com), and
 //
-// will delete emails from the mail folder ""Inbox"" (case sensitive) for the user david.svarrer@digitalageinstitute.com, by use of
+// will delete emails from the mail folder "Inbox" (case sensitive) for the user david.svarrer@digitalageinstitute.com, by use of
 // the IMAP domain (this is where you access emails from outside) imap.one.com and at port 143 (see this, further down)
 // 
-$emailaddress = $_GET[""email""];
-$emailpassword= $_GET[""password""];
-$fromdate = $_GET[""fromdate""];
-$todate = $_GET[""todate""];
-$search = $_GET[""search""];
-$domain = $_GET[""domain""];
-$folder = $_GET[""folder""];
-echo $emailaddress."" "".$emailpassword."" "".$fromdate."" "".$todate."" "".$search."" "".$domain."" "".$folder;
+$emailaddress = $_GET["email"];
+$emailpassword= $_GET["password"];
+$fromdate = $_GET["fromdate"];
+$todate = $_GET["todate"];
+$search = $_GET["search"];
+$domain = $_GET["domain"];
+$folder = $_GET["folder"];
+echo $emailaddress." ".$emailpassword." ".$fromdate." ".$todate." ".$search." ".$domain." ".$folder;
 
 $connection = imap_open('{'.$domain.':143}'.$folder,$emailaddress,$emailpassword);
 $ccount = imap_num_msg($connection);
 $maxtoexpunge=20000;
 
-echo ""Parameters = "".$fromdate."","".$todate."","".$search."":"".'ALL FROM ""'.$search.'"" SINCE ""'.$fromdate.'"" BEFORE ""'.$todate.'""';
+echo "Parameters = ".$fromdate.",".$todate.",".$search.":".'ALL FROM "'.$search.'" SINCE "'.$fromdate.'" BEFORE "'.$todate.'"';
 
-// $some   = imap_search($connection, 'ALL FROM ""Twitter""');
-$some   = imap_search($connection, 'ALL FROM ""'.$search.'"" SINCE ""'.$fromdate.'"" BEFORE ""'.$todate.'""');
+// $some   = imap_search($connection, 'ALL FROM "Twitter"');
+$some   = imap_search($connection, 'ALL FROM "'.$search.'" SINCE "'.$fromdate.'" BEFORE "'.$todate.'"');
 print_r ($some);
-echo ""<br/>Elements: "".count($some).""<br/>"";
+echo "<br/>Elements: ".count($some)."<br/>";
 $expunge = 0;
 for($msgno = 0; $msgno < count($some) ; $msgno++) {
 
-    // echo ""Fetching element "".$some[$msgno].""<br/>"";
+    // echo "Fetching element ".$some[$msgno]."<br/>";
     $headers = imap_headerinfo($connection, $some[$msgno]);
     //$position = True;
-    $position = strpos("" "".strtolower($headers->fromaddress), strtolower($search));
-    $position2 = strpos("" "".strtolower($headers->subject), strtolower($search));
+    $position = strpos(" ".strtolower($headers->fromaddress), strtolower($search));
+    $position2 = strpos(" ".strtolower($headers->subject), strtolower($search));
     if ($position || $position2) {
        if ($expunge<$maxtoexpunge) {
            imap_delete ($connection, $some[$msgno]);  
-           echo ""<br/>Deleting:"".$expunge."" sequence ["".$msgno.""]="".$some[$msgno]."" "".$headers->fromaddress."", subject:"".$headers->subject;
+           echo "<br/>Deleting:".$expunge." sequence [".$msgno."]=".$some[$msgno]." ".$headers->fromaddress.", subject:".$headers->subject;
            $expunge++;
        } else {
-           echo ""<br/>Skipping:""."" sequence ["".$msgno.""]="".$some[$msgno]."" "".$headers->fromaddress."", subject:"".$headers->subject;
+           echo "<br/>Skipping:"." sequence [".$msgno."]=".$some[$msgno]." ".$headers->fromaddress.", subject:".$headers->subject;
        }
     }
 }
 
 // The expunge command deletes after all action has been taken. DON'T call it until very end, as it will otherwise mess up message numbers!!
 imap_expunge ($connection);
-echo ""<br/>Expunged!!<br/>"";
+echo "<br/>Expunged!!<br/>";
 
 
 /* Here are the keywords to be used for the imap search order. 

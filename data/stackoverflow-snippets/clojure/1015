@@ -1,17 +1,17 @@
 ; handler.clj    
 (defn wrap-inject-deps
-  ""Ring middleware that injects the dependencies into each ring request map""
+  "Ring middleware that injects the dependencies into each ring request map"
   [handler deps]
   (fn [req]
     (handler (assoc req :deps deps))))
 
 (defn create-handler
-  ""Similar to the default ring 'handler', but with a parameter to let you inject dependencies""
+  "Similar to the default ring 'handler', but with a parameter to let you inject dependencies"
   [deps]
   (-> (routes
         api-routes
         web-routes
-        (route/resources ""/""))
+        (route/resources "/"))
       (kwp/wrap-keyword-params)
       (params/wrap-params)
       (json/wrap-json-params)
@@ -19,7 +19,7 @@
       (wrap-inject-deps deps))) ; this injects dependencies
 
 (defn start-jetty
-  ""Launch the Jetty instance""
+  "Launch the Jetty instance"
   [deps]
   (let [port (Integer. (or (-> system :env :port) 5000))
         handler (create-handler deps)]
@@ -28,14 +28,14 @@
 
 ; system.clj
 (defn get-env
-  ""Initialize configuration vars""
+  "Initialize configuration vars"
   []
-  {:aws-access-key-id     (System/getenv ""AWS_ACCESS_KEY_ID"")
-   :aws-secret-access-key (System/getenv ""AWS_SECRET_ACCESS_KEY"")
-   :mongo-url             (System/getenv ""MONGO_URL""))
+  {:aws-access-key-id     (System/getenv "AWS_ACCESS_KEY_ID")
+   :aws-secret-access-key (System/getenv "AWS_SECRET_ACCESS_KEY")
+   :mongo-url             (System/getenv "MONGO_URL"))
 
 (defn start
-  ""Launch dependencies such as DB connection and Jetty. Return these as a map, for use in REPL""
+  "Launch dependencies such as DB connection and Jetty. Return these as a map, for use in REPL"
   [& [env]]
   (let [env (or env (get-env))
         deps {:env     env
@@ -46,7 +46,7 @@
 
 ; program.clj
 (defn -main [& [port]]
-  ""App entrypoint""
-  (let [env (system/get-env) ; ""env"" is just a map of config variables, that can be hard-coded, read from file, or whatever you want.
+  "App entrypoint"
+  (let [env (system/get-env) ; "env" is just a map of config variables, that can be hard-coded, read from file, or whatever you want.
         env (if port (assoc env :port port) env)]
     (system/start env)))

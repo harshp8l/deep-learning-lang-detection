@@ -4,12 +4,12 @@ import spark.implicits._
 
 val numRecProducts = 10
 
-val result = prodRows.as(""left"")
+val result = prodRows.as("left")
   // self-join by gender:
-  .join(prodRows.as(""right""), $""left.gender_PK"" === $""right.gender_PK"" || $""right.gender_PK"" === ""UNISEX"")
+  .join(prodRows.as("right"), $"left.gender_PK" === $"right.gender_PK" || $"right.gender_PK" === "UNISEX")
   // limit to 10 results per record:
-  .withColumn(""rn"", row_number().over(Window.partitionBy($""left.product_PK"").orderBy($""right.product_PK"")))
-  .filter($""rn"" <= numRecProducts).drop($""rn"")
+  .withColumn("rn", row_number().over(Window.partitionBy($"left.product_PK").orderBy($"right.product_PK")))
+  .filter($"rn" <= numRecProducts).drop($"rn")
   // group and collect_list to create products column:
-  .groupBy($""left.product_PK"" as ""product_PK"")
-  .agg(collect_list(struct($""right.product_PK"", lit(1))) as ""products"")
+  .groupBy($"left.product_PK" as "product_PK")
+  .agg(collect_list(struct($"right.product_PK", lit(1))) as "products")

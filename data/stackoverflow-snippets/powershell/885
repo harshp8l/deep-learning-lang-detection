@@ -1,15 +1,15 @@
 #  Log file time stamp:
-$LogTime = Get-Date -Format ""MM-dd-yyyy_hh-mm-ss""
+$LogTime = Get-Date -Format "MM-dd-yyyy_hh-mm-ss"
 #  Log file name:
-$LogFile = ""C:\Administration\Logs\BCPEXPORTLOG_""+$LogTime+"".log""
+$LogFile = "C:\Administration\Logs\BCPEXPORTLOG_"+$LogTime+".log"
 
-$database = ""database""
-$schema = ""dbo""
-$table = ""TableName""
+$database = "database"
+$schema = "dbo"
+$table = "TableName"
 
 Import-CSV 'C:\Administration\Scheduled Tasks\CUBList.csv' | ForEach{
 
-        $bcp_command = ""bcp 'SELECT * FROM $database.$schema."" + $_.tablename + "" WHERE ("" + $_.fieldname + "" <=  DATEADD(ms, -3, GETDATE()))' QUERYOUT 'D:\BCPOut\$database`_"" + $_.tablename + "".txt'  -c -U 'user' -P 'password'""
+        $bcp_command = "bcp 'SELECT * FROM $database.$schema." + $_.tablename + " WHERE (" + $_.fieldname + " <=  DATEADD(ms, -3, GETDATE()))' QUERYOUT 'D:\BCPOut\$database`_" + $_.tablename + ".txt'  -c -U 'user' -P 'password'"
         Tee-Object -FilePath $LogFile -InputObject $bcp_command -Append
         $bcp_results = Invoke-Expression $bcp_command
         Tee-Object -FilePath $LogFile -InputObject $bcp_results -Append

@@ -3,16 +3,16 @@ case class Page(from: Int, to: Int)
 implicit def pageQSB(implicit intBinder: QueryStringBindable[Int]) = new QueryStringBindable[Page] {
   override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Page]] = {
     for {
-      from <- intBinder.bind(""from"", params)
-      to <- intBinder.bind(""to"", params)
+      from <- intBinder.bind("from", params)
+      to <- intBinder.bind("to", params)
     } yield {
       (from, to) match {
         case (Right(from), Right(to)) => Right(Page(from, to))
-        case _ => Left(""Unable to bind a Page"")
+        case _ => Left("Unable to bind a Page")
       }
     }
   }
   override def unbind(key: String, page: Page): String = {
-    intBinder.unbind(""from"", page.from) + ""&"" + intBinder.unbind(""to"", page.to)
+    intBinder.unbind("from", page.from) + "&" + intBinder.unbind("to", page.to)
   }
 }

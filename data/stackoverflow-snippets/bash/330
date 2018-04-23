@@ -6,7 +6,7 @@
 #CP works differently, provided that d in /c/d isn't an existing file, it assumes that you're copying item into a folder path called /c/d and will create it if it doesn't exist. so CP /a/b /c/d will always give /c/d/b unless d is an existing file. If you put the --rename switch, it will assume that you're copying into /c and renaming the singl item you're copying from b to d at the destination. Again, if /c doesn't exist, it will be created. So CP --rename /a/b /c/d will give a /c/d and if there already a folder called /c/d, contents of b will be merged into d. 
 
 #cp+ $source $destination
-#mkdir -p /foo/bar && cp myfile ""$_""
+#mkdir -p /foo/bar && cp myfile "$_"
 
 err=0 # error count
 i=0 #item counter, doesn't include destination (starts at 1, ex. item1, item2 etc)
@@ -15,10 +15,10 @@ n=1 # argument counter (aka the arguments inputed into script, those include bot
 count_s=0
 count_i=0
 easy_going=true #determines how you deal with bad pathes in your copy, true will allow copy to continue provided one of the items being copied exists, false will exit script for one bad path. this setting can also be changed via the custom switches: --strict and --not-strict
-verbal=""-v""
+verbal="-v"
 
 
-  help=""===============================================================================\
+  help="===============================================================================\
     \n         CREATIVE COPY SCRIPT (CP) -- written by thebunnyrules\
     \n===============================================================================\n
     \n This script (CP, note capital letters) is intended to supplement \
@@ -28,13 +28,13 @@ verbal=""-v""
     \n To make this happen, CP assumes that the item you're copying is \
     \n being dropped in the destination path and is not the destination\
     \n itself (aka, a renamed copy of the source file/folder). Meaning:\n 
-    \n * \""CP /a/b /c/d\"" will result in /c/d/b \
-    \n * even if you write \""CP /a/b /c/b\"", CP will create the path /a/b, \
+    \n * \"CP /a/b /c/d\" will result in /c/d/b \
+    \n * even if you write \"CP /a/b /c/b\", CP will create the path /a/b, \
     \n   resulting in /c/b/b. \n
     \n Of course, if /c/b or /c/d are existing files and /a/b is also a\
     \n file, the existing destination file will simply be overwritten. \
-    \n This behavior can be changed with the \""--rename\"" switch. In this\
-    \n case, it's assumed that \""CP --rename /a/b /c/d\"" is copying b into /c  \
+    \n This behavior can be changed with the \"--rename\" switch. In this\
+    \n case, it's assumed that \"CP --rename /a/b /c/d\" is copying b into /c  \
     \n and renaming the copy to d.\n
     \n===============================================================================\
     \n        CP specific help: Switches and their Usages \
@@ -51,49 +51,49 @@ verbal=""-v""
     \n\t\tmake strict the default behavior by editing the \
     \n\t\tCP script and setting: \n
     \n\t\teasy_going=false.\n
-    \n  --help-all\tShows help specific to cp (in addition to CP).""
+    \n  --help-all\tShows help specific to cp (in addition to CP)."
 
-cp_hlp=""\n\nRegular cp command's switches will still work when using CP.\
+cp_hlp="\n\nRegular cp command's switches will still work when using CP.\
     \nHere is the help out of the original cp command... \
     \n\n===============================================================================\
     \n          cp specific help: \
-    \n===============================================================================\n""
+    \n===============================================================================\n"
 
-outro1=""\n******************************************************************************\
+outro1="\n******************************************************************************\
     \n******************************************************************************\
     \n******************************************************************************\
     \n        USE THIS SCRIPT WITH CARE, TYPOS WILL GIVE YOU PROBLEMS...\
     \n******************************************************************************\
     \n******************************* HIT q TO EXIT ********************************\
-    \n******************************************************************************""
+    \n******************************************************************************"
 
 
 #count and classify arguments that were inputed into script, output help message if needed
 while true; do
-    eval input=""\$$n""
+    eval input="\$$n"
     in_=${input::1}
 
-    if [ -z ""$input"" -a $n = 1 ]; then input=""--help""; fi 
+    if [ -z "$input" -a $n = 1 ]; then input="--help"; fi 
 
-    if [ ""$input"" = ""-h"" -o ""$input"" = ""--help"" -o ""$input"" = ""-?"" -o ""$input"" = ""--help-all"" ]; then
-        if [ ""$input"" = ""--help-all"" ]; then 
-            echo -e ""$help""$cp_hlp > /tmp/cp.hlp 
+    if [ "$input" = "-h" -o "$input" = "--help" -o "$input" = "-?" -o "$input" = "--help-all" ]; then
+        if [ "$input" = "--help-all" ]; then 
+            echo -e "$help"$cp_hlp > /tmp/cp.hlp 
             cp --help >> /tmp/cp.hlp
-            echo -e ""$outro1"" >> /tmp/cp.hlp
+            echo -e "$outro1" >> /tmp/cp.hlp
             cat /tmp/cp.hlp|less
             cat /tmp/cp.hlp
             rm /tmp/cp.hlp
         else
-            echo -e ""$help"" ""$outro1""|less
-            echo -e ""$help"" ""$outro1""
+            echo -e "$help" "$outro1"|less
+            echo -e "$help" "$outro1"
         fi
         exit
     fi
 
-    if [ -z ""$input"" ]; then
+    if [ -z "$input" ]; then
         count_i=$(expr $count_i - 1 ) # remember, last item is destination and it's not included in cound
         break 
-    elif [ ""$in_"" = ""-"" ]; then
+    elif [ "$in_" = "-" ]; then
         count_s=$(expr $count_s + 1 )
     else
         count_i=$(expr $count_i + 1 )
@@ -103,40 +103,40 @@ done
 
 #error condition: no items to copy or no destination
     if [ $count_i -lt 0 ]; then 
-            echo ""Error: You haven't listed any items for copying. Exiting."" # you didn't put any items for copying
+            echo "Error: You haven't listed any items for copying. Exiting." # you didn't put any items for copying
     elif [ $count_i -lt 1 ]; then
-            echo ""Error: Copying usually involves a destination. Exiting."" # you put one item and no destination
+            echo "Error: Copying usually involves a destination. Exiting." # you put one item and no destination
     fi
 
 #reset the counter and grab content of arguments, aka: switches and item paths
 n=1
 while true; do
-        eval input=""\$$n"" #input=$1,$2,$3,etc...
+        eval input="\$$n" #input=$1,$2,$3,etc...
         in_=${input::1} #first letter of $input
 
-        if [ ""$in_"" = ""-"" ]; then
-            if [ ""$input"" = ""--rename"" ]; then 
+        if [ "$in_" = "-" ]; then
+            if [ "$input" = "--rename" ]; then 
                 rename=true #my custom switches
-            elif [ ""$input"" = ""--strict"" ]; then 
+            elif [ "$input" = "--strict" ]; then 
                 easy_going=false #exit script if even one of the non-destinations item is not found
-            elif [ ""$input"" = ""--relaxed"" ]; then 
+            elif [ "$input" = "--relaxed" ]; then 
                 easy_going=true #continue script if at least one of the non-destination items is found
-            elif [ ""$input"" = ""--quiet"" ]; then 
-                verbal=""""
+            elif [ "$input" = "--quiet" ]; then 
+                verbal=""
             else
-                #m=$(expr $m + 1);eval switch$m=""$input"" #input is a switch, if it's not one of the above, assume it belongs to cp.
-                switch_list=""$switch_list \""$input\""""
+                #m=$(expr $m + 1);eval switch$m="$input" #input is a switch, if it's not one of the above, assume it belongs to cp.
+                switch_list="$switch_list \"$input\""
             fi                                  
-        elif ! [ -z ""$input"" ]; then #if it's not a switch and input is not empty, it's a path
+        elif ! [ -z "$input" ]; then #if it's not a switch and input is not empty, it's a path
                 i=$(expr $i + 1)
-                if [ ! -f ""$input"" -a ! -d ""$input"" -a ""$i"" -le ""$count_i"" ]; then 
-                    err=$(expr $err + 1 ); error_list=""$error_list\npath does not exit: \""b\""""
+                if [ ! -f "$input" -a ! -d "$input" -a "$i" -le "$count_i" ]; then 
+                    err=$(expr $err + 1 ); error_list="$error_list\npath does not exit: \"b\""
                 else
-                    if [ ""$i"" -le ""$count_i"" ]; then 
-                        eval item$i=""$input"" 
-                        item_list=""$item_list \""$input\""""
+                    if [ "$i" -le "$count_i" ]; then 
+                        eval item$i="$input" 
+                        item_list="$item_list \"$input\""
                     else
-                        destination=""$input"" #destination is last items entered
+                        destination="$input" #destination is last items entered
                     fi
                 fi
         else
@@ -149,16 +149,16 @@ while true; do
 done
 
 #error condition: some or all item(s) being copied don't exist. easy_going: continue if at least one item exists, warn about rest, not easy_going: exit.
-#echo ""err=$err count_i=$count_i""
-if [ ""$easy_going"" != true -a $err -gt 0 -a $err != $count_i ]; then 
-    echo ""Some of the paths you entered are incorrect. Script is running in strict mode and will therefore exit.""
-    echo -e ""Bad Paths: $err $error_list""
+#echo "err=$err count_i=$count_i"
+if [ "$easy_going" != true -a $err -gt 0 -a $err != $count_i ]; then 
+    echo "Some of the paths you entered are incorrect. Script is running in strict mode and will therefore exit."
+    echo -e "Bad Paths: $err $error_list"
     exit
 fi
 
 if [ $err = $count_i ]; then
-    echo ""ALL THE PATHS you have entered are incorrect! Exiting.""
-    echo -e ""Bad Paths: $err $error_list""
+    echo "ALL THE PATHS you have entered are incorrect! Exiting."
+    echo -e "Bad Paths: $err $error_list"
 fi
 
 #one item to one destination:
@@ -176,43 +176,43 @@ fi
 # - rename option but source is folder, destination is file, exit.
 # - rename option but source is file and destination is folder. easy_going: option ignored.
 
-if [ -f ""$destination"" ]; then
+if [ -f "$destination" ]; then
     if [ $count_i -gt 1 ]; then 
-        echo ""Error: You've selected a single file as a destination and are copying multiple items to it. Exiting.""; exit
-    elif [ -d ""$item1"" ]; then
-        echo ""Error: Your destination is a file but your source is a folder. Exiting.""; exit
+        echo "Error: You've selected a single file as a destination and are copying multiple items to it. Exiting."; exit
+    elif [ -d "$item1" ]; then
+        echo "Error: Your destination is a file but your source is a folder. Exiting."; exit
     fi
 fi
-if [ ""$rename"" = true ]; then
+if [ "$rename" = true ]; then
     if [ $count_i -gt 1 ]; then
         if [ $easy_going = true ]; then
-            echo ""Warning: you choose the rename option but are copying multiple items. Ignoring Rename option. Continuing.""
+            echo "Warning: you choose the rename option but are copying multiple items. Ignoring Rename option. Continuing."
         else
-            echo ""Error: you choose the rename option but are copying multiple items. Script running in strict mode. Exiting.""; exit
+            echo "Error: you choose the rename option but are copying multiple items. Script running in strict mode. Exiting."; exit
         fi
-    elif [ -d ""$destination"" -a -f ""$item1"" ]; then
-        echo -n ""Warning: you choose the rename option but source is a file and destination is a folder with the same name. ""
+    elif [ -d "$destination" -a -f "$item1" ]; then
+        echo -n "Warning: you choose the rename option but source is a file and destination is a folder with the same name. "
         if [ $easy_going = true ]; then
-            echo ""Ignoring Rename option. Continuing.""
+            echo "Ignoring Rename option. Continuing."
         else
-            echo ""Script running in strict mode. Exiting.""; exit
+            echo "Script running in strict mode. Exiting."; exit
         fi
     else
-        dest_jr=$(dirname ""$destination"")
-        if [ -d ""$destination"" ]; then item_list=""$item1/*"";fi
-        mkdir -p ""$dest_jr""
+        dest_jr=$(dirname "$destination")
+        if [ -d "$destination" ]; then item_list="$item1/*";fi
+        mkdir -p "$dest_jr"
     fi
 else
-    mkdir -p ""$destination""
+    mkdir -p "$destination"
 fi
 
-eval cp $switch_list $verbal $item_list ""$destination""
+eval cp $switch_list $verbal $item_list "$destination"
 
-cp_err=""$?""
-if [ ""$cp_err"" != 0 ]; then 
-    echo -e ""Something went wrong with the copy operation. \nExit Status: $cp_err""
+cp_err="$?"
+if [ "$cp_err" != 0 ]; then 
+    echo -e "Something went wrong with the copy operation. \nExit Status: $cp_err"
 else 
-    echo ""Copy operation exited with no errors.""
+    echo "Copy operation exited with no errors."
 fi
 
 exit

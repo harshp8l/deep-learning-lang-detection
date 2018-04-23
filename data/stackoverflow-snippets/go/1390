@@ -1,21 +1,21 @@
 package main
 
 import (
-    ""fmt""
-    ""time""
+    "fmt"
+    "time"
 
     // you can also use original go-mgo/mgo here as well
-    mgo ""github.com/globalsign/mgo""
-    ""github.com/globalsign/mgo/bson""
+    mgo "github.com/globalsign/mgo"
+    "github.com/globalsign/mgo/bson"
 )
 
 // TODO: put some records into db first:
 //
 // use testapi
 // db.competitions.insert([
-//   {game_id: 1, game_name: ""foo""},
-//   {game_id: 2, game_name: ""bar""},
-//   {game_id: 3, game_name: ""jazz""}
+//   {game_id: 1, game_name: "foo"},
+//   {game_id: 2, game_name: "bar"},
+//   {game_id: 3, game_name: "jazz"}
 // ])
 
 // NOTE: you might want to increase this depending on your machine power
@@ -28,7 +28,7 @@ const ops = 10000
 type m bson.M
 
 func main() {
-    sess, err := mgo.DialWithTimeout(""localhost"", time.Second)
+    sess, err := mgo.DialWithTimeout("localhost", time.Second)
     if err != nil {
         panic(err)
     }
@@ -52,9 +52,9 @@ func main() {
 
             result, err := fetchSomething(sess)
             if err != nil {
-                fmt.Printf(""ERR: %s\n"", err)
+                fmt.Printf("ERR: %s\n", err)
             }
-            fmt.Printf(""RESULT: %+v\n"", result)
+            fmt.Printf("RESULT: %+v\n", result)
         }()
     }
 
@@ -70,28 +70,28 @@ func fetchSomething(sess *mgo.Session) ([]m, error) {
     result := []m{}
 
     group := m{
-        ""$group"": m{
-            ""_id"": m{
-                ""id"":   ""$game_id"",
-                ""name"": ""$game_name"",
+        "$group": m{
+            "_id": m{
+                "id":   "$game_id",
+                "name": "$game_name",
             },
         },
     }
 
     project := m{
-        ""$project"": m{
-            ""_id"":  ""$_id.id"",
-            ""name"": ""$_id.name"",
+        "$project": m{
+            "_id":  "$_id.id",
+            "name": "$_id.name",
         },
     }
 
     sort := m{
-        ""$sort"": m{
-            ""_id"": 1,
+        "$sort": m{
+            "_id": 1,
         },
     }
 
-    err := col(s, ""competitions"").Pipe([]m{group, project, sort}).All(&result)
+    err := col(s, "competitions").Pipe([]m{group, project, sort}).All(&result)
     if err != nil {
         return nil, err
     }
@@ -100,7 +100,7 @@ func fetchSomething(sess *mgo.Session) ([]m, error) {
 
 // col is a helper for selecting a column
 func col(sess *mgo.Session, name string) *mgo.Collection {
-    return sess.DB(""testapi"").C(name)
+    return sess.DB("testapi").C(name)
 }
 
 /*

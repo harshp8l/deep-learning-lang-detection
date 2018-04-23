@@ -1,5 +1,5 @@
     // Changes the variables in the Entity
-    $regex = '/ORM\\\\Column\(name=""([^""]*)""|private \$([^;]*);/';
+    $regex = '/ORM\\\\Column\(name="([^"]*)"|private \$([^;]*);/';
     $dir = new DirectoryIterator(__DIR__. '/entities');
     foreach ($dir as $fileinfo) {
         if (!$fileinfo->isDot()) {
@@ -12,7 +12,7 @@
             $both = array(&$databaseColumns, &$variables);
             array_walk($matches, function($v, $k) use ($both) { $both[$k % 2][] = $v; }); // to split the column names and the variable names (since the regex returns them in order)
             if( count($databaseColumns) != count($variables) ){ // just in case there are more items in one of the arrays than the other, something must have gone wrong
-                echo ""Error in file "" . $fileinfo->getFilename();
+                echo "Error in file " . $fileinfo->getFilename();
                 die;
             }
 
@@ -20,7 +20,7 @@
             for($i = 0; $i < $len; $i++){
                 $actualColumnName = end($databaseColumns[$i]);
                 $nameOfVariableInTheEntity = end($variables[$i]);
-                $nameOfVariableInTheEntity = explode("" "", $nameOfVariableInTheEntity); // to remove possible extra stuff after the name of the variable, such as variables with default values in the database
+                $nameOfVariableInTheEntity = explode(" ", $nameOfVariableInTheEntity); // to remove possible extra stuff after the name of the variable, such as variables with default values in the database
                 $nameOfVariableInTheEntity = $nameOfVariableInTheEntity[0];
 
                 $str = str_replace('private $'.$nameOfVariableInTheEntity, 'private $'.$actualColumnName,$str); // replace the declaration of variable

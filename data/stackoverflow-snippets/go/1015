@@ -1,6 +1,6 @@
   //EmptyBucket empties the Amazon S3 bucket
     func (s awsS3) EmptyBucket(bucket string) error {
-        log.Info(""removing objects from S3 bucket : "", bucket)
+        log.Info("removing objects from S3 bucket : ", bucket)
         params := &s3.ListObjectsInput{
             Bucket: aws.String(bucket),
         }
@@ -12,10 +12,10 @@
             }
             //Checks if the bucket is already empty
             if len((*objects).Contents) == 0 {
-                log.Info(""Bucket is already empty"")
+                log.Info("Bucket is already empty")
                 return nil
              }
-            log.Info(""First object in batch | "", *(objects.Contents[0].Key))
+            log.Info("First object in batch | ", *(objects.Contents[0].Key))
 
             //creating an array of pointers of ObjectIdentifier
             objectsToDelete := make([]*s3.ObjectIdentifier, 0, 1000)
@@ -38,11 +38,11 @@
             }
             if *(*objects).IsTruncated { //if there are more objects in the bucket, IsTruncated = true
                 params.Marker = (*deleteParams).Delete.Objects[len((*deleteParams).Delete.Objects)-1].Key
-                log.Info(""Requesting next batch | "", *(params.Marker))
+                log.Info("Requesting next batch | ", *(params.Marker))
             } else { //if all objects in the bucket have been cleaned up.
                 break
             }
         }
-        log.Info(""Emptied S3 bucket : "", bucket)
+        log.Info("Emptied S3 bucket : ", bucket)
         return nil
     } 

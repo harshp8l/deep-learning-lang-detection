@@ -24,28 +24,28 @@ object ShapelessStringToTypeConverters {
       Convert.instance(
         s =>
           s.parseBooleanValidated
-            .leftMap(e => ParseFailure(s""Not a Boolean ${e.getMessage}""))
+            .leftMap(e => ParseFailure(s"Not a Boolean ${e.getMessage}"))
             .toValidatedNel)
 
     implicit def ints: Convert[Int] =
       Convert.instance(
         s =>
           s.parseIntValidated
-            .leftMap(e => ParseFailure(s""Not an Int ${e.getMessage}""))
+            .leftMap(e => ParseFailure(s"Not an Int ${e.getMessage}"))
             .toValidatedNel)
 
     implicit def longs: Convert[Long] =
       Convert.instance(
         s =>
           s.parseLongValidated
-            .leftMap(e => ParseFailure(s""Not an Long ${e.getMessage}""))
+            .leftMap(e => ParseFailure(s"Not an Long ${e.getMessage}"))
             .toValidatedNel)
 
     implicit def doubles: Convert[Double] =
       Convert.instance(
         s =>
           s.parseDoubleValidated
-            .leftMap(e => ParseFailure(s""Not an Double ${e.getMessage}""))
+            .leftMap(e => ParseFailure(s"Not an Double ${e.getMessage}"))
             .toValidatedNel)
 
     implicit def strings: Convert[String] = Convert.instance(s => s.validNel)
@@ -73,7 +73,7 @@ object ShapelessStringToTypeConverters {
         val fieldName = key.value.name
         val parsedField = input
           .get(fieldName)
-          .cata(entry => Convert.to[V](entry), ParseFailure(s""$fieldName is missing"").invalidNel)
+          .cata(entry => Convert.to[V](entry), ParseFailure(s"$fieldName is missing").invalidNel)
           .map(f => field[K](f))
 
         (parsedField, next.readFrom(input)).mapN(_ :: _)
@@ -106,7 +106,7 @@ object ShapelessStringToTypeConverters {
         val fieldName = key.value.name
         val parsedField = input
           .headOption
-          .cata(entry => Convert.to[V](entry), ParseFailure(s""$fieldName is missing"").invalidNel)
+          .cata(entry => Convert.to[V](entry), ParseFailure(s"$fieldName is missing").invalidNel)
           .map(f => field[K](f))
 
         (parsedField, next.readFrom(input.tail)).mapN(_ :: _)
@@ -121,11 +121,11 @@ object ShapelessStringToTypeConverters {
 
 /*
     case class Foo(a: String, b: Int, c: Boolean)
-    def m: Map[String, String] = Map(""a"" -> ""hello"", ""c"" -> ""true"", ""b"" -> ""100"")
-    def e: Map[String, String] = Map(""c"" -> ""true"", ""b"" -> ""a100"")
+    def m: Map[String, String] = Map("a" -> "hello", "c" -> "true", "b" -> "100")
+    def e: Map[String, String] = Map("c" -> "true", "b" -> "a100")
     val result = SchemaMap.of[Foo].readFrom(m)
 
-    val lst = List(""145164983"", ""0.01862523"", ""16.11681596"", ""21:38:57"", ""bid"")
+    val lst = List("145164983", "0.01862523", "16.11681596", "21:38:57", "bid")
     case class Trade0(tid: Long, price: Double, amount: Double, time: String, tpe: String)
     val result2 = SchemaList.of[Trade0].readFrom(lst)
 */

@@ -1,6 +1,6 @@
 def asyncPost(url: String, formdata: Map[String, Seq[String]]): Future[String] = {
   ws.url(url)
-    .withHttpHeaders((""Content-Type"", ""application/x-www-form-urlencoded""))
+    .withHttpHeaders(("Content-Type", "application/x-www-form-urlencoded"))
     .post(formdata)
     .map(_.body)
 }
@@ -8,13 +8,13 @@ def asyncPost(url: String, formdata: Map[String, Seq[String]]): Future[String] =
 def action = Action.async { request =>
   request.body.asFormUrlEncoded match {
     case Some(formdata) =>
-      asyncPost(url, formdata + (""handshake"" -> List(""ok""))).map { body =>
-        Ok(""Here is the body: "" + body)
+      asyncPost(url, formdata + ("handshake" -> List("ok"))).map { body =>
+        Ok("Here is the body: " + body)
       } recover { 
         case e => 
           Logger.error(e)
           InternalServerError(e.getMessage)
       }
-    case None => Future.successful(BadRequest(""No form data given""))
+    case None => Future.successful(BadRequest("No form data given"))
   }
 }

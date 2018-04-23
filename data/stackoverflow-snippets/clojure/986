@@ -2,7 +2,7 @@
 
 (def parse
   (insta/parser
-    ""<moustache> = (tagged-block / word / sp)*
+    "<moustache> = (tagged-block / word / sp)*
      <tagged-block> = comment | section | var
      comment = <tag-open> <'!'> (word | sp)* <tag-close>
      section = section-block-open (current-item / var / comment / word / sp)* <section-block-close>
@@ -14,14 +14,14 @@
      <sp> = #'[\\s]+' 
      name = #'[^\\s{}]+'
      tag-open = '{{'
-     tag-close = '}}'""))
+     tag-close = '}}'"))
 
-(def template ""{{name}}.{{surname}}
+(def template "{{name}}.{{surname}}
   {{#data}}
   * {{.}}
-  {{/data}}"")
+  {{/data}}")
 
-(parse template) ;=> ([:var [:name ""name""]] ""."" [:var [:name ""surname""]] ""\n  "" [:var [:name ""#data""]] ""\n  "" ""*"" "" "" [:var [:name "".""]] ""\n  "" [:var [:name ""/data""]])
+(parse template) ;=> ([:var [:name "name"]] "." [:var [:name "surname"]] "\n  " [:var [:name "#data"]] "\n  " "*" " " [:var [:name "."]] "\n  " [:var [:name "/data"]])
 
 (defn introspect [parsed]
   (->> (tree-seq sequential? seq parsed)
@@ -29,9 +29,9 @@
        (filter #(#{:var :section} (first %)))
        (map (juxt first (comp keyword last second)))
        (map #(case (first %)
-               :var [(second %) """"]
+               :var [(second %) ""]
                :section [(second %) []]))
        (into {})))
 
-(assert (= {:name """" :surname """" :data []}
+(assert (= {:name "" :surname "" :data []}
            (introspect (parse template))))

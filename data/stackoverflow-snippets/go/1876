@@ -1,18 +1,18 @@
 func (pr *ExternalProcess) cmdInRoutine() {
-    app.At(te, ""cmdInRoutine"")
+    app.At(te, "cmdInRoutine")
 
     // this check should probably only happen once.
     // if stdOutPipe can change during the loop,
     // then that's a race condition.
     if pr.stdOutPipe == nil {
-        println(""!!! Standard output pipe is nil. Sending Exit Request !!!"")
+        println("!!! Standard output pipe is nil. Sending Exit Request !!!")
         pr.ProcessExit <- true
         close(pr.shutdown)
         return
     }
 
     for {
-        println(""CMDINROUTINE"")
+        println("CMDINROUTINE")
         // we need to allocate a new buffer in each iteration,
         // because when we pass it through the channel,
         // we can no longer safely overwrite the data in it,
@@ -20,7 +20,7 @@ func (pr *ExternalProcess) cmdInRoutine() {
         buf := make([]byte, 2048)
         size, err := pr.stdOutPipe.Read(buf)
         if err != nil {
-            println(""!!! Sending exit request from cmdInRoutine !!!"")
+            println("!!! Sending exit request from cmdInRoutine !!!")
             // Be careful with this, if you also closed pr.shutdown when you closed stdOutPipe, then this is going to panic (closing a closed channel).
             pr.ProcessExit <- true
             close(pr.shutdown)
@@ -31,10 +31,10 @@ func (pr *ExternalProcess) cmdInRoutine() {
         // unless we're done.
         select {
         case <-pr.shutdown:
-            println(""!!! Shutting cmdInRoutine down !!!"")
+            println("!!! Shutting cmdInRoutine down !!!")
             return
         case pr.CmdIn <- buf[:size]:
-            println(""--- Received data for sending to CmdIn:"", string(buf[:size]))
+            println("--- Received data for sending to CmdIn:", string(buf[:size]))
         }
     }
 }

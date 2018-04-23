@@ -6,7 +6,7 @@
   import scala.concurrent.{Await, Future}
   import scala.util.Random._
 
-  implicit val system = ActorSystem(""theSystem"")
+  implicit val system = ActorSystem("theSystem")
 
   implicit class FutureExtensions[T](f: Future[T]) {
     def withTimeout(timeout: => Throwable)(implicit duration: FiniteDuration, system: ActorSystem): Future[T] = {
@@ -15,17 +15,17 @@
   }
 
   def potentialLongBlockingHelloWorld(i: Int): String = {
-    Thread.sleep(nextInt(500)); s""hello world $i""
+    Thread.sleep(nextInt(500)); s"hello world $i"
   }
 
   implicit val timeout: FiniteDuration = 250.milliseconds
 
-  val timeoutException = new TimeoutException(""Future timed out!"")
+  val timeoutException = new TimeoutException("Future timed out!")
 
   // use the same method 3 times, but in reality is different methods (with different types)
-  val futureHelloWorld1 = Future(potentialLongBlockingHelloWorld(1)).withTimeout(timeoutException).recoverWith { case _ ⇒ Future.successful(""fallback hello world 1"") }
-  val futureHelloWorld2 = Future(potentialLongBlockingHelloWorld(2)).withTimeout(timeoutException).recoverWith { case _ ⇒ Future.successful(""fallback hello world 2"") }
-  val futureHelloWorld3 = Future(potentialLongBlockingHelloWorld(3)).withTimeout(timeoutException).recoverWith { case _ ⇒ Future.successful(""fallback hello world 3"") }
+  val futureHelloWorld1 = Future(potentialLongBlockingHelloWorld(1)).withTimeout(timeoutException).recoverWith { case _ ⇒ Future.successful("fallback hello world 1") }
+  val futureHelloWorld2 = Future(potentialLongBlockingHelloWorld(2)).withTimeout(timeoutException).recoverWith { case _ ⇒ Future.successful("fallback hello world 2") }
+  val futureHelloWorld3 = Future(potentialLongBlockingHelloWorld(3)).withTimeout(timeoutException).recoverWith { case _ ⇒ Future.successful("fallback hello world 3") }
 
   val results = Seq(futureHelloWorld1, futureHelloWorld2, futureHelloWorld3)
 

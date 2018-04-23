@@ -7,7 +7,7 @@ def getValuesMap[T](row: Row, schema: StructType): Map[String,Any] = {
   schema.fields.map {
     field =>
       try{
-        if (field.dataType.typeName.equals(""struct"")){
+        if (field.dataType.typeName.equals("struct")){
           field.name -> getValuesMap(row.getAs[Row](field.name),   field.dataType.asInstanceOf[StructType]) 
         }else{
           field.name -> row.getAs[T](field.name)
@@ -22,14 +22,14 @@ def convertRowToJSON(row: Row, schema: StructType): JSONObject = {
 }
 //I guess since I am using Any and not nothing the regular ValueFormatter is not working, and I had to add case jmap : Map[String,Any] => JSONObject(jmap).toString(defaultFormatter)
 val defaultFormatter : ValueFormatter = (x : Any) => x match {
-  case s : String => ""\"""" + JSONFormat.quoteString(s) + ""\""""
+  case s : String => "\"" + JSONFormat.quoteString(s) + "\""
   case jo : JSONObject => jo.toString(defaultFormatter)
   case jmap : Map[String,Any] => JSONObject(jmap).toString(defaultFormatter)
   case ja : JSONArray => ja.toString(defaultFormatter)
   case other => other.toString
 }
 
-val someFile = ""s3a://bucket/file""
+val someFile = "s3a://bucket/file"
 val df: DataFrame = sqlContext.read.load(someFile)
 val schema: StructType = df.schema
 val jsons: Dataset[JSONObject] = df.map(row => convertRowToJSON(row, schema))

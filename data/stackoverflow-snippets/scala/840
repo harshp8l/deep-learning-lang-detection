@@ -1,10 +1,10 @@
 val g = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
   import GraphDSL.Implicits._
-  val in = Consumer.committableSource(consumerSettings, Subscriptions.topics(conf.getString(""kafka.topics.errorRawCdr"")))
+  val in = Consumer.committableSource(consumerSettings, Subscriptions.topics(conf.getString("kafka.topics.errorRawCdr")))
     .map { msg => 
       val bytes: Array[Byte] = msg.record.value()
       val errormsg = (bytes.map(_.toChar)).mkString
-      (new Errors(1235, ""filename"", ""cdr"", ""cdr_type"", 0, errormsg), errormsg)
+      (new Errors(1235, "filename", "cdr", "cdr_type", 0, errormsg), errormsg)
     }
   val kuduout = new ErrorKuduSink(session, table)
   val emailout = Sink.foreach[Seq[String]] { errormsgs =>

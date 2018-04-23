@@ -1,30 +1,30 @@
-#I @""packages/FAKE.1.64.6/tools""
-#r ""FakeLib.dll""
+#I @"packages/FAKE.1.64.6/tools"
+#r "FakeLib.dll"
 open Fake
 
-let buildDir = @""./build/""
-let testDir = @""./test""
+let buildDir = @"./build/"
+let testDir = @"./test"
 
-let fxReferences = !! @""*/*.csproj""
-let testReferences = !! @""Tests/**/*.csproj""
-let buildTargets = environVarOrDefault ""BUILDTARGETS"" """"
+let fxReferences = !! @"*/*.csproj"
+let testReferences = !! @"Tests/**/*.csproj"
+let buildTargets = environVarOrDefault "BUILDTARGETS" ""
 
-Target ""Clean"" (fun _ ->
+Target "Clean" (fun _ ->
     CleanDirs [buildDir; testDir]
 )
 
-Target ""Build"" (fun _ ->
-    MSBuild buildDir ""Build"" [""Configuration"",""Debug""; ""VSToolsPath"",buildTargets] fxReferences
-        |> Log ""Build-Output: ""
+Target "Build" (fun _ ->
+    MSBuild buildDir "Build" ["Configuration","Debug"; "VSToolsPath",buildTargets] fxReferences
+        |> Log "Build-Output: "
 )
 
-Target ""BuildTest"" (fun _ ->
-    MSBuildRelease testDir ""Build"" testReferences
-        |> Log ""Test-Output: ""
+Target "BuildTest" (fun _ ->
+    MSBuildRelease testDir "Build" testReferences
+        |> Log "Test-Output: "
 )
 
-Target ""Test"" (fun _ ->
-    !! (testDir  + @""/*.Tests.dll"")
+Target "Test" (fun _ ->
+    !! (testDir  + @"/*.Tests.dll")
         |> xUnit (fun p ->
             { p with
                 ShadowCopy = true;
@@ -33,12 +33,12 @@ Target ""Test"" (fun _ ->
                 OutputDir = testDir })
 )
 
-""Clean""
-  ==> ""Build""
+"Clean"
+  ==> "Build"
 
-""Build""
-  ==> ""BuildTest""
+"Build"
+  ==> "BuildTest"
 
-Target ""Default"" DoNothing
+Target "Default" DoNothing
 
-RunParameterTargetOrDefault ""target"" ""Default""
+RunParameterTargetOrDefault "target" "Default"

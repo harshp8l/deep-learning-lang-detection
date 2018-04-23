@@ -1,9 +1,9 @@
 $ cat parse-local-vars.sh
 #!/usr/bin/env bash
 function explain_vars() {
-  echo ""Explaining vars '$@':"" >&2
-  for _var in ""$@""; do
-    printf ""  $_var: '${!_var}'\n"" >&2
+  echo "Explaining vars '$@':" >&2
+  for _var in "$@"; do
+    printf "  $_var: '${!_var}'\n" >&2
   done
 }
 
@@ -28,20 +28,20 @@ function parse_params() (
   for ((p=1; p<=$#; ++p)); do
      ## Read variables from input:
      if [ $p -le $_args_pos ]; then
-       #printf -v ""${_vars[p-1]}"" '%s' ""${!p}""
-       printf -v ""${_vars[p-1]}"" ""${!p}""  
+       #printf -v "${_vars[p-1]}" '%s' "${!p}"
+       printf -v "${_vars[p-1]}" "${!p}"  
      else
-       #printf -v ""${_vars[_args_pos]}[$_args_counter]"" '%s' ""${!p}""
-       printf -v ""${_vars[_args_pos]}[$_args_counter]"" ""${!p}""  # Without the '%s' assigning empty variable to an array does not work
+       #printf -v "${_vars[_args_pos]}[$_args_counter]" '%s' "${!p}"
+       printf -v "${_vars[_args_pos]}[$_args_counter]" "${!p}"  # Without the '%s' assigning empty variable to an array does not work
        _args_counter=$(( _args_counter+1 ))
      fi
   done
-  explain_vars ""${_vars[@]}""
-  echo ""exlaining array args[@]: '${args[@]}'""
-  for _v in ""${args[@]}""; do
-    echo ""   >'$_v'""
+  explain_vars "${_vars[@]}"
+  echo "exlaining array args[@]: '${args[@]}'"
+  for _v in "${args[@]}"; do
+    echo "   >'$_v'"
   done
 )
 
-params_to_test=(one """" ""  "" '' '  ' ""two dot one"" ""three"" ""four"")
-parse_params ""${params_to_test[@]}"" ""${params_to_test[@]}""
+params_to_test=(one "" "  " '' '  ' "two dot one" "three" "four")
+parse_params "${params_to_test[@]}" "${params_to_test[@]}"

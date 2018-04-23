@@ -1,17 +1,17 @@
-$replaceWithVersion=""1.0.0.0"" 
+$replaceWithVersion="1.0.0.0" 
 
-$path = ""c:\temp\testnuget""
+$path = "c:\temp\testnuget"
 $files = Get-ChildItem *.nupkg -Path $path 
 foreach($fileNuget in $files)
 { 
-    $target = $fileNuget.FullName -replace ""[0-9]+(\.([0-9]+|\*)){1,4}"", $replaceWithVersion
+    $target = $fileNuget.FullName -replace "[0-9]+(\.([0-9]+|\*)){1,4}", $replaceWithVersion
     Copy-Item $fileNuget.FullName -Destination $target
     $zipfileName = $target
-    $fileToEdit = ""*.nuspec""
+    $fileToEdit = "*.nuspec"
 
 
     # Open zip and find the particular file (assumes only one inside the Zip file)
-    $zip =  [System.IO.Compression.ZipFile]::Open($zipfileName,""Update"")
+    $zip =  [System.IO.Compression.ZipFile]::Open($zipfileName,"Update")
 
     $nuspecFile = $zip.Entries.Where({$_.name -like $fileToEdit})
 
@@ -20,7 +20,7 @@ foreach($fileNuget in $files)
     $text = $desiredFile.ReadToEnd()
     $desiredFile.Close()
     $desiredFile.Dispose()
-    $text = $text -replace  '<version>[\s\S]*?<\/version>',""<version>$replaceWithVersion</version>""
+    $text = $text -replace  '<version>[\s\S]*?<\/version>',"<version>$replaceWithVersion</version>"
     #update file with new content
     $desiredFile = [System.IO.StreamWriter]($nuspecFile).Open()
     $desiredFile.BaseStream.SetLength(0)
@@ -33,5 +33,5 @@ foreach($fileNuget in $files)
 
    # Write the changes and close the zip file
    $zip.Dispose()
-  Write-Host ""zip file updated""
+  Write-Host "zip file updated"
 }

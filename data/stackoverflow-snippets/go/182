@@ -1,33 +1,33 @@
 package main
 
 import (
-    ""fmt""
-    ""io""
-    ""log""
-    ""net""
-    ""time""
+    "fmt"
+    "io"
+    "log"
+    "net"
+    "time"
 )
 
 func main() {
-    l, err := net.Listen(""tcp"", ""127.0.0.1:3001"")
+    l, err := net.Listen("tcp", "127.0.0.1:3001")
     check(err)
 
     go slowServer(l)
 
-    conn, err := net.Dial(""tcp"", ""127.0.0.1:3001"")
+    conn, err := net.Dial("tcp", "127.0.0.1:3001")
     check(err)
     conn.SetDeadline(time.Now().Add(time.Second))
 
     b := make([]byte, 512)
 
     n, err := conn.Read(b)
-    fmt.Printf(""%q, %v\n"", b[:n], err) // """", i/o timeout
+    fmt.Printf("%q, %v\n", b[:n], err) // "", i/o timeout
 
     // Reset deadline
     conn.SetDeadline(time.Now().Add(2 * time.Second))
 
     n, err = conn.Read(b)
-    fmt.Printf(""%q, %v\n"", b[:n], err) // ""hello world"", <nil>
+    fmt.Printf("%q, %v\n", b[:n], err) // "hello world", <nil>
 }
 
 func slowServer(l net.Listener) {
@@ -35,7 +35,7 @@ func slowServer(l net.Listener) {
     check(err)
 
     time.Sleep(2 * time.Second)
-    io.WriteString(conn, ""hello world"")
+    io.WriteString(conn, "hello world")
     conn.Close()
 }
 
@@ -45,5 +45,5 @@ func check(err error) {
     }
 }
 
-// """", read tcp 127.0.0.1:50488->127.0.0.1:3001: i/o timeout
-// ""hello world"", <nil>
+// "", read tcp 127.0.0.1:50488->127.0.0.1:3001: i/o timeout
+// "hello world", <nil>

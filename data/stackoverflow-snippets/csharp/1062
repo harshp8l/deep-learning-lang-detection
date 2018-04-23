@@ -74,21 +74,21 @@ public async Task<StreamObject> HTTP_GetStreamAsync(StreamObject RequestObject)
                 RequestObject.ResponseURI = httpResponse.ResponseUri;
                 RequestObject.ContentLenght = _memstream.Length;
                 RequestObject.ContentCharSet = httpResponse.CharacterSet ?? string.Empty;
-                RequestObject.ContentLanguage = httpResponse.Headers[""Content-Language""] ?? string.Empty;
+                RequestObject.ContentLanguage = httpResponse.Headers["Content-Language"] ?? string.Empty;
                 RequestObject.ContentType = httpResponse.ContentType.ToLower();
-                if (RequestObject.ContentType.IndexOf(@""/"") > -1)
+                if (RequestObject.ContentType.IndexOf(@"/") > -1)
                 {
                     do
                     {
-                        RequestObject.ContentType = RequestObject.ContentType.Substring(RequestObject.ContentType.IndexOf(@""/"") + 1);
-                        if (RequestObject.ContentType.IndexOf(@""/"") < 0)
+                        RequestObject.ContentType = RequestObject.ContentType.Substring(RequestObject.ContentType.IndexOf(@"/") + 1);
+                        if (RequestObject.ContentType.IndexOf(@"/") < 0)
                             break;
                     } while (true);
-                    if (RequestObject.ContentType.IndexOf("";"") > -1)
-                        RequestObject.ContentType = RequestObject.ContentType.Substring(0, RequestObject.ContentType.IndexOf(@"";""));
-                    RequestObject.ContentType = ""."" + RequestObject.ContentType;
+                    if (RequestObject.ContentType.IndexOf(";") > -1)
+                        RequestObject.ContentType = RequestObject.ContentType.Substring(0, RequestObject.ContentType.IndexOf(@";"));
+                    RequestObject.ContentType = "." + RequestObject.ContentType;
                 }
-                RequestObject.ContentName = httpResponse.Headers[""Content-Disposition""] ?? string.Empty;
+                RequestObject.ContentName = httpResponse.Headers["Content-Disposition"] ?? string.Empty;
                 if (RequestObject.ContentName.Length == 0)
                     RequestObject.ContentName = RequestObject.ResourceURI.Segments.Last();
                 RequestObject.ServerType = httpResponse.Server;
@@ -118,7 +118,7 @@ public async Task<StreamObject> HTTP_GetStreamAsync(StreamObject RequestObject)
     {
         if ((uint)exS.HResult == COR_E_INVALIDOPERATION)
         {
-            RequestObject.WebException = await PingHostAddressAsync(""8.8.8.8"", 500) > 0
+            RequestObject.WebException = await PingHostAddressAsync("8.8.8.8", 500) > 0
                                        ? WebExceptionStatus.NameResolutionFailure
                                        : WebExceptionStatus.ConnectFailure;
             RequestObject.WebExceptionDescription = RequestObject.WebException.ToString();
@@ -144,7 +144,7 @@ private bool TlsValidationCallback(object sender, X509Certificate CACert, X509Ch
 {
     X509Certificate2 _Certificate = new X509Certificate2(CACert);
     //ADD A CERIFICATE HERE IF NEEDED
-    //X509Certificate2 _CACert = new X509Certificate2(@""[localstorage]/ca.cert"");
+    //X509Certificate2 _CACert = new X509Certificate2(@"[localstorage]/ca.cert");
     //CAChain.ChainPolicy.ExtraStore.Add(_CACert);
 
     X509Certificate2 cert = (X509Certificate2)CACert;
@@ -172,11 +172,11 @@ private void HTTP_RequestHeadersInit(ref HttpWebRequest _httpreq, CookieContaine
     _httpreq.ServicePoint.MaxIdleTime = 30000;
     _httpreq.ServicePoint.Expect100Continue = false;
     _httpreq.Referer = sObject.Referer ?? string.Empty;
-    _httpreq.UserAgent = ""Mozilla/5.0 (Windows NT 10; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0"";
-    _httpreq.Accept = ""ext/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"";
-    _httpreq.Headers.Add(HttpRequestHeader.AcceptLanguage, ""en-US;q=0.8,en-GB;q=0.5,en;q=0.3"");
-    _httpreq.Headers.Add(HttpRequestHeader.AcceptEncoding, ""gzip, deflate;q=0.8"");
-    _httpreq.Headers.Add(HttpRequestHeader.CacheControl, ""no-cache"");
+    _httpreq.UserAgent = "Mozilla/5.0 (Windows NT 10; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0";
+    _httpreq.Accept = "ext/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+    _httpreq.Headers.Add(HttpRequestHeader.AcceptLanguage, "en-US;q=0.8,en-GB;q=0.5,en;q=0.3");
+    _httpreq.Headers.Add(HttpRequestHeader.AcceptEncoding, "gzip, deflate;q=0.8");
+    _httpreq.Headers.Add(HttpRequestHeader.CacheControl, "no-cache");
 
     //I had to cut out the WebRequest Proxy setup here
 }
@@ -189,14 +189,14 @@ private string ProcessResponse(Stream stream, Encoding encoding, string ContentE
     {
         using (MemoryStream _memStream = new MemoryStream())
         {
-            if (ContentEncoding.Contains(""gzip""))
+            if (ContentEncoding.Contains("gzip"))
             {
                 using (GZipStream _gzipStream = new GZipStream(stream, System.IO.Compression.CompressionMode.Decompress))
                 {
                     _gzipStream.CopyTo(_memStream);
                 };
             }
-            else if (ContentEncoding.Contains(""deflate""))
+            else if (ContentEncoding.Contains("deflate"))
             {
                 using (DeflateStream _deflStream = new DeflateStream(stream, System.IO.Compression.CompressionMode.Decompress))
                 {
@@ -225,14 +225,14 @@ private string ProcessResponse(Stream stream, Encoding encoding, string ContentE
 
 private string DecodeMetaCharSetEncoding(Stream memStream, string _html, Encoding _encode)
 {
-    Match _match = new Regex(""<meta\\s+.*?charset\\s*=\\s*\""?(?<charset>[A-Za-z0-9_-]+)\""?"",
+    Match _match = new Regex("<meta\\s+.*?charset\\s*=\\s*\"?(?<charset>[A-Za-z0-9_-]+)\"?",
                                         RegexOptions.Singleline |
                                         RegexOptions.IgnoreCase).Match(_html);
     if (_match.Success)
     {
-        string charset = _match.Groups[""charset""].Value.ToLower() ?? ""utf-8"";
-        if ((charset == ""unicode"") | (charset == ""utf-7"") | (charset == ""utf-16""))
-            charset = ""utf-8"";
+        string charset = _match.Groups["charset"].Value.ToLower() ?? "utf-8";
+        if ((charset == "unicode") | (charset == "utf-7") | (charset == "utf-16"))
+            charset = "utf-8";
 
         try
         {

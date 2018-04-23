@@ -1,7 +1,7 @@
-#I @""..\packages\Chiron.6.1.0\lib\net40""
-#I @""..\packages\Aether.8.1.2\lib\net35""
-#r ""Chiron.dll""
-#r ""Aether.dll""
+#I @"..\packages\Chiron.6.1.0\lib\net40"
+#I @"..\packages\Aether.8.1.2\lib\net35"
+#r "Chiron.dll"
+#r "Aether.dll"
 
 open Chiron
 
@@ -10,22 +10,22 @@ type SimpleDU =
     | B
 
     static member ToJson x =
-        Json.write ""SimpleDU"" <|
+        Json.write "SimpleDU" <|
             match x with
-            | A -> ""a""
-            | B -> ""b""
+            | A -> "a"
+            | B -> "b"
 
     static member FromJson(_ : SimpleDU) = 
         json { 
-            let! du = Json.tryRead ""SimpleDU""
+            let! du = Json.tryRead "SimpleDU"
             match du with
-            | Some ""a"" -> return A
-            | Some ""b"" -> return B
-            | Some x -> return! Json.error <| sprintf ""%s is not a SimpleDU case"" x
-            | _ -> return! Json.error ""Not a SimpleDU JSON""
+            | Some "a" -> return A
+            | Some "b" -> return B
+            | Some x -> return! Json.error <| sprintf "%s is not a SimpleDU case" x
+            | _ -> return! Json.error "Not a SimpleDU JSON"
         }
 
-// val serializedA : Json = Object (map [(""SimpleDU"", String ""a"")])
+// val serializedA : Json = Object (map [("SimpleDU", String "a")])
 let serializedA = A |> Json.serialize
 let serializedB = B |> Json.serialize
 let (a : SimpleDU) = serializedA |> Json.deserialize
@@ -39,8 +39,8 @@ let abbaaMatches = abbaa = [ A; B; B; A; A ]
 let allFine = aMatches && bMatches && abbaaMatches
 
 let defects = 
-    Array [ Object <| Map.ofList [ (""SimpleDU"", String ""c"") ]
-            Object <| Map.ofList [ (""Foo"", String ""bar"") ] ]
+    Array [ Object <| Map.ofList [ ("SimpleDU", String "c") ]
+            Object <| Map.ofList [ ("Foo", String "bar") ] ]
 
-// attempt = Choice2Of2 ""Not a SimpleDU JSON""
+// attempt = Choice2Of2 "Not a SimpleDU JSON"
 let (attempt : Choice<SimpleDU list, string>) = defects |> Json.tryDeserialize

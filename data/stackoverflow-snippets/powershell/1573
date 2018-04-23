@@ -1,20 +1,20 @@
 foreach ($o in $ous){
 
-Write-Host ""Creating OU: "" $o
+Write-Host "Creating OU: " $o
 NEW-ADOrganizationalUnit $o
 
-Write-Host ""Create Group $o""
-New-ADGroup -Name ""$o"" -SamAccountName $o -GroupCategory Security -GroupScope Global -DisplayName ""$o"" -Path ""CN=Users,DC=lovely,DC=local"" -Description ""$o department""  
+Write-Host "Create Group $o"
+New-ADGroup -Name "$o" -SamAccountName $o -GroupCategory Security -GroupScope Global -DisplayName "$o" -Path "CN=Users,DC=lovely,DC=local" -Description "$o department"  
 
 # Create department dir
-New-Item -Path ""$dir\$o"" -ItemType Directory   
+New-Item -Path "$dir\$o" -ItemType Directory   
 
-$colRights = [System.Security.AccessControl.FileSystemRights]""Read, Write,Traverse""
+$colRights = [System.Security.AccessControl.FileSystemRights]"Read, Write,Traverse"
 $InheritanceFlag = [System.Security.AccessControl.InheritanceFlags]::None 
 $PropagationFlag = [System.Security.AccessControl.PropagationFlags]::InheritOnly 
 $objType =[System.Security.AccessControl.AccessControlType]::Allow 
-$objUser = New-Object System.Security.Principal.NTAccount(""$o"") 
+$objUser = New-Object System.Security.Principal.NTAccount("$o") 
 $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType) 
-$objACL = Get-ACL ""$dir\$o"" 
+$objACL = Get-ACL "$dir\$o" 
 $objACL.AddAccessRule($objACE) 
-Set-ACL ""$dir\$o"" $objACL
+Set-ACL "$dir\$o" $objACL

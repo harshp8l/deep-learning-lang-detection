@@ -1,26 +1,26 @@
 val df = Seq(
-  (""X"", ""x1"", ""x2""),
-  (""Z"", ""z1"", ""z2""),
-  (""Y"", """", """"),
-  (""X"", ""x3"", ""x4""),
-  (""P"", ""p1"", ""p2""),
-  (""Q"", ""q1"", ""q2""),
-  (""Y"", """", """")
-).toDF(""col1"", ""col2"", ""col3"")
+  ("X", "x1", "x2"),
+  ("Z", "z1", "z2"),
+  ("Y", "", ""),
+  ("X", "x3", "x4"),
+  ("P", "p1", "p2"),
+  ("Q", "q1", "q2"),
+  ("Y", "", "")
+).toDF("col1", "col2", "col3")
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.Window
 
-val colList = df.columns.filter(_ != ""col1"")
+val colList = df.columns.filter(_ != "col1")
 
-val df2 = df.select($""col1"", monotonically_increasing_id.as(""id""),
-  struct(colList.map(col): _*).as(""cols"")
+val df2 = df.select($"col1", monotonically_increasing_id.as("id"),
+  struct(colList.map(col): _*).as("cols")
 )
 
 val df3 = df2.
-  withColumn( ""tmp1"", when($""col1"" === ""X"", $""cols"") ).
-  withColumn( ""tmp2"", last(""tmp1"", ignoreNulls = true).over(
-    Window.orderBy(""id"").rowsBetween(Window.unboundedPreceding, 0)
+  withColumn( "tmp1", when($"col1" === "X", $"cols") ).
+  withColumn( "tmp2", last("tmp1", ignoreNulls = true).over(
+    Window.orderBy("id").rowsBetween(Window.unboundedPreceding, 0)
   ) )
 
 df3.show
@@ -36,9 +36,9 @@ df3.show
 // |   Y|  6|    [,]|   null|[x3,x4]|
 // +----+---+-------+-------+-------+
 
-val df4 = df3.withColumn( ""newcols"",
-  when($""col1"" === ""Y"", $""tmp2"").otherwise($""cols"")
-).select($""col1"", $""newcols"")
+val df4 = df3.withColumn( "newcols",
+  when($"col1" === "Y", $"tmp2").otherwise($"cols")
+).select($"col1", $"newcols")
 
 df4.show
 // +----+-------+
@@ -54,8 +54,8 @@ df4.show
 // +----+-------+
 
 val dfResult = colList.foldLeft( df4 )(
-  (accDF, c) => accDF.withColumn(c, df4(s""newcols.$c""))
-).drop($""newcols"")
+  (accDF, c) => accDF.withColumn(c, df4(s"newcols.$c"))
+).drop($"newcols")
 
 dfResult.show
 // +----+----+----+

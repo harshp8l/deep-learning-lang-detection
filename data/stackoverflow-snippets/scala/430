@@ -3,18 +3,18 @@ import scala.language.dynamics
 class DynamicBuilder[X](underConstruction: X) extends Dynamic {
   val clazz = underConstruction.getClass
   def applyDynamic(name: String)(arg: Any): DynamicBuilder[X] = {
-    if (name.startsWith(""with"")) {
+    if (name.startsWith("with")) {
       val propertyName = name.drop(4)
-      val setterName = ""set"" + propertyName
+      val setterName = "set" + propertyName
       clazz.getDeclaredMethods().
         find(_.getName == setterName).
-        fold(throw new IllegalArgumentException(""No method "" + setterName)) {
+        fold(throw new IllegalArgumentException("No method " + setterName)) {
           m => 
           m.invoke(underConstruction, arg.asInstanceOf[java.lang.Object])
           this
         }
     } else {
-      throw new IllegalArgumentException(""Expected 'result' or 'withXYZ'"")
+      throw new IllegalArgumentException("Expected 'result' or 'withXYZ'")
     }
   }
   def result(): X = underConstruction

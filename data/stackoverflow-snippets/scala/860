@@ -7,17 +7,17 @@ object MongoDBTest {
   def main(args: Array[String]) {
 
     val spark = SparkSession.builder()
-      .master(""local"")
-      .appName(""MongoSparkConnectorIntro"")
-      .config(""spark.mongodb.input.uri"", ""mongodb://localhost:27017/test.test"")
-      .config(""spark.mongodb.input.readPreference.name"", ""secondaryPreferred"")
-      .config(""spark.mongodb.output.uri"", ""mongodb://127.0.0.1/test.test"")
+      .master("local")
+      .appName("MongoSparkConnectorIntro")
+      .config("spark.mongodb.input.uri", "mongodb://localhost:27017/test.test")
+      .config("spark.mongodb.input.readPreference.name", "secondaryPreferred")
+      .config("spark.mongodb.output.uri", "mongodb://127.0.0.1/test.test")
       .getOrCreate()
 
     val sc = spark.sparkContext
-    val lines = sc.textFile(""log1.txt"")
-    val pairs = lines.filter(value => value.startsWith(""Finished""))
-       .map(lines => lines.split("": ""))
+    val lines = sc.textFile("log1.txt")
+    val pairs = lines.filter(value => value.startsWith("Finished"))
+       .map(lines => lines.split(": "))
        .map(line => new Document((line(0)), line(1)))
     for (va <- pairs) {
       println(va)

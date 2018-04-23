@@ -6,7 +6,7 @@
 (defn url-of
   [id]
   ;; this service responds within 100-200ms
-  (str ""http://localhost:28080/"" id "".json""))
+  (str "http://localhost:28080/" id ".json"))
 
 (defn retrieve-json-async
   [url c]
@@ -14,7 +14,7 @@
             (fn [{body :body status :status :as resp}]
               (if (= 200 status)
                 (async/put! c (decode body true))
-                (println ""ERROR:"" resp))
+                (println "ERROR:" resp))
               (async/close! c))))
 
 (defn run [parallelism stop-chan]
@@ -38,7 +38,7 @@
 
     ;; keep the input channel full until stop-chan is closed.
     (async/go-loop []
-      (let [[v c] (async/alts! [stop-chan [step1-chan ""1""]])]
+      (let [[v c] (async/alts! [stop-chan [step1-chan "1"]])]
         (if (= c stop-chan)
           (async/close! step1-chan)
           (recur))))
@@ -48,7 +48,7 @@
     (async/go-loop [status-timer (async/timeout 1000) subt 0 accu 0]
       (let [[v c] (async/alts! [status-timer out-chan])]
         (cond (= c status-timer)
-              (do (println subt ""records..."")
+              (do (println subt "records...")
                   (recur (async/timeout 1000) 0 (+ subt accu)))
 
               (nil? v)
@@ -61,7 +61,7 @@
     (let [final-total (async/<!! final-chan)
           elapsed-ms  (- (System/currentTimeMillis) start-time)
           elapsed-s   (/ elapsed-ms 1000.0)]
-      (print (format ""Processed %d records with parallelism %d in %.3f seconds (%d/sec)\n""
+      (print (format "Processed %d records with parallelism %d in %.3f seconds (%d/sec)\n"
                      final-total parallelism elapsed-s
                      (int (/ final-total elapsed-s)))))))
 

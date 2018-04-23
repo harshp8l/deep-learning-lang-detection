@@ -1,16 +1,16 @@
 val df = Seq(
-  (""a"", 0L), (""b"", 1L), (""c"", 1L), (""d"", 1L), (""e"", 0L), (""f"", 1L),
-  (""g"", 1L), (""h"", 0L), (""i"", 0L), (""j"", 1L), (""k"", 1L), (""l"", 1L)
-).toDF(""id"", ""flag"").
-  withColumn(""index"", monotonically_increasing_id).
-  withColumn(""run_key"", when($""flag"" === 1, $""index"").otherwise(0))
+  ("a", 0L), ("b", 1L), ("c", 1L), ("d", 1L), ("e", 0L), ("f", 1L),
+  ("g", 1L), ("h", 0L), ("i", 0L), ("j", 1L), ("k", 1L), ("l", 1L)
+).toDF("id", "flag").
+  withColumn("index", monotonically_increasing_id).
+  withColumn("run_key", when($"flag" === 1, $"index").otherwise(0))
 
 import org.apache.spark.sql.expressions.Window
 
-df.withColumn( ""lag1"", lag(""flag"", 1, -1).over(Window.orderBy(""index"")) ).
-  withColumn( ""switched"", when($""flag"" =!= $""lag1"", $""index"") ).
-  withColumn( ""key"", last(""switched"", ignoreNulls = true).over(
-    Window.orderBy(""index"").rowsBetween(Window.unboundedPreceding, 0)
+df.withColumn( "lag1", lag("flag", 1, -1).over(Window.orderBy("index")) ).
+  withColumn( "switched", when($"flag" =!= $"lag1", $"index") ).
+  withColumn( "key", last("switched", ignoreNulls = true).over(
+    Window.orderBy("index").rowsBetween(Window.unboundedPreceding, 0)
   ) )
 
 // +---+----+-----+-------+----+--------+---+

@@ -4,28 +4,28 @@ $win2k8xml = '.\features-w2k8.xml'
 $win2k12xml = '.\RolesAndFeatures.xml'
 
 
-$minOSVersion = [version] ""6.1.7600"" # Windows Server 2008 R2 RTM version
+$minOSVersion = [version] "6.1.7600" # Windows Server 2008 R2 RTM version
 $os = Get-WmiObject Win32_OperatingSystem
 $currentVersion = [version]$os.Version
 
 if($currentVersion -lt $minOSVersion)
 {
-    throw ""OS version equal or greater than ${minOSVersion} is required to run this script""
+    throw "OS version equal or greater than ${minOSVersion} is required to run this script"
 }
 elseif($currentVersion.ToString().substring(0,3) -eq $minOSVersion.ToString().substring(0,3))
 {
-If (!(Test-Path $win2k8xml)) {Write-Host ""For Windows Server 2008 R2 server make sure that you have Features-W2K8.xml in the current folder"" -ForegroundColor Yellow; Pause}
+If (!(Test-Path $win2k8xml)) {Write-Host "For Windows Server 2008 R2 server make sure that you have Features-W2K8.xml in the current folder" -ForegroundColor Yellow; Pause}
 }
 elseif($currentVersion -gt $minOSVersion){                                                            
 
-If (!(Test-Path $win2k12xml)) {Write-Host ""For Windows Server 2012/2016 make sure that you have RolesAndFeatures.xml in the current folder"" -ForegroundColor Yellow; Pause}
+If (!(Test-Path $win2k12xml)) {Write-Host "For Windows Server 2012/2016 make sure that you have RolesAndFeatures.xml in the current folder" -ForegroundColor Yellow; Pause}
 }
 
-$OSVersionName = (get-itemproperty -Path ""HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"" -Name ProductName).ProductName
-Write-Host ""Your OS version is:$OSVersionName"" -ForegroundColor Green
+$OSVersionName = (get-itemproperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name ProductName).ProductName
+Write-Host "Your OS version is:$OSVersionName" -ForegroundColor Green
 
 $defaultComputerName = $env:computername
-$ComputerName = Read-Host ""Computername (Press Enter for current computer - $defaultComputerName)""
+$ComputerName = Read-Host "Computername (Press Enter for current computer - $defaultComputerName)"
 
 
 if ([string]::IsNullOrEmpty($ComputerName))
@@ -33,7 +33,7 @@ if ([string]::IsNullOrEmpty($ComputerName))
     $ComputerName = $defaultComputerName;
 }
 
-Write-host ""Installation will take place on the following computers: $ComputerName""
+Write-host "Installation will take place on the following computers: $ComputerName"
 
 
 
@@ -48,7 +48,7 @@ function Invoke-WindowsFeatureBatchDeployment {
     # Deploy the features on multiple computers simultaneously.
     $jobs = @()
     if(Test-Connection -ComputerName $ComputerName -Quiet){
-        Write-Host ""Connection succeeded to: "" $ComputerName
+        Write-Host "Connection succeeded to: " $ComputerName
 
         if ($currentVersion.ToString().substring(0,3) -eq $minOSVersion.ToString().substring(0,3)) {
         $jobs += Start-Job -Command {
@@ -65,7 +65,7 @@ function Invoke-WindowsFeatureBatchDeployment {
 
     }
     else{
-        Write-Host ""Configuration failed for: ""+ $ComputerName + ""! Check computer name and execute again""
+        Write-Host "Configuration failed for: "+ $ComputerName + "! Check computer name and execute again"
     }
 
 

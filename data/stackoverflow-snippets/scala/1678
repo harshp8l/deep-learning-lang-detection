@@ -1,17 +1,17 @@
 val my_df = List(
-  (""Smith"", ""John"", ""2016-01-23""),
-  (""Smith"", ""John"", ""2016-02-20""),
-  (""Smith"", ""John"", ""2016-03-21""),
-  (""Smith"", ""John"", ""2016-06-25""),
-  (""Smith"", ""Jill"", ""2016-02-01""),
-  (""Smith"", ""Jill"", ""2016-03-10""),
-  (""James"", ""Jill"", ""2017-04-10""),
-  (""James"", ""Jill"", ""2017-05-11"")
-  ).toDF(Seq(""Provider"", ""Patient"", ""Date""): _*)
+  ("Smith", "John", "2016-01-23"),
+  ("Smith", "John", "2016-02-20"),
+  ("Smith", "John", "2016-03-21"),
+  ("Smith", "John", "2016-06-25"),
+  ("Smith", "Jill", "2016-02-01"),
+  ("Smith", "Jill", "2016-03-10"),
+  ("James", "Jill", "2017-04-10"),
+  ("James", "Jill", "2017-05-11")
+  ).toDF(Seq("Provider", "Patient", "Date"): _*)
 
-my_df.createOrReplaceTempView(""tbl"")
+my_df.createOrReplaceTempView("tbl")
 
-val q = """"""
+val q = """
 select t2.*, count(*) over (partition by provider, patient, grp) consecutive_id
   from (select t1.*, sum(x) over (partition by provider, patient order by yyyymm) grp
           from (select t0.*,
@@ -22,7 +22,7 @@ select t2.*, count(*) over (partition by provider, patient, grp) consecutive_id
                           else 1
                        end x
                   from (select tbl.*, substr(translate(date, '-', ''), 1, 6) yyyymm from tbl) t0) t1) t2
-""""""
+"""
 
 sql(q).show
 sql(q).rdd.toDebugString

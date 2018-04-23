@@ -14,24 +14,24 @@ case class Item(partNumber: String, productName: String)
 
 object Item {
   def apply(path: mutable.Stack[String]): PartialFunction[ParseEvent, Any] = {
-    case elem @ StartElement(""Item"", _, _, _, _) =>
-      path.push(""Item"")
+    case elem @ StartElement("Item", _, _, _, _) =>
+      path.push("Item")
       ItemBuilder.reset()
-      ItemBuilder.partNumber = elem.findAttribute(""PartNumber"").map(_.value).getOrElse("""")
+      ItemBuilder.partNumber = elem.findAttribute("PartNumber").map(_.value).getOrElse("")
     case Characters(text) =>
       path.top match {
-        case ""ProductName"" => ItemBuilder.productName = text
+        case "ProductName" => ItemBuilder.productName = text
         case _ => ()
       }
-    case EndElement(""Item"") =>
+    case EndElement("Item") =>
       path.pop()
       ItemBuilder.build()
   }
 }
 
 object ItemBuilder {
-  var partNumber = """"
-  var productName = """"
+  var partNumber = ""
+  var productName = ""
 
   def build(): Item =
     Item(
@@ -39,8 +39,8 @@ object ItemBuilder {
       productName = productName)
 
   def reset(): Unit = {
-    partNumber = """"
-    productName = """"
+    partNumber = ""
+    productName = ""
   }
 }
 
@@ -52,8 +52,8 @@ object AlpakkaDemo extends App {
   val path: mutable.Stack[String] = new mutable.Stack[String]()
 
   val xml =
-    """"""<PurchaseOrder PurchaseOrderNumber=""99503"" OrderDate=""1999-10-20"">
-      |<Address Type=""Shipping"">
+    """<PurchaseOrder PurchaseOrderNumber="99503" OrderDate="1999-10-20">
+      |<Address Type="Shipping">
       |  <Name>Ellen Adams</Name>
       |  <Street>123 Maple Street</Street>
       |  <City>Mill Valley</City>
@@ -63,20 +63,20 @@ object AlpakkaDemo extends App {
       |</Address>
       |<DeliveryNotes>Please leave packages in shed by driveway.</DeliveryNotes>
       |<Items>
-      |  <Item PartNumber=""872-AA"">
+      |  <Item PartNumber="872-AA">
       |    <ProductName>Lawnmower</ProductName>
       |    <Quantity>1</Quantity>
       |    <USPrice>148.95</USPrice>
       |    <Comment>Confirm this is electric</Comment>
       |  </Item>
-      |  <Item PartNumber=""926-AA"">
+      |  <Item PartNumber="926-AA">
       |    <ProductName>Baby Monitor</ProductName>
       |    <Quantity>2</Quantity>
       |    <USPrice>39.98</USPrice>
       |    <ShipDate>1999-05-21</ShipDate>
       |  </Item>
       |</Items>
-      |</PurchaseOrder>"""""".stripMargin
+      |</PurchaseOrder>""".stripMargin
 
   val defaultElementHandler: PartialFunction[ParseEvent, Any] = {
     case StartElement(localName, _, _, _, _) => path.push(localName)
@@ -104,7 +104,7 @@ object AlpakkaDemo extends App {
 
   val result: Seq[Item] = Await.result(resultFuture, 5.seconds)
 
-  println(""items : "" + result)
-  println(""END"")
+  println("items : " + result)
+  println("END")
   system.terminate()
 }

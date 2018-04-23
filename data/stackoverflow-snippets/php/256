@@ -5,7 +5,7 @@ public function createNewCustomer(&$input, $forConnect = false) {
       $cu = \Stripe\Customer::create(array(
         'email' => $input['email'],
         'source' => $input['connect_token']
-      ), array(""stripe_account"" => $input['txn_account_id']));
+      ), array("stripe_account" => $input['txn_account_id']));
 
       $input['txn_customer_id'] = $cu->id;
     }
@@ -39,7 +39,7 @@ public function chargeMonthly(&$input, $qty = 1) {
   // attempt to retrieve monthly plan
   // if not found, create new plan
   try {
-    $plan = \Stripe\Plan::retrieve($plan_name, array(""stripe_account"" => $input['txn_account_id']));
+    $plan = \Stripe\Plan::retrieve($plan_name, array("stripe_account" => $input['txn_account_id']));
   } catch(\Stripe\Error\InvalidRequest $e1) {
     // ignore error
     // \Log::error($e1);
@@ -56,16 +56,16 @@ public function chargeMonthly(&$input, $qty = 1) {
           'interval'  => 'month',
           'currency'  => 'usd',
           'id'        => $plan_name,
-          ""product"" => array(
-            ""name""    => $plan_name
+          "product" => array(
+            "name"    => $plan_name
           )
-        ), array(""stripe_account"" => $input['txn_account_id']));
+        ), array("stripe_account" => $input['txn_account_id']));
     }
 
     $token = \Stripe\Source::create(array(
       'customer' => $input['stripe_customer_id'],
       'usage' => 'reusable'
-    ), array(""stripe_account"" => $input['txn_account_id']));
+    ), array("stripe_account" => $input['txn_account_id']));
 
     $input['connect_token'] = $token->id;
     $this->createNewCustomer($input, true);

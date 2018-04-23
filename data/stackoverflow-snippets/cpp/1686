@@ -1,4 +1,4 @@
-#include ""example/common/root_certificates.hpp""
+#include "example/common/root_certificates.hpp"
 
 #include <boost/beast.hpp>
 #include <boost/asio.hpp>
@@ -13,7 +13,7 @@ namespace http = boost::beast::http; // from <boost/beast/http.hpp>
 void
 fail(boost::system::error_code ec, char const* what)
 {
-    std::cerr << what << "": "" << ec.message() << ""\n"";
+    std::cerr << what << ": " << ec.message() << "\n";
 }
 
 // Performs an HTTP GET and prints the response
@@ -46,7 +46,7 @@ public:
         if(! SSL_set_tlsext_host_name(stream_.native_handle(), host))
         {
             boost::system::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
-            std::cerr << ec.message() << ""\n"";
+            std::cerr << ec.message() << "\n";
             return;
         }
 
@@ -74,7 +74,7 @@ public:
         tcp::resolver::results_type results)
     {
         if(ec)
-            return fail(ec, ""resolve"");
+            return fail(ec, "resolve");
 
         // Make the connection on the IP address we get from a lookup
         boost::asio::async_connect(
@@ -91,7 +91,7 @@ public:
     on_connect(boost::system::error_code ec)
     {
         if(ec)
-            return fail(ec, ""connect"");
+            return fail(ec, "connect");
 
         // Perform the SSL handshake
         stream_.async_handshake(
@@ -106,7 +106,7 @@ public:
     on_handshake(boost::system::error_code ec)
     {
         if(ec)
-            return fail(ec, ""handshake"");
+            return fail(ec, "handshake");
 
         // Send the HTTP request to the remote host
         http::async_write(stream_, req_,
@@ -125,7 +125,7 @@ public:
         boost::ignore_unused(bytes_transferred);
 
         if(ec)
-            return fail(ec, ""write"");
+            return fail(ec, "write");
 
         // Receive the HTTP response
         http::async_read(stream_, buffer_, res_,
@@ -144,7 +144,7 @@ public:
         boost::ignore_unused(bytes_transferred);
 
         if(ec)
-            return fail(ec, ""read"");
+            return fail(ec, "read");
 
         // Write the message to standard out
         //std::cout << res_ << std::endl;
@@ -167,7 +167,7 @@ public:
             ec.assign(0, ec.category());
         }
         if(ec)
-            return fail(ec, ""shutdown"");
+            return fail(ec, "shutdown");
 
         // If we get here then the connection is closed gracefully
     }
@@ -182,7 +182,7 @@ struct io_context_runner
         try{
             ioc.run();
         }catch(std::exception& e){
-            fprintf(stderr, ""e: %s\n"", e.what());
+            fprintf(stderr, "e: %s\n", e.what());
         }
     }
 };
@@ -208,16 +208,16 @@ int main(int argc, char *argv[]) {
             total_run = atoi(argv[1]);
 
 #if 0
-        auto host = ""104.236.162.70"";                   // IP of  isocpp.org
-        auto port = ""443"";                              //
-        auto target = ""/"";                              //
+        auto host = "104.236.162.70";                   // IP of  isocpp.org
+        auto port = "443";                              //
+        auto target = "/";                              //
 #else
-        auto host = ""127.0.0.1"";
-        auto port = ""443"";
-        auto target = ""/BBB/http_client_async_ssl.cpp"";
+        auto host = "127.0.0.1";
+        auto port = "443";
+        auto target = "/BBB/http_client_async_ssl.cpp";
 #endif
 
-        std::string const body = """"; //
+        std::string const body = ""; //
         int version = 11;
 
         // The SSL context is required, and holds certificates
@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
             s->run(host, port, target, version);
         }
     } catch (std::exception const &e) {
-        std::cerr << ""Error: "" << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
 

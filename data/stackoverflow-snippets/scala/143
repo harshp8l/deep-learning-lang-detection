@@ -6,13 +6,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object WhyNotParallelExperiment extends App {
 
-  val actorSystem = ActorSystem(s""Experimental"")
+  val actorSystem = ActorSystem(s"Experimental")
 
-  println(""Default dispatcher throughput:"")
-  println(actorSystem.dispatchers.defaultDispatcherConfig.getInt(""throughput""))
+  println("Default dispatcher throughput:")
+  println(actorSystem.dispatchers.defaultDispatcherConfig.getInt("throughput"))
 
-  println(""Fair dispatcher throughput:"")
-  println(actorSystem.dispatchers.lookup(""fair-dispatcher"").configurator.config.getInt(""throughput""))
+  println("Fair dispatcher throughput:")
+  println(actorSystem.dispatchers.lookup("fair-dispatcher").configurator.config.getInt("throughput"))
 
   // Futures not started in future: running in parallel
   startFutures(runInFuture = false)(actorSystem.dispatcher)
@@ -27,10 +27,10 @@ object WhyNotParallelExperiment extends App {
   private def startFutures(runInFuture: Boolean)(implicit executionContext: ExecutionContext): Unit = {
     if (runInFuture) {
       Future{
-        implicit val fairExecutionContext = actorSystem.dispatchers.lookup(""fair-dispatcher"")
-        println(s""Start Futures on thread ${Thread.currentThread().getName()}"")
+        implicit val fairExecutionContext = actorSystem.dispatchers.lookup("fair-dispatcher")
+        println(s"Start Futures on thread ${Thread.currentThread().getName()}")
         (1 to 9).foreach(i => startFuture(i)(fairExecutionContext))
-        println(s""Started Futures on thread ${Thread.currentThread().getName()}"")
+        println(s"Started Futures on thread ${Thread.currentThread().getName()}")
       }
     } else {
       (11 to 19).foreach(startFuture)
@@ -38,8 +38,8 @@ object WhyNotParallelExperiment extends App {
   }
 
   private def startFuture(id: Int)(implicit executionContext: ExecutionContext): Future[Unit] = Future{
-    println(s""Future $id should run for 500 millis on thread ${Thread.currentThread().getName()}"")
+    println(s"Future $id should run for 500 millis on thread ${Thread.currentThread().getName()}")
     Thread.sleep(500)
-    println(s""Future $id finished on thread ${Thread.currentThread().getName()}"")
+    println(s"Future $id finished on thread ${Thread.currentThread().getName()}")
   }
 }

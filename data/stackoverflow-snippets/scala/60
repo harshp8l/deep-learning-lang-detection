@@ -1,9 +1,9 @@
 final OffsetResetStrategy offsetResetStrategy = OffsetResetStrategy.valueOf(_params.get(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG).toString().toUpperCase(Locale.ROOT));
 if(OffsetResetStrategy.EARLIEST.equals(offsetResetStrategy) || OffsetResetStrategy.LATEST.equals(offsetResetStrategy)) {
-    LOG.info(""Going to reset consumer offsets"");
+    LOG.info("Going to reset consumer offsets");
     final KafkaConsumer<K,V> consumer = new KafkaConsumer<>(_params);
 
-    LOG.debug(""Fetching current state"");
+    LOG.debug("Fetching current state");
     final List<TopicPartition> parts = new LinkedList<>();
     final Map<TopicPartition, OffsetAndMetadata> currentCommited = new HashMap<>();
     for(String topic: this.topics()) {
@@ -18,7 +18,7 @@ if(OffsetResetStrategy.EARLIEST.equals(offsetResetStrategy) || OffsetResetStrate
     final Map<TopicPartition, Long> begining = consumer.beginningOffsets(parts);
     final Map<TopicPartition, Long> ending = consumer.endOffsets(parts);
 
-    LOG.debug(""Finding what offsets need to be adjusted"");
+    LOG.debug("Finding what offsets need to be adjusted");
     final Map<TopicPartition, OffsetAndMetadata> newCommit = new HashMap<>();
     for(TopicPartition part: parts) {
         final OffsetAndMetadata m = currentCommited.get(part);
@@ -26,7 +26,7 @@ if(OffsetResetStrategy.EARLIEST.equals(offsetResetStrategy) || OffsetResetStrate
         final Long end = ending.get(part);
 
         if(m == null || m.offset() < begin) {
-            LOG.info(""Adjusting partition {}-{}; OffsetAndMeta={} Begining={} End={}"", part.topic(), part.partition(), m, begin, end);
+            LOG.info("Adjusting partition {}-{}; OffsetAndMeta={} Begining={} End={}", part.topic(), part.partition(), m, begin, end);
 
             final OffsetAndMetadata newMeta;
             if(OffsetResetStrategy.EARLIEST.equals(offsetResetStrategy)) {
@@ -37,7 +37,7 @@ if(OffsetResetStrategy.EARLIEST.equals(offsetResetStrategy) || OffsetResetStrate
                 newMeta = null;
             }
 
-            LOG.info(""New offset to be {}"", newMeta);
+            LOG.info("New offset to be {}", newMeta);
             if(newMeta != null) {
                 newCommit.put(part, newMeta);
             }

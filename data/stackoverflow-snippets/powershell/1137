@@ -1,29 +1,29 @@
-$configPath = ""C:\Windows\System32\inetsrv\config\applicationHost.config""
+$configPath = "C:\Windows\System32\inetsrv\config\applicationHost.config"
 $configXml = [xml] (type $configPath)
 
-[xml] $webFarmXml = @""
+[xml] $webFarmXml = @"
 <webFarms>
-    <webFarm name=""siteFarm"" enabled=""true"">
-        <server address=""site-blue"" enabled=""true"">
-            <applicationRequestRouting httpPort=""$bluePort"" />
+    <webFarm name="siteFarm" enabled="true">
+        <server address="site-blue" enabled="true">
+            <applicationRequestRouting httpPort="$bluePort" />
         </server>
-        <server address=""site-green"" enabled=""true"">
-            <applicationRequestRouting httpPort=""$greenPort"" />
+        <server address="site-green" enabled="true">
+            <applicationRequestRouting httpPort="$greenPort" />
         </server>
         <applicationRequestRouting>
-            <healthCheck url=""http://mySite/up.html"" interval=""00:00:05"" responseMatch=""up"" />
-            <protocol reverseRewriteHostInResponseHeaders=""true"">
-                <cache enabled=""false"" queryStringHandling=""NoCaching"" />
+            <healthCheck url="http://mySite/up.html" interval="00:00:05" responseMatch="up" />
+            <protocol reverseRewriteHostInResponseHeaders="true">
+                <cache enabled="false" queryStringHandling="NoCaching" />
             </protocol>
         </applicationRequestRouting>
     </webFarm>
     <applicationRequestRouting>
         <hostAffinityProviderList>
-            <add name=""Microsoft.Web.Arr.HostNameRoundRobin"" />
+            <add name="Microsoft.Web.Arr.HostNameRoundRobin" />
         </hostAffinityProviderList>
     </applicationRequestRouting>
 </webFarms>
-""@
+"@
 
 $configXml.configuration.AppendChild($configXml.ImportNode($webFarmXml.webFarms, $true))
 $configXml.Save($configPath)

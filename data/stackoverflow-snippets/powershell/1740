@@ -6,7 +6,7 @@ $columnNames = @();
 $rowNames = @();
 
 
-# Go through each ""environments"" property item in json and add ""id"" property to $columnNames without duplicates
+# Go through each "environments" property item in json and add "id" property to $columnNames without duplicates
 for ($i=0; $i -lt $environmentsArray.Count; $i++) {
     [bool]$existingColumnNameFound = $false;
     foreach($existingCol in $columnNames) {
@@ -36,17 +36,17 @@ for ($i=0; $i -lt $environmentsArray.Count; $i++) {
 
 foreach($existingRow in $rowNames) {
     $objRowItem = New-Object System.Object;
-    $objRowItem | Add-Member -MemberType NoteProperty -Name ""ValueName"" -Value $existingRow;
+    $objRowItem | Add-Member -MemberType NoteProperty -Name "ValueName" -Value $existingRow;
     # Create all columns for each row object
     foreach($existingCol in $columnNames) {
-        $objRowItem | Add-Member -MemberType NoteProperty -Name $existingCol -Value """";
+        $objRowItem | Add-Member -MemberType NoteProperty -Name $existingCol -Value "";
     }
     foreach($existingCol in $columnNames) {
 
         # Populate the column in row object we are adding to $arrData
         for ($i=0; $i -lt $environmentsArray.Count; $i++) {
             $environmentsArray[$i].variables.psobject.properties |  foreach {
-                # If json data ""id"" property and the value property name equal, add value to column
+                # If json data "id" property and the value property name equal, add value to column
                 if(($_.name -eq $objRowItem.ValueName) -and ($existingCol.ToString() -eq $environmentsArray[$i].id.ToString())) {
                     $objRowItem.$existingCol = $_.value.value;
                 }
@@ -59,4 +59,4 @@ foreach($existingRow in $rowNames) {
 }
 
 # Convert this data to CSV
-$arrData | ConvertTo-Csv -NoTypeInformation -Delimiter "","" | % {$_ -replace '""',''}  | Out-File .\output.csv
+$arrData | ConvertTo-Csv -NoTypeInformation -Delimiter "," | % {$_ -replace '"',''}  | Out-File .\output.csv

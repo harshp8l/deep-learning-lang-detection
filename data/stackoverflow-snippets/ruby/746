@@ -3,25 +3,25 @@ def scrape_instagram_city_page(page)
     id = 0
     begin
         instagram_source = open(page).read
-        content = JSON.parse(instagram_source.split(""window._sharedData = "")[1].split("";</script>"")[0])
+        content = JSON.parse(instagram_source.split("window._sharedData = ")[1].split(";</script>")[0])
         locationName = content['entry_data']['LocationsDirectoryPage'][0]['city_info']['name']
         nextpage = content['entry_data']['LocationsDirectoryPage'][0]['next_page'] 
-        Dir.mkdir(""#{locationName}"")
+        Dir.mkdir("#{locationName}")
         loop do
             id +=1
-            instagram_source = open(page+""?page=#{id}"").read
-            content = JSON.parse(instagram_source.split(""window._sharedData = "")[1].split("";</script>"")[0])
+            instagram_source = open(page+"?page=#{id}").read
+            content = JSON.parse(instagram_source.split("window._sharedData = ")[1].split(";</script>")[0])
             locationsList = content['entry_data']['LocationsDirectoryPage'][0]['location_list']
             locationsList.each do |hash|
                 cityArray.push(hash['id'].to_i)
             end
-            if nextpage == ""null""
+            if nextpage == "null"
                 break
             end
-            fileName = ""#{locationName}/#{locationName}.txt""
+            fileName = "#{locationName}/#{locationName}.txt"
             File.open(fileName, 'w') do |file|
                 cityArray.each do |item|
-                    file << ""https://www.instagram.com/explore/locations/#{item}/\n""
+                    file << "https://www.instagram.com/explore/locations/#{item}/\n"
                 end
             end
         end

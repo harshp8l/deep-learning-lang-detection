@@ -1,20 +1,20 @@
 package main
 
 import (
-    ""fmt""
-    ""os""
-    ""time""
+    "fmt"
+    "os"
+    "time"
 
-    mqtt ""github.com/eclipse/paho.mqtt.golang""
+    mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 func messageHandler(c mqtt.Client, msg mqtt.Message) {
-    fmt.Printf(""TOPIC: %s\n"", msg.Topic())
-    fmt.Printf(""MSG: %s\n"", msg.Payload())
+    fmt.Printf("TOPIC: %s\n", msg.Topic())
+    fmt.Printf("MSG: %s\n", msg.Payload())
 }
 
 func connLostHandler(c mqtt.Client, err error) {
-    fmt.Printf(""Connection lost, reason: %v\n"", err)
+    fmt.Printf("Connection lost, reason: %v\n", err)
 
     //Perform additional action...
 }
@@ -22,19 +22,19 @@ func connLostHandler(c mqtt.Client, err error) {
 func main() {
     //create a ClientOptions
     opts := mqtt.NewClientOptions().
-        AddBroker(""tcp://localhost:1883"").
-        SetClientID(""group-one"").
+        AddBroker("tcp://localhost:1883").
+        SetClientID("group-one").
         SetDefaultPublishHandler(messageHandler).
         SetConnectionLostHandler(connLostHandler)
 
     //set OnConnect handler as anonymous function
     //after connected, subscribe to topic
     opts.OnConnect = func(c mqtt.Client) {
-        fmt.Printf(""Client connected, subscribing to: test/topic\n"")
+        fmt.Printf("Client connected, subscribing to: test/topic\n")
 
         //Subscribe here, otherwise after connection lost, 
         //you may not receive any message
-        if token := c.Subscribe(""test/topic"", 0, nil); token.Wait() && token.Error() != nil {
+        if token := c.Subscribe("test/topic", 0, nil); token.Wait() && token.Error() != nil {
             fmt.Println(token.Error())
             os.Exit(1)
         }

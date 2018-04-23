@@ -1,12 +1,12 @@
 import org.apache.spark.sql.functions.posexplode
 import org.apache.spark.sql.expressions.Window
 
-val df = Seq((1, ""CS"", 0, Array(0.1, 0.2, 0.4, 0.5)), 
-             (4, ""Ed"", 0, Array(0.4, 0.8, 0.3, 0.6)),
-             (7, ""CS"", 0, Array(0.2, 0.5, 0.4, 0.7)),
-             (101, ""CS"", 1, Array(0.5, 0.7, 0.3, 0.8)),
-             (5, ""CS"", 1, Array(0.4, 0.2, 0.6, 0.9)))
-             .toDF(""id"", ""dept"", ""test"", ""arraytoprocess"")
+val df = Seq((1, "CS", 0, Array(0.1, 0.2, 0.4, 0.5)), 
+             (4, "Ed", 0, Array(0.4, 0.8, 0.3, 0.6)),
+             (7, "CS", 0, Array(0.2, 0.5, 0.4, 0.7)),
+             (101, "CS", 1, Array(0.5, 0.7, 0.3, 0.8)),
+             (5, "CS", 1, Array(0.4, 0.2, 0.6, 0.9)))
+             .toDF("id", "dept", "test", "arraytoprocess")
 
 scala> df.show()
 +---+----+----+--------------------+
@@ -19,9 +19,9 @@ scala> df.show()
 |  5|  CS|   1|[0.4, 0.2, 0.6, 0.9]|
 +---+----+----+--------------------+
 
-val columnIndicestoDrop = df.withColumn(""zipRank"",row_number().over(Window.partitionBy(""dept"")
-    .orderBy(""id"")))
-    .withColumn(""pos"",when($""test"" === 1, $""zipRank""-1))
+val columnIndicestoDrop = df.withColumn("zipRank",row_number().over(Window.partitionBy("dept")
+    .orderBy("id")))
+    .withColumn("pos",when($"test" === 1, $"zipRank"-1))
     .filter('pos.isNotNull)
     .select('pos)
     .distinct()
@@ -38,7 +38,7 @@ val dfwitharrayIndices = df.select('id,
     'dept,
     'test,
     'arraytoprocess,
-    posexplode($""arraytoprocess"") as Seq(""pos"", ""val""))
+    posexplode($"arraytoprocess") as Seq("pos", "val"))
 
 scala> dfwitharrayIndices.show()
 +---+----+----+--------------------+---+---+
@@ -67,10 +67,10 @@ scala> dfwitharrayIndices.show()
 +---+----+----+--------------------+---+---+
 
 val finaldataFrame = dfwitharrayIndices
-    .join(broadcast(columnIndicestoDrop),Seq(""pos""),""leftanti"")
+    .join(broadcast(columnIndicestoDrop),Seq("pos"),"leftanti")
     .select('id,'dept,'test,'val)
     .groupBy('id,'dept,'test)
-    .agg(collect_list('val).as(""finalarray""))
+    .agg(collect_list('val).as("finalarray"))
 
 scala> finaldataFrame.show()
 +---+----+----+----------+

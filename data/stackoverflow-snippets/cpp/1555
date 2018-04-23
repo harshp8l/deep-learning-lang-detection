@@ -1,10 +1,10 @@
 bool socks::start() {
     if (listen(master_socket, backlog) < 0) {
-        std::cerr << ""Failed to start listening."" << std::endl;
+        std::cerr << "Failed to start listening." << std::endl;
         return false;
     }
 
-    std::cout << ""Listening for connections on port "" << listening_port << std::endl;
+    std::cout << "Listening for connections on port " << listening_port << std::endl;
 
     std::vector<pollfd> readfds;
     char buf[256];
@@ -22,7 +22,7 @@ bool socks::start() {
         int activity = poll(&readfds[0], readfds.size(), -1);
         if (activity < 0) {
             if (errno == EINTR) continue;
-            std::cerr << ""poll() failed"" << std::endl;
+            std::cerr << "poll() failed" << std::endl;
             return false;
         }
 
@@ -42,16 +42,16 @@ bool socks::start() {
                     socklen_t addrlen = sizeof(address);
                     int new_socket = accept(master_socket, (struct sockaddr *) &address, &addrlen);
                     if (new_socket < 0) {
-                        std::cerr << ""Failed to accept incoming connection."" << std::endl;
+                        std::cerr << "Failed to accept incoming connection." << std::endl;
                         return false;
                     }
 
                     // Information about the new connection
-                    std::cout << ""New connection : ""
-                              << ""[SOCKET_FD : "" << new_socket
-                              << "" , IP : "" << inet_ntoa(address.sin_addr)
-                              << "" , PORT : "" << ntohs(address.sin_port)
-                              << ""]"" << std::endl;
+                    std::cout << "New connection : "
+                              << "[SOCKET_FD : " << new_socket
+                              << " , IP : " << inet_ntoa(address.sin_addr)
+                              << " , PORT : " << ntohs(address.sin_port)
+                              << "]" << std::endl;
 
                     // Add connection to vectors
 
@@ -65,7 +65,7 @@ bool socks::start() {
                 else {
                     ssize_t rc = recv(sd, buf, sizeof(buf), 0);
                     if (rc > 0) {
-                        std::cout << ""Client "" << sd << "" sent: "";
+                        std::cout << "Client " << sd << " sent: ";
                         std::cout.write(buf, rc);
                         std::cout << std::endl;
                     }
@@ -82,7 +82,7 @@ bool socks::start() {
                     ...
                 }
                 else {
-                    std::cout << ""Client "" << (readfds[j].revents & POLLERR) ? ""read error"" : ""disconnected"" << ""! [SOCKET_FD: "" << sd << ""]"" << std::endl;
+                    std::cout << "Client " << (readfds[j].revents & POLLERR) ? "read error" : "disconnected" << "! [SOCKET_FD: " << sd << "]" << std::endl;
                     close(sd);
                     clients.erase(std::find(clients.begin(), clients.end(), sd));
                     readfds.erase(readfds.begin() + j);

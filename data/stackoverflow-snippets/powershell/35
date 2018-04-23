@@ -4,24 +4,24 @@ Param(
     [string]$domain,
     [Parameter(Mandatory = $true,Position=1)]
     [string[]]$username,
-    [Alias(""pass"",""p"")]
+    [Alias("pass","p")]
     [Parameter(Mandatory = $false,Position=2)]
     $password,
     [Parameter(Mandatory = $true,Position=3)]
-    [ValidateSet(""Y"",""N"")]
+    [ValidateSet("Y","N")]
     [string]$cyberArk
 )
 
 function Get-Creds($domain,$user,$password) {
     Invoke-Expression -Command:'cmd.exe /c klist purge' | Out-Null
-    If (!($password)) {$password = Read-Host ""Enter $domain password"" -AsSecureString}
+    If (!($password)) {$password = Read-Host "Enter $domain password" -AsSecureString}
           $creds = new-object -typename System.Management.Automation.PSCredential -argumentlist $user,$password      
           return $creds
     }
 
 $doms = @{
-    'domain1.com' = @{'serverDC' = ""somesvalidDC.fqdn.com"";'searchBase' = ""DC=somesvalidDC,DC=fqdn,DC=com"";'suffix' = ""domain1.com""; 'TSMserver' = ""127.0.0.1""; 'NetBIOS' = ""domain1""; 'SCOM' = ""somescomserver.com"";'AdminSuffix' = ""_admin""}
-    'domain2.com' = @{'serverDC' = ""somesvalidDC.fqdn.com"";'searchBase' = ""DC=somesvalidDC,DC=fqdn,DC=com"";'suffix' = ""domain2.com""; 'TSMserver' = ""127.0.0.1""; 'NetBIOS' = ""domain2""; 'SCOM' = ""somescomserver.com"";'AdminSuffix' = "".adm""}
+    'domain1.com' = @{'serverDC' = "somesvalidDC.fqdn.com";'searchBase' = "DC=somesvalidDC,DC=fqdn,DC=com";'suffix' = "domain1.com"; 'TSMserver' = "127.0.0.1"; 'NetBIOS' = "domain1"; 'SCOM' = "somescomserver.com";'AdminSuffix' = "_admin"}
+    'domain2.com' = @{'serverDC' = "somesvalidDC.fqdn.com";'searchBase' = "DC=somesvalidDC,DC=fqdn,DC=com";'suffix' = "domain2.com"; 'TSMserver' = "127.0.0.1"; 'NetBIOS' = "domain2"; 'SCOM' = "somescomserver.com";'AdminSuffix' = ".adm"}
 }
 
 $global:adminsuffix = $doms.$domain.AdminSuffix
@@ -34,14 +34,14 @@ $global:scom = $doms.$domain.scom
 
 If ((!$cyberArk) -or ($cyberArk -eq 'N')) {
 
-    $global:user = $doms.$domain.NetBIOS + ""\"" + $username + $adminsuffix
+    $global:user = $doms.$domain.NetBIOS + "\" + $username + $adminsuffix
     $global:fetchCreds = Get-Creds -domain $domain -user $user -password $password
 
 }
 
 Else {
 
-    $global:User = ""corpau\"" + $username 
+    $global:User = "corpau\" + $username 
     $CyberArkdomain = 'corpau.wbcau.westpac.com.au'
     $global:fetchCreds = Get-Creds -domain $CyberArkdomain -user $user -password $password
 

@@ -14,16 +14,16 @@ object test {
   import com.datastax.spark.connector._, org.apache.spark.SparkContext, org.apache.spark.SparkContext._, org.apache.spark.SparkConf
 
   def main(args: Array[String]): Unit = {
-    val conf = new SparkConf(true).set(""spark.cassandra.connection.host"", ""localhost"")
+    val conf = new SparkConf(true).set("spark.cassandra.connection.host", "localhost")
     val sc = new SparkContext(conf)
-    val nameTable = ""artport""
-    val ligne = ""20171,16,165481,51,1,1,4,-79.6000,-101.7000,-98.9000""
+    val nameTable = "artport"
+    val ligne = "20171,16,165481,51,1,1,4,-79.6000,-101.7000,-98.9000"
     //parse ligne string Schema case class
     val schema = parseString(ligne)
     //get RDD[Schema]
     val rdd = sc.parallelize(Seq(schema))
     //now you can save this RDD to cassandra
-    rdd.saveToCassandra(""db"", nameTable)
+    rdd.saveToCassandra("db", nameTable)
     }
 
 
@@ -31,7 +31,7 @@ object test {
     def parseString(s: String): Schema = {
        //get each field from string array
        val Array(collecttime, sbnid, enodebid, rackid, shelfid, slotid,
-       channelid, c373910000, c373910001, c373910002, _*) = s.split("","").map(_.toDouble)
+       channelid, c373910000, c373910001, c373910002, _*) = s.split(",").map(_.toDouble)
 
        //map those fields to Schema class
        Schema(collecttime,

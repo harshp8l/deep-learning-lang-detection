@@ -1,17 +1,17 @@
 <?php
 
-    $target_dir = ""uploads/"";
-    $target_file = $target_dir . basename($_FILES[""fileToUpload""][""name""]);
+    $target_dir = "uploads/";
+    $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
     $uploadOk = true;
     $imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
 
     $errorMsgs = array();
 
     // Grabs the file extension of the submitted file, to be used later
-    if(isset($_POST[""submit""])) {
-        $check = getimagesize($_FILES[""fileToUpload""][""tmp_name""]);
+    if(isset($_POST["submit"])) {
+        $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
         if($check === false) {
-            $errMsgs[] = ""File is not an image."";
+            $errMsgs[] = "File is not an image.";
             $uploadOk = false;
         }
     } else {
@@ -21,20 +21,20 @@
     // Checks uploads/ to see if file already exists, throws uploadOk to 0 therefore sending an error if it does. This is probably going to be made useless by randomizing the upload names. Also what if two people want to use the same picture?
     if (file_exists($target_file)) {
         // NOTE: we don't echo yet as this would break any subsequent output
-        $errMsgs[] = ""Sorry, file already exists. \n"";
+        $errMsgs[] = "Sorry, file already exists. \n";
         $uploadOk = false;
     }
 
     // Check file size
-    if ($_FILES[""fileToUpload""][""size""] > 2000000) {
-        $$errMsgs[] = ""Sorry, your file is too large. \n"";
+    if ($_FILES["fileToUpload"]["size"] > 2000000) {
+        $$errMsgs[] = "Sorry, your file is too large. \n";
         $uploadOk = false;
     }
 
     // Allow certain file formats, checks to make sure it is a valid image format using $imageFileType
-    if($imageFileType != ""jpg"" && $imageFileType != ""png"" && $imageFileType != ""jpeg""
-      && $imageFileType != ""gif"" ) {
-        $$errMsgs[] = ""Sorry, only JPG, JPEG, PNG & GIF files are allowed. \n"";
+    if($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
+      && $imageFileType != "gif" ) {
+        $$errMsgs[] = "Sorry, only JPG, JPEG, PNG & GIF files are allowed. \n";
         $uploadOk = false;
      }
 
@@ -46,16 +46,16 @@
         exit();
 
     } else {
-         if (move_uploaded_file($_FILES[""fileToUpload""][""tmp_name""], $target_file)) {
+         if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
             $randName = substr(md5(rand()), 0, 15) . '.' . $imageFileType; 
             //generates a pseudorandom string 2^31(? I think so, also saw 2^32 somewhere, but how?) possibilities, as the md5 hash of a random int truncated to 15 characters
 
-            rename($target_file, ""/var/www/html/uploads/"" . $randName); // What if this fails?
+            rename($target_file, "/var/www/html/uploads/" . $randName); // What if this fails?
 
             $data = array(
                 'success' => 1,
                 'image' => $randName,
-                'message' => ""The file "" . basename( $_FILES[""fileToUpload""][""name""]) . "" has been uploaded and renamed to {$randName}""
+                'message' => "The file " . basename( $_FILES["fileToUpload"]["name"]) . " has been uploaded and renamed to {$randName}"
             ); 
             // You can add as many items as you like above. NOTE you can now use data.image for the image name or data.message for the full string.
 
@@ -66,7 +66,7 @@
 
         } else {
             header('Content-type: application/json');
-            echo ""Unable to store file in system"";
+            echo "Unable to store file in system";
         }
     }   
 

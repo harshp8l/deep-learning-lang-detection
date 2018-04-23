@@ -1,7 +1,7 @@
 let getIccmCallNumberFromReference (referenceId : string) =
-  match referenceId.IndexOf ""-"" with
+  match referenceId.IndexOf "-" with
     -1    -> referenceId
-  |  0    -> """" // to be consistent with the original function
+  |  0    -> "" // to be consistent with the original function
   | index -> referenceId.[.. index - 1]
 
 let findWorkItemsToClose (allWorkItems : WorkItem []) (iccmCalls : Iccm.IccmCall []) =
@@ -9,7 +9,7 @@ let findWorkItemsToClose (allWorkItems : WorkItem []) (iccmCalls : Iccm.IccmCall
   let callNumbers = iccmCalls |> Array.distinctBy (fun ic -> ic.CallNumber) // |> Set.ofArray
 
   allWorkItems
-  |> Seq.groupBy (fun wi -> getIccmCallNumberFromReference(wi.Fields.[""ReferenceId""].Value.ToString()))
+  |> Seq.groupBy (fun wi -> getIccmCallNumberFromReference(wi.Fields.["ReferenceId"].Value.ToString()))
   |> Seq.filter (fun (callNumber, _) -> not (Array.contains callNumber callNumbers)) // replace Array.contains by Set.contains
   |> Seq.collect snd
   |> Seq.toArray

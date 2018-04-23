@@ -1,14 +1,14 @@
-val table1 = spark.sparkContext.parallelize(Seq((""1"", ""a""), (""2"", ""b""), (""3"", ""c""))).collectAsMap()
+val table1 = spark.sparkContext.parallelize(Seq(("1", "a"), ("2", "b"), ("3", "c"))).collectAsMap()
 //Brodcasting so that mapping is available to all nodes
 val brodcastedMapping = spark.sparkContext.broadcast(table1)
-val table2 = spark.sparkContext.parallelize(Array(Array(""1"", ""2"", ""d""), Array(""1"", ""3"", ""e"")))
+val table2 = spark.sparkContext.parallelize(Array(Array("1", "2", "d"), Array("1", "3", "e")))
 
 def changeMapping(value: String): String = {
   brodcastedMapping.value.getOrElse(value, value)
 }
 val changeMappingUDF = udf(changeMapping(_:String))
-table2.toDF.withColumn(""exploded"", explode($""value""))
-  .withColumn(""new"", changeMappingUDF($""exploded""))
-  .groupBy(""value"")
-  .agg(collect_list(""new"").as(""mappedCol""))
-  .select(""mappedCol"").rdd.map(r => r.toSeq.toArray.map(_.toString))
+table2.toDF.withColumn("exploded", explode($"value"))
+  .withColumn("new", changeMappingUDF($"exploded"))
+  .groupBy("value")
+  .agg(collect_list("new").as("mappedCol"))
+  .select("mappedCol").rdd.map(r => r.toSeq.toArray.map(_.toString))

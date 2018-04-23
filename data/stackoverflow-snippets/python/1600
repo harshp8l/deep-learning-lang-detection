@@ -1,9 +1,9 @@
 from pyspark.sql.functions import udf
 
-keys = [k for k in chain.from_iterable(df.select(explode(""value"")).distinct().collect())]
+keys = [k for k in chain.from_iterable(df.select(explode("value")).distinct().collect())]
 
 def f(keys):
-    @udf(""map<string,long>"")
+    @udf("map<string,long>")
     def _(values):
         d = dict.fromkeys(keys, 0)
         for v in values:
@@ -11,7 +11,7 @@ def f(keys):
         return d
     return _
 
-df.select(""key"", f(keys)(""value"").alias(""value"")).show(truncate=False)
+df.select("key", f(keys)("value").alias("value")).show(truncate=False)
 # 
 # +---+---------------------------+
 # |key|value                      |

@@ -1,8 +1,8 @@
 package main
 
 import (
-    ""fmt""
-    ""time""
+    "fmt"
+    "time"
 )
 
 type DataBuffer struct {
@@ -72,7 +72,7 @@ func (b *DataBuffer) clear() {
         b.args[k] = nil
     }
     b.args = b.args[:0]
-    b.query = """"
+    b.query = ""
 }
 
 func (b *DataBuffer) buildQuery() bool {
@@ -85,9 +85,9 @@ func (b *DataBuffer) buildQuery() bool {
     b.clear()
 
     //Build the query, adjust as needed
-    b.query = ""QUERY:""
+    b.query = "QUERY:"
     for data := range b.incomingData {
-        b.query += fmt.Sprintf("" q%d"", k) //build the query
+        b.query += fmt.Sprintf(" q%d", k) //build the query
         b.args = append(b.args, data)
 
         k++
@@ -108,7 +108,7 @@ func (b *DataBuffer) doInsert() {
 func (b *DataBuffer) runAsync() {
     defer func() {
         b.doInsert()
-        fmt.Println(""Last insert"")
+        fmt.Println("Last insert")
         close(b.done)
     }()
 
@@ -117,14 +117,14 @@ func (b *DataBuffer) runAsync() {
         select {
         case <- timer.C:
             b.doInsert()
-            fmt.Println(""Timer Expired"")
+            fmt.Println("Timer Expired")
             timer.Reset(b.duration)
         case <- b.full:
             if !timer.Stop() {
                 <-timer.C
             }
             b.doInsert()
-            fmt.Println(""Full"")
+            fmt.Println("Full")
             timer.Reset(b.duration)
         case <- b.mustExit:
             if !timer.Stop() {

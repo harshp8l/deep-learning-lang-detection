@@ -2,33 +2,33 @@ object KafkaStreamsConsumer4  {
 
   def main(args: Array[String]) {
 
-val date_today = new SimpleDateFormat(""yyyy_MM_dd"");
-val date_today_hour = new SimpleDateFormat(""yyyy_MM_dd_HH"");
-val PATH_SEPERATOR = ""/"";
+val date_today = new SimpleDateFormat("yyyy_MM_dd");
+val date_today_hour = new SimpleDateFormat("yyyy_MM_dd_HH");
+val PATH_SEPERATOR = "/";
 
-val conf = ConfigFactory.load(""spfin.conf"")
-println(""kafka.duration --- ""+ conf.getString(""kafka.duration"").toLong)
+val conf = ConfigFactory.load("spfin.conf")
+println("kafka.duration --- "+ conf.getString("kafka.duration").toLong)
 
 val mlFeatures: MLFeatures = new MLFeatures()
 
 // Create context with custom second batch interval
-//val sparkConf = new SparkConf().setAppName(""SpFinML"")
-//val ssc = new StreamingContext(sparkConf, Seconds(conf.getString(""kafka.duration"").toLong))
+//val sparkConf = new SparkConf().setAppName("SpFinML")
+//val ssc = new StreamingContext(sparkConf, Seconds(conf.getString("kafka.duration").toLong))
 
-val ssc = new StreamingContext(mlFeatures.sc, Seconds(conf.getString(""kafka.duration"").toLong))
+val ssc = new StreamingContext(mlFeatures.sc, Seconds(conf.getString("kafka.duration").toLong))
 
 // Create direct kafka stream with brokers and topics
-val topicsSet = conf.getString(""kafka.requesttopic"").split("","").toSet
+val topicsSet = conf.getString("kafka.requesttopic").split(",").toSet
 
 val kafkaParams = Map[String, Object](
-  ""bootstrap.servers"" -> conf.getString(""kafka.brokers""),
-  ""zookeeper.connect"" -> conf.getString(""kafka.zookeeper""),
-  ""group.id"" -> conf.getString(""kafka.consumergroups2""),
-  ""auto.offset.reset"" -> conf.getString(""kafka.autoOffset""),
-  ""enable.auto.commit"" -> (conf.getString(""kafka.autoCommit"").toBoolean: java.lang.Boolean),
-  ""key.deserializer"" -> classOf[StringDeserializer],
-  ""value.deserializer"" -> classOf[StringDeserializer],
-  ""security.protocol"" -> ""SASL_PLAINTEXT"")
+  "bootstrap.servers" -> conf.getString("kafka.brokers"),
+  "zookeeper.connect" -> conf.getString("kafka.zookeeper"),
+  "group.id" -> conf.getString("kafka.consumergroups2"),
+  "auto.offset.reset" -> conf.getString("kafka.autoOffset"),
+  "enable.auto.commit" -> (conf.getString("kafka.autoCommit").toBoolean: java.lang.Boolean),
+  "key.deserializer" -> classOf[StringDeserializer],
+  "value.deserializer" -> classOf[StringDeserializer],
+  "security.protocol" -> "SASL_PLAINTEXT")
 
   /*    this code is to get messages from request topic*/
 
@@ -37,9 +37,9 @@ val messages = KafkaUtils.createDirectStream[String, String](
   LocationStrategies.PreferConsistent,
   ConsumerStrategies.Subscribe[String, String](topicsSet, kafkaParams))
 
-println(""before printing the messages"")
+println("before printing the messages")
 messages.print(5)   
-           println(""------------------------------------------------------------------"")
+           println("------------------------------------------------------------------")
 
 try{
 
@@ -47,44 +47,44 @@ try{
   messages.foreachRDD((kafkaRdd: RDD[ConsumerRecord[String, String]]) => {
     kafkaRdd.foreach(println)
     var kafkaRDDRep = kafkaRdd.repartition(10)
-    println(""first foreachRDD"")
+    println("first foreachRDD")
        val rdd: RDD[(String, String)] = kafkaRDDRep.mapPartitions((records: Iterator[ConsumerRecord[String, String]]) => {
-         println(""Inside mapPartitions"")
+         println("Inside mapPartitions")
   //           import argonaut.Argonaut.StringToParseWrap
           import org.esi.priorauth.features.MLFeatures
           while(records.hasNext){
-            println(""Test inside the while"" + records.next()) 
+            println("Test inside the while" + records.next()) 
           }
           val convertedDataTest: Iterator[(String, String)] = records.map(record => {    
                       val req_message = record.value()
 
                       val decisionTree_res = PriorAuthPredict.processPriorAuthPredict(req_message)
 
-                      kafkaProducer(conf.getString(""kafka.responsetopic""), decisionTree_res)                
+                      kafkaProducer(conf.getString("kafka.responsetopic"), decisionTree_res)                
 
-                      println(""Inside map"" + record.value())
-                      (""test"", record.value())
+                      println("Inside map" + record.value())
+                      ("test", record.value())
                     })
 
-          convertedDataTest.map{data => kafkaProducer(conf.getString(""kafka.responsetopic""), data._2) 
+          convertedDataTest.map{data => kafkaProducer(conf.getString("kafka.responsetopic"), data._2) 
                                        data
                                  }                          
       })
-      println(""Inside foreachRDD"")
+      println("Inside foreachRDD")
 
     })   
 
-    println(""inside the try"")
+    println("inside the try")
 }
 catch {
     case e: Exception  => e.printStackTrace
     case t: Throwable => t.printStackTrace()
 
     // handling any other exception that might come up
-    case unknown : Throwable => println(""Got this unknown exception: "" + unknown)
+    case unknown : Throwable => println("Got this unknown exception: " + unknown)
 }
 finally {
-    println(""send json data"");
+    println("send json data");
 }           
 
 // After all successful processing, commit the offsets to kafka

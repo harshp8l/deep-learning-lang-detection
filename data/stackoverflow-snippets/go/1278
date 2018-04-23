@@ -1,7 +1,7 @@
 // This is the type that will be used to build our handlers.
 type Handler struct {
-    handlerType       string    // Can be ""CREATE"" or ""GET""
-    handlerActionName string    // Can be ""flow"" or ""process""
+    handlerType       string    // Can be "CREATE" or "GET"
+    handlerActionName string    // Can be "flow" or "process"
     elastible         Elastible // Can be *Flow or *Process
 }
 
@@ -33,7 +33,7 @@ func CreateHandler(handler Handler) func(*AppContext, http.ResponseWriter, http.
         sendResponse := func(response interface{}) (int, error) {
             b := new(bytes.Buffer)
             json.NewEncoder(b).Encode(response)
-            w.Header().Set(""Content-Type"", ""application/json"")
+            w.Header().Set("Content-Type", "application/json")
             w.Write(b.Bytes())
             return 200, nil
         }
@@ -44,10 +44,10 @@ func CreateHandler(handler Handler) func(*AppContext, http.ResponseWriter, http.
         var err error
 
         // Check the handlerType. Is it create or get?
-        if handler.handlerType == ""CREATE"" {
+        if handler.handlerType == "CREATE" {
             var highest int
 
-            // Creates the thing using handler.handlerActionName which may be ""flow"" or ""process""
+            // Creates the thing using handler.handlerActionName which may be "flow" or "process"
             highest, code, err = a.Create(handler.handlerActionName, r)
             if code != 200 || err != nil {
                 return code, err
@@ -55,7 +55,7 @@ func CreateHandler(handler Handler) func(*AppContext, http.ResponseWriter, http.
 
             // Send the response using the above defined function and return.
             return sendResponse(struct {
-                Highest int `json:""id""`
+                Highest int `json:"id"`
             }{highest})
 
         } else {
@@ -63,8 +63,8 @@ func CreateHandler(handler Handler) func(*AppContext, http.ResponseWriter, http.
             // This is GET handlerType.
             var hit HitType
 
-            // Get the hit using again the handler.handlerActionName which may be ""flow"" or ""process""
-            hit, code, err = a.GetByID(handler.handlerActionName, mux.Vars(r)[""id""], r)
+            // Get the hit using again the handler.handlerActionName which may be "flow" or "process"
+            hit, code, err = a.GetByID(handler.handlerActionName, mux.Vars(r)["id"], r)
             if code != 200 || err != nil {
                 return code, err
             }

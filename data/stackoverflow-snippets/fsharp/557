@@ -1,5 +1,5 @@
 let aref =  
-    spawn system ""listener""
+    spawn system "listener"
     <| fun mailbox ->
         let cluster = Cluster.Get (mailbox.Context.System)
         cluster.Subscribe (mailbox.Self, [| typeof<ClusterEvent.IMemberEvent> |])
@@ -10,11 +10,11 @@ let aref =
                 match msg with
                 | :? ClusterEvent.MemberUp as up -> 
                     // new node joined the cluster
-                    let selection = select (up.Member.Address.ToString() + ""user/r-actor"") mailbox
+                    let selection = select (up.Member.Address.ToString() + "user/r-actor") mailbox
                     selection <! Identify(null) // request actor under selection to identify itself
                 | :? ActorIdentity as id when id.Subject <> null ->
                     // actor has identified itself
-                    id.Subject <! ""hello""
+                    id.Subject <! "hello"
                 | :? ClusterEvent.MemberRemoved as rem -> 
                     //  node leaved the cluster, invalidate all actors from that node
                 | _ -> ()

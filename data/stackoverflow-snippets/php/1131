@@ -1,5 +1,5 @@
 <?php
-# Add this to the top, don't add it as an ""if"" conditional
+# Add this to the top, don't add it as an "if" conditional
 session_start();
 # Add this once and also at the top, regardless of if you use it
 include('../db_config/connection.php');
@@ -13,7 +13,7 @@ function getUserInfo($uid,$conn)
     if(!$uid)
         return false;
     # Fetch
-    $result = $conn->query(""SELECT * FROM user_info where user_index = '$uid'"");
+    $result = $conn->query("SELECT * FROM user_info where user_index = '$uid'");
     if($result->num_rows > 0) {
         $row = $result->fetch_assoc();
         return $row;
@@ -27,7 +27,7 @@ function getUserInfo($uid,$conn)
 function addUserLeave($uid,$array,$conn)
 {
     # Question marks are placeholders for values
-    $sql = ""INSERT INTO tblleaves(leavetype, todate, fromdate, description, status, isRead, user_index) VALUES (?,?,?,?,1,1,?)"";
+    $sql = "INSERT INTO tblleaves(leavetype, todate, fromdate, description, status, isRead, user_index) VALUES (?,?,?,?,1,1,?)";
     # Prepare the statement
     $query = $conn->prepare($sql);
     # Bind the values to question marks in the statement, use the first parameter in this
@@ -51,7 +51,7 @@ if(isset($_POST['apply'])) {
     $isread      = 0;
     # Check date
     if($fromdate > $todate) {
-        $error = '""To"" date should be greater than the ""from"" date';
+        $error = '"To" date should be greater than the "from" date';
     }
     # If you have an error on date, it doesn't make sense to keep going
     # with the script, so use else
@@ -61,7 +61,7 @@ if(isset($_POST['apply'])) {
         # Check that there is a value here
         if(!empty($userInfo['user_index'])) {
             # Redirect AND exit
-            header(""Location: ../add_leave.php?err=Leave for {$uid} is not available&ent_id={$uid}"");
+            header("Location: ../add_leave.php?err=Leave for {$uid} is not available&ent_id={$uid}");
             exit;
         }
         else {
@@ -69,7 +69,7 @@ if(isset($_POST['apply'])) {
             $added = addUserLeave($uid,$_POST,$conn);
             if($added) {
                 # Redirect AND exit
-                header(""Location: apply_leave.php?message={$leavetype} have been requested"");
+                header("Location: apply_leave.php?message={$leavetype} have been requested");
                 exit;
             }
             else
@@ -78,4 +78,4 @@ if(isset($_POST['apply'])) {
     }
 }
 # Default is to redirect
-header(""location: add_leave.php?err={$error}"");
+header("location: add_leave.php?err={$error}");

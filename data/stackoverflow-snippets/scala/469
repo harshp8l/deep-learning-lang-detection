@@ -5,11 +5,11 @@ val sqlContext = new SQLContext(SparkCtxt)
 import sqlContext.implicits
 
 import org.apache.spark.sql.functions._
-val temp=SparkCtxt.parallelize(Seq(Row(Array(""String1"",""String2""),Array(""String3"",""String4""))))
+val temp=SparkCtxt.parallelize(Seq(Row(Array("String1","String2"),Array("String3","String4"))))
 val df= sqlContext.createDataFrame(temp,
   StructType(List(
-    StructField(""Col1"",ArrayType(StringType),true),
-    StructField(""Col2"",ArrayType(StringType),true)
+    StructField("Col1",ArrayType(StringType),true),
+    StructField("Col2",ArrayType(StringType),true)
   )
   )    )
 
@@ -19,7 +19,7 @@ def concat_array(firstarray: mutable.WrappedArray[String],
  (firstarray ++ secondarray)
 }
 val concatUDF = udf(concat_array _)
-val df2=df.withColumn(""udftest"",concatUDF(df.col(""Col1""), df.col(""Col2"")))
-df2.select(""udftest"").foreach(each=>{println(""***********"")
+val df2=df.withColumn("udftest",concatUDF(df.col("Col1"), df.col("Col2")))
+df2.select("udftest").foreach(each=>{println("***********")
 println(each(0))})
 df2.show(true)

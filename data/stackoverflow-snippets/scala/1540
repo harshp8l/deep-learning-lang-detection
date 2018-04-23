@@ -1,15 +1,15 @@
 override lazy val httpFilters: Seq[EssentialFilter] = {
     val wiredInstance: Wired = wiredInModule(this)
     val classes: Seq[Class[EssentialFilter]] = {
-        val disabledFilters = config.get[Seq[String]](""play.filters.disabled"")
-        val enabledFilters = config.get[Seq[String]](""play.filters.enabled"").filterNot(disabledFilters.contains)
+        val disabledFilters = config.get[Seq[String]]("play.filters.disabled")
+        val enabledFilters = config.get[Seq[String]]("play.filters.enabled").filterNot(disabledFilters.contains)
         try {
             for (filterClassName <- enabledFilters) yield {
                 try {
                     environment.classLoader.loadClass(filterClassName).asInstanceOf[Class[EssentialFilter]]
                 } catch {
                     case e: ClassNotFoundException =>
-                      throw configuration.reportError(""play.filters.enabled"", s""Cannot load class $filterClassName"", Some(e))
+                      throw configuration.reportError("play.filters.enabled", s"Cannot load class $filterClassName", Some(e))
                 }
             }
         } catch {

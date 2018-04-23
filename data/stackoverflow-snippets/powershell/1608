@@ -7,10 +7,10 @@ $apimContext = New-AzureRmApiManagementContext -ResourceGroupName $resourceGroup
 $gitAccess = Get-AzureRmApiManagementTenantGitAccess -Context $apimContext
 $userId = $gitAccess.Id
 
-$expiry = Get-Date ((Get-Date).AddDays(29)) -Format ""yyyy-MM-ddTHH:mm:ss.000Z""
-$parameters = @{ ""keyType""= ""primary""; ""expiry""= ""$expiry""; }
+$expiry = Get-Date ((Get-Date).AddDays(29)) -Format "yyyy-MM-ddTHH:mm:ss.000Z"
+$parameters = @{ "keyType"= "primary"; "expiry"= "$expiry"; }
 
-$pw = Invoke-AzureRmResourceAction  -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.ApiManagement/service/users' -Action 'token' -ResourceName ""$serviceName/$userId"" -ApiVersion ""2016-10-10"" -Parameters $parameters
+$pw = Invoke-AzureRmResourceAction  -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.ApiManagement/service/users' -Action 'token' -ResourceName "$serviceName/$userId" -ApiVersion "2016-10-10" -Parameters $parameters
 
 # URL-encode password:
 $pwUrlencodedLowerCase = [System.Web.HttpUtility]::UrlEncode($pw.value)
@@ -19,6 +19,6 @@ $pwUrlencodedLowerCase = [System.Web.HttpUtility]::UrlEncode($pw.value)
 [regex]$regex='(%[0-9a-f][0-9a-f])'
 $pwUrlencoded = $regex.Replace($pwUrlencodedLowerCase, {$args[0].Value.ToUpper()})
 
-$gitUrl = ""https://${gitUser}:$pwUrlencoded@$serviceName.scm.azure-api.net/""
+$gitUrl = "https://${gitUser}:$pwUrlencoded@$serviceName.scm.azure-api.net/"
 
 git clone $gitUrl

@@ -1,24 +1,24 @@
 val sal1 = Seq(
-  (""109.175.191.0""),
-  (""invalid.ip""),
-  (""187.42.62.209""),
-  (""89.142.219.5"")
-).toDF(""SourceIP"")
+  ("109.175.191.0"),
+  ("invalid.ip"),
+  ("187.42.62.209"),
+  ("89.142.219.5")
+).toDF("SourceIP")
 
 val sal2 = Seq(
-  (""75.0.0.0"", ""89.255.255.255"", ""Country A""),
-  (""90.0.0.0"", ""129.255.255.255"", ""Country B""),
-  (""130.0.0.0"", ""199.255.255.255"", ""Country C""),
-  (""bad.ip"", ""bad.ip"", ""Country Z"")
-).toDF(""ip_from"", ""ip_to"", ""country"")
+  ("75.0.0.0", "89.255.255.255", "Country A"),
+  ("90.0.0.0", "129.255.255.255", "Country B"),
+  ("130.0.0.0", "199.255.255.255", "Country C"),
+  ("bad.ip", "bad.ip", "Country Z")
+).toDF("ip_from", "ip_to", "country")
 
 import org.apache.spark.sql.functions._
 
 def ipToLongUDF = udf(
   (ip: String) => {
-    val patternIPv4 = """"""\s*\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s*"""""".r
+    val patternIPv4 = """\s*\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s*""".r
     ip match {
-      case patternIPv4() => ip.split(""\\."").reverse.zipWithIndex.map(
+      case patternIPv4() => ip.split("\\.").reverse.zipWithIndex.map(
           a => a._1.toInt * math.pow(256, a._2).toLong
         ).sum
       case _ => -1L
@@ -28,10 +28,10 @@ def ipToLongUDF = udf(
 
 sal1.join(
     sal2,
-    ipToLongUDF(sal1(""SourceIP"")) >= 0 &&
-      ipToLongUDF(sal1(""SourceIP"")) >= ipToLongUDF(sal2(""ip_from"")) && 
-      ipToLongUDF(sal1(""SourceIP"")) <= ipToLongUDF(sal2(""ip_to"")),
-    ""left""
+    ipToLongUDF(sal1("SourceIP")) >= 0 &&
+      ipToLongUDF(sal1("SourceIP")) >= ipToLongUDF(sal2("ip_from")) && 
+      ipToLongUDF(sal1("SourceIP")) <= ipToLongUDF(sal2("ip_to")),
+    "left"
   ).
   show
 // +-------------+---------+---------------+---------+

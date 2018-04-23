@@ -3,21 +3,21 @@ function getRecords($search = null) {
 $items = array();
 $params = array();
 
-$connect = mysqli_connect(""localhost"", ""root"", """", ""acsdb"");  
+$connect = mysqli_connect("localhost", "root", "", "acsdb");  
 $record_per_page = 50;  
 $page = '';  
 $output = '';  
-if(isset($_POST[""page""]))  
+if(isset($_POST["page"]))  
 {  
-  $page = $_POST[""page""];  
+  $page = $_POST["page"];  
 }  
 else  
 {  
   $page = 1;  
 }  
  $start_from = ($page - 1)*$record_per_page;  
- $sql = ""SELECT DISTINCT(`staff`.`staffname`), `staff`.`indexno` AS `index`, 
- locations.name, staff.email FROM `staff` JOIN `locations` ON `locations`.`id` = `staff`.`slocationid` "";
+ $sql = "SELECT DISTINCT(`staff`.`staffname`), `staff`.`indexno` AS `index`, 
+ locations.name, staff.email FROM `staff` JOIN `locations` ON `locations`.`id` = `staff`.`slocationid` ";
 
 if (!empty($search) && is_array($search)) {
 
@@ -26,22 +26,22 @@ if (!empty($search) && is_array($search)) {
         switch($key) {
 
             case 'keyword':
-                $items[] = ""`staff`.`staffname` LIKE ?"";
-                $params[] = ""%{$value}%"";
+                $items[] = "`staff`.`staffname` LIKE ?";
+                $params[] = "%{$value}%";
                 break;
 
             case 'locations':
-                $items[] = ""`locations`.`id` = ?"";
+                $items[] = "`locations`.`id` = ?";
                 $params[] = $value;
                 break;
 
 
             case 'locationm':
-                $items[] = ""`staff`.`slocationid` IN (
+                $items[] = "`staff`.`slocationid` IN (
                                 SELECT `id`
                                 FROM `locations`
                                 WHERE `id` = ?
-                            )"";
+                            )";
                 $params[] = $value;
                 break;
 
@@ -57,14 +57,14 @@ if (!empty($search) && is_array($search)) {
 
     if (!empty($items)) {
 
-        $sql .= "" WHERE "";
-        $sql .= implode("" AND "", $items);
+        $sql .= " WHERE ";
+        $sql .= implode(" AND ", $items);
 
     }
 
 }
 
-$sql .= "" ORDER BY `staff`.`staffname` ASC LIMIT $start_from, $record_per_page"";
+$sql .= " ORDER BY `staff`.`staffname` ASC LIMIT $start_from, $record_per_page";
 
 return fetchRecords($sql, $params);
 

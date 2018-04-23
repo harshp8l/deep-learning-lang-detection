@@ -3,14 +3,14 @@ class CdrToMongoReactiveStreamSpec extends WordSpec with Matchers {
   import CdrToMongoReactiveStream._
   import RandomCdrJsonProtocol._
 
-  implicit val system = ActorSystem(""cdr-data-generator"")
+  implicit val system = ActorSystem("cdr-data-generator")
   implicit val materializer = ActorMaterializer()
 
-  val collection = new Fongo(""mongo test server"").getDB(""cdrDB"").getCollection(""cdr"")
-  val randomCdr = RandomCdr(""+33612345678"",1511448336402L,""+33612345678"",""SMS"",""OUT"",0,0,0)
+  val collection = new Fongo("mongo test server").getDB("cdrDB").getCollection("cdr")
+  val randomCdr = RandomCdr("+33612345678",1511448336402L,"+33612345678","SMS","OUT",0,0,0)
 
-  ""randomCdrThrottledSource"" should {
-    ""generate RandomCdr elements only"" in {
+  "randomCdrThrottledSource" should {
+    "generate RandomCdr elements only" in {
       val future = CdrToMongoReactiveStream.randomCdrThrottledSource(8,86400000,1)
         .runWith(Sink.head)
 

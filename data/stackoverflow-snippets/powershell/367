@@ -1,4 +1,4 @@
-$computers = (Get-AdComputer -Filter ""name -like 'VM-*'"").Name | Sort-Object
+$computers = (Get-AdComputer -Filter "name -like 'VM-*'").Name | Sort-Object
 foreach ($computer in $Computers) 
 {
 $vol = gwmi Win32_volume -Computer $Computer -Filter 'DriveType = 3'
@@ -10,13 +10,13 @@ $info = $vol | select PsComputerName, DriveLetter, Label,
            @{n='FreeSpace (%)';e={[int](($_.FreeSpace) / ($_.capacity) * 100.0)}},
            @{n='Recommendation';e={
                 if((($_.FreeSpace) / ($_.capacity) * 100.0) -gt 90){
-                    ""Disk Usage Low, Consider Resizing Options""
+                    "Disk Usage Low, Consider Resizing Options"
                 }elseif((($_.FreeSpace) / ($_.capacity) * 100.0) -gt 75){
-                    ""Something else""
+                    "Something else"
                 }else{
-                    ""Disk Usage High""
+                    "Disk Usage High"
                 }
             }
 
-$info  | Export-Csv ""c:\temp\tempfiles\question.csv"" -Append
+$info  | Export-Csv "c:\temp\tempfiles\question.csv" -Append
 }

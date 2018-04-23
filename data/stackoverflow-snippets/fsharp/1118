@@ -1,6 +1,6 @@
-#I ""../packages/FParsec.1.0.1/lib/net40-client""
-#r ""FParsec""
-#r ""FParsecCS""
+#I "../packages/FParsec.1.0.1/lib/net40-client"
+#r "FParsec"
+#r "FParsecCS"
 
 open FParsec
 open System.Numerics
@@ -21,12 +21,12 @@ let pLowExpr = low.ExpressionParser .>> spaces
 high.TermParser <-
   choice
     [ pInt |>> Int
-      between (str ""("") (str "")"") pLowExpr ]
+      between (str "(") (str ")") pLowExpr ]
 
 low.TermParser <-
   many1 pHighExpr |>> (function [f] -> f | fs -> List.reduce (fun f g -> Mul(f, g)) fs) .>> spaces
 
-low.AddOperator(InfixOperator(""+"", spaces, 10, Associativity.Left, fun f g -> Add(f, g)))
-high.AddOperator(InfixOperator(""^"", spaces, 20, Associativity.Right, fun f g -> Pow(f, g)))
+low.AddOperator(InfixOperator("+", spaces, 10, Associativity.Left, fun f g -> Add(f, g)))
+high.AddOperator(InfixOperator("^", spaces, 20, Associativity.Right, fun f g -> Pow(f, g)))
 
-run (spaces >>. pLowExpr .>> eof) ""1 2 + 3 4 ^ 5 6""
+run (spaces >>. pLowExpr .>> eof) "1 2 + 3 4 ^ 5 6"

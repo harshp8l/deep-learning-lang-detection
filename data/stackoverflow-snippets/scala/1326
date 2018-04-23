@@ -35,24 +35,24 @@ object TlsClient {
       chunk
     }
 
-    val inputLogger = logger(""> "")
-    val outputLogger = logger(""< "")
+    val inputLogger = logger("> ")
+    val outputLogger = logger("< ")
 
     // create BidiFlow with a separate logger function for each of both streams
     BidiFlow.fromFunctions(outputLogger, inputLogger)
   }
 
   def main(args: Array[String]): Unit = {
-    implicit val system: ActorSystem = ActorSystem(""sip-client"")
+    implicit val system: ActorSystem = ActorSystem("sip-client")
     implicit val materializer: ActorMaterializer = ActorMaterializer()
 
     val source = Source.actorRef(1000, OverflowStrategy.fail)
-    val connection = Tcp().outgoingConnection(""www.google.com"", 443)
+    val connection = Tcp().outgoingConnection("www.google.com", 443)
     val tlsFlow = tlsClientLayer.join(connection)
     val srcActor = tlsFlow.join(logging).to(Sink.ignore).runWith(source)
 
     // I show HTTP here but send/receive your protocol over this actor
     // Should respond with a 302 (Found) and a small explanatory HTML message
-    srcActor ! ByteString(""GET / HTTP/1.1\r\nHost: www.google.com\r\n\r\n"")
+    srcActor ! ByteString("GET / HTTP/1.1\r\nHost: www.google.com\r\n\r\n")
   }
 }

@@ -1,20 +1,20 @@
 val graphDF = Seq(
   (1, 0, 1, 0, 0), (1, 4, 1, 0, 4), (2, 2, 1, 2, 2),
   (4, 3, 1, 4, 4), (4, 5, 1, 4, 4)
-).toDF(""from"", ""to"", ""attr"", ""type_from"", ""type_to"")
+).toDF("from", "to", "attr", "type_from", "type_to")
 
 val types = Seq(
   (0, 0), (1, 0), (2, 2), (3, 4), (4,4), (5, 4)
-).toDF(""nodeId"", ""type"")
+).toDF("nodeId", "type")
 
 graphDF
   // I want to know the number of edges to the nodes of the same type
-  .where($""type_from"" === $""type_to"" && $""from"" =!= $""to"")
+  .where($"type_from" === $"type_to" && $"from" =!= $"to")
   // I only want to count the edges outgoing from a node,
-  .groupBy($""from"" as ""nodeId"", $""type_from"" as ""type"")
-  .agg(count(""*"") as ""numLinks"")
+  .groupBy($"from" as "nodeId", $"type_from" as "type")
+  .agg(count("*") as "numLinks")
   // but it lacks those nodes that have 0 links.
-  .join(types, Seq(""nodeId"", ""type""), ""rightouter"")
+  .join(types, Seq("nodeId", "type"), "rightouter")
   .na.fill(0)
 
 // +------+----+--------+

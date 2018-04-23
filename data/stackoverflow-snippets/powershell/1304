@@ -1,8 +1,8 @@
 $Identity = 'test'
-$LDAP = ""dc=""+$env:USERDNSDOMAIN.Replace('.',',dc=')
-$Filter = ""(&(sAMAccountName=$Identity)(objectClass=group))""
+$LDAP = "dc="+$env:USERDNSDOMAIN.Replace('.',',dc=')
+$Filter = "(&(sAMAccountName=$Identity)(objectClass=group))"
 $Searcher = [adsisearcher]$Filter
-$Searcher.SearchRoot = ""LDAP://$LDAP""
+$Searcher.SearchRoot = "LDAP://$LDAP"
 'Member','Description','groupType' | %{$Searcher.PropertiesToLoad.Add($_)|Out-Null}
 
 $Results=$Searcher.FindAll()
@@ -19,12 +19,12 @@ $GroupTypeDef = @{
 
 If($Results.Count -gt 0){
     $Group = New-Object PSObject @{
-        'DistinguishedName'=[string]$Results.Properties.Item('adspath') -replace ""LDAP\:\/\/""
+        'DistinguishedName'=[string]$Results.Properties.Item('adspath') -replace "LDAP\:\/\/"
         'Scope'=$GroupTypeDef.Keys|?{$_ -band ($($Results.properties.item('GroupType')))}|%{$GroupTypeDef.get_item($_)}
         'Description'=[string]$Results.Properties.Item('description')
-        'Members'=[string[]]$Results.Properties.Item('member')|% -Begin {$Searcher.PropertiesToLoad.Clear();$Searcher.PropertiesToLoad.Add('objectClass')|Out-Null} {$Searcher.Filter = ""(distinguishedName=$_)"";[PSCustomObject][ordered]@{'MemberType'=$Searcher.FindAll().Properties.Item('objectClass').ToUpper()[-1];'DistinguishedName'=$_}}
+        'Members'=[string[]]$Results.Properties.Item('member')|% -Begin {$Searcher.PropertiesToLoad.Clear();$Searcher.PropertiesToLoad.Add('objectClass')|Out-Null} {$Searcher.Filter = "(distinguishedName=$_)";[PSCustomObject][ordered]@{'MemberType'=$Searcher.FindAll().Properties.Item('objectClass').ToUpper()[-1];'DistinguishedName'=$_}}
     }
     $Group|Select DistinguishedName,Scope,Description
     $Group.Members|FT -AutoSize
 }
-Else{""Unable to find group '$Group' in '$env:USERDNSDOMAIN'.`nPlease check that you can access that domain from your current domain, and that the group exists.""}
+Else{"Unable to find group '$Group' in '$env:USERDNSDOMAIN'.`nPlease check that you can access that domain from your current domain, and that the group exists."}

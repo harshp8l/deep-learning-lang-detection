@@ -1,4 +1,4 @@
-val input = """"""ID:   12343-7888
+val input = """ID:   12343-7888
 Name:  Mary, Bob, Jason, Jeff, Suzy
            Harry, Steve
            Larry, George
@@ -11,7 +11,7 @@ Name: Alex, Bob
    Gary
 City: Los Angeles, St. Petersburg
    Washington D.C., Phoenix
-""""""
+"""
 
 case class Entry(id: String, names: List[String], cities: List[String])
 
@@ -24,14 +24,14 @@ def parseMessyInput(input: String): List[Entry] = {
   case class UnlabeledLine(content: String) extends MessyInputLine
   case class CityLine(content: String) extends MessyInputLine
 
-  val lines = input.split(""\n"").toList
+  val lines = input.split("\n").toList
 
   // a helper function for checking whether a line starts with a label
   def tryParseLabeledLine
     (label: String, line: String)
     (cons: String => MessyInputLine)
   : Option[MessyInputLine] = {
-    if (line.startsWith(label + "":"")) {
+    if (line.startsWith(label + ":")) {
       Some(cons(line.drop(label.size + 1)))
     } else {
       None
@@ -40,9 +40,9 @@ def parseMessyInput(input: String): List[Entry] = {
 
   val messyLines: List[MessyInputLine] = for (line <- lines) yield {
     (
-      tryParseLabeledLine(""Name"", line){NameLine(_)} orElse
-      tryParseLabeledLine(""City"", line){CityLine(_)} orElse
-      tryParseLabeledLine(""ID"", line){IdLine(_)}
+      tryParseLabeledLine("Name", line){NameLine(_)} orElse
+      tryParseLabeledLine("City", line){CityLine(_)} orElse
+      tryParseLabeledLine("ID", line){IdLine(_)}
     ).getOrElse(UnlabeledLine(line))
   }
 
@@ -73,8 +73,8 @@ def parseMessyInput(input: String): List[Entry] = {
       val (namesContent, citiesRest) = readUntilNextLabel(namesCitiesRest)
       val (citiesContent, rest) = readUntilNextLabel(citiesRest)
       val id = idContent.head.trim
-      val names = namesContent.map(_.split("","").map(_.trim).toList).flatten
-      val cities = citiesContent.map(_.split("","").map(_.trim).toList).flatten
+      val names = namesContent.map(_.split(",").map(_.trim).toList).flatten
+      val cities = citiesContent.map(_.split(",").map(_.trim).toList).flatten
       Entry(id, names, cities) :: combineToEntries(rest)
     }
   }
@@ -89,6 +89,6 @@ val entries = parseMessyInput(input)
 // output
 for (Entry(id, names, cities) <- entries) {
   println(id)
-  println(names.mkString("", ""))
-  println(cities.mkString("", ""))
+  println(names.mkString(", "))
+  println(cities.mkString(", "))
 }

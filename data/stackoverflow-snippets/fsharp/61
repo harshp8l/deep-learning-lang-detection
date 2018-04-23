@@ -26,20 +26,20 @@ type FormLayout<'a> = {
     Form : Form<'a>
 }
 
-let form action x = tag ""form"" [""method"", ""POST""; ""action"", action] x
-let submitInput value = input [""type"", ""submit""; ""value"", value]
+let form action x = tag "form" ["method", "POST"; "action", action] x
+let submitInput value = input ["type", "submit"; "value", value]
 
 let renderForm action (layout : FormLayout<_>) =    
     form action [
         for set in layout.Fieldsets -> 
-            tag ""fieldset"" [] [
-                yield tag ""legend"" [] [Text set.Legend]
+            tag "fieldset" [] [
+                yield tag "legend" [] [Text set.Legend]
 
                 for field in set.Fields do
-                    yield div [""class"", ""editor-label""] [
+                    yield div ["class", "editor-label"] [
                         Text field.Label
                     ]
-                    yield div [""class"", ""editor-field""] [
+                    yield div ["class", "editor-field"] [
                         field.Html layout.Form
                     ]
             ]
@@ -60,37 +60,37 @@ let bindToForm form handler =
     bindReq (bindForm form) handler BAD_REQUEST
 
 let firstHandle first = 
-    printfn ""first = %A"" first
-    Redirection.FOUND ""/""
+    printfn "first = %A" first
+    Redirection.FOUND "/"
 
 let secondHandle second = 
-    printfn ""second = %A"" second
-    Redirection.FOUND ""/""
+    printfn "second = %A" second
+    Redirection.FOUND "/"
 
 let page = 
     html [] [
         head [] [ ]
         body [] [
             div [][
-                renderForm ""first""
+                renderForm "first"
                     { Form = firstForm
                       Fieldsets = 
-                        [ { Legend = ""1""
+                        [ { Legend = "1"
                             Fields = 
-                              [ { Label = ""Text""
+                              [ { Label = "Text"
                                   Html = Form.input (fun f -> <@ f.First @>) []  }
                                   ] }]
-                      SubmitText = ""Submit"" }
+                      SubmitText = "Submit" }
 
-                renderForm ""second""
+                renderForm "second"
                     { Form = secondForm
                       Fieldsets = 
-                        [ { Legend = ""2""
+                        [ { Legend = "2"
                             Fields = 
-                              [ { Label = ""Decimal""
+                              [ { Label = "Decimal"
                                   Html = Form.input (fun f -> <@ f.Second @>) [] }
                                   ] }]
-                      SubmitText = ""Submit"" }
+                      SubmitText = "Submit" }
             ]
         ]
     ]
@@ -100,8 +100,8 @@ let webpart =
     choose [
         GET >=> OK page
         POST >=> choose 
-            [ path ""/first"" >=> (bindToForm firstForm firstHandle)
-              path ""/second"" >=> (bindToForm secondForm secondHandle) ]
+            [ path "/first" >=> (bindToForm firstForm firstHandle)
+              path "/second" >=> (bindToForm secondForm secondHandle) ]
     ]
 
 startWebServer defaultConfig webpart

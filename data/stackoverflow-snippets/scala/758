@@ -6,8 +6,8 @@ import scala.collection.generic.CanBuildFrom
 case class MyCollection[C[A] <: Traversable[A]](stuff: C[String])
 
 
-val innerV = MyCollection(Vector(""a"")).stuff
-val innerL = MyCollection(List(""b"")).stuff
+val innerV = MyCollection(Vector("a")).stuff
+val innerL = MyCollection(List("b")).stuff
 
 object MyCollection {
 
@@ -16,7 +16,7 @@ object MyCollection {
   : Decoder[MyCollection[C]] = {
     new Decoder[MyCollection[C]] {
       override def apply(c: HCursor) = {
-        c.downField(""stuff"").as[C[String]](Decoder.decodeTraversable[String, C](
+        c.downField("stuff").as[C[String]](Decoder.decodeTraversable[String, C](
           implicitly,
           // this thing cannot be generated 
           // if you know nothing about `C` except
@@ -31,7 +31,7 @@ object MyCollection {
 def getMyCollection[C[A] <: Traversable[A]]
   (implicit cbf: CanBuildFrom[Nothing, String, C[String]])
 : MyCollection[C] = {
-  val jsonString = """"""{ ""stuff"": [""a"",""b""] }""""""
+  val jsonString = """{ "stuff": ["a","b"] }"""
   val json = io.circe.parser.parse(jsonString).right.get
   json.as[MyCollection[C]].right.get
 }

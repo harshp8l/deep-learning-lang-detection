@@ -7,9 +7,9 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    QSerialPort master(""/dev/ptmx"");
+    QSerialPort master("/dev/ptmx");
     if(!master.open(QSerialPort::ReadWrite))
-        std::cout<<""The master port was not opened"";
+        std::cout<<"The master port was not opened";
 
     int master_fd = master.handle();
 
@@ -28,16 +28,16 @@ int main(int argc, char *argv[])
         return -1;
 
     // open slave
-    std::cout << ""Slave pseudoterminal: "" << ptsname_buffer << std::endl;
+    std::cout << "Slave pseudoterminal: " << ptsname_buffer << std::endl;
     QSerialPort slave(ptsname_buffer);
     if(!slave.open(QSerialPort::ReadWrite))
-        std::cout<<""The slave port was not opened"";
+        std::cout<<"The slave port was not opened";
 
     QObject::connect(&slave, &QSerialPort::readyRead, [&](){
-        std::cout << ""Received: "" << slave.readAll().toStdString() << std::endl;
+        std::cout << "Received: " << slave.readAll().toStdString() << std::endl;
         a.quit();
     });
     // test communication
-    master.write(""Hello World"");
+    master.write("Hello World");
     return a.exec();
 }

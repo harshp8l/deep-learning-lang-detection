@@ -8,19 +8,19 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 
-val confPath = getClass.getResource(""/application.conf"")
+val confPath = getClass.getResource("/application.conf")
 val config = ConfigFactory.parseFile(new File(confPath.getPath)).resolve()
-val db = Database.forConfig(""slick.db"", config)
+val db = Database.forConfig("slick.db", config)
 
-implicit val system = ActorSystem(""testSystem"")
+implicit val system = ActorSystem("testSystem")
 implicit val executionContext = system.dispatcher
 
 case class AnyData(a: String, b: String)
 case class GroupByFields(a: Option[String], b: Option[String])
 
-class AnyTable(tag: Tag) extends Table[AnyData](tag, ""macro""){
-  def a = column[String](""a"")
-  def b = column[String](""b"")
+class AnyTable(tag: Tag) extends Table[AnyData](tag, "macro"){
+  def a = column[String]("a")
+  def b = column[String]("b")
   def * = (a, b) <> ((AnyData.apply _).tupled, AnyData.unapply)
 }
 
@@ -29,7 +29,7 @@ val table = TableQuery[AnyTable]
 def groupByDynamically(groupBys: Seq[String]): DBIO[Seq[GroupByFields]] = {
   // ensures columns are returned in the right order
   def selectGroups(g: Map[String, Rep[Option[String]]]) = {
-    (g.getOrElse(""a"", Rep.None[String]), g.getOrElse(""b"", Rep.None[String])).mapTo[GroupByFields]
+    (g.getOrElse("a", Rep.None[String]), g.getOrElse("b", Rep.None[String])).mapTo[GroupByFields]
   }
 
   val grouped = if (groupBys.lengthCompare(2) == 0) {
@@ -49,10 +49,10 @@ def groupByDynamically(groupBys: Seq[String]): DBIO[Seq[GroupByFields]] = {
 
 val actions = for {
   _ <- table.schema.create
-  _ <- table.map(a => (a.column[String](""a""), a.column[String](""b""))) += (""a1"", ""b1"")
-  _ <- table.map(a => (a.column[String](""a""), a.column[String](""b""))) += (""a2"", ""b2"")
-  _ <- table.map(a => (a.column[String](""a""), a.column[String](""b""))) += (""a2"", ""b3"")
-  queryResult <- groupByDynamically(Seq(""b"", ""a""))
+  _ <- table.map(a => (a.column[String]("a"), a.column[String]("b"))) += ("a1", "b1")
+  _ <- table.map(a => (a.column[String]("a"), a.column[String]("b"))) += ("a2", "b2")
+  _ <- table.map(a => (a.column[String]("a"), a.column[String]("b"))) += ("a2", "b3")
+  queryResult <- groupByDynamically(Seq("b", "a"))
 } yield queryResult
 
 val result: Future[Seq[GroupByFields]] = db.run(actions.transactionally)

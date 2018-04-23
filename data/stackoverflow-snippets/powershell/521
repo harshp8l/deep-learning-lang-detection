@@ -5,14 +5,14 @@ $Forest = [System.DirectoryServices.ActiveDirectory.Forest]::GetCurrentForest()
 #Get trusts from each domain in the forest -- this will include forest trusts
 ForEach($Domain in $Forest.Domains) {
     $adsisearcher = New-Object system.directoryservices.directorysearcher
-    $adsisearcher.SearchRoot = [ADSI]""LDAP://CN=System,$($Domain.GetDirectoryEntry().distinguishedName)""
-    $adsisearcher.Filter = ""(objectclass=trustedDomain)""
+    $adsisearcher.SearchRoot = [ADSI]"LDAP://CN=System,$($Domain.GetDirectoryEntry().distinguishedName)"
+    $adsisearcher.Filter = "(objectclass=trustedDomain)"
     ForEach($ExtDomain in $adsisearcher.FindAll()) {
-        $name = $ExtDomain.Properties[""name""][0]
-        ""Found $($name)""
-        $sid = New-Object System.Security.Principal.SecurityIdentifier ($ExtDomain.Properties[""securityidentifier""][0], 0)
+        $name = $ExtDomain.Properties["name"][0]
+        "Found $($name)"
+        $sid = New-Object System.Security.Principal.SecurityIdentifier ($ExtDomain.Properties["securityidentifier"][0], 0)
         if (-not $DomainSIDList.Contains($sid.Value)) {
-            ""Adding $($sid.Value), $($name)""
+            "Adding $($sid.Value), $($name)"
             $DomainSIDList.Add($sid.Value, $name)
         }
     }

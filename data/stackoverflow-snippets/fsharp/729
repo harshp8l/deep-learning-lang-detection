@@ -11,7 +11,7 @@ let collectionCount () =
   GC.CollectionCount 0 + GC.CollectionCount 1 + GC.CollectionCount 2
 
 let timeIt (n : string) (outer : int) (a : unit -> 'T) : 'T*int64 =
-  printfn ""Timing '%s'..."" n
+  printfn "Timing '%s'..." n
 
   let v = a ()
 
@@ -20,7 +20,7 @@ let timeIt (n : string) (outer : int) (a : unit -> 'T) : 'T*int64 =
     a () |> ignore
   let e = clock.ElapsedMilliseconds - t
 
-  printfn ""  took %d ms"" e
+  printfn "  took %d ms" e
 
   v, e
 
@@ -30,17 +30,17 @@ let main argv =
   let total   = 100000000
   let outers  = [|100;10000;1000000|]
 
-  use output = new StreamWriter "".\output.tsv""
-  ""Dimensions\tName\tSum\tCollectionCounts\tMilliseconds"" |> output.WriteLine
+  use output = new StreamWriter ".\output.tsv"
+  "Dimensions\tName\tSum\tCollectionCounts\tMilliseconds" |> output.WriteLine
 
   for outer in outers do
     let inner = total / outer
     let dim   = inner |> float |> sqrt |> int32
     let ar    = Array2D.init dim dim (fun _ _ -> random.NextDouble ())
 
-    printfn ""New test run, matrix dimensions are %dx%d"" dim dim 
+    printfn "New test run, matrix dimensions are %dx%d" dim dim 
 
-    let run = sprintf ""%d_%d"" dim dim
+    let run = sprintf "%d_%d" dim dim
 
     let perf_zero () : float[,] = 
       let xl = ar.GetLength(0)
@@ -104,14 +104,14 @@ let main argv =
 
     let testCases =
       [|
-        ""Creating Zero Matrix""              , perf_zero
-        ""Copying Matrix""                    , perf_copy
-        ""Mapping Matrix with id""            , perf_id
-        ""Original Algorithm""                , perf_op
-        ""Tomas Petricek Algorithm""          , perf_tp 
-        ""Modified Tomas Petricek Algorithm"" , perf_tpm
-        ""Reverse Algoritm""                  , perf_tr
-        ""Flipped x,y Algoritm""              , perf_tpmf
+        "Creating Zero Matrix"              , perf_zero
+        "Copying Matrix"                    , perf_copy
+        "Mapping Matrix with id"            , perf_id
+        "Original Algorithm"                , perf_op
+        "Tomas Petricek Algorithm"          , perf_tp 
+        "Modified Tomas Petricek Algorithm" , perf_tpm
+        "Reverse Algoritm"                  , perf_tr
+        "Flipped x,y Algoritm"              , perf_tpmf
       |]
 
     for name, a in testCases do
@@ -120,6 +120,6 @@ let main argv =
       let sum   = ref 0.
       vs |> Array2D.iter (fun v -> sum := !sum + v)
       let dcc   = collectionCount () - pcc
-      sprintf ""%s\t%s\t%f\t%d\t%d"" run name !sum dcc t |> output.WriteLine
+      sprintf "%s\t%s\t%f\t%d\t%d" run name !sum dcc t |> output.WriteLine
 
   0

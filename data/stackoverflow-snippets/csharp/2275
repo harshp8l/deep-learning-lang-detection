@@ -11,7 +11,7 @@ class HtmlPreviewVisitor : MimeVisitor
     /// <summary>
     /// Creates a new HtmlPreviewVisitor.
     /// </summary>
-    /// <param name=""tempDirectory"">A temporary directory used for storing image files.</param>
+    /// <param name="tempDirectory">A temporary directory used for storing image files.</param>
     public HtmlPreviewVisitor (string tempDirectory)
     {
         tempDir = tempDirectory;
@@ -86,10 +86,10 @@ class HtmlPreviewVisitor : MimeVisitor
         return false;
     }
 
-    // Save the image to our temp directory and return a ""file://"" url suitable for
+    // Save the image to our temp directory and return a "file://" url suitable for
     // the browser control to load.
     // Note: if you'd rather embed the image data into the HTML, you can construct a
-    // ""data:"" url instead.
+    // "data:" url instead.
     string SaveImage (MimePart image, string url)
     {
         string fileName = url.Replace (':', '_').Replace ('\\', '_').Replace ('/', '_');
@@ -101,11 +101,11 @@ class HtmlPreviewVisitor : MimeVisitor
                 image.Content.DecodeTo (output);
         }
 
-        return ""file://"" + path.Replace ('\\', '/');
+        return "file://" + path.Replace ('\\', '/');
     }
 
     // Replaces <img src=...> urls that refer to images embedded within the message with
-    // ""file://"" urls that the browser control will actually be able to load.
+    // "file://" urls that the browser control will actually be able to load.
     void HtmlTagCallback (HtmlTagContext ctx, HtmlWriter htmlWriter)
     {
         if (ctx.TagId == HtmlTagId.Image && !ctx.IsEndTag && stack.Count > 0) {
@@ -133,15 +133,15 @@ class HtmlPreviewVisitor : MimeVisitor
         } else if (ctx.TagId == HtmlTagId.Body && !ctx.IsEndTag) {
             ctx.WriteTag (htmlWriter, false);
 
-            // add and/or replace oncontextmenu=""return false;""
+            // add and/or replace oncontextmenu="return false;"
             foreach (var attribute in ctx.Attributes) {
-                if (attribute.Name.ToLowerInvariant () == ""oncontextmenu"")
+                if (attribute.Name.ToLowerInvariant () == "oncontextmenu")
                     continue;
 
                 htmlWriter.WriteAttribute (attribute);
             }
 
-            htmlWriter.WriteAttribute (""oncontextmenu"", ""return false;"");
+            htmlWriter.WriteAttribute ("oncontextmenu", "return false;");
         } else {
             // pass the tag through to the output
             ctx.WriteTag (htmlWriter, true);
@@ -166,8 +166,8 @@ class HtmlPreviewVisitor : MimeVisitor
             var flowed = new FlowedToHtml ();
             string delsp;
 
-            if (entity.ContentType.Parameters.TryGetValue (""delsp"", out delsp))
-                flowed.DeleteSpace = delsp.ToLowerInvariant () == ""yes"";
+            if (entity.ContentType.Parameters.TryGetValue ("delsp", out delsp))
+                flowed.DeleteSpace = delsp.ToLowerInvariant () == "yes";
 
             converter = flowed;
         } else {

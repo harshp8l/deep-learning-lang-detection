@@ -18,13 +18,13 @@ let functionParseXmlToExcel (fileName:string) =
         let xmlDoc = new XmlDocument()
         //////////////////////////////////////////////////Xml Path
         let mXmlPath = fileName
-        //(""C:\\Users\\rivkar\\Desktop\\My Projects\\Zmira\\XML2Excel\\"" + ""NIMO.xml"");;
+        //("C:\\Users\\rivkar\\Desktop\\My Projects\\Zmira\\XML2Excel\\" + "NIMO.xml");;
         //////////////////////////////////////////////////Load XML
         xmlDoc.Load(mXmlPath)
 
 
         //////////////////////////////Tables Nodes
-        let tablePath=""/OCEXPORT""
+        let tablePath="/OCEXPORT"
         let docTablesElement = xmlDoc.DocumentElement
         let nodeTablesList = docTablesElement.SelectSingleNode(tablePath).ChildNodes
 
@@ -36,26 +36,26 @@ let functionParseXmlToExcel (fileName:string) =
         //xlApp.Visible <- true
 
         ////////////////////////////////////Load Excel Format
-        //let xlWorkBookFormat = xlApp.Workbooks.Open(@""C:\Users\rivkar\Desktop\My Projects\Zmira\XML2Excel\nimo2_types.xlsx"")
+        //let xlWorkBookFormat = xlApp.Workbooks.Open(@"C:\Users\rivkar\Desktop\My Projects\Zmira\XML2Excel\nimo2_types.xlsx")
 
         //////////////////////////////////// Loop on Tables (Excel Sheets)
         for tabs in 1 .. nodeTablesList.Count do   
 
-            let tableNamePath=""/OCEXPORT/TABLE""
+            let tableNamePath="/OCEXPORT/TABLE"
             let docElement = xmlDoc.DocumentElement
             let nodeTableNameList = docElement.ChildNodes.[tabs-1].FirstChild
 
-            let columnsPath= tableNamePath+""/""+nodeTableNameList.Name
+            let columnsPath= tableNamePath+"/"+nodeTableNameList.Name
 
             let nodeColumsList = docElement.SelectSingleNode(columnsPath).ChildNodes
 
             let xlWorkSheetOutput = xlWorkBookOutput.Worksheets.[tabs] :?> Excel.Worksheet
             xlWorkSheetOutput.Name <- nodeTableNameList.Name
-            xlWorkSheetOutput.get_Range(""A1:Z1"").Interior.Color <- Color.SkyBlue
+            xlWorkSheetOutput.get_Range("A1:Z1").Interior.Color <- Color.SkyBlue
 
             /////////////////////////////////////Loop on Columns    
             for columns in 1.. nodeColumsList.Count do
-                     let Node = ""/OCEXPORT/TABLE/""+nodeTableNameList.Name+""/""+nodeColumsList.Item(columns-1).Name+""/text()""   
+                     let Node = "/OCEXPORT/TABLE/"+nodeTableNameList.Name+"/"+nodeColumsList.Item(columns-1).Name+"/text()"   
                      let data = [|
                           (xmlDoc.SelectNodes Node
                               |> Seq.cast<XmlNode>
@@ -69,7 +69,7 @@ let functionParseXmlToExcel (fileName:string) =
 
                      for j in 1 .. rows.Length do
                            xlWorkSheetOutput.Cells.[j+1, columns] <- rows.[j-1]
-                           xlWorkSheetOutput.Range(""A1:A100"").NumberFormat <- ""0.0""
+                           xlWorkSheetOutput.Range("A1:A100").NumberFormat <- "0.0"
 
             //if (tabs <= nodeTablesList.Count) then
             xlWorkBookOutput.Worksheets.Add(After=xlWorkBookOutput.Worksheets.[xlWorkBookOutput.Worksheets.Count])
@@ -80,7 +80,7 @@ let functionParseXmlToExcel (fileName:string) =
 
 
         ////////////////////////////Save the Excel File
-        let excelPath = ""C:\\Users\\rivkar\\Desktop\\My Projects\\Zmira\\XML2Excel\\""+DateTime.Today.ToString(""yyyy_dd_MM_BNA"")+"".xls""
+        let excelPath = "C:\\Users\\rivkar\\Desktop\\My Projects\\Zmira\\XML2Excel\\"+DateTime.Today.ToString("yyyy_dd_MM_BNA")+".xls"
         if File.Exists(excelPath) then
                  File.Delete(excelPath)
 
@@ -89,10 +89,10 @@ let functionParseXmlToExcel (fileName:string) =
 
 [<EntryPoint>]
 let main(args) =    
-    //printfn ""args: %A"" args.[0]
+    //printfn "args: %A" args.[0]
     let fName = args.[0]
-    //""C:\\Users\\rivkar\\Desktop\\My Projects\\Zmira\\XML2Excel\\NIMO.XML""
-    printfn ""%A"" (functionParseXmlToExcel fName) |> ignore
+    //"C:\\Users\\rivkar\\Desktop\\My Projects\\Zmira\\XML2Excel\\NIMO.XML"
+    printfn "%A" (functionParseXmlToExcel fName) |> ignore
     //Console.ReadLine()
 
     0

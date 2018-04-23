@@ -20,25 +20,25 @@ subq = select([foo.c.a]).where(foo.c.b > 10).alias()
 stmt = select([
     bar.c.x,
     case([
-        (bar.c.y == 5, ""A""),
-        (bar.c.y == 10, ""B"")
-    ], else_=""C"").label(""complicated_case"").
-    comment(""comment explaining the convoluted case statement""),
-    func.row_number().over(order_by=bar.c.z).label(""complicated_row_num"").
-    comment(""comment exaplaining the convoluted window function"")
+        (bar.c.y == 5, "A"),
+        (bar.c.y == 10, "B")
+    ], else_="C").label("complicated_case").
+    comment("comment explaining the convoluted case statement"),
+    func.row_number().over(order_by=bar.c.z).label("complicated_row_num").
+    comment("comment exaplaining the convoluted window function")
 ]).select_from(
     bar.join(
-        subq.comment(""Comment explaining subquery and join""),
+        subq.comment("Comment explaining subquery and join"),
         bar.c.x == subq.c.a
     )
 ).where(
     exists([foo.c.b]).where(foo.c.a == bar.c.y).
-    comment(""comment explaining the purpose of the EXISTS clause"")
+    comment("comment explaining the purpose of the EXISTS clause")
 )
 
 print stmt
 
-""""""
+"""
 
 output:
 
@@ -58,4 +58,4 @@ EXISTS (SELECT foo.b
 FROM foo
 WHERE foo.a = bar.y)
 
-""""""
+"""

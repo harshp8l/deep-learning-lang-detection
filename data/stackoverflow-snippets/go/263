@@ -1,13 +1,13 @@
 package main
 
 import (
-    ""bytes""
-    ""encoding/json""
-    ""fmt""
-    ""io/ioutil""
-    ""log""
-    ""net/http""
-    ""net/http/httputil""
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "io/ioutil"
+    "log"
+    "net/http"
+    "net/http/httputil"
 )
 
 type token struct {
@@ -24,7 +24,7 @@ func main() {
         log.Fatal(err)
     }
 
-    config, err := getConfig(""foo"", token)
+    config, err := getConfig("foo", token)
     if err != nil {
         log.Fatal(err)
     }
@@ -33,36 +33,36 @@ func main() {
 }
 
 func getAuthToken() (string, error) {
-    endpoint := ""foo""
+    endpoint := "foo"
 
     body := struct {
-        UserName string `json:""username""`
-        Password string `json:""password""`
+        UserName string `json:"username"`
+        Password string `json:"password"`
     }{
-        UserName: ""foo"",
-        Password: ""bar"",
+        UserName: "foo",
+        Password: "bar",
     }
     var token token
 
     err := sendRequest(endpoint, body, &token)
     if err != nil {
-        return """", err
+        return "", err
     }
 
     return token.Token, nil
 }
 
 func getConfig(id string, token string) (*config, error) {
-    endpoint := ""foo""
+    endpoint := "foo"
 
     body := struct {
-        ID string `json:""id""`
+        ID string `json:"id"`
     }{
         ID: id,
     }
     var config config
 
-    err := sendRequest(endpoint, body, &config, header(""Content-Type"", ""application/json""))
+    err := sendRequest(endpoint, body, &config, header("Content-Type", "application/json"))
     if err != nil {
         return nil, err
     }
@@ -84,13 +84,13 @@ func sendRequest(endpoint string, body interface{}, result interface{}, options 
 
     }
 
-    req, err := http.NewRequest(""POST"", endpoint, bytes.NewReader(jsnBytes))
+    req, err := http.NewRequest("POST", endpoint, bytes.NewReader(jsnBytes))
     if err != nil {
-        return fmt.Errorf(""Unable to create request. %v"", err)
+        return fmt.Errorf("Unable to create request. %v", err)
 
     }
 
-    req.Header.Add(""Content-Type"", ""application/json"")
+    req.Header.Add("Content-Type", "application/json")
     for _, option := range options {
         option(req)
     }
@@ -98,28 +98,28 @@ func sendRequest(endpoint string, body interface{}, result interface{}, options 
 
     dump, err := httputil.DumpRequest(req, true)
     if err != nil {
-        return fmt.Errorf(""Could not dump request. "", err)
+        return fmt.Errorf("Could not dump request. ", err)
     }
 
-    log.Println(""Request: "", string(dump))
+    log.Println("Request: ", string(dump))
 
     client := http.Client{}
-    log.Println(""Initiating http request"")
+    log.Println("Initiating http request")
 
     resp, err := client.Do(req)
     if err != nil {
-        return fmt.Errorf(""HTTP Error: %v"", err)
+        return fmt.Errorf("HTTP Error: %v", err)
     }
     defer resp.Body.Close()
 
     bytes, err := ioutil.ReadAll(resp.Body)
     if err != nil {
-        return fmt.Errorf(""Error reading response body: %v"", err)
+        return fmt.Errorf("Error reading response body: %v", err)
     }
 
     err = json.Unmarshal(bytes, result)
     if err != nil {
-        return fmt.Errorf(""Could not unamrshal json. "", err)
+        return fmt.Errorf("Could not unamrshal json. ", err)
     }
     return nil
 }

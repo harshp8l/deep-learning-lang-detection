@@ -1,27 +1,27 @@
 import spark.implicits._
 
 val df_a = Seq(
-  (1, ""a"", ""bob"", ""nj""),
-  (2, ""b"", ""sue"", ""ma"")
-).toDF(""id1"", ""id2"", ""name"", ""state"")
+  (1, "a", "bob", "nj"),
+  (2, "b", "sue", "ma")
+).toDF("id1", "id2", "name", "state")
 
 val df_b = Seq(
-  (1, ""a"", ""bob"", ""fl""),
-  (2, ""b"", ""susane"", ""ma"")
-).toDF(""id1"", ""id2"", ""name"", ""state"")
+  (1, "a", "bob", "fl"),
+  (2, "b", "susane", "ma")
+).toDF("id1", "id2", "name", "state")
 
 val compareFields = udf((aName:String,aState:String,bName:String,bState:String) => {
-  val changedState = if (aState != bState) Some(""state"") else None
-  val changedName = if (aName != bName) Some(""name"") else None
-  Seq(changedName, changedState).flatten.mkString("","")
+  val changedState = if (aState != bState) Some("state") else None
+  val changedName = if (aName != bName) Some("name") else None
+  Seq(changedName, changedState).flatten.mkString(",")
  }
 )
 
 
-df_b.as(""b"")
+df_b.as("b")
 .join(
-   df_a.as(""a""), Seq(""id1"", ""id2"")
+   df_a.as("a"), Seq("id1", "id2")
 )
-.withColumn(""changed_fields"",compareFields($""a.name"",$""a.state"",$""b.name"",$""b.state""))
-.select($""id1"",$""id2"",$""b.name"",$""b.state"",$""changed_fields"")
+.withColumn("changed_fields",compareFields($"a.name",$"a.state",$"b.name",$"b.state"))
+.select($"id1",$"id2",$"b.name",$"b.state",$"changed_fields")
 .show()

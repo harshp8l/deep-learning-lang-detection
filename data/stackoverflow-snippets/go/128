@@ -1,21 +1,21 @@
 package main
 
 import (
-    ""fmt""
-    ""io/ioutil""
-    ""log""
-    ""net/http""
+    "fmt"
+    "io/ioutil"
+    "log"
+    "net/http"
 )
 
-const newsTargetURL = ""http://www.example.com/bd/news/home""
+const newsTargetURL = "http://www.example.com/bd/news/home"
 
 func main() {
     mux := http.NewServeMux()
 
-    mux.Handle(""/"", http.HandlerFunc(GetNews))
+    mux.Handle("/", http.HandlerFunc(GetNews))
 
     srv := &http.Server{
-        Addr:    "":2222"",
+        Addr:    ":2222",
         Handler: mux,
     }
     // output error and quit if ListenAndServe fails
@@ -24,17 +24,17 @@ func main() {
 
 func GetNews(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodGet {
-        http.Error(w, ""only get allowed"", http.StatusMethodNotAllowed)
+        http.Error(w, "only get allowed", http.StatusMethodNotAllowed)
         return
     }
 
     // build proxy url
-    urlstr := fmt.Sprintf(""%s?%s"", newsTargetURL, r.URL.RawQuery)
+    urlstr := fmt.Sprintf("%s?%s", newsTargetURL, r.URL.RawQuery)
 
     // request the proxy url
     resp, err := http.Get(urlstr)
     if err != nil {
-        http.Error(w, fmt.Sprintf(""error creating request to %s"", urlstr), http.StatusInternalServerError)
+        http.Error(w, fmt.Sprintf("error creating request to %s", urlstr), http.StatusInternalServerError)
         return
     }
     // make sure body gets closed when this function exits
@@ -43,7 +43,7 @@ func GetNews(w http.ResponseWriter, r *http.Request) {
     // read entire response body
     body, err := ioutil.ReadAll(resp.Body)
     if err != nil {
-        http.Error(w, ""error reading response body"", http.StatusInternalServerError)
+        http.Error(w, "error reading response body", http.StatusInternalServerError)
         return
     }
 

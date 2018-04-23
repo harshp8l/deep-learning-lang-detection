@@ -18,7 +18,7 @@ and StreamPosition =
 
   member x.ReadBytes (size : int) : StreamPosition*StreamReaderResult<byte[]> =
     if x.Remaining < size then
-      x, Failure [""EOS"", x]
+      x, Failure ["EOS", x]
     else
       let nsp = StreamPosition.New x.Stream (x.Position + size)
       nsp, Success (x.Stream.[x.Position..(x.Position + size - 1)])
@@ -26,7 +26,7 @@ and StreamPosition =
   member x.Read (converter : byte[]*int -> 'T) : StreamPosition*StreamReaderResult<'T> =
     let size = sizeof<'T>
     if x.Remaining < size then
-      x, Failure [""EOS"", x]
+      x, Failure ["EOS", x]
     else
       let nsp = StreamPosition.New x.Stream (x.Position + size)
       nsp, Success (converter (x.Stream, x.Position))
@@ -95,6 +95,6 @@ let main argv =
   let bytes   = [|2;0;0;0;3;0;0;0;1;2;3;4;5;6|] |> Array.map byte
   let result  = read readImage bytes 0
 
-  printfn ""%A"" result
+  printfn "%A" result
 
   0

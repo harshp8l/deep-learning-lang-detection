@@ -4,7 +4,7 @@ public class Certificate
 
     public void LoadCertificate()
     {
-        string certificate = ""-----BEGIN CERTIFICATE-----certificate data -----END CERTIFICATE-----"";
+        string certificate = "-----BEGIN CERTIFICATE-----certificate data -----END CERTIFICATE-----";
         cert = new X509Certificate2(certificate);
         cert.Import(StringToByteArray(certificate));
     }
@@ -57,10 +57,10 @@ public class Response
         bool status = true;
 
         XmlNamespaceManager manager = new XmlNamespaceManager(xmlDoc.NameTable);
-        manager.AddNamespace(""ds"", SignedXml.XmlDsigNamespaceUrl);
-        manager.AddNamespace(""saml"", ""urn:oasis:names:tc:SAML:2.0:assertion"");
-        manager.AddNamespace(""samlp"", ""urn:oasis:names:tc:SAML:2.0:protocol"");
-        XmlNodeList nodeList = xmlDoc.SelectNodes(""//ds:Signature"", manager);
+        manager.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
+        manager.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+        manager.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
+        XmlNodeList nodeList = xmlDoc.SelectNodes("//ds:Signature", manager);
 
         SignedXml signedXml = new SignedXml(xmlDoc);
         signedXml.LoadXml((XmlElement)nodeList[0]);
@@ -79,14 +79,14 @@ public class Response
     public DateTime? NotBefore()
     {
         XmlNamespaceManager manager = new XmlNamespaceManager(xmlDoc.NameTable);
-        manager.AddNamespace(""saml"", ""urn:oasis:names:tc:SAML:2.0:assertion"");
-        manager.AddNamespace(""samlp"", ""urn:oasis:names:tc:SAML:2.0:protocol"");
+        manager.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+        manager.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 
-        var nodes = xmlDoc.SelectNodes(""/samlp:Response/saml:Assertion/saml:Conditions"", manager);
+        var nodes = xmlDoc.SelectNodes("/samlp:Response/saml:Assertion/saml:Conditions", manager);
         string value = null;
-        if (nodes != null && nodes.Count > 0 && nodes[0] != null && nodes[0].Attributes != null && nodes[0].Attributes[""NotBefore""] != null)
+        if (nodes != null && nodes.Count > 0 && nodes[0] != null && nodes[0].Attributes != null && nodes[0].Attributes["NotBefore"] != null)
         {
-            value = nodes[0].Attributes[""NotBefore""].Value;
+            value = nodes[0].Attributes["NotBefore"].Value;
         }
         return value != null ? DateTime.Parse(value) : (DateTime?)null;
     }
@@ -94,14 +94,14 @@ public class Response
     public DateTime? NotOnOrAfter()
     {
         XmlNamespaceManager manager = new XmlNamespaceManager(xmlDoc.NameTable);
-        manager.AddNamespace(""saml"", ""urn:oasis:names:tc:SAML:2.0:assertion"");
-        manager.AddNamespace(""samlp"", ""urn:oasis:names:tc:SAML:2.0:protocol"");
+        manager.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+        manager.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 
-        var nodes = xmlDoc.SelectNodes(""/samlp:Response/saml:Assertion/saml:Conditions"", manager);
+        var nodes = xmlDoc.SelectNodes("/samlp:Response/saml:Assertion/saml:Conditions", manager);
         string value = null;
-        if (nodes != null && nodes.Count > 0 && nodes[0] != null && nodes[0].Attributes != null && nodes[0].Attributes[""NotOnOrAfter""] != null)
+        if (nodes != null && nodes.Count > 0 && nodes[0] != null && nodes[0].Attributes != null && nodes[0].Attributes["NotOnOrAfter"] != null)
         {
-            value = nodes[0].Attributes[""NotOnOrAfter""].Value;
+            value = nodes[0].Attributes["NotOnOrAfter"].Value;
         }
         return value != null ? DateTime.Parse(value) : (DateTime?)null;
     }
@@ -109,11 +109,11 @@ public class Response
     public string GetNameID()
     {
         XmlNamespaceManager manager = new XmlNamespaceManager(xmlDoc.NameTable);
-        manager.AddNamespace(""ds"", SignedXml.XmlDsigNamespaceUrl);
-        manager.AddNamespace(""saml"", ""urn:oasis:names:tc:SAML:2.0:assertion"");
-        manager.AddNamespace(""samlp"", ""urn:oasis:names:tc:SAML:2.0:protocol"");
+        manager.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
+        manager.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+        manager.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 
-        XmlNode node = xmlDoc.SelectSingleNode(""/samlp:Response/saml:Assertion/saml:Subject/saml:NameID"", manager);
+        XmlNode node = xmlDoc.SelectSingleNode("/samlp:Response/saml:Assertion/saml:Subject/saml:NameID", manager);
         return node.InnerText;
     }
 }
@@ -132,8 +132,8 @@ public class AuthRequest
     public AuthRequest()
     {
 
-        id = ""_"" + System.Guid.NewGuid().ToString();
-        issue_instant = DateTime.Now.ToUniversalTime().ToString(""yyyy-MM-ddTHH:mm:ssZ"");
+        id = "_" + System.Guid.NewGuid().ToString();
+        issue_instant = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ");
     }
 
     public string GetRequest(AuthRequestFormat format)
@@ -145,32 +145,32 @@ public class AuthRequest
 
             using (XmlWriter xw = XmlWriter.Create(sw, xws))
             {
-                xw.WriteStartElement(""samlp"", ""AuthnRequest"", ""urn:oasis:names:tc:SAML:2.0:protocol"");
-                xw.WriteAttributeString(""ID"", id);
-                xw.WriteAttributeString(""Version"", ""2.0"");
-                xw.WriteAttributeString(""IssueInstant"", issue_instant);
-                xw.WriteAttributeString(""ProtocolBinding"", ""urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"");
-                xw.WriteAttributeString(""AssertionConsumerServiceURL"", ""http://localhost/SAML2/POST""); // service provider url to consume token . it should be post method
-                xw.WriteAttributeString(""Destination"", ""http://myshibboleth.idp.com/idp/profile/SAML2/Redirect/SSO"");
+                xw.WriteStartElement("samlp", "AuthnRequest", "urn:oasis:names:tc:SAML:2.0:protocol");
+                xw.WriteAttributeString("ID", id);
+                xw.WriteAttributeString("Version", "2.0");
+                xw.WriteAttributeString("IssueInstant", issue_instant);
+                xw.WriteAttributeString("ProtocolBinding", "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST");
+                xw.WriteAttributeString("AssertionConsumerServiceURL", "http://localhost/SAML2/POST"); // service provider url to consume token . it should be post method
+                xw.WriteAttributeString("Destination", "http://myshibboleth.idp.com/idp/profile/SAML2/Redirect/SSO");
 
-                //xw.WriteAttributeString(""AssertionConsumerServiceURL"", ConfigurationManager.AppSettings[""AssertionConsumerServiceURL""]);
-                //xw.WriteAttributeString(""Destination"", ConfigurationManager.AppSettings[""Destination""]);
+                //xw.WriteAttributeString("AssertionConsumerServiceURL", ConfigurationManager.AppSettings["AssertionConsumerServiceURL"]);
+                //xw.WriteAttributeString("Destination", ConfigurationManager.AppSettings["Destination"]);
 
 
-                xw.WriteStartElement(""saml"", ""Issuer"", ""urn:oasis:names:tc:SAML:2.0:assertion"");
-                xw.WriteString(""http://localhost"");  // service provider home url
+                xw.WriteStartElement("saml", "Issuer", "urn:oasis:names:tc:SAML:2.0:assertion");
+                xw.WriteString("http://localhost");  // service provider home url
                 xw.WriteEndElement();
 
-                xw.WriteStartElement(""samlp"", ""NameIDPolicy"", ""urn:oasis:names:tc:SAML:2.0:protocol"");
+                xw.WriteStartElement("samlp", "NameIDPolicy", "urn:oasis:names:tc:SAML:2.0:protocol");
 
-                xw.WriteAttributeString(""AllowCreate"", ""true"");
+                xw.WriteAttributeString("AllowCreate", "true");
                 xw.WriteEndElement();
 
-                //xw.WriteStartElement(""samlp"", ""RequestedAuthnContext"", ""urn:oasis:names:tc:SAML:2.0:protocol"");
-                //xw.WriteAttributeString(""Comparison"", ""exact"");
+                //xw.WriteStartElement("samlp", "RequestedAuthnContext", "urn:oasis:names:tc:SAML:2.0:protocol");
+                //xw.WriteAttributeString("Comparison", "exact");
 
-                //xw.WriteStartElement(""saml"", ""AuthnContextClassRef"", ""urn:oasis:names:tc:SAML:2.0:assertion"");
-                //xw.WriteString(""urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"");
+                //xw.WriteStartElement("saml", "AuthnContextClassRef", "urn:oasis:names:tc:SAML:2.0:assertion");
+                //xw.WriteString("urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport");
                 //xw.WriteEndElement();
 
                 xw.WriteEndElement(); // RequestedAuthnContext

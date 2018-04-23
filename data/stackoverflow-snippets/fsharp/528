@@ -10,7 +10,7 @@ module ActionResult =
     let ofAsync (res: Async<IActionResult>) =
         res |> Async.StartAsTask
 
-[<Route(""api/[controller]"")>]
+[<Route("api/[controller]")>]
 type FSToDoController(commands: IToDoCommands, queries: IToDoQueries) =
     inherit Controller()
 
@@ -20,7 +20,7 @@ type FSToDoController(commands: IToDoCommands, queries: IToDoQueries) =
             let! data = queries.GetAll()
             return JsonResult(data) :> _ } 
 
-    [<HttpGet(""{id}"", Name = ""GetFsToDo"")>]
+    [<HttpGet("{id}", Name = "GetFsToDo")>]
     member this.Get(id) =
         ActionResult.ofAsync <| async {
             let! res = queries.Find id
@@ -38,11 +38,11 @@ type FSToDoController(commands: IToDoCommands, queries: IToDoQueries) =
                 let item = { item with Id = Guid.NewGuid() |> string }
                 do! commands.Add item
                 let rv = RouteValueDictionary()
-                rv.Add(""id"",item.Id)
-                return this.CreatedAtRoute(""GetFsToDo"", rv, item) :> _ } 
+                rv.Add("id",item.Id)
+                return this.CreatedAtRoute("GetFsToDo", rv, item) :> _ } 
 
     // update
-    [<HttpPut(""{id}"")>]
+    [<HttpPut("{id}")>]
     member this.Put(id:String, [<FromBody>] item:ToDoItem) =
         ActionResult.ofAsync <| async {
             if (not this.ModelState.IsValid) || String.IsNullOrEmpty item.Id then

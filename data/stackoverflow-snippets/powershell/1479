@@ -2,11 +2,11 @@ $processes = Get-Process *
 $processHt = @{}                                 # empty hash table
 foreach ($process in $processes) {
   foreach ($thread in $process.Threads) {   
-    if($thread.ThreadState -eq ""Wait"") {
+    if($thread.ThreadState -eq "Wait") {
       if ( $processHt.Containskey( $process.Name ) ) {
         if ( $processHt[$process.Name] -match $($thread.WaitReason.ToString()) ) {
         } else {
-          $processHt[$process.Name] += "",$($thread.WaitReason.ToString())""
+          $processHt[$process.Name] += ",$($thread.WaitReason.ToString())"
         }
       } else {
         $processHt.Add( $process.Name , $thread.WaitReason.ToString() )
@@ -15,9 +15,9 @@ foreach ($process in $processes) {
   }
 }
 
-""`n=== all threads suspended ===""
+"`n=== all threads suspended ==="
 $processHt.Keys | Where-Object { $processHt[$_] -eq 'Suspended' }
-""`n=== some thread suspended ===""
+"`n=== some thread suspended ==="
 $processHt.Keys | Where-Object { $processHt[$_] -match 'Suspended' } | 
   ForEach-Object { @{ $_ = $processHt[$_] } } |
   Format-Table -AutoSize -HideTableHeaders       # merely for simple output look 

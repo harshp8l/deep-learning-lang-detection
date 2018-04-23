@@ -11,17 +11,17 @@ object checkDFSchema extends App {
   val sc = new SparkContext(cc)
   val sparkSession = SparkSession.builder().enableHiveSupport().getOrCreate()
   //First option for creating hive table through dataframe 
-  val DF = sparkSession.sql(""select * from salary"")
-  DF.createOrReplaceTempView(""tempTable"")
-  sparkSession.sql(""Create table yourtable as select * form tempTable"")
+  val DF = sparkSession.sql("select * from salary")
+  DF.createOrReplaceTempView("tempTable")
+  sparkSession.sql("Create table yourtable as select * form tempTable")
   //Second option for creating hive table from schema
-  val oldDFF = sparkSession.sql(""select * from salary"")
+  val oldDFF = sparkSession.sql("select * from salary")
   //Generate the schema out of dataframe  
   val schema = oldDFF.schema
   //Generate RDD of you data 
-  val rowRDD = sc.parallelize(Seq(Row(100, ""a"", 123)))
+  val rowRDD = sc.parallelize(Seq(Row(100, "a", 123)))
   //Creating new DF from data and schema 
   val newDFwithSchema = sparkSession.createDataFrame(rowRDD, schema)
-  newDFwithSchema.createOrReplaceTempView(""tempTable"")
-  sparkSession.sql(""create table FinalTable AS select * from tempTable"")
+  newDFwithSchema.createOrReplaceTempView("tempTable")
+  sparkSession.sql("create table FinalTable AS select * from tempTable")
 }

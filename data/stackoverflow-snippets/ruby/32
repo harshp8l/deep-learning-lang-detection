@@ -1,4 +1,4 @@
-require ""net/http""
+require "net/http"
 require 'uri'
 
 module FetchUtil
@@ -14,14 +14,14 @@ module FetchUtil
 
       # First make a HEAD request and check the content-length
       check_res = http.request_head(uri.path)
-      raise ""File too big"" if check_res['content-length'].to_i > max_bytes
+      raise "File too big" if check_res['content-length'].to_i > max_bytes
 
       # Then fetch in chunks and bail on either timeout or max_bytes
       # (Note: timeout won't work unless bytes are streaming in...)
       http.request_get(uri.path) do |res|
         res.read_body do |chunk|
-          raise ""Timeout error"" if (Time.now().to_f-t0 > timeout_sec)
-          raise ""Filesize exceeded"" if (body.length+chunk.length > max_bytes)
+          raise "Timeout error" if (Time.now().to_f-t0 > timeout_sec)
+          raise "Filesize exceeded" if (body.length+chunk.length > max_bytes)
           body += chunk
         end
       end

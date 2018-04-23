@@ -8,18 +8,18 @@ _pingAndLog(){                   # $1 is the server ip list
   while :; do
     while read -r ip || [[ -n $ip ]]; do
       if ping -c1 $ip >/dev/null 2>&1; then
-        echo ""`date +%H:%M`: $ip is up""
+        echo "`date +%H:%M`: $ip is up"
       else
-        echo ""`date +%H:%M`: $ip is down""
+        echo "`date +%H:%M`: $ip is down"
       fi >>pingtest-`date +%F`.log
-    done <""$1""                   # $1 = ip list
-    sleep ""$t""
+    done <"$1"                   # $1 = ip list
+    sleep "$t"
   done
 }
 
 _killOldLog(){
   while :; do
-    # use ""-mtime +7"" to find old files, 7 days
+    # use "-mtime +7" to find old files, 7 days
     find . -type f -mtime +7 -name 'pingtest-*\.log' -delete
     sleep 24h
   done
@@ -31,8 +31,8 @@ _cleanUp(){
 }
 
 for s in *\.list; do             # for each file ip list
-  [[ ""$s"" = '*.list' ]] && break # no file found, then quit
-  _pingAndLog ""$s"" & p+=($!)     # run in background, remember pid
+  [[ "$s" = '*.list' ]] && break # no file found, then quit
+  _pingAndLog "$s" & p+=($!)     # run in background, remember pid
 done
 _killOldLog & p+=($!)
 

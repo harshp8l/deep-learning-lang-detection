@@ -1,39 +1,39 @@
 let private pnumeric =
     (pfloat
     .>> ws
-    |>> fun n -> Literal (Numeric n)) <!> ""pnumeric""
+    |>> fun n -> Literal (Numeric n)) <!> "pnumeric"
 
 let private pboolean =
     (choice [
-        (stringReturn ""true"" (Literal (Boolean true)))
-        (stringReturn ""false"" (Literal (Boolean false)))
+        (stringReturn "true" (Literal (Boolean true)))
+        (stringReturn "false" (Literal (Boolean false)))
     ]
-    .>> ws) <!> ""pboolean""
+    .>> ws) <!> "pboolean"
 
 let private pstringliteral =
     (choice [
-        between (pstring ""\"""") (pstring ""\"""") (manyChars (satisfy (fun c -> c <> '""')))
-        between (pstring ""'"") (pstring ""'"") (manyChars (satisfy (fun c -> c <> ''')))
+        between (pstring "\"") (pstring "\"") (manyChars (satisfy (fun c -> c <> '"')))
+        between (pstring "'") (pstring "'") (manyChars (satisfy (fun c -> c <> ''')))
     ]
-    |>> fun s -> Literal (String s))  <!> ""pstringliteral""
+    |>> fun s -> Literal (String s))  <!> "pstringliteral"
 
 let private pidentifier =
-    (many1Satisfy2L isLetter (fun c -> isLetter c || isDigit c) ""identifier""
-    |>> fun s -> Identifier s) <!> ""pidentifier""
+    (many1Satisfy2L isLetter (fun c -> isLetter c || isDigit c) "identifier"
+    |>> fun s -> Identifier s) <!> "pidentifier"
 
 let private betweenParentheses p =
-    (between (str ""("") (str "")"") p) <!> ""betweenParentheses""
+    (between (str "(") (str ")") p) <!> "betweenParentheses"
 
 let private pvalue =
     (choice [
         pnumeric
         pboolean
-    ]) <!> ""pvalue""
+    ]) <!> "pvalue"
 
-let private negationExprParser = oppNegation.ExpressionParser <!> ""negationExprParser""
-let private logicExprParser = oppLogic.ExpressionParser <!> ""logicExprParser""
-let private arithmeticExprParser = oppArithmetic.ExpressionParser <!> ""arithmeticExprParser""
-let private negativeExprParser = oppNegative.ExpressionParser <!> ""negativeExprParser ""
+let private negationExprParser = oppNegation.ExpressionParser <!> "negationExprParser"
+let private logicExprParser = oppLogic.ExpressionParser <!> "logicExprParser"
+let private arithmeticExprParser = oppArithmetic.ExpressionParser <!> "arithmeticExprParser"
+let private negativeExprParser = oppNegative.ExpressionParser <!> "negativeExprParser "
 
 let private pexpression =
     choice [
@@ -43,32 +43,32 @@ let private pexpression =
         attempt <| negativeExprParser
         attempt <| arithmeticExprParser
         attempt <| (pidentifier |>> fun id -> Variable id)
-    ]  <!> ""pexpression""
+    ]  <!> "pexpression"
 
 let private passignment =
-    pipe2 (str ""let"" .>> ws >>. pidentifier) (ws >>. str ""be"" >>. ws >>. pexpression) (fun id exp -> Assignment (id, exp))  <!> ""passignment""
+    pipe2 (str "let" .>> ws >>. pidentifier) (ws >>. str "be" >>. ws >>. pexpression) (fun id exp -> Assignment (id, exp))  <!> "passignment"
 
 let private pprint =
-    (str ""print""
+    (str "print"
     >>. pexpression
-    |>> fun exp -> Print exp)  <!> ""pprint""
+    |>> fun exp -> Print exp)  <!> "pprint"
 
 let private pread =
-    (str ""read""
+    (str "read"
     >>. pidentifier
-    |>> fun id -> Read id)  <!> ""pread""
+    |>> fun id -> Read id)  <!> "pread"
 
 let private pstatement =
     (choice [
         passignment
         pprint
         pread
-    ])   <!> ""pstatement""
+    ])   <!> "pstatement"
 
 let private pline =
     (skipMany (satisfy (fun c -> c = '\n' || c = ' '))
     >>. pstatement
-    .>> ws)   <!> ""pline""
+    .>> ws)   <!> "pline"
 
 let private pcode =
-    many pline  <!> ""pcode""
+    many pline  <!> "pcode"

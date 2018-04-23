@@ -1,18 +1,18 @@
-SELECT html_id, REGEXP_SUBSTR(clean_html, 'src=""[^""]*\.js""', 1, LEVEL, 'i') AS match
+SELECT html_id, REGEXP_SUBSTR(clean_html, 'src="[^"]*\.js"', 1, LEVEL, 'i') AS match
   FROM (
     SELECT html_id, REGEXP_REPLACE(html_text, '<!--.*?-->', '', 1, 0, 'n') AS clean_html
       FROM (
-        SELECT 1 AS html_id, '<!------<script type=""text/javascript"" src=""js/Shop.js""></script>  -->
-        <!----<script type=""text/javascript"" src=""js/Shop.js""></script>  -->
-        <script type=""text/javascript"" src=""jquery.serialize-object.js""></script><!---->
-        <script type=""text/javascript"" src=""jquery.serialize-object.js""></script><!-- a comment -- afterwards -->
-        <script type=""text/javascript"" src=""jquery.serialize-object.js""></script><!-- a comment starting but not ending
+        SELECT 1 AS html_id, '<!------<script type="text/javascript" src="js/Shop.js"></script>  -->
+        <!----<script type="text/javascript" src="js/Shop.js"></script>  -->
+        <script type="text/javascript" src="jquery.serialize-object.js"></script><!---->
+        <script type="text/javascript" src="jquery.serialize-object.js"></script><!-- a comment -- afterwards -->
+        <script type="text/javascript" src="jquery.serialize-object.js"></script><!-- a comment starting but not ending
         -- afterwards -->
-        <script type=""text/javascript"" src=""jquery.serialize-object.js""></script>
-        <script type=""text/javascript"" src=""jquery.cookie.js""></script>' AS html_text
+        <script type="text/javascript" src="jquery.serialize-object.js"></script>
+        <script type="text/javascript" src="jquery.cookie.js"></script>' AS html_text
           FROM dual
     )
 )
-CONNECT BY REGEXP_SUBSTR(clean_html, 'src=""[^""]*\.js""', 1, LEVEL, 'i') IS NOT NULL
+CONNECT BY REGEXP_SUBSTR(clean_html, 'src="[^"]*\.js"', 1, LEVEL, 'i') IS NOT NULL
    AND PRIOR html_id = html_id
    AND PRIOR DBMS_RANDOM.VALUE IS NOT NULL;

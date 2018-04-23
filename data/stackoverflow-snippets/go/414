@@ -1,51 +1,51 @@
 package main
 
 import (
-    ""fmt""
-    ""io/ioutil""
-    ""net/http""
+    "fmt"
+    "io/ioutil"
+    "net/http"
 
-    ""log""
+    "log"
 )
 
 func main() {
-    http.HandleFunc(""/"", handler)
-    http.ListenAndServe("":8080"", nil)
+    http.HandleFunc("/", handler)
+    http.ListenAndServe(":8080", nil)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-    log.Println(""Got request:"", r.URL.Path)
+    log.Println("Got request:", r.URL.Path)
 
     var contentType string
     var fileName string
 
     switch r.URL.Path {
-    case ""/"":
-        contentType = ""text/html""
-        fileName = ""webpage.html""
+    case "/":
+        contentType = "text/html"
+        fileName = "webpage.html"
 
-    case ""/changeColor.js"":
-        contentType = ""text/javascript""
-        fileName = ""changeColor.js""
+    case "/changeColor.js":
+        contentType = "text/javascript"
+        fileName = "changeColor.js"
 
-    case ""/styles.css"":
-        contentType = ""text/css""
-        fileName = ""styles.css""
+    case "/styles.css":
+        contentType = "text/css"
+        fileName = "styles.css"
 
     default:
         w.WriteHeader(http.StatusBadRequest)
-        log.Println(""Bad request (unknown file)"")
+        log.Println("Bad request (unknown file)")
         return
     }
 
     file, err := ioutil.ReadFile(fileName)
     if err != nil {
         w.WriteHeader(http.StatusNotFound)
-        log.Println(""File not found"")
+        log.Println("File not found")
         return
     }
 
-    w.Header().Set(""Content-Type"", contentType)
+    w.Header().Set("Content-Type", contentType)
     s := string(file)
     fmt.Fprintf(w, s)
 }

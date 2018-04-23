@@ -3,15 +3,15 @@ let compile (codeText:string) =
     let scs = SimpleSourceCodeServices()
     let src,dllPath = 
         let fn = Path.GetTempFileName()
-        let fn2 = Path.ChangeExtension(fn, "".fs"")
-        let fn3 = Path.ChangeExtension(fn, "".dll"")
+        let fn2 = Path.ChangeExtension(fn, ".fs")
+        let fn3 = Path.ChangeExtension(fn, ".dll")
         fn2,fn3
     File.WriteAllText(src,codeText)
-    let errors, exitCode = scs.Compile [| ""fsc.exe""; ""-o""; dllPath; ""-a"";src; ""-r""; ""WindowsBase""; ""-r"" ;""PresentationCore""; ""-r""; ""PresentationFramework"" |]
+    let errors, exitCode = scs.Compile [| "fsc.exe"; "-o"; dllPath; "-a";src; "-r"; "WindowsBase"; "-r" ;"PresentationCore"; "-r"; "PresentationFramework" |]
     match errors,exitCode with
     | [| |],0 -> Some dllPath
     | _ -> 
-        (errors,exitCode).Dump(""Compilation failed"")
+        (errors,exitCode).Dump("Compilation failed")
         File.Delete src
         File.Delete dllPath
         None

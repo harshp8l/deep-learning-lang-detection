@@ -1,32 +1,32 @@
 def main(args: Array[String]) {
 
-val date_today = new SimpleDateFormat(""yyyy_MM_dd"");
-val date_today_hour = new SimpleDateFormat(""yyyy_MM_dd_HH"");
-val PATH_SEPERATOR = ""/"";
+val date_today = new SimpleDateFormat("yyyy_MM_dd");
+val date_today_hour = new SimpleDateFormat("yyyy_MM_dd_HH");
+val PATH_SEPERATOR = "/";
 
-val conf = ConfigFactory.load(""spfin.conf"")
-println(""kafka.duration --- ""+ conf.getString(""kafka.duration"").toLong)
+val conf = ConfigFactory.load("spfin.conf")
+println("kafka.duration --- "+ conf.getString("kafka.duration").toLong)
 
 val mlFeatures: MLFeatures = new MLFeatures()
 
 // Create context with custom second batch interval
-//val sparkConf = new SparkConf().setAppName(""SpFinML"")
-//val ssc = new StreamingContext(sparkConf, Seconds(conf.getString(""kafka.duration"").toLong))
+//val sparkConf = new SparkConf().setAppName("SpFinML")
+//val ssc = new StreamingContext(sparkConf, Seconds(conf.getString("kafka.duration").toLong))
 
-val ssc = new StreamingContext(mlFeatures.sc, Seconds(conf.getString(""kafka.duration"").toLong))
+val ssc = new StreamingContext(mlFeatures.sc, Seconds(conf.getString("kafka.duration").toLong))
 
 // Create direct kafka stream with brokers and topics
-val topicsSet = conf.getString(""kafka.requesttopic"").split("","").toSet
+val topicsSet = conf.getString("kafka.requesttopic").split(",").toSet
 
 val kafkaParams = Map[String, Object](
-  ""bootstrap.servers"" -> conf.getString(""kafka.brokers""),
-  ""zookeeper.connect"" -> conf.getString(""kafka.zookeeper""),
-  ""group.id"" -> conf.getString(""kafka.consumergroups2""),
-  ""auto.offset.reset"" -> conf.getString(""kafka.autoOffset""),
-  ""enable.auto.commit"" -> (conf.getString(""kafka.autoCommit"").toBoolean: java.lang.Boolean),
-  ""key.deserializer"" -> classOf[StringDeserializer],
-  ""value.deserializer"" -> classOf[StringDeserializer],
-  ""security.protocol"" -> ""SASL_PLAINTEXT"")
+  "bootstrap.servers" -> conf.getString("kafka.brokers"),
+  "zookeeper.connect" -> conf.getString("kafka.zookeeper"),
+  "group.id" -> conf.getString("kafka.consumergroups2"),
+  "auto.offset.reset" -> conf.getString("kafka.autoOffset"),
+  "enable.auto.commit" -> (conf.getString("kafka.autoCommit").toBoolean: java.lang.Boolean),
+  "key.deserializer" -> classOf[StringDeserializer],
+  "value.deserializer" -> classOf[StringDeserializer],
+  "security.protocol" -> "SASL_PLAINTEXT")
 
  /*    this code is to get messages from request topic*/
  val messages = KafkaUtils.createDirectStream[String, String](
@@ -36,7 +36,7 @@ val kafkaParams = Map[String, Object](
 
     messages.foreachRDD{ rdd =>
       val newRDD = rdd.map{message => 
-                                      processMessage(message,""Inside processMessage"")}
-      println(""Inside map"")
+                                      processMessage(message,"Inside processMessage")}
+      println("Inside map")
  //          println(newRDD.count())
       }

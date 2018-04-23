@@ -7,7 +7,7 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer08
 import org.apache.flink.streaming.connectors.wikiedits.{WikipediaEditEvent, WikipediaEditsSource}
 
 class SumAggregate extends AggregateFunction[WikipediaEditEvent, (String, Int), (String, Int)] {
-  override def createAccumulator() = ("""", 0)
+  override def createAccumulator() = ("", 0)
 
   override def add(value: WikipediaEditEvent, accumulator: (String, Int)) = (value.getUser, value.getByteDiff + accumulator._2)
 
@@ -24,9 +24,9 @@ object WikipediaAnalysis extends App {
     .keyBy(_.getUser)
     .timeWindow(Time.seconds(5))
     .aggregate(new SumAggregate)
-//    .fold(("""", 0))((acc, event) => (event.getUser, acc._2 + event.getByteDiff))
+//    .fold(("", 0))((acc, event) => (event.getUser, acc._2 + event.getByteDiff))
   result.print()
 
-  result.map(_.toString()).addSink(new FlinkKafkaProducer08[String](""localhost:9092"", ""wiki-result"", new SimpleStringSchema()))
-  see.execute(""Wikipedia User Edit Volume"")
+  result.map(_.toString()).addSink(new FlinkKafkaProducer08[String]("localhost:9092", "wiki-result", new SimpleStringSchema()))
+  see.execute("Wikipedia User Edit Volume")
 }

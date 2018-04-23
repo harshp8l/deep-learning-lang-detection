@@ -11,14 +11,14 @@
 
 (def flink-env (ExecutionEnvironment/createLocalEnvironment))
 
-(def text (.fromElements flink-env (to-array [""please test me and me too""])))
+(def text (.fromElements flink-env (to-array ["please test me and me too"])))
 
 (deftype tokenizer [] FlatMapFunction
                       (flatMap [this value collector]
-                        (doseq [v (str/split value #""\s"")]
+                        (doseq [v (str/split value #"\s")]
                           (.collect collector (Tuple2. v (int 1))))))
 
-(def tokens (.returns (.flatMap text (tokenizer.)) ""Tuple2<String,Integer>""))
+(def tokens (.returns (.flatMap text (tokenizer.)) "Tuple2<String,Integer>"))
 
 (def counts (.sum (.groupBy tokens (int-array [0])) 1))
 

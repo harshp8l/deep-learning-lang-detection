@@ -2,7 +2,7 @@ val writerForText = new ForeachWriter[Row] {
     var fileWriter: FileWriter = _
 
     override def process(value: Row): Unit = {
-      fileWriter.append(value.toSeq.mkString("",""))
+      fileWriter.append(value.toSeq.mkString(","))
     }
 
     override def close(errorOrNull: Throwable): Unit = {
@@ -10,8 +10,8 @@ val writerForText = new ForeachWriter[Row] {
     }
 
     override def open(partitionId: Long, version: Long): Boolean = {
-      FileUtils.forceMkdir(new File(s""src/test/resources/${partitionId}""))
-      fileWriter = new FileWriter(new File(s""src/test/resources/${partitionId}/temp""))
+      FileUtils.forceMkdir(new File(s"src/test/resources/${partitionId}"))
+      fileWriter = new FileWriter(new File(s"src/test/resources/${partitionId}/temp"))
       true
 
     }
@@ -19,6 +19,6 @@ val writerForText = new ForeachWriter[Row] {
 
 val query = sessionUpdates
   .writeStream
-  .outputMode(""update"")
+  .outputMode("update")
   .foreach(writerForText)
   .start()

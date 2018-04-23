@@ -1,16 +1,16 @@
 #!/bin/bash
 
 SERVERLIST=$1
-INITIAL_WD=""$PWD""
-SCREEN_SESSION=""mysession""
+INITIAL_WD="$PWD"
+SCREEN_SESSION="mysession"
 
-if ! screen -list | grep -q ""$SCREEN_SESSION""; then
-    echo ""Creating new screen session...""
-    screen -d -m -S ""$SCREEN_SESSION""
+if ! screen -list | grep -q "$SCREEN_SESSION"; then
+    echo "Creating new screen session..."
+    screen -d -m -S "$SCREEN_SESSION"
 fi
 
-while IFS='' read line || [[ -n ""$line"" ]] ; do
-echo ""Uploading to ${line}""
-screen -S ""$SCREEN_SESSION"" -X chdir ""$INITIAL_WD""
-screen -S ""$SCREEN_SESSION"" -X screen bash -c ""lftp -e \""set ftp:ssl-allow false; mirror -Rvc\"" \""$line\"" ; exec bash""
+while IFS='' read line || [[ -n "$line" ]] ; do
+echo "Uploading to ${line}"
+screen -S "$SCREEN_SESSION" -X chdir "$INITIAL_WD"
+screen -S "$SCREEN_SESSION" -X screen bash -c "lftp -e \"set ftp:ssl-allow false; mirror -Rvc\" \"$line\" ; exec bash"
 done < <(cat $SERVERLIST)

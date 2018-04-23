@@ -1,25 +1,25 @@
   val spark = SparkSession.builder
-  .master(""local[*]"")
-  .appName(""testApp"")
-  .config(""spark.sql.warehouse.dir"", ""file:///c:/tmp/spark-warehouse"")
+  .master("local[*]")
+  .appName("testApp")
+  .config("spark.sql.warehouse.dir", "file:///c:/tmp/spark-warehouse")
   .getOrCreate()
 
 import spark.implicits._
 
-val ds = Seq((""99227100"", ""42222245"", ""2018-04-26""),
-  (""99227100"", ""42222245"", ""2018-05-01""),
-  (""34011381"", ""42830849"", ""2015-12-20""),
-  (""34011381"", ""42830849"", ""2016-11-27""),
-  (""34011381"", ""42830849"", ""2016-12-19""),
-  (""34011381"", ""42830849"", ""2017-08-05"")).toDS()
+val ds = Seq(("99227100", "42222245", "2018-04-26"),
+  ("99227100", "42222245", "2018-05-01"),
+  ("34011381", "42830849", "2015-12-20"),
+  ("34011381", "42830849", "2016-11-27"),
+  ("34011381", "42830849", "2016-12-19"),
+  ("34011381", "42830849", "2017-08-05")).toDS()
 
-//.toDF(""ckey"", ""twkey"", ""s_date"")
+//.toDF("ckey", "twkey", "s_date")
 
 ds.show()
 
 def encoder(columns: Seq[String]): Encoder[Row] = RowEncoder(StructType(columns.map(StructField(_, StringType, nullable = false))))
 
-val outputCols = Seq(""ckey"", ""twkey"", ""s_date"")
+val outputCols = Seq("ckey", "twkey", "s_date")
 
 val result = ds.groupByKey(_._1)
   .flatMapGroups((_, rowsForEach) => {

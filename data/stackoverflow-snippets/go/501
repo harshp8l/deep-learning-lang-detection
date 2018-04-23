@@ -1,13 +1,13 @@
 package main
 
 import (
-    ""flag""
-    ""fmt""
-    ""log""
-    ""time""
+    "flag"
+    "fmt"
+    "log"
+    "time"
 
-    mgo ""gopkg.in/mgo.v2""
-    ""gopkg.in/mgo.v2/bson""
+    mgo "gopkg.in/mgo.v2"
+    "gopkg.in/mgo.v2/bson"
 )
 
 const (
@@ -20,11 +20,11 @@ const (
 // with various session related data and the
 // date on which a session should expire.
 type Session struct {
-    ID             bson.ObjectId `bson:""_id""`
+    ID             bson.ObjectId `bson:"_id"`
     User           string
     Foo            string
     Bar            string
-    ExpirationDate time.Time `bson:""expirationDate""`
+    ExpirationDate time.Time `bson:"expirationDate"`
 }
 
 // NewSession is just a simple helper method to
@@ -49,25 +49,25 @@ var (
 )
 
 func init() {
-    flag.StringVar(&mgohost, ""host"", ""localhost"", ""MongoDB host"")
-    flag.IntVar(&mgoport, ""port"", 27017, ""MongoDB port"")
-    flag.StringVar(&db, ""db"", ""test"", ""MongoDB database"")
-    flag.StringVar(&col, ""collection"", ""ttltest"", ""MongoDB collection"")
+    flag.StringVar(&mgohost, "host", "localhost", "MongoDB host")
+    flag.IntVar(&mgoport, "port", 27017, "MongoDB port")
+    flag.StringVar(&db, "db", "test", "MongoDB database")
+    flag.StringVar(&col, "collection", "ttltest", "MongoDB collection")
 
 }
 
 func main() {
     flag.Parse()
 
-    c, err := mgo.Dial(fmt.Sprintf(""mongodb://%s:%d/%s"", mgohost, mgoport, db))
+    c, err := mgo.Dial(fmt.Sprintf("mongodb://%s:%d/%s", mgohost, mgoport, db))
     if err != nil {
-        log.Fatalf(""Error connecting to '%s:%d/%s': %s"", mgohost, mgoport, db, err)
+        log.Fatalf("Error connecting to '%s:%d/%s': %s", mgohost, mgoport, db, err)
     }
 
     // We use a goroutine here in order to make sure
     // that even when EnsureIndex blocks, our program continues
     go func() {
-        log.Println(""Ensuring sessionTTL index in background"")
+        log.Println("Ensuring sessionTTL index in background")
 
         // Request a conncetion from the pool
         m := c.DB(db).Session.Copy()
@@ -80,32 +80,32 @@ func main() {
         // The TTL purging is done once a minute only.
         // See https://docs.mongodb.com/manual/core/index-ttl/#timing-of-the-delete-operation
         // for details
-        m.DB(db).C(col).EnsureIndex(mgo.Index{ExpireAfter: 1 * time.Second, Key: []string{""expirationDate""}})
+        m.DB(db).C(col).EnsureIndex(mgo.Index{ExpireAfter: 1 * time.Second, Key: []string{"expirationDate"}})
 
-        log.Println(""sessionTTL index is ready"")
+        log.Println("sessionTTL index is ready")
     }()
 
-    s := NewSession(""mwmahlberg"", ""foo"", ""bar"")
+    s := NewSession("mwmahlberg", "foo", "bar")
 
     if err := c.DB(db).C(col).Insert(&s); err != nil {
-        log.Fatalf(""Error inserting %#v into %s.%s: %s"", s, db, col, err)
+        log.Fatalf("Error inserting %#v into %s.%s: %s", s, db, col, err)
     }
 
     l := Session{}
 
     if err := c.DB(db).C(col).Find(nil).One(&l); err != nil {
-        log.Fatalf(""Could not load session from %s.%s: %s"", db, col, err)
+        log.Fatalf("Could not load session from %s.%s: %s", db, col, err)
     }
-    log.Printf(""Session with ID %s loaded for user '%s' which will expire in %s"", l.ID, l.User, time.Until(l.ExpirationDate))
+    log.Printf("Session with ID %s loaded for user '%s' which will expire in %s", l.ID, l.User, time.Until(l.ExpirationDate))
     time.Sleep(2 * time.Minute)
 
     // Let's check if the session is still there
 
     if n, err := c.DB(db).C(col).Count(); err != nil {
-        log.Fatalf(""Error counting documents in %s.%s: %s"", db, col, err)
+        log.Fatalf("Error counting documents in %s.%s: %s", db, col, err)
     } else if n > 1 {
-        log.Fatalf(""Uups! Someting went wrong!"")
+        log.Fatalf("Uups! Someting went wrong!")
     }
 
-    log.Println(""All sessions were expired."")
+    log.Println("All sessions were expired.")
 }

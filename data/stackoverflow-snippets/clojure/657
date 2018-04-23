@@ -3,7 +3,7 @@ import org.apache.spark.rdd.RDD
 
 case class RFMCKey(cId: String, R: Double, F: Long, M: Double, C: Double)
 class RFMCPartitioner(partitions: Int) extends Partitioner {
-  require(partitions >= 0, ""Number of partitions ($partitions) cannot be negative."")
+  require(partitions >= 0, "Number of partitions ($partitions) cannot be negative.")
   override def numPartitions: Int = partitions
   override def getPartition(key: Any): Int = {
     val k = key.asInstanceOf[RFMCKey]
@@ -19,7 +19,7 @@ object RFMCKey {
 class rfmcSort {
   def sortWithRFMC(a: RDD[(String, (((Double, Long), Double), Double))], parts: Int): RDD[(RFMCKey, String)] = {
     val x = a.map(v => v match {
-                case (custId, (((rVal, fVal), mVal),cVal)) => (RFMCKey(custId, rVal, fVal, mVal, cVal), rVal+"",""+fVal+"",""+mVal+"",""+cVal)
+                case (custId, (((rVal, fVal), mVal),cVal)) => (RFMCKey(custId, rVal, fVal, mVal, cVal), rVal+","+fVal+","+mVal+","+cVal)
             }).repartitionAndSortWithinPartitions(new RFMCPartitioner(parts))
     x
   }

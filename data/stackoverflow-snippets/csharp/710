@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace Parse {
   internal class GcmRegistrar {
-    private const string LogTag = ""parse.GcmRegistrar"";
+    private const string LogTag = "parse.GcmRegistrar";
 
-    private const string ExtraRegistrationId = ""registration_id"";
+    private const string ExtraRegistrationId = "registration_id";
 
-    private const string ExtraSenderId = ""com.parse.push.gcm_sender_id"";
-    private const string ParseGcmSenderId = ""1076345567071"";
+    private const string ExtraSenderId = "com.parse.push.gcm_sender_id";
+    private const string ParseGcmSenderId = "1076345567071";
 
-    public const string IntentRegisterAction = ""com.google.android.c2dm.intent.REGISTER"";
+    public const string IntentRegisterAction = "com.google.android.c2dm.intent.REGISTER";
 
     private readonly Object mutex = new Object();
     private Request request;
@@ -36,7 +36,7 @@ namespace Parse {
         return null;
       }
       string senderId = senderIdExtra.ToString();
-      if (!senderId.StartsWith(""id:"")) {
+      if (!senderId.StartsWith("id:")) {
         return null;
       }
 
@@ -59,10 +59,10 @@ namespace Parse {
             string senderId = getActualSenderIdFromExtra(senderIdExtra);
 
             if (senderId != null) {
-              senderIds += "","" + senderId;
+              senderIds += "," + senderId;
             } else {
-              Android.Util.Log.Error(""parse.GcmRegistrar"", ""Found "" + ExtraSenderId + "" <meta-data> element with value \""""
-                + senderIdExtra.ToString() + ""\"", but the value is missing the expected \""id:\"" prefix"");
+              Android.Util.Log.Error("parse.GcmRegistrar", "Found " + ExtraSenderId + " <meta-data> element with value \""
+                + senderIdExtra.ToString() + "\", but the value is missing the expected \"id:\" prefix");
             }
           }
           request = Request.CreateAndSend(this.context, senderIds);
@@ -71,24 +71,24 @@ namespace Parse {
     }
 
     /// <summary>
-    /// Handles GCM registration intent from <see cref=""ParsePushBroadcastReceiver""/> and saves the GCM registration
-    /// id as <see cref=""ParseInstallation.CurrentInstallation""/> device token.
+    /// Handles GCM registration intent from <see cref="ParsePushBroadcastReceiver"/> and saves the GCM registration
+    /// id as <see cref="ParseInstallation.CurrentInstallation"/> device token.
     /// </summary>
     /// <remarks>
     /// Should be called by a broadcast receiver or service to handle GCM registration response
     /// intent (com.google.android.c2dm.intent.REGISTRATION).
     /// </remarks>
-    /// <param name=""intent""></param>
+    /// <param name="intent"></param>
     public Task HandleRegistrationIntentAsync(Intent intent) {
       if (intent.Action == ParsePushBroadcastReceiver.ActionGcmRegisterResponse) {
         string registrationId = intent.GetStringExtra(ExtraRegistrationId);
 
         if (registrationId != null && registrationId.Length > 0) {
-          Android.Util.Log.Info(LogTag, ""GCM registration successful. Registration Id: "" + registrationId);
+          Android.Util.Log.Info(LogTag, "GCM registration successful. Registration Id: " + registrationId);
           ParseInstallation installation = ParseInstallation.CurrentInstallation;
 
           // Set `pushType` via internal `Set` method since we want to skip mutability check.
-          installation.Set(""pushType"", ""gcm"");
+          installation.Set("pushType", "gcm");
           installation.DeviceToken = registrationId;
 
           return installation.SaveAsync();
@@ -121,9 +121,9 @@ namespace Parse {
 
       private void Send() {
         Intent intent = new Intent(IntentRegisterAction);
-        intent.SetPackage(""com.google.android.gsf"");
-        intent.PutExtra(""sender"", senderId);
-        intent.PutExtra(""app"", appIntent);
+        intent.SetPackage("com.google.android.gsf");
+        intent.PutExtra("sender", senderId);
+        intent.PutExtra("app", appIntent);
 
         ComponentName name = null;
         try {

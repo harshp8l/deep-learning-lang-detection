@@ -11,24 +11,24 @@ object stuff{
   implicit def jsonDecoder : Decoder[KeyValueRow] = Decoder.instance{ h =>
     (for{
       keys <- h.keys
-      key <- keys.dropWhile(_ == ""count"").headOption
+      key <- keys.dropWhile(_ == "count").headOption
     } yield { 
       for{
-        count <- h.get[Int](""count"")
+        count <- h.get[Int]("count")
         keyValue <- h.get[String](key)
       } yield KeyValueRow(count.toInt, keyValue)
-    }).getOrElse(Left(DecodingFailure(""Not a valid KeyValueRow"", List())))
+    }).getOrElse(Left(DecodingFailure("Not a valid KeyValueRow", List())))
   }
 }
 
 import stuff._
 
-val a = KeyValueRow(974989, ""www.google.com"")
+val a = KeyValueRow(974989, "www.google.com")
 
 println(a.asJson.spaces2)
 
-val test1 = """"""{""count"":974989,""url"":""http://google.com""}""""""
-val test2 = """"""{""count"":1234,""city"":""Rome"", ""will be dropped"": ""who cares""}""""""
+val test1 = """{"count":974989,"url":"http://google.com"}"""
+val test2 = """{"count":1234,"city":"Rome", "will be dropped": "who cares"}"""
 
 val parsedTest1 = parse(test1).flatMap(_.as[KeyValueRow])
 val parsedTest2 = parse(test2).flatMap(_.as[KeyValueRow])

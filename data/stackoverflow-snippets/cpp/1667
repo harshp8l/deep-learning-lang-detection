@@ -3,7 +3,7 @@
 #include <memory>
 
 // Some C style code that has some custom free function ptr...
-extern ""C"" {
+extern "C" {
 
 struct ABC { };
 
@@ -17,12 +17,12 @@ struct some_c_ops { free_f* free_op; };
 
 void MY_free(enum free_type_e free_type, void *ptr)
 {
-    printf(""%s:%d ptr=%ld\n"", __func__, __LINE__, (long)ptr);
+    printf("%s:%d ptr=%ld\n", __func__, __LINE__, (long)ptr);
     (void)free_type;
     free(ptr);
 }
 
-}; // extern ""C""
+}; // extern "C"
 
 template<typename T>
 using c_unique_ptr = std::unique_ptr<T,std::function<void(T*)>>;
@@ -36,19 +36,19 @@ c_unique_ptr<T> make_c_unique(some_c_ops* op, free_type_e free_type)
 
 void foo(c_unique_ptr<ABC> ptr)
 {
-    std::cout << __func__ << "":"" << __LINE__
-        << "" ptr="" << reinterpret_cast<size_t>(ptr.get()) <<     std::endl;
+    std::cout << __func__ << ":" << __LINE__
+        << " ptr=" << reinterpret_cast<size_t>(ptr.get()) <<     std::endl;
 }
 
 int main()
 {
     some_c_ops ops = { MY_free };
     c_unique_ptr<ABC> ptr = make_c_unique<ABC>(&ops, FREE_ALL);
-    std::cout << __func__ << "":"" << __LINE__
-        << "" ptr="" << reinterpret_cast<size_t>(ptr.get()) << std::endl;
+    std::cout << __func__ << ":" << __LINE__
+        << " ptr=" << reinterpret_cast<size_t>(ptr.get()) << std::endl;
 
     foo(std::move(ptr));
 
-    std::cout << __func__ << "":"" << __LINE__
-        << "" ptr="" << reinterpret_cast<size_t>(ptr.get()) << std::endl;
+    std::cout << __func__ << ":" << __LINE__
+        << " ptr=" << reinterpret_cast<size_t>(ptr.get()) << std::endl;
 }

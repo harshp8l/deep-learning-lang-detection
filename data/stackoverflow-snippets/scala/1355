@@ -22,13 +22,13 @@ object UserInterface {
       // we use 1-based indices in the menu
       while (inputNum <= 0 || inputNum > menu.items.length) {
         if (!isFirstRun) {
-          println(""Your input was wrong. Try again"")
+          println("Your input was wrong. Try again")
         }
         isFirstRun = false
 
-        println(menu.header + "":"")
-        println(menu.items.zipWithIndex.map({ case (item, index) => s""${index + 1} - ${item.name}"" }).mkString(""\n""))
-        println(""Choose the operation you want to perform:"")
+        println(menu.header + ":")
+        println(menu.items.zipWithIndex.map({ case (item, index) => s"${index + 1} - ${item.name}" }).mkString("\n"))
+        println("Choose the operation you want to perform:")
 
         inputNum = StdIn.readInt()
       }
@@ -65,33 +65,33 @@ object UserInterface {
 
 
   private val loginItem = new MenuItem[Unit] {
-    override val name = ""Login""
+    override val name = "Login"
 
     override def doAction(state: Unit, curMenu: MenuAndStateNG): MenuAndStateNG = {
-      println(""Input you login, please:"")
+      println("Input you login, please:")
       val inputLogin = StdIn.readLine()
-      println(""Input you password, please:"")
+      println("Input you password, please:")
       val inputPassword = StdIn.readLine()
 
       val checkLogin = Await.result(DAO.checkUserLogin(inputLogin, inputPassword), Duration.Inf).toString
       val userId = DAO.selectUserId(inputLogin)
 
       checkLogin match {
-        case ""true"" =>
-          println(""You have successfully entered"")
+        case "true" =>
+          println("You have successfully entered")
           MenuAndState(userMenu, userId)
-        case ""false"" =>
-          println(""Your input for login or password is wrong. Please, try again"")
+        case "false" =>
+          println("Your input for login or password is wrong. Please, try again")
           curMenu
         case _ =>
-          println(""Your input is wrong"")
+          println("Your input is wrong")
           curMenu
       }
     }
   }
 
   private val exitItem = new MenuItem[Unit] {
-    override val name = ""Exit""
+    override val name = "Exit"
 
     override def doAction(state: Unit, curMenu: MenuAndStateNG): MenuAndStateNG = {
       System.exit(0)
@@ -101,69 +101,69 @@ object UserInterface {
 
 
   private val displayFinishedTasks = new SimpleMenuItem[Int] {
-    override val name: String = ""Display finished tasks""
+    override val name: String = "Display finished tasks"
 
     override def doSimpleAction(state: Int): Unit = {
-      println(""User's finished tasks:\n"" + Await.result(DAO.selectFinishedTasks(id), Duration.Inf).toList.toString)
+      println("User's finished tasks:\n" + Await.result(DAO.selectFinishedTasks(id), Duration.Inf).toList.toString)
     }
   }
 
   private val displayUnfinishedTasks = new SimpleMenuItem[Int] {
-    override val name: String = ""Display unfinished tasks""
+    override val name: String = "Display unfinished tasks"
 
     override def doSimpleAction(state: Int): Unit = {
-      println(""User's unfinished tasks:\n"" + Await.result(DAO.selectUnfinishedTasks(id), Duration.Inf).toList.toString)
+      println("User's unfinished tasks:\n" + Await.result(DAO.selectUnfinishedTasks(id), Duration.Inf).toList.toString)
     }
   }
 
   private val displayAllTasks = new SimpleMenuItem[Int] {
-    override val name: String = ""Display all tasks""
+    override val name: String = "Display all tasks"
 
     override def doSimpleAction(state: Int): Unit = {
-      println(""User's tasks:\n"" + Await.result(DAO.selectTasksByUser(id), Duration.Inf).toList.toString)
+      println("User's tasks:\n" + Await.result(DAO.selectTasksByUser(id), Duration.Inf).toList.toString)
     }
   }
 
   private val addTask = new SimpleMenuItem[Int] {
-    override val name: String = ""Add task""
+    override val name: String = "Add task"
 
     override def doSimpleAction(state: Int): Unit = {
-      println(""Input the task name you want to create, please:"")
+      println("Input the task name you want to create, please:")
       val taskName = readLine()
       Await.result(DAO.addTask(taskName, id), Duration.Inf)
     }
   }
   private val deleteTask = new SimpleMenuItem[Int] {
-    override val name: String = ""Delete task""
+    override val name: String = "Delete task"
 
     override def doSimpleAction(state: Int): Unit = {
-      println(""Choose the task you want to delete, please:"")
+      println("Choose the task you want to delete, please:")
       val taskId = readLong()
       Await.result(DAO.deleteTask(Some(taskId)), Duration.Inf)
     }
   }
 
   private val markTaskFinished = new SimpleMenuItem[Int] {
-    override val name: String = ""Mark task as finished""
+    override val name: String = "Mark task as finished"
 
     override def doSimpleAction(state: Int): Unit = {
-      println(""Choose the task you want to mark as finished, please:"")
+      println("Choose the task you want to mark as finished, please:")
       val taskId = readLong()
       Await.result(DAO.finishTask(Some(taskId), id), Duration.Inf)
     }
   }
 
   private val logoutTask = new MenuItem[Int] {
-    override val name = ""Get back to the main menu""
+    override val name = "Get back to the main menu"
 
     override def doAction(state: Int, curMenu: MenuAndStateNG): MenuAndState[Unit] = {
       MenuAndState(mainMenu, ())
     }
   }
 
-  val mainMenu: Menu[Unit] = Menu(""Main menu"", List(loginItem, exitItem))
+  val mainMenu: Menu[Unit] = Menu("Main menu", List(loginItem, exitItem))
 
-  val userMenu: Menu[Int] = Menu(""User menu"", List(
+  val userMenu: Menu[Int] = Menu("User menu", List(
     displayAllTasks,
     displayFinishedTasks,
     displayUnfinishedTasks,

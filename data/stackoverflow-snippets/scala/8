@@ -1,29 +1,29 @@
 val df = Seq(
-  (""a"", ""2*Z12*CA9*ThisnThat10*51827630323*fa2""),
-  (""b"", ""1*C7*Friends5*names1*O2""),
-  (""c"", ""4*19456*helpme6*please""),
-  (""d"", ""2*M13*fin2*na2*325*123456*fancy2"")
-).toDF(""A"", ""B"")
+  ("a", "2*Z12*CA9*ThisnThat10*51827630323*fa2"),
+  ("b", "1*C7*Friends5*names1*O2"),
+  ("c", "4*19456*helpme6*please"),
+  ("d", "2*M13*fin2*na2*325*123456*fancy2")
+).toDF("A", "B")
 
 def processString = udf( (s: String) => {
   import scala.util.{Try, Success, Failure}
 
-  val arr = s.split(""\\*"")
+  val arr = s.split("\\*")
   val firstN = Try(arr.head.toInt) match {
     case Success(i) => i
     case Failure(_) => 0
   }
 
-  arr.tail.foldLeft( ("""", firstN) ){ (acc, x) =>
+  arr.tail.foldLeft( ("", firstN) ){ (acc, x) =>
     val n = Try( x.drop(acc._2).toInt ) match {
       case Success(i) => i
       case Failure(_) => 0
     }
-    ( acc._1 + ""*"" + x.take(acc._2), n )
+    ( acc._1 + "*" + x.take(acc._2), n )
   }._1.tail
 } )
 
-df.select($""A"", processString($""B"").as(""B"")).
+df.select($"A", processString($"B").as("B")).
   show(false)
 // +---+------------------------------+
 // |A  |B                             |

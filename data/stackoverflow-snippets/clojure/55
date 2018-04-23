@@ -1,7 +1,7 @@
-(def json-str ""{\n  \""foo\"": {\n    \""id\"": 1,\n    \""name\"": \""foo1\""\n  },\n  \""bar\"": {\n    \""id\"": 1,\n    \""name\"": \""bar1\""\n  },\n  \""foo\"": {\n    \""id\"": 2,\n    \""name\"": \""foo2\""\n  },\n  \""bar\"": {\n    \""id\"": 2,\n    \""name\"": \""bar2\""\n  }\n}"")
+(def json-str "{\n  \"foo\": {\n    \"id\": 1,\n    \"name\": \"foo1\"\n  },\n  \"bar\": {\n    \"id\": 1,\n    \"name\": \"bar1\"\n  },\n  \"foo\": {\n    \"id\": 2,\n    \"name\": \"foo2\"\n  },\n  \"bar\": {\n    \"id\": 2,\n    \"name\": \"bar2\"\n  }\n}")
 
 (def parsed (cheshire.core/parse-string json-str true))
-;; {:foo {:id 2, :name ""foo2""}, :bar {:id 2, :name ""bar2""}}
+;; {:foo {:id 2, :name "foo2"}, :bar {:id 2, :name "bar2"}}
 
 ;; handle with case:
 
@@ -9,9 +9,9 @@
   [data]
   (doseq [[k v] data]
     (case k
-      :foo (println ""this is a foo!"" v)
-      :bar (println ""this is a bar!"" v)
-      (throw (ex-info (str ""Did not recognize key ""
+      :foo (println "this is a foo!" v)
+      :bar (println "this is a bar!" v)
+      (throw (ex-info (str "Did not recognize key "
                            key)
                       {:key k
                        :map v})))))
@@ -21,13 +21,13 @@
 (defmulti do-thing-depending-on-key first)
 
 (defmethod do-thing-depending-on-key :foo [[k v]]
-  (println ""this is a foo!"" v))
+  (println "this is a foo!" v))
 
 (defmethod do-thing-depending-on-key :bar [[k v]]
-  (println ""this is a bar!"" k))
+  (println "this is a bar!" k))
 
 (defmethod do-thing-depending-on-key :default [[k v]]
-  (throw (ex-info (str ""Did not recognize key ""
+  (throw (ex-info (str "Did not recognize key "
                        key)
                   {:key k
                    :map v})))
@@ -37,7 +37,7 @@
 ;; this is a bar! {:id 2, :name bar2}
 ;; => nil
 
-(run! do-thing-depending-on-key {:unknown {:id 3 :name ""Unknown""}})
+(run! do-thing-depending-on-key {:unknown {:id 3 :name "Unknown"}})
 ;; => 
 ;; clojure.lang.ExceptionInfo:
-;; Did not recognize key :unknown {:key :unknown, :map {:id 3, :name ""Unknown""}}
+;; Did not recognize key :unknown {:key :unknown, :map {:id 3, :name "Unknown"}}

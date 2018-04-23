@@ -8,7 +8,7 @@ import scala.concurrent.Future
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption._
 
-implicit val system = ActorSystem(""sys"")
+implicit val system = ActorSystem("sys")
 implicit val materializer = ActorMaterializer()
 import system.dispatcher
 
@@ -16,24 +16,24 @@ case class Message(destination: String, content: String)
 case class DeliverySink(name: String, sink: Sink[ByteString, Future[IOResult]])
 
 val messageSource: Source[Message, NotUsed] = Source(List(
-  Message(""a"", ""uuu""), Message(""a"", ""vvv""),
-  Message(""b"", ""xxx""), Message(""b"", ""yyy""), Message(""b"", ""zzz"")
+  Message("a", "uuu"), Message("a", "vvv"),
+  Message("b", "xxx"), Message("b", "yyy"), Message("b", "zzz")
 ))
 
-val sinkA = DeliverySink(""sink-a"", FileIO.toPath(
-  Paths.get(""/path/to/sink-a.txt""), options = Set(CREATE, WRITE)
+val sinkA = DeliverySink("sink-a", FileIO.toPath(
+  Paths.get("/path/to/sink-a.txt"), options = Set(CREATE, WRITE)
 ))
-val sinkB = DeliverySink(""sink-b"", FileIO.toPath(
-  Paths.get(""/path/to/sink-b.txt""), options = Set(CREATE, WRITE)
+val sinkB = DeliverySink("sink-b", FileIO.toPath(
+  Paths.get("/path/to/sink-b.txt"), options = Set(CREATE, WRITE)
 ))
 
-val sinkMapping: Map[String, DeliverySink] = Map(""a"" -> sinkA, ""b"" -> sinkB)
+val sinkMapping: Map[String, DeliverySink] = Map("a" -> sinkA, "b" -> sinkB)
 
 val totalDests = 2
 
 messageSource.map(m => (m.destination, m)).
   groupBy(totalDests, _._1).
-  fold(("""", List.empty[Message])) {
+  fold(("", List.empty[Message])) {
     case ((_, list), (dest, msg)) => (dest, msg :: list)
   }.
   mapAsync(parallelism = totalDests) {

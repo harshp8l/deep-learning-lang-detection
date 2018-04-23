@@ -1,43 +1,43 @@
 #! /bin/bash
 
-TIMESTAMP=$(date +""%Y-%m-%d"")
-PAST=$(date +""%Y-%m-%d"" -d ""30 days ago"")
-BACKUP_DIR=""/volume1/dir/dir2/$TIMESTAMP""
-PAST_DIR=""/volume1/dir/di2/$PAST""
-HOST=""myip""
-MYSQL_USER=""username""
+TIMESTAMP=$(date +"%Y-%m-%d")
+PAST=$(date +"%Y-%m-%d" -d "30 days ago")
+BACKUP_DIR="/volume1/dir/dir2/$TIMESTAMP"
+PAST_DIR="/volume1/dir/di2/$PAST"
+HOST="myip"
+MYSQL_USER="username"
 MYSQL=/usr/bin/mysql
-MYSQL_PASSWORD=""password""
+MYSQL_PASSWORD="password"
 MYSQLDUMP=/usr/bin/mysqldump
 
-SSH_KEY=""""
-SSH_USER=""""
-SSH_HOST=""""
+SSH_KEY=""
+SSH_USER=""
+SSH_HOST=""
 
-REMOTE_COMMAND=""$MYSQL -h $HOST --user=$MYSQL_USER -p$MYSQL_PASSWORD -s -e 'SHOW DATABASES' | grep -v 'information_schema'""
-databases=$(ssh -i $SSH_KEY ${SSH_USER}@${SSH_HOST} ""$REMOTE_COMMAND"")
+REMOTE_COMMAND="$MYSQL -h $HOST --user=$MYSQL_USER -p$MYSQL_PASSWORD -s -e 'SHOW DATABASES' | grep -v 'information_schema'"
+databases=$(ssh -i $SSH_KEY ${SSH_USER}@${SSH_HOST} "$REMOTE_COMMAND")
 
 created=0
 
 for db in $databases; do
-  DUMP=""$BACKUP_DIR/$db.sql""
+  DUMP="$BACKUP_DIR/$db.sql"
 
   # To save backup on remote machine
   case $created in
-    0) REMOTE_COMMAND=""rm -rv $PAST_DIR; mkdir -p $BACKUP_DIR""; created=1
-       ssh -i $SSH_KEY ${SSH_USER}@${SSH_HOST} ""$REMOTE_COMMAND"" ;;
+    0) REMOTE_COMMAND="rm -rv $PAST_DIR; mkdir -p $BACKUP_DIR"; created=1
+       ssh -i $SSH_KEY ${SSH_USER}@${SSH_HOST} "$REMOTE_COMMAND" ;;
     *) ;;
   esac
 
-  REMOTE_COMMAND=""$MYSQLDUMP --force --opt -h $HOST --user=$MYSQL_USER -p$MYSQL_PASSWORD --databases $db | gzip -9 > $DUMP.gz""
-  ssh -i $SSH_KEY ${SSH_USER}@${SSH_HOST} ""$REMOTE_COMMAND""
+  REMOTE_COMMAND="$MYSQLDUMP --force --opt -h $HOST --user=$MYSQL_USER -p$MYSQL_PASSWORD --databases $db | gzip -9 > $DUMP.gz"
+  ssh -i $SSH_KEY ${SSH_USER}@${SSH_HOST} "$REMOTE_COMMAND"
 
   # To save backup on local machine
   # case $created in
   #   0) rm -rv $PAST_DIR; mkdir -p $BACKUP_DIR; created=1 ;;
   #   *) ;;
   # esac
-  # REMOTE_COMMAND=""$MYSQLDUMP --force --opt -h $HOST --user=$MYSQL_USER -p$MYSQL_PASSWORD --databases $db""
-  # ssh -i $SSH_KEY ${SSH_USER}@${SSH_HOST} ""$REMOTE_COMMAND"" | gzip -9 > $DUMP.gz
+  # REMOTE_COMMAND="$MYSQLDUMP --force --opt -h $HOST --user=$MYSQL_USER -p$MYSQL_PASSWORD --databases $db"
+  # ssh -i $SSH_KEY ${SSH_USER}@${SSH_HOST} "$REMOTE_COMMAND" | gzip -9 > $DUMP.gz
 
 done

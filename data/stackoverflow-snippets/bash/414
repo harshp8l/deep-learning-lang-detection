@@ -1,22 +1,22 @@
 #!/bin/bash
 
-[ -n ""$1"" ] || {    ## validate one argument given
-    printf ""error: insufficient input\nusage: %s dd-mmm-yy hh.mm.ss.ms\n"" \
-    ""${0##*/}""
+[ -n "$1" ] || {    ## validate one argument given
+    printf "error: insufficient input\nusage: %s dd-mmm-yy hh.mm.ss.ms\n" \
+    "${0##*/}"
     exit 1
 }
 
-oifs=""$IFS""         ## save original Internal Field Separator
+oifs="$IFS"         ## save original Internal Field Separator
 IFS=$' \t\n-.';     ## set IFS to break on - or .
 
 dt=( $(echo $1) )   ## separate date into indexed array
 
-[ ""${#dt[@]}"" -lt '7' ] && {    ## check all 7 components present
-    printf ""error: date doesn't match dd-mmm-yy hh.mm.ss.ms format\n""
+[ "${#dt[@]}" -lt '7' ] && {    ## check all 7 components present
+    printf "error: date doesn't match dd-mmm-yy hh.mm.ss.ms format\n"
     exit 1
 }
 
-IFS=""$oifs""         ## reset original IFS
+IFS="$oifs"         ## reset original IFS
 
 ## create associative array mapping months to numerics
 declare -A mo=(
@@ -35,15 +35,15 @@ declare -A mo=(
 )
 
 ## any date after 30 considerd 1930, else considered 2000
-[ ""${dt[2]}"" -gt '30' ] && dt[2]=$((${dt[2]} + 1000)) || \
+[ "${dt[2]}" -gt '30' ] && dt[2]=$((${dt[2]} + 1000)) || \
 dt[2]=$((${dt[2]} + 2000))
 
 ## use date to convert array contents to seconds since epoch
-epochsec=$( date -d ""${dt[2]}-${mo[${dt[1]}]}-${dt[0]} \
-                    ${dt[3]}:${dt[4]}:${dt[5]}.${dt[6]}"" +%s )
+epochsec=$( date -d "${dt[2]}-${mo[${dt[1]}]}-${dt[0]} \
+                    ${dt[3]}:${dt[4]}:${dt[5]}.${dt[6]}" +%s )
 
-if [ ""$?"" -ne '0' ]; then   ## check if last return was error
-    printf ""error: invalid date.\n""
+if [ "$?" -ne '0' ]; then   ## check if last return was error
+    printf "error: invalid date.\n"
 else    ## output good date
-    printf ""date: %s\n"" ""$(date -d @$epochsec)""
+    printf "date: %s\n" "$(date -d @$epochsec)"
 fi

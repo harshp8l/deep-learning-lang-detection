@@ -4,11 +4,11 @@ foreach($_POST as $varname => $varval) {
 }
 $wherePieces = array();
 $tests = array(
-    ""searchAlias"" => array(""where"" => ""user.alias LIKE :searchAlias"",""addWildCard"" => false),
-    ""searchLink"" => array(""where"" => ""posts.homepage LIKE :searchLink"",""addWildCard"" => true),
-    ""searchComment"" => array(""where"" => ""posts.comment LIKE :searchComment"",""addWildCard"" => true),
-    ""searchCategory"" => array(""where"" => ""posts.category LIKE :searchCategory"",""addWildCard"" => false),
-    ""searchTimestamp"" => array(""where"" => ""CAST(posts.timestamp AS DATE) = CAST(:searchTimestamp AS DATE)"",""addWildCard"" => false)
+    "searchAlias" => array("where" => "user.alias LIKE :searchAlias","addWildCard" => false),
+    "searchLink" => array("where" => "posts.homepage LIKE :searchLink","addWildCard" => true),
+    "searchComment" => array("where" => "posts.comment LIKE :searchComment","addWildCard" => true),
+    "searchCategory" => array("where" => "posts.category LIKE :searchCategory","addWildCard" => false),
+    "searchTimestamp" => array("where" => "CAST(posts.timestamp AS DATE) = CAST(:searchTimestamp AS DATE)","addWildCard" => false)
 );
 
 foreach($tests as $postname => $wherePart) {
@@ -16,8 +16,8 @@ foreach($tests as $postname => $wherePart) {
         $wherePieces[] = $wherePart['where'];
     }
 }
-$whereClause = ""WHERE "" . implode("" AND "",$wherePieces);
-$qstr = ""SELECT 
+$whereClause = "WHERE " . implode(" AND ",$wherePieces);
+$qstr = "SELECT 
             users.alias, 
             posts.postId, 
             categories.category, 
@@ -32,11 +32,11 @@ $qstr = ""SELECT
             ON posts.userId = users.userId) 
         $whereClause 
         ORDER BY postId DESC 
-        LIMIT 300"";
+        LIMIT 300";
 $stmt = $connection->prepare($qstr);
 foreach($tests as $postname => $wherePart) {
     if(isset($_POST[$postname]) && $_POST[$postname] != '') {
-        if($wherePart[""addWildCard""]) {
+        if($wherePart["addWildCard"]) {
             $postVals[$postname] = '%'.$postVals[$postname].'%';
         }
         $stmt->bindParam(':'.$postname,$postVals[$postname]);

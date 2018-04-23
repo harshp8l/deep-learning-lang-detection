@@ -1,23 +1,23 @@
 package main
 
 import (
-    ""encoding/json""
-    ""fmt""
-    ""log""
-    ""reflect""
+    "encoding/json"
+    "fmt"
+    "log"
+    "reflect"
 )
 
 const s = `
 {
-         ""localhost"":
+         "localhost":
         {
-                ""tag"": ""dev_latest"",
-                ""vhost"": ""localhost.com""
+                "tag": "dev_latest",
+                "vhost": "localhost.com"
         },
-        ""development"":
+        "development":
         {
-                ""tag"": ""dev_latest"",
-                ""vhost"": ""dev.com""
+                "tag": "dev_latest",
+                "vhost": "dev.com"
         }
 }
 `
@@ -29,17 +29,17 @@ func flatten(m map[string]interface{}) map[string]string {
         case reflect.Map:
             mv := flatten(v.(map[string]interface{}))
             for kk, vv := range mv {
-                mm[k+""-""+kk] = vv
+                mm[k+"-"+kk] = vv
             }
         case reflect.Array, reflect.Slice:
             for kk, vv := range m {
                 if reflect.TypeOf(vv).Kind() == reflect.Map {
                     mv := flatten(vv.(map[string]interface{}))
                     for kkk, vvv := range mv {
-                        mm[k+""-""+kkk] = vvv
+                        mm[k+"-"+kkk] = vvv
                     }
                 } else {
-                    mm[k+""-""+kk] = fmt.Sprint(vv)
+                    mm[k+"-"+kk] = fmt.Sprint(vv)
                 }
             }
         default:
@@ -55,6 +55,6 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    b, _ := json.MarshalIndent(flatten(m), """", ""  "")
+    b, _ := json.MarshalIndent(flatten(m), "", "  ")
     println(string(b))
 }

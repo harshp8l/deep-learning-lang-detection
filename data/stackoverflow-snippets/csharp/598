@@ -25,21 +25,21 @@ public class WorkerPool<T> : IDisposable
     public void CompleteAdding()
     {
         queue.CompleteAdding();
-        log.Debug(""CompleteAdding"");
+        log.Debug("CompleteAdding");
     }
 
     //create workers and put then running
     public void startWorkers(Action<T> worker)
     {            
-        log.Debug(""Start"");
+        log.Debug("Start");
 
-        log.Debug($""prepare {maxWorkers} workers"");
+        log.Debug($"prepare {maxWorkers} workers");
         for (int i = 0; i < maxWorkers; i++)
         {
             taskList.Add(new Task(() =>
             {
-                string myname = ""worker "" + Guid.NewGuid().ToString();
-                log.Debug($""{myname} started"");
+                string myname = "worker " + Guid.NewGuid().ToString();
+                log.Debug($"{myname} started");
 
                 while (!isShutdown)
                 {
@@ -47,17 +47,17 @@ public class WorkerPool<T> : IDisposable
                     {
                         //just in case you need to abort on demand
                         if (cancellationToken.IsCancellationRequested)
-                            throw new ApplicationException(""Shutting down on request"");
+                            throw new ApplicationException("Shutting down on request");
                         worker(value);
-                        log.Debug($""processing {value}"");
+                        log.Debug($"processing {value}");
                         countdown.Signal();
                     }
                 }
-                log.Debug($""{myname} Shutdown complete"");
+                log.Debug($"{myname} Shutdown complete");
             }));
         }
 
-        log.Debug(""start workers"");
+        log.Debug("start workers");
         foreach (var task in taskList)
         {
             task.Start();
@@ -76,10 +76,10 @@ public class WorkerPool<T> : IDisposable
 
     private void shutdown()
     {
-        log.Debug(""Shutting down"");
+        log.Debug("Shutting down");
         isShutdown = true;
         Task.WaitAll(taskList.ToArray());
-        log.Debug(""Shutdown complete"");
+        log.Debug("Shutdown complete");
         wasShutDown = true;
     }
 

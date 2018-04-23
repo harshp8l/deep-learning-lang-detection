@@ -1,5 +1,5 @@
 $ cat tst.awk
-BEGIN { OFS="","" }
+BEGIN { OFS="," }
 
 !NF || /^([^[:alpha:]]|SQL|Finished)/ { next }
 
@@ -7,18 +7,18 @@ BEGIN { OFS="","" }
 
 /^Running/ {
     prt()
-    gsub(/^[^ ]+ |=.*/,"""",tag)
-    gsub(/.*\[|\].*/,"""",val)
+    gsub(/^[^ ]+ |=.*/,"",tag)
+    gsub(/.*\[|\].*/,"",val)
 }
 
 /^Statement/ {
-    tag = ""rowsAffected""
-    gsub(/.*\[|\].*/,"""",val)
+    tag = "rowsAffected"
+    gsub(/.*\[|\].*/,"",val)
 }
 
 /^[:[:alpha:]]+: / {
-    sub(/:.*/,"""",tag)
-    sub(/^[:[:alpha:]]+: /,"""",val)
+    sub(/:.*/,"",tag)
+    sub(/^[:[:alpha:]]+: /,"",val)
 }
 
 {
@@ -31,18 +31,18 @@ END { prt() }
 function prt( tag,val,tagNr) {
     if (numTags > 0) {
         if ( ++recNr == 1 ) {
-            printf ""\""%s\""%s"", ""file"", OFS
+            printf "\"%s\"%s", "file", OFS
             for (tagNr=1; tagNr<=numTags; tagNr++) {
                 tag = tags[tagNr]
-                printf ""\""%s\""%s"", tag, (tagNr<numTags ? OFS : ORS)
+                printf "\"%s\"%s", tag, (tagNr<numTags ? OFS : ORS)
             }
         }
-        printf ""\""%s\""%s"", FILENAME, OFS
+        printf "\"%s\"%s", FILENAME, OFS
         for (tagNr=1; tagNr<=numTags; tagNr++) {
             tag = tags[tagNr]
             val = tag2val[tag]
-            gsub(/""/,""\""\"""",val)
-            printf ""\""%s\""%s"", val, (tagNr<numTags ? OFS : ORS)
+            gsub(/"/,"\"\"",val)
+            printf "\"%s\"%s", val, (tagNr<numTags ? OFS : ORS)
         }
     }
     delete tags

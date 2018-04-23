@@ -1,6 +1,6 @@
     if (array_key_exists('attachs', $data)) {
-        $multipart[""type""] = TYPEMULTIPART;
-        $multipart[""subtype""] = ""alternative"";
+        $multipart["type"] = TYPEMULTIPART;
+        $multipart["subtype"] = "alternative";
         $body[$i++] = $multipart;
     }
 
@@ -9,17 +9,17 @@
             $part = array();
             $filename = $attach;
             if (filesize($filename) > 0) {
-                $fp = fopen($filename, ""rb"");
+                $fp = fopen($filename, "rb");
                 $file_size = filesize($attach);
-                $part[""type""] = 'APPLICATION';
-                $part[""encoding""] = ENCBASE64;
-                $part[""subtype""] = ""octet-stream"";
-                $part[""description""] = basename($filename);
+                $part["type"] = 'APPLICATION';
+                $part["encoding"] = ENCBASE64;
+                $part["subtype"] = "octet-stream";
+                $part["description"] = basename($filename);
                 $part['disposition.type'] = 'attachment';
                 $part['disposition'] = array('filename' => basename($filename));
                 $part['type.parameters'] = array('name' => basename($filename));
-                $part[""description""] = '';
-                $part[""contents.data""] = base64_encode(fread($fp, $file_size));
+                $part["description"] = '';
+                $part["contents.data"] = base64_encode(fread($fp, $file_size));
                 $body[$i++] = $part;
                 fclose($fp);
             }
@@ -27,16 +27,16 @@
     }
     if ($data['message']) {
         $part = array();
-        $part[""type""] = ""TEXT"";
-        $part[""subtype""] = ""html"";
-        $part[""description""] = '';
-        $part[""contents.data""] = $data['message'];
+        $part["type"] = "TEXT";
+        $part["subtype"] = "html";
+        $part["description"] = '';
+        $part["contents.data"] = $data['message'];
         $body[$i++] = $part;
     }
 
     $msg = imap_mail_compose($envelope, $body);
     if (imap_append($conn, $draftsMailBox, $msg) === false) {
-        //die(""could not append message: "" . imap_last_error());
+        //die("could not append message: " . imap_last_error());
         return FALSE;
     } else {
         return TRUE;

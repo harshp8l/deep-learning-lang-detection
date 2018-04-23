@@ -1,31 +1,31 @@
 package main
 
 import (
-    ""fmt""
-    ""log""
-    ""net/http""
-    ""os""
-    ""strings""
-    ""sync""
+    "fmt"
+    "log"
+    "net/http"
+    "os"
+    "strings"
+    "sync"
 
-    ""golang.org/x/net/html""
+    "golang.org/x/net/html"
 )
 
 func main() {
 
     if len(os.Args) != 2 {
-        fmt.Println(""Usage: crawl [URL]."")
+        fmt.Println("Usage: crawl [URL].")
     }
 
     url := os.Args[1]
-    if !strings.HasPrefix(url, ""http://"") {
-        url = ""http://"" + url
+    if !strings.HasPrefix(url, "http://") {
+        url = "http://" + url
     }
 
     wg := NewWorkGroup(1)
     wg.Crawl(url)
     for k, v := range wg.urlMap {
-        fmt.Printf(""%s: %d\n"", k, v)
+        fmt.Printf("%s: %d\n", k, v)
     }
 }
 
@@ -139,7 +139,7 @@ func (wg *WorkGroup) newCrawler() {
 func getExternalUrls(source Link) []Link {
     resp, err := http.Get(source.url)
     if err != nil {
-        log.Printf(""Can not reach the site. Error = %v\n"", err)
+        log.Printf("Can not reach the site. Error = %v\n", err)
         return nil
     }
 
@@ -158,11 +158,11 @@ func getExternalUrls(source Link) []Link {
             return links
         case html.StartTagToken:
             current := z.Token()
-            if current.Data != ""a"" {
+            if current.Data != "a" {
                 continue
             }
             url, ok := getHrefTag(current)
-            if ok && strings.HasPrefix(url, ""http"") {
+            if ok && strings.HasPrefix(url, "http") {
                 links = append(links, Link{url: url, deph: source.deph + 1})
             }
         }
@@ -173,7 +173,7 @@ func getExternalUrls(source Link) []Link {
 //default function
 func getHrefTag(token html.Token) (result string, ok bool) {
     for _, a := range token.Attr {
-        if a.Key == ""href"" {
+        if a.Key == "href" {
             result = a.Val
             ok = true
             break

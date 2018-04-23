@@ -53,21 +53,21 @@ let state = StateMonadBuilder<int> ()
 type SonM (sonName: string) =
     let name = sonName
     member this.GetMoneyFromDad (x: int) = state {
-        printfn "" I am getting money from dad""
+        printfn " I am getting money from dad"
         let! currState = state.getState
         do! state.putState (currState + x)  
         do! this.ToConsole () }
     member this.GoShopping (x: int) = state {
-        printfn "" I am taken to the mall""
+        printfn " I am taken to the mall"
         let! currState = state.getState   
         do! state.putState (currState - x) 
         do! this.ToConsole () }
     member this.TellDad = state {
-        printfn "" I'll tell dad my balance ""
+        printfn " I'll tell dad my balance "
         return! state.getState }
     member this.ToConsole () = state {
         let! mystate = state.getState
-        printfn "" Balance: %i"" mystate }
+        printfn " Balance: %i" mystate }
 
 type Agent<'T> = MailboxProcessor<'T>
 
@@ -79,21 +79,21 @@ type message =
 
 let setupAgent iv = Agent.Start (fun inbox ->   
 
-    let aSon = new SonM (""Paul"")
+    let aSon = new SonM ("Paul")
 
     let processMsg msg = state {
         match msg with
         | Shopping money ->
-            printfn ""Go shopping with %i "" money
+            printfn "Go shopping with %i " money
             do! (aSon.GoShopping money)
         | Allowance money -> 
-            printfn "" I got some money for you, son""
+            printfn " I got some money for you, son"
             do! (aSon.GetMoneyFromDad money) 
         | GetBalance -> 
-            printfn "" Calling: TellDad""
+            printfn " Calling: TellDad"
             let! balance = aSon.TellDad
-            printfn "" Current Balance: %i"" balance 
-        | _ -> do printfn ""Nothing to do.."" }
+            printfn " Current Balance: %i" balance 
+        | _ -> do printfn "Nothing to do.." }
 
     let rec loop s = async {
             let! msg = inbox.Receive() 

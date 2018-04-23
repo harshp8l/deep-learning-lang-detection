@@ -1,4 +1,4 @@
-#include ""worker.h""
+#include "worker.h"
 
 Worker::Worker(QObject *parent) : QObject(parent)
 {
@@ -15,7 +15,7 @@ void Worker::start(quint16 port)
     m_port = port;
 
     connect(&m_client, &Client::searchPeersFinished, []{
-        qDebug() << ""Search peers finished!"";
+        qDebug() << "Search peers finished!";
     });
 
     m_connection = connect(&m_client, &Client::peerFound, [&](const QHostAddress &peer_address){
@@ -24,21 +24,21 @@ void Worker::start(quint16 port)
     });
 
     connect(&m_client, &Client::error, [](const QString &error){
-        qDebug() << ""Error:"" << qPrintable(error);
+        qDebug() << "Error:" << qPrintable(error);
     });
 
     connect(&m_client, &Client::connected, [&](const PeerData &pd){
-        qDebug() << ""Connected to:"" << qPrintable(pd.host.toString());
+        qDebug() << "Connected to:" << qPrintable(pd.host.toString());
         m_timer.start();
     });
 
     connect(&m_client, &Client::disconnected, [](const PeerData &pd){
-        qDebug() << ""Disconnected from:"" << qPrintable(pd.host.toString());
+        qDebug() << "Disconnected from:" << qPrintable(pd.host.toString());
     });
 
     connect(&m_client, &Client::readyRead, [](const PeerData &pd){
-        qDebug() << ""Data from"" << qPrintable(pd.host.toString())
-                 << qPrintable(QString::asprintf(""%.2f"", getValue<double>(pd.data)));
+        qDebug() << "Data from" << qPrintable(pd.host.toString())
+                 << qPrintable(QString::asprintf("%.2f", getValue<double>(pd.data)));
     });
 
     connect(&m_timer, &QTimer::timeout, [&]{
@@ -59,7 +59,7 @@ void Worker::start(quint16 port)
         m_client.write(data2); //Write the data2 to the server
     });
 
-    qDebug() << ""Searching..."";
+    qDebug() << "Searching...";
 
     m_client.searchPeers(m_port); //Search for peers in range, if found, handle the first and connect to it!
 }

@@ -1,21 +1,21 @@
-let inQuotes s = sprintf ""\""%s\"""" s
+let inQuotes s = sprintf "\"%s\"" s
 
-Target ""Sample"" (fun _ ->
+Target "Sample" (fun _ ->
   let retCode =
     ExecProcess
       (fun info ->
-        info.Name <- ""powershell.exe""  // Don't know if you need full path here
-        info.WorkingDirectory <- getBuildParam ""BuildRoot""
+        info.Name <- "powershell.exe"  // Don't know if you need full path here
+        info.WorkingDirectory <- getBuildParam "BuildRoot"
         info.Arguments <-
-          [ ""-File""; getBuildParam ""BuildRoot"" + ""\DeployScripts\scripts\AdminScripts\VersionUpdateFile.ps1"" |> inQuotes;
-            ""-path""; getBuildParam ""BuildSolutionVersioningConfig"" |> inQuotes;
-            ""-majorVersion""; getBuildParam ""BuildNumberMajor"" |> inQuotes;
-            ""-minor""; getBuildParam ""BuildNumberMinor"" |> inQuotes;
-            ""-build""; getBuildParam ""BuildNumber"" |> inQuotes;
-            ""-revision""; getBuildParam ""BuildNumberRevision"" |> inQuotes
-          ] |> separated "" ""
+          [ "-File"; getBuildParam "BuildRoot" + "\DeployScripts\scripts\AdminScripts\VersionUpdateFile.ps1" |> inQuotes;
+            "-path"; getBuildParam "BuildSolutionVersioningConfig" |> inQuotes;
+            "-majorVersion"; getBuildParam "BuildNumberMajor" |> inQuotes;
+            "-minor"; getBuildParam "BuildNumberMinor" |> inQuotes;
+            "-build"; getBuildParam "BuildNumber" |> inQuotes;
+            "-revision"; getBuildParam "BuildNumberRevision" |> inQuotes
+          ] |> separated " "
       )
       (TimeSpan.FromMinutes 5.0)
   if retCode <> 0 then
-    failwith (sprintf ""PowerShell exited with non-zero exit code %d"" retCode)
+    failwith (sprintf "PowerShell exited with non-zero exit code %d" retCode)
 )

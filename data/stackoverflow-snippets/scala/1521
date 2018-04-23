@@ -3,8 +3,8 @@ val convertToCase = udf((id: String, name: String, streetName: Seq[String], stre
   PersonAddress(id, name, addresses.map(t => Address(t._1, t._2)).toArray)
 })
 
-val results = personData.join(addressData, Seq(""PersonID""), ""left_outer"")
-  .groupBy(""PersonID"",""Name"")
-  .agg(collect_list($""StreetNumber"").as(""StreetNumbers""), 
-       collect_list($""StreetName"").as(""StreetNames""))
-val personAddresses = results.select(convertToCase($""PersonID"", $""Name"", $""StreetNumbers"", $""StreetNames"").as(""Person""))
+val results = personData.join(addressData, Seq("PersonID"), "left_outer")
+  .groupBy("PersonID","Name")
+  .agg(collect_list($"StreetNumber").as("StreetNumbers"), 
+       collect_list($"StreetName").as("StreetNames"))
+val personAddresses = results.select(convertToCase($"PersonID", $"Name", $"StreetNumbers", $"StreetNames").as("Person"))

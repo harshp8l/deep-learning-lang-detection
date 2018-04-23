@@ -1,32 +1,32 @@
 Login-AzureRmAccount
 Select-AzureRmSubscription -SubscriptionName my-subscription-here
 
-Write-Host ""Begin process...""
+Write-Host "Begin process..."
 
 try
 {
     # Make sure to reference the latest version of Microsoft.Azure.NotificationHubs.dll
-    Write-Host ""Adding the [Microsoft.Azure.NotificationHubs.dll] assembly to the script..."";
+    Write-Host "Adding the [Microsoft.Azure.NotificationHubs.dll] assembly to the script...";
     $scriptPath = Split-Path (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Path;
-    $packagesFolder = $scriptPath + ""\packs"";
+    $packagesFolder = $scriptPath + "\packs";
     Write-Host $packagesFolder;
-    $assembly = Get-ChildItem $packagesFolder -Include ""Microsoft.Azure.NotificationHubs.dll"" -Recurse;
+    $assembly = Get-ChildItem $packagesFolder -Include "Microsoft.Azure.NotificationHubs.dll" -Recurse;
     write-Host $assembly.FullName;
     Add-Type -Path $assembly.FullName;
 
-    Write-Host ""The [Microsoft.Azure.NotificationHubs.dll] assembly has been successfully added to the script."";
+    Write-Host "The [Microsoft.Azure.NotificationHubs.dll] assembly has been successfully added to the script.";
 
     # Create requered variables
-    $HubNamespace = ""hub-namespace"";
-    $HubName = ""hub-name"";
-    $ResourceGroup = ""resource-group"";
+    $HubNamespace = "hub-namespace";
+    $HubName = "hub-name";
+    $ResourceGroup = "resource-group";
 
-    $GcmApiKey = ""api key here"";
+    $GcmApiKey = "api key here";
     # Possible values: gateway.push.apple.com, gateway.sandbox.push.apple.com
-    $ApnsEndpoint = ""gateway.push.apple.com"";
+    $ApnsEndpoint = "gateway.push.apple.com";
     # A certificate (in base 64 format) provided by Apple on the iOS Provisioning Portal
-    $ApnsCertificate = ""base 64 certificate here"";
-    $ApnsCertificateKey = ""certificate key/password here"";
+    $ApnsCertificate = "base 64 certificate here";
+    $ApnsCertificateKey = "certificate key/password here";
 
     $GcmCredential = New-Object -TypeName Microsoft.Azure.NotificationHubs.GcmCredential -ArgumentList $GcmApiKey;
     $ApnsCredential = New-Object -TypeName Microsoft.Azure.NotificationHubs.ApnsCredential;
@@ -41,33 +41,33 @@ try
     if ($FoundNamespaces -and $FoundNamespaces.Length -eq 1)
     {
         $CurrentNamespace = $FoundNamespaces[0];
-        Write-Host ""The namespace [$HubNamespace] in the [$($CurrentNamespace.Location)] region was found."";
+        Write-Host "The namespace [$HubNamespace] in the [$($CurrentNamespace.Location)] region was found.";
 
         $HubListKeys = Get-AzureRmNotificationHubListKeys -Namespace $HubNamespace -ResourceGroup $ResourceGroup -NotificationHub $HubName -AuthorizationRule DefaultFullSharedAccessSignature;
         # Check to see if the Notification Hub exists
         if ($HubListKeys)
         {
             # Create the NamespaceManager object used to update the notification hub
-            Write-Host ""Creating a NamespaceManager object for the [$HubNamespace] namespace..."";
+            Write-Host "Creating a NamespaceManager object for the [$HubNamespace] namespace...";
             $NamespaceManager = [Microsoft.Azure.NotificationHubs.NamespaceManager]::CreateFromConnectionString($HubListKeys.PrimaryConnectionString);
-            Write-Host ""NamespaceManager object for the [$HubNamespace] namespace has been successfully created."";
+            Write-Host "NamespaceManager object for the [$HubNamespace] namespace has been successfully created.";
 
             # Update notification hub with new details
-            Write-Host ""The [$Path] notification hub already exists in the [$HubNamespace] namespace.""  ;
+            Write-Host "The [$Path] notification hub already exists in the [$HubNamespace] namespace."  ;
             $NHDescription = $NamespaceManager.GetNotificationHub($HubName);
             $NHDescription.GcmCredential = $GcmCredential;
             $NHDescription.ApnsCredential = $ApnsCredential;
             $NHDescription = $NamespaceManager.UpdateNotificationHub($NHDescription);
-            Write-Host ""The [$HubName] notification hub was updated"";
+            Write-Host "The [$HubName] notification hub was updated";
         }
         else
         {
-            Write-Host ""The [$HubName] notification hub does not exist.""
+            Write-Host "The [$HubName] notification hub does not exist."
         }
     }
     else
     {
-        Write-Host ""The [$HubNamespace] namespace does not exist.""
+        Write-Host "The [$HubNamespace] namespace does not exist."
     }
 }
 catch [System.Exception]

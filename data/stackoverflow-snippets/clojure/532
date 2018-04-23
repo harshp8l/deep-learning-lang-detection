@@ -10,14 +10,14 @@ import Foreign.C.String
 -- from something else that has the same size - 'CLong'.
 newtype ClojureObject = ClojureObject CLong deriving (Storable)
 
-foreign import ccall ""load_methods"" load_methods :: IO ()
-foreign import ccall ""create_vm"" create_vm :: IO ()
-foreign import ccall ""invokeFn"" invokeFn :: ClojureObject -> CUInt -> Ptr ClojureObject -> IO ClojureObject
--- foreign import ccall ""readObj"" readObj :: CString -> IO ClojureObject
--- foreign import ccall ""varObj"" varObj :: CString -> IO ClojureObject
-foreign import ccall ""varObjQualified"" varObjQualified :: CString -> CString -> IO ClojureObject
-foreign import ccall ""newLong"" newLong :: CLong -> ClojureObject
-foreign import ccall ""longValue"" longValue :: ClojureObject -> CLong
+foreign import ccall "load_methods" load_methods :: IO ()
+foreign import ccall "create_vm" create_vm :: IO ()
+foreign import ccall "invokeFn" invokeFn :: ClojureObject -> CUInt -> Ptr ClojureObject -> IO ClojureObject
+-- foreign import ccall "readObj" readObj :: CString -> IO ClojureObject
+-- foreign import ccall "varObj" varObj :: CString -> IO ClojureObject
+foreign import ccall "varObjQualified" varObjQualified :: CString -> CString -> IO ClojureObject
+foreign import ccall "newLong" newLong :: CLong -> ClojureObject
+foreign import ccall "longValue" longValue :: ClojureObject -> CLong
 
 -- | In order for anything to work, this needs to be called first.
 loadClojure :: IO ()
@@ -46,8 +46,8 @@ varQual ns fn = withCString ns (\nsCStr ->
 main :: IO ()
 main = do
   loadClojure
-  putStrLn ""Clojure loaded""
+  putStrLn "Clojure loaded"
 
-  plus <- varQual ""clojure.core"" ""+""
+  plus <- varQual "clojure.core" "+"
   out <- invoke plus [long 3, long 4]
-  print $ unLong out -- prints ""7"" on my tests
+  print $ unLong out -- prints "7" on my tests

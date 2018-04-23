@@ -10,18 +10,18 @@ $UserCredential = Get-Credential
 Import-Module ActiveDirectory
 
 
-$Users = Get-ADUser -filter * -Properties * -SearchBase ""OU=Disabled User Accounts,DC=private,DC=private""
+$Users = Get-ADUser -filter * -Properties * -SearchBase "OU=Disabled User Accounts,DC=private,DC=private"
 
 $Today = (Get-Date).ToShortDateString()
 $OneMonthAgo = (Get-Date).AddMonths(-1).ToShortDateString()
 
 [Collections.ArrayList]$results = @()    
 
-$OnPrem = $Users | Where-Object {$_.mDBUseDefaults -eq ""True""}
-$365 = $Users | Where-Object{$_.mDBUseDefaults -ne ""True""}
+$OnPrem = $Users | Where-Object {$_.mDBUseDefaults -eq "True"}
+$365 = $Users | Where-Object{$_.mDBUseDefaults -ne "True"}
 
-Write-Host ""Start Date: "" $OneMonthAgo -ForegroundColor Green
-Write-Host ""Total Users OnPrem: "" ($OnPrem.mail).Count -ForegroundColor Green
+Write-Host "Start Date: " $OneMonthAgo -ForegroundColor Green
+Write-Host "Total Users OnPrem: " ($OnPrem.mail).Count -ForegroundColor Green
 
 
 $OnPremScriptblock = {
@@ -44,7 +44,7 @@ $OnPremScriptblock = {
         User = $userName
         Login = $loginName
         Email = $emailaddress
-        Type = ""OnPrem""
+        Type = "OnPrem"
         DisabledDate = $DisabledDate
         Location = $OfficeLocation
         MessagesReceived = $MessageCount.Count.ToString()
@@ -80,7 +80,7 @@ foreach ($user in $OnPrem){
 }
 
 While($jobs.handle.IsCompleted -eq $false){
-    Write-Host ""."" -NoNewline
+    Write-Host "." -NoNewline
     Start-Sleep -Milliseconds 100
 }
 

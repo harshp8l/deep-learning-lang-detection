@@ -1,13 +1,13 @@
 func ping(w http.ResponseWriter, a Ping) {
 
-    cmdName := ""ping""
-    cmdArgs := []string{""-c"", a.Count, a.Ip}
+    cmdName := "ping"
+    cmdArgs := []string{"-c", a.Count, a.Ip}
 
     cmd := exec.Command(cmdName, cmdArgs...)
     cmdReader, err := cmd.StdoutPipe()
     if err != nil {
-        fmt.Fprintln(os.Stderr, ""Error creating StdoutPipe for Cmd"", err)
-        http.Error(w, ""Error creating StdoutPipe for Cmd\n""+err.Error(), 500)
+        fmt.Fprintln(os.Stderr, "Error creating StdoutPipe for Cmd", err)
+        http.Error(w, "Error creating StdoutPipe for Cmd\n"+err.Error(), 500)
         return
     }
 
@@ -16,7 +16,7 @@ func ping(w http.ResponseWriter, a Ping) {
     scanner := bufio.NewScanner(cmdReader)
     go func() {
         for scanner.Scan() {
-            fmt.Printf(""%s\n"", scanner.Text())
+            fmt.Printf("%s\n", scanner.Text())
             //
             // TODO:
             // send output to server
@@ -25,8 +25,8 @@ func ping(w http.ResponseWriter, a Ping) {
 
     err = cmd.Start()
     if err != nil {
-        fmt.Fprintln(os.Stderr, ""Error starting Cmd"", err)
-        http.Error(w, ""Error starting Cmd\n""+err.Error(), 500)
+        fmt.Fprintln(os.Stderr, "Error starting Cmd", err)
+        http.Error(w, "Error starting Cmd\n"+err.Error(), 500)
         return
     }
 
@@ -43,9 +43,9 @@ func ping(w http.ResponseWriter, a Ping) {
 
     select {
     case err := <-errChan:
-        http.Error(w, ""Error: ""+err.Error(), 500)
+        http.Error(w, "Error: "+err.Error(), 500)
     // timeout 50ms just in case. But I presume you would get an error (if there is one in cmd) even before execution will get to this point
     case <-time.After(time.Millisecond * 50):
-        fmt.Fprintf(w, ""ping started"")
+        fmt.Fprintf(w, "ping started")
     }
 }

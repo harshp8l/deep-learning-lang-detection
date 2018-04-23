@@ -1,7 +1,7 @@
-val list = jobModelsDataset.select(collect_list(""JobId"")).rdd.first()(0).asInstanceOf[collection.mutable.WrappedArray[Int]]
+val list = jobModelsDataset.select(collect_list("JobId")).rdd.first()(0).asInstanceOf[collection.mutable.WrappedArray[Int]]
 def notContained = udf((array: collection.mutable.WrappedArray[Int]) => list.filter(x => !(array.contains(x))))
-temp.join(jobModelsDataset, temp(""visitedJobIds"") === jobModelsDataset(""JobId""), ""left"")
-      .groupBy(""userId"")
-      .agg(collect_list(""visitedJobIds"").as(""visitedJobIds""), collect_list(""JobId"").as(""ModelJobIds""))
-      .withColumn(""ModelJobIds"", notContained(col(""ModelJobIds"")))
+temp.join(jobModelsDataset, temp("visitedJobIds") === jobModelsDataset("JobId"), "left")
+      .groupBy("userId")
+      .agg(collect_list("visitedJobIds").as("visitedJobIds"), collect_list("JobId").as("ModelJobIds"))
+      .withColumn("ModelJobIds", notContained(col("ModelJobIds")))
     .show(false)

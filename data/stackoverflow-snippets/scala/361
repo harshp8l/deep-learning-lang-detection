@@ -1,23 +1,23 @@
 val df = Seq(
-  (1, 2, ""a"", ""analyses""),
-  (2, 3, ""b"", ""carried""),
-  (3, 1, ""c"", ""atlantic""),
-  (4, 2, ""d"", ""hello""),
-  (5, 2, ""e"", """"),
-  (6, 1, ""f"", null),
-  (7, 0, ""f"", ""blah"")
-).toDF(""ocId"", ""freq"", ""nameFile"", ""word"")
+  (1, 2, "a", "analyses"),
+  (2, 3, "b", "carried"),
+  (3, 1, "c", "atlantic"),
+  (4, 2, "d", "hello"),
+  (5, 2, "e", ""),
+  (6, 1, "f", null),
+  (7, 0, "f", "blah")
+).toDF("ocId", "freq", "nameFile", "word")
 
 def multiWords = udf(
   (word: String, freq: Int) => word match {
      case null => null
-     case """" => """"
-     case _ => if (freq > 0) ((word + "","") * freq).dropRight(1) + "".""
-               else """"
+     case "" => ""
+     case _ => if (freq > 0) ((word + ",") * freq).dropRight(1) + "."
+               else ""
   }
 )
 
-df.withColumn(""multiWords"", multiWords($""word"", $""freq"")).
+df.withColumn("multiWords", multiWords($"word", $"freq")).
   show(false)
 
 // +----+----+--------+--------+------------------------+

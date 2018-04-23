@@ -5,7 +5,7 @@ type myConfig struct {
 func (config *myConfig) myMiddlewareFunc() buffalo.MiddlewareFunc {
     return func(next buffalo.Handler) buffalo.Handler {
         return func(c buffalo.Context) error {
-            c.Logger().Info(""Test "", config.value)
+            c.Logger().Info("Test ", config.value)
 
             return next(c)
         }
@@ -17,15 +17,15 @@ func App() *buffalo.App {
     if app == nil {
         app = buffalo.New(buffalo.Options{
             Env:         ENV,
-            SessionName: ""_myapp_session"",
+            SessionName: "_myapp_session",
         })
         // Automatically redirect to SSL
         app.Use(ssl.ForceSSL(secure.Options{
-            SSLRedirect:     ENV == ""production"",
-            SSLProxyHeaders: map[string]string{""X-Forwarded-Proto"": ""https""},
+            SSLRedirect:     ENV == "production",
+            SSLProxyHeaders: map[string]string{"X-Forwarded-Proto": "https"},
         }))
 
-        if ENV == ""development"" {
+        if ENV == "development" {
             app.Use(middleware.ParameterLogger)
         }
 
@@ -34,28 +34,28 @@ func App() *buffalo.App {
         app.Use(csrf.New)
 
         // Wraps each request in a transaction.
-        //  c.Value(""tx"").(*pop.PopTransaction)
+        //  c.Value("tx").(*pop.PopTransaction)
         // Remove to disable this.
         app.Use(middleware.PopTransaction(models.DB))
 
         // Setup and use translations:
         var err error
-        if T, err = i18n.New(packr.NewBox(""../locales""), ""en-US""); err != nil {
+        if T, err = i18n.New(packr.NewBox("../locales"), "en-US"); err != nil {
             app.Stop(err)
         }
         app.Use(T.Middleware())
 
         c := &myConfig{
-            value: ""test value"",
+            value: "test value",
         }
         app.Use(c.myMiddlewareFunc())
         app.Middleware.Skip(c.myMiddlewareFunc(), TestHandler)
 
 
-        app.GET(""/"", HomeHandler)
-        app.GET(""/test"", TestHandler)
+        app.GET("/", HomeHandler)
+        app.GET("/test", TestHandler)
 
-        app.ServeFiles(""/assets"", assetsBox)
+        app.ServeFiles("/assets", assetsBox)
     }
 
     return app

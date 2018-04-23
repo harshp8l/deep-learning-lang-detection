@@ -2,7 +2,7 @@
 def insertToTable(sqlDatabaseConnectionString: String,
                   sqlTableName: String): Unit = {
 
-  val tableHeader: String = dataFrame.columns.mkString("","")
+  val tableHeader: String = dataFrame.columns.mkString(",")
   dataFrame.foreachPartition { partition =>
     //NOTE : EACH PARTITION ONE CONNECTION (more better way is to use connection pools)
     val sqlExecutorConnection: Connection =
@@ -13,13 +13,13 @@ def insertToTable(sqlDatabaseConnectionString: String,
         new scala.collection.mutable.StringBuilder()
 
       group.foreach { record =>
-        insertString.append(""('"" + record.mkString("","") + ""'),"")
+        insertString.append("('" + record.mkString(",") + "'),")
       }
 
       sqlExecutorConnection
         .createStatement()
-        .executeUpdate(f""INSERT INTO [$sqlTableName] ($tableHeader) VALUES ""
-          + insertString.stripSuffix("",""))
+        .executeUpdate(f"INSERT INTO [$sqlTableName] ($tableHeader) VALUES "
+          + insertString.stripSuffix(","))
     }
 
     sqlExecutorConnection.close() // close the connection so that connections wont exhaust.

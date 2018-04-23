@@ -1,30 +1,30 @@
     val original: JsValue = Json.parse(
-      """""" {""student"": [
+      """ {"student": [
       {
-        ""name"": ""Xyz"",
-        ""college"": ""abc"",
-        ""student_id"":{
-        ""$oid"": ""59a9314f6d0000920962e247""
+        "name": "Xyz",
+        "college": "abc",
+        "student_id":{
+        "$oid": "59a9314f6d0000920962e247"
       }},
       {
-        ""name"": ""DDD"",
-        ""college"": ""opop"",
-        ""student_id"":{
-        ""$oid"": ""59a9314f6d0000920962e257""
+        "name": "DDD",
+        "college": "opop",
+        "student_id":{
+        "$oid": "59a9314f6d0000920962e257"
       }}
-      ]}"""""")
+      ]}""")
 
     val changed = original.as[JsObject] ++ Json.obj(
-      ""student"" -> Json.arr {
+      "student" -> Json.arr {
         original.transform((__ \ 'student)
           .json.pick[JsArray])
           .getOrElse(Json.arr())
           .value.map(e => {
           val value = e.transform((__ \ 'student_id \ '$oid).json.pick[JsString]).get
-          e.as[JsObject] ++ Json.obj(""student_id"" -> value)
+          e.as[JsObject] ++ Json.obj("student_id" -> value)
         })
       })
     println(Json.stringify(changed))
 
 //Result:
-{""student"":[[{""name"":""Xyz"",""college"":""abc"",""student_id"":""59a9314f6d0000920962e247""},{""name"":""DDD"",""college"":""opop"",""student_id"":""59a9314f6d0000920962e257""}]]}
+{"student":[[{"name":"Xyz","college":"abc","student_id":"59a9314f6d0000920962e247"},{"name":"DDD","college":"opop","student_id":"59a9314f6d0000920962e257"}]]}

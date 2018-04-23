@@ -1,22 +1,22 @@
 object Main extends App with SimpleRoutingApp {
-  implicit val system = ActorSystem(""simple-routing-app"")
+  implicit val system = ActorSystem("simple-routing-app")
   import system.dispatcher
 
   val route = ...
-    ~ (post | parameter('method ! ""post"")) {
-      path(""stop"") {
+    ~ (post | parameter('method ! "post")) {
+      path("stop") {
         complete {
           system.scheduler.scheduleOnce(1.second)(system.shutdown())(system.dispatcher)
-          ""Shutting down in 1 second...""
+          "Shutting down in 1 second..."
         }
       }
     }
 
-  startServer(""0.0.0.0"", port = 9100) {
+  startServer("0.0.0.0", port = 9100) {
     route
   }.onComplete {
     case Success(b) =>
-      println(s""Successfully bound to ${b.localAddress}"")
+      println(s"Successfully bound to ${b.localAddress}")
     case Failure(ex) =>
       println(ex.getMessage)
       system.shutdown()

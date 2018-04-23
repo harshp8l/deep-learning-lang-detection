@@ -46,10 +46,10 @@ namespace scl {
     namespace ast {
 
         using namespace util;
-        IcOptions<struct DllPdb>  static const dll_pdb { ""DLL"",   ""PDB""   };
-        IcOptions<struct Setting> static const setting { ""DEBUG"", ""TRACE"" };
-        IcOptions<struct OnOff>   static const on_off  { ""OFF"",   ""ON""    };
-        IcOptions<struct SymType> static const sym_type{ ""all"", ""imports"", ""exports"" };
+        IcOptions<struct DllPdb>  static const dll_pdb { "DLL",   "PDB"   };
+        IcOptions<struct Setting> static const setting { "DEBUG", "TRACE" };
+        IcOptions<struct OnOff>   static const on_off  { "OFF",   "ON"    };
+        IcOptions<struct SymType> static const sym_type{ "all", "imports", "exports" };
 
         using Wildcard = FlavouredString<struct _Wild>;
         using Filespec = FlavouredString<struct _Filespec>;
@@ -98,30 +98,30 @@ namespace scl { namespace ast {
     static inline std::ostream &operator<<(std::ostream &os, Wildcard const &w) { return os << std::quoted(w); }
     static inline std::ostream &operator<<(std::ostream &os, Filespec const &s) { return os << std::quoted(s); }
     static inline std::ostream &operator<<(std::ostream &os, LoadCommand const &cmd) {
-        return os << ""LOAD "" << dll_pdb.to_string(cmd.kind) << "" "" << cmd.filespec ;
+        return os << "LOAD " << dll_pdb.to_string(cmd.kind) << " " << cmd.filespec ;
     }
     static inline std::ostream &operator<<(std::ostream &os, SetCommand const &cmd) {
-        return os << ""SET "" << setting.to_string(cmd.setting) << "" /"" << on_off.to_string(cmd.value);
+        return os << "SET " << setting.to_string(cmd.setting) << " /" << on_off.to_string(cmd.value);
     }
     static inline std::ostream &operator<<(std::ostream &os, ShowSettingCommand const &cmd) {
-        return os << ""SHOW "" << setting.to_string(cmd.setting);
+        return os << "SHOW " << setting.to_string(cmd.setting);
     }
     static inline std::ostream &operator<<(std::ostream &os, ShowModuleCommand const &cmd) {
-        return os << ""SHOW MODULE "" << cmd.wildcard << (cmd.symbols?"" /SYMBOLS"":"""");
+        return os << "SHOW MODULE " << cmd.wildcard << (cmd.symbols?" /SYMBOLS":"");
     }
     static inline std::ostream &operator<<(std::ostream &os, ShowSymbolsCommand const &cmd) {
-        os << ""SHOW SYMBOLS"";
-        if (cmd.all)          os << "" /ALL"";
-        if (cmd.full)         os << "" /FULL"";
-        if (cmd.out.size())   os << "" /OUT="" << cmd.out;
+        os << "SHOW SYMBOLS";
+        if (cmd.all)          os << " /ALL";
+        if (cmd.full)         os << " /FULL";
+        if (cmd.out.size())   os << " /OUT=" << cmd.out;
         if (cmd.types.size()) { 
-            os << "" /TYPE=("";
+            os << " /TYPE=(";
             bool first = true;
             for (auto type : cmd.types)
-                os << (std::exchange(first, false)?"""":"","") << sym_type.to_string(type);
-            os << "")"";
+                os << (std::exchange(first, false)?"":",") << sym_type.to_string(type);
+            os << ")";
         }
-        return os << "" "" << cmd.wildcard;
+        return os << " " << cmd.wildcard;
     }
 } } 
 #endif
@@ -136,7 +136,7 @@ namespace scl {
     namespace x3 = boost::spirit::x3;
 
     // (case insensitive) keyword handling
-    static auto kw        = [](auto p) { return x3::lexeme[p >> !(x3::graph - x3::char_(""/=,()""))]; };
+    static auto kw        = [](auto p) { return x3::lexeme[p >> !(x3::graph - x3::char_("/=,()"))]; };
     static auto ikw       = [](auto p) { return x3::no_case [kw(p)]; };
     static auto qualifier = [](auto p) { return x3::lexeme['/' >> ikw(p)]; };
 
@@ -166,27 +166,27 @@ namespace scl {
     using namespace x3;
 
     auto const bare_string
-        = lexeme[+char_(""a-zA-Z0-9$_.\\*?+-"")]; // bare string taken from old ""param"" rule
+        = lexeme[+char_("a-zA-Z0-9$_.\\*?+-")]; // bare string taken from old "param" rule
 
     auto const quoted_string 
-        = lexeme['""' >> *(('\\' > char_) | ~char_('""')) >> '""'];
+        = lexeme['"' >> *(('\\' > char_) | ~char_('"')) >> '"'];
 
     DEF_RULE(Filespec) = quoted_string | bare_string;
-    DEF_RULE(Wildcard) = lexeme[+char_(""a-zA-Z0-9$_.\\*?+-"")];
+    DEF_RULE(Wildcard) = lexeme[+char_("a-zA-Z0-9$_.\\*?+-")];
 
     DEF_RULE(LoadCommand)
-        = ikw(""load"") >> ast::dll_pdb >> Filespec;
+        = ikw("load") >> ast::dll_pdb >> Filespec;
 
     DEF_RULE(SetCommand)
-        = ikw(""set"") >> ast::setting >> qualifier(ast::on_off);
+        = ikw("set") >> ast::setting >> qualifier(ast::on_off);
 
     DEF_RULE(ShowSettingCommand)
-        = ikw(""show"") >> ast::setting;
+        = ikw("show") >> ast::setting;
 
     DEF_RULE(ShowModuleCommand)
-        = ikw(""show"") >> ikw(""module"") >> Wildcard >> matches[qualifier(""symbols"")];
+        = ikw("show") >> ikw("module") >> Wildcard >> matches[qualifier("symbols")];
 
-    // Note the IIFE idiom allows for ""very local"" helper definitions
+    // Note the IIFE idiom allows for "very local" helper definitions
     DEF_RULE(SymbolTypes) = [] {
             auto type = as_parser(ast::sym_type);
             return '(' >> (type % ',') >> ')' | repeat(1) [ type ];
@@ -202,15 +202,15 @@ namespace scl {
             };
 
             using T = ast::ShowSymbolsCommand;;
-            return qualifier(""all"")  >> set(&T::all, attr(true))
-                 | qualifier(""full"") >> set(&T::full, attr(true))
-                 | qualifier(""out"")  >> set(&T::out, '=' >> Filespec)
-                 | qualifier(""type"") >> set(&T::types, '=' >> SymbolTypes)
+            return qualifier("all")  >> set(&T::all, attr(true))
+                 | qualifier("full") >> set(&T::full, attr(true))
+                 | qualifier("out")  >> set(&T::out, '=' >> Filespec)
+                 | qualifier("type") >> set(&T::types, '=' >> SymbolTypes)
                  | set(&T::wildcard, Wildcard);
         }(); // IIFE idiom
 
     DEF_RULE(ShowSymbolsCommand)
-        = ikw(""show"") >> ikw(""symbols"") >> *ShowSymbolsQualifiers;
+        = ikw("show") >> ikw("symbols") >> *ShowSymbolsQualifiers;
 
     DEF_RULE(Command)
         = skip(blank)[ LoadCommand | SetCommand | ShowSettingCommand | ShowModuleCommand | ShowSymbolsCommand ];
@@ -221,30 +221,30 @@ namespace scl {
 
 int main() {
     for (std::string const str : {
-        ""load dll test.dll"",
-        ""LOAD pdb \""test special.pdb\"""",
-        ""LOAD pDb test.pdb"",
-        ""set debug /on"",
-        ""show debug"",
-        ""SHOW module test.dll/symbols"",
-        ""SHOW MODULE TEST.DLL /SYMBOLS"",
-        ""SHOW module test.dll / symbols"",
-        ""SHOW module test.dll"",
-        ""show symbols/type=exports test*"",
-        ""show symbols/type=(exports,imports) test*"",
-        ""show symbols test.dll/type=(imports,exports)"",
-        ""show symbols test.dll/tyPE=(imports,exports)"",
-        ""show symbols s*/out=s.txt"",
-        ""show symbols /all /full"",
+        "load dll test.dll",
+        "LOAD pdb \"test special.pdb\"",
+        "LOAD pDb test.pdb",
+        "set debug /on",
+        "show debug",
+        "SHOW module test.dll/symbols",
+        "SHOW MODULE TEST.DLL /SYMBOLS",
+        "SHOW module test.dll / symbols",
+        "SHOW module test.dll",
+        "show symbols/type=exports test*",
+        "show symbols/type=(exports,imports) test*",
+        "show symbols test.dll/type=(imports,exports)",
+        "show symbols test.dll/tyPE=(imports,exports)",
+        "show symbols s*/out=s.txt",
+        "show symbols /all /full",
     }) {
-        std::cout << "" ======== "" << std::quoted(str) << std::endl;
+        std::cout << " ======== " << std::quoted(str) << std::endl;
 
         auto b = str.begin(), e = str.end();
         scl::ast::Command cmd;
 
         if (parse(b, e, scl::Command, cmd))
-            std::cout << "" - Parsed: "" << cmd << std::endl;
+            std::cout << " - Parsed: " << cmd << std::endl;
         if (b != e)
-            std::cout << "" - Remaining unparsed: "" << std::quoted(std::string(b, e)) << std::endl;
+            std::cout << " - Remaining unparsed: " << std::quoted(std::string(b, e)) << std::endl;
     }
 }

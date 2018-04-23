@@ -1,12 +1,12 @@
-SELECT template_id, REGEXP_SUBSTR(clean_html, 'src=""[^""]*\.js""', 1, LEVEL, 'i') AS match
+SELECT template_id, REGEXP_SUBSTR(clean_html, 'src="[^"]*\.js"', 1, LEVEL, 'i') AS match
   FROM (
     SELECT template_id,  REGEXP_REPLACE(html_text, '<!--.*?-->', '', 1, 0, 'n') AS clean_html
      FROM (
        SELECT t.id as template_id, t.data AS html_text
          FROM template t
-        WHERE REGEXP_LIKE(t.data, 'src=""[^""]*\.js""', 'i')
+        WHERE REGEXP_LIKE(t.data, 'src="[^"]*\.js"', 'i')
      )
   )
-CONNECT BY TO_CHAR(REGEXP_SUBSTR(clean_html, 'src=""[^""]*\.js""', 1, LEVEL, 'i')) IS NOT NULL
+CONNECT BY TO_CHAR(REGEXP_SUBSTR(clean_html, 'src="[^"]*\.js"', 1, LEVEL, 'i')) IS NOT NULL
   AND PRIOR template_id = template_id
   AND PRIOR DBMS_RANDOM.VALUE IS NOT NULL;

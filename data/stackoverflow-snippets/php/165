@@ -1,45 +1,45 @@
 <?php
 session_start();
-include ""connection.php"";
+include "connection.php";
 
-$id = $_GET[""userID""]; // SANITISE USER INPUT!!!
+$id = $_GET["userID"]; // SANITISE USER INPUT!!!
         // change that to a prepared statement!! This is unsecure.
-$sql = ""SELECT * FROM userdetails WHERE userID = '"" . $id . ""'"";
+$sql = "SELECT * FROM userdetails WHERE userID = '" . $id . "'";
 $result = mysqli_query($con, $sql);
 
 if (mysqli_num_rows($result) == 1) {
     $row = mysqli_fetch_assoc($result); // no need for a while there, we expect only one row
-    echo ""<div>"" .
-        ""<br>First name: "" . $row[""firstname""] .
-        ""<br>Second name: "" . $row[""secondname""] .
-        ""<br>Mobile: "" . $row[""mobile""] .
-        ""<br>Height: "" . $row[""height""] . ""CM"" .
-        ""<br>weight: "" . $row[""weight""] . ""KG"" .
-        ""<br>Image:<br> <img src=getimage.php? 
-    userID="" . $row[""userID""] . ""width=100, height=100"" .
-        ""<br> You are a match! click below to view events"" .
-        ""<br><a href=Events.php?userID="" . $row[""userID""] . "">View 
-    Events</a>"" .
-        ""</div>"";
+    echo "<div>" .
+        "<br>First name: " . $row["firstname"] .
+        "<br>Second name: " . $row["secondname"] .
+        "<br>Mobile: " . $row["mobile"] .
+        "<br>Height: " . $row["height"] . "CM" .
+        "<br>weight: " . $row["weight"] . "KG" .
+        "<br>Image:<br> <img src=getimage.php? 
+    userID=" . $row["userID"] . "width=100, height=100" .
+        "<br> You are a match! click below to view events" .
+        "<br><a href=Events.php?userID=" . $row["userID"] . ">View 
+    Events</a>" .
+        "</div>";
 
         // find users with the same weight;
         $findSimularity = 'weight'; // having weight as a var keeps it more modular/reuseable
-        $stmt = mysqli_prepare($con, ""SELECT * FROM userdetails WHERE `{$findSimularity}` = ?"");
+        $stmt = mysqli_prepare($con, "SELECT * FROM userdetails WHERE `{$findSimularity}` = ?");
 
-        mysqli_stmt_bind_param($stmt,""d"", $row[$findSimularity]); // I assumed type double for weight here. 
+        mysqli_stmt_bind_param($stmt,"d", $row[$findSimularity]); // I assumed type double for weight here. 
                                                            //Could also be 'i' for int or 's' for a string/varchar. ?
         mysqli_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
-        echo ""Similar Users:<br>"";
+        echo "Similar Users:<br>";
         while($similarUser = mysqli_fetch_assoc($result)) {
-            echo $similarUser['firstname'] . "" has the same $findSimularity of "".$row[$findSimularity].""<br>"";
+            echo $similarUser['firstname'] . " has the same $findSimularity of ".$row[$findSimularity]."<br>";
         }
 
 
 } elseif (mysqli_num_rows($result) > 1) {
-    echo ""I found more than one user with given ID. That should be an error."";
+    echo "I found more than one user with given ID. That should be an error.";
 } else {
-    echo ""0 results"";
+    echo "0 results";
 }
 
 // best practice is to NOT have a final ?> in your files (to avoid some strange hard to find errors), so I removed it

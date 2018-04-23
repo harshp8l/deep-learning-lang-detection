@@ -1,10 +1,10 @@
 package main
 
 import (
-    ""encoding/json""
-    ""errors""
-    ""fmt""
-    ""strings""
+    "encoding/json"
+    "errors"
+    "fmt"
+    "strings"
 )
 
 // parseFn describes the function for converting input into a map.
@@ -16,13 +16,13 @@ type parseFn func(string) (map[string]string, error)
 // parseFormat1 is for fields separated by commas
 func parseFormat1(in string) (map[string]string, error) {
     data := map[string]string{}
-    fields := strings.Split(in, "","")
+    fields := strings.Split(in, ",")
     for _, field := range fields {
-        pair := strings.Split(field, ""="")
+        pair := strings.Split(field, "=")
         if len(pair) != 2 {
-            return nil, errors.New(""invalid input"")
+            return nil, errors.New("invalid input")
         }
-        data[strings.Trim(pair[0], ` ""`)] = strings.Trim(pair[1], ` ""`)
+        data[strings.Trim(pair[0], ` "`)] = strings.Trim(pair[1], ` "`)
     }
     return data, nil
 }
@@ -30,26 +30,26 @@ func parseFormat1(in string) (map[string]string, error) {
 // parseFormat2 is for lines with no commas
 func parseFormat2(in string) (map[string]string, error) {
     data := map[string]string{}
-    fields := strings.Split(in, "" "")
+    fields := strings.Split(in, " ")
     for _, field := range fields {
-        pair := strings.Split(field, ""="")
+        pair := strings.Split(field, "=")
         if len(pair) != 2 {
-            return nil, errors.New(""invalid input"")
+            return nil, errors.New("invalid input")
         }
-        data[strings.Trim(pair[0], ` ""`)] = strings.Trim(pair[1], ` ""`)
+        data[strings.Trim(pair[0], ` "`)] = strings.Trim(pair[1], ` "`)
     }
     return data, nil
 }
 
 // nullFormat is what we fall back on when we just don't know
-func nullFormat(in string) (map[string]string, error) { return nil, errors.New(""invalid format"") }
+func nullFormat(in string) (map[string]string, error) { return nil, errors.New("invalid format") }
 
 // classify just tries to guess the parser to use for the input
 func classify(in string) parseFn {
     switch {
-    case strings.Count(in, "", "") > 1:
+    case strings.Count(in, ", ") > 1:
         return parseFormat1
-    case strings.Count(in, "" "") > 1:
+    case strings.Count(in, " ") > 1:
         return parseFormat2
     default:
         return nullFormat
@@ -59,23 +59,23 @@ func classify(in string) parseFn {
 func main() {
     testCases := []string{
         `id=1, name=peter, age=12`,
-        `id=1, name=peter, age=""12""`,
+        `id=1, name=peter, age="12"`,
         `id=1 name=peter age=12`,
-        `id=1;name=peter;age=""12""`,
+        `id=1;name=peter;age="12"`,
     }
 
     for ix, tc := range testCases {
         pfn := classify(tc)
         d, err := pfn(tc)
         if err != nil {
-            fmt.Printf(""\nerror parsing on line %d: %v\n"", ix, err)
+            fmt.Printf("\nerror parsing on line %d: %v\n", ix, err)
             continue
         }
         b, err := json.Marshal(d)
         if err != nil {
-            fmt.Printf(""\nerror marshaling on line %d: %v\n"", ix, err)
+            fmt.Printf("\nerror marshaling on line %d: %v\n", ix, err)
             continue
         }
-        fmt.Printf(""\nSuccess on line %d:\n INPUT: %s\nOUTPUT: %s\n"", ix, tc, string(b))
+        fmt.Printf("\nSuccess on line %d:\n INPUT: %s\nOUTPUT: %s\n", ix, tc, string(b))
     }
 }

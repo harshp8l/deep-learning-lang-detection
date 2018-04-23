@@ -10,18 +10,18 @@ def getClusterInfo(clusterId: String): ClusterInfo =
   ClusterInfo(clusterId, Array(Influencer(clusterId)))
 
 // some sample data - assuming both columns are integers:
-val df = Seq((222, 3), (333, 4)).toDF(""Report_id"", ""Cluster_number"")
+val df = Seq((222, 3), (333, 4)).toDF("Report_id", "Cluster_number")
 
 // actual solution:
 
 // UDF that returns an array of ClusterInfo;
 // Array size is 'clusterNo', creates cluster id for each element and maps it to info
 val clusterInfoUdf = udf { (clusterNo: Int, reportId: Int) =>
-  (1 to clusterNo).map(v => s""${reportId}_$v"").map(getClusterInfo)
+  (1 to clusterNo).map(v => s"${reportId}_$v").map(getClusterInfo)
 }
 
 // apply UDF to each record and explode - to create one record per array item
-val result = df.select(explode(clusterInfoUdf($""Cluster_number"", $""Report_id"")))
+val result = df.select(explode(clusterInfoUdf($"Cluster_number", $"Report_id")))
 
 result.printSchema()
 // root

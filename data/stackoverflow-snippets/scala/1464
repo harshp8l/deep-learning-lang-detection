@@ -1,20 +1,20 @@
 // the input dataset (just a single JSON blob)
-val jsonstrings = Seq(""""""{
-    ""key1"": ""value1"",
-    ""key2"": {
-        ""level2key1"": ""level2value1"",
-        ""level2key2"": ""level2value2""
+val jsonstrings = Seq("""{
+    "key1": "value1",
+    "key2": {
+        "level2key1": "level2value1",
+        "level2key2": "level2value2"
     }
-}"""""").toDF(""jsonstring"")
+}""").toDF("jsonstring")
 
 // define the schema of JSON messages
 import org.apache.spark.sql.types._
 val key2schema = new StructType()
-  .add($""level2key1"".string)
-  .add($""level2key2"".string)
+  .add($"level2key1".string)
+  .add($"level2key2".string)
 val schema = new StructType()
-  .add($""key1"".string)
-  .add(""key2"", key2schema)
+  .add($"key1".string)
+  .add("key2", key2schema)
 scala> schema.printTreeString
 root
  |-- key1: string (nullable = true)
@@ -23,8 +23,8 @@ root
  |    |-- level2key2: string (nullable = true)
 
 val messages = jsonstrings
-  .select(from_json($""jsonstring"", schema) as ""json"")
-  .select(""json.*"") // <-- flattening nested fields
+  .select(from_json($"jsonstring", schema) as "json")
+  .select("json.*") // <-- flattening nested fields
 scala> messages.show(truncate = false)
 +------+---------------------------+
 |key1  |key2                       |
@@ -32,7 +32,7 @@ scala> messages.show(truncate = false)
 |value1|[level2value1,level2value2]|
 +------+---------------------------+
 
-scala> messages.select(""key1"", ""key2.*"").show(truncate = false)
+scala> messages.select("key1", "key2.*").show(truncate = false)
 +------+------------+------------+
 |key1  |level2key1  |level2key2  |
 +------+------------+------------+

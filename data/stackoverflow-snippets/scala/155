@@ -1,24 +1,24 @@
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 
-val df1 = List(""a"", ""b"", ""c"").toDF(""myList"")
-val df2 = Array(""x"", ""y"", ""z"").toSeq.toDF(""myArray"")
+val df1 = List("a", "b", "c").toDF("myList")
+val df2 = Array("x", "y", "z").toSeq.toDF("myArray")
 
 val rdd1 = df1.rdd.zipWithIndex.map{
   case (row: Row, id: Long) => Row.fromSeq(row.toSeq :+ id)
 }
 val df1withId = spark.createDataFrame( rdd1,
-  StructType(df1.schema.fields :+ StructField(""rowId"", LongType, false))
+  StructType(df1.schema.fields :+ StructField("rowId", LongType, false))
 )
 
 val rdd2 = df2.rdd.zipWithIndex.map{
   case (row: Row, id: Long) => Row.fromSeq(row.toSeq :+ id)
 }
 val df2withId = spark.createDataFrame( rdd2, 
-  StructType(df2.schema.fields :+ StructField(""rowId"", LongType, false))
+  StructType(df2.schema.fields :+ StructField("rowId", LongType, false))
 )
 
-df1withId.join(df2withId, Seq(""rowId"")).show
+df1withId.join(df2withId, Seq("rowId")).show
 // +-----+------+-------+
 // |rowId|myList|myArray|
 // +-----+------+-------+

@@ -3,16 +3,16 @@ import org.apache.spark.ml.Pipeline
 
 
 val df = Seq(
-  (1, Array(""I"", ""like"", ""Spark"")), (2, Array(""I"", ""hate"", ""Spark""))
-).toDF(""id"", ""words"")
+  (1, Array("I", "like", "Spark")), (2, Array("I", "hate", "Spark"))
+).toDF("id", "words")
 
 val pipeline = new Pipeline().setStages(Array(
   new SQLTransformer()
-    .setStatement(""SELECT id, explode(words) as word FROM __THIS__""),
-  new StringIndexer().setInputCol(""word"").setOutputCol(""index""),
+    .setStatement("SELECT id, explode(words) as word FROM __THIS__"),
+  new StringIndexer().setInputCol("word").setOutputCol("index"),
   new SQLTransformer()
-    .setStatement(""""""SELECT id, COLLECT_SET(index) AS values 
-                     FROM __THIS__ GROUP BY id"""""")
+    .setStatement("""SELECT id, COLLECT_SET(index) AS values 
+                     FROM __THIS__ GROUP BY id""")
 ))
 
 pipeline.fit(df).transform(df).show

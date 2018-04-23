@@ -1,11 +1,11 @@
-$IpRelayList = @(""192.168.1.0, 255.255.0.0"", 
-                ""127.3.4.0, 255.255.255.192"")
+$IpRelayList = @("192.168.1.0, 255.255.0.0", 
+                "127.3.4.0, 255.255.255.192")
 
 #adding relays
-$iisObject = new-object System.DirectoryServices.DirectoryEntry(""IIS://localhost/smtpsvc/1"")
-$relays = $iisObject.Properties[""RelayIpList""].Value
-$bindingFlags = [Reflection.BindingFlags] ""Public, Instance, GetProperty""
-$ipList = $relays.GetType().InvokeMember(""IPGrant"", $bindingFlags, $null, $relays, $null);
+$iisObject = new-object System.DirectoryServices.DirectoryEntry("IIS://localhost/smtpsvc/1")
+$relays = $iisObject.Properties["RelayIpList"].Value
+$bindingFlags = [Reflection.BindingFlags] "Public, Instance, GetProperty"
+$ipList = $relays.GetType().InvokeMember("IPGrant", $bindingFlags, $null, $relays, $null);
 
 #if relay list is empty we are retrieving host subnets and adding to relay
 $Networkip =@()
@@ -15,7 +15,7 @@ if($IpRelayList.Count -eq 0)
     foreach($Network in $Networks)  
     {   
         $line = Get-NetworkAddress $Network.IpAddress[0] $Network.IpSubnet[0]
-        $line = $line + "", "" + $Network.IpSubnet[0]
+        $line = $line + ", " + $Network.IpSubnet[0]
         $Networkip += $line
     }
 }
@@ -27,8 +27,8 @@ $ipList = $Networkip + $IpRelayList
 $ipArray += , $ipList
 
 # Now update
-$bindingFlags = [Reflection.BindingFlags] ""Public, Instance, SetProperty""
-$ipList = $relays.GetType().InvokeMember(""IPGrant"", $bindingFlags, $null, $relays, $ipArray);
+$bindingFlags = [Reflection.BindingFlags] "Public, Instance, SetProperty"
+$ipList = $relays.GetType().InvokeMember("IPGrant", $bindingFlags, $null, $relays, $ipArray);
 
-$iisObject.Properties[""RelayIpList""].Value = $relays
+$iisObject.Properties["RelayIpList"].Value = $relays
 $iisObject.CommitChanges()

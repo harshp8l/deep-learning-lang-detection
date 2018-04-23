@@ -4,14 +4,14 @@ private async Task OnAuthorizationCodeReceived(AuthorizationCodeReceivedNotifica
     var code = notification.Code;
 
     string signedInUserID = notification.AuthenticationTicket.Identity.FindFirst(ClaimTypes.NameIdentifier).Value;
-    TokenCache userTokenCache = new MSALSessionCache(signedInUserID, notification.OwinContext.Environment[""System.Web.HttpContextBase""] as HttpContextBase).GetMsalCacheInstance();
+    TokenCache userTokenCache = new MSALSessionCache(signedInUserID, notification.OwinContext.Environment["System.Web.HttpContextBase"] as HttpContextBase).GetMsalCacheInstance();
     ConfidentialClientApplication cca = new ConfidentialClientApplication(ClientId, Authority, RedirectUri, new ClientCredential(ClientSecret), userTokenCache, null);
 
     ///////////////////////////////////
     // Added line here
     ///////////////////////////////////
-    // Add a custom claim to the user's ObjectId ('oid' in the token); Access it with this code: ((System.Security.Claims.ClaimsIdentity)User.Identity).FindFirst(""ObjectId"").Value
-    notification.AuthenticationTicket.Identity.AddClaim(new System.Security.Claims.Claim(""ObjectId"", signedInUserID));
+    // Add a custom claim to the user's ObjectId ('oid' in the token); Access it with this code: ((System.Security.Claims.ClaimsIdentity)User.Identity).FindFirst("ObjectId").Value
+    notification.AuthenticationTicket.Identity.AddClaim(new System.Security.Claims.Claim("ObjectId", signedInUserID));
 
     try
     {
@@ -19,7 +19,7 @@ private async Task OnAuthorizationCodeReceived(AuthorizationCodeReceivedNotifica
     }
     catch (Exception ex)
     {
-        MyLogger.LogTrace(""Failed to retrieve AuthenticationResult Token for user "" + signedInUserID, MyLogger.LogLevel.Critical);
+        MyLogger.LogTrace("Failed to retrieve AuthenticationResult Token for user " + signedInUserID, MyLogger.LogLevel.Critical);
         return;
     }
 }

@@ -1,13 +1,13 @@
 CREATE TEMP FUNCTION SumFieldsNamedFoo(json_row STRING)
   RETURNS FLOAT64
-  LANGUAGE js AS """"""
+  LANGUAGE js AS """
 function SumFoo(obj) {
   var sum = 0;
   for (var field in obj) {
     if (obj.hasOwnProperty(field) && obj[field] != null) {
-      if (typeof obj[field] == ""object"") {
+      if (typeof obj[field] == "object") {
         sum += SumFoo(obj[field]);
-      } else if (field == ""foo"") {
+      } else if (field == "foo") {
         sum += obj[field];
       }
     }
@@ -16,7 +16,7 @@ function SumFoo(obj) {
 }
 var row = JSON.parse(json_row);
 return SumFoo(row);
-"""""";
+""";
 
 WITH Input AS (
   SELECT STRUCT(1 AS foo, 2 AS bar, STRUCT('foo' AS x, 3.14 AS foo) AS baz) AS s, 10 AS foo UNION ALL
@@ -30,7 +30,7 @@ FROM Input AS t;
 +---------------------------------------------------------------------+---------+
 | json_row                                                            | foo_sum |
 +---------------------------------------------------------------------+---------+
-| {""s"":{""foo"":1,""bar"":2,""baz"":{""x"":""foo"",""foo"":3.14}},""foo"":10}       | 14.14   |
-| {""s"":null,""foo"":4}                                                  | 4       |
-| {""s"":{""foo"":null,""bar"":2,""baz"":{""x"":""fizz"",""foo"":1.59}},""foo"":null} | 1.59    |
+| {"s":{"foo":1,"bar":2,"baz":{"x":"foo","foo":3.14}},"foo":10}       | 14.14   |
+| {"s":null,"foo":4}                                                  | 4       |
+| {"s":{"foo":null,"bar":2,"baz":{"x":"fizz","foo":1.59}},"foo":null} | 1.59    |
 +---------------------------------------------------------------------+---------+

@@ -1,14 +1,14 @@
-def saveDfToCsv(df: DataFrame, tsvOutput: String, sep: String = "","", header: Boolean = false): Unit = {
-    val tmpParquetDir = ""Posts.tmp.parquet""
+def saveDfToCsv(df: DataFrame, tsvOutput: String, sep: String = ",", header: Boolean = false): Unit = {
+    val tmpParquetDir = "Posts.tmp.parquet"
 
     df.repartition(1).write.
-        format(""com.databricks.spark.csv"").
-        option(""header"", header.toString).
-        option(""delimiter"", sep).
+        format("com.databricks.spark.csv").
+        option("header", header.toString).
+        option("delimiter", sep).
         save(tmpParquetDir)
 
     val dir = new File(tmpParquetDir)
-    val newFileRgex = tmpParquetDir + File.separatorChar + "".part-00000.*.csv""
+    val newFileRgex = tmpParquetDir + File.separatorChar + ".part-00000.*.csv"
     val tmpTsfFile = dir.listFiles.filter(_.toPath.toString.matches(newFileRgex))(0).toString
     (new File(tmpTsvFile)).renameTo(new File(tsvOutput))
 

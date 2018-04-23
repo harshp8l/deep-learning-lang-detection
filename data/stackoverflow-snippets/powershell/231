@@ -3,30 +3,30 @@ Import-PSSession $Session -AllowClobber
 
 Import-Module ActiveDirectory    
 
-$Users = Get-ADUser -filter * -Properties * -SearchBase ""OU=Disabled User Accounts,DC=Private,DC=Private""
+$Users = Get-ADUser -filter * -Properties * -SearchBase "OU=Disabled User Accounts,DC=Private,DC=Private"
 
 $Today = (Get-Date).ToShortDateString()
 $OneMonthAgo = (Get-Date).AddMonths(-1).ToShortDateString()
 
 $results = @()
 
-$OnPrem = $Users | Where-Object {$_.mDBUseDefaults -eq ""True""}
-$365 = $Users | Where-Object{$_.mDBUseDefaults -ne ""True""}
+$OnPrem = $Users | Where-Object {$_.mDBUseDefaults -eq "True"}
+$365 = $Users | Where-Object{$_.mDBUseDefaults -ne "True"}
 
-Write-Host ""Start Date: "" $OneMonthAgo -ForegroundColor Green
-Write-Host ""Total Users OnPrem: "" ($OnPrem.mail).Count -ForegroundColor Green
+Write-Host "Start Date: " $OneMonthAgo -ForegroundColor Green
+Write-Host "Total Users OnPrem: " ($OnPrem.mail).Count -ForegroundColor Green
 
 foreach($User in $OnPrem)
 {
-    Write-Host ""Checking User: ""$User.DisplayName -ForegroundColor Yellow
-    $MessageCount = Get-MessageTrackingLog -recipients $User.Mail -Start $OneMonthAgo.ToString() | Where-Object {$_.EventID -eq ""RECEIVE""} | Measure-Object
+    Write-Host "Checking User: "$User.DisplayName -ForegroundColor Yellow
+    $MessageCount = Get-MessageTrackingLog -recipients $User.Mail -Start $OneMonthAgo.ToString() | Where-Object {$_.EventID -eq "RECEIVE"} | Measure-Object
 
-    Write-Host $User.Name"": MessageCount: ""$MessageCount.Count -ForegroundColor Cyan
+    Write-Host $User.Name": MessageCount: "$MessageCount.Count -ForegroundColor Cyan
 
      $Object = New-Object PSObject -Property @{
         User = $User.Name
         Email = $User.Mail
-        Type = ""OnPrem""
+        Type = "OnPrem"
         DisabledDate = $User.Modified
         Location = $User.Office
         MessagesReceived = $MessageCount.Count

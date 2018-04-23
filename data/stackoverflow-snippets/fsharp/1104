@@ -14,20 +14,20 @@ type Consume =
 [<EntryPoint>]
 let main argv =
 
-    let system = System.create ""MySystem"" <| Configuration.load()    
-    let greeter = spawn system ""greeter"" <| fun mailbox ->
+    let system = System.create "MySystem" <| Configuration.load()    
+    let greeter = spawn system "greeter" <| fun mailbox ->
         let rec loop() = actor {
             let! msg = mailbox.Receive()
             let sender = mailbox.Sender()
             match msg with
-                | Greet who -> () // printf ""Hello, %s!\n"" who
+                | Greet who -> () // printf "Hello, %s!\n" who
                 | Hello2 -> sender.Tell(Response)
                 | _ -> ()
             return! loop()
             }
         loop()
 
-    let consumer = spawn system ""consumer"" <| fun mailbox ->
+    let consumer = spawn system "consumer" <| fun mailbox ->
         let rec loop(count,sender : IActorRef) = actor {
             if count = 1000000 then sender.Tell(true)
             let! msg = mailbox.Receive()
@@ -48,7 +48,7 @@ let main argv =
     let workdone = consumer.Ask SetSender
     workdone.Wait()
 
-    printfn ""elapsed Akka:%A"" t1.ElapsedMilliseconds
+    printfn "elapsed Akka:%A" t1.ElapsedMilliseconds
     System.Console.ReadLine () |> ignore
 
     0

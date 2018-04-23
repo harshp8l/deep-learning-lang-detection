@@ -5,27 +5,27 @@
 }
 
 function Get-HttpBasicHeader([string]$username, [string]$password, $Headers = @{}) {
-    $b64 = ConvertTo-Base64 ""$($username):$($Password)""
-    $Headers[""Authorization""] = ""Basic $b64""
-    $Headers[""X-Atlassian-Token""] = ""nocheck""
+    $b64 = ConvertTo-Base64 "$($username):$($Password)"
+    $Headers["Authorization"] = "Basic $b64"
+    $Headers["X-Atlassian-Token"] = "nocheck"
     return $Headers
 }
 
 function add_comment([string]$issueKey,[string]$comment) {
-    $body = ('{""body"": ""'+$comment+'""}')
-    $comment=(Invoke-RestMethod -uri ($restapiuri +""issue/$issueKey/comment"") -Headers $headers -Method POST -ContentType ""application/json"" -Body $body).id    
+    $body = ('{"body": "'+$comment+'"}')
+    $comment=(Invoke-RestMethod -uri ($restapiuri +"issue/$issueKey/comment") -Headers $headers -Method POST -ContentType "application/json" -Body $body).id    
     return $comment
 }
 
 function transition([string]$issueKey,[string]$transitionid) {
-    $body = ('{""transition"": ""'+$transitionid+'""}')
-    $comment=(Invoke-RestMethod -uri ($restapiuri +""issue/$issueKey/transitions?expand=transitions.fields"") -Headers $headers -Method POST -ContentType ""application/json"" -Body $body).id    
+    $body = ('{"transition": "'+$transitionid+'"}')
+    $comment=(Invoke-RestMethod -uri ($restapiuri +"issue/$issueKey/transitions?expand=transitions.fields") -Headers $headers -Method POST -ContentType "application/json" -Body $body).id    
     return $comment
 }
 
 
-$restapiuri = ""https://jira.com/rest/api/2/""
-$headers = Get-HttpBasicHeader ""user"" ""pw""
+$restapiuri = "https://jira.com/rest/api/2/"
+$headers = Get-HttpBasicHeader "user" "pw"
 
-add_comment ""ticket-id"" ""comment""
-transition ""ticket-id"" ""transitionid""
+add_comment "ticket-id" "comment"
+transition "ticket-id" "transitionid"

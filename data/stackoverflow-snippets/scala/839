@@ -1,11 +1,11 @@
 val kafkaMessages: Source[ConsumerMessage.CommittableMessage[String, Array[Byte]], Consumer.Control] = 
-  Consumer.committableSource(consumerSettings, Subscriptions.topics(conf.getString(""kafka.topics.errorRawCdr"")))
+  Consumer.committableSource(consumerSettings, Subscriptions.topics(conf.getString("kafka.topics.errorRawCdr")))
 
 val cdrs: Source[Errors, Consumer.Control] = 
   kafkaMessages.map { msg => 
     val bytes: Array[Byte] = msg.record.value()
     val errormsg = (bytes.map(_.toChar)).mkString
-    (new Errors(1235, ""filename"", ""cdr"", ""cdr_type"", 0, errormsg), errormsg) // we are returning a tuple so type of downstream elements will be (Errors, String)
+    (new Errors(1235, "filename", "cdr", "cdr_type", 0, errormsg), errormsg) // we are returning a tuple so type of downstream elements will be (Errors, String)
   }.map { case i@(errors, errormsg) => 
     sendEmail(errormsg)
     i

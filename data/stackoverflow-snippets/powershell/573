@@ -32,12 +32,12 @@ Loads full path xml
 Saves full path csv
 
 .EXAMPLE
-dir *.xml | Sort-Object -Property LastWriteTime | Convert-Excel -Extension "".csv""
+dir *.xml | Sort-Object -Property LastWriteTime | Convert-Excel -Extension ".csv"
 Similar to above but uses the pipeline to do multiple conversions.
 If full outfile name is given, it will create just one file over and over again. In this example it would go in chronological order creating csv files.
 
 .EXAMPLE
-Dir *.xml | Convert-Excel -extension "".csv"" -delete $True | Convert-Excel -extension "".xml""
+Dir *.xml | Convert-Excel -extension ".csv" -delete $True | Convert-Excel -extension ".xml"
 Thats just weird, but it might solve your problem, and it works.
 
 .PARAMETER infile
@@ -63,18 +63,18 @@ function Convert-Excel{
     Begin {
         $begin_outfile = $outfile
         Try {$ExcelWB = new-object -comobject excel.application}
-        Catch {Write-Host ""This host does not seem to have Excel installed""}
+        Catch {Write-Host "This host does not seem to have Excel installed"}
     }
 
     Process{
     #Check infile 
         if (-not($infile)) {
-            Write-Output ""You must supply a value for -infile""
+            Write-Output "You must supply a value for -infile"
             break
         }
         else {
             Try {$file = Get-Item $infile}
-            Catch {Write-Output ""$infile does not seem to exist, or I can't get to it""; break}
+            Catch {Write-Output "$infile does not seem to exist, or I can't get to it"; break}
         }
 
     #Check outfile
@@ -83,26 +83,26 @@ function Convert-Excel{
 
         #If blank just presume xlsx
         if (-not($outfile)) {
-            $outfile = $file.FullName -replace '\.[^.]+$',"".xlsx""
-            Write-Verbose ""No outfile supplied, setting outfile to $outfile""
+            $outfile = $file.FullName -replace '\.[^.]+$',".xlsx"
+            Write-Verbose "No outfile supplied, setting outfile to $outfile"
         }
 
         #If startswith a dot, use as an extension.
-        If ($outfile.StartsWith(""."")) {
+        If ($outfile.StartsWith(".")) {
             $outfile = $file.FullName -replace '\.[^.]+$',$outfile
-            Write-Verbose ""Extension supplied, setting outfile to $outfile""
+            Write-Verbose "Extension supplied, setting outfile to $outfile"
         }
 
         #derive XlFileFormat from extension
         if($outfile -cmatch '\.[^.]+$') {
-            $extens="""" #Reset for pipeline loop
+            $extens="" #Reset for pipeline loop
             switch ($Matches[0]) 
             {
-                "".xlsx"" {$extens = 51}
-                "".csv""  {$extens = 6}
-                "".xml""  {$extens = 46}
-                "".xls""  {$extens = -4143}
-                "".xlsm"" {$extens = 52}
+                ".xlsx" {$extens = 51}
+                ".csv"  {$extens = 6}
+                ".xml"  {$extens = 46}
+                ".xls"  {$extens = -4143}
+                ".xlsm" {$extens = 52}
                 default {$extens = 51}
             }
 
@@ -113,7 +113,7 @@ function Convert-Excel{
 
         if ($file.FullName -eq $outfile) {
             #Nobody needs us to create a copy of an existing file.
-            write-verbose ""Goal already achieved, moving on""
+            write-verbose "Goal already achieved, moving on"
         }
         Else {
             if(Test-Path ($outfile)){
@@ -122,9 +122,9 @@ function Convert-Excel{
             }
 
             Try {
-                Write-Verbose ""Loop Check $infile""
+                Write-Verbose "Loop Check $infile"
 
-                if ($file.Extension -eq "".xml"") {
+                if ($file.Extension -eq ".xml") {
                     #Make assumptions for XML. If you need more control don't automate
                     $Workbook = $ExcelWB.Workbooks.OpenXML($file.FullName,1)
                 }
@@ -136,7 +136,7 @@ function Convert-Excel{
                 $Workbook.Close($false)
             }
             Catch {
-                Write-Host ""Unable to convert file $file because Excel cannot open or save it without help""
+                Write-Host "Unable to convert file $file because Excel cannot open or save it without help"
                 break
             }
 

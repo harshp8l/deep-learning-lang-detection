@@ -1,22 +1,22 @@
 package main
 
 import (
-    ""log""
+    "log"
 
-    ""github.com/jinzhu/gorm""
-    _ ""github.com/jinzhu/gorm/dialects/sqlite""
-    _ ""github.com/mattn/go-sqlite3""
+    "github.com/jinzhu/gorm"
+    _ "github.com/jinzhu/gorm/dialects/sqlite"
+    _ "github.com/mattn/go-sqlite3"
 )
 
 type Business struct {
     ID     uint
-    Name   string `gorm:""not null""`
-    Tables Tables `gorm:""ForeignKey:BusinessID""`
+    Name   string `gorm:"not null"`
+    Tables Tables `gorm:"ForeignKey:BusinessID"`
 }
 
 type Table struct {
     ID         uint
-    Ref        string `gorm:""not null""`
+    Ref        string `gorm:"not null"`
     Business   Business
     BusinessID uint
 }
@@ -28,7 +28,7 @@ func main() {
     var err error
     var db *gorm.DB
 
-    db, err = gorm.Open(""sqlite3"", ""test.db"")
+    db, err = gorm.Open("sqlite3", "test.db")
     if err != nil {
         log.Fatal(err)
     }
@@ -40,13 +40,13 @@ func main() {
     db.AutoMigrate(&Table{})
 
     bus := Business{
-        Name: ""Test"",
+        Name: "Test",
         Tables: Tables{
-            Table{Ref: ""A1""},
+            Table{Ref: "A1"},
         },
     }
     db.Create(&bus)
     var businesses Businesses
-    db.Preload(""Tables"").Find(&businesses)
+    db.Preload("Tables").Find(&businesses)
     log.Println(businesses)
 }

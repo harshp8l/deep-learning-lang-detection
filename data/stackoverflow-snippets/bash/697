@@ -17,7 +17,7 @@
 $DATE='/usr/bin/date'
 $BTRFS='/usr/bin/btrfs'
 
-pushd ""$SNAPSHOT_DST/$HOST_SRC"" >/dev/null
+pushd "$SNAPSHOT_DST/$HOST_SRC" >/dev/null
 declare -a arrFiles
 arrFiles=(2[0-9][0-9][0-9]-[01][0-9]-[0-3][0-9]-[0-2][0-9][0-5][0-9][0-5][0-9]) # BASH glob is auto sorted low to high
 popd >/dev/null
@@ -37,28 +37,28 @@ for c in ${!arrFiles[@]}; do
     # because:
     # date --date='2017-12-17-235559' +%s 
     # date: invalid date '2017-12-17-235559'
-    # date --date=""2017-12-17 23:55:59"" +%s
+    # date --date="2017-12-17 23:55:59" +%s
     # 1513551359
   i=${arrFiles[$c]}
-  strDateIn=""${i::10} ${i:11:2}:${i:13:2}:${i:15:2}""
+  strDateIn="${i::10} ${i:11:2}:${i:13:2}:${i:15:2}"
   #               -d --date   display time described by STRING, not 'now'
   #                                              %s   seconds since 1970-01-01 00:00:00 UTC
-  strDateOut=$($DATE --date=""$strDateIn"" +'%F %T')
-  (( arrSinceEpoch[$c]=$($DATE --date=""$strDateIn"" +%s) + intTZ ))
+  strDateOut=$($DATE --date="$strDateIn" +'%F %T')
+  (( arrSinceEpoch[$c]=$($DATE --date="$strDateIn" +%s) + intTZ ))
   # test sorting order
-  [[ -n $lastEpoch && $lastEpoch -gt ${arrSinceEpoch[$c]} ]] && Error ""Unexpected sorting order""
+  [[ -n $lastEpoch && $lastEpoch -gt ${arrSinceEpoch[$c]} ]] && Error "Unexpected sorting order"
   lastEpoch=arrSinceEpoch[$c]
   # test date conversion
-  [[ $strDateIn == $strDateOut ]] || Error ""$strDateIn != $strDateOut""
+  [[ $strDateIn == $strDateOut ]] || Error "$strDateIn != $strDateOut"
 done
 
 if [[ $v='-v' ]]; then
   # First = oldest
-  echo -n ""Oldest backup: ${arrFiles[0]}""
-  echo ""  (${arrSinceEpoch[0]})""
+  echo -n "Oldest backup: ${arrFiles[0]}"
+  echo "  (${arrSinceEpoch[0]})"
   # Last = newest
-  echo -n ""Newest backup: ${arrFiles[-1]}""
-  echo ""  (${arrSinceEpoch[-1]})""
+  echo -n "Newest backup: ${arrFiles[-1]}"
+  echo "  (${arrSinceEpoch[-1]})"
 fi
 
 declare -i intNewest intUpperLimit
@@ -77,11 +77,11 @@ intUpperLimitMinusThirty=$((intNewest-2592000)) #30*86400 seconds
 lastday=''
 for c in ${!arrFiles[@]}; do
   if [[ ${arrSinceEpoch[$c]} -gt $intUpperLimitMinusSeven ]]; then
-    [[ $v='-v' ]] && echo ""<24h: ${arrFiles[$c]}, [$c]""
-    break # exit for loop because all (remaining) backups are made within 24 hours of the ""latest"" backup
+    [[ $v='-v' ]] && echo "<24h: ${arrFiles[$c]}, [$c]"
+    break # exit for loop because all (remaining) backups are made within 24 hours of the "latest" backup
   elif [[ -n $lastday && $lastday == ${arrFiles[$c]::10} ]]; then
      # duplicate day found -> add this snapshot to the to-be-removed array
-     [[ $v='-v' ]] && echo ""Remove snapshot: ${arrFiles[$c]}, [$c]""
+     [[ $v='-v' ]] && echo "Remove snapshot: ${arrFiles[$c]}, [$c]"
      arrToBeRemoved[$c]=1
   fi
   lastday=${arrFiles[$c]::10}
@@ -97,8 +97,8 @@ intLastSavedWeekSnapDay=$((${arrSinceEpoch[0]}/86400)) # epoch seconds to day nu
 
 for c in ${!arrFiles[@]}; do
   if [[ ${arrSinceEpoch[$c]} -gt $intUpperLimitMinusThirty ]]; then
-    [[ $v='-v' ]] && echo ""<30d: ${arrFiles[$c]}, [$c]""
-    break # exit for loop because all (remaining) backups are made within 30 days of the ""latest"" backup
+    [[ $v='-v' ]] && echo "<30d: ${arrFiles[$c]}, [$c]"
+    break # exit for loop because all (remaining) backups are made within 30 days of the "latest" backup
   elif [[ $c = 0 ]]; then
     continue # skip this snap, always keep 1st snapshot
   elif [[ ${arrToBeRemoved[$c]} = 1 ]]; then
@@ -115,8 +115,8 @@ done
 
 # print array count & indexes
 if [[ $v='-v' && -n ${!arrToBeRemoved[@]} ]]; then
-  echo -n ""To be removed (${#arrToBeRemoved[@]}): ""
-  printf '#%s ' ""${!arrToBeRemoved[@]}""
+  echo -n "To be removed (${#arrToBeRemoved[@]}): "
+  printf '#%s ' "${!arrToBeRemoved[@]}"
   echo
 fi
 
@@ -124,7 +124,7 @@ fi
 if [[ -n ${!arrToBeRemoved[@]} ]]; then
   # delete corresponding snapshots
   for c in ${!arrToBeRemoved[@]}; do
-    [[ $v='-v' ]] && echo -n ""btrfs subvolume delete $SNAPSHOT_DST/$HOST_SRC/${arrFiles[$c]};""
+    [[ $v='-v' ]] && echo -n "btrfs subvolume delete $SNAPSHOT_DST/$HOST_SRC/${arrFiles[$c]};"
     #$BTRFS subvolume delete $SNAPSHOT_DST/$HOST_SRC/${arrFiles[$c]}
   done
   [[ $v='-v' ]] && echo

@@ -1,5 +1,5 @@
 static IEnumerable<string> ResolveDirectories(string path) {
-    if (path.Contains(""*"") || path.Contains(""?"")) {
+    if (path.Contains("*") || path.Contains("?")) {
         // we have a wildcard,
         // resolve it to absolute path if necessary
         if (!Path.IsPathRooted(path))
@@ -7,14 +7,14 @@ static IEnumerable<string> ResolveDirectories(string path) {
         // resolve .. stuff if any
         path = new Uri(Path.Combine(Directory.GetCurrentDirectory(), path)).AbsolutePath;
         // split with regex above, only on first match (2 parts)
-        var parts = new Regex(@""[\\/](?=[^\\/]*[\*?])"").Split(path, 2);
+        var parts = new Regex(@"[\\/](?=[^\\/]*[\*?])").Split(path, 2);
         var searchRoot = parts[0];                
         var searchPatterns = parts[1].Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         foreach (var dir in ResolveWildcards(searchRoot, searchPatterns))
             yield return dir;                
     }
     else {
-        // this should work with ""../.."" type of paths too, will resolve relative to current directory
+        // this should work with "../.." type of paths too, will resolve relative to current directory
         // so no processing is necessary
         if (Directory.Exists(path)) {
             yield return path;

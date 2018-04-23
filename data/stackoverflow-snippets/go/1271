@@ -1,6 +1,6 @@
 func get_all_components(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     var err error
-    fmt.Println(""starting get_all_components"")
+    fmt.Println("starting get_all_components")
 
     // input sanitation
     err = sanitize_arguments_len(args, 1)
@@ -9,7 +9,7 @@ func get_all_components(stub shim.ChaincodeStubInterface, args []string) pb.Resp
     }
 
     // ---- Get All Components ---- //
-    resultsIterator, err := stub.GetStateByRange(""c0"", ""c9999999999999999999"")
+    resultsIterator, err := stub.GetStateByRange("c0", "c9999999999999999999")
     if err != nil {
         return shim.Error(err.Error())
     }
@@ -17,7 +17,7 @@ func get_all_components(stub shim.ChaincodeStubInterface, args []string) pb.Resp
 
     // buffer is a JSON array containing QueryRecords
     var buffer bytes.Buffer
-    buffer.WriteString(""["")
+    buffer.WriteString("[")
 
     bArrayMemberAlreadyWritten := false
     for resultsIterator.HasNext() {
@@ -29,22 +29,22 @@ func get_all_components(stub shim.ChaincodeStubInterface, args []string) pb.Resp
 
         // Add a comma before array members, suppress it for the first array member
         if bArrayMemberAlreadyWritten == true {
-            buffer.WriteString("","")
+            buffer.WriteString(",")
         }
-        buffer.WriteString(""{\""Key\"":"")
-        buffer.WriteString(""\"""")
+        buffer.WriteString("{\"Key\":")
+        buffer.WriteString("\"")
         buffer.WriteString(queryResponse.Key)
-        buffer.WriteString(""\"""")
+        buffer.WriteString("\"")
 
-        buffer.WriteString("", \""Record\"":"")
+        buffer.WriteString(", \"Record\":")
         // Record is a JSON object, so we write as-is
         buffer.WriteString(string(queryResponse.Value))
-        buffer.WriteString(""}"")
+        buffer.WriteString("}")
         bArrayMemberAlreadyWritten = true
     }
-    buffer.WriteString(""]"")
+    buffer.WriteString("]")
 
-    fmt.Printf(""get_all_components:\n%s\n"", buffer.String())
+    fmt.Printf("get_all_components:\n%s\n", buffer.String())
 
     return shim.Success(buffer.Bytes())
 }

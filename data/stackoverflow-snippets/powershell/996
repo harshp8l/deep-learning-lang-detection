@@ -5,10 +5,10 @@ Set-Location C:\
 Import-Module ActiveDirectory
 
 #While this is not 100% secure, I still feel it is better than leaving the credentials in plaintext within the code.
-$keyfile = ""\\[domain controller]\GPO Deployment Files\Scripts\AES.txt""
+$keyfile = "\\[domain controller]\GPO Deployment Files\Scripts\AES.txt"
 [byte[]] $key = ([byte array key])
 $secure = Get-Content $keyfile | ConvertTo-SecureString -Key $key
-$username = ""[domain\admin]""
+$username = "[domain\admin]"
 $cred = new-object -typename System.Management.Automation.PSCredential `
          -argumentlist $username, $secure
 
@@ -19,7 +19,7 @@ $datecutoff = (Get-Date).AddDays(-90)
 $computers = Get-ADComputer -Filter {LastLogonDate -lt $datecutoff} -Properties * | Sort LastLogonDate | Select DistinguishedName,Name,LastLogonDate
 
 #This is a test CSV - I ran all code up until this line so I could verify the list with a quick visual skim.
-$computers | Add-Content -Path ""\\[domain controller]\DeletedADItems\test.csv""
+$computers | Add-Content -Path "\\[domain controller]\DeletedADItems\test.csv"
 
 #Stepping through the list
 Foreach ($computer in $computers) {
@@ -31,12 +31,12 @@ Foreach ($computer in $computers) {
     $computerDN = $computerDN -replace '}',''
 <# I discovered that LDIFDE doesn't always play nicely with PS drives and such, or at least it failed to do so in my case.
 So I back up the files to my local drive and then I copy them to the domain controller path that I used with the test.csv file. #>
-    $exportFile = ""C:\DeletedADItems\$computername.ldf""
+    $exportFile = "C:\DeletedADItems\$computername.ldf"
 
 #Prior to deletion, export the object to the export file location.
-    ldifde -d ""$computerDN"" -f ""$exportFile""
+    ldifde -d "$computerDN" -f "$exportFile"
 
 #Finally, remove the item and mark confirm false so you don't have to confirm hundreds of deletions.
-    Remove-ADComputer -Identity ""$computerDN"" -Confirm:$False
+    Remove-ADComputer -Identity "$computerDN" -Confirm:$False
 
 }

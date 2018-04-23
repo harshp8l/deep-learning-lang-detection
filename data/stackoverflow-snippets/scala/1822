@@ -5,33 +5,33 @@ val df = {
   import scala.collection.JavaConverters._
 
   val simpleSchema = StructType(
-    StructField(""a"", StringType) ::
-    StructField(""b"", IntegerType) ::
-    StructField(""c"", IntegerType) ::
-    StructField(""d"", IntegerType) ::
-    StructField(""e"", IntegerType) :: Nil)
+    StructField("a", StringType) ::
+    StructField("b", IntegerType) ::
+    StructField("c", IntegerType) ::
+    StructField("d", IntegerType) ::
+    StructField("e", IntegerType) :: Nil)
 
   val data = List(
-    Row(""001"", 1, 0, 3, 4),
-    Row(""001"", 3, 4, 1, 7),
-    Row(""001"", null, 0, 6, 4),
-    Row(""003"", 1, 4, 5, 7),
-    Row(""003"", 5, 4, null, 2),
-    Row(""003"", 4, null, 9, 2),
-    Row(""003"", 2, 3, 0, 1)
+    Row("001", 1, 0, 3, 4),
+    Row("001", 3, 4, 1, 7),
+    Row("001", null, 0, 6, 4),
+    Row("003", 1, 4, 5, 7),
+    Row("003", 5, 4, null, 2),
+    Row("003", 4, null, 9, 2),
+    Row("003", 2, 3, 0, 1)
   )
 
   spark.createDataFrame(data.asJava, simpleSchema)
 }
 
 // fill replaces nulls with zero, which we need for the desired averaging.    
-val avgs = df.na.fill(0).groupBy(col(""a"")).avg(""b"", ""c"", ""d"", ""e"").as(""avgs"")
+val avgs = df.na.fill(0).groupBy(col("a")).avg("b", "c", "d", "e").as("avgs")
 
-val output = df.as(""df"").join(avgs, col(""df.a"") === col(""avgs.a"")).select(col(""df.a""),
-  coalesce(col(""df.b""), col(""avg(b)"")),
-  coalesce(col(""df.c""), col(""avg(c)"")),
-  coalesce(col(""df.d""), col(""avg(d)"")),
-  coalesce(col(""df.e""), col(""avg(e)""))
+val output = df.as("df").join(avgs, col("df.a") === col("avgs.a")).select(col("df.a"),
+  coalesce(col("df.b"), col("avg(b)")),
+  coalesce(col("df.c"), col("avg(c)")),
+  coalesce(col("df.d"), col("avg(d)")),
+  coalesce(col("df.e"), col("avg(e)"))
   )
 
 scala> df.show()

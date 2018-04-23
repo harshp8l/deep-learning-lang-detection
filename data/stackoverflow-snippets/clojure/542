@@ -14,24 +14,24 @@
                     :db/cardinality        :db.cardinality/many
                     :db.install/_attribute :db.part/db}
                    {:db/id        #db/id[:db.part/tx]
-                    :db/txInstant #inst ""2016-01-01""}])
+                    :db/txInstant #inst "2016-01-01"}])
 
 ;; parent task created on 10-21
 (let [p               (d/tempid :db.part/user -1)
       {tids :tempids} @(d/transact conn [{:db/id        #db/id [:db.part/tx]
-                                          :db/txInstant #inst ""2016-10-21""}
-                                         [:db/add p :task/name ""Parent Task""]])]
+                                          :db/txInstant #inst "2016-10-21"}
+                                         [:db/add p :task/name "Parent Task"]])]
   (def parent-task1 (d/resolve-tempid (db conn) tids p)))
 
 ;; start a subtask on 10-23
 (let [s               (d/tempid :db.part/user -2)
       {tids :tempids} @(d/transact conn [{:db/id        #db/id [:db.part/tx]
-                                          :db/txInstant #inst ""2016-10-23""}
-                                         [:db/add s :task/name ""subtask 1""]
+                                          :db/txInstant #inst "2016-10-23"}
+                                         [:db/add s :task/name "subtask 1"]
                                          [:db/add parent-task1 :task/subtask  s]])]
   (def subtask1 (d/resolve-tempid (db conn) tids s)))
 
 ;; stop the subtask on 10-25
 @(d/transact conn [{:db/id #db/id [:db.part/tx]
-                    :db/txInstant #inst ""2016-10-25""}
+                    :db/txInstant #inst "2016-10-25"}
                    [:db/add subtask1 :task/completed true]])

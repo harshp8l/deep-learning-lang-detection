@@ -1,16 +1,16 @@
- val df1 = spark.readStream.format(""socket"").option(""host"",""localhost"").option(""port"",5430).load()
+ val df1 = spark.readStream.format("socket").option("host","localhost").option("port",5430).load()
 
-  val df9 = spark.readStream.format(""socket"").option(""host"",""localhost"").option(""port"",5431).load()
+  val df9 = spark.readStream.format("socket").option("host","localhost").option("port",5431).load()
 
 
-  val df2 = df1.as[String].flatMap(x=>x.split("",""))
+  val df2 = df1.as[String].flatMap(x=>x.split(","))
 
-  val df3 = df9.as[String].flatMap(x=>x.split("","")).select($""value"".as(""name""))
+  val df3 = df9.as[String].flatMap(x=>x.split(",")).select($"value".as("name"))
 
- val sq1 = df3.writeStream.format(""console"").queryName(""sq1"")
-    .option(""truncate"",""false"").trigger(Trigger.ProcessingTime(10 second)).start()
+ val sq1 = df3.writeStream.format("console").queryName("sq1")
+    .option("truncate","false").trigger(Trigger.ProcessingTime(10 second)).start()
 
-  val sq = df2.writeStream.format(""console"").queryName(""sq"")
-    .option(""truncate"",""false"").trigger(Trigger.ProcessingTime(20 second)).start()
+  val sq = df2.writeStream.format("console").queryName("sq")
+    .option("truncate","false").trigger(Trigger.ProcessingTime(20 second)).start()
 
 spark.streams.awaitAnyTermination()

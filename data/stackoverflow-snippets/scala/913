@@ -13,20 +13,20 @@ def materializeMappableImpl[T: c.WeakTypeTag](c: Context): c.Expr[Mappable[T]] =
     val decoded = name.decodedName.toString
     val returnType = tpe.decl(name).typeSignature
 
-    (q""$decoded → t.$name"", q""map($decoded).asInstanceOf[$returnType]"", decoded)
+    (q"$decoded → t.$name", q"map($decoded).asInstanceOf[$returnType]", decoded)
   }.unzip3
 
   c.Expr[Mappable[T]] {
-    q""""""
+    q"""
     new Mappable[$tpe] {
       private val fieldNames = scala.collection.immutable.Set[String](..$fromMapParamsList)
       def toMap(t: $tpe): Map[String, Any] = Map(..$toMapParams)
       def fromMap(map: Map[String, Any]): $tpe = {
         val redundant = map.keys.filter(k => !fieldNames.contains(k))
-        if(!redundant.isEmpty) throw new IllegalArgumentException(""Conversion between map of data-fields to "" + $className + "" failed because there are redundant fields: "" + redundant.mkString(""'"",""', "",""'""))
+        if(!redundant.isEmpty) throw new IllegalArgumentException("Conversion between map of data-fields to " + $className + " failed because there are redundant fields: " + redundant.mkString("'","', ","'"))
         $companion(..$fromMapParams)
       }
     }
-  """"""
+  """
   }
 }

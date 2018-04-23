@@ -11,13 +11,13 @@ def filterOnlyTopN(data: DataFrame, n: Int = 100): DataFrame = {
       reverseSortedDownloads.last
   })
 
-  val topNLimitsByDate = data.groupBy($""date"").agg(collect_set($""downloadCount"").as(""downloads""))
-          .select($""date"", getTopNCutoff($""downloads"").as(""cutoff""))
+  val topNLimitsByDate = data.groupBy($"date").agg(collect_set($"downloadCount").as("downloads"))
+          .select($"date", getTopNCutoff($"downloads").as("cutoff"))
 
   // And then, let's throw away the records below the top 100
-  data.join(topNLimitsByDate, Seq(""date""))
-    .filter($""downloadCount"" >= $""cutoff"")
-    .drop(""cutoff"", ""downloadCount"")
+  data.join(topNLimitsByDate, Seq("date"))
+    .filter($"downloadCount" >= $"cutoff")
+    .drop("cutoff", "downloadCount")
 }
 
 val relevantData = filterOnlyTopN(baseData)

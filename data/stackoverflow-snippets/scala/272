@@ -11,23 +11,23 @@ def formatResult(jsonString: String, searchType: String): String = {
   implicit val formats = DefaultFormats
   val json = JsonParser.parse(jsonString)
 
-  val elements = (json \\ ""_source"").children
+  val elements = (json \\ "_source").children
   if (elements.isEmpty == true) {
     implicit val formats = DefaultFormats
-    return (List(write(ErrorMsg(searchType, ""No Matching Record Found""))).mkString(""[\n"", "",\n"", ""\n]""))
+    return (List(write(ErrorMsg(searchType, "No Matching Record Found"))).mkString("[\n", ",\n", "\n]"))
   }
   if (json.extract[ParseJson].hits.total == 1) {
-    val m = (json \\ ""_source"").extract[Source]
+    val m = (json \\ "_source").extract[Source]
     val list = List(write(Uiresult(m.AccountNo.toString(), (m.fname.toString() + m.lname.toString() ))))
-    return (list.mkString(""[\n"", "",\n"", ""\n]""))
+    return (list.mkString("[\n", ",\n", "\n]"))
 
   } else {
-    val elements = (json \\ ""_source"").children
+    val elements = (json \\ "_source").children
     val list = for (source <- elements) yield {
-      println("" source "" + source)
+      println(" source " + source)
       val m = source.extract[Source]
       val list = List(write(Uiresult(m.AccountNo.toString(), (m.fname.toString() + m.lname.toString() ))))
     }
-    return (list.mkString(""[\n"", "",\n"", ""\n]""))
+    return (list.mkString("[\n", ",\n", "\n]"))
   }
 }

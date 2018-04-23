@@ -1,22 +1,22 @@
 #!/bin/bash
 
 function die {
-    echo ""$1"" >&2
+    echo "$1" >&2
     exit -1
 }
 
-(( $# == 2 )) || die ""Usage: $0 <moved filename> <original filename>""
-[[ -e ""$1"" ]]  || die ""Not an existing file: $1""
-[[ ! -e ""$2"" ]] || die ""Not a missing file: $2""
+(( $# == 2 )) || die "Usage: $0 <moved filename> <original filename>"
+[[ -e "$1" ]]  || die "Not an existing file: $1"
+[[ ! -e "$2" ]] || die "Not a missing file: $2"
 
-hg_st_lines_1=$(hg st ""$1"" 2>/dev/null | wc -l)
-hg_st_lines_2=$(hg st ""$2"" 2>/dev/null | wc -l)
+hg_st_lines_1=$(hg st "$1" 2>/dev/null | wc -l)
+hg_st_lines_2=$(hg st "$2" 2>/dev/null | wc -l)
 
-(( ${hg_st_lines_1} == 1 )) || die ""Expected exactly one line in hg status for $1, but got ${hg_st_lines_1}""
-(( ${hg_st_lines_2} == 1 )) || die ""Expected exactly one line in hg status for $2, but got ${hg_st_lines_2}""
+(( ${hg_st_lines_1} == 1 )) || die "Expected exactly one line in hg status for $1, but got ${hg_st_lines_1}"
+(( ${hg_st_lines_2} == 1 )) || die "Expected exactly one line in hg status for $2, but got ${hg_st_lines_2}"
 
-[[ ""$(hg st ""$1"" 2>/dev/null)"" == \?* ]] || die ""Mercurial does not consider $1 to be an unknown (untracked) file""
-[[ ""$(hg st ""$2"" 2>/dev/null)"" =~ !.* ]] || die ""Mercurial does not consider $2 to be a missing file""
+[[ "$(hg st "$1" 2>/dev/null)" == \?* ]] || die "Mercurial does not consider $1 to be an unknown (untracked) file"
+[[ "$(hg st "$2" 2>/dev/null)" =~ !.* ]] || die "Mercurial does not consider $2 to be a missing file"
 
 mv $1 $2
 hg mv $2 $1

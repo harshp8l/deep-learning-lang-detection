@@ -1,18 +1,18 @@
 Param(
-   [string]$collectionurl = ""https://{instance}.visualstudio.com"",
-   [string]$workitemId = ""74"",
-   [string]$user = ""test@hotmail.com"",
-   [string]$token = ""password"",
-   [string]$templist = ""D:\temp\history.txt"", # Loop all the records (revisions) with the users who ever changed the specific work item. 
-   [string]$userlist = ""D:\temp\userlist.txt"" # You can get the final users who worked on the specific work item from this text file.
+   [string]$collectionurl = "https://{instance}.visualstudio.com",
+   [string]$workitemId = "74",
+   [string]$user = "test@hotmail.com",
+   [string]$token = "password",
+   [string]$templist = "D:\temp\history.txt", # Loop all the records (revisions) with the users who ever changed the specific work item. 
+   [string]$userlist = "D:\temp\userlist.txt" # You can get the final users who worked on the specific work item from this text file.
 
 )
 
 # Base64-encodes the Personal Access Token (PAT) appropriately
-$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes((""{0}:{1}"" -f $user,$token)))
+$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$token)))
 
-$baseUrl = ""$collectionurl/_apis/wit/workitems/$($workitemId)/revisions?api-version=1.0""            
-$response = (Invoke-RestMethod -Uri $baseUrl -Method Get -UseDefaultCredential -Headers @{Authorization=(""Basic {0}"" -f $base64AuthInfo)})
+$baseUrl = "$collectionurl/_apis/wit/workitems/$($workitemId)/revisions?api-version=1.0"            
+$response = (Invoke-RestMethod -Uri $baseUrl -Method Get -UseDefaultCredential -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)})
 $revisions = $response.value.fields | where({$_.'System.State' -eq 'Committed'}) # Change the sate which you want to get it's changed date here 
 
 #Get the history (revisions) with the changed by user
@@ -21,7 +21,7 @@ $witrevisions = @()
 foreach($revision in $revisions){
 
     $customObject = new-object PSObject -property @{
-          ""ChangedBy"" = $revision.'System.ChangedBy'
+          "ChangedBy" = $revision.'System.ChangedBy'
         } 
 
     $witrevisions += $customObject      

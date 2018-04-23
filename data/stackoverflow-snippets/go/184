@@ -1,11 +1,11 @@
 package main
 
 import (
-    ""fmt""
-    ""time""
+    "fmt"
+    "time"
 
-    ""gopkg.in/mgo.v2""
-    ""gopkg.in/mgo.v2/bson""
+    "gopkg.in/mgo.v2"
+    "gopkg.in/mgo.v2/bson"
 )
 
 type State struct {
@@ -22,19 +22,19 @@ type DataStore struct {
 
 func (ds *DataStore) getCol(collectionName string) *mgo.Collection {
 
-    ds.session, ds.err = mgo.Dial(""localhost:27017"")
+    ds.session, ds.err = mgo.Dial("localhost:27017")
 
     if ds.err != nil {
         panic(ds.err)
     }
 
-    return ds.session.DB(""c3po_db"").C(collectionName)
+    return ds.session.DB("c3po_db").C(collectionName)
 }
 
 func (ds *DataStore) GetAll() []State {
 
     var states []State
-    ds.err = ds.getCol(""state"").Find(bson.M{}).All(&states)
+    ds.err = ds.getCol("state").Find(bson.M{}).All(&states)
     if ds.err != nil {
         panic(ds.err)
     }
@@ -46,7 +46,7 @@ func (ds *DataStore) GetAll() []State {
 func (ds *DataStore) GetById(customerId string) State {
 
     var state State
-    ds.err = ds.getCol(""state"").Find(bson.M{""customerId"": customerId}).One(&state)
+    ds.err = ds.getCol("state").Find(bson.M{"customerId": customerId}).One(&state)
     if ds.err != nil {
         panic(ds.err)
     }
@@ -58,9 +58,9 @@ func (ds *DataStore) GetById(customerId string) State {
 
 func (ds *DataStore) CreateOrUpdate(state State) bool {
 
-    _, ds.err = ds.getCol(""state"").Upsert(
-        bson.M{""customerId"": state.CustomerId},
-        bson.M{""$set"": state})
+    _, ds.err = ds.getCol("state").Upsert(
+        bson.M{"customerId": state.CustomerId},
+        bson.M{"$set": state})
     if ds.err != nil {
         panic(ds.err)
     } else {
@@ -76,11 +76,11 @@ func main() {
 
     ds := DataStore{}
 
-    state := State{CustomerId: ""3"", CreatedOn: time.Now(), CreatedBy: ""Ivo"", Description: ""6""}
+    state := State{CustomerId: "3", CreatedOn: time.Now(), CreatedBy: "Ivo", Description: "6"}
 
     ds.CreateOrUpdate(state)
 
-    fmt.Println(ds.GetById(""3""))
+    fmt.Println(ds.GetById("3"))
 
     fmt.Println(ds.GetAll())
 

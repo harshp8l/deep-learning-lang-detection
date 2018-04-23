@@ -1,61 +1,61 @@
 <?php
 session_start();
 require_once('database_conn.php');
-if (isset($_POST[""add_to_cart""])) {
-    if (isset($_SESSION[""shopping_cart""]) && !empty($_SESSION['shopping_cart'])) {
-        $item_array_id = array_column($_SESSION[""shopping_cart""], ""productID"");
-        if (!in_array($_GET[""id""], $item_array_id)) {
-            $count = count($_SESSION[""shopping_cart""]);
+if (isset($_POST["add_to_cart"])) {
+    if (isset($_SESSION["shopping_cart"]) && !empty($_SESSION['shopping_cart'])) {
+        $item_array_id = array_column($_SESSION["shopping_cart"], "productID");
+        if (!in_array($_GET["id"], $item_array_id)) {
+            $count = count($_SESSION["shopping_cart"]);
             $item_array = array(
-                'productID' => $_GET[""productID""],
-                'productName' => $_POST[""productName""],
-                'productPrice' => $_POST[""productPrice""],
-                'productAisle' => $_POST[""productAisle""]
+                'productID' => $_GET["productID"],
+                'productName' => $_POST["productName"],
+                'productPrice' => $_POST["productPrice"],
+                'productAisle' => $_POST["productAisle"]
             );
-            $_SESSION[""shopping_cart""][$count] = $item_array;
+            $_SESSION["shopping_cart"][$count] = $item_array;
         }
     } else {
         $item_array = array(
-            'productID' => $_GET[""productID""],
-            'productName' => $_POST[""productName""],
-            'productPrice' => $_POST[""productPrice""],
-            'productAisle' => $_POST[""productAisle""]
+            'productID' => $_GET["productID"],
+            'productName' => $_POST["productName"],
+            'productPrice' => $_POST["productPrice"],
+            'productAisle' => $_POST["productAisle"]
         );
-        $_SESSION[""shopping_cart""][0] = $item_array;
+        $_SESSION["shopping_cart"][0] = $item_array;
     }
 }
-if (!empty($_GET[""action""])) {
+if (!empty($_GET["action"])) {
     switch ($_GET['action']) {
         case 'delete':
-            foreach ($_SESSION[""shopping_cart""] as $keys => $values) {
-                if ($values[""item_id""] == $_GET[""id""]) {
-                    unset($_SESSION[""shopping_cart""][$keys]);
-                    echo '<script>alert(""Item Removed"")</script>';
-                    echo '<script>window.location=""add.php""</script>';
+            foreach ($_SESSION["shopping_cart"] as $keys => $values) {
+                if ($values["item_id"] == $_GET["id"]) {
+                    unset($_SESSION["shopping_cart"][$keys]);
+                    echo '<script>alert("Item Removed")</script>';
+                    echo '<script>window.location="add.php"</script>';
                 }
             }
             break;
         case 'add':
-            if (isset($_SESSION[""shopping_cart""]) && !empty($_SESSION['shopping_cart'])) {
-                $item_array_id = array_column($_SESSION[""shopping_cart""], ""productID"");
-                if (!in_array($_GET[""id""], $item_array_id)) {
-                    $count = count($_SESSION[""shopping_cart""]);
+            if (isset($_SESSION["shopping_cart"]) && !empty($_SESSION['shopping_cart'])) {
+                $item_array_id = array_column($_SESSION["shopping_cart"], "productID");
+                if (!in_array($_GET["id"], $item_array_id)) {
+                    $count = count($_SESSION["shopping_cart"]);
                     $item_array = array(
-                        'productID' => $_GET[""productID""],
-                        'productName' => $_POST[""productName""],
-                        'productPrice' => $_POST[""productPrice""],
-                        'productAisle' => $_POST[""productAisle""]
+                        'productID' => $_GET["productID"],
+                        'productName' => $_POST["productName"],
+                        'productPrice' => $_POST["productPrice"],
+                        'productAisle' => $_POST["productAisle"]
                     );
-                    $_SESSION[""shopping_cart""][$count] = $item_array;
+                    $_SESSION["shopping_cart"][$count] = $item_array;
                 }
             } else {
                 $item_array = array(
-                    'productID' => $_GET[""productID""],
-                    'productName' => $_POST[""productName""],
-                    'productPrice' => $_POST[""productPrice""],
-                    'productAisle' => $_POST[""productAisle""]
+                    'productID' => $_GET["productID"],
+                    'productName' => $_POST["productName"],
+                    'productPrice' => $_POST["productPrice"],
+                    'productAisle' => $_POST["productAisle"]
                 );
-                $_SESSION[""shopping_cart""][0] = $item_array;
+                $_SESSION["shopping_cart"][0] = $item_array;
             }
             break;
     }
@@ -64,65 +64,65 @@ if (!empty($_GET[""action""])) {
 <!DOCTYPE html>
 <html>
 <head>
-    <script src=""https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js""></script>
-    <link rel=""stylesheet"" href=""https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css""/>
-    <script src=""https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js""></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 </head>
 <body>
 <br/>
-<div class=""container"" style=""width:700px;"">
+<div class="container" style="width:700px;">
     <?php
     $name = isset($_REQUEST['name']) ? $_REQUEST['name'] : null;
-    $sqlProducts = ""SELECT productID, productName, productPrice, productImage, productAisle
+    $sqlProducts = "SELECT productID, productName, productPrice, productImage, productAisle
 
-                    FROM s_products WHERE productName LIKE '%$name%'"";
+                    FROM s_products WHERE productName LIKE '%$name%'";
     $rProducts = mysqli_query($conn, $sqlProducts) or die(mysqli_error($conn));
 
     while ($row = mysqli_fetch_assoc($rProducts)) {
         ?>
-        <div class=""col-md-4"">
-            <form method=""post"" action=""add.php?action=add&productID=<?php echo $row[""id""]; ?>"">
-                <div style=""border:1px solid #333; background-color:#f1f1f1; border-radius:5px; padding:16px;""
-                     align=""center"">
-                    <img src=""<?php echo $row[""productImage""]; ?>"" class=""img-responsive""/><br/>
-                    <h4 class=""text-info""><?php echo $row[""productName""]; ?></h4>
-                    <h4 class=""text-danger"">$ <?php echo $row[""productPrice""]; ?></h4>
-                    <input type=""text"" name=""quantity"" class=""form-control"" value=""1""/>
-                    <input type=""hidden"" name=""productName"" id=""productName"" value=""<?= $row[""productName""] ?>""/>
-                    <input type=""hidden"" name=""productPrice"" id=""productPrice"" value=""<?= $row[""productPrice""] ?>""/>
-                    <input type=""hidden"" name=""productAisle"" id=""productAisle"" value=""<?= $row['productAisle'] ?>""/>
-                    <input type=""hidden"" name=""hidden_name"" value=""<?php echo $row[""productName""]; ?>""/>
-                    <input type=""hidden"" name=""hidden_price"" value=""<?php echo $row[""productPrice""]; ?>""/>
-                    <input type=""submit"" name=""add_to_cart"" style=""margin-top:5px;"" class=""btn btn-success""
-                           value=""Add to Cart""/>
+        <div class="col-md-4">
+            <form method="post" action="add.php?action=add&productID=<?php echo $row["id"]; ?>">
+                <div style="border:1px solid #333; background-color:#f1f1f1; border-radius:5px; padding:16px;"
+                     align="center">
+                    <img src="<?php echo $row["productImage"]; ?>" class="img-responsive"/><br/>
+                    <h4 class="text-info"><?php echo $row["productName"]; ?></h4>
+                    <h4 class="text-danger">$ <?php echo $row["productPrice"]; ?></h4>
+                    <input type="text" name="quantity" class="form-control" value="1"/>
+                    <input type="hidden" name="productName" id="productName" value="<?= $row["productName"] ?>"/>
+                    <input type="hidden" name="productPrice" id="productPrice" value="<?= $row["productPrice"] ?>"/>
+                    <input type="hidden" name="productAisle" id="productAisle" value="<?= $row['productAisle'] ?>"/>
+                    <input type="hidden" name="hidden_name" value="<?php echo $row["productName"]; ?>"/>
+                    <input type="hidden" name="hidden_price" value="<?php echo $row["productPrice"]; ?>"/>
+                    <input type="submit" name="add_to_cart" style="margin-top:5px;" class="btn btn-success"
+                           value="Add to Cart"/>
                 </div>
             </form>
         </div>
         <?php
     }
     ?>
-    <div style=""clear:both""></div>
+    <div style="clear:both"></div>
     <br/>
     <h3>Order Details</h3>
-    <div class=""table-responsive"">
-        <table class=""table table-bordered"">
+    <div class="table-responsive">
+        <table class="table table-bordered">
             <tr>
-                <th width=""40%"">Item Name</th>
-                <th width=""10%"">Quantity</th>
-                <th width=""20%"">Price</th>
-                <th width=""15%"">Total</th>
-                <th width=""5%"">Action</th>
+                <th width="40%">Item Name</th>
+                <th width="10%">Quantity</th>
+                <th width="20%">Price</th>
+                <th width="15%">Total</th>
+                <th width="5%">Action</th>
             </tr>
             <?php
-            if (!empty($_SESSION[""shopping_cart""])) {
+            if (!empty($_SESSION["shopping_cart"])) {
                 $total = 0;
-                foreach ($_SESSION[""shopping_cart""] as $keys => $values) {
+                foreach ($_SESSION["shopping_cart"] as $keys => $values) {
                     ?>
                     <tr>
                         <td><?= $values['productName'] ?></td>
                         <td><?= $values['productPrice'] ?></td>
                         <td>$ <?= $values['productAisle'] ?></td>
-                        <td><a href=""add.php?action=delete&id=<?= $values['productID'] ?>""><span class=""text-danger"">Remove</span></a>
+                        <td><a href="add.php?action=delete&id=<?= $values['productID'] ?>"><span class="text-danger">Remove</span></a>
                         </td>
                     </tr>
                     <?php
@@ -130,8 +130,8 @@ if (!empty($_GET[""action""])) {
                 ?>
 
                 <tr>
-                    <td colspan=""3"" align=""right"">Total</td>
-                    <td align=""right"">$ <?php echo number_format($total, 2); ?></td>
+                    <td colspan="3" align="right">Total</td>
+                    <td align="right">$ <?php echo number_format($total, 2); ?></td>
                     <td></td>
                 </tr>
                 <?php

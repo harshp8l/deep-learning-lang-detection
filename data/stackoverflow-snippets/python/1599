@@ -2,13 +2,13 @@ from pyspark.sql.functions import explode, col, create_map, count, explode, lit
 from itertools import chain
 
 df = sc.parallelize([
-    (""A"", [""x"", ""y""]), (""B"", [""y"", ""z""]), (""C"", [""z""])
-]).toDF([""key"", ""value""])
+    ("A", ["x", "y"]), ("B", ["y", "z"]), ("C", ["z"])
+]).toDF(["key", "value"])
 
-cnts = df.withColumn(""value"", explode(""value"")).groupBy(""key"").pivot(""value"").count().na.fill(0)
-value = create_map(*chain.from_iterable((lit(c), col(c)) for c in cnts.columns if c != ""key""))
+cnts = df.withColumn("value", explode("value")).groupBy("key").pivot("value").count().na.fill(0)
+value = create_map(*chain.from_iterable((lit(c), col(c)) for c in cnts.columns if c != "key"))
 
-cnts.select(""key"", value.alias(""value"")).show(truncate=False)
+cnts.select("key", value.alias("value")).show(truncate=False)
 # +---+---------------------------+
 # |key|value                      |
 # +---+---------------------------+

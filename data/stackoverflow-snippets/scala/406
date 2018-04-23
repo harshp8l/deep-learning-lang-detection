@@ -1,12 +1,12 @@
 //create your first RDD
 val rdd1: RDD[(String, String)] = sc.parallelize(Seq(
-  (""111"", ""A""),
-  (""112"", ""B""),
-  (""113"", ""C""),
-  (""114"", ""D""),
-  (""115"", ""E""),
-  (""116"", ""F""),
-  (""117"", ""G"")))
+  ("111", "A"),
+  ("112", "B"),
+  ("113", "C"),
+  ("114", "D"),
+  ("115", "E"),
+  ("116", "F"),
+  ("117", "G")))
 
 //as this rdd is small so collect it and convert it to a map
 val mapRdd1: Map[String, String] = rdd1.collect.toMap
@@ -15,13 +15,13 @@ val bRdd = sc.broadcast(mapRdd1)
 
 //create your second rdd
 val rdd2: RDD[(String, String)] = sc.parallelize(Seq(
-  (""111"", ""112:0.75,114:0.43,117:0.21""),
-  (""112"", ""113:0.67,114:0.48,115:0.34,116:0.12"")))
+  ("111", "112:0.75,114:0.43,117:0.21"),
+  ("112", "113:0.67,114:0.48,115:0.34,116:0.12")))
 
 val result: RDD[(String, String)] = rdd2.map(x => (x._1, //keep first string as it is
-  x._2.split("","").map(a => a.split("":"")) //split second string for the required transformations
+  x._2.split(",").map(a => a.split(":")) //split second string for the required transformations
     //fetch the value from the bradcasted map
-    .map(t => (bRdd.value(t.head), t.last)).mkString("" "")))
+    .map(t => (bRdd.value(t.head), t.last)).mkString(" ")))
 
 result.foreach(println(_))
 

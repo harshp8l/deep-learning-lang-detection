@@ -1,8 +1,8 @@
 #Powershell script to upload files from a local dire 
 param ( 
-$sessionUrl = ""sftp://tester:password;fingerprint=ssh-rsa 2048 ba:5d:a4:1b:0a:73:30:cf:90:dd:e3:ef:6c:9e:1d:94@localhost"", 
-$remotePath = ""/"", 
-$localPath = ""C:\Users\your\test\upload"", 
+$sessionUrl = "sftp://tester:password;fingerprint=ssh-rsa 2048 ba:5d:a4:1b:0a:73:30:cf:90:dd:e3:ef:6c:9e:1d:94@localhost", 
+$remotePath = "/", 
+$localPath = "C:\Users\your\test\upload", 
 $batches = 3 
 ) 
 
@@ -11,7 +11,7 @@ $batches = 3
 try 
 { 
     # Load WinSCP .NET assembly 
-    $dllPath = (Join-Path $PSScriptRoot ""WinSCPnet.dll"") 
+    $dllPath = (Join-Path $PSScriptRoot "WinSCPnet.dll") 
     # Load WinSCP .NET assembly 
     Add-Type -Path $dllPath 
 
@@ -26,7 +26,7 @@ try
     # And batch size 
     $batch = [int]($total / $batches) 
 
-    Write-Host (""Will upload {0} files totaling {1} bytes in {2} parallel batches, {3} bytes on average in each"" -f $files.Count, $total, $batches, $batch) 
+    Write-Host ("Will upload {0} files totaling {1} bytes in {2} parallel batches, {3} bytes on average in each" -f $files.Count, $total, $batches, $batch) 
 
     $start = 0 
     $sum = 0 
@@ -39,12 +39,12 @@ try
         # Found enough files for the next batch 
         if (($sum -ge $batch) -or ($i -eq $files.Count - 1)) 
         { 
-            Write-Host (""Starting batch {0} to upload {1} files totaling {2}"" -f $no, ($i - $start + 1), $sum) 
+            Write-Host ("Starting batch {0} to upload {1} files totaling {2}" -f $no, ($i - $start + 1), $sum) 
 
-            $fileList = $files[$start..$i] -join "";"" 
+            $fileList = $files[$start..$i] -join ";" 
 
             # Start the background job for the batch 
-            Start-Job -Name ""Batch $no"" -ArgumentList $dllPath, $sessionUrl, $localPath, $remotePath, $no, $fileList { 
+            Start-Job -Name "Batch $no" -ArgumentList $dllPath, $sessionUrl, $localPath, $remotePath, $no, $fileList { 
                 param ( 
                     [Parameter(Position = 0)] 
                     $dllPath, 
@@ -62,7 +62,7 @@ try
 
                 try 
                 { 
-                    Write-Host (""Starting batch {0}"" -f $no) 
+                    Write-Host ("Starting batch {0}" -f $no) 
 
                     # Load WinSCP .NET assembly. 
                     # Need to use an absolute path as the Job is started from user's documents folder. 
@@ -74,19 +74,19 @@ try
 
                     try 
                     { 
-                        Write-Host (""Connecting batch {0}..."" -f $no) 
+                        Write-Host ("Connecting batch {0}..." -f $no) 
                         $session = New-Object WinSCP.Session 
 
                         $session.Open($sessionOptions) 
 
-                        $files = $fileList -split "";"" 
+                        $files = $fileList -split ";" 
 
                         # Upload the files selected for this batch 
                         foreach ($file in $files) 
                         { 
-                            $localFilePath = ""$localPath\$file"" 
-                            $remoteFilePath = ""$remotePath/$file"" 
-                            Write-Host ""Uploading $localFilePath to $remoteFilePath in $no"" 
+                            $localFilePath = "$localPath\$file" 
+                            $remoteFilePath = "$remotePath/$file" 
+                            Write-Host "Uploading $localFilePath to $remoteFilePath in $no" 
 
                             $session.PutFiles($session.EscapeFileMask($localFilePath), $remoteFilePath).Check() 
                         } 
@@ -97,7 +97,7 @@ try
                         $session.Dispose() 
                     } 
 
-                    Write-Host (""Batch {0} done"" -f $no) 
+                    Write-Host ("Batch {0} done" -f $no) 
                 } 
                 catch [Exception] 
                 { 
@@ -113,13 +113,13 @@ try
         } 
     } 
 
-    Write-Host ""Waiting for batches to complete"" 
+    Write-Host "Waiting for batches to complete" 
     Get-Job | Receive-Job -Wait 
 
-    Write-Host ""Done"" 
+    Write-Host "Done" 
 
     $ended = Get-Date 
-    Write-Host (""Took {0}"" -f (New-TimeSpan -Start $started -End $ended)) 
+    Write-Host ("Took {0}" -f (New-TimeSpan -Start $started -End $ended)) 
 
     exit 0 
 } 

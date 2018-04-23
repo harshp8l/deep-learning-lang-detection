@@ -11,7 +11,7 @@ class Overlord extends Actor {
         ).withSupervisorStrategy(
           OneForOneStrategy(maxNrOfRetries = 3, loggingEnabled = true) {
             case msg: MessageException =>
-              println(""caught specific message!"")
+              println("caught specific message!")
               self ! Error(msg.cmd)
               SupervisorStrategy.Restart
             case ...
@@ -26,7 +26,7 @@ class Overlord extends Actor {
           context.stop(backoffSup)
           state -= cmdId
         case None =>
-          println(s""${cmdId} not found"")
+          println(s"${cmdId} not found")
       }
 
     case Error(cmd) =>
@@ -34,13 +34,13 @@ class Overlord extends Actor {
        state.get(cmdId) match {
          case Some((backoffSup, numRetries)) =>
            if (numRetries == 3) {
-             println(s""${cmdId} has already been retried 3 times. Giving up."")
+             println(s"${cmdId} has already been retried 3 times. Giving up.")
              context.stop(backoffSup)
              state -= cmdId
            } else
              state += (cmdId -> (backoffSup, numRetries + 1))
          case None =>
-           println(s""${cmdId} not found"")
+           println(s"${cmdId} not found")
        }
 
     case ...

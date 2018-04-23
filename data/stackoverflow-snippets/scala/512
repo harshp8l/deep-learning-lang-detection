@@ -1,20 +1,20 @@
-val client = MongoClient(""mongodb://localhost:27017"")
-val database = client.getDatabase(""test"")
-val collection = database.getCollection(""users"")
+val client = MongoClient("mongodb://localhost:27017")
+val database = client.getDatabase("test")
+val collection = database.getCollection("users")
 
 val future = collection.find().toFuture()
 val allDocs = Await.result(future, Duration.Inf)
 
 allDocs
-  .map { d => (d.filterKeys { x => !x.equals(""_id"")}, d.get(""_id"").get ) }
+  .map { d => (d.filterKeys { x => !x.equals("_id")}, d.get("_id").get ) }
   .groupBy(_._1)
   .map(_._2.map(_._2))
   .filter(_.size > 1)
   .map({ids => ids.take(ids.size - 1)})
   .flatten
   .foreach{
-    id => collection.deleteOne(equal(""_id"", id)).subscribe(
+    id => collection.deleteOne(equal("_id", id)).subscribe(
       (dr: DeleteResult) => println(dr.getDeletedCount),
-      (e: Throwable) => println(s""Error when deleting the document $id: $e"")
+      (e: Throwable) => println(s"Error when deleting the document $id: $e")
     )
   }

@@ -24,15 +24,15 @@ case class ReorderColumnsOnProjectOptimizationRule(spark: SparkSession) extends 
   private def checkConditions(fields: Seq[NamedExpression], child: LogicalPlan): Boolean = {
     // compare UDFs computation cost and return Boolean
     val needsOptimization = listHaveTwoUDFsEnabledForOptimization(fields)
-    if (needsOptimization) println(fields.mkString("" | ""))
+    if (needsOptimization) println(fields.mkString(" | "))
     needsOptimization
   }
 
   private def listHaveTwoUDFsEnabledForOptimization(fields: Seq[NamedExpression]): Boolean = {
     // a simple priority order based on UDF name suffix
     val myPriorityList = fields.map((e) => {
-      if (e.name.toString().startsWith(""udf"")) {
-        Integer.parseInt(e.name.toString().split(""_"")(1))
+      if (e.name.toString().startsWith("udf")) {
+        Integer.parseInt(e.name.toString().split("_")(1))
       } else {
         0
       }
@@ -46,19 +46,19 @@ case class ReorderColumnsOnProjectOptimizationRule(spark: SparkSession) extends 
     child: LogicalPlan,
     plan: LogicalPlan): Seq[NamedExpression] = {
     // change order on field list. Return LogicalPlan modified
-    val myListWithUDF = fields.filter((e) =>  e.name.toString().startsWith(""udf""))
+    val myListWithUDF = fields.filter((e) =>  e.name.toString().startsWith("udf"))
     if (myListWithUDF.size != 2) {
       throw new UnsupportedOperationException(
-        s""The size of UDF list have ${myListWithUDF.size} elements."")
+        s"The size of UDF list have ${myListWithUDF.size} elements.")
     }
     val myModifiedList: Seq[NamedExpression] = Seq(myListWithUDF(1), myListWithUDF(0))
-    val myListWithoutUDF = fields.filter((e) =>  !e.name.toString().startsWith(""udf""))
+    val myListWithoutUDF = fields.filter((e) =>  !e.name.toString().startsWith("udf"))
     val modifiedFielsObject = getFieldsReordered(myListWithoutUDF, myModifiedList)
-    val msg = ""•••• optimizePlan called : "" + fields.size + "" columns on Project.\n"" +
-      ""•••• fields: "" + fields.mkString("" | "") + ""\n"" +
-      ""•••• UDFs to reorder:\n"" + myListWithUDF.mkString("" | "") + ""\n"" +
-      ""•••• field list Without UDF: "" + myListWithoutUDF.mkString("" | "") + ""\n"" +
-      ""•••• modifiedFielsObject: "" + modifiedFielsObject.mkString("" | "") + ""\n""
+    val msg = "•••• optimizePlan called : " + fields.size + " columns on Project.\n" +
+      "•••• fields: " + fields.mkString(" | ") + "\n" +
+      "•••• UDFs to reorder:\n" + myListWithUDF.mkString(" | ") + "\n" +
+      "•••• field list Without UDF: " + myListWithoutUDF.mkString(" | ") + "\n" +
+      "•••• modifiedFielsObject: " + modifiedFielsObject.mkString(" | ") + "\n"
     modifiedFielsObject
   }
 
@@ -100,12 +100,12 @@ object App {
     val udfA_99 = (p: Int) => Math.cos(p * p)  // higher cost Function
     val udfB_10 = (q: Int) => q + 1            // lower cost Function
 
-    println(""*** I' going to register my UDF ***"")
-    spark.udf.register(""myUdfA"", udfA_99)
-    spark.udf.register(""myUdfB"", udfB_10)
+    println("*** I' going to register my UDF ***")
+    spark.udf.register("myUdfA", udfA_99)
+    spark.udf.register("myUdfB", udfB_10)
 
     val dsR1 = {
-      val ret1DS = dsR0.selectExpr(""x"", ""p"", ""q"", ""myUdfA(p) as udfA_99"")
+      val ret1DS = dsR0.selectExpr("x", "p", "q", "myUdfA(p) as udfA_99")
       val result = ret1DS.cache()
       dsR0.show()
       result.show()
@@ -114,7 +114,7 @@ object App {
     }
 
     val dsR2 = {
-      val ret2DS = dsR1.selectExpr(""x"", ""p"", ""q"", ""udfA_99"", ""myUdfB(p) as udfB_10"")
+      val ret2DS = dsR1.selectExpr("x", "p", "q", "udfA_99", "myUdfB(p) as udfB_10")
       val result = ret2DS.cache()
       dsR0.show()
       dsR1.show()

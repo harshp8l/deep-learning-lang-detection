@@ -1,15 +1,15 @@
 h = @transactions.each_with_object(Hash.new(0)) do |g,h|
-  a = [g[""fromAddress""], g[""toAddress""]]
-  h.update(a => h[a] += g[""amount""].to_f)
+  a = [g["fromAddress"], g["toAddress"]]
+  h.update(a => h[a] += g["amount"].to_f)
 end
-  #=> {[nil, ""Alice""]=>50.0, [""Alice"", ""Bob""]=>13.5, [nil, ""50""]=>50.0,
-  #    [""50"", ""Alice""]=>50.0, [""Alice"", ""Alice""]=>50.0, [""1444"", ""0297bc77""]=>2.0,
-  #    [""1444"", ""Alice""]=>3.0}
+  #=> {[nil, "Alice"]=>50.0, ["Alice", "Bob"]=>13.5, [nil, "50"]=>50.0,
+  #    ["50", "Alice"]=>50.0, ["Alice", "Alice"]=>50.0, ["1444", "0297bc77"]=>2.0,
+  #    ["1444", "Alice"]=>3.0}
 g = h.group_by { |(_from, to), _amt| to }
-  #=> { ""Alice""=>[[[nil, ""Alice""], 50.0], [[""50"", ""Alice""], 50.0],
-  #              [[""Alice"", ""Alice""], 50.0], [[""1444"", ""Alice""], 3.0]],
-  #     ""Bob""=>[[[""Alice"", ""Bob""], 13.5]], ""50""=>[[[nil, ""50""], 50.0]],
-  #     ""0297bc77""=>[[[""1444"", ""0297bc77""], 2.0]]}
+  #=> { "Alice"=>[[[nil, "Alice"], 50.0], [["50", "Alice"], 50.0],
+  #              [["Alice", "Alice"], 50.0], [["1444", "Alice"], 3.0]],
+  #     "Bob"=>[[["Alice", "Bob"], 13.5]], "50"=>[[[nil, "50"], 50.0]],
+  #     "0297bc77"=>[[["1444", "0297bc77"], 2.0]]}
 g.map do |k,v|
   { toAddress: k, amount: v.map(&:last).sum.to_s,
     from_address: v.map { |(from, _to), amt| [from, amt.to_s] }.to_h }

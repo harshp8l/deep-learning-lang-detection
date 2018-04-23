@@ -11,7 +11,7 @@ jail_files() {
     # All of these commands are used at least once by one of the
     # scripts under test.
 
-    commands=""
+    commands="
         /bin/cat
         /bin/chmod
         /bin/date
@@ -20,17 +20,17 @@ jail_files() {
         /usr/bin/awk
         /usr/bin/cut
         /usr/bin/tee
-    ""
+    "
 
     local OPTIND script wrappers
-    while getopts ""s:w:"" o
+    while getopts "s:w:" o
     do
-        case ""${o}"" in
+        case "${o}" in
         s)
-            script=""${OPTARG}""
+            script="${OPTARG}"
             ;;
         w)
-            wrappers=""${wrappers} ${OPTARG}""
+            wrappers="${wrappers} ${OPTARG}"
             ;;
         esac
     done
@@ -53,14 +53,14 @@ jail_files() {
     Darwin)
         # Copy Bash 4 and GNU Sed.
         cp -p /usr/local/bin/bash $FAKE_ROOT/bin
-        cp -p /usr/local/bin/gsed ""$FAKE_ROOT/bin/sed""
+        cp -p /usr/local/bin/gsed "$FAKE_ROOT/bin/sed"
 
         initial_libs=$(
             for f in /usr/local/bin/bash
             do
                 otool -L $f | awk 'NR > 1 {print $1}'
             done | sort -u)
-        initial_libs=""/usr/lib/dyld $initial_libs""
+        initial_libs="/usr/lib/dyld $initial_libs"
 
         for f in $initial_libs
         do
@@ -74,13 +74,13 @@ jail_files() {
         do
             missing_lib=$(sudo chroot -u $who_i_am $FAKE_ROOT /bin/sh -c echo 2>&1 | \
                 awk '/dyld: Library not loaded:/ {print $5}')
-            [ ""$?"" -eq 0 ] && break
+            [ "$?" -eq 0 ] && break
             copy_to_jail $missing_lib
         done
         ;;
 
     *)
-        echo ""Platform $(uname -s) not supported""
+        echo "Platform $(uname -s) not supported"
         exit 1
         ;;
     esac

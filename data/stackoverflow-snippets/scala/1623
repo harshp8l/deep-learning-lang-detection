@@ -1,7 +1,7 @@
  def listenUserStatus(actorRef: ActorRef, message: SocketParsedMessage): Unit = {
     hashMapA2U.get(actorRef) match {
       case Some(user) => {
-        (message.data \ ""userId"").validate[UUID] match {
+        (message.data \ "userId").validate[UUID] match {
           case s: JsSuccess[UUID] => {
             hashMapUserListeners.get(s.get) match {
               case Some(x) => {
@@ -15,16 +15,16 @@
           }
           case e: JsError => actorRef ! SocketParsedMessage(
             AllowedSocketMessageTypes.LISTEN_USER_STATUS, Json.obj(
-              ""success"" -> false,
-              ""message"" -> ""UserId not provided with request""
+              "success" -> false,
+              "message" -> "UserId not provided with request"
             ))
         }
       }
       case None => {
         actorRef ! SocketParsedMessage(
           AllowedSocketMessageTypes.AUTHENTICATE, Json.obj(
-            ""success"" -> false,
-            ""message"" -> ""User not authenticated""
+            "success" -> false,
+            "message" -> "User not authenticated"
           ))
       }
     }

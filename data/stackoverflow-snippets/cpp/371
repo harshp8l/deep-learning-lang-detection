@@ -10,11 +10,11 @@ using Mutex     = bip::named_mutex;
 using Condition = bip::named_condition;
 
 int main(int argc, char**) {
-    Mutex     mx(bip::open_or_create, ""shared_mat_mx"");
-    Condition cv(bip::open_or_create, ""shared_mat_cv"");
+    Mutex     mx(bip::open_or_create, "shared_mat_mx");
+    Condition cv(bip::open_or_create, "shared_mat_cv");
 
     if (argc>1) { // server
-        auto mat = bip::shared_memory_object(bip::create_only, ""shared_mat"", bip::read_write);
+        auto mat = bip::shared_memory_object(bip::create_only, "shared_mat", bip::read_write);
         mat.truncate(10 << 10); // 10kb
 
         bip::mapped_region region(mat, bip::read_only);
@@ -28,9 +28,9 @@ int main(int argc, char**) {
             bip::scoped_lock<Mutex> lk(mx);
             cv.wait(lk); // wait for server signal
         }
-        auto mat = bip::shared_memory_object(bip::open_only, ""shared_mat"", bip::read_only);
+        auto mat = bip::shared_memory_object(bip::open_only, "shared_mat", bip::read_only);
         bip::mapped_region region(mat, bip::read_only);
 
-        std::cout << ""Mapped the region of size "" << region.get_size() << ""\n"";
+        std::cout << "Mapped the region of size " << region.get_size() << "\n";
     }
 }

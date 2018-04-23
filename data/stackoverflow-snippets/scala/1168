@@ -12,18 +12,18 @@ def processFileWithIncrementalUpdates(
     }
     else {
       val myMax = batch.map(_.toInt).max
-      println(""Starting new batch with max line: "" + myMax)
+      println("Starting new batch with max line: " + myMax)
 
       //processing work happens here
       batch.map(processSync)
-      println(""Finished processing batch with max line: "" + myMax)
+      println("Finished processing batch with max line: " + myMax)
 
       //send a progress update to be persisted to the DB
       val progressCall = Future[Unit] { dBUtil.incrementProgress(batch.size) }
 
       progressCall.onComplete{
         case Success(s) => // don't care
-        case Failure(e) => logger.error(""Unable to persist progress from actor "")
+        case Failure(e) => logger.error("Unable to persist progress from actor ")
       }
 
       progressCall.onComplete({

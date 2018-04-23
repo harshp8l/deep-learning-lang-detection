@@ -1,32 +1,32 @@
 Param(
-   [string]$collectionurl = ""http://server:8080/tfs/DefaultCollection"",
-   [string]$projectName = ""ProjectName"",
-   [string]$keepForever = ""true"",
-   [string]$BuildDefinitionId = ""34"",
-   [string]$user = ""username"",
-   [string]$token = ""password""
+   [string]$collectionurl = "http://server:8080/tfs/DefaultCollection",
+   [string]$projectName = "ProjectName",
+   [string]$keepForever = "true",
+   [string]$BuildDefinitionId = "34",
+   [string]$user = "username",
+   [string]$token = "password"
 )
 
 # Base64-encodes the Personal Access Token (PAT) appropriately
-$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes((""{0}:{1}"" -f $user,$token)))
+$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$token)))
 
 function CreateJsonBody
 {
 
-    $value = @""
+    $value = @"
   {
-  ""definition"": {
-    ""id"": $BuildDefinitionId
+  "definition": {
+    "id": $BuildDefinitionId
   },
 
-  ""parameters"": ""{\""system.debug\"":\""true\"",\""BuildConfiguration\"":\""debug\"",\""BuildPlatform\"":\""x64\""}""
+  "parameters": "{\"system.debug\":\"true\",\"BuildConfiguration\":\"debug\",\"BuildPlatform\":\"x64\"}"
 }
-""@
+"@
 
  return $value
 }
 
 $json = CreateJsonBody
 
-$uri = ""$($collectionurl)/$($projectName)/_apis/build/builds?api-version=2.0""
-$result = Invoke-RestMethod -Uri $uri -Method Post -Body $json -ContentType ""application/json"" -Headers @{Authorization=(""Basic {0}"" -f $base64AuthInfo)}
+$uri = "$($collectionurl)/$($projectName)/_apis/build/builds?api-version=2.0"
+$result = Invoke-RestMethod -Uri $uri -Method Post -Body $json -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}

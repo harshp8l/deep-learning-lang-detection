@@ -5,42 +5,42 @@
 # IN: string_with_key_value_pairs wanted_key_1 [wanted_key_2] ...
 # OUT: result
 function split_key_val {
-  local KEY_VAL_STRING=""$1""
+  local KEY_VAL_STRING="$1"
   local RESULT
   # read the string with key-value pairs into array
-  IFS=\| read -r -a ARRAY <<< ""$KEY_VAL_STRING""
+  IFS=\| read -r -a ARRAY <<< "$KEY_VAL_STRING"
   #
   shift
   # while there are wanted-keys ...
   while [[ -n $1 ]]
   do
-    WANTED_KEY=""$1""
+    WANTED_KEY="$1"
     # Search the array for the wanted-key
-    for KEY_VALUE in ""${ARRAY[@]}""
+    for KEY_VALUE in "${ARRAY[@]}"
     do
-      # the key is the part before ""=""
-      KEY=$(echo ""$KEY_VALUE"" |cut --delimiter=""="" --fields=1)
-      # the value is the part after ""=""
-      VALUE=$(echo ""$KEY_VALUE"" |cut --delimiter=""="" --fields=2)
+      # the key is the part before "="
+      KEY=$(echo "$KEY_VALUE" |cut --delimiter="=" --fields=1)
+      # the value is the part after "="
+      VALUE=$(echo "$KEY_VALUE" |cut --delimiter="=" --fields=2)
       if [[ $KEY == $WANTED_KEY ]]
       then
         # if result is empty; result= found value...
         if [[ -z $RESULT ]]
         then
           # (quote the damned quotes)
-          RESULT=""\""${VALUE}\""""
+          RESULT="\"${VALUE}\""
         else
           # ... else add a comma as a separator
-          RESULT=""${RESULT},\""${VALUE}\""""
+          RESULT="${RESULT},\"${VALUE}\""
         fi
       fi  # key == wanted-key
     done  # searched whole array
     shift # prepare for next wanted-key
   done
-  echo ""$RESULT""
+  echo "$RESULT"
   return 0
 }
 
-STRING=""zone=INTERNET|status=good|routed=special|location=001|resp=user|switch=not set|stack=no|dswres=no|CIDR=10.10.10.0/24|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=enable|inheritPingBeforeAssign=true|locationInherited=true|gateway=10.10.10.100|inheritDefaultDomains=true|inheritDefaultView=true|inheritDNSRestrictions=true|name=SCB-INET-A""
+STRING="zone=INTERNET|status=good|routed=special|location=001|resp=user|switch=not set|stack=no|dswres=no|CIDR=10.10.10.0/24|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=enable|inheritPingBeforeAssign=true|locationInherited=true|gateway=10.10.10.100|inheritDefaultDomains=true|inheritDefaultView=true|inheritDNSRestrictions=true|name=SCB-INET-A"
 
-split_key_val ""$STRING"" zone CIDR name
+split_key_val "$STRING" zone CIDR name

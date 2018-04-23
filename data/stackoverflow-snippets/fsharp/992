@@ -11,26 +11,26 @@ type GeneralStructure =
 | StringPayload of string option
 
 let toString = function
-| NoPayload -> ""NoPayload""
-| DatePayload dt -> sprintf ""DatePayload(%d)"" <| dt.ToBinary()
-| StringPayload None -> ""StringPayload(None)""
-| StringPayload (Some s) -> sprintf ""StringPayload(Some(%s))"" s
+| NoPayload -> "NoPayload"
+| DatePayload dt -> sprintf "DatePayload(%d)" <| dt.ToBinary()
+| StringPayload None -> "StringPayload(None)"
+| StringPayload (Some s) -> sprintf "StringPayload(Some(%s))" s
 
 let fromString = function
-| ""NoPayload"" -> NoPayload
-| ""StringPayload(None)"" -> StringPayload None
-| RegexMatch @""DatePayload\((.*)\)"" dt -> DatePayload <| DateTime.FromBinary(Int64.Parse dt)
-| RegexMatch @""StringPayload\(Some\((.*)\)\)"" msg -> StringPayload <| Some msg
-| o -> failwithf ""Unknown %s %s"" typeof<GeneralStructure>.Name o
+| "NoPayload" -> NoPayload
+| "StringPayload(None)" -> StringPayload None
+| RegexMatch @"DatePayload\((.*)\)" dt -> DatePayload <| DateTime.FromBinary(Int64.Parse dt)
+| RegexMatch @"StringPayload\(Some\((.*)\)\)" msg -> StringPayload <| Some msg
+| o -> failwithf "Unknown %s %s" typeof<GeneralStructure>.Name o
 
 
-let serialized = StringPayload <| Some ""Foo"" |> toString
+let serialized = StringPayload <| Some "Foo" |> toString
 let deserialized = fromString serialized
 
 let serialized' = DatePayload DateTime.UtcNow |> toString
 let deserialized' = fromString serialized'
 
-// val serialized : string = ""StringPayload(Some(Foo))""
-// val deserialized : GeneralStructure = StringPayload (Some ""Foo"")
-// val serialized' : string = ""DatePayload(5247430828937321388)""
+// val serialized : string = "StringPayload(Some(Foo))"
+// val deserialized : GeneralStructure = StringPayload (Some "Foo")
+// val serialized' : string = "DatePayload(5247430828937321388)"
 // val deserialized' : GeneralStructure = DatePayload 06.08.2015 18:04:10

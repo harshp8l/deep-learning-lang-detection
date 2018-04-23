@@ -1,20 +1,20 @@
 (defn process-url-encoded
- ""parses the url sent from the .js function""
+ "parses the url sent from the .js function"
   [req]
   (let [input (or (:query-string req) (:input-string req))]
-    (let [input-vec (apply hash-map (str/split input #""[&=]""))]
+    (let [input-vec (apply hash-map (str/split input #"[&=]"))]
       (walk/keywordize-keys input-vec))))
 
 
 (defn get-list! [req]
-  (log/infof ""Request sent from .js function"")
+  (log/infof "Request sent from .js function")
   (try
     (let [{keyword     :keyword} (process-url-encoded req)
-          keywd (str ""%"" keyword ""%"")
+          keywd (str "%" keyword "%")
           param (hash-map :name-like keywd)
           list (into {} (db/get-client-list param))]
-          (log/infof ""The list is -> %s"" list)
-          (layout/render ""readlist.html"" {:record list}))
+          (log/infof "The list is -> %s" list)
+          (layout/render "readlist.html" {:record list}))
     (catch Exception e
-      (log/errorf ""No value supplied -> %s"" (.getMessage e))
-      (layout/render ""readlist.html"" {:record {}}))))
+      (log/errorf "No value supplied -> %s" (.getMessage e))
+      (layout/render "readlist.html" {:record {}}))))

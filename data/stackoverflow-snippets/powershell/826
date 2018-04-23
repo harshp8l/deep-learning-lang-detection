@@ -16,7 +16,7 @@ function Get-VMStatus
     .DESCRIPTION
        Uses PS Workflow to get Azure VM status' in a concurrent manner, preserving the original code sequence
     .EXAMPLE
-       Get-VMStatusWF -VMList (Find-AzureRmResource | Where-Object {$_.ResourceType -like ""Microsoft.Compute/virtualMachines"")
+       Get-VMStatusWF -VMList (Find-AzureRmResource | Where-Object {$_.ResourceType -like "Microsoft.Compute/virtualMachines")
     #>
     workflow Get-VMDetailsWF
     {
@@ -28,21 +28,21 @@ function Get-VMStatus
         foreach -parallel ($Vm in $VmList) {
             sequence {
                 $TimeToGetVM = Measure-Command {$VmDetails = (Get-AzureRmVM -ResourceGroupName $vm.ResourceGroupName -Name $Vm.ResourceName)}
-                Write-Verbose "" -Get VM [$($Vm.ResourceName)/$($vm.ResourceGroupName)] $($TimeToGetVM.Minutes):$($TimeToGetVM.Seconds):$($TimeToGetVM.Milliseconds) minutes"" -Verbose
+                Write-Verbose " -Get VM [$($Vm.ResourceName)/$($vm.ResourceGroupName)] $($TimeToGetVM.Minutes):$($TimeToGetVM.Seconds):$($TimeToGetVM.Milliseconds) minutes" -Verbose
 
                 $VmListTags = $VmDetails.Tags
                 $TimeToGetThePowa = Measure-Command {$PowerState = ((Get-AzureRmVM -ResourceGroupName $vm.ResourceGroupName -Name $Vm.ResourceName -Status).Statuses[1].DisplayStatus)}
-                Write-Verbose "" -Get Status [$($Vm.ResourceName)/$($vm.ResourceGroupName)] $($TimeToGetThePowa.Minutes):$($TimeToGetThePowa.Seconds):$($TimeToGetThePowa.Milliseconds) minutes"" -Verbose
+                Write-Verbose " -Get Status [$($Vm.ResourceName)/$($vm.ResourceGroupName)] $($TimeToGetThePowa.Minutes):$($TimeToGetThePowa.Seconds):$($TimeToGetThePowa.Milliseconds) minutes" -Verbose
             }
         }
     }
 
-    Write-Host ""VM Status Start"" -ForegroundColor Blue -BackgroundColor White
-    $TimeToGetVmList = Measure-Command {$VmList = Find-AzureRmResource | Where-Object {$_.ResourceType -like ""Microsoft.Compute/virtualMachines""}}
-    Write-Host ""`n-Get The VmList $($TimeToGetVmList.Minutes):$($TimeToGetVmList.Seconds):$($TimeToGetVmList.Milliseconds) minutes"" -ForegroundColor Green
+    Write-Host "VM Status Start" -ForegroundColor Blue -BackgroundColor White
+    $TimeToGetVmList = Measure-Command {$VmList = Find-AzureRmResource | Where-Object {$_.ResourceType -like "Microsoft.Compute/virtualMachines"}}
+    Write-Host "`n-Get The VmList $($TimeToGetVmList.Minutes):$($TimeToGetVmList.Seconds):$($TimeToGetVmList.Milliseconds) minutes" -ForegroundColor Green
 
     $TimeToAllVmStatus = measure-command {Get-VMDetailsWF -VMList $VmList}
-    Write-Host ""`n---Time to Get all VM status [$($TimeToAllVmStatus.Minutes):$($TimeToAllVmStatus.Seconds):$($TimeToAllVmStatus.Milliseconds)] minutes"" -ForegroundColor Green
+    Write-Host "`n---Time to Get all VM status [$($TimeToAllVmStatus.Minutes):$($TimeToAllVmStatus.Seconds):$($TimeToAllVmStatus.Milliseconds)] minutes" -ForegroundColor Green
 }
 
 

@@ -1,14 +1,14 @@
-#r @""packages\SQLProvider.0.0.9-alpha\lib\net40\FSharp.Data.SqlProvider.dll""
+#r @"packages\SQLProvider.0.0.9-alpha\lib\net40\FSharp.Data.SqlProvider.dll"
 
 open System
 open System.Linq
 open FSharp.Data.Sql
 
 [<Literal>]
-let cnStr = @""Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\temp\Database1.accdb;Persist Security Info=False;""
+let cnStr = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\temp\Database1.accdb;Persist Security Info=False;"
 
 type sql = SqlDataProvider<
-                ConnectionString = @""Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\temp\Database1.accdb;Persist Security Info=False;"",
+                ConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\temp\Database1.accdb;Persist Security Info=False;",
                 DatabaseVendor = Common.DatabaseProviderTypes.MSACCESS>
 let ctx = sql.GetDataContext()
 
@@ -27,14 +27,14 @@ let saveARow (aRow: Row) =
     table1.GG <- aRow.GG
     ctx.SubmitUpdates()
 
-{P=""abc""; In=DateTime.Now; GG=200.}
+{P="abc"; In=DateTime.Now; GG=200.}
 |> saveARow
 
 // try it the old fashioned way
 open System.Data
 open System.Data.OleDb
 
-#r @""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5.2\System.Transactions.dll""
+#r @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5.2\System.Transactions.dll"
 open System.Transactions
 
 let saveARow2(aRow: Row) =
@@ -42,11 +42,11 @@ let saveARow2(aRow: Row) =
     cn.Open()
     let cmd = new OleDbCommand()
     cmd.CommandType <- CommandType.Text
-    let insertCmd = sprintf ""insert into Table1 values ('%s', '%s', '%f')"" aRow.P (aRow.In.ToShortDateString()) aRow.GG
+    let insertCmd = sprintf "insert into Table1 values ('%s', '%s', '%f')" aRow.P (aRow.In.ToShortDateString()) aRow.GG
     cmd.CommandText <- insertCmd
     cmd.Connection <- cn
     cmd.ExecuteNonQuery() |>ignore
     cn.Close()
 
-{P=""abcd""; In=DateTime.Now; GG=200.}
+{P="abcd"; In=DateTime.Now; GG=200.}
 |> saveARow2

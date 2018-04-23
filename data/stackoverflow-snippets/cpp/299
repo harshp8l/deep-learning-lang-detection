@@ -7,16 +7,16 @@
 #include <QPushButton>
 
 static bool createDB() {
-    QSqlDatabase db = QSqlDatabase::addDatabase(""QSQLITE"",""CREATE_CON"");
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE","CREATE_CON");
 
-    db.setDatabaseName(""TestDb.db3"");
+    db.setDatabaseName("TestDb.db3");
     if(!db.open()){
         qDebug()<<db.lastError().text();
         return false;
     }
 
     QSqlQuery q(db);
-    if(!q.exec(""CREATE TABLE IF NOT EXISTS Test(testCol TEXT PRIMARY KEY);"")){
+    if(!q.exec("CREATE TABLE IF NOT EXISTS Test(testCol TEXT PRIMARY KEY);")){
         qDebug()<<q.lastError().text();
         return false;
     }
@@ -24,16 +24,16 @@ static bool createDB() {
 }
 
 static int entries() {
-    QSqlDatabase db = QSqlDatabase::addDatabase(""QSQLITE"",""SELECT_CON"");
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE","SELECT_CON");
 
-    db.setDatabaseName(""TestDb.db3"");
+    db.setDatabaseName("TestDb.db3");
     if(!db.open()){
         qDebug()<< db.lastError().text();
         return -1;
     }
 
     QSqlQuery q(db);
-    if(!q.exec(""SELECT * FROM Test;"")){
+    if(!q.exec("SELECT * FROM Test;")){
         qDebug()<<q.lastError().text();
         return -2;
     }
@@ -41,7 +41,7 @@ static int entries() {
     if(!q.last()) {
         return 0;
     }
-    qDebug()<<""not empty"";
+    qDebug()<<"not empty";
     return q.at()+1;
 }
 
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     if(!createDB()){
         return -1;
     }
-    QPushButton button(""call entries"");
+    QPushButton button("call entries");
     QObject::connect(&button, &QPushButton::clicked, [&](){
         qDebug()<<entries();
     });

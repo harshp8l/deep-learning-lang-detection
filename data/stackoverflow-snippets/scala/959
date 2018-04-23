@@ -4,7 +4,7 @@ val fileSizeRotationFunction = () => {
   (element: ByteString) =>
     {
       if (size + element.size > max) {
-        val path = Files.createTempFile(""out-"", "".log"")
+        val path = Files.createTempFile("out-", ".log")
         size = element.size
         Some(path)
       } else {
@@ -18,6 +18,6 @@ val sizeRotatorSink: Sink[ByteString, Future[Done]] =
   LogRotatorSink(fileSizeRotationFunction)
 
 val source = Source(files).flatMapConcat(f => FileIO.fromPath(Paths.get(f)))
-val chunking = Framing.delimiter(ByteString(""\n""), maximumFrameLength = 256, allowTruncation = true)
+val chunking = Framing.delimiter(ByteString("\n"), maximumFrameLength = 256, allowTruncation = true)
 
 source.via(chunking).runWith(sizeRotatorSink)

@@ -3,17 +3,17 @@ param(
     [string] $printerName
     )
 
-$printer=gwmi win32_Printer -filter ""name='$printerName'""
+$printer=gwmi win32_Printer -filter "name='$printerName'"
 $printer.Delete()
 Write-Host $printer.portname
 
-$port=gwmi win32_tcpipprinterport -filter ""name='$($printer.portname)'"" -EnableAllPrivileges
+$port=gwmi win32_tcpipprinterport -filter "name='$($printer.portname)'" -EnableAllPrivileges
 
 
 
 if(!$port){
-    throw ""Printer port could not be found, this printer may have not been 
-removed correctly""
+    throw "Printer port could not be found, this printer may have not been 
+removed correctly"
 }
 
 $unableToDeletePort = $true
@@ -24,22 +24,22 @@ while($unableToDeletePort -and $counter -ge 0)
     try{
         $port.Delete()
         $unableToDeletePort = $false
-        write-host ""deleted port""
+        write-host "deleted port"
        }
      catch{
         $unableToDeletePort = $true
-        write-host ""didn't delete port""
+        write-host "didn't delete port"
 }
     Start-Sleep -Seconds 2
     $counter-=1
 
-    $port=gwmi win32_tcpipprinterport -filter ""name='$($printer.portname)'"" -EnableAllPrivileges
+    $port=gwmi win32_tcpipprinterport -filter "name='$($printer.portname)'" -EnableAllPrivileges
 }
 
 
 
 if($unableToDeletePort){
-    Restart-Service ""Spooler""
+    Restart-Service "Spooler"
 
     $counter=5
 
@@ -48,19 +48,19 @@ if($unableToDeletePort){
         try{
             $port.Delete()
             $unableToDeletePort = $false
-            write-host ""deleted port""
+            write-host "deleted port"
             }
     catch{
         $unableToDeletePort = $true
-        write-host ""didn't delete port""
+        write-host "didn't delete port"
          }
     Start-Sleep -Seconds 2
     $counter-=1
 
-    $port=gwmi win32_tcpipprinterport -filter ""name='$($printer.portname)'"" -EnableAllPrivileges
+    $port=gwmi win32_tcpipprinterport -filter "name='$($printer.portname)'" -EnableAllPrivileges
     }
 
     if($unableToDeletePort){
-        throw ""Unable to delete port""
+        throw "Unable to delete port"
     }
 }

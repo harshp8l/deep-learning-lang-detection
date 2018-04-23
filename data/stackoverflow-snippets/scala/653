@@ -17,13 +17,13 @@ object SparkKafkaExample {
   def main(args: Array[String]): Unit =
   {
 
-  val brokers = ""broker1.com:9092,broker2.com:9092,"" +
-    ""broker3.com:9092,broker4.com:9092,broker5.com:9092""
+  val brokers = "broker1.com:9092,broker2.com:9092," +
+    "broker3.com:9092,broker4.com:9092,broker5.com:9092"
   // Create Spark Session
   val spark = SparkSession
     .builder()
-    .appName(""KafkaSparkDemo"")
-    .master(""local[*]"")
+    .appName("KafkaSparkDemo")
+    .master("local[*]")
     .getOrCreate()
 
   import spark.implicits._
@@ -32,15 +32,15 @@ object SparkKafkaExample {
   val ssc = new StreamingContext(spark.sparkContext, Seconds(10))
 
   var kafkaParams = Map(
-    ""bootstrap.servers"" -> brokers,
-    ""key.deserializer"" -> ""org.apache.kafka.common.serialization.StringDeserializer"",
-    ""value.deserializer"" -> ""org.apache.kafka.common.serialization.StringDeserializer"",
-    ""group.id"" -> ""test"",
-    ""security.protocol"" -> ""SASL_PLAINTEXT"",
-    ""sasl.kerberos.service.name"" -> ""kafka"",
-    ""auto.offset.reset"" -> ""earliest"")
+    "bootstrap.servers" -> brokers,
+    "key.deserializer" -> "org.apache.kafka.common.serialization.StringDeserializer",
+    "value.deserializer" -> "org.apache.kafka.common.serialization.StringDeserializer",
+    "group.id" -> "test",
+    "security.protocol" -> "SASL_PLAINTEXT",
+    "sasl.kerberos.service.name" -> "kafka",
+    "auto.offset.reset" -> "earliest")
 
-  val topics = Array(""sparkstreaming"")
+  val topics = Array("sparkstreaming")
   val stream = KafkaUtils.createDirectStream[String, String](
     ssc,
     PreferConsistent,
@@ -48,8 +48,8 @@ object SparkKafkaExample {
 
   // Define a schema for JSON data
   val schema = new StructType()
-    .add(""action"", StringType)
-    .add(""timestamp"", TimestampType)
+    .add("action", StringType)
+    .add("timestamp", TimestampType)
 
   // Process batches:
   // Parse JSON and create Data Frame
@@ -57,7 +57,7 @@ object SparkKafkaExample {
   stream.foreachRDD { (rdd, time) =>
     val data = rdd.map(record => record.value)
     val json = spark.read.schema(schema).json(data)
-    val result = json.groupBy($""action"").agg(count(""*"").alias(""count""))
+    val result = json.groupBy($"action").agg(count("*").alias("count"))
     result.show
   }
 

@@ -11,7 +11,7 @@ WindowsSCSIBus                : 0
 WindowsSCSILogicalUnit        : 0
 WindowsSCSIPort               : 2
 WindowsSCSITargetId           : 0
-WindowsDisk                   : \\SERVER\root\cimv2:Win32_DiskDrive.DeviceID=""\\\\.\\PHYSICALDRIVE0""
+WindowsDisk                   : \\SERVER\root\cimv2:Win32_DiskDrive.DeviceID="\\\\.\\PHYSICALDRIVE0"
 WindowsDriveLetter            : C:
 WindowsLocicalDiskSizeGB      : 39.9980430603027
 WindowsLocicalDiskFreeSpaceGB : 9.30975723266602
@@ -38,23 +38,23 @@ $obj_LogicalDiskToPartition = Get-WmiObject -Class Win32_LogicalDiskToPartition 
 $obj_DiskDriveToDiskPartition = Get-WmiObject -Class Win32_DiskDriveToDiskPartition -ComputerName $ComputerName
 
 #Get vm               
-$obj_VMView = Get-View -ViewType VirtualMachine -Filter @{""Name"" = ""$($Vm.Name)""}
+$obj_VMView = Get-View -ViewType VirtualMachine -Filter @{"Name" = "$($Vm.Name)"}
 
 #Get vm disk
 $obj_VMDisk = Get-HardDisk -VM $Vm
 
 #Match the informations      
-foreach ($obj_vmWareSCSIController in ($obj_VMView.Config.Hardware.Device | Where-Object -FilterScript {$_.DeviceInfo.Label -match ""SCSI""})) 
+foreach ($obj_vmWareSCSIController in ($obj_VMView.Config.Hardware.Device | Where-Object -FilterScript {$_.DeviceInfo.Label -match "SCSI"})) 
 {
     foreach ($obj_vmWareDiskDevice in ($obj_VMView.Config.Hardware.Device | Where-Object -FilterScript {$_.ControllerKey -eq $obj_vmWareSCSIController.Key})) 
     {                                    
-        $obj_tempDiskInfos = """" | Select-Object -Property Date, vCenterName, vmName, vmWareSCSIController, wmWareSCSIID, vmWareDiskName, vmWareDiskFile,
+        $obj_tempDiskInfos = "" | Select-Object -Property Date, vCenterName, vmName, vmWareSCSIController, wmWareSCSIID, vmWareDiskName, vmWareDiskFile,
             vmWareSizeGB, WindowsSerialNumber, WindowsSCSIBus, WindowsSCSILogicalUnit, WindowsSCSIPort, WindowsSCSITargetId, WindowsDisk, WindowsDriveLetter,
             WindowsLocicalDiskSizeGB, WindowsLocicalDiskFreeSpaceGB, WindowsLocicalDiskUsedSpaceGB
 
         #Select WMI object
         $obj_currentDiskDrive = @()
-        $obj_currentDiskDrive = $obj_DiskDrive | Where-Object -FilterScript {$_.SerialNumber -eq $obj_vmWareDiskDevice.Backing.Uuid.Replace(""-"","""")}
+        $obj_currentDiskDrive = $obj_DiskDrive | Where-Object -FilterScript {$_.SerialNumber -eq $obj_vmWareDiskDevice.Backing.Uuid.Replace("-","")}
 
         $obj_currentDiskDriveToDiskPartition = @()
         $obj_currentDiskDriveToDiskPartition = $obj_DiskDriveToDiskPartition | Where-Object -FilterScript {$_.Antecedent -eq $obj_currentDiskDrive.Path}
@@ -70,11 +70,11 @@ foreach ($obj_vmWareSCSIController in ($obj_VMView.Config.Hardware.Device | Wher
         $obj_CurrentvmWareHarddisk = $obj_VMDisk | Where-Object -FilterScript {$_.Name -eq $obj_vmWareDiskDevice.DeviceInfo.Label}
 
         #Generate output
-        $obj_tempDiskInfos.Date = Get-Date -Format ""yyyy.MM.dd HH:mm:ss""
+        $obj_tempDiskInfos.Date = Get-Date -Format "yyyy.MM.dd HH:mm:ss"
         $obj_tempDiskInfos.vCenterName = $defaultVIServer.Name
         $obj_tempDiskInfos.vmName = $Vm.Name
         $obj_tempDiskInfos.vmWareSCSIController = $obj_vmWareSCSIController.DeviceInfo.Label
-        $obj_tempDiskInfos.wmWareSCSIID = ""$($obj_vmWareSCSIController.BusNumber) : $($obj_vmWareDiskDevice.UnitNumber)""
+        $obj_tempDiskInfos.wmWareSCSIID = "$($obj_vmWareSCSIController.BusNumber) : $($obj_vmWareDiskDevice.UnitNumber)"
         $obj_tempDiskInfos.vmWareDiskName = $obj_vmWareDiskDevice.DeviceInfo.Label
         $obj_tempDiskInfos.vmWareDiskFile = $obj_vmWareDiskDevice.Backing.FileName
         $obj_tempDiskInfos.vmWareSizeGB = $obj_CurrentvmWareHarddisk.CapacityGB              

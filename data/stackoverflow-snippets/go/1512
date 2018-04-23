@@ -1,36 +1,36 @@
 package main
 
 import (
-    ""database/sql""
-    ""log""
+    "database/sql"
+    "log"
 
-    ""github.com/get-ion/ion""
-    ""github.com/get-ion/ion/context""
-    ""github.com/get-ion/ion/view""
-    _ ""github.com/go-sql-driver/mysql""
+    "github.com/get-ion/ion"
+    "github.com/get-ion/ion/context"
+    "github.com/get-ion/ion/view"
+    _ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
     app := ion.New()
-    app.RegisterView(view.HTML(""./templates"", "".html""))
+    app.RegisterView(view.HTML("./templates", ".html"))
 
-    db, err := sql.Open(""mysql"", ""root:password@/database?charset=utf8&parseTime=true&loc=Local"")
+    db, err := sql.Open("mysql", "root:password@/database?charset=utf8&parseTime=true&loc=Local")
     if err != nil {
         log.Fatalln(err)
-        panic(""There was an error handling mysql connection!"")
+        panic("There was an error handling mysql connection!")
     }
     defer db.Close()
 
-    allRoutes := app.Party(""/"", logThisMiddleware)
+    allRoutes := app.Party("/", logThisMiddleware)
     {
-        allRoutes.Get(""/"", homePage(db))
+        allRoutes.Get("/", homePage(db))
     }
 
-    //app.Run(ion.Addr("":8080""))
+    //app.Run(ion.Addr(":8080"))
 }
 
 func logThisMiddleware(ctx context.Context) {
-    ctx.Application().Logger().Infof(""Path: %s | IP: %s\n"", ctx.Path(), ctx.RemoteAddr())
+    ctx.Application().Logger().Infof("Path: %s | IP: %s\n", ctx.Path(), ctx.RemoteAddr())
     ctx.Next()
 }
 
@@ -42,16 +42,16 @@ func homePage(db *sql.DB) context.Handler {
             featured_image string
             created_at     string
         )
-        rows, err := db.Query(""SELECT id, title, featured_image, created_at from blogs order by crated_at desc limit 0,5"")
+        rows, err := db.Query("SELECT id, title, featured_image, created_at from blogs order by crated_at desc limit 0,5")
         if err != nil {
-            ctx.Application().Logger().Fatalf(""MySQL Error fetching row %s\n"", err)
+            ctx.Application().Logger().Fatalf("MySQL Error fetching row %s\n", err)
         }
         defer rows.Close()
         blogData := map[int]map[int]string{}
         for rows.Next() {
             err := rows.Scan(&id, &title, &featured_image, &created_at)
             if err != nil {
-                ctx.Application().Logger().Fatalf(""Error while fetching row from blog: %s\n"", err)
+                ctx.Application().Logger().Fatalf("Error while fetching row from blog: %s\n", err)
             }
             blogData[id][0] = title
             blogData[id][1] = featured_image
@@ -59,9 +59,9 @@ func homePage(db *sql.DB) context.Handler {
         }
         err = rows.Err()
         if err != nil {
-            ctx.Application().Logger().Fatalf(""Error while scanning Row : %s\n"", err)
+            ctx.Application().Logger().Fatalf("Error while scanning Row : %s\n", err)
         }
-        ctx.ViewData(""blog"", blogData)
-        ctx.View(""homepage.html"")
+        ctx.ViewData("blog", blogData)
+        ctx.View("homepage.html")
     }
 }

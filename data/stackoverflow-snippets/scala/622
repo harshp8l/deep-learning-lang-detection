@@ -50,7 +50,7 @@ implicit class ByteContext(private val sc: StringContext) {
         case c: Char => c.toByte
         case str: String =>  parseByte(str)
         case sthElse => throw new IllegalArgumentException(
-          s""Failed to parse byte array, could not convert argument to byte: '$sthElse'""
+          s"Failed to parse byte array, could not convert argument to byte: '$sthElse'"
         )
       }
       buf += argAsByte
@@ -63,40 +63,40 @@ implicit class ByteContext(private val sc: StringContext) {
   }
 
   /** Parses comma-separated bytes in hexadecimal format (without 0x-prefix),
-    * e.g. ""7F,80,AB,CD"".
+    * e.g. "7F,80,AB,CD".
     */
   def hexBytes(args: Any*): Array[Byte] = parseBytes(
-    s => s.replaceAll(""^,"", """").replaceAll("",$"", """"), // ,AB,CD, -> AB,CD
-    _.split("",""),
+    s => s.replaceAll("^,", "").replaceAll(",$", ""), // ,AB,CD, -> AB,CD
+    _.split(","),
     s => Integer.parseInt(s, 16).toByte
   )(args: _*)
 
   /** Parses decimal unsigned bytes (0-255) separated by periods,
-    * e.g. ""127.0.0.1"".
+    * e.g. "127.0.0.1".
     */
   def ip(args: Any*): Array[Byte] = parseBytes(
-    s => s.replaceAll(""^[.]"", """").replaceAll(""[.]$"", """"), // .1.1. -> 1.1
-    _.split(""[.]""),
+    s => s.replaceAll("^[.]", "").replaceAll("[.]$", ""), // .1.1. -> 1.1
+    _.split("[.]"),
     s => Integer.parseInt(s, 10).toByte
   )(args:_*)
 
   /** Parses byte arrays from hexadecimal representation with possible 
     * spaces, expects each byte to be represented by exactly two characters,
     * e.g. 
-    * ""742d 6761 2e00 6f6e 6574 672e 756e 622e"".
+    * "742d 6761 2e00 6f6e 6574 672e 756e 622e".
     */
   def hexdump(args: Any*): Array[Byte] = parseBytes(
-    s => s.replaceAll("" "", """"),
+    s => s.replaceAll(" ", ""),
     _.grouped(2).toArray,
     s => Integer.parseInt(s, 16).toByte
   )(args: _*)
 
   /** Parses decimal unsigned bytes (0-255) separated by commas,
-    * e.g. ""127.0.0.1"".
+    * e.g. "127.0.0.1".
     */
   def decBytes(args: Any*): Array[Byte] = parseBytes(
-    s => s.replaceAll(""^,"", """").replaceAll("",$"", """"), // ,127, -> 127
-    _.split("",""),
+    s => s.replaceAll("^,", "").replaceAll(",$", ""), // ,127, -> 127
+    _.split(","),
     s => Integer.parseInt(s, 10).toByte
   )(args:_*)
 }

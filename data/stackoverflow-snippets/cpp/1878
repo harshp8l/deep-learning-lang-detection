@@ -19,7 +19,7 @@ namespace testing {
     template<typename...> struct argsExtract { static std::string toString() { return std::string(); } };
     template<typename T, typename Y, typename... A> struct argsExtract<T, Y, A...> {
       static std::string toString() {
-        return boost::core::demangled_name( typeid( T ) ) + "", "" + argsExtract<Y, A...>::toString();
+        return boost::core::demangled_name( typeid( T ) ) + ", " + argsExtract<Y, A...>::toString();
       }
     };
     template<typename T> struct argsExtract<T> { static std::string toString() { return boost::core::demangled_name( typeid( T ) ); } };
@@ -30,13 +30,13 @@ namespace testing {
                                             const std::string &argumentTypes, const std::string &templateArguments = std::string() ) {
       std::ostringstream rt;
       if ( not templateArguments.empty() ) {
-        rt << boost::core::demangled_name( returnType ) << "" "";
+        rt << boost::core::demangled_name( returnType ) << " ";
       }
-      rt << boost::core::demangled_name( classType ) << ""::"" << functionName;
+      rt << boost::core::demangled_name( classType ) << "::" << functionName;
       if ( not templateArguments.empty() ) {
-        rt << ""<"" << templateArguments << "">"";
+        rt << "<" << templateArguments << ">";
       }
-      rt << ""("" << argumentTypes << "")"";
+      rt << "(" << argumentTypes << ")";
       return rt.str();
     }
 
@@ -53,5 +53,5 @@ namespace testing {
 #define COVERS_CLASS_FUNCTION_T( c, n, s, t... ) \
   functions.emplace_back( testing::coverage::functionComponentsToString( typeid( testing::coverage::returnExtract<s>::type ), typeid( c ), #n, testing::coverage::argsExtract<s>::toString(), testing::coverage::argsExtract<t>::toString() ) ); \
   testing::coverage::functionCheck<c,s>::func( &c::n<t> );
-#define COVERS_END_FUNCTIONS RecordProperty(""COVERS_FUNCTIONS"", testing::coverage::toString(functions) ); \
+#define COVERS_END_FUNCTIONS RecordProperty("COVERS_FUNCTIONS", testing::coverage::toString(functions) ); \
 }

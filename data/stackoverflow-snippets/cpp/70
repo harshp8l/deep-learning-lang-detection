@@ -5,7 +5,7 @@ using ast::type_variant;
 using ast::field_vec;
 
 
-template <typename T> static auto as = [](auto p) { return x3::rule<struct tag, T> {""as""} = p; };
+template <typename T> static auto as = [](auto p) { return x3::rule<struct tag, T> {"as"} = p; };
 
 auto const alpha     = '_' | ascii::upper | ascii::lower;
 auto const alpha_num = alpha | ascii::digit;
@@ -14,29 +14,29 @@ auto const con_id    = as<std::string>(x3::lexeme[ascii::upper >> *alpha_num]);
 auto const id        = typ_id | con_id;
 
 auto const field
-    = x3::rule<class constructor, ast::Field> {""field""}
+    = x3::rule<class constructor, ast::Field> {"field"}
     = as<ast::Field>(typ_id >> -(ascii::char_('?') | ascii::char_('*')) >> -id);
 auto const fields
-    = x3::rule<class sum, field_vec>{ ""fields"" }
+    = x3::rule<class sum, field_vec>{ "fields" }
     = '(' >> field % ',' >> ')';
 auto const constructor
-    = x3::rule<class product, ast::Constructor>{ ""constructor"" }
+    = x3::rule<class product, ast::Constructor>{ "constructor" }
     = as<ast::Constructor>(con_id >> -fields);
 auto const sum
-    = x3::rule<class field, ast::Sum>{ ""sum"" }
-    = as<ast::Sum>(constructor % '|' >> -(""attributes"" >> fields));
+    = x3::rule<class field, ast::Sum>{ "sum" }
+    = as<ast::Sum>(constructor % '|' >> -("attributes" >> fields));
 auto const product
-    = x3::rule<class fields, ast::Product>{ ""product"" }
+    = x3::rule<class fields, ast::Product>{ "product" }
     = as<ast::Product>(fields);
 auto const type
-    = x3::rule<class type, type_variant>{ ""type"" }
+    = x3::rule<class type, type_variant>{ "type" }
     = product | sum;
 auto const definitions
-    = x3::rule<class definitions, ast::Type>{ ""definitions"" }
+    = x3::rule<class definitions, ast::Type>{ "definitions" }
     = as<ast::Type>(typ_id >> '=' >> type);
 auto const module
-    = x3::rule<class module, ast::Module>{ ""module"" }
-    = ""module"" >> id >> '{' >> *definitions >> '}';
+    = x3::rule<class module, ast::Module>{ "module" }
+    = "module" >> id >> '{' >> *definitions >> '}';
 
 bool parse(const std::string &input, ast::Module &mod) {
     std::string::const_iterator iter = input.begin();

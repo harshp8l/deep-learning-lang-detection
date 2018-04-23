@@ -1,8 +1,8 @@
-#r ""Newtonsoft.Json.dll""
-#r ""Suave.dll""
-#r ""Suave.Testing.dll""
-#r ""System.Net.Http.dll""
-#r ""Fuchu.dll""
+#r "Newtonsoft.Json.dll"
+#r "Suave.dll"
+#r "Suave.Testing.dll"
+#r "System.Net.Http.dll"
+#r "Fuchu.dll"
 
 open System.Net
 open System.Net.Http
@@ -28,12 +28,12 @@ let DoThing someParam anotherParam =
 
 let checkHeader ctx =
     asyncOption {
-        match ""key"" |> ctx.request.header with
+        match "key" |> ctx.request.header with
         | Choice1Of2 k1 ->
-            printfn ""Header k1: %s"" k1
+            printfn "Header k1: %s" k1
             return ctx
         | Choice2Of2 k2 ->
-            printfn ""Header k2: %s"" k2
+            printfn "Header k2: %s" k2
             return { ctx with
                         response = { ctx.response with
                                         status = HTTP_400 } } }
@@ -42,7 +42,7 @@ let app =
     choose
         [ GET >=> choose
             [
-                pathScan ""/someroute/%i/%i"" (fun (p1, p2) ->
+                pathScan "/someroute/%i/%i" (fun (p1, p2) ->
                         DoThing p1 p2)
                 >=> checkHeader
             ]
@@ -52,7 +52,7 @@ let emptyCont = new ByteArrayContent([||]) |> Some
 
 runWith defaultConfig app
 |> reqResp HttpMethod.GET 
-           ""/someroute/1/2"" """" 
+           "/someroute/1/2" "" 
            None 
            None 
            DecompressionMethods.None

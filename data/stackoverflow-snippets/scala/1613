@@ -13,7 +13,7 @@ import scala.io.StdIn
 
 object TestApp2 extends App {
 
-  implicit val system = ActorSystem(""MyAkkaSystem"")
+  implicit val system = ActorSystem("MyAkkaSystem")
   implicit val materializer = ActorMaterializer()
 
   implicit val executionContext = system.dispatcher
@@ -25,7 +25,7 @@ object TestApp2 extends App {
   }
 
   val start = ByteString.empty
-  val sep = ByteString(""\n"")
+  val sep = ByteString("\n")
   val end = ByteString.empty
 
   implicit val jsonStreamingSupport = EntityStreamingSupport
@@ -35,13 +35,13 @@ object TestApp2 extends App {
   object MyJsonService extends Directives with JsonSupport {
 
     def streamingJsonRoute =
-      path(""streaming-json"") {
+      path("streaming-json") {
         get {
           val sourceOfNumbers = Source(1 to 1000000)
 
           val sourceOfDetailedMessages =
             sourceOfNumbers
-              .map(num => SomeData(s""Hello $num""))
+              .map(num => SomeData(s"Hello $num"))
               .throttle(elements = 5,
                         per = 30 second,
                         maximumBurst = 6,
@@ -53,9 +53,9 @@ object TestApp2 extends App {
   }
 
   val bindingFuture =
-    Http().bindAndHandle(MyJsonService.streamingJsonRoute, ""localhost"", 9000)
+    Http().bindAndHandle(MyJsonService.streamingJsonRoute, "localhost", 9000)
 
-  println(s""Server online at http://localhost:9000/\nPress RETURN to stop..."")
+  println(s"Server online at http://localhost:9000/\nPress RETURN to stop...")
   StdIn.readLine() // let it run until user presses return
   bindingFuture
     .flatMap(_.unbind()) // trigger unbinding from the port

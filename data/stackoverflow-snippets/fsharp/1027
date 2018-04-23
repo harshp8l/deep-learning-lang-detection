@@ -13,16 +13,16 @@ type ATFServiceInstaller() =
 
 
  let spi_ = new ServiceProcessInstaller(Account = ServiceAccount.LocalSystem)
-    let si_ = new ServiceInstaller( DisplayName = ""ATF Service"", Description=""ATF service"", ServiceName = ""atf"",StartType = ServiceStartMode.Automatic ) 
+    let si_ = new ServiceInstaller( DisplayName = "ATF Service", Description="ATF service", ServiceName = "atf",StartType = ServiceStartMode.Automatic ) 
     let dic_ = new System.Collections.Hashtable()
-    let SVC_SERVICE_KET = @""SYSTEM\CurrentControlSet\Services""
+    let SVC_SERVICE_KET = @"SYSTEM\CurrentControlSet\Services"
 
     member this.install () = 
         base.Installers.Add(spi_) |> ignore
         let ret = base.Installers.Add(si_)
-        let apath = sprintf ""/assemblypath=%s"" (Assembly.GetExecutingAssembly().Location)
-        let ctx = [|apath; ""/logToConsole=false""; ""/showCallStack""|]
-        this.Context <- new InstallContext(""atfserviceinstall.log"", ctx)
+        let apath = sprintf "/assemblypath=%s" (Assembly.GetExecutingAssembly().Location)
+        let ctx = [|apath; "/logToConsole=false"; "/showCallStack"|]
+        this.Context <- new InstallContext("atfserviceinstall.log", ctx)
 
         base.Install(dic_)
         base.Commit(dic_)
@@ -33,9 +33,9 @@ type ATFServiceInstaller() =
 
 
         let ret = base.Installers.Add(si_)
-        let apath = sprintf ""/assemblypath=%s"" (Assembly.GetExecutingAssembly().Location)
-        let ctx = [|apath; ""/logToConsole=false""; ""/showCallStack""|]
-        this.Context <- new InstallContext(""atfserviceinstall.log"", ctx)
+        let apath = sprintf "/assemblypath=%s" (Assembly.GetExecutingAssembly().Location)
+        let ctx = [|apath; "/logToConsole=false"; "/showCallStack"|]
+        this.Context <- new InstallContext("atfserviceinstall.log", ctx)
         base.Uninstall(null)
 
 module Main =
@@ -44,13 +44,13 @@ try
 
     match (args |> Seq.length) with
     | 2 -> match (args.[1]) with
-           | ""-install"" -> let installer = new ATFServiceInstaller()
+           | "-install" -> let installer = new ATFServiceInstaller()
                            installer.install()
                            installer.Dispose()
-           | ""-uninstall"" -> let installer = new ATFServiceInstaller()
+           | "-uninstall" -> let installer = new ATFServiceInstaller()
                              installer.uninstall()
                              installer.Dispose()
-           | _ -> failwith ""Unrecognized param %s"" args.[0]
+           | _ -> failwith "Unrecognized param %s" args.[0]
     | _ -> ServiceBase.Run [| new atfservice.ATFService() :> ServiceBase |]
 with
     | _ as ex -> MessageBox.Show(ex.ToString()) |> ignore

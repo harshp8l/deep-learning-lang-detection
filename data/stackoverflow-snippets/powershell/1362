@@ -9,19 +9,19 @@ function insert-OLEDBData {
     )
     $cs = Switch -regex ($file)
     {
-        ""xlsb$""
-            {""Provider=Microsoft.ACE.OLEDB.12.0;Data Source=`""$File`"";Extended Properties=`""Excel 12.0;HDR=YES`"";""}
-        ""xlsx$""
-            {""Provider=Microsoft.ACE.OLEDB.12.0;Data Source=`""$File`"";Extended Properties=`""Excel 12.0 Xml;HDR=YES`"";""}
+        "xlsb$"
+            {"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=`"$File`";Extended Properties=`"Excel 12.0;HDR=YES`";"}
+        "xlsx$"
+            {"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=`"$File`";Extended Properties=`"Excel 12.0 Xml;HDR=YES`";"}
     }
     $OLEDBCon = New-Object System.Data.OleDb.OleDbConnection($cs)
 
     $hdr = $oCol | Get-Member -MemberType NoteProperty,Property | ForEach-Object {$_.name}
 
-    $names = '[' + ($hdr -join ""],["") + ']'
-    $vals = (@(""?"")*([array]$hdr).length) -join ','
+    $names = '[' + ($hdr -join "],[") + ']'
+    $vals = (@("?")*([array]$hdr).length) -join ','
 
-    $sql = ""insert into [$sheet`$] ($names) values ($vals)""
+    $sql = "insert into [$sheet`$] ($names) values ($vals)"
 
     $sqlCmd = New-Object system.Data.OleDb.OleDbCommand($sql)
     $sqlCmd.connection = $oledbcon
@@ -29,17 +29,17 @@ function insert-OLEDBData {
     $cpary = @($null)*([array]$hdr).length
 
     $i=0
-    [array]$hdr|%{([array]$cpary)[$i] = $sqlCmd.parameters.add($_,""VarChar"",255);$i++}
+    [array]$hdr|%{([array]$cpary)[$i] = $sqlCmd.parameters.add($_,"VarChar",255);$i++}
     $oledbcon.open()
 
     for ($i=0;$i -lt ([array]$ocol).length;$i++)
     {
         for ($k=0;$k -lt ([array]$hdr).length;$k++)
         {
-            IF (([array]$oCol)[$i].(([array]$hdr)[$k]) -notlike """") {
+            IF (([array]$oCol)[$i].(([array]$hdr)[$k]) -notlike "") {
                 ([array]$cpary)[$k].value = ([array]$oCol)[$i].(([array]$hdr)[$k])
             } ELSE {
-                ([array]$cpary)[$k].value = """"
+                ([array]$cpary)[$k].value = ""
             }
         }
         $res = $sqlCmd.ExecuteNonQuery()

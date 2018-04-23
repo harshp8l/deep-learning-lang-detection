@@ -6,8 +6,8 @@ function Test-IPv4InternetConnectivity
     # Returns $false otherwise
 
     # Get operating system  major and minor version
-    $strOSVersion = (Get-WmiObject -Query ""Select Version from Win32_OperatingSystem"").Version
-    $arrStrOSVersion = $strOSVersion.Split(""."")
+    $strOSVersion = (Get-WmiObject -Query "Select Version from Win32_OperatingSystem").Version
+    $arrStrOSVersion = $strOSVersion.Split(".")
     $intOSMajorVersion = [UInt16]$arrStrOSVersion[0]
     if ($arrStrOSVersion.Length -ge 2)
     {
@@ -37,7 +37,7 @@ function Test-IPv4InternetConnectivity
         # to determine connectivity.
         # See https://msdn.microsoft.com/en-us/library/windows/desktop/aa370795(v=vs.85).aspx
 
-        $internetNetworks = ([Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]""{DCB00C01-570F-4A9B-8D69-199FDBA5723B}""))).GetNetworkConnections() | `
+        $internetNetworks = ([Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]"{DCB00C01-570F-4A9B-8D69-199FDBA5723B}"))).GetNetworkConnections() | `
             ForEach-Object {$_.GetNetwork().GetConnectivity()} | Where-Object {($_ -band 64) -eq 64}
     }
     return ($internetNetworks -ne $null)

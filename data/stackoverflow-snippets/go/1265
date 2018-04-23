@@ -1,25 +1,25 @@
 package main
 
 import (
-    ""encoding/json""
-    ""net/http""
-    ""log""
+    "encoding/json"
+    "net/http"
+    "log"
 )
 
 type Article struct{
-    Id          string  `json:""id""`
-    Title       string  `json:""title""`
-    Body        string  `json:""body""`
-    Description string  `json:""description""`
+    Id          string  `json:"id"`
+    Title       string  `json:"title"`
+    Body        string  `json:"body"`
+    Description string  `json:"description"`
 }
 
 func AllArticles(w http.ResponseWriter, r *http.Request){
-    log.Print(""/articles - GET"")
+    log.Print("/articles - GET")
     db := connect()
     defer db.Close()
 
     var articles []Article
-    results, err := db.Query(""SELECT * FROM Articles"")
+    results, err := db.Query("SELECT * FROM Articles")
 
     if err != nil{
         log.Print(err)
@@ -32,12 +32,12 @@ func AllArticles(w http.ResponseWriter, r *http.Request){
 
         if err != nil{
             serr, _ := json.Marshal(err)
-            json.NewEncoder(w).Encode(HttpResp{Status: 500, Description: ""Failed to retrieve all articles"", Body: string(serr)})
+            json.NewEncoder(w).Encode(HttpResp{Status: 500, Description: "Failed to retrieve all articles", Body: string(serr)})
         }
 
         articles = append(articles, article)
     }
 
-    w.Header().Set(""Content-Type"", ""application/json"")
+    w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(HttpResp{Status: 200, Body: articles})
 }

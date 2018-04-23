@@ -17,14 +17,14 @@ def printBTree(node, nodeInfo=None, inverted=False, isTop=True):
    subLevelLines     = max(len(rightTextBlock),len(leftTextBlock))
 
    # extend lines on shallower side to get same number of lines on both sides
-   leftSubLines      = leftTextBlock  + [""""] *  (subLevelLines - len(leftTextBlock))
-   rightSubLines     = rightTextBlock + [""""] *  (subLevelLines - len(rightTextBlock))
+   leftSubLines      = leftTextBlock  + [""] *  (subLevelLines - len(leftTextBlock))
+   rightSubLines     = rightTextBlock + [""] *  (subLevelLines - len(rightTextBlock))
 
    # compute location of value or link bar for all left and right sub nodes
    #   * left node's value ends at line's width
    #   * right node's value starts after initial spaces
    leftLineWidths    = [ len(line) for line in leftSubLines  ]                            
-   rightLineIndents  = [ len(line)-len(line.lstrip("" "")) for line in rightSubLines ]
+   rightLineIndents  = [ len(line)-len(line.lstrip(" ")) for line in rightSubLines ]
 
    # top line value locations, will be used to determine position of current node & link bars
    firstLeftWidth    = (leftLineWidths   + [0])[0]  
@@ -65,17 +65,17 @@ def printBTree(node, nodeInfo=None, inverted=False, isTop=True):
 
    # build value line taking into account left indent and link bar extension (on left side)
    valueIndent       = max(0, firstLeftWidth + leftLinkExtra + leftLinkBar - valueOffset)
-   valueLine         = "" "" * max(0,valueIndent) + stringValue
-   slash             = ""\\"" if inverted else  ""/""
-   backslash         = ""/"" if inverted else  ""\\""
-   uLine             = ""¯"" if inverted else  ""_""
+   valueLine         = " " * max(0,valueIndent) + stringValue
+   slash             = "\\" if inverted else  "/"
+   backslash         = "/" if inverted else  "\\"
+   uLine             = "¯" if inverted else  "_"
 
    # build left side of link line
-   leftLink          = """" if not leftNode else ( "" "" * firstLeftWidth + uLine * leftLinkExtra + slash)
+   leftLink          = "" if not leftNode else ( " " * firstLeftWidth + uLine * leftLinkExtra + slash)
 
    # build right side of link line (includes blank spaces under top node value) 
    rightLinkOffset   = linkSpacing + valueOffset * (1 - leftLinkBar)                      
-   rightLink         = """" if not rightNode else ( "" "" * rightLinkOffset + backslash + uLine * rightLinkExtra )
+   rightLink         = "" if not rightNode else ( " " * rightLinkOffset + backslash + uLine * rightLinkExtra )
 
    # full link line (will be empty if there are no sub nodes)                                                                                                    
    linkLine          = leftLink + rightLink
@@ -83,8 +83,8 @@ def printBTree(node, nodeInfo=None, inverted=False, isTop=True):
    # will need to offset left side lines if right side sub nodes extend beyond left margin
    # can happen if left subtree is shorter (in height) than right side subtree                                                
    leftIndentWidth   = max(0,firstRightIndent - rightNodePosition) 
-   leftIndent        = "" "" * leftIndentWidth
-   indentedLeftLines = [ (leftIndent if line else """") + line for line in leftSubLines ]
+   leftIndent        = " " * leftIndentWidth
+   indentedLeftLines = [ (leftIndent if line else "") + line for line in leftSubLines ]
 
    # compute distance between left and right sublines based on their value position
    # can be negative if leading spaces need to be removed from right side
@@ -97,7 +97,7 @@ def printBTree(node, nodeInfo=None, inverted=False, isTop=True):
    #   * spaces between left and right lines
    #   * right sub line with extra leading blanks removed.
    mergedSubLines    = zip(range(len(mergeOffsets)), mergeOffsets, indentedLeftLines)
-   mergedSubLines    = [ (i,p,line + ("" "" * max(0,p)) )       for i,p,line in mergedSubLines ]
+   mergedSubLines    = [ (i,p,line + (" " * max(0,p)) )       for i,p,line in mergedSubLines ]
    mergedSubLines    = [ line + rightSubLines[i][max(0,-p):]  for i,p,line in mergedSubLines ]                        
 
    # Assemble final result combining
@@ -110,5 +110,5 @@ def printBTree(node, nodeInfo=None, inverted=False, isTop=True):
    treeLines = reversed(treeLines) if inverted and isTop else treeLines
 
    # return intermediate tree lines or print final result
-   if isTop : print(""\n"".join(treeLines))
+   if isTop : print("\n".join(treeLines))
    else     : return treeLines                                       

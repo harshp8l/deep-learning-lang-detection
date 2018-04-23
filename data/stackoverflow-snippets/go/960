@@ -1,19 +1,19 @@
 func parseCommandLine(command string) ([]string, error) {
     var args []string
-    state := ""start""
-    current := """"
-    quote := ""\""""
+    state := "start"
+    current := ""
+    quote := "\""
     escapeNext := true
     for i := 0; i < len(command); i++ {
         c := command[i]
 
-        if state == ""quotes"" {
+        if state == "quotes" {
             if string(c) != quote {
                 current += string(c)
             } else {
                 args = append(args, current)
-                current = """"
-                state = ""start""
+                current = ""
+                state = "start"
             }
             continue
         }
@@ -29,17 +29,17 @@ func parseCommandLine(command string) ([]string, error) {
             continue
         }
 
-        if c == '""' || c == '\'' {
-            state = ""quotes""
+        if c == '"' || c == '\'' {
+            state = "quotes"
             quote = string(c)
             continue
         }
 
-        if state == ""arg"" {
+        if state == "arg" {
             if c == ' ' || c == '\t' {
                 args = append(args, current)
-                current = """"
-                state = ""start""
+                current = ""
+                state = "start"
             } else {
                 current += string(c)
             }
@@ -47,16 +47,16 @@ func parseCommandLine(command string) ([]string, error) {
         }
 
         if c != ' ' && c != '\t' {
-            state = ""arg""
+            state = "arg"
             current += string(c)
         }
     }
 
-    if state == ""quotes"" {
-        return []string{}, errors.New(fmt.Sprintf(""Unclosed quote in command line: %s"", command))
+    if state == "quotes" {
+        return []string{}, errors.New(fmt.Sprintf("Unclosed quote in command line: %s", command))
     }
 
-    if current != """" {
+    if current != "" {
         args = append(args, current)
     }
 

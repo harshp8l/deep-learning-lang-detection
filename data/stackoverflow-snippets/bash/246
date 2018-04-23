@@ -1,27 +1,27 @@
 function logs() {
-    timestamplastupload=""`cat /tmp/latest-timestamp.txt`""
-    timestampnow=`date +""%a %b %_d %H:%M:%S %Y""`
-    echo ""$timestampnow"" > /tmp/latest-timestamp.txt
+    timestamplastupload="`cat /tmp/latest-timestamp.txt`"
+    timestampnow=`date +"%a %b %_d %H:%M:%S %Y"`
+    echo "$timestampnow" > /tmp/latest-timestamp.txt
 
     while read -r line; do
-        curl -X POST -d ""$line"" https://logserver/api/NewLog --ntlm --user xx:xx
-    done < <(awk -v timestamplastupload=""$timestamplastupload"" -v timestampnow=""$timestampnow"" '
+        curl -X POST -d "$line" https://logserver/api/NewLog --ntlm --user xx:xx
+    done < <(awk -v timestamplastupload="$timestamplastupload" -v timestampnow="$timestampnow" '
     # initialize variables
     BEGIN {
-        monstr = ""JanFebMarAprMayJunJulAugSepOctNovDec"";
+        monstr = "JanFebMarAprMayJunJulAugSepOctNovDec";
         for (i = 1; i <= 12; i++) {
             mon2mm[substr(monstr, i * 3 - 2, 3)] = i;
         }
-        split(timestamplastupload, ary, "" "");
+        split(timestamplastupload, ary, " ");
         start = date2str(ary[2], ary[3], ary[4], ary[5]);
-        split(timestampnow, ary, "" "");
+        split(timestampnow, ary, " ");
         end = date2str(ary[2], ary[3], ary[4], ary[5]);
     }
     # merge date and time into a scalar number
     function date2str(mon, day, time, year,
         hms, datestr) {
-        split(time, hms, "":"");
-        datestr = sprintf(""%04d%02d%02d%02d%02d%02d"",
+        split(time, hms, ":");
+        datestr = sprintf("%04d%02d%02d%02d%02d%02d",
             year, mon2mm[mon], day, hms[1], hms[2], hms[3]);
         return datestr;
     }

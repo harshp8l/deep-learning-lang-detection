@@ -1,10 +1,10 @@
-#I @""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5""
-#r @""WindowsBase.dll""
-#r @""PresentationCore.dll""
-#r @""PresentationFramework.dll""
-#r @""System.Xaml.dll""
-#r @""UIAutomationProvider.dll""
-#r @""UIAutomationTypes.dll""
+#I @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5"
+#r @"WindowsBase.dll"
+#r @"PresentationCore.dll"
+#r @"PresentationFramework.dll"
+#r @"System.Xaml.dll"
+#r @"UIAutomationProvider.dll"
+#r @"UIAutomationTypes.dll"
 
 
 module WPFEventLoop =     
@@ -35,7 +35,7 @@ module WPFEventLoop =
             member x.Invoke(f) =                  
                 try 
                     disp.Invoke(DispatcherPriority.Send,new RunDelegate<_>(fun () -> box(f ()))) |> unbox                 
-                with e -> eprintf ""\n\n ERROR: %O\n"" e; reraise()             
+                with e -> eprintf "\n\n ERROR: %O\n" e; reraise()             
 
             member x.ScheduleRestart() =   ()                 
             //restart := true;                 
@@ -64,13 +64,13 @@ type ucData() as this =
     // ---------------------------------------------------------------------------------------------------------------- //
 
     static let dpDescription = 
-        DependencyProperty.Register(""Description"", typeof<string>, typeof<ucData>)
+        DependencyProperty.Register("Description", typeof<string>, typeof<ucData>)
 
     static let dpData = 
-        DependencyProperty.Register(""Data"", typeof<double>, typeof<ucData>)
+        DependencyProperty.Register("Data", typeof<double>, typeof<ucData>)
 
     static let dpUnitOfMeasure = 
-        DependencyProperty.Register(""UnitOfMeasure"", typeof<string>, typeof<ucData>) 
+        DependencyProperty.Register("UnitOfMeasure", typeof<string>, typeof<ucData>) 
 
     // ---------------------------------------------------------------------------------------------------------------- //
 
@@ -141,8 +141,8 @@ type ucData() as this =
         // ---------------------------------------------------------------------------------------------------------------- //
 
         this.Data <- 0.00
-        this.Description <- ""<Description>""
-        this.UnitOfMeasure <- ""<UM>""
+        this.Description <- "<Description>"
+        this.UnitOfMeasure <- "<UM>"
 
         // ---------------------------------------------------------------------------------------------------------------- //
 
@@ -151,17 +151,17 @@ type ucData() as this =
         // ---------------------------------------------------------------------------------------------------------------- //
 
         let bDesc = new Binding()
-        bDesc.Path <- new PropertyPath(""Description"")
+        bDesc.Path <- new PropertyPath("Description")
         bDesc.Mode <- BindingMode.OneWay
         bDesc.RelativeSource <- new RelativeSource(RelativeSourceMode.FindAncestor,typeof<ucData>,1)
 
         let bData = new Binding()
-        bData.Path <- new PropertyPath(""Data"")
+        bData.Path <- new PropertyPath("Data")
         bData.Mode <- BindingMode.TwoWay 
         bData.RelativeSource <- new RelativeSource(RelativeSourceMode.FindAncestor,typeof<ucData>,1)
 
         let bUnit = new Binding()
-        bUnit.Path <- new PropertyPath(""UnitOfMeasure"")
+        bUnit.Path <- new PropertyPath("UnitOfMeasure")
         bUnit.Mode <- BindingMode.OneWay
         //bUnit.RelativeSource <- new RelativeSource(RelativeSourceMode.FindAncestor,typeof<ucData>,1) 
         bUnit.Source <- this
@@ -176,13 +176,13 @@ type ucData() as this =
 
     static member DescriptionProperty = dpDescription
 
-    [<Description(""Description of the Numerical Data""); Category(""UserData"")>]
+    [<Description("Description of the Numerical Data"); Category("UserData")>]
     member x.Description
         with get() =
             let res = x.GetValue(ucData.DescriptionProperty) 
             (res :?> string)
         and set (v:string) = 
-            x.SetValue(ucData.DescriptionProperty, (condassign (v=null) "" "" v) )
+            x.SetValue(ucData.DescriptionProperty, (condassign (v=null) " " v) )
 
     // ---------------------------------------------------------------------------------------------------------------- //
 
@@ -191,7 +191,7 @@ type ucData() as this =
 
     static member DescriptionChangedEvent =
         EventManager.RegisterRoutedEvent
-            (""DescriptionChanged"", RoutingStrategy.Bubble, 
+            ("DescriptionChanged", RoutingStrategy.Bubble, 
                 typeof<RoutedEventHandler>, typeof<ucData>)
 
     member x.OnDescriptionChangedEvent() =
@@ -204,7 +204,7 @@ type ucData() as this =
 
     static member DataProperty =dpData
 
-    [<Description(""Specify the Numerical Data""); Category(""UserData"")>]
+    [<Description("Specify the Numerical Data"); Category("UserData")>]
     member x.Data
         with get() = 
             let res = x.GetValue(ucData.DataProperty) 
@@ -219,7 +219,7 @@ type ucData() as this =
 
     static member DataChangedEvent =
         EventManager.RegisterRoutedEvent
-            (""DataChanged"", RoutingStrategy.Bubble, 
+            ("DataChanged", RoutingStrategy.Bubble, 
                 typeof<RoutedEventHandler>, typeof<ucData>)
 
     member x.OnDataChangedEvent() =
@@ -232,13 +232,13 @@ type ucData() as this =
 
     static member UnitOfMeasureProperty = dpUnitOfMeasure
 
-    [<Description(""Specify the 'Unit of Measure'""); Category(""UserData"")>]
+    [<Description("Specify the 'Unit of Measure'"); Category("UserData")>]
     member x.UnitOfMeasure
         with get() = 
             let res = x.GetValue(ucData.UnitOfMeasureProperty) 
             (res :?> string)
         and set (v:string) = 
-            x.SetValue(ucData.UnitOfMeasureProperty, (condassign (v=null) "" "" v) )
+            x.SetValue(ucData.UnitOfMeasureProperty, (condassign (v=null) " " v) )
 
     // ---------------------------------------------------------------------------------------------------------------- //
 
@@ -247,7 +247,7 @@ type ucData() as this =
 
     static member UnitOfMeasureChangedEvent=
         EventManager.RegisterRoutedEvent
-            (""UnitOfMeasureChanged"", RoutingStrategy.Bubble, 
+            ("UnitOfMeasureChanged", RoutingStrategy.Bubble, 
                 typeof<RoutedEventHandler>, typeof<ucData>)
 
     member x.OnUnitOfMeasureChangedEvent() =
@@ -270,14 +270,14 @@ type TestWindow() as this =
 
         let sp = new StackPanel()
 
-        c1.Description <- ""Pippo""
+        c1.Description <- "Pippo"
         c1.Data <- 1200.
-        c1.UnitOfMeasure <- ""mm""
+        c1.UnitOfMeasure <- "mm"
         c1.BorderThickness <- new Thickness(2.0)
 
-        c2.Description <- ""Pippo2""
+        c2.Description <- "Pippo2"
         c2.Data <- 400.
-        c2.UnitOfMeasure <- ""MPa""
+        c2.UnitOfMeasure <- "MPa"
         c2.BorderThickness <- new Thickness(2.0)
 
         sp.Children.Add(c1) |> ignore

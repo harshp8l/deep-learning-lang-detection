@@ -15,8 +15,8 @@ dict1 = {
 table_source = ColumnDataSource(data=dict1)
 
 columns = [
-    TableColumn(field=""x"", title=""x""),
-    TableColumn(field=""y"", title=""y"")
+    TableColumn(field="x", title="x"),
+    TableColumn(field="y", title="y")
 ]
 
 data_table = DataTable(
@@ -30,23 +30,23 @@ def file_callback(attr, old, new):
     print('filename:', file_source.data['file_name'])
     raw_contents = file_source.data['file_contents'][0]  
     # remove the prefix that JS adds  
-    prefix, b64_contents = raw_contents.split("","", 1)    
+    prefix, b64_contents = raw_contents.split(",", 1)    
     file_contents = base64.b64decode(b64_contents)
-    # print(""B64 decoded: file_contents : %s"" % file_contents)
+    # print("B64 decoded: file_contents : %s" % file_contents)
     # Remove byte order mask and decode to str
-    file_contents = file_contents.decode(""utf-8-sig"")
-    # print(""Decoded file_contents : %s"" % file_contents)
+    file_contents = file_contents.decode("utf-8-sig")
+    # print("Decoded file_contents : %s" % file_contents)
     file_io = StringIO(file_contents)
     # Separator might need to be adjusted
-    df = pd.read_csv(file_io, sep="";"")
+    df = pd.read_csv(file_io, sep=";")
     table_source.data = table_source.from_df(df)
-    print(""Table source data: %s"" % table_source.data)
+    print("Table source data: %s" % table_source.data)
 
 file_source.on_change('data', file_callback)
 
-button = Button(label=""Upload"", button_type=""success"")
+button = Button(label="Upload", button_type="success")
 
-button.callback = CustomJS(args=dict(file_source=file_source), code = """"""
+button.callback = CustomJS(args=dict(file_source=file_source), code = """
 function read_file(filename) {
     var reader = new FileReader();
     reader.onload = load_handler;
@@ -58,12 +58,12 @@ function read_file(filename) {
 function load_handler(event) {
     var b64string = event.target.result;
     file_source.data = {'file_contents' : [b64string], 'file_name':[input.files[0].name]};
-    file_source.trigger(""change"");
+    file_source.trigger("change");
 }
 
 function error_handler(evt) {
-    if(evt.target.error.name == ""NotReadableError"") {
-        alert(""Can't read file!"");
+    if(evt.target.error.name == "NotReadableError") {
+        alert("Can't read file!");
     }
 }
 
@@ -77,6 +77,6 @@ input.onchange = function(){
     }
 }
 input.click();
-"""""")
+""")
 
 curdoc().add_root(row(button, data_table))

@@ -1,9 +1,9 @@
 function parse($subject)
 {
     $tokens = [
-        'T_SRC'             => 'src\s*=\s*""[^""]+""',
-        'T_WIDTH'           => 'width\s*=\s*""[^""]+""',
-        'T_HEIGHT'          => 'height\s*=\s*""[^""]+""',
+        'T_SRC'             => 'src\s*=\s*"[^"]+"',
+        'T_WIDTH'           => 'width\s*=\s*"[^"]+"',
+        'T_HEIGHT'          => 'height\s*=\s*"[^"]+"',
         'T_EOF'             => '\Z',
         'T_UNKNOWN'         => '.+?'
     ];
@@ -13,9 +13,9 @@ function parse($subject)
     $lexer_stream = [];
     $result = false;
     foreach ($tokens as $k=>$v){
-        $patterns[] = ""(?P<$k>$v)"";
+        $patterns[] = "(?P<$k>$v)";
     }
-    $pattern = ""/"".implode('|', $patterns).""/i"";
+    $pattern = "/".implode('|', $patterns)."/i";
     if (preg_match_all($pattern, $subject, $matches, PREG_OFFSET_CAPTURE)) {
         //print_r($matches);
         foreach ($matches[0] as $key => $value) {
@@ -41,13 +41,13 @@ function parse($subject)
             next($lexer_stream);
             switch($type){
                 case 'T_EOF': 
-                    return '<div class=""youtube_player"" '.implode(' ', $result).' rel=""1"" controls=""1"" showinfo=""1"" autoplay=""0"" ></div>';
+                    return '<div class="youtube_player" '.implode(' ', $result).' rel="1" controls="1" showinfo="1" autoplay="0" ></div>';
                 break;
                 case 'T_SRC':
-                    if(preg_match('/([^\/]+)""$/', $content, $match)){
-                        $result[] = 'videoID=""'.$match[1].'""';
+                    if(preg_match('/([^\/]+)"$/', $content, $match)){
+                        $result[] = 'videoID="'.$match[1].'"';
                     }else{
-                        throw new Exception(""Failed to parse src $content"");
+                        throw new Exception("Failed to parse src $content");
                     }
                 break;
                 case 'T_HEIGHT':
@@ -58,17 +58,17 @@ function parse($subject)
                     //ignore
                 break;
                 default:
-                    throw new Exception(""Unknown token $type value $content"");
+                    throw new Exception("Unknown token $type value $content");
             }//end switch
         }//end while lexer
 
     }//end preg match all
-    throw new Exception(""Unclosed item $mode for $type value $content"");
+    throw new Exception("Unclosed item $mode for $type value $content");
 }//end parse
 
 
 
-$string = '<iframe width=""450"" height=""250"" frameborder=""0"" src=""https://www.youtube.com/embed/vJcQOmhRPJ2""  allowfullscreen=""allowfullscreen""></iframe>';
+$string = '<iframe width="450" height="250" frameborder="0" src="https://www.youtube.com/embed/vJcQOmhRPJ2"  allowfullscreen="allowfullscreen"></iframe>';
 
 
 echo parse($string);;

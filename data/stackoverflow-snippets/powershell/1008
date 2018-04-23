@@ -1,6 +1,6 @@
 $svcUrl = 'http://the-host-name/ReportServer/reportservice2010.asmx'
 $svc = New-WebServiceProxy -Class 'RS' -Namespace 'RS' -Uri $svcUrl -UseDefaultCredential
-$reports = $svc.ListChildren(""/"", $true) | Where-Object { $_.TypeName -eq ""Report"" }
+$reports = $svc.ListChildren("/", $true) | Where-Object { $_.TypeName -eq "Report" }
 
 $KeepExecutionSnapshots = $false
 $ScheduleDefinitionOrReference = New-Object RS.ScheduleDefinitionOrReference
@@ -11,16 +11,16 @@ foreach ($report in $reports) {
         [ref]$ScheduleDefinitionOrReference)
     if($ScheduleDefinitionOrReference.Item -is [RS.MonthlyRecurrence])
     {
-        ""'$($report.Name)' Schedule Information:""
-        ""StartDateTime: $($ScheduleDefinitionOrReference.StartDateTime)""
-        ""StartDateTime: $($ScheduleDefinitionOrReference.EndDate)""
-        ""EndDateSpecified: $($ScheduleDefinitionOrReference.EndDateSpecified)""
-        ""Days: $($ScheduleDefinitionOrReference.Item.Days)""
+        "'$($report.Name)' Schedule Information:"
+        "StartDateTime: $($ScheduleDefinitionOrReference.StartDateTime)"
+        "StartDateTime: $($ScheduleDefinitionOrReference.EndDate)"
+        "EndDateSpecified: $($ScheduleDefinitionOrReference.EndDateSpecified)"
+        "Days: $($ScheduleDefinitionOrReference.Item.Days)"
         $months = Get-Member `
             -InputObject $($ScheduleDefinitionOrReference.Item.MonthsOfYear) `
             -MemberType Property | Where-Object {
             $ScheduleDefinitionOrReference.Item.MonthsOfYear.$($_.Name) -eq $true
         }
-        ""Months:$($months.Name -join "","")"" 
+        "Months:$($months.Name -join ",")" 
     }
 }

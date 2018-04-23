@@ -1,23 +1,23 @@
 val data = Seq(
-  (1, 30, 50000, ""M""),
-  (1, 25, 70000, ""F""),
-  (1, 40, 70000, ""M""),
-  (1, 30, 80000, ""M""),
-  (2, 30, 80000, ""M""),
-  (2, 40, 50000, ""F""),
-  (2, 25, 70000, ""F"")
-).toDF(""numericID"", ""age"", ""salary"", ""gender"")
+  (1, 30, 50000, "M"),
+  (1, 25, 70000, "F"),
+  (1, 40, 70000, "M"),
+  (1, 30, 80000, "M"),
+  (2, 30, 80000, "M"),
+  (2, 40, 50000, "F"),
+  (2, 25, 70000, "F")
+).toDF("numericID", "age", "salary", "gender")
 
 // Create list pivotCols which consists columns to pivot
 val id = data.columns.head
-val pivotCols = data.columns.filter(_ != ""numericID"")
+val pivotCols = data.columns.filter(_ != "numericID")
 
 // Create the first pivot dataframe from the first column in list pivotCols and
 // rename each of the generated pivot columns
 val c1 = pivotCols.head
-val df1 = data.groupBy(c1, id).pivot(c1).agg(expr(s""coalesce(first($id),'-')"")).drop(c1)
+val df1 = data.groupBy(c1, id).pivot(c1).agg(expr(s"coalesce(first($id),'-')")).drop(c1)
 val df1Renamed = df1.columns.tail.foldLeft( df1 )( (acc, x) =>
-      acc.withColumnRenamed(x, c1 + ""_"" + x)
+      acc.withColumnRenamed(x, c1 + "_" + x)
     )
 
 // Using the first pivot dataframe as the initial dataframe, process each of the
@@ -25,9 +25,9 @@ val df1Renamed = df1.columns.tail.foldLeft( df1 )( (acc, x) =>
 // and cumulatively join each of them with the previously joined dataframe
 pivotCols.tail.foldLeft( df1Renamed )(
   (accDF, c) => {
-    val df = data.groupBy(c, id).pivot(c).agg(expr(s""coalesce(first($id),'-')"")).drop(c)
+    val df = data.groupBy(c, id).pivot(c).agg(expr(s"coalesce(first($id),'-')")).drop(c)
     val dfRenamed = df.columns.tail.foldLeft( df )( (acc, x) =>
-      acc.withColumnRenamed(x, c + ""_"" + x)
+      acc.withColumnRenamed(x, c + "_" + x)
     )
     dfRenamed.join(accDF, Seq(id))
   }

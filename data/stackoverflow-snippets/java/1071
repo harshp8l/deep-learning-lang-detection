@@ -48,8 +48,8 @@ public class BaseInAppPurchaseActivity extends BaseAppCompatActivity {
     }
 
     public void startInAppPurchaseServices() {
-        Intent serviceIntent = new Intent(""com.android.vending.billing.InAppBillingService.BIND"");
-        serviceIntent.setPackage(""com.android.vending"");
+        Intent serviceIntent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
+        serviceIntent.setPackage("com.android.vending");
         bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
     }
 
@@ -111,8 +111,8 @@ public class BaseInAppPurchaseActivity extends BaseAppCompatActivity {
             String generatedPayload = getPayLoad();
             AppPreference.getInstance(BaseInAppPurchaseActivity.this).setDeveloperPayload(generatedPayload);
             try {
-                Bundle buyIntentBundle = mService.getBuyIntent(3, getPackageName(), sku, ""inapp"", generatedPayload);
-                PendingIntent pendingIntent = buyIntentBundle.getParcelable(""BUY_INTENT"");
+                Bundle buyIntentBundle = mService.getBuyIntent(3, getPackageName(), sku, "inapp", generatedPayload);
+                PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
                 try {
                     startIntentSenderForResult(pendingIntent.getIntentSender(), Helper.RESPONSE_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));
                 } catch (IntentSender.SendIntentException e) {
@@ -127,11 +127,11 @@ public class BaseInAppPurchaseActivity extends BaseAppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == Helper.RESPONSE_CODE) {
-            if (data != null && data.getExtras() != null && data.getStringExtra(""INAPP_DATA_SIGNATURE"") != null & data.getStringExtra(""INAPP_PURCHASE_DATA"") != null) {
+            if (data != null && data.getExtras() != null && data.getStringExtra("INAPP_DATA_SIGNATURE") != null & data.getStringExtra("INAPP_PURCHASE_DATA") != null) {
 
-                int responseCode = data.getIntExtra(""RESPONSE_CODE"", 0);
-                String purchaseData = data.getStringExtra(""INAPP_PURCHASE_DATA"");
-                String dataSignature = data.getStringExtra(""INAPP_DATA_SIGNATURE"");
+                int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
+                String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
+                String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
                 if (resultCode == RESULT_OK && responseCode == 0) {
                     try {
                         PurchaseResponseBean purchaseResponseBean = new Gson().fromJson(purchaseData, PurchaseResponseBean.class);
@@ -181,7 +181,7 @@ public class BaseInAppPurchaseActivity extends BaseAppCompatActivity {
 
         RandomString(int length) {
             if (length < 1)
-                throw new IllegalArgumentException(""length < 1: "" + length);
+                throw new IllegalArgumentException("length < 1: " + length);
             buf = new char[length];
         }
 
@@ -222,7 +222,7 @@ public class BaseInAppPurchaseActivity extends BaseAppCompatActivity {
             query.putStringArrayList(Helper.ITEM_ID_LIST, skuList);
             Bundle skuDetails = null;
             try {
-                skuDetails = mService.getSkuDetails(3, packageName, ""inapp"", query);
+                skuDetails = mService.getSkuDetails(3, packageName, "inapp", query);
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -233,16 +233,16 @@ public class BaseInAppPurchaseActivity extends BaseAppCompatActivity {
         protected void onPostExecute(Bundle skuDetails) {
             ArrayList<AvailablePurchase> availablePurchaseArrayList = new ArrayList<>();
             if (skuDetails != null) {
-                int response = skuDetails.getInt(""RESPONSE_CODE"");
+                int response = skuDetails.getInt("RESPONSE_CODE");
                 if (response == 0) {
-                    ArrayList<String> responseList = skuDetails.getStringArrayList(""DETAILS_LIST"");
+                    ArrayList<String> responseList = skuDetails.getStringArrayList("DETAILS_LIST");
                     if (responseList != null) {
                         for (String thisResponse : responseList) {
                             JSONObject object = null;
                             try {
                                 object = new JSONObject(thisResponse);
-                                String sku = object.getString(""productId"");
-                                String price = object.getString(""price"");
+                                String sku = object.getString("productId");
+                                String price = object.getString("price");
                                 availablePurchaseArrayList.add(new AvailablePurchase(sku, price, false));
                             } catch (JSONException e) {
                                 e.printStackTrace();
@@ -269,7 +269,7 @@ public class BaseInAppPurchaseActivity extends BaseAppCompatActivity {
     public boolean isBillingSupported() {
         int response = 1;
         try {
-            response = mService.isBillingSupported(3, getPackageName(), ""inapp"");
+            response = mService.isBillingSupported(3, getPackageName(), "inapp");
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -294,7 +294,7 @@ public class BaseInAppPurchaseActivity extends BaseAppCompatActivity {
     public Bundle getAllUserPurchase() {
         Bundle ownedItems = null;
         try {
-            ownedItems = mService.getPurchases(3, getPackageName(), ""inapp"", null);
+            ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -303,12 +303,12 @@ public class BaseInAppPurchaseActivity extends BaseAppCompatActivity {
 
     public List<UserPurchaseItemsBean> extractAllUserPurchase(Bundle ownedItems) {
         List<UserPurchaseItemsBean> mUserItems = new ArrayList<UserPurchaseItemsBean>();
-        int response = ownedItems.getInt(""RESPONSE_CODE"");
+        int response = ownedItems.getInt("RESPONSE_CODE");
         if (response == 0) {
-            ArrayList<String> ownedSkus = ownedItems.getStringArrayList(""INAPP_PURCHASE_ITEM_LIST"");
-            ArrayList<String> purchaseDataList = ownedItems.getStringArrayList(""INAPP_PURCHASE_DATA_LIST"");
-            ArrayList<String> signatureList = ownedItems.getStringArrayList(""INAPP_DATA_SIGNATURE_LIST"");
-            String continuationToken = ownedItems.getString(""INAPP_CONTINUATION_TOKEN"");
+            ArrayList<String> ownedSkus = ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
+            ArrayList<String> purchaseDataList = ownedItems.getStringArrayList("INAPP_PURCHASE_DATA_LIST");
+            ArrayList<String> signatureList = ownedItems.getStringArrayList("INAPP_DATA_SIGNATURE_LIST");
+            String continuationToken = ownedItems.getString("INAPP_CONTINUATION_TOKEN");
             if (purchaseDataList != null) {
                 for (int i = 0; i < purchaseDataList.size(); ++i) {
                     String purchaseData = purchaseDataList.get(i);

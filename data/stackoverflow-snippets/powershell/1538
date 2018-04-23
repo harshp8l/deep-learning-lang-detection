@@ -1,19 +1,19 @@
 function Get-RebootPendingStatus {
     try
     {
-        $util = [wmiclass]""\\.\root\ccm\clientsdk:CCM_ClientUtilities""
+        $util = [wmiclass]"\\.\root\ccm\clientsdk:CCM_ClientUtilities"
         $status = $util.DetermineIfRebootPending()
     } catch{}
 
-    If (Get-ChildItem ""HKLM:\Software\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending"" -ErrorAction Ignore)
+    If (Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending" -ErrorAction Ignore)
     {
         return $true
     }
-    ElseIf (Get-Item ""HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired"" -ErrorAction Ignore)
+    ElseIf (Get-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired" -ErrorAction Ignore)
     {
         return $true
     }
-    ElseIf (Get-ItemProperty ""HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager"" -Name PendingFileRenameOperations -ErrorAction Ignore)
+    ElseIf (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name PendingFileRenameOperations -ErrorAction Ignore)
     {
         return $true
     }
@@ -36,5 +36,5 @@ $RebootStatus = Get-RebootPendingStatus
 $ServiceStatus = Watch-ForServiceStatus -ServiceName wuauserv -ServiceStatus Stopped
 
 If (($RebootStatus -eq $true) -and ($ServiceStatus-eq $true)) {
-    Get-ChildItem -Path ""$env:SystemRoot\SoftwareDistribution\Download"" -Force -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+    Get-ChildItem -Path "$env:SystemRoot\SoftwareDistribution\Download" -Force -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
 }

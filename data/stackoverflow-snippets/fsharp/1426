@@ -9,27 +9,27 @@ let skipTillStringOrEof str : Parser<unit, _> =
         stream.SkipCharsOrNewlinesUntilString(str, maxInt, &found) |> ignore
         Reply(())
 
-let openingBrace = skipString ""{%"" >>. spaces
+let openingBrace = skipString "{%" >>. spaces
 
 let tagName name = 
     skipString name 
     >>? nextCharSatisfies (fun c -> c = '%' || System.Char.IsWhiteSpace(c))
 
 let endTag name =     
-    openingBrace >>? (tagName (""end"" + name) >>. (spaces >>. skipString ""%}""))
+    openingBrace >>? (tagName ("end" + name) >>. (spaces >>. skipString "%}"))
 
 let tagPair_afterOpeningBrace name = 
-   tagName name  >>. skipTillString ""%}""
+   tagName name  >>. skipTillString "%}"
    >>. (manyCharsTill anyChar (endTag name)
         |>> fun str -> LiquidTag(name, str))
 
-let skipToOpeningBraceOrEof = skipTillStringOrEof ""{%"" 
+let skipToOpeningBraceOrEof = skipTillStringOrEof "{%" 
 
 let tagPairs =
     skipToOpeningBraceOrEof 
     >>. many (openingBrace
-              >>. opt (    tagPair_afterOpeningBrace ""examplecode""
-                       <|> tagPair_afterOpeningBrace ""requiredcode"")
+              >>. opt (    tagPair_afterOpeningBrace "examplecode"
+                       <|> tagPair_afterOpeningBrace "requiredcode")
               .>> skipToOpeningBraceOrEof)
         |>> List.choose id
    .>> eof

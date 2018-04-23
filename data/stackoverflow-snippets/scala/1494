@@ -25,7 +25,7 @@ class DbNotificationController @Inject()(cc: ControllerComponents,
 
   implicit val mat = materializer
 
-  val configuration = URLParser.parse(""jdbc:postgresql://localhost:5233/my_db?user=dbuser&password=pwd"")
+  val configuration = URLParser.parse("jdbc:postgresql://localhost:5233/my_db?user=dbuser&password=pwd")
   val connection = new PostgreSQLConnection(configuration)
   Await.result(connection.connect, 5 seconds)
 
@@ -34,10 +34,10 @@ class DbNotificationController @Inject()(cc: ControllerComponents,
           .toMat(BroadcastHub.sink[String])(Keep.both)
           .run()
 
-  connection.sendQuery(""LISTEN my_channel"")
+  connection.sendQuery("LISTEN my_channel")
   connection.registerNotifyListener { message =>
     val msg = message.payload
-    Logger.debug(s""Sending the payload: $msg"")
+    Logger.debug(s"Sending the payload: $msg")
     actor ! msg
   }
 

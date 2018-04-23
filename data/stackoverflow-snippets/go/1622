@@ -1,13 +1,13 @@
 package main
 
 import(
-""bufio""
-""fmt""
-""math""
-""net/http""
-""os""
-""launchpad.net/goamz/aws""
-""launchpad.net/goamz/s3""
+"bufio"
+"fmt"
+"math"
+"net/http"
+"os"
+"launchpad.net/goamz/aws"
+"launchpad.net/goamz/s3"
 )
 
 func check(err error) {
@@ -18,21 +18,21 @@ func check(err error) {
 
 func main() {
 
-fmt.Println(""Test"")
+fmt.Println("Test")
 
 auth := aws.Auth{
-    AccessKey: ""xxxxxxxxxxx"", // change this to yours
-    SecretKey: ""xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"",
+    AccessKey: "xxxxxxxxxxx", // change this to yours
+    SecretKey: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 }
 
 client := s3.New(auth, aws.USWest2)
 
 b := s3.Bucket{
     S3:   client,
-    Name: ""some-bucket"",
+    Name: "some-bucket",
 }
 
-fileToBeUploaded := ""testfile""
+fileToBeUploaded := "testfile"
 file, err := os.Open(fileToBeUploaded)
 check(err)
 defer file.Close()
@@ -48,14 +48,14 @@ check(err)
 filetype := http.DetectContentType(bytes)
 
 // set up for multipart upload
-multi, err := b.InitMulti(""/""+fileToBeUploaded, filetype, s3.ACL(""bucket-owner-read""))
+multi, err := b.InitMulti("/"+fileToBeUploaded, filetype, s3.ACL("bucket-owner-read"))
 check(err)
 
 const fileChunk = 5242880 // 5MB
 totalPartsNum := uint64(math.Ceil(float64(fileSize) / float64(fileChunk)))
 parts := []s3.Part{}
 
-fmt.Println(""Uploading..."")
+fmt.Println("Uploading...")
 
 HeaderPart := strings.NewReader(string(bytes))
 
@@ -73,12 +73,12 @@ for i := uint64(0); i < totalPartsNum; i++ {
 
     check(err)
 
-    fmt.Printf(""Processing %d part of %d and uploaded %d bytes.\n "", int(i), int(totalPartsNum), int(n))
+    fmt.Printf("Processing %d part of %d and uploaded %d bytes.\n ", int(i), int(totalPartsNum), int(n))
     parts = append(parts, part)
 }
 
 err = multi.Complete(parts)
 check(err)
 
-fmt.Println(""\n\nPutPart upload completed"")
+fmt.Println("\n\nPutPart upload completed")
 }

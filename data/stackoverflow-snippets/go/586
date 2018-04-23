@@ -1,28 +1,28 @@
 package main
 
 import (
-    ""github.com/go-xorm/xorm""
-    _ ""github.com/go-sql-driver/mysql""
-    xrc ""github.com/go-xorm/xorm-redis-cache""
+    "github.com/go-xorm/xorm"
+    _ "github.com/go-sql-driver/mysql"
+    xrc "github.com/go-xorm/xorm-redis-cache"
 
-    ""encoding/gob""
+    "encoding/gob"
 )
 
 type User struct {
-    Id   int `xorm:""pk""`
+    Id   int `xorm:"pk"`
     Name string
 }
 
 func main() {
     gob.Register(new(User))
 
-    engine, err := xorm.NewEngine(""mysql"", ""root:@/xorm_test_db"")
+    engine, err := xorm.NewEngine("mysql", "root:@/xorm_test_db")
     if nil != err {
         log.Fatal(err)
     }
     engine.ShowSQL(true)
 
-    cacher := xrc.NewRedisCacher(""localhost:6379"", """", xrc.DEFAULT_EXPIRATION, engine.Logger())
+    cacher := xrc.NewRedisCacher("localhost:6379", "", xrc.DEFAULT_EXPIRATION, engine.Logger())
     engine.SetDefaultCacher(cacher)
 
     engine.Get(User{Id: 1})

@@ -11,7 +11,7 @@ import ply.lex
 t_COMMENT = r'\#.*'
 t_BACKSLASHED = r'\\([\\{}])'
 t_WORD = '[A-Za-z0-9_]+'
-t_STRING = '(""[^""]*"")|' ""('[^']*)'""
+t_STRING = '("[^"]*")|' "('[^']*)'"
 t_LB = '{'
 t_RB = '}'
 t_WHITE = '[ \t]+'
@@ -37,20 +37,20 @@ def t_NEWLINE(t):
 # This never happens because '.' matches anything but newline and
 # we have a newline rule; but if we don't define it, ply complains.
 def t_error(t):
-    print(""Illegal character '%s'"" % t.value[0])
+    print("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
 # Build the lexer
 LEXER = ply.lex.lex()
 
 def fill(tlist, howmany):
-    ""build up token list - returns False if the list is all non-tokens""
+    "build up token list - returns False if the list is all non-tokens"
     while len(tlist) < howmany:
         tlist.append(LEXER.token())
     return tlist[0] is not None
 
 def nth_is(tlist, offset, tok_type, tok_value=None):
-    ""a sleazy kind of parser lookahead""
+    "a sleazy kind of parser lookahead"
     fill(tlist, offset + 1)
     tok = tlist[offset]
     if tok is None:
@@ -67,14 +67,14 @@ server {
     stuff;
     more { } stuff;
     this is not a brace \{ because it is backslashed;
-    ""and these strings }"";
+    "and these strings }";
     'do not close the server } either';
 }
 this gets copied;
 '''
 
 def main():
-    ""main""
+    "main"
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--test', action='store_true')
@@ -88,7 +88,7 @@ def main():
         LEXER.input(args.inputfile.read())
 
     # Tokenize; copy lines through except when dealing
-    # with the first ""server"" definition
+    # with the first "server" definition
     looking_for_server = True
     copying = True
     eat_white_space_and_newline = False

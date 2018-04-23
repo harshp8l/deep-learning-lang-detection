@@ -2,14 +2,14 @@ val requiredNumberOfFields = schema.fieldNames.length
 def appendDummyData(row: Array[String], len: Int) = row.length == len match {
   case true => row
   case false => if(len > row.length) {
-    val add = (for(loop <- 1 to len - row.length) yield ""dummy"").toArray
+    val add = (for(loop <- 1 to len - row.length) yield "dummy").toArray
     row ++ add
   } else row.take(len)
 }
 val data = sqlContext
   .createDataFrame(
     rdd
-      .filter(!_.contains(""uniqueFundamentalSet""))
-      .map(line => line.split(""\\|\\^\\|""))
+      .filter(!_.contains("uniqueFundamentalSet"))
+      .map(line => line.split("\\|\\^\\|"))
       .map(x => Row.fromSeq(appendDummyData(x, requiredNumberOfFields).toSeq))   //calling the custom function for checking the length
     , schema)

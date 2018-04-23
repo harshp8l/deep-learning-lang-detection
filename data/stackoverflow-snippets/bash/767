@@ -1,16 +1,16 @@
 #!/bin/bash
 
-qfile=""$1""
+qfile="$1"
 
 # number of queries
-n=""$(grep -oP '(?<=Query )[0-9]+ ' $qfile)""
+n="$(grep -oP '(?<=Query )[0-9]+ ' $qfile)"
 
 count=1
 for q in $n; do
     # Corrected solution, modified after the remarks of @EdMorton
-    qn=""EXPLAIN ANALYZE $(awk -v n=""Query $q"" 'flag; $0 ~ n {flag=1} /;/{flag=0}' $qfile)""
-    #qn=""EXPLAIN ANALYZE $(awk -v n=$q ""flag; /Query $q/{flag=1} /;/{flag=0}"" $qfile)""
-    # psql -U postgres -h localhost -d nyc-taxi-data -c ""$qn"" > q$count.txt
-    echo ""$qn"" > q$count.txt
+    qn="EXPLAIN ANALYZE $(awk -v n="Query $q" 'flag; $0 ~ n {flag=1} /;/{flag=0}' $qfile)"
+    #qn="EXPLAIN ANALYZE $(awk -v n=$q "flag; /Query $q/{flag=1} /;/{flag=0}" $qfile)"
+    # psql -U postgres -h localhost -d nyc-taxi-data -c "$qn" > q$count.txt
+    echo "$qn" > q$count.txt
     count=$(( $count + 1 ))
 done

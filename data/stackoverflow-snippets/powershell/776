@@ -5,7 +5,7 @@ $Ticklist='C:\folder\path\tick.txt'
 $ratelist='C:\folder\path\rate.txt'
 
 #Import needed data from an excel file which creates and array
-$csv = Import-CSV C:\folder\path\RateIDTable.csv | Where { $_.'Rate' -ne """" } | Export-Csv C:\folder\path\out.csv -NoTypeInformation
+$csv = Import-CSV C:\folder\path\RateIDTable.csv | Where { $_.'Rate' -ne "" } | Export-Csv C:\folder\path\out.csv -NoTypeInformation
 $bond = Import-CSV C:\folder\path\out.csv | select -Property TickerID, Rate
 
 #Put array from Excel file into two text files
@@ -16,16 +16,16 @@ $replace = $bond | foreach-object {$_.rate} | set-content $Ratelist
 $Tickdata = (Get-content $Ticklist ) -join ','
  foreach ($t in $Tickdata)
   {
-  $t = $t -split("","")
+  $t = $t -split(",")
 }
 
 $Ratedata = (Get-content $Ratelist ) -join ','
  foreach ($r in $Ratedata)
   {
-  $r = $r -split("","")
+  $r = $r -split(",")
 }  
 
-#Get main file to search (bond.out) and search for the word that is in the first line from ""t"" array file
+#Get main file to search (bond.out) and search for the word that is in the first line from "t" array file
 
 ###Replace all pipes with a comma
 
@@ -33,12 +33,12 @@ $Ratedata = (Get-content $Ratelist ) -join ','
 $data = Select-String $filepath -pattern $t[0] | Select-Object -ExpandProperty Line
 $data
 
-#Once found, split the line, replace the rate on the 3rd line with the rate in the first line from the ""r"" array file, the put the line back to together
-$split=$data.split(""{,}"")
+#Once found, split the line, replace the rate on the 3rd line with the rate in the first line from the "r" array file, the put the line back to together
+$split=$data.split("{,}")
 $split[3]=$r[0]
-$join = $split -join "",""
+$join = $split -join ","
 
-#Put the updated line back into the ""bond.out"" file from whence it came
+#Put the updated line back into the "bond.out" file from whence it came
 
 ###change all commas back to pipes
 

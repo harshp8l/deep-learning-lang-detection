@@ -46,18 +46,18 @@ case class S3StreamingServiceLike(awsConf: AWS, s3Client: S3ClientAlpakka)(
     zipElementSource
       .map {
         case FileStart(name, index, outOf) =>
-          logger.info(s""Zipping file #$index of $outOf with name $name for user $forUser"")
+          logger.info(s"Zipping file #$index of $outOf with name $name for user $forUser")
           zipBuffer.startEntry(name)
           None
         case FilePayload(byteString) =>
           if (byteString.length > zipBuffer.remaining()) {
             throw new Exception(
-              s""Bytestring size exceeded buffer size ${byteString.length} > ${zipBuffer.remaining}"")
+              s"Bytestring size exceeded buffer size ${byteString.length} > ${zipBuffer.remaining}")
           }
           zipBuffer.write(byteString.toArray, byteString.length)
           Some(zipBuffer.toByteString())
         case FileEnd(name, index, outOf) =>
-          logger.info(s""Finished zipping file #$index of $outOf with $name for user $forUser"")
+          logger.info(s"Finished zipping file #$index of $outOf with $name for user $forUser")
           zipBuffer.endEntry()
           Some(zipBuffer.toByteString())
         case EndZip =>

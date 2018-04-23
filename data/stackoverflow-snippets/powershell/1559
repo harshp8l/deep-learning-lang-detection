@@ -1,41 +1,41 @@
 function ConvertTo-MimeMultiPartBody {
     param([Parameter(Mandatory=$true)][string]$Boundary, [Parameter(Mandatory=$true)][hashtable]$Data)
 
-    $body = """";
+    $body = "";
     $Data.GetEnumerator() |% {
         $name = $_.Key
         $value = $_.Value
 
-        $body += ""--$Boundary`r`n""
-        $body += ""Content-Disposition: form-data; name=`""$name`""""
+        $body += "--$Boundary`r`n"
+        $body += "Content-Disposition: form-data; name=`"$name`""
         if ($value -is [byte[]]) {
             $fileName = $Data['FileName']
             if(!$fileName) { $fileName = $name }
-            $body += ""; filename=`""$fileName`""`r`n""
+            $body += "; filename=`"$fileName`"`r`n"
             $body += 'Content-Type: application/octet-stream'
-            $value = [System.Text.Encoding]::GetEncoding(""ISO-8859-1"").GetString($value)
+            $value = [System.Text.Encoding]::GetEncoding("ISO-8859-1").GetString($value)
         }
-        $body += ""`r`n`r`n"" + $value + ""`r`n""
+        $body += "`r`n`r`n" + $value + "`r`n"
     }
-    return $body + ""--$boundary--""
+    return $body + "--$boundary--"
 }
 
-$emaildomain = ""example.com""
-$apikey = ""key-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx""
-$url = ""https://api.mailgun.net/v2/$($emaildomain)/messages""
+$emaildomain = "example.com"
+$apikey = "key-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+$url = "https://api.mailgun.net/v2/$($emaildomain)/messages"
 $headers = @{
-    Authorization = ""Basic "" + ([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes(""api:$($apikey)"")))
+    Authorization = "Basic " + ([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("api:$($apikey)")))
 }
 
 $email_parms = @{
-    from = ""me@example.com"";
-    to = ""you@example.com"";
-    subject = ""My Test Email"";
+    from = "me@example.com";
+    to = "you@example.com";
+    subject = "My Test Email";
     text = 'Your email does not support HTML.';
-    html = ""Hello World!"";
-    filename = ""example.pdf""
-    attachment = ([IO.File]::ReadAllBytes(""c:\example.pdf""));
+    html = "Hello World!";
+    filename = "example.pdf"
+    attachment = ([IO.File]::ReadAllBytes("c:\example.pdf"));
 }
 $boundary = [guid]::NewGuid().ToString()
 $body = ConvertTo-MimeMultiPartBody $boundary $email_parms
-Invoke-RestMethod -Uri $url -Method Post -Headers $headers -Body $body -ContentType ""multipart/form-data; boundary=$boundary""
+Invoke-RestMethod -Uri $url -Method Post -Headers $headers -Body $body -ContentType "multipart/form-data; boundary=$boundary"

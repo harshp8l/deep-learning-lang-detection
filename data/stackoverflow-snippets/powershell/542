@@ -1,33 +1,33 @@
 # Translate the S-1-5-32-544 (.\Administrators) SID to a group name, the name varies depending on the language version of Windows.
 $sid2 = 'S-1-5-32-544'
 $objSID2 = New-Object System.Security.Principal.SecurityIdentifier($sid2)
-$localadminsgroup = (( $objSID2.Translate([System.Security.Principal.NTAccount]) ).Value).Split(""\"")[1]
+$localadminsgroup = (( $objSID2.Translate([System.Security.Principal.NTAccount]) ).Value).Split("\")[1]
 
 # Translate the S-1-5-4 (NT AUTHORITY\Interactive) SID to an account name, the name varies depending on the language version of Windows.
 $sid1 = 'S-1-5-4'
 $objSID1 = New-Object System.Security.Principal.SecurityIdentifier($sid1)
-$interactive = (( $objSID1.Translate([System.Security.Principal.NTAccount]) ).Value).Split(""\"")[1]
+$interactive = (( $objSID1.Translate([System.Security.Principal.NTAccount]) ).Value).Split("\")[1]
 
 # Add the security principal name to the local administrators group. (used old style of adding group members due to compatibility reasons)
 
 try {
-    Write-Host ""Adding security principal: $interactive to the $localadminsgroup group...""
+    Write-Host "Adding security principal: $interactive to the $localadminsgroup group..."
 
-    $group = [ADSI]""WinNT://$env:computername/$localadminsgroup,group""
-    $ismember = ""False""
+    $group = [ADSI]"WinNT://$env:computername/$localadminsgroup,group"
+    $ismember = "False"
 
-    @($group.Invoke(""Members"")) | ForEach-Object {
-        If ($interactive -match $_.GetType.Invoke().InvokeMember(""Name"", 'GetProperty', $null, $_, $null)) {
-            $ismember = ""True""
+    @($group.Invoke("Members")) | ForEach-Object {
+        If ($interactive -match $_.GetType.Invoke().InvokeMember("Name", 'GetProperty', $null, $_, $null)) {
+            $ismember = "True"
         }
     }
 
-    If ($ismember -eq ""True"") {
-        write-host ""user $interactive is already a member of $localadminsgroup""
+    If ($ismember -eq "True") {
+        write-host "user $interactive is already a member of $localadminsgroup"
     }
     Else {
-        $result = $group.Add(""WinNT://NT AUTHORITY/$interactive,user"")
-        write-host ""user $interactive is added to $localadminsgroup""
+        $result = $group.Add("WinNT://NT AUTHORITY/$interactive,user")
+        write-host "user $interactive is added to $localadminsgroup"
     }
 }
 Catch {

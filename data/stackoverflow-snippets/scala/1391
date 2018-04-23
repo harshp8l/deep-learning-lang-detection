@@ -1,10 +1,10 @@
 // taking inspiration from
 // http://stackoverflow.com/questions/11509843/
-lazy val ugenGenerator = TaskKey[Seq[File]](""ugen-generate"", ""Generate UGen class files"")
+lazy val ugenGenerator = TaskKey[Seq[File]]("ugen-generate", "Generate UGen class files")
 
-lazy val gen = Project(id = ""gen"", base = file(""gen"")) ...
+lazy val gen = Project(id = "gen", base = file("gen")) ...
 
-lazy val core = Project(id = ""core"", base = file(""core""))
+lazy val core = Project(id = "core", base = file("core"))
   .settings(
     sourceGenerators in Compile <+= ugenGenerator in Compile,
     ugenGenerator in Compile := {
@@ -18,21 +18,21 @@ lazy val core = Project(id = ""core"", base = file(""core""))
 
 def runUGenGenerator(name: String, outputDir: File, cp: Seq[File],
                     log: Logger): Seq[File] = {
-  val mainClass   = ""my.class.from.Gen""
-  val tmp         = java.io.File.createTempFile(""sources"", "".txt"")
+  val mainClass   = "my.class.from.Gen"
+  val tmp         = java.io.File.createTempFile("sources", ".txt")
   val os          = new java.io.FileOutputStream(tmp)
 
-  log.info(s""Generating UGen source code in $outputDir for $name"")
+  log.info(s"Generating UGen source code in $outputDir for $name")
 
   try {
     val outs  = CustomOutput(os)
     val fOpt  = ForkOptions(javaHome = None, outputStrategy = Some(outs), bootJars = cp,
         workingDirectory = None, connectInput = false)
     val res: Int = Fork.scala(config = fOpt,
-      arguments = mainClass :: ""-d"" :: outputDir.getAbsolutePath :: Nil)
+      arguments = mainClass :: "-d" :: outputDir.getAbsolutePath :: Nil)
 
     if (res != 0) {
-      sys.error(s""UGen class file generator failed with exit code $res"")
+      sys.error(s"UGen class file generator failed with exit code $res")
     }
   } finally {
     os.close()

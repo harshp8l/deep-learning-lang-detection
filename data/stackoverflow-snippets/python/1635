@@ -1,23 +1,23 @@
 def create_slug(instance, new_slug=None):
-    """"""
+    """
     A function to create a slug
     if an object with slug already exists, it adds id value to slug
     else  just slugify the title
-    """"""
+    """
     slug = slugify(instance.title)
     if new_slug is not None:
         slug = new_slug
     qs = Product.objects.filter(slug=slug).order_by('-id')
     exists = qs.exists()
     if exists:
-        new_slug = ""%s-%s"" %(slug, qs.first().id)
+        new_slug = "%s-%s" %(slug, qs.first().id)
         return create_slug(instance, new_slug=new_slug) #recursive call 
     return slug
 
 def pre_save_product_receiver(sender, instance, *args, **kwargs):
-    """"""
+    """
     A signal that calls the function create_slug if an object has not slug 
-    """"""
+    """
     if not instance.slug:
         instance.slug = create_slug(instance)
 

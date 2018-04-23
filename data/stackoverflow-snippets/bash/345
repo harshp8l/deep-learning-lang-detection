@@ -6,24 +6,24 @@ url='https://swapi.co/api'
 n=1
 #while true
 #do
-    response=$(curl -sL -H 'Accept: application/json' ""${url}/people?page=${n}"")
-    if [[ ${response} =~ .*""detail"".*""Not"".* ]]; then
+    response=$(curl -sL -H 'Accept: application/json' "${url}/people?page=${n}")
+    if [[ ${response} =~ .*"detail".*"Not".* ]]; then
             break
     fi
 
-    readarray -t name < <( echo ""${response}"" | jq -r '.results[] | ""\(.name)""')
-    readarray -t shipurls < <(echo ${response} | jq -r '.results[] | { starships: .starships }' | egrep /starships/ | sed -e 's/^[ \t]*//' | tr -d '""' | tr -d ',')
+    readarray -t name < <( echo "${response}" | jq -r '.results[] | "\(.name)"')
+    readarray -t shipurls < <(echo ${response} | jq -r '.results[] | { starships: .starships }' | egrep /starships/ | sed -e 's/^[ \t]*//' | tr -d '"' | tr -d ',')
 
-    for p in ""${shipurls[@]}""
+    for p in "${shipurls[@]}"
     do
 
-        shipname=$(curl -s ${p} | jq '.name' | tr -d '""')
+        shipname=$(curl -s ${p} | jq '.name' | tr -d '"')
         readarray -t _pilots < <(curl -s ${p} | jq -r '.pilots[]' | xargs -I {} sh -c 'curl -s {}' | jq '.name')
 
-        for _name in ""${name[@]}""
+        for _name in "${name[@]}"
         do
-            if [[ ""${_pilots[@]}"" =~ ""${_name}"" ]]; 
-            echo ""${_name} ${shipname}""
+            if [[ "${_pilots[@]}" =~ "${_name}" ]]; 
+            echo "${_name} ${shipname}"
             break
             fi
         done

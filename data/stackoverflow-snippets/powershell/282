@@ -1,19 +1,19 @@
-$sched = New-Object -Com ""Schedule.Service""
+$sched = New-Object -Com "Schedule.Service"
 $sched.Connect()
 $out = @()
-$sched.GetFolder(""\"").GetTasks(0) | % {
+$sched.GetFolder("\").GetTasks(0) | % {
     $xml = [xml]$_.xml
 
     $out += New-Object PSObject -Property @{
-        ""Name"" = $_.Name
-        ""Status"" = switch ($_.State) {0 {""Unknown""} 1 {""Disabled""} 2 {""Queued""} 3 {""Ready""} 4 {""Running""}}
-        ""Actions"" = ($xml.Task.Actions.Exec | % { ""$($_.Command) $($_.Arguments)"" }) -join ""`n""
-        ""NextRunTime"" = $_.NextRunTime
-        ""LastRunTime"" = $_.LastRunTime
-        ""LastRunResult"" = $_.LastTaskResult
-        ""Author"" = $xml.Task.Principals.Principal.UserId
-        ""Created"" = $xml.Task.RegistrationInfo.Date
+        "Name" = $_.Name
+        "Status" = switch ($_.State) {0 {"Unknown"} 1 {"Disabled"} 2 {"Queued"} 3 {"Ready"} 4 {"Running"}}
+        "Actions" = ($xml.Task.Actions.Exec | % { "$($_.Command) $($_.Arguments)" }) -join "`n"
+        "NextRunTime" = $_.NextRunTime
+        "LastRunTime" = $_.LastRunTime
+        "LastRunResult" = $_.LastTaskResult
+        "Author" = $xml.Task.Principals.Principal.UserId
+        "Created" = $xml.Task.RegistrationInfo.Date
     }
 }
 
-$out |Where Actions -like ""*powershell*""
+$out |Where Actions -like "*powershell*"

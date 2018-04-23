@@ -4,30 +4,30 @@ l=radius.log                                            # logfile, all logs
 m=myFile
 
 _sendMail(){                                            # send mail if not empty
-  local f msg=""$(</dev/stdin)""                          # mail contents
-  if [[ -n ""$msg"" ]]; then                              # if contents not empty
-    while read -r -a f || [[ -n ""${f[20]}"" ]]; do       # read line by line
-      [[ -z ""${f[20]}"" ]] && continue                   # ignore mal-formatted log
-      echo ""|-------------------------------------------------------------|""
-      echo ""  Switch: ${f[18]}""
-      echo ""|-------------------------------------------------------------|""
-      echo ""  Port-Nr: ${f[20]}""
-      echo ""|-------------------------------------------------------------|""
-      echo ""  MAC-Address: ${f[10]}""
-      echo ""|-------------------------------------------------------------|""
-    done <<<""$msg"" | (echo ""-----> $1""; cat)            # fake sending for test
-    #done <<<""$msg"" | mailx -E -s ""$1"" myuser@email.com # real sending, $1 = subject
+  local f msg="$(</dev/stdin)"                          # mail contents
+  if [[ -n "$msg" ]]; then                              # if contents not empty
+    while read -r -a f || [[ -n "${f[20]}" ]]; do       # read line by line
+      [[ -z "${f[20]}" ]] && continue                   # ignore mal-formatted log
+      echo "|-------------------------------------------------------------|"
+      echo "  Switch: ${f[18]}"
+      echo "|-------------------------------------------------------------|"
+      echo "  Port-Nr: ${f[20]}"
+      echo "|-------------------------------------------------------------|"
+      echo "  MAC-Address: ${f[10]}"
+      echo "|-------------------------------------------------------------|"
+    done <<<"$msg" | (echo "-----> $1"; cat)            # fake sending for test
+    #done <<<"$msg" | mailx -E -s "$1" myuser@email.com # real sending, $1 = subject
   fi
 }
 
 while :; do                                             # endless loop
-  if [[ ! -e ""$m"" ]]; then
-    grep ""Invalid user"" ""$l"" >""$m""
-    _sendMail ""Invalid $l"" <""$m""
+  if [[ ! -e "$m" ]]; then
+    grep "Invalid user" "$l" >"$m"
+    _sendMail "Invalid $l" <"$m"
   else
-    n=$(grep ""Invalid user"" ""$l"")
-    comm -23 <(echo ""$n"") ""$m"" | _sendMail ""Radius Invalid User""
-    echo ""$n"" >""$m""
+    n=$(grep "Invalid user" "$l")
+    comm -23 <(echo "$n") "$m" | _sendMail "Radius Invalid User"
+    echo "$n" >"$m"
   fi
   sleep 1
 done

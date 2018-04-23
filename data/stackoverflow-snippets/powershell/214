@@ -1,14 +1,14 @@
 #List of words. Had to escape them because Select-String doesn't return Matches-objects (with Index/location) for SimpleMatch
-$words = ""purple"",""blue"",""red"" | ForEach-Object { [regex]::Escape($_) }
+$words = "purple","blue","red" | ForEach-Object { [regex]::Escape($_) }
 #Can also use a list with word/sentence per line using $words = Get-Content patterns.txt | % { [regex]::Escape($_.Trim()) }
 
 #Get all files to search
-Get-ChildItem -Filter ""test.txt"" -Recurse | Foreach-Object { 
-    #Has to loop words because Select-String -Pattern ""blue"",""red"" won't return match for both pattern. It stops on a line after first match
+Get-ChildItem -Filter "test.txt" -Recurse | Foreach-Object { 
+    #Has to loop words because Select-String -Pattern "blue","red" won't return match for both pattern. It stops on a line after first match
     foreach ($word in $words) {
         $_ | Select-String -Pattern $word |
         #Select the properties we care about
-        Select-Object Path, Line, Pattern, LineNumber, @{n=""Index"";e={$_.Matches[0].Index}}
+        Select-Object Path, Line, Pattern, LineNumber, @{n="Index";e={$_.Matches[0].Index}}
     }
 } |
 #Sort by File (to keep file-matches together), then LineNumber and Index to get the order of matches

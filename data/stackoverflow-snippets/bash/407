@@ -1,20 +1,20 @@
 #!/bin/bash
 
-prefix=${1:-""out.""}                        # first optional argument: output file prefix
+prefix=${1:-"out."}                        # first optional argument: output file prefix
 
 file_num=1                                 # current numeric suffix; starting at 1
-exec >""$prefix$file_num""                   # open first output file
+exec >"$prefix$file_num"                   # open first output file
 
 while true; do
   dd bs=1M count=100                       # tell GNU dd to copy 100MB from stdin to stdout
   if IFS= read -r -d $'\x02' piece; then   # read in bash to the next boundary
-    printf '%s\x02' ""$piece""               # write that segment to stdout
-    exec >""$prefix$((++file_num))""         # re-open stdout to point to the next file
+    printf '%s\x02' "$piece"               # write that segment to stdout
+    exec >"$prefix$((++file_num))"         # re-open stdout to point to the next file
   else
-    [[ $piece ]] && printf '%s' ""$piece""   # write what's left after the last boundary
+    [[ $piece ]] && printf '%s' "$piece"   # write what's left after the last boundary
     break                                  # and stop
   fi
 done
 
 # if our last file is empty, delete it.
-[[ -s $prefix$file_num ]] || rm -f -- ""$prefix$file_num""
+[[ -s $prefix$file_num ]] || rm -f -- "$prefix$file_num"

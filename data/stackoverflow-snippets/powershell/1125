@@ -1,35 +1,35 @@
-    if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] ""Administrator"")) { Start-Process powershell.exe ""-NoProfile -ExecutionPolicy Bypass -File `""$PSCommandPath`"""" -Verb RunAs;}
+    if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) { Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs;}
 
 Param(
-  [string]$name = ""Test""
+  [string]$name = "Test"
 )
 
 $datacollectorset = New-Object -COM Pla.DataCollectorSet
 $datacollectorset.DisplayName = $name;
 $datacollectorset.Duration = 14400 ;
 $datacollectorset.SubdirectoryFormat = 1 ;
-$datacollectorset.SubdirectoryFormatPattern = ""yyyy\-MM"";
-$datacollectorset.RootPath = ""%systemdrive%\PerfLogs\Admin\"" + $name ;
+$datacollectorset.SubdirectoryFormatPattern = "yyyy\-MM";
+$datacollectorset.RootPath = "%systemdrive%\PerfLogs\Admin\" + $name ;
 
 $DataCollector = $datacollectorset.DataCollectors.CreateDataCollector(0) 
-$DataCollector.FileName = $name + ""_"";
+$DataCollector.FileName = $name + "_";
 $DataCollector.FileNameFormat = 0x1 ;
-$DataCollector.FileNameFormatPattern = ""yyyy\-MM\-dd"";
+$DataCollector.FileNameFormatPattern = "yyyy\-MM\-dd";
 $DataCollector.SampleInterval = 10
 
 $counters = @(
-        ""\Memory\Available MBytes"",
-        ""\Memory\Page Faults/sec"",
-        ""\Memory\Page Reads/sec"",
-        ""\Memory\Page Writes/sec"",
-        ""\Memory\Pages Input/sec"",
-        ""\Memory\Pages Output/sec"",
-        ""\Process(CloudHASHService)\*"",
-        ""\Processor(_Total)\% Idle Time"",
-        ""\Processor(_Total)\% Interrupt Time"",
-        ""\Processor(_Total)\% Privileged Time"",
-        ""\Processor(_Total)\% Processor Time"",
-        ""\Processor(_Total)\% User Time""
+        "\Memory\Available MBytes",
+        "\Memory\Page Faults/sec",
+        "\Memory\Page Reads/sec",
+        "\Memory\Page Writes/sec",
+        "\Memory\Pages Input/sec",
+        "\Memory\Pages Output/sec",
+        "\Process(CloudHASHService)\*",
+        "\Processor(_Total)\% Idle Time",
+        "\Processor(_Total)\% Interrupt Time",
+        "\Processor(_Total)\% Privileged Time",
+        "\Processor(_Total)\% Processor Time",
+        "\Processor(_Total)\% User Time"
 ) ;
 
 $DataCollector.PerformanceCounters = $counters
@@ -37,11 +37,11 @@ $DataCollector.PerformanceCounters = $counters
 try
 {    
     $datacollectorset.DataCollectors.Add($DataCollector) 
-    $datacollectorset.Commit(""$name"" , $null , 0x0003) | Out-Null
+    $datacollectorset.Commit("$name" , $null , 0x0003) | Out-Null
     $datacollectorset.Start($false);
 }
 catch [Exception] 
 { 
-    Write-Host ""Exception Caught: "" $_.Exception -ForegroundColor Red 
+    Write-Host "Exception Caught: " $_.Exception -ForegroundColor Red 
     return 
 } 

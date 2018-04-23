@@ -1,11 +1,11 @@
 func (db *DB) Migrate(domain ...interface{}) {
-    // statement := ""CREATE TABLE IF NOT EXISTS %s (%s, %s, %s, %s, %s)""
+    // statement := "CREATE TABLE IF NOT EXISTS %s (%s, %s, %s, %s, %s)"
     for _,i := range domain {
         params := BindStruct(i)
-        statement := CreateStatement(""create"", len(params))
+        statement := CreateStatement("create", len(params))
         _,err := db.Exec(fmt.Sprintf(statement, params...))
         if err != nil {
-            log.Fatal(""Error migrating database schema - "", err)
+            log.Fatal("Error migrating database schema - ", err)
             break
         }
     }
@@ -21,10 +21,10 @@ func BindStruct(domain interface{}) (params []interface{}) {
         tag := field.Tag
 
         fieldName := field.Name
-        fieldType := tag.Get(""sql_type"")
-        fieldTags := tag.Get(""sql_tag"")
+        fieldType := tag.Get("sql_type")
+        fieldTags := tag.Get("sql_tag")
 
-        paramstring := fieldName + "" "" + fieldType + "" "" + fieldTags
+        paramstring := fieldName + " " + fieldType + " " + fieldTags
         params = append(params, paramstring)
     }
     return params

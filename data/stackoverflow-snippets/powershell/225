@@ -1,6 +1,6 @@
 $CSVfiles = Get-ChildItem -Path $root -Filter *.csv
 
-$xlsx = ""C:\Users\abc\Desktop\testxl.xlsx"" #output location
+$xlsx = "C:\Users\abc\Desktop\testxl.xlsx" #output location
 
 #Create a excel
 $xl = New-Object -ComObject Excel.Application
@@ -16,11 +16,11 @@ $ws = $wb.Worksheets.Item(1)
 ForEach ($csv in $CSVfiles){
 
     # OpenText method does not work well with csv files
-    Copy-Item -Path $csv.FullName -Destination ($csv.FullName).Replace("".csv"","".txt"") -Force
+    Copy-Item -Path $csv.FullName -Destination ($csv.FullName).Replace(".csv",".txt") -Force
 
     # Use OpenText method. FieldInfo will need to be amended to suit your needs
     $xl.WorkBooks.OpenText(`
-                    ($file.FullName).Replace("".csv"","".txt""),    # Filename
+                    ($file.FullName).Replace(".csv",".txt"),    # Filename
                     2,                 # Origin
                     1,                 # StartRow
                     1,                 # DataType
@@ -37,13 +37,13 @@ ForEach ($csv in $CSVfiles){
 
     $tempBook   = $xl.ActiveWorkbook
 
-    $tempBook.worksheets.Item(1).Range(""A1"").Select()         | Out-Null
+    $tempBook.worksheets.Item(1).Range("A1").Select()         | Out-Null
     $tempBook.worksheets.Item(1).Move($wb.Worksheets.Item(1)) | Out-Null
 
     # name  the worksheet
     $xl.ActiveSheet.Name = $csv.BaseName
 
-    Remove-Item -Path ($csv.FullName).Replace("".csv"","".txt"")  -Force
+    Remove-Item -Path ($csv.FullName).Replace(".csv",".txt")  -Force
 
 }
 

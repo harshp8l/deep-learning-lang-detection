@@ -1,13 +1,13 @@
-val requests = List((HttpRequest(uri = ""http://akka.io""), Promise[HttpResponse]()),
-                    (HttpRequest(uri = ""http://www.yahoo.com""), Promise[HttpResponse]()))
+val requests = List((HttpRequest(uri = "http://akka.io"), Promise[HttpResponse]()),
+                    (HttpRequest(uri = "http://www.yahoo.com"), Promise[HttpResponse]()))
 
 val poolClientFlow =
   Http().superPool[Promise[HttpResponse]](settings = ConnectionPoolSettings(system).withMaxConnections(10)
 
 Source(requests)
-  .map { req => println(""-"", req); req }
+  .map { req => println("-", req); req }
   .via(poolClientFlow)
-  .map { resp => println(""|"", resp); resp }
+  .map { resp => println("|", resp); resp }
   .toMat(Sink.foreach(println))(Keep.both)
   .run()
 

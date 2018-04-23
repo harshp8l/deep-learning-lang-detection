@@ -1,19 +1,19 @@
-[object]$paramObj=Get-Content ""d:\a\r1\a\continuous\Scripts\Webjobs_Parameters.json"" |ConvertFrom-Json 
+[object]$paramObj=Get-Content "d:\a\r1\a\continuous\Scripts\Webjobs_Parameters.json" |ConvertFrom-Json 
     $userName =$paramObj.userName 
     $password =$paramObj.password
     $webAppName =$paramObj.webAppName
     $resourceGroup=$paramObj.resourceGroup
     [object[]]$webJobs=$paramObj.webJobs
-$Apiversion=""2016-08-01""
+$Apiversion="2016-08-01"
 $webJobArr=New-Object System.Collections.ArrayList
     foreach($wj in $webjobs)
     {
     $webJobArr.Add($wj.name)
-     if($wj.typeName -eq ""continuous"")
+     if($wj.typeName -eq "continuous")
      {
-Invoke-AzureRmResourceAction -ResourceGroupName $resourceGroup -ResourceType Microsoft.Web/sites/ContinuousWebJobs -ResourceName ""$webAppName/$($wj.name)"" -Action stop -ApiVersion $Apiversion -Force
-      Write-Host ""continuous""
-     Write-Host ""$wj.name is Stopping""
+Invoke-AzureRmResourceAction -ResourceGroupName $resourceGroup -ResourceType Microsoft.Web/sites/ContinuousWebJobs -ResourceName "$webAppName/$($wj.name)" -Action stop -ApiVersion $Apiversion -Force
+      Write-Host "continuous"
+     Write-Host "$wj.name is Stopping"
      }
     }
 $tryCount=4
@@ -21,28 +21,28 @@ $tryCount=4
  while($i -lt $tryCount){
  $errorsJobs=New-Object System.Collections.ArrayList
  Start-Sleep -s 5
- Write-Host ""starting $i try.......""
+ Write-Host "starting $i try......."
  $i +=1
 
   $continuejobs=Get-AzureRmResource -ResourceGroupName $resourceGroup -ResourceName $webAppName -ResourceType Microsoft.web/sites/ContinuousWebJobs -ApiVersion $Apiversion 
 foreach($webJob in $continuejobs)
 {
 if($webJobArr -contains $webJob.Properties.name){
-    if($webJob.Properties.status -ne ""Stopped""){
+    if($webJob.Properties.status -ne "Stopped"){
         $errorsJobs.Add($webJob.Properties.name)
     }
 }
 }
 if($errorsJobs.Count -gt 0){
-$result=$errorsJobs -join "";""
-Write-Host ""Some jobs are not stopped: $result. Try to check again""
+$result=$errorsJobs -join ";"
+Write-Host "Some jobs are not stopped: $result. Try to check again"
 }
 else{
-Write-Host ""All jobs are stopped.""
+Write-Host "All jobs are stopped."
 break
 }
 if(($i -eq $tryCount) -and ($errorsJobs.Count -gt 0)){
-Write-Error ""Some jobs are not stopped: $result.""
+Write-Error "Some jobs are not stopped: $result."
 }
 
  }
