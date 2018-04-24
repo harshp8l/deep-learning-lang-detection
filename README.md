@@ -25,6 +25,8 @@ controller, locator, customer, view, model, nav, show, new, old, legacy
 
 Data are separated into training (~2000 per language) and test (~1000 per language). In the new version, in order to train for snippets, larger files are broken down and the second and last third of the file are used in the training data. 
 
+There are around **20K snippets extracted from Stackoverflow questions/answers** which due to poor labelling not used for training or testing but can be used to test the system on small or atypical snippets.
+
 ## Run the code
 You need Keras (and TensorFlow). The code is in python 2.7.
 
