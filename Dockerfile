@@ -40,7 +40,7 @@ ADD data_helper.py $SRC_PATH
 ADD defs.py $SRC_PATH
 ADD save_tmp.h5 $SRC_PATH
 ADD ui $SRC_PATH/ui
-
+ADD data/stackoverflow-snippets $SRC_PATH/data/stackoverflow-snippets
 
 EXPOSE 5000
 
