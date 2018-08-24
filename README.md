@@ -12,7 +12,7 @@ The project is set up to demonstrate - in simple steps - how to use Keras to bui
 Small dataset is the main limitation of the project - for a powerful model, you would need at least x10 or x100 samples. Another problem is that the training has been done on full files (and their snippets) and not on snippets. A dataset supplied with snippets (perhaps extracted from StackOverflow) can help. In the end, as we said earlier the project aims to demonstrate the ease of getting started with DL with a relatively small dataset. In the process, it seems to achieve reasonable accuracy that can be improved upon.
 
 ## Languages
-16 language was chosen as below:
+16 languages were chosen as below:
 XML, F#, Clojure, Java, Scala, Python, Javascript, C++, CSS, C#, go, PHP, Ruby, Powershell, bash and SQL
 
 ## Data
