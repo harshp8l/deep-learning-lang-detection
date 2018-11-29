@@ -1,9 +1,0 @@
-WITH XMLNAMESPACES(DEFAULT N'somenamspace/2006-10-31')
-SELECT
-    ROW_NUMBER() OVER(PARTITION BY p.value(N'local-name(.)',N'nvarchar(max)') ORDER BY (SELECT NULL)) AS SequenceNumber, 
-    @xml.value(N'(/order/@order-no)[1]',N'int') AS OrderNumber,
-    p.value(N'local-name(.)',N'nvarchar(max)') AS PaymentType,
-    p.value(N'(card-type/text())[1]','nvarchar(max)') AS CardType,
-    p.value(N'(../amount/text())[1]','decimal(10,4)') AS Amount
-FROM 
-    @xml.nodes(N'/order/payments/payment/*[local-name()!="amount"]') AS A(p)
