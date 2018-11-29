@@ -81,7 +81,8 @@ print "Final result: {}/{} ({})".format(success, len(y_hat), (success * 1.0 / le
 
 prs = precision_recall.calculate_precision_recall(expecteds, predicteds, defs.langs)
 for c in prs:
-  print "{} - Precision:{} Recall: {}".format(prs[c].get_name(), prs[c].precision(), prs[c].recall())
+    print "{} - Precision:{} Recall: {} F1Score: {}".format(prs[c].get_name(), prs[c].precision(), prs[c].recall(),
+            (2*prs[c].precision()*prs[c].recall())/(prs[c].precision() + prs[c].recall()))
 
 
 for key in class_count:
