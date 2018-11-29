@@ -1,20 +1,9 @@
 langs = [
-  'go',
-  'csharp',
   'java',
-  'js',
   'cpp',
-  'ruby',
-  'powershell',
-  'bash',
-  'php',
-  'css',
-  'xml',
   'python',
   'scala',
-  'clojure',
-  'fsharp',
-  'sql'
+  'clojure'
 ]
 
 file_characters_truncation_limit = 2 * 1024 # 2KB
